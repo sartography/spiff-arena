@@ -91,7 +91,7 @@ export default function ProcessInfo({
         })
       : [];
     setTaskRows(filtered);
-  }, [filter]);
+  }, [filter, pi.tasks?.results]);
 
   const columns = [
     {
@@ -110,6 +110,7 @@ export default function ProcessInfo({
       setTaskColumns(columns);
       setTaskRows(rows);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pi]);
 
   const bgPaper = isDark ? 'background.paper' : 'background.bluegreylight';

@@ -98,6 +98,8 @@ export default function Dashboards() {
     if (Object.keys(processInstanceCollection).length) {
       setProcessInstances(processInstanceCollection.results);
     }
+    // ignore this because it doesn't realize that setProcessInstances is a state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processInstanceCollection]);
 
   return (

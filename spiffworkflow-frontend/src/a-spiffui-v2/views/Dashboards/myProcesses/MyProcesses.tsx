@@ -4,7 +4,7 @@ import {
   GridRowProps,
   GridRowsProp,
 } from '@mui/x-data-grid';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import ProcessInstanceCard from '../cards/ProcessInstanceCard';
 import useTaskCollection from '../../../hooks/useTaskCollection';
@@ -67,17 +67,20 @@ export default function MyProcesses({
       },
     );
     setFilteredRows(sorted);
-  }, [filter]);
+  }, [filter, mappedRows]);
 
   // Put the task objects right on the process instance objects
-  const addTaskCounts = (rows: GridRowsProp[]) => {
-    return rows.map((row: Record<string, any>) => {
-      const tasks = taskCollection?.results?.filter(
-        (task: Record<string, any>) => task.process_instance_id === row.id,
-      );
-      return { ...row, tasks };
-    });
-  };
+  const addTaskCounts = useCallback(
+    (rows: GridRowsProp[]) => {
+      return rows.map((row: Record<string, any>) => {
+        const tasks = taskCollection?.results?.filter(
+          (task: Record<string, any>) => task.process_instance_id === row.id,
+        );
+        return { ...row, tasks };
+      });
+    },
+    [taskCollection?.results],
+  );
 
   useEffect(() => {
     if (pis?.report_metadata && taskCollection?.results) {
@@ -116,7 +119,7 @@ export default function MyProcesses({
         [...rows].sort((a, b) => b.tasks.length - a.tasks.length),
       );
     }
-  }, [pis]);
+  }, [pis, addTaskCounts, taskCollection?.results]);
 
   return (
     <Box

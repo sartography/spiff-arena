@@ -105,6 +105,7 @@ export default function ProcessModelCard({
   useEffect(() => {
     if (!styleInit && lastSelected) {
       handleClickStream(lastSelected);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       styleInit = true;
     }
   }, [lastSelected]);
@@ -112,6 +113,7 @@ export default function ProcessModelCard({
   let streamSub: Subscription;
   useEffect(() => {
     if (!streamSub && stream) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       streamSub = stream.subscribe(handleClickStream);
     }
 

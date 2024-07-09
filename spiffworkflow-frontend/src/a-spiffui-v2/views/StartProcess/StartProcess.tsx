@@ -227,6 +227,7 @@ export default function StartProcess() {
       setGroupsExpanded(!!processGroups.results.length);
       setCrumbs([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processGroups]);
 
   let cardStreamSub: Subscription;
@@ -234,6 +235,7 @@ export default function StartProcess() {
     if (!cardStreamSub && clickStream) {
       clickStream.subscribe(handleClickStream);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clickStream]);
 
   return (

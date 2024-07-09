@@ -49,6 +49,7 @@ export default function ContainerForExtensions() {
     // if we include the removeError function to the dependency array of this useEffect, it causes
     // an infinite loop where the page with the error adds the error,
     // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity

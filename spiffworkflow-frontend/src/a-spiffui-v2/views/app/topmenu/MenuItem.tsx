@@ -54,6 +54,7 @@ export default function MenuItem({
   let subMenuItem: Subscription;
   useEffect(() => {
     if (!subMenuItem && stream) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       subMenuItem = stream.subscribe((item) =>
         setToggled(item.text === data.text),
       );

@@ -144,6 +144,7 @@ export default forwardRef(function TreePanel(
   let streamSub: Subscription;
   useEffect(() => {
     if (!streamSub && stream) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       streamSub = stream.subscribe((item) => {
         setLastSelected({ ...item });
       });
@@ -179,6 +180,7 @@ export default forwardRef(function TreePanel(
     console.log(lastSelected);
     // Otherwise, go through the rigamarole of expanding it.
     expandToItem(lastSelected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastSelected]);
 
   return (

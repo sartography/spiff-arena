@@ -33,6 +33,7 @@ export default function SearchBar({
   let streamSub: Subscription;
   useEffect(() => {
     if (!streamSub && stream) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       streamSub = stream.subscribe(handleClickStream);
     }
 
