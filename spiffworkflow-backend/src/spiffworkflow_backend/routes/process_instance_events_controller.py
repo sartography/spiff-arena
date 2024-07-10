@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -164,3 +165,25 @@ def error_detail_show(
 
     error_details = process_instance_event.error_details[0]
     return make_response(jsonify(error_details), 200)
+
+
+def process_instance_migration_event_list(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    # to make sure the process instance exists
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    log_query = ProcessInstanceEventModel.query.filter_by(
+        process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
+    ).join(ProcessInstanceMigrationDetailModel)
+
+    logs = log_query.order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()).outerjoin(  # type: ignore
+        UserModel, UserModel.id == ProcessInstanceEventModel.user_id
+    )
+
+    response_json = {
+        "results": logs.items,
+    }
+
+    return make_response(jsonify(response_json), 200)
