@@ -393,7 +393,10 @@ class AuthenticationService:
 
     @classmethod
     def get_key_config(cls, jwks_configs: dict, key_id: str) -> dict | None:
-        return next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
+        for jk in jwks_configs["keys"]:
+            if jk["kid"] == key_id:
+                return jk
+        return None
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
