@@ -1,5 +1,5 @@
-import copy
 import base64
+import copy
 import hashlib
 import time
 from collections.abc import Generator
@@ -212,9 +212,7 @@ class ProcessInstanceService:
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
         migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
-        # print(f"➡️ ➡️ ➡️  target_subprocess_specs: {target_subprocess_specs}")
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
-            # print(f"➡️ ➡️ ➡️  sp: {sp.spec.name}")
             migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
         processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
 

@@ -3,16 +3,13 @@ import traceback
 
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
-from flask_migrate import migrate  # type: ignore
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
-from spiffworkflow_backend.models.process_instance_migration_detail import (
-    ProcessInstanceMigrationDetailDict,
-    ProcessInstanceMigrationDetailModel,
-)
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailDict
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 
 
