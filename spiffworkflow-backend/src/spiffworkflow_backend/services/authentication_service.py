@@ -143,18 +143,16 @@ class AuthenticationService:
         if jwks_uri not in cls.JSON_WEB_KEYSET_CACHE or force_refresh:
             try:
                 jwt_ks_response = safe_requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-                jwks_response = jwt_ks_response.json()
-                cls.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwks_response
+                cls.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwt_ks_response.json()
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given jwks url: {jwks_uri}") from ce
         return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
 
     @classmethod
-    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict:
+    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict[str, Any]:
         jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
-        jwks_configs = cls.JSON_WEB_KEYSET_CACHE[jwks_uri]
-        json_key_configs: dict = next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
+        json_key_configs: dict | None = next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
         if not json_key_configs:
             # Refetch the JWKS keys from the source if key_id is not found in cache
             jwks_configs = cls.get_jwks_config_from_uri(jwks_uri, force_refresh=True)
