@@ -1,11 +1,13 @@
 import base64
 import copy
 import hashlib
+import json
 import time
 from collections.abc import Generator
 from contextlib import suppress
 from datetime import datetime
 from datetime import timezone
+from hashlib import sha256
 from typing import Any
 from urllib.parse import unquote
 from uuid import UUID
@@ -35,6 +37,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationUnnecessaryError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -158,6 +161,11 @@ class ProcessInstanceService:
             (target_bpmn_process_spec, target_subprocess_specs) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
                 process_instance.process_model_identifier,
             )
+            full_bpmn_spec_dict = {
+                "spec": ProcessInstanceProcessor._serializer.to_dict(target_bpmn_process_spec),
+                "subprocess_specs": ProcessInstanceProcessor._serializer.to_dict(target_subprocess_specs),
+            }
+            target_bpmn_process_hash = sha256(json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")).hexdigest()
         else:
             bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
                 full_process_model_hash=target_bpmn_process_hash
@@ -173,6 +181,12 @@ class ProcessInstanceService:
             process_copy = copy.deepcopy(full_bpmn_process_dict)
             target_bpmn_process_spec = ProcessInstanceProcessor._serializer.from_dict(process_copy["spec"])
             target_subprocess_specs = ProcessInstanceProcessor._serializer.from_dict(process_copy["subprocess_specs"])
+
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        if target_bpmn_process_hash == initial_bpmn_process_hash:
+            raise ProcessInstanceMigrationUnnecessaryError(
+                "Both target and current process model versions are the same. There is no need to migrate."
+            )
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
@@ -195,7 +209,7 @@ class ProcessInstanceService:
         )
 
     @classmethod
-    def migrate_process_instance_to_newest_model_version(
+    def migrate_process_instance(
         cls,
         process_instance: ProcessInstanceModel,
         user: UserModel,
@@ -211,6 +225,7 @@ class ProcessInstanceService:
             top_level_bpmn_process_diff,
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
+
         migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
             migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))

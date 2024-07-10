@@ -59,3 +59,4 @@ class TestProcessInstanceEventsController(BaseTest):
             assert events[ii]["initial_bpmn_process_hash"] == f"hash{ii}"
             assert events[ii]["target_git_revision"] == f"rev{ii+1}"
             assert events[ii]["target_bpmn_process_hash"] == f"hash{ii+1}"
+            assert events[ii]["username"] == with_super_admin_user.username

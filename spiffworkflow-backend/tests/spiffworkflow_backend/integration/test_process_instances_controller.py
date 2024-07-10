@@ -161,4 +161,7 @@ class TestProcessInstancesController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json == {"can_migrate": True, "process_instance_id": process_instance.id}
+        assert response.json["can_migrate"] is True
+        assert response.json["process_instance_id"] == process_instance.id
+        assert response.json["current_bpmn_process_hash"] is not None
+        assert response.json["current_git_revision"] is not None

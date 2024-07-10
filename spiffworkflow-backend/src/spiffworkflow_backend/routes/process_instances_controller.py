@@ -1,3 +1,4 @@
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationUnnecessaryError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationError, ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 
@@ -552,13 +553,19 @@ def process_instance_check_can_migrate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    can_migrate = True
+    return_dict: dict = {
+        "can_migrate": True,
+        "process_instance_id": process_instance.id,
+        "current_git_revision": process_instance.bpmn_version_control_identifier,
+        "current_bpmn_process_hash": process_instance.bpmn_process.bpmn_process_definition.full_process_model_hash,
+    }
     try:
         ProcessInstanceService.check_process_instance_can_be_migrated(process_instance)
-    except ProcessInstanceMigrationNotSafeError:
-        can_migrate = False
+    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
+        return_dict["can_migrate"] = False
+        return_dict["exception_class"] = exception.__class__.__name__
     return Response(
-        json.dumps({"can_migrate": can_migrate, "process_instance_id": process_instance.id}),
+        json.dumps(return_dict),
         status=200,
         mimetype="application/json",
     )
@@ -567,13 +574,16 @@ def process_instance_check_can_migrate(
 def process_instance_migrate(
     process_instance_id: int,
     modified_process_model_identifier: str,
+    target_bpmn_process_hash: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if process_instance.status != "suspended":
         raise ProcessInstanceMigrationError(
             f"The process instance needs to be suspended to migrate it. It is currently: {process_instance.status}"
         )
-    ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=g.user)
+    ProcessInstanceService.migrate_process_instance(
+        process_instance, user=g.user, target_bpmn_process_hash=target_bpmn_process_hash
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

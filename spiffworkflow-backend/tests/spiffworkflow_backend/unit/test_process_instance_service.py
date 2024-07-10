@@ -206,7 +206,7 @@ class TestProcessInstanceService(BaseTest):
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         mock_get_current_revision.return_value = "rev2"
-        ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=initiator_user)
+        ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
 
         for initial_task in initial_tasks:
             new_task = processor.bpmn_process_instance.get_task_from_id(initial_task.id)
@@ -290,14 +290,14 @@ class TestProcessInstanceService(BaseTest):
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         mock_get_current_revision.return_value = "rev2"
-        ProcessInstanceService.migrate_process_instance_to_newest_model_version(process_instance, user=initiator_user)
+        ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
 
-        ProcessInstanceService.migrate_process_instance_to_newest_model_version(
+        ProcessInstanceService.migrate_process_instance(
             process_instance, user=initiator_user, target_bpmn_process_hash=initial_bpmn_process_hash
         )
         processor = ProcessInstanceProcessor(process_instance)

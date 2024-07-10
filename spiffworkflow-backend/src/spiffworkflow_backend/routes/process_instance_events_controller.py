@@ -174,25 +174,26 @@ def process_instance_migration_event_list(
     # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    log_query = (
-        db.session.query(ProcessInstanceEventModel, ProcessInstanceMigrationDetailModel)
+    logs = (
+        db.session.query(ProcessInstanceEventModel, ProcessInstanceMigrationDetailModel, UserModel)
         .filter(
             ProcessInstanceEventModel.process_instance_id == process_instance.id,
             ProcessInstanceEventModel.event_type == ProcessInstanceEventType.process_instance_migrated.value,
         )
         .join(ProcessInstanceMigrationDetailModel)  # type: ignore
-    )
-
-    # db.session.query(Event).options(joinedload(Event.details))
-    logs = (
-        log_query.order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc())  # type: ignore
         .outerjoin(UserModel, UserModel.id == ProcessInstanceEventModel.user_id)
+        .order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc())  # type: ignore
+        .add_columns(
+            ProcessInstanceEventModel.id,
+            ProcessInstanceEventModel.timestamp,
+            UserModel.username,
+            ProcessInstanceMigrationDetailModel.initial_bpmn_process_hash,
+            ProcessInstanceMigrationDetailModel.target_bpmn_process_hash,
+            ProcessInstanceMigrationDetailModel.initial_git_revision,
+            ProcessInstanceMigrationDetailModel.initial_git_revision,
+        )
         .all()
     )
-    # import pdb
-    #
-    # pdb.set_trace()
-    # print(f"➡️ ➡️ ➡️  logs: {logs}")
 
     response_json = {
         "results": logs,
