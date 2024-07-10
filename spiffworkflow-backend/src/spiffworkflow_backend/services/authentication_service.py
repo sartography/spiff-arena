@@ -71,7 +71,7 @@ class AuthenticationOptionNotFoundError(Exception):
 
 class AuthenticationService:
     ENDPOINT_CACHE: dict[str, dict[str, str]] = {}  # We only need to find the openid endpoints once, then we can cache them.
-    JSON_WEB_KEYSET_CACHE: dict[str, dict[str, str]] = {}
+    JSON_WEB_KEYSET_CACHE: dict[str, dict[str, dict]] = {}
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
@@ -143,7 +143,9 @@ class AuthenticationService:
         if jwks_uri not in AuthenticationService.JSON_WEB_KEYSET_CACHE:
             try:
                 jwt_ks_response = safe_requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
-                AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri] = jwt_ks_response.json()
+                jwks_response = jwt_ks_response.json()
+                for key in jwks_response["keys"]:
+                    cls.JSON_WEB_KEYSET_CACHE[key["kid"]] = key
             except requests.exceptions.ConnectionError as ce:
                 raise OpenIdConnectionError(f"Cannot connect to given jwks url: {jwks_uri}") from ce
         return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
@@ -152,7 +154,12 @@ class AuthenticationService:
     def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict:
         jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
-        json_key_configs: dict = next(jk for jk in jwks_configs["keys"] if jk["kid"] == key_id)
+        if key_id not in cls.JSON_WEB_KEYSET_CACHE:
+            # Refetch the JWKS keys from the source
+            jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
+            # Remove keys not in the source from the cache
+            cls.JSON_WEB_KEYSET_CACHE = {key["kid"]: key for key in jwks_configs["keys"]}
+        json_key_configs: dict = cls.JSON_WEB_KEYSET_CACHE[key_id]
         return json_key_configs
 
     @classmethod
