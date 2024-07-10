@@ -29,20 +29,6 @@ else:
     from typing import TypedDict
 
 
-class JWKSKeyConfig(TypedDict):
-    kid: str
-    kty: str
-    use: str
-    n: str
-    e: str
-    x5c: NotRequired[list[str]]
-    alg: str
-    x5t: str
-
-class JWKSConfigs(TypedDict):
-    keys: NotRequired[list[JWKSKeyConfig]]
-
-
 import jwt
 import requests
 from flask import current_app
@@ -61,6 +47,21 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
+
+
+class JWKSKeyConfig(TypedDict):
+    kid: str
+    kty: str
+    use: str
+    n: str
+    e: str
+    x5c: NotRequired[list[str]]
+    alg: str
+    x5t: str
+
+
+class JWKSConfigs(TypedDict):
+    keys: NotRequired[list[JWKSKeyConfig]]
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -232,7 +233,6 @@ class AuthenticationService:
                 public_key = cls.public_key_from_rsa_public_numbers(json_key_configs)
             else:
                 public_key = cls.public_key_from_x5c(key_id, json_key_configs)
-
 
             # tokens generated from the cli have an aud like: [ "realm-management", "account" ]
             # while tokens generated from frontend have an aud like: "spiffworkflow-backend."
