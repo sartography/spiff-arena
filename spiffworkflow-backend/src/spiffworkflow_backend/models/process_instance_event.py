@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import ForeignKey
@@ -29,6 +30,7 @@ class ProcessInstanceEventType(SpiffEnum):
     task_skipped = "task_skipped"
 
 
+@dataclass
 class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     __tablename__ = "process_instance_event"
     id: int = db.Column(db.Integer, primary_key=True)

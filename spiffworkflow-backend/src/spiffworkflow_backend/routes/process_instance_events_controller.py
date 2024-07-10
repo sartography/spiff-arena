@@ -174,16 +174,28 @@ def process_instance_migration_event_list(
     # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    log_query = ProcessInstanceEventModel.query.filter_by(
-        process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
-    ).join(ProcessInstanceMigrationDetailModel)
-
-    logs = log_query.order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()).outerjoin(  # type: ignore
-        UserModel, UserModel.id == ProcessInstanceEventModel.user_id
+    log_query = (
+        db.session.query(ProcessInstanceEventModel, ProcessInstanceMigrationDetailModel)
+        .filter(
+            ProcessInstanceEventModel.process_instance_id == process_instance.id,
+            ProcessInstanceEventModel.event_type == ProcessInstanceEventType.process_instance_migrated.value,
+        )
+        .join(ProcessInstanceMigrationDetailModel)  # type: ignore
     )
 
+    # db.session.query(Event).options(joinedload(Event.details))
+    logs = (
+        log_query.order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc())  # type: ignore
+        .outerjoin(UserModel, UserModel.id == ProcessInstanceEventModel.user_id)
+        .all()
+    )
+    # import pdb
+    #
+    # pdb.set_trace()
+    # print(f"➡️ ➡️ ➡️  logs: {logs}")
+
     response_json = {
-        "results": logs.items,
+        "results": logs,
     }
 
     return make_response(jsonify(response_json), 200)

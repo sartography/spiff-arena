@@ -2,7 +2,7 @@ import time
 import traceback
 
 from flask import g
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
