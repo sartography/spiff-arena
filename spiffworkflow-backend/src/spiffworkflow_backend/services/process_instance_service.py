@@ -1,3 +1,4 @@
+import copy
 import base64
 import hashlib
 import time
@@ -169,9 +170,9 @@ class ProcessInstanceService:
                 task_model_mapping={},
                 bpmn_subprocess_mapping={},
             )
-            bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(full_bpmn_process_dict)
-            target_bpmn_process_spec = bpmn_process_instance.spec
-            target_subprocess_specs = bpmn_process_instance.subprocess_specs
+            process_copy = copy.deepcopy(full_bpmn_process_dict)
+            target_bpmn_process_spec = ProcessInstanceProcessor._serializer.from_dict(process_copy["spec"])
+            target_subprocess_specs = ProcessInstanceProcessor._serializer.from_dict(process_copy["subprocess_specs"])
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
@@ -209,9 +210,11 @@ class ProcessInstanceService:
             target_subprocess_specs,
             top_level_bpmn_process_diff,
             subprocesses_diffs,
-        ) = cls.check_process_instance_can_be_migrated(process_instance)
+        ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
         migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
+        # print(f"➡️ ➡️ ➡️  target_subprocess_specs: {target_subprocess_specs}")
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
+            # print(f"➡️ ➡️ ➡️  sp: {sp.spec.name}")
             migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
         processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
 
