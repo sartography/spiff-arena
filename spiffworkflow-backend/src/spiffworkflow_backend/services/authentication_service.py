@@ -152,11 +152,11 @@ class AuthenticationService:
     def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict[str, Any]:
         jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
-        json_key_configs: dict | None = next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
+        json_key_configs: dict | None = cls.get_key_config(jwks_configs, key_id)
         if not json_key_configs:
             # Refetch the JWKS keys from the source if key_id is not found in cache
             jwks_configs = cls.get_jwks_config_from_uri(jwks_uri, force_refresh=True)
-            json_key_configs = next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
+            json_key_configs = cls.get_key_config(jwks_configs, key_id)
             if not json_key_configs:
                 raise KeyError(f"Key ID {key_id} not found in JWKS even after refreshing from {jwks_uri}.")
         return json_key_configs
@@ -390,6 +390,10 @@ class AuthenticationService:
         if refresh_token_object:
             return refresh_token_object.token
         return None
+
+    @classmethod
+    def get_key_config(cls, jwks_configs: dict, key_id: str) -> dict | None:
+        return next((jk for jk in jwks_configs["keys"] if jk["kid"] == key_id), None)
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
