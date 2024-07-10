@@ -28,6 +28,21 @@ else:
     from typing import NotRequired
     from typing import TypedDict
 
+
+class JWKSKeyConfig(TypedDict):
+    kid: str
+    kty: str
+    use: str
+    n: str
+    e: str
+    x5c: NotRequired[list[str]]
+    alg: str
+    x5t: str
+
+class JWKSConfigs(TypedDict):
+    keys: NotRequired[list[JWKSKeyConfig]]
+
+
 import jwt
 import requests
 from flask import current_app
@@ -71,7 +86,7 @@ class AuthenticationOptionNotFoundError(Exception):
 
 class AuthenticationService:
     ENDPOINT_CACHE: dict[str, dict[str, str]] = {}  # We only need to find the openid endpoints once, then we can cache them.
-    JSON_WEB_KEYSET_CACHE: dict[str, dict[str, str]] = {}
+    JSON_WEB_KEYSET_CACHE: dict[str, JWKSConfigs] = {}
 
     @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
@@ -139,7 +154,7 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def get_jwks_config_from_uri(cls, jwks_uri: str, force_refresh: bool = False) -> dict:
+    def get_jwks_config_from_uri(cls, jwks_uri: str, force_refresh: bool = False) -> JWKSConfigs:
         if jwks_uri not in cls.JSON_WEB_KEYSET_CACHE or force_refresh:
             try:
                 jwt_ks_response = safe_requests.get(jwks_uri, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
@@ -149,10 +164,10 @@ class AuthenticationService:
         return AuthenticationService.JSON_WEB_KEYSET_CACHE[jwks_uri]
 
     @classmethod
-    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> dict[str, Any]:
+    def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> JWKSKeyConfig:
         jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
-        json_key_configs: dict | None = cls.get_key_config(jwks_configs, key_id)
+        json_key_configs: JWKSKeyConfig | None = cls.get_key_config(jwks_configs, key_id)
         if not json_key_configs:
             # Refetch the JWKS keys from the source if key_id is not found in cache
             jwks_configs = cls.get_jwks_config_from_uri(jwks_uri, force_refresh=True)
@@ -162,7 +177,7 @@ class AuthenticationService:
         return json_key_configs
 
     @classmethod
-    def public_key_from_rsa_public_numbers(cls, json_key_configs: dict) -> Any:
+    def public_key_from_rsa_public_numbers(cls, json_key_configs: JWKSKeyConfig) -> Any:
         modulus = base64.urlsafe_b64decode(json_key_configs["n"] + "===")
         exponent = base64.urlsafe_b64decode(json_key_configs["e"] + "===")
         public_key_numbers = rsa.RSAPublicNumbers(
@@ -171,7 +186,7 @@ class AuthenticationService:
         return public_key_numbers.public_key(backend=default_backend())
 
     @classmethod
-    def public_key_from_x5c(cls, key_id: str, json_key_configs: dict) -> Any:
+    def public_key_from_x5c(cls, key_id: str, json_key_configs: JWKSKeyConfig) -> Any:
         x5c = json_key_configs["x5c"][0]
         decoded_certificate = base64.b64decode(x5c)
 
@@ -217,6 +232,7 @@ class AuthenticationService:
                 public_key = cls.public_key_from_rsa_public_numbers(json_key_configs)
             else:
                 public_key = cls.public_key_from_x5c(key_id, json_key_configs)
+
 
             # tokens generated from the cli have an aud like: [ "realm-management", "account" ]
             # while tokens generated from frontend have an aud like: "spiffworkflow-backend."
@@ -392,7 +408,7 @@ class AuthenticationService:
         return None
 
     @classmethod
-    def get_key_config(cls, jwks_configs: dict, key_id: str) -> dict | None:
+    def get_key_config(cls, jwks_configs: JWKSConfigs, key_id: str) -> JWKSKeyConfig | None:
         for jk in jwks_configs["keys"]:
             if jk["kid"] == key_id:
                 return jk
