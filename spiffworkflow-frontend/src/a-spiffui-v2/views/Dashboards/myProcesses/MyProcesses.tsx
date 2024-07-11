@@ -91,7 +91,6 @@ export default function MyProcesses({
           colSpan: 0,
           flex: 1,
           renderCell: (params: Record<string, any>) => {
-            console.log('params', params);
             return <CellRenderer header={column.Header} data={params} />;
           },
         }),

@@ -31,8 +31,8 @@ function DangerousMigrationButton({
   title,
   buttonText = 'Migrate to Newest',
 }: {
-  successCallback: Function;
-  failureCallback: Function;
+  successCallback: (result: any) => void;
+  failureCallback: (error: any) => void;
   title?: string;
   migrationEvent?: MigrationEvent;
   buttonText?: string;
@@ -350,7 +350,7 @@ export default function ProcessInstanceMigratePage() {
       <br />
       <MigrationStatus migrationCheckResult={migrationCheckResult} />
       <br />
-      {migrationCheckResult && migrationCheckResult.can_migrate ? (
+      {migrationCheckResult?.can_migrate ? (
         <DangerousMigrationButton
           successCallback={onMigrationComplete}
           failureCallback={onMigrationFailure}

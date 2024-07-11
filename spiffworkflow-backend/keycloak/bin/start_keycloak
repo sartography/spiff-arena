@@ -8,7 +8,7 @@ function remove_traps() {
 }
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 setup_traps
@@ -17,10 +17,10 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 realm_name="${1:-}"
 if [[ -z "$realm_name" ]]; then
-  realm_name="spiffworkflow"
+  realm_name="spiffworkflow-local"
 fi
 
-if ! docker network inspect spiffworkflow > /dev/null 2>&1; then
+if ! docker network inspect spiffworkflow >/dev/null 2>&1; then
   docker network create spiffworkflow
 fi
 
@@ -53,7 +53,10 @@ docker run \
   -D--spi-theme-cache-themes=false \
   -D--spi-theme-cache-templates=false
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
 spiff_subdomain="for-local-dev.spiffworkflow.org"
 perl -pi -e "s/replace-me-with-spiff-backend-host-and-path/${spiff_subdomain}/g" /tmp/${realm_name}-realm.json
@@ -80,10 +83,8 @@ if [ "${TURN_OFF_SSL:-}" == "true" ]; then
   echo 'turned off SSL requirement'
 fi
 
-
 docker stop keycloak
 docker start keycloak
-
 
 # to export:
 # /opt/keycloak/bin/kc.sh export --dir /tmp/hey --users realm_file
