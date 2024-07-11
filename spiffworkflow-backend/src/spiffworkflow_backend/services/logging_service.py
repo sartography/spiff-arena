@@ -94,13 +94,13 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-
+    
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
     log_level = logging.getLevelName(upper_log_level_string)
     log_formatter = get_log_formatter(app)
-    app.logger.debug("Printing log to create app logger")
+    app.logger.debug(f"Printing log to create app logger with level: {upper_log_level_string}")
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
@@ -147,7 +147,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         if not re.match(r"^spiff\b", name):
             logger_for_name = logging.getLogger(name)
             log_level_to_use = log_level
-            if spiff_logger_filehandler:
+            if False: #spiff_logger_filehandler:
                 logger_for_name.handlers = []
                 logger_for_name.propagate = False
                 logger_for_name.addHandler(spiff_logger_filehandler)
@@ -179,6 +179,13 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                     the_handler.setLevel(level_number)
             level_number = logging.getLevelName(log_level_to_use)
             logger_for_name.setLevel(level_number)
+
+    spiff_logger = logging.getLogger("spiff")
+    spiff_logger.setLevel(logging.INFO)
+    if spiff_logger_filehandler:
+        spiff_logger.handlers = []
+        spiff_logger.propagate = False
+        spiff_logger.addHandler(spiff_logger_filehandler)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
