@@ -48,7 +48,8 @@ class ProcessInstanceTmpService:
 
         process_instance_error_detail = None
         if exception is not None:
-            # NOTE: I tried to move this to its own method but test_unlocks_if_an_exception_is_thrown_with_a__dequeued_process_instance
+            # NOTE: I tried to move this to its own method but
+            # est_unlocks_if_an_exception_is_thrown_with_a__dequeued_process_instance
             # gave sqlalchemy rollback errors. I could not figure out why so went back to this.
             #
             # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
