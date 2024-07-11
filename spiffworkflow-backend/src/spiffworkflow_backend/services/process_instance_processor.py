@@ -630,14 +630,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
-                task_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                task_definition.bpmn_identifier
+            ] = task_definition
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
-                bpmn_process_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                "bpmn_process_definition"
+            ] = bpmn_process_definition
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -689,9 +689,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -808,7 +808,6 @@ class ProcessInstanceProcessor:
             "subprocess_specs": {},
             "subprocesses": {},
         }
-        # print(f"➡️ ➡️ ➡️  spiff_bpmn_process_dict1: {spiff_bpmn_process_dict.keys()}")
         if bpmn_process_definition is not None:
             spiff_bpmn_process_dict["spec"] = cls._get_definition_dict_for_bpmn_process_definition(
                 bpmn_process_definition,
@@ -827,7 +826,6 @@ class ProcessInstanceProcessor:
                     include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                     task_model_mapping=task_model_mapping,
                 )
-                # print(f"➡️ ➡️ ➡️  single_bpmn_process_dict.keys(): {single_bpmn_process_dict.keys()}")
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
 
                 bpmn_subprocesses_query = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id)
@@ -860,7 +858,6 @@ class ProcessInstanceProcessor:
                     task_model_mapping=task_model_mapping,
                 )
 
-        # print(f"➡️ ➡️ ➡️  spiff_bpmn_process_dict2: {spiff_bpmn_process_dict.keys()}")
         return spiff_bpmn_process_dict
 
     def current_user(self) -> Any:
@@ -919,7 +916,6 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                # print(f"➡️ ➡️ ➡️  process_copy.keys(): {process_copy.keys()}")
                 bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
                 bpmn_process_instance.get_tasks()
             except Exception as err:

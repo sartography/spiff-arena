@@ -164,4 +164,7 @@ class TestProcessInstancesController(BaseTest):
         assert response.json["can_migrate"] is True
         assert response.json["process_instance_id"] == process_instance.id
         assert response.json["current_bpmn_process_hash"] is not None
-        assert response.json["current_git_revision"] is not None
+
+        # this can actually be None if the process model repo is not git at all
+        # such as when running the docker container ci tests.
+        assert "current_git_revision" in response.json

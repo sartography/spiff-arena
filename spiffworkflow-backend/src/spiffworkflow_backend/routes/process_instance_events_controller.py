@@ -28,7 +28,6 @@ def log_list(
     task_type: str | None = None,
     event_type: str | None = None,
 ) -> flask.wrappers.Response:
-    # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     log_query = (
@@ -171,7 +170,6 @@ def process_instance_migration_event_list(
     modified_process_model_identifier: str,
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     logs = (
