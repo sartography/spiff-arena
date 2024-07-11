@@ -4,6 +4,8 @@ import os
 import re
 import sys
 from typing import Any
+from logging.handlers import SocketHandler
+from uuid import uuid4
 
 from flask.app import Flask
 
@@ -22,6 +24,37 @@ from flask.app import Flask
 class InvalidLogLevelError(Exception):
     pass
 
+class MetricsFormatter(logging.Formatter):
+
+    def format(self, record):
+        return json.dumps({
+            'specversion': '1.0',
+            'type': record.name,
+            'id': str(uuid4()),
+            'source': 'spiffworkflow.org',
+            'timestamp': datetime.utcnow().timestamp(),
+            'data': getattr(record, '__spiff_data'),
+        })
+
+class SpiffLogHandler(SocketHandler):
+
+    def filter(self, record):
+        if hasattr(record, '__spiff_data'):
+            return True
+
+        data = {}
+
+        for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
+            if hasattr(record, attr):
+                data[attr] = str(getattr(record, attr))
+        
+        setattr(record, '__spiff_data', data)
+        return True
+
+    def makePickle(self, record):
+        # Instead of returning a pickled log record, write the json entry to the socket
+        return (self.format(record) + '\n').encode('utf-8')
+
 class SpiffLogFilter(logging.Filter):
     def filter(self, record):
         if hasattr(record, '__spiff_data'):
@@ -31,7 +64,7 @@ class SpiffLogFilter(logging.Filter):
 
         for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
             if hasattr(record, attr):
-                data[attr] = getattr(record, attr)
+                data[attr] = str(getattr(record, attr))
         
         setattr(record, '__spiff_data', data)
         return True
@@ -161,7 +194,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         if not re.match(r"^spiff\b", name):
             logger_for_name = logging.getLogger(name)
             log_level_to_use = log_level
-            if False: #spiff_logger_filehandler:
+            if spiff_logger_filehandler:
                 logger_for_name.handlers = []
                 logger_for_name.propagate = False
                 logger_for_name.addHandler(spiff_logger_filehandler)
@@ -194,19 +227,21 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
             level_number = logging.getLevelName(log_level_to_use)
             logger_for_name.setLevel(level_number)
 
-    # TODO: this is a hacky integration, but when the file logger is on above the
-    # loggers to exclude don't get excluded. file logging is temporary anyway
-    spiff_logger = logging.getLogger("spiff")
-    spiff_logger.setLevel(logging.INFO)
-    spiff_logger.addFilter(SpiffLogFilter())
-    if spiff_logger_filehandler:
-        spiff_logger.handlers = []
+    if app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None:
+        spiff_logger = logging.getLogger("spiff")
+        spiff_logger.setLevel(logging.INFO)
+        spiff_logger.addFilter(SpiffLogFilter())
         spiff_logger.propagate = False
-        spiff_logger.addHandler(spiff_logger_filehandler)
+        handler = SpiffLogHandler(
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
+        )
+        handler.setFormatter(MetricsFormatter())
+        spiff_logger.addHandler(handler)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
-    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s %(__spiff_data)s")
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # the json formatter is nice for real environments but makes
     # debugging locally a little more difficult

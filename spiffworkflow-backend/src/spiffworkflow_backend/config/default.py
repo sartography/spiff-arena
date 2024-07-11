@@ -158,6 +158,8 @@ else:
 config_from_env("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
