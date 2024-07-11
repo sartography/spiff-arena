@@ -180,6 +180,8 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
             level_number = logging.getLevelName(log_level_to_use)
             logger_for_name.setLevel(level_number)
 
+    # TODO: this is a hacky integration, but when the file logger is on above the
+    # loggers to exclude don't get excluded. file logging is temporary anyway
     spiff_logger = logging.getLogger("spiff")
     spiff_logger.setLevel(logging.INFO)
     if spiff_logger_filehandler:
