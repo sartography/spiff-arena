@@ -789,23 +789,25 @@ class ProcessInstanceProcessor:
     @classmethod
     def _get_full_bpmn_process_dict(
         cls,
-        process_instance_model: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
-        task_model_mapping: dict[str, TaskModel],
         bpmn_subprocess_mapping: dict[str, BpmnProcessModel],
+        task_model_mapping: dict[str, TaskModel],
+        spiff_serializer_version: str | None = None,
+        bpmn_process_definition: BpmnProcessDefinitionModel | None = None,
+        bpmn_process: BpmnProcessModel | None = None,
+        bpmn_process_definition_id: int | None = None,
         include_task_data_for_completed_tasks: bool = False,
         include_completed_subprocesses: bool = False,
     ) -> dict:
-        if process_instance_model.bpmn_process_definition_id is None:
+        if bpmn_process_definition_id is None:
             return {}
 
         spiff_bpmn_process_dict: dict = {
-            "serializer_version": process_instance_model.spiff_serializer_version,
+            "serializer_version": spiff_serializer_version,
             "spec": {},
             "subprocess_specs": {},
             "subprocesses": {},
         }
-        bpmn_process_definition = process_instance_model.bpmn_process_definition
         if bpmn_process_definition is not None:
             spiff_bpmn_process_dict["spec"] = cls._get_definition_dict_for_bpmn_process_definition(
                 bpmn_process_definition,
@@ -817,7 +819,6 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings,
             )
 
-            bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(
                     bpmn_process,
@@ -903,12 +904,15 @@ class ProcessInstanceProcessor:
 
             try:
                 full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
-                    process_instance_model,
-                    bpmn_definition_to_task_definitions_mappings,
+                    bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                     include_completed_subprocesses=include_completed_subprocesses,
                     include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
                     task_model_mapping=task_model_mapping,
                     bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+                    spiff_serializer_version=process_instance_model.spiff_serializer_version,
+                    bpmn_process_definition=process_instance_model.bpmn_process_definition,
+                    bpmn_process=process_instance_model.bpmn_process,
+                    bpmn_process_definition_id=process_instance_model.bpmn_process_definition_id,
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)

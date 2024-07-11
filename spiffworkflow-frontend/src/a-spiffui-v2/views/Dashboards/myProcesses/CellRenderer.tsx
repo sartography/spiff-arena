@@ -1,15 +1,18 @@
 // react doesn't like the name "useTheme" but we don't control that
 /* eslint-disable react-hooks/rules-of-hooks */
 import { Chip, Stack, Typography, useTheme } from '@mui/material';
+import DateAndTimeService from '../../../../services/DateAndTimeService';
 import { formatSecondsForDisplay } from '../../../utils/Utils';
 
 /** Used by the Processes datagrid in Dashboards to render things like chips on cells, etc. */
 export default function CellRenderer({
   header,
   data,
+  title,
 }: {
   header: string;
   data: Record<string, any>;
+  title?: string;
 }) {
   /** These values map to theme tokens, which enable the light/dark modes etc. */
   const chipBackground = (params: any) => {
@@ -57,15 +60,32 @@ export default function CellRenderer({
           alignItems: 'center',
         }}
       >
-        <Typography variant="body2">
+        <Typography variant="body2" title={title}>
           {formatSecondsForDisplay(data.value)}
+        </Typography>
+      </Stack>
+    );
+  }
+  if (header === 'timestamp') {
+    return (
+      <Stack
+        direction="row"
+        sx={{
+          height: '100%',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="body2" title={title}>
+          {DateAndTimeService.convertSecondsToFormattedDateTime(data.value)}
         </Typography>
       </Stack>
     );
   }
   return (
     <Stack direction="row" sx={{ height: '100%', alignItems: 'center' }}>
-      <Typography variant="body2">{data.value}</Typography>
+      <Typography variant="body2" title={title}>
+        {data.value}
+      </Typography>
     </Stack>
   );
 }

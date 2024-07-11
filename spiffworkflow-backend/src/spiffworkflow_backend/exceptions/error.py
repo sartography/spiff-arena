@@ -14,6 +14,10 @@ class ProcessInstanceMigrationError(Exception):
     pass
 
 
+class ProcessInstanceMigrationUnnecessaryError(Exception):
+    pass
+
+
 class TokenExpiredError(Exception):
     pass
 

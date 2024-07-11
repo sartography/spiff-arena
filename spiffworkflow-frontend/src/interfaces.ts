@@ -548,3 +548,13 @@ export interface PublicTask {
 export interface RJSFFormObject {
   formData: any;
 }
+
+export interface MigrationEvent {
+  id: number;
+  initial_bpmn_process_hash: string;
+  initial_git_revision: string;
+  target_bpmn_process_hash: string;
+  target_git_revision: string;
+  timestamp: string;
+  username: string;
+}

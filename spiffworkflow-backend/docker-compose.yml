@@ -56,7 +56,7 @@ services:
       - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqldb://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@127.0.0.1:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
       - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-local_development}
       - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-false}
-      - SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=${SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL:-http://localhost:7002/realms/spiffworkflow}
+      - SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=${SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL:-http://localhost:7002/realms/spiffworkflow-local}
       - SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=${SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME:-acceptance_tests.yml}
       - SPIFFWORKFLOW_BACKEND_PORT=7000
         # the background scheduler picks up process instances that we set in a certain state and then runs them like running not_started instances
