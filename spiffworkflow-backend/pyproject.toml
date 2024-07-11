@@ -45,7 +45,7 @@ setuptools = "^70.2.0"
 werkzeug = "^2.3"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 
-lxml = "^4.9.1"
+lxml = "^5.2.2"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.6.0"
 APScheduler = "*"
