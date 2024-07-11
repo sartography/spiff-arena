@@ -72,8 +72,13 @@ def setup_database_configs(app: Flask) -> None:
             # this is a sqlalchemy default, if we don't have any better ideas
             pool_size = 5
 
+    pool_pre_ping = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING")
+    if pool_pre_ping is None:
+        pool_pre_ping = True
+
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = pool_size
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_pre_ping"] = pool_pre_ping
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
