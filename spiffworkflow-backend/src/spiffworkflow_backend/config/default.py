@@ -107,6 +107,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
 # we only use this in one place, and it checks to see if it is None.
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
+# check sqlalchemy's doc for more info about pool_pre_ping:
+# https://docs.sqlalchemy.org/en/20/core/pooling.html#disconnect-handling-pessimistic
+config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
 
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
