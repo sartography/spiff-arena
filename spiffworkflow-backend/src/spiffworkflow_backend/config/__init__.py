@@ -73,8 +73,6 @@ def setup_database_configs(app: Flask) -> None:
             pool_size = 5
 
     pool_pre_ping = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING")
-    if pool_pre_ping is None:
-        pool_pre_ping = True
 
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = pool_size
