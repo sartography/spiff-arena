@@ -22,6 +22,20 @@ from flask.app import Flask
 class InvalidLogLevelError(Exception):
     pass
 
+class SpiffLogFilter(logging.Filter):
+    def filter(self, record):
+        if hasattr(record, '__spiff_data'):
+            return True
+
+        data = {}
+
+        for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
+            if hasattr(record, attr):
+                data[attr] = getattr(record, attr)
+        
+        setattr(record, '__spiff_data', data)
+        return True
+
 
 # originally from https://stackoverflow.com/a/70223539/6090676
 
@@ -184,6 +198,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
     # loggers to exclude don't get excluded. file logging is temporary anyway
     spiff_logger = logging.getLogger("spiff")
     spiff_logger.setLevel(logging.INFO)
+    spiff_logger.addFilter(SpiffLogFilter())
     if spiff_logger_filehandler:
         spiff_logger.handlers = []
         spiff_logger.propagate = False
@@ -191,7 +206,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
-    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s %(__spiff_data)s")
 
     # the json formatter is nice for real environments but makes
     # debugging locally a little more difficult
