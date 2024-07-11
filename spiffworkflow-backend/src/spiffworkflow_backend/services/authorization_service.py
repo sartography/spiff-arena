@@ -70,6 +70,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     },
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/process-instance-events", "relevant_permissions": ["read"]},
     {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
@@ -559,6 +560,7 @@ class AuthorizationService:
                 f"/logs/{process_related_path_segment}",
                 f"/logs/typeahead-filter-values/{process_related_path_segment}",
                 f"/process-data-file-download/{process_related_path_segment}",
+                f"/process-instance-events/{process_related_path_segment}",
                 f"/event-error-details/{process_related_path_segment}",
             ]:
                 permissions_to_assign.append(PermissionToAssign(permission="read", target_uri=target_uri))
@@ -662,6 +664,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instance-events/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
 
         for permission in ["create", "read", "update", "delete"]:

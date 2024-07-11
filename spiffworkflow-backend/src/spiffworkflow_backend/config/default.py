@@ -148,7 +148,7 @@ else:
             {
                 "identifier": "default",
                 "label": "Default",
-                "uri": "http://localhost:7002/realms/spiffworkflow",
+                "uri": "http://localhost:7002/realms/spiffworkflow-local",
                 "client_id": "spiffworkflow-backend",
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
                 "additional_valid_client_ids": None,

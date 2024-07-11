@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -27,7 +28,6 @@ def log_list(
     task_type: str | None = None,
     event_type: str | None = None,
 ) -> flask.wrappers.Response:
-    # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     log_query = (
@@ -164,3 +164,37 @@ def error_detail_show(
 
     error_details = process_instance_event.error_details[0]
     return make_response(jsonify(error_details), 200)
+
+
+def process_instance_migration_event_list(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    logs = (
+        db.session.query(ProcessInstanceEventModel, ProcessInstanceMigrationDetailModel, UserModel)
+        .filter(
+            ProcessInstanceEventModel.process_instance_id == process_instance.id,
+            ProcessInstanceEventModel.event_type == ProcessInstanceEventType.process_instance_migrated.value,
+        )
+        .join(ProcessInstanceMigrationDetailModel)  # type: ignore
+        .outerjoin(UserModel, UserModel.id == ProcessInstanceEventModel.user_id)
+        .order_by(ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc())  # type: ignore
+        .add_columns(
+            ProcessInstanceEventModel.id,
+            ProcessInstanceEventModel.timestamp,
+            UserModel.username,
+            ProcessInstanceMigrationDetailModel.initial_bpmn_process_hash,
+            ProcessInstanceMigrationDetailModel.target_bpmn_process_hash,
+            ProcessInstanceMigrationDetailModel.initial_git_revision,
+            ProcessInstanceMigrationDetailModel.initial_git_revision,
+        )
+        .all()
+    )
+
+    response_json = {
+        "results": logs,
+    }
+
+    return make_response(jsonify(response_json), 200)
