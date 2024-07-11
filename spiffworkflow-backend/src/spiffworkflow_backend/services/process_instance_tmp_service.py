@@ -1,3 +1,4 @@
+import logging
 import time
 import traceback
 
@@ -76,6 +77,10 @@ class ProcessInstanceTmpService:
 
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
+
+        spiff_logger = logging.getLogger("spiff")
+        spiff_logger.info("Added event", extra=process_instance_event.loggable_event())
+                
         return (process_instance_event, process_instance_error_detail)
 
     @staticmethod
