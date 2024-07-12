@@ -176,6 +176,7 @@ class TestProcessInstanceService(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
         )
+        assert process_instance.bpmn_version_control_identifier == "rev1"
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
@@ -242,6 +243,7 @@ class TestProcessInstanceService(BaseTest):
         assert pi_migration_details.target_bpmn_process_hash == target_bpmn_process_hash
         assert pi_migration_details.initial_git_revision == "rev1"
         assert pi_migration_details.target_git_revision == "rev2"
+        assert process_instance.bpmn_version_control_identifier == "rev2"
 
     def test_it_can_migrate_a_process_instance_and_revert(
         self,
@@ -292,6 +294,8 @@ class TestProcessInstanceService(BaseTest):
         mock_get_current_revision.return_value = "rev2"
         ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.bpmn_version_control_identifier == "rev2"
+        target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
@@ -312,6 +316,23 @@ class TestProcessInstanceService(BaseTest):
             process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
         ).all()
         assert len(pi_events) == 2
+
+        process_instance_event = pi_events[0]
+        assert len(process_instance_event.migration_details) == 1
+        pi_migration_details = process_instance_event.migration_details[0]
+        assert pi_migration_details.initial_bpmn_process_hash == initial_bpmn_process_hash
+        assert pi_migration_details.target_bpmn_process_hash == target_bpmn_process_hash
+        assert pi_migration_details.initial_git_revision == "rev1"
+        assert pi_migration_details.target_git_revision == "rev2"
+
+        process_instance_event = pi_events[1]
+        assert len(process_instance_event.migration_details) == 1
+        pi_migration_details = process_instance_event.migration_details[0]
+        assert pi_migration_details.initial_bpmn_process_hash == target_bpmn_process_hash
+        assert pi_migration_details.target_bpmn_process_hash == initial_bpmn_process_hash
+        assert pi_migration_details.initial_git_revision == "rev2"
+        assert pi_migration_details.target_git_revision == "rev1"
+        assert process_instance.bpmn_version_control_identifier == "rev1"
 
     def test_it_can_check_if_a_process_instance_can_be_migrated(
         self,

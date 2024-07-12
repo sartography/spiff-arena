@@ -79,6 +79,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -1552,7 +1553,13 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
         should_schedule_waiting_timer_events: bool = True,
+        ignore_cannot_be_run_error: bool = False,
     ) -> TaskRunnability:
+        if not ignore_cannot_be_run_error and not self.process_instance_model.allowed_to_run():
+            raise ProcessInstanceCannotBeRunError(
+                f"Process instance '{self.process_instance_model.id}' has status "
+                f"'{self.process_instance_model.status}' and therefore cannot run."
+            )
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(self.process_instance_model):
                 # TODO: ideally we just lock in the execution service, but not sure
