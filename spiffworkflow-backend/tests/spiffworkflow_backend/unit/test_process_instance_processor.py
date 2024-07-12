@@ -382,8 +382,6 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-
         assert process_instance.status == "complete"
 
     def test_properly_resets_process_on_tasks_with_boundary_events(
@@ -525,11 +523,6 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-
-        # recreate variables to ensure all bpmn json was recreated from scratch from the db
-        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor_last_tasks = ProcessInstanceProcessor(process_instance_relookup)
-        processor_last_tasks.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor_final = ProcessInstanceProcessor(process_instance_relookup, include_completed_subprocesses=True)

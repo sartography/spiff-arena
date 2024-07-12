@@ -627,7 +627,8 @@ def _dequeued_interstitial_stream(
         if execute_tasks:
             try:
                 if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
-                    with ProcessInstanceQueueService.dequeued(process_instance):
+                    # let interstitial page handle this issue on its own
+                    with ProcessInstanceQueueService.dequeued(process_instance, ignore_cannot_be_run_error=True):
                         ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)
             except ProcessInstanceIsAlreadyLockedError:
@@ -639,7 +640,7 @@ def _dequeued_interstitial_stream(
                 and process_instance.spiff_serializer_version < SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
             ):
                 try:
-                    with ProcessInstanceQueueService.dequeued(process_instance):
+                    with ProcessInstanceQueueService.dequeued(process_instance, ignore_cannot_be_run_error=True):
                         ProcessInstanceMigrator.run(process_instance)
                 except ProcessInstanceIsAlreadyLockedError:
                     pass

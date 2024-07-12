@@ -33,6 +33,10 @@ class ProcessInstanceCannotBeDeletedError(Exception):
     pass
 
 
+class ProcessInstanceCannotBeRunError(Exception):
+    pass
+
+
 class ProcessInstanceStatus(SpiffEnum):
     complete = "complete"
     error = "error"

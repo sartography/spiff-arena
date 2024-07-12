@@ -3,6 +3,7 @@ import time
 from collections.abc import Generator
 
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
@@ -112,6 +113,7 @@ class ProcessInstanceQueueService:
         cls,
         process_instance: ProcessInstanceModel,
         max_attempts: int = 1,
+        ignore_cannot_be_run_error: bool = False,
     ) -> Generator[None, None, None]:
         reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
 
@@ -121,6 +123,9 @@ class ProcessInstanceQueueService:
             cls._dequeue_with_retries(process_instance, max_attempts=max_attempts)
         try:
             yield
+        except ProcessInstanceCannotBeRunError as ex:
+            if not ignore_cannot_be_run_error:
+                raise ex
         except Exception as ex:
             # these events are handled in the WorkflowExecutionService.
             # that is, we don't need to add error_detail records here, etc.
