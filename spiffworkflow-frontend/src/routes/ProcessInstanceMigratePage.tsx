@@ -299,7 +299,6 @@ export default function ProcessInstanceMigratePage() {
       },
     ];
     const rows = migrationEvents.map((migrationEvent: MigrationEvent) => {
-      console.log('migrationEvent', migrationEvent);
       return migrationEvent;
     });
     return (

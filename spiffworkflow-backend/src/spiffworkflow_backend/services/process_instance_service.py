@@ -50,6 +50,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
@@ -257,11 +258,10 @@ class ProcessInstanceService:
                 process_instance_model=process_instance,
                 bpmn_process_instance=processor.bpmn_process_instance,
             )
-            try:
-                current_git_revision = GitService.get_current_revision()
-            except GitCommandError:
-                current_git_revision = None
-            process_instance.bpmn_version_control_identifier = current_git_revision
+            git_revision_to_use = cls.get_appropriate_git_revision(
+                process_instance, initial_bpmn_process_hash, target_bpmn_process_hash
+            )
+            process_instance.bpmn_version_control_identifier = git_revision_to_use
             db.session.add(process_instance)
 
         target_git_revision = process_instance.bpmn_version_control_identifier
@@ -278,6 +278,35 @@ class ProcessInstanceService:
             },
         )
         db.session.commit()
+
+    @classmethod
+    def get_appropriate_git_revision(
+        cls,
+        process_instance: ProcessInstanceModel,
+        initial_bpmn_process_hash: str | None,
+        target_bpmn_process_hash: str | None,
+    ) -> str | None:
+        # if target_bpmn_process_hash is set and there's an old migration event, then assume this is a revert
+        # and that we should ensure that items like git revision remain consistent
+        git_revision_to_use = None
+        if target_bpmn_process_hash is not None:
+            old_migration_event = (
+                ProcessInstanceMigrationDetailModel.query.filter_by(
+                    initial_bpmn_process_hash=target_bpmn_process_hash, target_bpmn_process_hash=initial_bpmn_process_hash
+                )
+                .join(ProcessInstanceEventModel)
+                .filter(ProcessInstanceEventModel.process_instance_id == process_instance.id)
+                .order_by(ProcessInstanceMigrationDetailModel.id.desc())  # type: ignore
+                .first()
+            )
+            if old_migration_event is not None:
+                git_revision_to_use = old_migration_event.initial_git_revision
+        if git_revision_to_use is None:
+            try:
+                git_revision_to_use = GitService.get_current_revision()
+            except GitCommandError:
+                pass
+        return git_revision_to_use
 
     @classmethod
     def create_process_instance_from_process_model_identifier(

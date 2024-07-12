@@ -7,6 +7,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -84,7 +85,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         if task_runnability == TaskRunnability.has_ready_tasks:
             queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
         return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
-    except ProcessInstanceIsAlreadyLockedError as exception:
+    except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
         current_app.logger.info(
             f"{logger_prefix}: Could not run process instance with worker: {current_app.config['PROCESS_UUID']}"
             f" - {proc_index}. Error was: {str(exception)}"
