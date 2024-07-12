@@ -50,7 +50,7 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
 
     def loggable_event(self):
         return {
-            "task_guid": self.task_guid,
+            "task_id": self.task_guid,
             "process_instance_id": self.process_instance_id,
             "event_type": self.event_type,
             "user_id": self.user_id,

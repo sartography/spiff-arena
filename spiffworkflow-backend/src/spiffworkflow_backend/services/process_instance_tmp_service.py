@@ -79,7 +79,7 @@ class ProcessInstanceTmpService:
                 db.session.add(process_instance_error_detail)
 
         spiff_logger = logging.getLogger("spiff")
-        spiff_logger.info(f"Added event {event_type}", extra={"__spiff_data": process_instance_event.loggable_event()})
+        spiff_logger.info(event_type, extra=process_instance_event.loggable_event())
         
         return (process_instance_event, process_instance_error_detail)
 

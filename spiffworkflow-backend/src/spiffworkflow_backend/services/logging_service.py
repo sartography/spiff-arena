@@ -6,8 +6,10 @@ import sys
 from typing import Any
 from logging.handlers import SocketHandler
 from uuid import uuid4
+from datetime import datetime
 
 from flask.app import Flask
+from flask import g
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -24,7 +26,14 @@ from flask.app import Flask
 class InvalidLogLevelError(Exception):
     pass
 
-class MetricsFormatter(logging.Formatter):
+class SpiffLogHandler(SocketHandler):
+
+    def __init__(self, app, *args):
+        super().__init__(
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
+        )
+        self.app = app
 
     def format(self, record):
         return json.dumps({
@@ -33,41 +42,31 @@ class MetricsFormatter(logging.Formatter):
             'id': str(uuid4()),
             'source': 'spiffworkflow.org',
             'timestamp': datetime.utcnow().timestamp(),
-            'data': getattr(record, '__spiff_data'),
+            'data': record._spiff_data,
         })
 
-class SpiffLogHandler(SocketHandler):
-
     def filter(self, record):
-        if hasattr(record, '__spiff_data'):
+        if record.name == 'spiff' and getattr(record, 'event_type', '') not in ['task_completed', 'task_cancelled']:
+            data = {
+                'message': record.msg,
+                'process_instance_id': self.app.config["THREAD_LOCAL_DATA"].process_instance_id,
+                'process_model_identifier': self.app.config["THREAD_LOCAL_DATA"].process_model_identifier,
+                'userid': g.user.id,
+                'username': g.user.username,
+            }
+            for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
+                if hasattr(record, attr):
+                    data[attr] = str(getattr(record, attr))
+                else:
+                    data[attr] = None
+            setattr(record, '_spiff_data', data)
             return True
-
-        data = {}
-
-        for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
-            if hasattr(record, attr):
-                data[attr] = str(getattr(record, attr))
-        
-        setattr(record, '__spiff_data', data)
-        return True
+        else:
+            return False
 
     def makePickle(self, record):
         # Instead of returning a pickled log record, write the json entry to the socket
         return (self.format(record) + '\n').encode('utf-8')
-
-class SpiffLogFilter(logging.Filter):
-    def filter(self, record):
-        if hasattr(record, '__spiff_data'):
-            return True
-
-        data = {}
-
-        for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
-            if hasattr(record, attr):
-                data[attr] = str(getattr(record, attr))
-        
-        setattr(record, '__spiff_data', data)
-        return True
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -230,15 +229,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
     if app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None:
         spiff_logger = logging.getLogger("spiff")
         spiff_logger.setLevel(logging.INFO)
-        spiff_logger.addFilter(SpiffLogFilter())
         spiff_logger.propagate = False
-        handler = SpiffLogHandler(
-            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
-            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
-        )
-        handler.setFormatter(MetricsFormatter())
+        handler = SpiffLogHandler(app)
         spiff_logger.addHandler(handler)
-
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
     log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
