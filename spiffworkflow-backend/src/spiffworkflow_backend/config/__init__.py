@@ -225,6 +225,12 @@ def setup_config(app: Flask) -> None:
         f"SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: {app.config['SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR']}"
     )
 
+    # if git username is defined, default git user email to [username]@users.noreply.github.com
+    # that way, you may not have to define both variables in your environment
+    git_username = app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
+    if git_username and app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL") is None:
+        app.config["SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL"] = f"{git_username}@users.noreply.github.com"
+
     if app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] == "":
         app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] = None
 
