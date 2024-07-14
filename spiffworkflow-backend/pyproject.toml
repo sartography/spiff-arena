@@ -108,7 +108,7 @@ pytest-flask-sqlalchemy = "^1.1.0"
 # 3.4+ broke existfirst option which we use
 # https://stackoverflow.com/questions/77667559/pytest-xdist-3-40-and-higher-not-honoring-exitfirst
 # https://github.com/pytest-dev/pytest-xdist/issues/1034
-pytest-xdist = "3.3.1"
+pytest-xdist = "3.6.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.8"
