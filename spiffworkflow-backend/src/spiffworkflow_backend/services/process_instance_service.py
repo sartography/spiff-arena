@@ -198,8 +198,10 @@ class ProcessInstanceService:
         )
         if not cls.can_migrate(top_level_bpmn_process_diff, subprocesses_diffs):
             raise ProcessInstanceMigrationNotSafeError(
-                f"It is not safe to migrate process instance {process_instance.id} to "
-                f"new version of '{process_instance.process_model_identifier}'"
+                f"It is not safe to migrate process instance {process_instance.id} to this version of "
+                f"'{process_instance.process_model_identifier}'. This version of the process model may have changed tasks that "
+                "have been completed in this process instance or the changes to be made may be too dangerous "
+                "to ensure a safe migration."
             )
         return (
             processor,
