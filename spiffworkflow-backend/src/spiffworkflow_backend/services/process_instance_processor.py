@@ -1290,7 +1290,7 @@ class ProcessInstanceProcessor:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
             )
-            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
+            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
             task_model_delegate = TaskModelSavingDelegate(
@@ -1299,7 +1299,7 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
             execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
-            self.do_engine_steps(save=True, execution_strategy=execution_strategy)
+            self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
