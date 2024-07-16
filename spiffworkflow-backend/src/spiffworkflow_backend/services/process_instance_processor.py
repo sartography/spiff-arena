@@ -1,5 +1,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
+from SpiffWorkflow.bpmn.serializer.data_spec import BpmnSpecConverter
 import _strptime  # type: ignore
 import copy
 import decimal
@@ -46,6 +47,7 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import UserTask  # type: ignore
 
 # fix for StandardLoopTask
 from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
@@ -123,10 +125,33 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
         super().__init__(target_class, registry, typename)
 
 
+class CustomUserTaskConverter(BpmnSpecConverter):  # type: ignore
+    def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
+        super().__init__(target_class, registry, typename)
+
+    def to_dict(self, spec: Any) -> dict[str, Any]:
+        initial_dict: dict[str, Any] = super().to_dict(spec)
+        # add lookup to db json hash value in to_dict
+        # see if we can add backin on from_dict so calling to_dict does not need to do a lookup again
+        # path_to_json = spec._wf_spec.file.replace(file_name...., '')
+        # rsjsf_file_name = spec.exstensions...json_file_name
+        if hasattr(spec, "user_form_hash"):
+            initial_dict["user_form_hash"] = spec.user_form_hash
+        else:
+            initial_dict["user_form_hash"] = "HEY"  # lookup from db
+        return initial_dict
+
+    def from_dict(self, incoming_dict: dict) -> Any:
+        user_task = super().from_dict(incoming_dict)
+        user_task.user_form_hash = incoming_dict.get("user_form_hash")
+        return user_task
+
+
 SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
 del SPIFF_CONFIG[ServiceTask]
 
 SPIFF_CONFIG[StartEvent] = EventConverter
+SPIFF_CONFIG[UserTask] = CustomUserTaskConverter
 SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
 SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
@@ -601,6 +626,7 @@ class ProcessInstanceProcessor:
                     f"The given process model was not found: {process_model_identifier}.",
                 )
             )
+        # TODO: look up form json files here as well
         spec_files = FileSystemService.get_files(process_model_info)
         return cls.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
 
@@ -631,14 +657,14 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
 
         if task_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = (
-                task_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                task_definition.bpmn_identifier
+            ] = task_definition
 
         if bpmn_process_definition is not None:
-            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier]["bpmn_process_definition"] = (
-                bpmn_process_definition
-            )
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][
+                "bpmn_process_definition"
+            ] = bpmn_process_definition
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
@@ -690,9 +716,9 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict: dict = bpmn_subprocess_definition.properties_json
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(bpmn_subprocess_definition_bpmn_identifiers.keys())  # type: ignore
@@ -1448,6 +1474,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifiers_in_parser = parser.get_process_ids()
 
         new_bpmn_files = set()
+        # TODO: look up form json files here as well
         for bpmn_process_identifier in processor_dependencies_new:
             # ignore identifiers that spiff already knows about
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
