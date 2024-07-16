@@ -230,13 +230,10 @@ class ProcessInstanceService:
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
 
-        # does this get from subprocesses as well?
-        pre_migration_tasks = processor.bpmn_process_instance.get_tasks()
-        migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
+        deleted_tasks = migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
-            migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
+            deleted_tasks += migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
         processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
-        post_migration_tasks = processor.bpmn_process_instance.get_tasks()
 
         if preserve_old_process_instance:
             # TODO: write tests for this code path - no one has a requirement for it yet
@@ -283,11 +280,9 @@ class ProcessInstanceService:
                 "target_bpmn_process_hash": target_bpmn_process_hash or "",
             },
         )
-        pre_task_guids = [str(t.id) for t in pre_migration_tasks]
-        post_task_guids = [str(t.id) for t in post_migration_tasks]
-        task_guid_diff = set(pre_task_guids) - set(post_task_guids)
-        tasks_to_delete = TaskModel.query.filter(TaskModel.guid.in_(task_guid_diff)).all()  # type: ignore
-        bpmn_processes_to_delete = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(task_guid_diff)).all()  # type: ignore
+        deleted_task_guids = [str(dt.id) for dt in deleted_tasks]
+        tasks_to_delete = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
+        bpmn_processes_to_delete = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids)).all()  # type: ignore
         for td in tasks_to_delete:
             db.session.delete(td)
         for bpd in bpmn_processes_to_delete:
