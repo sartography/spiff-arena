@@ -47,9 +47,3 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, ProcessInstanceEventType)
-
-    def loggable_event(self):
-        return {
-            "task_id": self.task_guid,
-            "event_type": self.event_type,
-        }

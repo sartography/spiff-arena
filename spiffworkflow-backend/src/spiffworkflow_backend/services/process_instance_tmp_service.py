@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.logging_service import LoggingService
 
 
 class ProcessInstanceTmpService:
@@ -78,8 +79,7 @@ class ProcessInstanceTmpService:
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
 
-        spiff_logger = logging.getLogger("spiff")
-        spiff_logger.info(event_type, extra=process_instance_event.loggable_event())
+        LoggingService.log_event(event_type, task_guid)
         
         return (process_instance_event, process_instance_error_detail)
 

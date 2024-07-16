@@ -260,3 +260,16 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
         )
         log_formatter = json_formatter
     return log_formatter
+
+
+class LoggingService:
+    _spiff_logger = logging.getLogger("spiff")
+    
+    @classmethod
+    def log_event(cls, event_type: str, task_guid: str | None) -> None:
+        cls._spiff_logger.info(event_type, extra={
+            "task_guid": task_guid,
+            "event_type": event_type,
+        })
+
+
