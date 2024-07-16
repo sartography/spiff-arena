@@ -259,6 +259,7 @@ class ProcessInstanceService:
                 bpmn_definition_to_task_definitions_mappings={},
                 process_instance_model=process_instance,
                 bpmn_process_instance=processor.bpmn_process_instance,
+                store_process_instance_events=False,
             )
             git_revision_to_use = cls.get_appropriate_git_revision(
                 process_instance, initial_bpmn_process_hash, target_bpmn_process_hash

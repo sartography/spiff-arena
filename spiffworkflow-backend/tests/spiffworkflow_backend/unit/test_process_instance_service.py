@@ -209,6 +209,11 @@ class TestProcessInstanceService(BaseTest):
         mock_get_current_revision.return_value = "rev2"
         ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
 
+        # there should only be 5 events after the migration. anymore indicates that events are getting duplicated.
+        process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
+        # NOTE: this would be 5 but for some reason we are not storing the event for the spiff created subprocess start task
+        assert len(process_instance_events) == 4
+
         for initial_task in initial_tasks:
             new_task = processor.bpmn_process_instance.get_task_from_id(initial_task.id)
             assert new_task is not None
