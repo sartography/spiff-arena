@@ -47,19 +47,19 @@ class SpiffLogHandler(SocketHandler):
 
     def filter(self, record):
         if record.name == 'spiff' and getattr(record, 'event_type', '') not in ['task_completed', 'task_cancelled']:
-            if hasattr(g, "user") and g.user:
-                user_id = g.user.id
-                user_name = g.user.username
-            else:
-                user_id = None
-                user_name = None
+            has_user = hasattr(g, "user") and g.user
+
             data = {
                 'message': record.msg,
-                'process_instance_id': self.app.config["THREAD_LOCAL_DATA"].process_instance_id,
-                'process_model_identifier': self.app.config["THREAD_LOCAL_DATA"].process_model_identifier,
-                'userid': user_id,
-                'username': user_name,
+                'userid': g.user.id if has_user else None,
+                'username': g.user.username if has_user else None,
             }
+            
+            if not hasattr(record, 'process_instance_id'):
+                data['process_instance_id'] = self.app.config["THREAD_LOCAL_DATA"].process_instance_id
+            if not hasattr(record, 'process_model_identifier'):
+                data['process_model_identifier'] = self.app.config["THREAD_LOCAL_DATA"].process_model_identifier
+                
             for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
                 if hasattr(record, attr):
                     data[attr] = str(getattr(record, attr))
