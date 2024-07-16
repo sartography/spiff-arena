@@ -19,3 +19,4 @@ services:
         required: false
     volumes:
       - ./spiffworkflow-backend:/app
+      - ${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST}:${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST}

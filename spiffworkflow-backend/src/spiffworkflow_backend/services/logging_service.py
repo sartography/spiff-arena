@@ -232,6 +232,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         spiff_logger.propagate = False
         handler = SpiffLogHandler(app)
         spiff_logger.addHandler(handler)
+        
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
     log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
