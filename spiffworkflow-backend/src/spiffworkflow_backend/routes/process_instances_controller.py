@@ -551,6 +551,7 @@ def process_instance_reset(
 def process_instance_check_can_migrate(
     process_instance_id: int,
     modified_process_model_identifier: str,
+    target_bpmn_process_hash: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     return_dict: dict = {
@@ -560,7 +561,9 @@ def process_instance_check_can_migrate(
         "current_bpmn_process_hash": process_instance.bpmn_process.bpmn_process_definition.full_process_model_hash,
     }
     try:
-        ProcessInstanceService.check_process_instance_can_be_migrated(process_instance)
+        ProcessInstanceService.check_process_instance_can_be_migrated(
+            process_instance, target_bpmn_process_hash=target_bpmn_process_hash
+        )
     except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
         return_dict["can_migrate"] = False
         return_dict["exception_class"] = exception.__class__.__name__
