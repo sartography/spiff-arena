@@ -1,8 +1,7 @@
 import base64
+import datetime
 import hashlib
 import os
-from datetime import datetime
-from datetime import timezone
 from typing import Any
 
 import pytest
@@ -14,6 +13,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -120,7 +120,7 @@ class TestProcessInstanceService(BaseTest):
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
                 pending_event,
-                datetime.now(timezone.utc),
+                datetime.datetime.now(datetime.timezone.utc),
             )
         )
 
@@ -131,7 +131,7 @@ class TestProcessInstanceService(BaseTest):
         pending_event = PendingBpmnEvent(name, event_type, value)
         assert ProcessInstanceService.waiting_event_can_be_skipped(
             pending_event,
-            datetime.fromisoformat("2023-04-26T20:15:10.626656+00:00"),
+            datetime.datetime.fromisoformat("2023-04-26T20:15:10.626656+00:00"),
         )
 
     def test_does_not_skip_duration_timer_events_for_the_past(self) -> None:
@@ -142,7 +142,7 @@ class TestProcessInstanceService(BaseTest):
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
                 pending_event,
-                datetime.fromisoformat("2023-04-28T20:15:10.626656+00:00"),
+                datetime.datetime.fromisoformat("2023-04-28T20:15:10.626656+00:00"),
             )
         )
 
@@ -154,7 +154,7 @@ class TestProcessInstanceService(BaseTest):
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
                 pending_event,
-                datetime.fromisoformat("2023-04-27T20:15:10.626656+00:00"),
+                datetime.datetime.fromisoformat("2023-04-27T20:15:10.626656+00:00"),
             )
         )
 
@@ -413,3 +413,78 @@ class TestProcessInstanceService(BaseTest):
 
         with pytest.raises(ProcessInstanceMigrationNotSafeError):
             ProcessInstanceService.check_process_instance_can_be_migrated(process_instance)
+
+    def test_it_can_migrate_a_process_instance_a_timer(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/migration-test-with-timer",
+            process_model_source_directory="migration-test-with-timer",
+            bpmn_file_name="migration-initial.bpmn",
+        )
+        mock_get_current_revision = mocker.patch.object(GitService, "get_current_revision")
+
+        # Set the return value for the first call
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
+        )
+        assert process_instance.bpmn_version_control_identifier == "rev1"
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        assert initial_bpmn_process_hash is not None
+
+        ready_tasks = processor.get_all_ready_or_waiting_tasks()
+        assert len(ready_tasks) == 1
+        assert ready_tasks[0].task_spec.name == "TimerEvent1"
+        task = TaskModel.query.filter_by(guid=str(ready_tasks[0].id)).first()
+        assert task is not None
+        self.set_timer_event_to_new_time(task, {"seconds": 50})
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        ready_tasks = processor.get_all_ready_or_waiting_tasks()
+        assert len(ready_tasks) == 2
+        ready_task_names = [t.task_spec.name for t in ready_tasks]
+        assert sorted(ready_task_names) == ["Test_Timer_intermediate_catch.EndJoin", "TimerEvent1"]
+
+        timer_event_spiff_task = next(t for t in ready_tasks if t.task_spec.name == "TimerEvent1")
+        assert timer_event_spiff_task is not None
+        timer_event_children = self.get_all_children_of_spiff_task(timer_event_spiff_task)
+        timer_event_children_guids = [str(t.id) for t in timer_event_children]
+        assert len(timer_event_children_guids) == 5
+
+        new_file_path = os.path.join(
+            app.instance_path,
+            "..",
+            "..",
+            "tests",
+            "data",
+            "migration-test-with-timer",
+            "migration-new.bpmn",
+        )
+        with open(new_file_path) as f:
+            new_contents = f.read().encode()
+
+        SpecFileService.update_file(
+            process_model_info=process_model,
+            file_name="migration-initial.bpmn",
+            binary_data=new_contents,
+            update_process_cache_only=True,
+        )
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        mock_get_current_revision.return_value = "rev2"
+        ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
+
+        child_task_models = TaskModel.query.filter(TaskModel.guid.in_(timer_event_children_guids)).all()  # type: ignore
+        assert len(child_task_models) == 0
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
