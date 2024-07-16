@@ -484,6 +484,10 @@ class TestProcessInstanceService(BaseTest):
 
         child_task_models = TaskModel.query.filter(TaskModel.guid.in_(timer_event_children_guids)).all()  # type: ignore
         assert len(child_task_models) == 0
+        timer_event_task_model = TaskModel.query.filter_by(guid=str(timer_event_spiff_task.id)).first()
+        assert timer_event_task_model is not None
+        # make sure it resets the cycles properly
+        assert timer_event_task_model.properties_json["internal_data"]["event_value"]["cycles"] == 2
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
