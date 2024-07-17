@@ -1,4 +1,5 @@
 # Script Tasks
+
 Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
 In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language.
@@ -114,31 +115,38 @@ del(k)
 
 These are great for user forms where you want to modify and clean up the form results before moving on to the next task.
 
-## Functions available to script tasks
+## What can you do and not do in Script Tasks?
+
+- Keywords and operands can be used without restrictions
+- SpiffArena uses RestrictedPython under the hood, which allows certain ['safe names' from the collection of builtins](https://github.com/zopefoundation/RestrictedPython/blob/master/src/RestrictedPython/Guards.py#L27C5-L28C7)
+- SpiffArena extends this list with [additional 'global names' (builtins and modules)](https://github.com/search?q=repo%3Asartography%2Fspiff-arena+symbol%3ACustomBpmnScriptEngine&type=code)
+- When you store variables in script tasks, be aware that these will be added to the process context. As such, they must be JSON serializable. This means that you can't store sets, for example. If you run into another example that is worth documenting, please submit a documentation pull request.
+
+## Custom functions available to script tasks
 
 Please see the [implementing files themselves](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/scripts) for the details.
 
-| Function Name                     | Description                                                                                  |
-|----------------------------------|----------------------------------------------------------------------------------------------|
-| delete_process_instances_with_criteria | Deletes process instances that match the provided criteria.                                    |
-| get_all_permissions              | Gets all permissions currently in the system.                                                 |
-| get_current_task_info            | Returns information about the current task.                                                   |
-| get_current_user                 | Returns the current user.                                                                    |
-| get_data_sizes                   | Returns information about the size of task data.                                              |
-| get_encoded_file_data            | Returns the encoded file data. This is a very expensive call.                                 |
-| get_env                          | Returns the current environment (e.g., testing, staging, production).                         |
-| get_frontend_url                 | Returns the URL to the frontend.                                                             |
-| get_group_members                | Returns the list of usernames of the users in the given group.                                |
-| get_last_user_completing_task    | Returns the last user who completed the given task.                                           |
-| get_localtime                    | Converts a Datetime object into a Datetime object for a specific timezone.                    |
-| get_process_initiator_user       | Returns the user that initiated the process instance.                                         |
-| get_secret                       | Returns the value for a previously configured secret.                                         |
-| get_task_data_value              | Checks if a given value is in task data and returns its value. If it does not exist or is None, it returns the default value.                                 |
-| get_toplevel_process_info        | Returns information about the currently running process.                                       |
-| get_url_for_task_with_bpmn_identifier | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task.                  |
-| get_user_properties              | Gets the user properties for the current user.                                                |
-| markdown_file_download_link      | Returns a markdown format string for a file download link.                                     |
-| refresh_permissions              | Adds permissions using a dictionary.                                                          |
-| set_user_properties              | Sets given user properties on the current user.                                                |
-| times_executed_by_user           | Returns the number of times the user has started an instance of the current process model.    |
-| user_has_started_instance        | Returns a boolean indicating if the user has started an instance of the current process model. |
+| Function Name                          | Description                                                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| delete_process_instances_with_criteria | Deletes process instances that match the provided criteria.                                                                                                    |
+| get_all_permissions                    | Gets all permissions currently in the system.                                                                                                                  |
+| get_current_task_info                  | Returns information about the current task.                                                                                                                    |
+| get_current_user                       | Returns the current user.                                                                                                                                      |
+| get_data_sizes                         | Returns information about the size of task data.                                                                                                               |
+| get_encoded_file_data                  | Returns the encoded file data. This is a very expensive call.                                                                                                  |
+| get_env                                | Returns the current environment (e.g., testing, staging, production).                                                                                          |
+| get_frontend_url                       | Returns the URL to the frontend.                                                                                                                               |
+| get_group_members                      | Returns the list of usernames of the users in the given group.                                                                                                 |
+| get_last_user_completing_task          | Returns the last user who completed the given task.                                                                                                            |
+| get_localtime                          | Converts a Datetime object into a Datetime object for a specific timezone.                                                                                     |
+| get_process_initiator_user             | Returns the user that initiated the process instance.                                                                                                          |
+| get_secret                             | Returns the value for a previously configured secret.                                                                                                          |
+| get_task_data_value                    | Checks if a given value is in task data and returns its value. If it does not exist or is None, it returns the default value.                                  |
+| get_toplevel_process_info              | Returns information about the currently running process.                                                                                                       |
+| get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
+| get_user_properties                    | Gets the user properties for the current user.                                                                                                                 |
+| markdown_file_download_link            | Returns a markdown format string for a file download link.                                                                                                     |
+| refresh_permissions                    | Adds permissions using a dictionary.                                                                                                                           |
+| set_user_properties                    | Sets given user properties on the current user.                                                                                                                |
+| times_executed_by_user                 | Returns the number of times the user has started an instance of the current process model.                                                                     |
+| user_has_started_instance              | Returns a boolean indicating if the user has started an instance of the current process model.                                                                 |

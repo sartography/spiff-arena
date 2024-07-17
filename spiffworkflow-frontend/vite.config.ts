@@ -1,13 +1,10 @@
 import preact from '@preact/preset-vite';
-import prefresh from '@prefresh/vite';
-
 import { defineConfig } from 'vite';
-// import react from '@vitejs/plugin-react';
-
 import viteTsconfigPaths from 'vite-tsconfig-paths';
+import svgr from 'vite-plugin-svgr';
 
-let host = process.env.HOST ?? 'localhost';
-let port = process.env.PORT ? parseInt(process.env.PORT) : 7001;
+const host = process.env.HOST ?? 'localhost';
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 7001;
 
 export default defineConfig({
   // depending on your application, base can also be "/"
@@ -18,8 +15,18 @@ export default defineConfig({
     // Cannot read properties of undefined (reading 'disabled')
     // prefresh(),
     // we need preact for bpmn-js-spiffworkflow. see https://forum.bpmn.io/t/custom-prop-for-service-tasks-typeerror-cannot-add-property-object-is-not-extensible/8487
-    preact(),
+    preact({ devToolsEnabled: false }),
     viteTsconfigPaths(),
+    svgr({
+      // svgr options: https://react-svgr.com/docs/options/
+      svgrOptions: {
+        exportType: 'default',
+        ref: true,
+        svgo: false,
+        titleProp: true,
+      },
+      include: '**/*.svg',
+    }),
   ],
   // for prefresh, from https://github.com/preactjs/prefresh/issues/454#issuecomment-1456491801, not working
   // optimizeDeps: {

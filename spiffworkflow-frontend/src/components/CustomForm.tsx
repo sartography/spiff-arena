@@ -1,5 +1,5 @@
 import validator from '@rjsf/validator-ajv8';
-import { ReactNode, useEffect, useRef } from 'react';
+import { ComponentType, ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@carbon/react';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -36,6 +36,15 @@ type OwnProps = {
   bpmnEvent?: any;
 };
 
+const withProps = <P extends object>(
+  Component: ComponentType<P>,
+  customProps: Partial<P>,
+) =>
+  function CustomComponent(props: P) {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <Component {...props} {...customProps} />;
+  };
+
 export default function CustomForm({
   id,
   key,
@@ -54,18 +63,6 @@ export default function CustomForm({
   hideSubmitButton = false,
   bpmnEvent,
 }: OwnProps) {
-  // set in uiSchema using the "ui:widget" key for a property
-  const rjsfWidgets = {
-    'date-range': DateRangePickerWidget,
-    markdown: MarkDownFieldWidget,
-    typeahead: TypeaheadWidget,
-  };
-
-  // set in uiSchema using the "ui:field" key for a property
-  const rjsfFields: RegistryFieldsType = {
-    'numeric-range': NumericRangeField,
-  };
-
   let reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
     if (uiSchema['ui:theme'] === 'carbon') {
@@ -79,6 +76,22 @@ export default function CustomForm({
       reactJsonSchemaFormTheme = 'mui';
     }
   }
+
+  const customTypeaheadWidget = withProps(TypeaheadWidget, {
+    reactJsonSchemaFormTheme,
+  });
+
+  // set in uiSchema using the "ui:widget" key for a property
+  const rjsfWidgets = {
+    'date-range': DateRangePickerWidget,
+    markdown: MarkDownFieldWidget,
+    typeahead: customTypeaheadWidget,
+  };
+
+  // set in uiSchema using the "ui:field" key for a property
+  const rjsfFields: RegistryFieldsType = {
+    'numeric-range': NumericRangeField,
+  };
 
   const rjsfTemplates: any = {};
   if (restrictedWidth && reactJsonSchemaFormTheme === 'carbon') {

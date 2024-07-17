@@ -1,5 +1,6 @@
 from flask.app import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
@@ -41,6 +42,7 @@ class TestDotNotation(BaseTest):
             "invoice.dueDate": "09/30/2022",
         }
         ProcessInstanceService.complete_form_task(processor, user_task, form_data, process_instance.process_initiator, human_task)
+        assert process_instance.status == ProcessInstanceStatus.complete.value
 
         expected = {
             "invoice.contibutorName": "Elizabeth",
@@ -49,7 +51,5 @@ class TestDotNotation(BaseTest):
             "invoice.invoiceAmount": "1000.00",
             "invoice.dueDate": "09/30/2022",
         }
-
-        processor.do_engine_steps(save=True)
         actual_data = processor.get_data()
         assert actual_data == expected

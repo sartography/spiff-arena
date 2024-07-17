@@ -109,6 +109,10 @@ class TestAuthorizationService(BaseTest):
                 ("/process-groups/some-process-group:some-process-model:*", "read"),
                 ("/process-groups/some-process-group:some-process-model:*", "update"),
                 (
+                    "/process-instance-migrate/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
                     "/process-instance-suspend/some-process-group:some-process-model:*",
                     "create",
                 ),
@@ -124,6 +128,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model:*",
                     "delete",
                 ),
+                ("/process-instance-events/some-process-group:some-process-model:*", "read"),
                 ("/process-instances/for-me/some-process-group:some-process-model:*", "read"),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
@@ -164,6 +169,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-data-file-download/some-process-group:some-process-model:*",
                     "read",
                 ),
+                ("/process-instance-events/some-process-group:some-process-model:*", "read"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model:*",
                     "read",
@@ -193,6 +199,10 @@ class TestAuthorizationService(BaseTest):
                 ("/message-models/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
                 (
+                    "/process-instance-migrate/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
                     "/process-instance-suspend/some-process-group:some-process-model/*",
                     "create",
                 ),
@@ -208,6 +218,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model/*",
                     "delete",
                 ),
+                ("/process-instance-events/some-process-group:some-process-model/*", "read"),
                 ("/process-instances/for-me/some-process-group:some-process-model/*", "read"),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
@@ -248,6 +259,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-data-file-download/some-process-group:some-process-model/*",
                     "read",
                 ),
+                ("/process-instance-events/some-process-group:some-process-model/*", "read"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model/*",
                     "read",
@@ -530,6 +542,8 @@ class TestAuthorizationService(BaseTest):
                 ("/messages/*", "create"),
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
+                ("/process-instance-events/*", "read"),
+                ("/process-instance-migrate/*", "create"),
                 ("/process-instance-reset/*", "create"),
                 ("/process-instance-resume/*", "create"),
                 ("/process-instance-suspend/*", "create"),
