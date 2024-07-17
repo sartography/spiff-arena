@@ -1,4 +1,5 @@
 from __future__ import annotations
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 
 from dataclasses import dataclass
 from typing import Any
@@ -37,6 +38,8 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
 
     # use task guid so we can bulk insert without worrying about whether or not the task has an id yet
+    # we considered putting a foreign key constraint on this in july 2024, and decided not to mostly
+    # because it was scary. it would also delete events on reset and migrate, which felt less than ideal.
     task_guid: str | None = db.Column(db.String(36), nullable=True, index=True)
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
@@ -49,6 +52,10 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     migration_details = relationship(
         "ProcessInstanceMigrationDetailModel", back_populates="process_instance_event", cascade="delete"
     )  # type: ignore
+
+    def task(self) -> TaskModel | None:
+        task_model: TaskModel | None = TaskModel.query.filter_by(guid=self.task_guid).first()
+        return task_model
 
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:
