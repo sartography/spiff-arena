@@ -50,12 +50,16 @@ type OwnProps = {
   processModelId: string;
   fileName: string;
   onFileNameSet: (fileName: string) => void;
+  canCreateFiles: boolean;
+  canUpdateFiles: boolean;
 };
 
 export default function ReactFormBuilder({
   processModelId,
   fileName,
   onFileNameSet,
+  canCreateFiles,
+  canUpdateFiles,
 }: OwnProps) {
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
@@ -104,13 +108,17 @@ export default function ReactFormBuilder({
 
   const saveFile = useCallback(
     (file: File, create: boolean = false, callback: Function | null = null) => {
+      if ((create && !canCreateFiles) || (!create && !canUpdateFiles)) {
+        return;
+      }
       let httpMethod = 'PUT';
       let url = `/process-models/${processModelId}/files`;
-      if (create) {
+      if (create && canCreateFiles) {
         httpMethod = 'POST';
-      } else {
+      } else if (canUpdateFiles) {
         url += `/${file.name}`;
       }
+
       const submission = new FormData();
       submission.append('file', file);
       submission.append('fileName', file.name);
@@ -129,7 +137,7 @@ export default function ReactFormBuilder({
         postBody: submission,
       });
     },
-    [processModelId, fileName],
+    [processModelId, fileName, canUpdateFiles, canCreateFiles],
   );
 
   const hasValidName = (identifierToCheck: string) => {
@@ -230,6 +238,10 @@ export default function ReactFormBuilder({
       setErrorMessage('Please check the Data View for errors.');
       return;
     }
+
+    if (!canCreateFiles) {
+      return;
+    }
     setErrorMessage('');
 
     HttpService.makeCallToBackend({
@@ -249,7 +261,7 @@ export default function ReactFormBuilder({
         task_data: data,
       },
     });
-  }, [debouncedStrSchema, debouncedStrUI, debouncedFormData]);
+  }, [debouncedStrSchema, debouncedStrUI, debouncedFormData, canCreateFiles]);
 
   const handleTabChange = (evt: any) => {
     setSelectedIndex(evt.selectedIndex);
@@ -419,15 +431,17 @@ export default function ReactFormBuilder({
               {DATA_EXTENSION} (for example data to test the form
             </li>
           </ul>
-          <Button
-            className="react-json-schema-form-submit-button"
-            type="submit"
-            onClick={() => {
-              createFiles(newFileName);
-            }}
-          >
-            Create Files
-          </Button>
+          {canCreateFiles ? (
+            <Button
+              className="react-json-schema-form-submit-button"
+              type="submit"
+              onClick={() => {
+                createFiles(newFileName);
+              }}
+            >
+              Create Files
+            </Button>
+          ) : null}
         </Column>
       </Grid>
     );
@@ -440,7 +454,7 @@ export default function ReactFormBuilder({
             <Tab>Json Schema</Tab>
             <Tab>UI Settings</Tab>
             <Tab>Data View</Tab>
-            <Tab>Examples</Tab>
+            {canUpdateFiles ? <Tab>Examples</Tab> : null}
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -463,6 +477,7 @@ export default function ReactFormBuilder({
                 defaultValue={strSchema}
                 onChange={(value) => setStrSchema(value || '')}
                 onMount={handleSchemaEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
             <TabPanel>
@@ -484,6 +499,7 @@ export default function ReactFormBuilder({
                 defaultValue={strUI}
                 onChange={(value) => setStrUI(value || '')}
                 onMount={handleUiEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
             <TabPanel>
@@ -501,16 +517,19 @@ export default function ReactFormBuilder({
                 defaultValue={strFormData}
                 onChange={(value: any) => updateDataFromStr(value || '')}
                 onMount={handleDataEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
-            <TabPanel>
-              <p>
-                If you are looking for a place to start, try adding these
-                example fields to your form and changing them to meet your
-                needs.
-              </p>
-              <ExamplesTable onSelect={insertFields} />
-            </TabPanel>
+            {canUpdateFiles ? (
+              <TabPanel>
+                <p>
+                  If you are looking for a place to start, try adding these
+                  example fields to your form and changing them to meet your
+                  needs.
+                </p>
+                <ExamplesTable onSelect={insertFields} />
+              </TabPanel>
+            ) : null}
           </TabPanels>
         </Tabs>
       </Column>
