@@ -43,15 +43,17 @@ kibana-start:
 		docker.elastic.co/kibana/kibana:8.14.3
 	
 kibana-stop:
-	docker stop kibana
+	docker stop kibana && docker container rm kibana
 	
 events-demo-start: net-start \
 	elasticsearch-start elasticsearch-wait-for-boot \
-	elasticsearch-create-index #elasticsearch-kibana-set-pwd
+	elasticsearch-create-index \
+	elasticsearch-kibana-set-pwd \
+	kibana-start
 	
 	@true
 	
-events-demo-stop: elasticsearch-stop net-stop
+events-demo-stop: kibana-stop elasticsearch-stop net-stop
 	@true
 	
 .PHONY: net-start net-stop \
