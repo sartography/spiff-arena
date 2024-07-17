@@ -1,5 +1,4 @@
 from __future__ import annotations
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 
 from dataclasses import dataclass
 from typing import Any
@@ -11,6 +10,7 @@ from sqlalchemy.orm import validates
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 
 
