@@ -364,6 +364,7 @@ export default function ProcessInstanceMigratePage() {
             `Process Instance: ${params.process_instance_id}`,
             `/i/${params.process_instance_id}`,
           ],
+          ['Migrate'],
         ]}
       />
       <br />
