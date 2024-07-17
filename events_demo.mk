@@ -4,15 +4,24 @@ net-start:
 
 net-stop:
 	docker network rm elastic-net
-
+	
 elasticsearch-start:
-	docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network elastic-net --rm \
+	docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network elastic-net \
 		-e ELASTIC_PASSWORD=$(ELASTIC_PASSWORD) \
 		-e "discovery.type=single-node" \
 		-e "xpack.security.http.ssl.enabled=false" \
 		-e "xpack.license.self_generated.type=basic" \
 		docker.elastic.co/elasticsearch/elasticsearch:8.14.3
-	
+
+elasticsearch-wait-for-boot:
+	sleep 30
+		
+elasticsearch-create-index:
+	curl -u elastic:$(ELASTIC_PASSWORD) \
+		-X PUT \
+		http://localhost:9200/events-index \
+		-H 'Content-Type: application/json'
+		
 elasticsearch-kibana-set-pwd:
 	curl -u elastic:$(ELASTIC_PASSWORD) \
 		-X POST \
@@ -21,10 +30,10 @@ elasticsearch-kibana-set-pwd:
 		-H 'Content-Type: application/json'
 	
 elasticsearch-stop:
-	docker stop elasticsearch
+	docker stop elasticsearch && docker container rm elasticsearch
 
 kibana-start:
-	docker run -p 127.0.0.1:5601:5601 -d --name kibana --network elastic-net --rm \
+	docker run -p 127.0.0.1:5601:5601 -d --name kibana --network elastic-net \
 		-e ELASTICSEARCH_URL=http://elasticsearch:9200 \
 		-e ELASTICSEARCH_HOSTS=http://elasticsearch:9200 \
 		-e ELASTICSEARCH_USERNAME=kibana_system \
@@ -36,13 +45,19 @@ kibana-start:
 kibana-stop:
 	docker stop kibana
 	
-events-demo-start: net-start elasticsearch-start elasticsearch-kibana-set-pwd
+events-demo-start: net-start \
+	elasticsearch-start elasticsearch-wait-for-boot \
+	elasticsearch-create-index #elasticsearch-kibana-set-pwd
+	
 	@true
 	
 events-demo-stop: elasticsearch-stop net-stop
 	@true
 	
 .PHONY: net-start net-stop \
-	elasticsearch-start elasticsearch-kibana-set-pwd elasticsearch-stop \
+	elasticsearch-start \
+	elasticsearch-wait-for-boot \
+	elasticsearch-create-index elasticsearch-kibana-set-pwd \
+	elasticsearch-stop \
 	kibana-start kibana-stop \
 	events-demo-start events-demo-stop
