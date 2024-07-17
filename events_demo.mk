@@ -46,11 +46,11 @@ kibana-stop:
 	docker stop kibana && docker container rm kibana
 	
 events-demo-start: net-start \
-	elasticsearch-start elasticsearch-wait-for-boot \
+	elasticsearch-start \
+	elasticsearch-wait-for-boot \
 	elasticsearch-create-index \
 	elasticsearch-kibana-set-pwd \
 	kibana-start
-	
 	@true
 	
 events-demo-stop: kibana-stop elasticsearch-stop net-stop
