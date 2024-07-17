@@ -23,6 +23,7 @@ from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
+from spiffworkflow_backend.models.form_schema import FormSchemaModel  # noqa: F401
 from spiffworkflow_backend.models.cache_generation import (
     CacheGenerationModel,
 )  # noqa: F401

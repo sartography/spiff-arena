@@ -1,6 +1,5 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
-from SpiffWorkflow.bpmn.serializer.data_spec import BpmnSpecConverter
 import _strptime  # type: ignore
 import copy
 import decimal
@@ -46,6 +45,7 @@ from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
+from SpiffWorkflow.bpmn.serializer.default.task_spec import BpmnTaskSpecConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import UserTask  # type: ignore
 
@@ -125,14 +125,13 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
         super().__init__(target_class, registry, typename)
 
 
-class CustomUserTaskConverter(BpmnSpecConverter):  # type: ignore
+class CustomUserTaskConverter(BpmnTaskSpecConverter):  # type: ignore
     def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
         super().__init__(target_class, registry, typename)
 
     def to_dict(self, spec: Any) -> dict[str, Any]:
         initial_dict: dict[str, Any] = super().to_dict(spec)
         # add lookup to db json hash value in to_dict
-        # see if we can add backin on from_dict so calling to_dict does not need to do a lookup again
         # path_to_json = spec._wf_spec.file.replace(file_name...., '')
         # rsjsf_file_name = spec.exstensions...json_file_name
         if hasattr(spec, "user_form_hash"):
