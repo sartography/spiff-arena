@@ -133,7 +133,11 @@ class ProcessInstanceQueueService:
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                 )
-            ErrorHandlingService.handle_error(process_instance, ex)
+
+            # we call dequeued multiple times but we want this code to only happen once.
+            # assume that if we are not reentering_lock then this is the top level call and should be the one to handle the error.
+            if not reentering_lock:
+                ErrorHandlingService.handle_error(process_instance, ex)
             raise ex
         finally:
             if not reentering_lock:
