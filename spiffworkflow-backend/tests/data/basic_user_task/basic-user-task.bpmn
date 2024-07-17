@@ -6,12 +6,12 @@
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="StartEvent_1" targetRef="user_task_one" />
     <bpmn:endEvent id="EndEvent_1">
-      <bpmn:incoming>Flow_12pkbxb</bpmn:incoming>
+      <bpmn:incoming>Flow_0qj33vw</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="user_task_one" targetRef="EndEvent_1" />
+    <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="user_task_one" targetRef="subprocess_one" />
     <bpmn:userTask id="user_task_one" name="User Task 1">
       <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser></spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:instructionsForEndUser />
         <spiffworkflow:properties>
           <spiffworkflow:property name="formJsonSchemaFilename" value="user-form-schema.json" />
           <spiffworkflow:property name="formUiSchemaFilename" value="user-form-uischema.json" />
@@ -20,17 +20,44 @@
       <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
       <bpmn:outgoing>Flow_12pkbxb</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0qj33vw" sourceRef="subprocess_one" targetRef="EndEvent_1" />
+    <bpmn:subProcess id="subprocess_one" name="Subprocess 1">
+      <bpmn:incoming>Flow_12pkbxb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qj33vw</bpmn:outgoing>
+      <bpmn:startEvent id="Event_0wywngo">
+        <bpmn:outgoing>Flow_0plh32y</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_0plh32y" sourceRef="Event_0wywngo" targetRef="sub_user_task_one" />
+      <bpmn:endEvent id="Event_0s0lmib">
+        <bpmn:incoming>Flow_1092m06</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1092m06" sourceRef="sub_user_task_one" targetRef="Event_0s0lmib" />
+      <bpmn:userTask id="sub_user_task_one" name="Sub User Task 1">
+        <bpmn:extensionElements>
+          <spiffworkflow:properties>
+            <spiffworkflow:property name="formJsonSchemaFilename" value="user-form-schema.json" />
+            <spiffworkflow:property name="formUiSchemaFilename" value="" />
+          </spiffworkflow:properties>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0plh32y</bpmn:incoming>
+        <bpmn:outgoing>Flow_1092m06</bpmn:outgoing>
+      </bpmn:userTask>
+    </bpmn:subProcess>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_basic_user_task_awdeg7j">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_14za570_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="432" y="159" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1s9iqmj_di" bpmnElement="user_task_one">
         <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14za570_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="582" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0kj3woe_di" bpmnElement="subprocess_one">
+        <dc:Bounds x="420" y="137" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_17db3yp_di" bpmnElement="Flow_17db3yp">
@@ -39,7 +66,33 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_12pkbxb_di" bpmnElement="Flow_12pkbxb">
         <di:waypoint x="370" y="177" />
-        <di:waypoint x="432" y="177" />
+        <di:waypoint x="420" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qj33vw_di" bpmnElement="Flow_0qj33vw">
+        <di:waypoint x="520" y="177" />
+        <di:waypoint x="582" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_09bjeoo">
+    <bpmndi:BPMNPlane id="BPMNPlane_0n9uie7" bpmnElement="subprocess_one">
+      <bpmndi:BPMNShape id="Event_0wywngo_di" bpmnElement="Event_0wywngo">
+        <dc:Bounds x="392" y="292" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0s0lmib_di" bpmnElement="Event_0s0lmib">
+        <dc:Bounds x="632" y="292" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1duzq5v_di" bpmnElement="sub_user_task_one">
+        <dc:Bounds x="480" y="270" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0plh32y_di" bpmnElement="Flow_0plh32y">
+        <di:waypoint x="428" y="310" />
+        <di:waypoint x="480" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1092m06_di" bpmnElement="Flow_1092m06">
+        <di:waypoint x="580" y="310" />
+        <di:waypoint x="632" y="310" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

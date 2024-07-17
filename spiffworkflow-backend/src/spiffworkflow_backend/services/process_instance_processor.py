@@ -126,18 +126,23 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
 
 
 class CustomUserTaskConverter(BpmnTaskSpecConverter):  # type: ignore
-    def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
+    def __init__(self, target_class, registry, typename: str | None = None):  # type: ignore
+        # raise Exception("HEY")
         super().__init__(target_class, registry, typename)
 
     def to_dict(self, spec: Any) -> dict[str, Any]:
         initial_dict: dict[str, Any] = super().to_dict(spec)
+        spec._wf_spec.hey = [spec]
         # add lookup to db json hash value in to_dict
         # path_to_json = spec._wf_spec.file.replace(file_name...., '')
         # rsjsf_file_name = spec.exstensions...json_file_name
         if hasattr(spec, "user_form_hash"):
             initial_dict["user_form_hash"] = spec.user_form_hash
         else:
+            # lookup in db
+            # else: we calculate it - spec._wf_spec.form_schemas_to_add = [form_schema]
             initial_dict["user_form_hash"] = "HEY"  # lookup from db
+
         return initial_dict
 
     def from_dict(self, incoming_dict: dict) -> Any:
