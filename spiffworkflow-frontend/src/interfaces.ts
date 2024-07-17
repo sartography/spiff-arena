@@ -558,3 +558,9 @@ export interface MigrationEvent {
   timestamp: string;
   username: string;
 }
+export interface MigrationCheckResult {
+  can_migrate: boolean;
+  process_instance_id: number;
+  current_git_revision: string;
+  current_bpmn_process_hash: string;
+}

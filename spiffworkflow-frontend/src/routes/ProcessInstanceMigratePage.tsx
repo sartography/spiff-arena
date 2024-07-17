@@ -21,31 +21,49 @@ import HttpService from '../services/HttpService';
 
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { MigrationEvent } from '../interfaces';
+import { MigrationEvent, MigrationCheckResult } from '../interfaces';
 import CellRenderer from '../a-spiffui-v2/views/Dashboards/myProcesses/CellRenderer';
 
 function DangerousMigrationButton({
   successCallback,
   failureCallback,
-  migrationEvent,
+  targetBpmnProcessHash,
   title,
   buttonText = 'Migrate to Newest',
 }: {
   successCallback: (result: any) => void;
   failureCallback: (error: any) => void;
   title?: string;
-  migrationEvent?: MigrationEvent;
+  targetBpmnProcessHash?: string;
   buttonText?: string;
 }) {
+  const params = useParams();
   const [openDialog, setOpenDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { targetUris } = useUriListForPermissions();
+  const [migrationCheckResult, setMigrationCheckResult] =
+    useState<MigrationCheckResult | null>(null);
+
+  useEffect(() => {
+    let queryParams = '';
+    if (targetBpmnProcessHash) {
+      queryParams = `?target_bpmn_process_hash=${targetBpmnProcessHash}`;
+    }
+    HttpService.makeCallToBackend({
+      path: `/process-instances/${params.process_model_id}/${params.process_instance_id}/check-can-migrate${queryParams}`,
+      successCallback: (result: any) => setMigrationCheckResult(result),
+    });
+  }, [
+    targetBpmnProcessHash,
+    params.process_model_id,
+    params.process_instance_id,
+  ]);
 
   const handleRunMigration = () => {
     setIsLoading(true);
     let queryParams = '';
-    if (migrationEvent) {
-      queryParams = `?target_bpmn_process_hash=${migrationEvent.initial_bpmn_process_hash}`;
+    if (targetBpmnProcessHash) {
+      queryParams = `?target_bpmn_process_hash=${targetBpmnProcessHash}`;
     }
     HttpService.makeCallToBackend({
       httpMethod: 'POST',
@@ -71,42 +89,45 @@ function DangerousMigrationButton({
     setOpenDialog(false);
   };
 
-  return (
-    <>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleOpenDialog}
-        title={title}
-        size="small"
-      >
-        {buttonText}
-      </Button>
+  if (migrationCheckResult?.can_migrate) {
+    return (
+      <>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleOpenDialog}
+          title={title}
+          size="small"
+        >
+          {buttonText}
+        </Button>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Confirm Migrate Instance</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to proceed with this potentially-dangerous
-            process instance migration?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleRunMigration}
-            color="secondary"
-            variant="contained"
-            disabled={isLoading}
-          >
-            {isLoading ? <CircularProgress size={24} /> : 'Confirm'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Confirm Migrate Instance</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to proceed with this potentially-dangerous
+              process instance migration?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRunMigration}
+              color="secondary"
+              variant="contained"
+              disabled={isLoading}
+            >
+              {isLoading ? <CircularProgress size={24} /> : 'Confirm'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  }
+  return null;
 }
 function MigrationStatus({
   migrationCheckResult,
@@ -159,7 +180,8 @@ function MigrationStatus({
 
 export default function ProcessInstanceMigratePage() {
   const params = useParams();
-  const [migrationCheckResult, setMigrationCheckResult] = useState<any>(null);
+  const [migrationCheckResult, setMigrationCheckResult] =
+    useState<MigrationCheckResult | null>(null);
   const [migrationResult, setMigrationResult] = useState<any>(null);
   const [migrationEvents, setMigrationEvents] = useState<
     MigrationEvent[] | null
@@ -291,7 +313,7 @@ export default function ProcessInstanceMigratePage() {
               successCallback={onMigrationComplete}
               failureCallback={onMigrationFailure}
               title={`Run another migration to switch to model version: '${data.row.initial_git_revision}'`}
-              migrationEvent={data.row}
+              targetBpmnProcessHash={data.row.initial_bpmn_process_hash}
               buttonText="Revert"
             />
           );

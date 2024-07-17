@@ -1,3 +1,5 @@
+import copy
+import datetime
 import io
 import json
 import os
@@ -10,6 +12,7 @@ from typing import Any
 from flask import current_app
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -27,6 +30,7 @@ from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -35,6 +39,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.test import TestResponse  # type: ignore
 
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -644,3 +649,24 @@ class BaseTest:
 
     def get_test_file(self, *args: str) -> str:
         return os.path.join(current_app.instance_path, "..", "..", "tests", "files", *args)
+
+    def set_timer_event_to_new_time(self, task_model: TaskModel, timedelta_args: dict) -> None:
+        new_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(**timedelta_args)
+        new_time_formatted = new_time.isoformat()
+
+        new_properties_json = copy.copy(task_model.properties_json)
+        new_properties_json["internal_data"]["event_value"]["next"] = new_time_formatted
+        task_model.properties_json = new_properties_json
+        # make sure we actually commit
+        flag_modified(task_model, "properties_json")  # type: ignore
+        db.session.add(task_model)
+        db.session.commit()
+        task_model = TaskModel.query.filter_by(guid=task_model.guid).first()
+        assert task_model.properties_json["internal_data"]["event_value"]["next"] == new_time_formatted
+
+    def get_all_children_of_spiff_task(self, spiff_task: SpiffTask) -> list[SpiffTask]:
+        children = []
+        for child in spiff_task.children:
+            children.append(child)
+            children += self.get_all_children_of_spiff_task(child)
+        return children

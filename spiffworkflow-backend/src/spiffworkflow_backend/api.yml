@@ -1344,6 +1344,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: target_bpmn_process_hash
+        in: query
+        required: false
+        description: The full bpmn process hash of the target version of the process model.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
