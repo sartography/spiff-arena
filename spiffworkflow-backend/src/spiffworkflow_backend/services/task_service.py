@@ -145,6 +145,9 @@ class TaskService:
             db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
 
+    def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
+        return (self.task_model_mapping, self.bpmn_subprocess_mapping)
+
     def process_parents_and_children_and_save_to_database(
         self,
         spiff_task: SpiffTask,

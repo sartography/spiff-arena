@@ -1829,6 +1829,7 @@ class ProcessInstanceProcessor:
         for spiff_task_to_update in tasks_to_update:
             if spiff_task_to_update.id != spiff_task.id:
                 task_service.update_task_model_with_spiff_task(spiff_task_to_update)
+        self.task_model_mapping, self.bpmn_subprocess_mapping = task_service.get_guid_to_db_object_mappings()
 
         task_service.save_objects_to_database()
 

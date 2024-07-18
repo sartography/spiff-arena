@@ -1117,6 +1117,25 @@ class TestProcessInstanceProcessor(BaseTest):
         new_task_names = [t.task_spec.name for t in new_tasks]
         assert old_task_names == new_task_names
 
+    def test_simple_call_activity_chain(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/basic_call_activity_series",
+            process_model_source_directory="basic_call_activity_series",
+            primary_file_name="call-activity-1.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        self.complete_next_manual_task(processor)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
     # # To test processing times with multiinstance subprocesses
     # def test_large_multiinstance(
     #     self,
