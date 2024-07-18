@@ -112,6 +112,10 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.specs.start_event import StartEvent
 
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.services.logging_service import LoggingService
+
+
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 
 
@@ -1174,6 +1178,10 @@ class ProcessInstanceProcessor:
                 self.process_instance_model.end_in_seconds = round(time.time())
                 if self._workflow_completed_handler is not None:
                     self._workflow_completed_handler(self.process_instance_model)
+                LoggingService.log_event(
+                    ProcessInstanceEventType.process_instance_completed,
+                )
+                
 
         db.session.add(self.process_instance_model)
 
