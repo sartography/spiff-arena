@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -10,13 +10,16 @@ set -o errtrace -o errexit -o nounset -o pipefail
 export FLASK_SESSION_SECRET_KEY="this_is_recreate_db_secret_key"
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
-  script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+  script_dir="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1
+    pwd -P
+  )"
 
   SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
   if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
     if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
+      echo >&2 "ERROR: Could not find a location for the sample processes. Last tried: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
       exit 1
     fi
   fi
@@ -24,8 +27,24 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
 fi
 
 database_host="localhost"
+database_port=""
+database_username="root"
+database_password=""
 if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
-  database_host=$(grep -oP "^[^:]+://.*@\K(.+?)[:/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[:\/]$//')
+  database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
+  database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
+  database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
+  database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
+  database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
+  database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
+fi
+
+database_host_args="-h $database_host -u $database_username"
+if [[ -n "$database_port" ]]; then
+  database_host_args="${database_host_args} -P${database_port}"
+fi
+if [[ -n "$database_password" ]]; then
+  database_host_args="${database_host_args} -p${database_password}"
 fi
 
 # uncomment this line to fix branching conflicts
@@ -38,15 +57,15 @@ if [[ "${1:-}" == "clean" ]]; then
     tasks="$tasks init migrate"
     rm -rf migrations/
   elif [[ -n "$subcommand" ]]; then
-    >&2 echo "ERROR: you passed a subcommand that was not rmall, and that is not supported: $subcommand"
+    echo >&2 "ERROR: you passed a subcommand that was not rmall, and that is not supported: $subcommand"
     exit 1
   fi
 
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "sqlite" ]]; then
     rm -f ./src/instance/*.sqlite3
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-    mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
-    mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
+    mysql $database_host_args -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
+    mysql $database_host_args -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
     # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
     # start postgres in background with one db
@@ -80,8 +99,8 @@ else
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-  mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
-  mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
+  mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
+  mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
 fi
 
 for task in $tasks; do
@@ -89,15 +108,15 @@ for task in $tasks; do
 done
 
 SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
-if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<< "$SPIFFWORKFLOW_BACKEND_ENV"; then
+if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<<"$SPIFFWORKFLOW_BACKEND_ENV"; then
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-    mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
+    mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
   fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 fi
 
 # for ./bin/tests-par (parallel tests with xdist)
-if [[ -f "./src/instance/db_unit_testing.sqlite3" ]] ; then
+if [[ -f "./src/instance/db_unit_testing.sqlite3" ]]; then
   for i in $(seq 0 16); do
     cp ./src/instance/db_unit_testing.sqlite3 ./src/instance/db_unit_testing_gw$i.sqlite3
   done
