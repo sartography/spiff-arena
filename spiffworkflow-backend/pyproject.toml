@@ -93,7 +93,7 @@ spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
-coverage = {extras = ["toml"], version = "^7.5"}
+coverage = {extras = ["toml"], version = "^7.6"}
 safety = "^3.2.3"
 mypy = ">=0.961"
 typeguard = "^4"
