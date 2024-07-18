@@ -31,6 +31,7 @@ def assure_process_group_exists(process_group_id: str | None = None) -> ProcessG
 def load_test_spec(
     process_model_id: str,
     bpmn_file_name: str | None = None,
+    primary_file_name: str | None = None,
     process_model_source_directory: str | None = None,
 ) -> ProcessModelInfo:
     """Loads a bpmn file into the process model dir based on a directory in tests/data."""
@@ -42,5 +43,6 @@ def load_test_spec(
         display_name=process_model_id,
         bpmn_file_name=bpmn_file_name,
         process_model_source_directory=process_model_source_directory,
+        primary_file_name=primary_file_name,
     )
     return spec

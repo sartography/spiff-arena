@@ -16,6 +16,7 @@ class ExampleDataLoader:
         description: str = "",
         display_order: int = 0,
         bpmn_file_name: str | None = None,
+        primary_file_name: str | None = None,
         process_model_source_directory: str | None = None,
     ) -> ProcessModelInfo:
         """Assumes that process_model_source_directory exists in static/bpmn and contains bpmn_file_name.
@@ -71,7 +72,7 @@ class ExampleDataLoader:
 
             filename = os.path.basename(file_path)
             # since there are multiple bpmn files in a test data directory, ensure we set the correct one as the primary
-            is_primary = filename.lower() == bpmn_file_name_with_extension
+            is_primary = filename.lower() in [primary_file_name, bpmn_file_name_with_extension]
             file = None
             try:
                 file = open(file_path, "rb")
