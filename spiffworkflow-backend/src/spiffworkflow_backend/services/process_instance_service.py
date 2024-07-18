@@ -289,6 +289,14 @@ class ProcessInstanceService:
         for bpd in bpmn_processes_to_delete:
             db.session.delete(bpd)
 
+        user_spiff_tasks = processor.get_ready_user_tasks()
+        user_task_guids = [str(t.id) for t in user_spiff_tasks]
+        user_spiff_task_map = {str(t.id): t for t in user_spiff_tasks}
+        ready_human_tasks = HumanTaskModel.query.filter(HumanTaskModel.task_guid.in_(user_task_guids)).all()  # type: ignore
+        for human_task in ready_human_tasks:
+            human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid])
+            db.session.add(human_task)
+
         db.session.commit()
 
     @classmethod
@@ -402,7 +410,7 @@ class ProcessInstanceService:
 
     @classmethod
     def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
-        for ready_user_task in processor.bpmn_process_instance.get_tasks(state=TaskState.READY, manual=True):
+        for ready_user_task in processor.get_ready_user_tasks():
             if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 for boundary_event_child in ready_user_task.parent.children:
                     child_task_spec = boundary_event_child.task_spec
