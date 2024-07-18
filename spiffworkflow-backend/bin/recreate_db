@@ -26,10 +26,17 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 fi
 
+if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<<"$SPIFFWORKFLOW_BACKEND_ENV"; then
+  echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_ENV is set to '${SPIFFWORKFLOW_BACKEND_ENV}'. Only local_development and unit_testing are allowed."
+  exit 1
+fi
+
 database_host="localhost"
 database_port=""
 database_username="root"
 database_password=""
+databases_to_run_on="spiffworkflow_backend_local_development spiffworkflow_backend_unit_testing"
+database_name_from_uri=""
 if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
   database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
   database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
@@ -37,6 +44,10 @@ if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
   database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
   database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
   database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
+  database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+  if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
+    databases_to_run_on="$database_name_from_uri"
+  fi
 fi
 
 database_host_args="-h $database_host -u $database_username"
@@ -49,6 +60,13 @@ fi
 
 # uncomment this line to fix branching conflicts
 # poetry run flask db merge heads -m "merging heads"
+
+function run_command_on_mysql_databases {
+  local command="$1"
+  for database_name in $databases_to_run_on; do
+    mysql $database_host_args -e "$command $database_name"
+  done
+}
 
 tasks=""
 if [[ "${1:-}" == "clean" ]]; then
@@ -64,8 +82,7 @@ if [[ "${1:-}" == "clean" ]]; then
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "sqlite" ]]; then
     rm -f ./src/instance/*.sqlite3
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-    mysql $database_host_args -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
-    mysql $database_host_args -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
+    run_command_on_mysql_databases "DROP DATABASE IF EXISTS"
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
     # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
     # start postgres in background with one db
@@ -99,20 +116,16 @@ else
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-  mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
-  mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
+  run_command_on_mysql_databases "CREATE DATABASE IF NOT EXISTS"
 fi
 
 for task in $tasks; do
   SPIFFWORKFLOW_BACKEND_ENV=local_development FLASK_APP=src/spiffworkflow_backend poetry run flask db "$task"
 done
 
-SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
-if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<<"$SPIFFWORKFLOW_BACKEND_ENV"; then
-  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-    mysql $database_host_args -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
-  fi
-  FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
+if [[ -z "$database_name_from_uri" ]] || [[ "$database_name_from_uri" == "spiffworkflow_backend_local_development" ]]; then
+  hacked_up_uri=$(sed -E 's/spiffworkflow_backend_local_development$/spiffworkflow_backend_unit_testing/' <<<"${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}")
+  SPIFFWORKFLOW_BACKEND_DATABASE_URI="$hacked_up_uri" SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 fi
 
 # for ./bin/tests-par (parallel tests with xdist)
