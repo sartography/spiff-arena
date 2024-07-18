@@ -182,6 +182,11 @@ class TestProcessInstanceService(BaseTest):
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         assert initial_bpmn_process_hash is not None
 
+        human_task_one = process_instance.active_human_tasks[0]
+        assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
+        assert human_task_one.task_title == "Manual Task 1"
+        assert human_task_one.task_name == "manual_task_one"
+
         initial_tasks = processor.bpmn_process_instance.get_tasks()
         spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
         assert spiff_task is None
@@ -224,6 +229,7 @@ class TestProcessInstanceService(BaseTest):
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
+        assert human_task_one.task_title == "Manual Task One"
         self.complete_next_manual_task(processor)
 
         human_task_one = process_instance.active_human_tasks[0]

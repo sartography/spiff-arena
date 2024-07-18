@@ -1748,7 +1748,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  # NOT USED
   /tasks:
     parameters:
       - name: process_instance_id

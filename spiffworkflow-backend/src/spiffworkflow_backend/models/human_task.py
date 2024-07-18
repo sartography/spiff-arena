@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from flask import g
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -59,6 +60,10 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         overlaps="human_task_user,users",
         order_by="HumanTaskUserModel.id",
     )
+
+    def update_attributes_from_spiff_task(self, spiff_task: SpiffTask) -> None:
+        # currently only used for process instance migrations where only the bpmn_name is allowed to be updated
+        self.task_title = spiff_task.task_spec.bpmn_name
 
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:
