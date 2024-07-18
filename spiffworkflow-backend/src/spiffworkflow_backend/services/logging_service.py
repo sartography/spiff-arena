@@ -266,10 +266,21 @@ class LoggingService:
     _spiff_logger = logging.getLogger("spiff")
     
     @classmethod
-    def log_event(cls, event_type: str, task_guid: str | None) -> None:
-        cls._spiff_logger.info(event_type, extra={
-            "task_guid": task_guid,
-            "event_type": event_type,
-        })
+    def log_event(cls, event_type: str,
+        task_guid: str | None = None,
+        process_model_identifier: str | None = None,
+        process_instance_id: int | None = None,
+    ) -> None:
+        extra = {"event_type": event_type}
 
+        if task_guid is not None:
+            extra["task_guid"] = task_guid
+
+        if process_model_identifier is not None:
+            extra["process_model_Identifier"] = process_model_identifier
+
+        if process_instance_id is not None:
+            extra["process_instance_id"] = process_instance_id
+        
+        cls._spiff_logger.info(event_type, extra=extra)
 

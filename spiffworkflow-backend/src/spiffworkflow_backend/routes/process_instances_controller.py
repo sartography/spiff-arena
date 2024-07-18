@@ -32,6 +32,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
@@ -49,6 +50,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -67,6 +69,11 @@ def process_instance_create(
 
     process_instance = _process_instance_create(process_model_identifier)
 
+    LoggingService.log_event(
+        ProcessInstanceEventType.process_instance_created,
+        process_model_identifier=process_model_identifier,
+        process_instance_id=process_instance.id,
+    )
     
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),

@@ -9,7 +9,6 @@ if os.path.exists(SOCK):
     os.remove(SOCK)
 
 AUTH = f"elastic:{os.environ['ELASTIC_PASSWORD']}"
-T = {"specversion": "1.0", "type": "spiff", "id": "740fe40c-2c70-4643-bc42-1ae999a85948", "source": "spiffworkflow.org", "timestamp": 1721241492.540756, "data": {"message": "State change to COMPLETED", "userid": 1, "username": "admin@spiffworkflow.org", "process_instance_id": None, "process_model_identifier": "site-administration/onboarding", "workflow_spec": "Process_109on5e", "task_spec": "End", "task_id": "b949bea8-39ae-4ab7-8268-e14422617a97", "task_type": "SimpleBpmnTask"}}
 
 CURL_TEMPLATE = [
     "curl",
