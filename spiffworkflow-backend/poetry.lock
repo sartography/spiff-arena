@@ -2899,8 +2899,8 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "feature/improved-loggers"
-resolved_reference = "e9591122cd5d669df009e6826365ee5d93d3108c"
+reference = "main"
+resolved_reference = "c62a76d121567e6265e2bf3ae1b817be78f4f397"
 
 [[package]]
 name = "spiffworkflow-connector-command"
@@ -3406,4 +3406,4 @@ tests-strict = ["pytest (==4.6.0)", "pytest (==4.6.0)", "pytest (==6.2.5)", "pyt
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "d21b6f0f279769fb97a613cf7f1cbbacd980a555276301abcb47e623948e9255"
+content-hash = "2a42cbf26330e9856524018bbda8553eb83c1178395f2b0fd9eb8966810acc43"

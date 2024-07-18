@@ -25,7 +25,7 @@ flask-jwt-extended = "^4.4.4"
 flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/improved-loggers"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
 sentry-sdk = {extras = ['flask'], version = "^2.5"}
