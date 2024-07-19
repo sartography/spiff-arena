@@ -8,19 +8,6 @@ Getting_Started/quick_start.md
 
 ```{toctree}
 :maxdepth: 1
-:caption: Technical Docs
-dev/index.md
-dev/setup.md
-dev/backend.md
-dev/frontend.md
-dev/connector_proxy.md
-dev/how_to_build_a_connector.md
-dev/extensions.md
-dev/process.md
-```
-
-```{toctree}
-:maxdepth: 1
 :caption: Building Diagrams
 Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
@@ -53,6 +40,28 @@ Debugging_Diagrams/Private_data.md
 
 ```{toctree}
 :maxdepth: 1
+:caption: Support & Administration
+Support/manage_processes.md
+Support/Welcome_Messages.md
+Support/Running_Server_Locally.md
+Support/FAQ.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Technical Docs
+dev/index.md
+dev/setup.md
+dev/backend.md
+dev/frontend.md
+dev/connector_proxy.md
+dev/how_to_build_a_connector.md
+dev/extensions.md
+dev/process.md
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: DevOps - Installation & Integration
 DevOps_installation_integration/deployment.md
 DevOps_installation_integration/admin_and_permissions.md
@@ -63,15 +72,6 @@ DevOps_installation_integration/Secrets.md
 DevOps_installation_integration/redis_celery_broker.md
 DevOps_installation_integration/path_based_routing.md
 DevOps_installation_integration/process_model_management.md
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Support & Administration
-Support/suspend_resume_terminate.md
-Support/Welcome_Messages.md
-Support/Running_Server_Locally.md
-Support/FAQ.md
 ```
 
 ```{toctree}
