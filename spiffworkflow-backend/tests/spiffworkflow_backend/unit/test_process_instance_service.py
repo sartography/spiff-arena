@@ -345,6 +345,108 @@ class TestProcessInstanceService(BaseTest):
         assert pi_migration_details.target_git_revision == "rev1"
         assert process_instance.bpmn_version_control_identifier == "rev1"
 
+    def test_it_can_migrate_a_process_instance_multiple_times_and_revert(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/migration-test-with-subprocess",
+            process_model_source_directory="migration-test-with-subprocess",
+            bpmn_file_name="migration-initial.bpmn",
+        )
+        mock_get_current_revision = mocker.patch.object(GitService, "get_current_revision")
+
+        # Set the return value for the first call
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
+        assert initial_bpmn_process_hash is not None
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        assert spiff_task is None
+
+        new_file_path = os.path.join(
+            app.instance_path,
+            "..",
+            "..",
+            "tests",
+            "data",
+            "migration-test-with-subprocess",
+            "migration-new.bpmn",
+        )
+        with open(new_file_path) as f:
+            new_contents = f.read().encode()
+
+        SpecFileService.update_file(
+            process_model_info=process_model,
+            file_name="migration-initial.bpmn",
+            binary_data=new_contents,
+            update_process_cache_only=True,
+        )
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        mock_get_current_revision.return_value = "rev2"
+        ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.bpmn_version_control_identifier == "rev2"
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        target_bpmn_process_hash_one = process_instance.bpmn_process_definition.full_process_model_hash
+        assert target_bpmn_process_hash_one is not None
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        assert spiff_task is not None
+
+        new_file_path = os.path.join(
+            app.instance_path,
+            "..",
+            "..",
+            "tests",
+            "data",
+            "migration-test-with-subprocess",
+            "migration-new-2.bpmn",
+        )
+        with open(new_file_path) as f:
+            new_contents = f.read().encode()
+
+        SpecFileService.update_file(
+            process_model_info=process_model,
+            file_name="migration-initial.bpmn",
+            binary_data=new_contents,
+            update_process_cache_only=True,
+        )
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        mock_get_current_revision.return_value = "rev3"
+        ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.bpmn_version_control_identifier == "rev3"
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        target_bpmn_process_hash_two = process_instance.bpmn_process_definition.full_process_model_hash
+        assert target_bpmn_process_hash_two is not None
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_three", processor.bpmn_process_instance)
+        assert spiff_task is not None
+
+        ProcessInstanceService.migrate_process_instance(
+            process_instance, user=initiator_user, target_bpmn_process_hash=initial_bpmn_process_hash
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        assert spiff_task is None
+        human_task_one = process_instance.active_human_tasks[0]
+        assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
+        self.complete_next_manual_task(processor)
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.bpmn_version_control_identifier == "rev1"
+
     def test_it_can_check_if_a_process_instance_can_be_migrated(
         self,
         app: Flask,

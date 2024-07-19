@@ -27,6 +27,7 @@ from SpiffWorkflow.bpmn.util.diff import migrate_workflow
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
@@ -262,9 +263,7 @@ class ProcessInstanceService:
                 bpmn_process_instance=processor.bpmn_process_instance,
                 store_process_instance_events=False,
             )
-            git_revision_to_use = cls.get_appropriate_git_revision(
-                process_instance, initial_bpmn_process_hash, target_bpmn_process_hash
-            )
+            git_revision_to_use = cls.get_appropriate_git_revision(process_instance, target_bpmn_process_hash)
             process_instance.bpmn_version_control_identifier = git_revision_to_use
             db.session.add(process_instance)
 
@@ -303,16 +302,21 @@ class ProcessInstanceService:
     def get_appropriate_git_revision(
         cls,
         process_instance: ProcessInstanceModel,
-        initial_bpmn_process_hash: str | None,
         target_bpmn_process_hash: str | None,
     ) -> str | None:
         # if target_bpmn_process_hash is set and there's an old migration event, then assume this is a revert
         # and that we should ensure that items like git revision remain consistent
         git_revision_to_use = None
         if target_bpmn_process_hash is not None:
+            # NOTE: there is a potential bug where there could be many git revisions for a bpmn process hash
+            # so this could pick up a different git revision than the revert event passed in.
+            # This is an edge case though and the git revision is close enough and more informational
             old_migration_event = (
-                ProcessInstanceMigrationDetailModel.query.filter_by(
-                    initial_bpmn_process_hash=target_bpmn_process_hash, target_bpmn_process_hash=initial_bpmn_process_hash
+                ProcessInstanceMigrationDetailModel.query.filter(
+                    or_(
+                        ProcessInstanceMigrationDetailModel.initial_bpmn_process_hash == target_bpmn_process_hash,
+                        ProcessInstanceMigrationDetailModel.target_bpmn_process_hash == target_bpmn_process_hash,
+                    )
                 )
                 .join(ProcessInstanceEventModel)
                 .filter(ProcessInstanceEventModel.process_instance_id == process_instance.id)
@@ -320,7 +324,10 @@ class ProcessInstanceService:
                 .first()
             )
             if old_migration_event is not None:
-                git_revision_to_use = old_migration_event.initial_git_revision
+                if old_migration_event.initial_bpmn_process_hash == target_bpmn_process_hash:
+                    git_revision_to_use = old_migration_event.initial_git_revision
+                elif old_migration_event.target_bpmn_process_hash == target_bpmn_process_hash:
+                    git_revision_to_use = old_migration_event.target_bpmn_process_hash
         if git_revision_to_use is None:
             try:
                 git_revision_to_use = GitService.get_current_revision()
