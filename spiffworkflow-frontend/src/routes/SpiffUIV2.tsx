@@ -126,7 +126,7 @@ export default function SpiffUIV2() {
                 <Route path="/dashboard" element={<Dashboards />} />
                 <Route path="/startprocess" element={<StartProcess />} />
                 <Route
-                  path="/:processModelId/start"
+                  path="/:modifiedProcessModelId/start"
                   element={<StartProcessInstance />}
                 />
               </Routes>

@@ -6,30 +6,30 @@ import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import { ProcessInstance } from '../../../interfaces';
 
 export default function StartProcessInstance() {
-  const { processModelId } = useParams<{ processModelId: string }>();
+  const { modifiedProcessModelId } = useParams<{ modifiedProcessModelId: string }>();
   const navigate = useNavigate();
   const { addError } = useAPIError();
 
-  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    processModelId || '',
+  const modifiedProcessModelIdParam = modifyProcessIdentifierForPathParam(
+    modifiedProcessModelId || '',
   );
 
   const onProcessInstanceRun = (processInstance: ProcessInstance) => {
     const processInstanceId = processInstance.id;
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
+        `/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/progress`,
       );
     } else {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
+        `/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/interstitial`,
       );
     }
   };
 
   const processModelRun = (processInstance: ProcessInstance) => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
+      path: `/process-instances/${modifiedProcessModelIdParam}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
       failureCallback: (result: any) => {
         addError(result);
@@ -40,7 +40,7 @@ export default function StartProcessInstance() {
 
   const processInstanceCreateAndRun = () => {
     HttpService.makeCallToBackend({
-      path: `/v1.0/process-instances/${modifiedProcessModelId}`,
+      path: `/v1.0/process-instances/${modifiedProcessModelIdParam}`,
       successCallback: processModelRun,
       failureCallback: (result: any) => {
         addError(result);
