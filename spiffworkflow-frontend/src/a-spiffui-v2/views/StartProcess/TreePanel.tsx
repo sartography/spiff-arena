@@ -63,55 +63,62 @@ export default forwardRef(function TreePanel(
    * You have to manage it all yourself.
    */
   const buildTree = (groups: Record<string, any>[]) => {
-    return groups.map((group: Record<string, any>) => (
-      <TreeItem
-        key={group.id}
-        itemId={group.id}
-        onClick={() => stream && stream.next(group)}
-        label={
-          <Stack
-            direction="row"
-            sx={{
-              backgroundColor:
-                lastSelected.id === group.id
-                  ? 'spotColors.selectedBackground'
-                  : '',
-              padding: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            <Box sx={{ width: '100%' }}>{group.display_name}</Box>
-            <Box sx={treeItemStyle}>
-              {`${group?.process_models?.length || 0} / 
-                ${group?.process_groups?.length || 0}`}
-            </Box>
-          </Stack>
-        }
-      >
-        {group?.process_models?.map((model: Record<string, any>) => (
-          <TreeItem
-            key={model.id}
-            itemId={model.id}
-            label={
+    return groups.map((group: Record<string, any>) => {
+      const groupCount = group?.process_groups?.length || 0;
+      const modelCount = group?.process_models?.length || 0;
+      const totalCount = groupCount + modelCount;
+      return (
+        <TreeItem
+          key={group.id}
+          itemId={group.id}
+          onClick={() => stream && stream.next(group)}
+          label={
+            <Stack
+              direction="row"
+              sx={{
+                backgroundColor:
+                  lastSelected.id === group.id
+                    ? 'spotColors.selectedBackground'
+                    : '',
+                padding: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              <Box sx={{ width: '100%' }}>{group.display_name}</Box>
               <Box
-                sx={{
-                  backgroundColor:
-                    lastSelected.id === model.id
-                      ? 'spotColors.selectedBackground'
-                      : '',
-                  padding: 0.5,
-                  borderRadius: 1,
-                }}
+                sx={treeItemStyle}
+                title={`${totalCount} items, including ${modelCount} Process Models and ${groupCount} Process Groups`}
               >
-                {model.display_name}
+                {totalCount}
               </Box>
-            }
-            onClick={() => stream && stream.next(model)}
-          />
-        ))}
-        {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
-      </TreeItem>
-    ));
+            </Stack>
+          }
+        >
+          {group?.process_models?.map((model: Record<string, any>) => (
+            <TreeItem
+              key={model.id}
+              itemId={model.id}
+              label={
+                <Box
+                  sx={{
+                    backgroundColor:
+                      lastSelected.id === model.id
+                        ? 'spotColors.selectedBackground'
+                        : '',
+                    padding: 0.5,
+                    borderRadius: 1,
+                  }}
+                >
+                  {model.display_name}
+                </Box>
+              }
+              onClick={() => stream && stream.next(model)}
+            />
+          ))}
+          {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
+        </TreeItem>
+      );
+    });
   };
 
   const expandToItem = (item: Record<string, any>) => {

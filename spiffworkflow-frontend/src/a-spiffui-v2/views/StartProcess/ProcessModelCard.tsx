@@ -46,9 +46,13 @@ export default function ProcessModelCard({
 
   const navigate = useNavigate();
 
-  const handleStartProcess = (e: PointerEvent) => {
+  const stopEventBubble = (e: PointerEvent) => {
     e.stopPropagation();
     e.preventDefault();
+  };
+
+  const handleStartProcess = (e: PointerEvent) => {
+    stopEventBubble(e);
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );

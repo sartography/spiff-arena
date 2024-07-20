@@ -6,7 +6,9 @@ import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import { ProcessInstance } from '../../../interfaces';
 
 export default function StartProcessInstance() {
-  const { modifiedProcessModelId } = useParams<{ modifiedProcessModelId: string }>();
+  const { modifiedProcessModelId } = useParams<{
+    modifiedProcessModelId: string;
+  }>();
   const navigate = useNavigate();
   const { addError } = useAPIError();
 
