@@ -151,3 +151,13 @@ This is something that Volker called out as a desirable feature.
 ### Provide a way for a process model to be available in the modeling environment but not the runtime environment
 
 This is available via "start" permissions, but Volker was wondering if there should potentially be another more accessible way to allow this type of function.
+
+### Comments function
+
+In a generic workflow system like this, there are many reasons why one might want to add a comment to a process instance.
+The process model author can easily build a user task with a form that allows for comments.
+As such, having a separate system for comments would in some ways be redundant.
+But a separate system for comments would also allow for adding comments at any time, not just when a user task is active.
+Comments from people tend to be highly relevant for coworkers who need to interact with processes, such as with approvals.
+These comments could be more easily presented in the UI associated with a process instance.
+The approver will be looking for this type of information, so having a standard place to put it might be beneficial.
