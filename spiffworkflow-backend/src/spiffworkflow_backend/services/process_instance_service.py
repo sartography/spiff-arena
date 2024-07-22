@@ -231,9 +231,25 @@ class ProcessInstanceService:
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
 
-        deleted_tasks = migrate_workflow(top_level_bpmn_process_diff, processor.bpmn_process_instance, target_bpmn_process_spec)
+        migration_task_mask = TaskState.READY | TaskState.WAITING | TaskState.STARTED
+
+        deleted_tasks = migrate_workflow(
+            top_level_bpmn_process_diff,
+            processor.bpmn_process_instance,
+            target_bpmn_process_spec,
+            reset_mask=migration_task_mask,
+        )
         for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
-            deleted_tasks += migrate_workflow(subprocesses_diffs[sp_id], sp, target_subprocess_specs.get(sp.spec.name))
+            deleted_tasks += migrate_workflow(
+                subprocesses_diffs[sp_id],
+                sp,
+                target_subprocess_specs.get(sp.spec.name),
+                reset_mask=migration_task_mask,
+            )
+            # make sure we change the subprocess_spiff_task state back to STARTED after the migration
+            if not sp.is_completed():
+                subprocess_spiff_task = processor.bpmn_process_instance.get_task_from_id(sp_id)
+                subprocess_spiff_task._set_state(TaskState.STARTED)
         processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
 
         if preserve_old_process_instance:
