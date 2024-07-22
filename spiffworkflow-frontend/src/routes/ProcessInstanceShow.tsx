@@ -735,9 +735,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const initializeTaskDataToDisplay = (task: Task | null) => {
     if (
       task &&
-      (task.state === 'COMPLETED' ||
-        task.state === 'ERROR' ||
-        task.state === 'READY') &&
+      ['COMPLETED', 'ERROR', 'READY'].includes(task.state) &&
       ability.can('GET', targetUris.processInstanceTaskDataPath)
     ) {
       setShowTaskDataLoading(true);
@@ -1127,7 +1125,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (task.typename === 'CallActivity') {
+    if (
+      task.typename === 'CallActivity' &&
+      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+    ) {
       const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
         task.task_definition_properties_json;
       buttons.push(
