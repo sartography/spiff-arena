@@ -8,6 +8,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
+from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -61,9 +62,10 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         order_by="HumanTaskUserModel.id",
     )
 
-    def update_attributes_from_spiff_task(self, spiff_task: SpiffTask) -> None:
+    def update_attributes_from_spiff_task(self, spiff_task: SpiffTask, potential_owner_hash: PotentialOwnerIdList) -> None:
         # currently only used for process instance migrations where only the bpmn_name is allowed to be updated
         self.task_title = spiff_task.task_spec.bpmn_name
+        self.lane_assignment_id = potential_owner_hash["lane_assignment_id"]
 
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:

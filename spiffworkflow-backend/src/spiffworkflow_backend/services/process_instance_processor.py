@@ -17,7 +17,6 @@ from datetime import timedelta
 from hashlib import sha256
 from typing import Any
 from typing import NewType
-from typing import TypedDict
 from uuid import UUID
 from uuid import uuid4
 
@@ -66,6 +65,7 @@ from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
+from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
@@ -142,11 +142,6 @@ WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
 def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
-
-
-class PotentialOwnerIdList(TypedDict):
-    potential_owner_ids: list[int]
-    lane_assignment_id: int | None
 
 
 class ProcessInstanceProcessorError(Exception):

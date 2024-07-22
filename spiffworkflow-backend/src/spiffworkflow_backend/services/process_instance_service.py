@@ -46,6 +46,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -269,7 +270,6 @@ class ProcessInstanceService:
             ).all()
             for ft in future_tasks:
                 db.session.delete(ft)
-            db.session.commit()
 
             bpmn_process_dict = processor.serialize()
             ProcessInstanceProcessor.persist_bpmn_process_dict(
@@ -309,8 +309,22 @@ class ProcessInstanceService:
         user_spiff_task_map = {str(t.id): t for t in user_spiff_tasks}
         ready_human_tasks = HumanTaskModel.query.filter(HumanTaskModel.task_guid.in_(user_task_guids)).all()  # type: ignore
         for human_task in ready_human_tasks:
-            human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid])
+            spiff_task = processor.get_task_by_guid(human_task.task_guid)
+            potential_owner_hash = processor.get_potential_owner_ids_from_task(spiff_task)
+            human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid], potential_owner_hash)
             db.session.add(human_task)
+            human_task_user_records = HumanTaskUserModel.query.filter_by(human_task=human_task).all()
+            currently_assigned_user_ids = {ht.user_id for ht in human_task_user_records}
+            desired_user_ids = set(potential_owner_hash["potential_owner_ids"])
+            user_ids_to_remove = currently_assigned_user_ids - desired_user_ids
+            user_ids_to_add = desired_user_ids - currently_assigned_user_ids
+            for potential_owner_id in user_ids_to_add:
+                if potential_owner_id not in currently_assigned_user_ids:
+                    human_task_user = HumanTaskUserModel(user_id=potential_owner_id, human_task=human_task)
+                    db.session.add(human_task_user)
+            for htur in human_task_user_records:
+                if htur.id in user_ids_to_remove:
+                    db.session.delete(htur)
 
         db.session.commit()
 
