@@ -258,11 +258,11 @@ export default function ReactFormEditor() {
 
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
-    if (processModelFileName) {
-      const pmLength = params.process_model_id?.split(':').length || 0;
-      if (hotCrumbs.current.length <= pmLength) {
-        hotCrumbs.current.push([processModelFileName]);
-      }
+    if (
+      processModelFileName &&
+      (hotCrumbs.current.at(-1) || [])[0] !== processModelFileName
+    ) {
+      hotCrumbs.current.push([processModelFileName]);
     }
     return (
       <main>
