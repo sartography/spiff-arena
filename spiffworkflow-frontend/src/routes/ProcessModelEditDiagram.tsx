@@ -295,9 +295,9 @@ export default function ProcessModelEditDiagram() {
     setDiagramHasChanges(false);
   };
 
-  const onElementsChanged = () => {
+  const onElementsChanged = useCallback(() => {
     setDiagramHasChanges(true);
-  };
+  }, []);
 
   const onDeleteFile = (fileName = params.file_name) => {
     const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
@@ -414,51 +414,60 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
-  const onServiceTasksRequested = (event: any) => {
+  const onServiceTasksRequested = useCallback((event: any) => {
     HttpService.makeCallToBackend({
       path: `/service-tasks`,
       successCallback: makeApiHandler(event),
     });
-  };
+  }, []);
 
-  const onDataStoresRequested = (event: any) => {
-    const processGroupIdentifier =
-      processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
-    HttpService.makeCallToBackend({
-      path: `/data-stores?upsearch=true&process_group_identifier=${processGroupIdentifier}`,
-      successCallback: makeDataStoresApiHandler(event),
-    });
-  };
-
-  const onJsonSchemaFilesRequested = (event: any) => {
-    setFileEventBus(event.eventBus);
-    const re = /.*[-.]schema.json/;
-    if (processModel) {
-      const jsonFiles = processModel.files.filter((f) => f.name.match(re));
-      const options = jsonFiles.map((f) => {
-        return { label: f.name, value: f.name };
+  const onDataStoresRequested = useCallback(
+    (event: any) => {
+      const processGroupIdentifier =
+        processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
+      HttpService.makeCallToBackend({
+        path: `/data-stores?upsearch=true&process_group_identifier=${processGroupIdentifier}`,
+        successCallback: makeDataStoresApiHandler(event),
       });
-      event.eventBus.fire('spiff.json_schema_files.returned', { options });
-    } else {
-      console.error('There is no process Model.');
-    }
-  };
+    },
+    [processModel?.parent_groups],
+  );
 
-  const onDmnFilesRequested = (event: any) => {
-    setFileEventBus(event.eventBus);
-    if (processModel) {
-      const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
-      const options: any[] = [];
-      dmnFiles.forEach((file) => {
-        file.references.forEach((ref) => {
-          options.push({ label: ref.display_name, value: ref.identifier });
+  const onJsonSchemaFilesRequested = useCallback(
+    (event: any) => {
+      setFileEventBus(event.eventBus);
+      const re = /.*[-.]schema.json/;
+      if (processModel) {
+        const jsonFiles = processModel.files.filter((f) => f.name.match(re));
+        const options = jsonFiles.map((f) => {
+          return { label: f.name, value: f.name };
         });
-      });
-      event.eventBus.fire('spiff.dmn_files.returned', { options });
-    } else {
-      console.error('There is no process model.');
-    }
-  };
+        event.eventBus.fire('spiff.json_schema_files.returned', { options });
+      } else {
+        console.error('There is no process Model.');
+      }
+    },
+    [processModel],
+  );
+
+  const onDmnFilesRequested = useCallback(
+    (event: any) => {
+      setFileEventBus(event.eventBus);
+      if (processModel) {
+        const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
+        const options: any[] = [];
+        dmnFiles.forEach((file) => {
+          file.references.forEach((ref) => {
+            options.push({ label: ref.display_name, value: ref.identifier });
+          });
+        });
+        event.eventBus.fire('spiff.dmn_files.returned', { options });
+      } else {
+        console.error('There is no process model.');
+      }
+    },
+    [processModel],
+  );
 
   const makeMessagesRequestedHandler = (event: any) => {
     return function fireEvent(results: any) {
@@ -467,20 +476,23 @@ export default function ProcessModelEditDiagram() {
       });
     };
   };
-  const onMessagesRequested = (event: any) => {
-    // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
-    // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
-    // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
-    // access to the read the process model. we also considered automatically giving you access to read message_model_list
-    // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
-    // where we normally only pork barrel permissions on top of "start" and "all."
-    if (ability.can('GET', targetUris.messageModelListPath)) {
-      HttpService.makeCallToBackend({
-        path: targetUris.messageModelListPath,
-        successCallback: makeMessagesRequestedHandler(event),
-      });
-    }
-  };
+  const onMessagesRequested = useCallback(
+    (event: any) => {
+      // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
+      // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
+      // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
+      // access to the read the process model. we also considered automatically giving you access to read message_model_list
+      // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
+      // where we normally only pork barrel permissions on top of "start" and "all."
+      if (ability.can('GET', targetUris.messageModelListPath)) {
+        HttpService.makeCallToBackend({
+          path: targetUris.messageModelListPath,
+          successCallback: makeMessagesRequestedHandler(event),
+        });
+      }
+    },
+    [ability, targetUris.messageModelListPath],
+  );
 
   useEffect(() => {
     const updateDiagramFiles = (pm: ProcessModel) => {
@@ -518,35 +530,38 @@ export default function ProcessModelEditDiagram() {
     return [];
   };
 
-  const setScriptUnitTestElementWithIndex = (
-    scriptIndex: number,
-    element: any = scriptElement,
-  ) => {
-    const unitTestsModdleElements = getScriptUnitTestElements(element);
-    if (unitTestsModdleElements.length > 0) {
-      setCurrentScriptUnitTest(unitTestsModdleElements[scriptIndex]);
-      setCurrentScriptUnitTestIndex(scriptIndex);
-    }
-  };
+  const setScriptUnitTestElementWithIndex = useCallback(
+    (scriptIndex: number, element: any = scriptElement) => {
+      const unitTestsModdleElements = getScriptUnitTestElements(element);
+      if (unitTestsModdleElements.length > 0) {
+        setCurrentScriptUnitTest(unitTestsModdleElements[scriptIndex]);
+        setCurrentScriptUnitTestIndex(scriptIndex);
+      }
+    },
+    [scriptElement],
+  );
 
-  const onLaunchScriptEditor = (
-    element: any,
-    script: string,
-    scriptTypeString: string,
-    eventBus: any,
-    modeling: any,
-  ) => {
-    // TODO: modeling is only needed for script unit tests.
-    // we should update this to act like updating scripts
-    // where we pass an event to bpmn-js
-    setScriptModeling(modeling);
-    setScriptText(script || '');
-    setScriptType(scriptTypeString);
-    setScriptEventBus(eventBus);
-    setScriptElement(element);
-    setScriptUnitTestElementWithIndex(0, element);
-    handleShowScriptEditor();
-  };
+  const onLaunchScriptEditor = useCallback(
+    (
+      element: any,
+      script: string,
+      scriptTypeString: string,
+      eventBus: any,
+      modeling: any,
+    ) => {
+      // TODO: modeling is only needed for script unit tests.
+      // we should update this to act like updating scripts
+      // where we pass an event to bpmn-js
+      setScriptModeling(modeling);
+      setScriptText(script || '');
+      setScriptType(scriptTypeString);
+      setScriptEventBus(eventBus);
+      setScriptElement(element);
+      setScriptUnitTestElementWithIndex(0, element);
+      handleShowScriptEditor();
+    },
+    [setScriptUnitTestElementWithIndex],
+  );
 
   const handleScriptEditorClose = () => {
     scriptEventBus.fire('spiff.script.update', {
@@ -1045,15 +1060,16 @@ export default function ProcessModelEditDiagram() {
       </Modal>
     );
   };
-  const onLaunchMarkdownEditor = (
-    _element: any,
-    markdown: string,
-    eventBus: any,
-  ) => {
-    setMarkdownText(markdown || '');
-    setMarkdownEventBus(eventBus);
-    handleShowMarkdownEditor();
-  };
+
+  const onLaunchMarkdownEditor = useCallback(
+    (_element: any, markdown: string, eventBus: any) => {
+      setMarkdownText(markdown || '');
+      setMarkdownEventBus(eventBus);
+      handleShowMarkdownEditor();
+    },
+    [],
+  );
+
   const handleMarkdownEditorClose = () => {
     markdownEventBus.fire('spiff.markdown.update', {
       value: markdownText,
@@ -1083,13 +1099,14 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMessageEditor = (event: any) => {
+  const onLaunchMessageEditor = useCallback((event: any) => {
     setMessageEvent(event);
     setMessageId(event.value.messageId);
     setElementId(event.value.elementId);
     setCorrelationProperties(event.value.correlation_properties);
     handleShowMessageEditor();
-  };
+  }, []);
+
   const handleMessageEditorClose = () => {
     setShowMessageEditor(false);
     onMessagesRequested(messageEvent);
@@ -1132,15 +1149,14 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onSearchProcessModels = (
-    _processId: string,
-    eventBus: any,
-    element: any,
-  ) => {
-    setProcessSearchEventBus(eventBus);
-    setProcessSearchElement(element);
-    setShowProcessSearch(true);
-  };
+  const onSearchProcessModels = useCallback(
+    (_processId: string, eventBus: any, element: any) => {
+      setProcessSearchEventBus(eventBus);
+      setProcessSearchElement(element);
+      setShowProcessSearch(true);
+    },
+    [],
+  );
   const processSearchOnClose = (selection: CarbonComboBoxProcessSelection) => {
     const selectedProcessModel = selection.selectedItem;
     if (selectedProcessModel) {
@@ -1172,79 +1188,81 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const findFileNameForReferenceId = (
-    id: string,
-    type: string,
-  ): ProcessFile | null => {
-    // Given a reference id (like a process_id, or decision_id) finds the file
-    // that contains that reference and returns it.
-    let matchFile = null;
-    if (processModel) {
-      const files = processModel.files.filter((f) => f.type === type);
-      files.some((file) => {
-        if (file.references.some((ref) => ref.identifier === id)) {
-          matchFile = file;
-          return true;
+  const findFileNameForReferenceId = useCallback(
+    (id: string, type: string): ProcessFile | null => {
+      // Given a reference id (like a process_id, or decision_id) finds the file
+      // that contains that reference and returns it.
+      let matchFile = null;
+      if (processModel) {
+        const files = processModel.files.filter((f) => f.type === type);
+        files.some((file) => {
+          if (file.references.some((ref) => ref.identifier === id)) {
+            matchFile = file;
+            return true;
+          }
+          return false;
+        });
+      }
+      return matchFile;
+    },
+    [processModel],
+  );
+
+  const onLaunchBpmnEditor = useCallback(
+    (processId: string) => {
+      const openProcessModelFileInNewTab = (
+        processReference: ProcessReference,
+      ) => {
+        const path = generatePath(
+          '/editor/process-models/:process_model_path/files/:file_name',
+          {
+            process_model_path: modifyProcessIdentifierForPathParam(
+              processReference.relative_location,
+            ),
+            file_name: processReference.file_name,
+          },
+        );
+        window.open(path);
+      };
+
+      const openFileNameForProcessId = (
+        processesReferences: ProcessReference[],
+      ) => {
+        const processRef = processesReferences.find((p) => {
+          return p.identifier === processId;
+        });
+        if (processRef) {
+          openProcessModelFileInNewTab(processRef);
         }
-        return false;
+      };
+
+      // using the "setState" method with a function gives us access to the
+      // most current state of processes. Otherwise it uses the stale state
+      // when passing the callback to a non-React component like bpmn-js:
+      //   https://stackoverflow.com/a/60643670/6090676
+      setProcesses((upToDateProcesses: ProcessReference[]) => {
+        const processRef = upToDateProcesses.find((p) => {
+          return p.identifier === processId;
+        });
+        if (!processRef) {
+          getProcessesCallback(openFileNameForProcessId);
+        } else {
+          openProcessModelFileInNewTab(processRef);
+        }
+        return upToDateProcesses;
       });
-    }
-    return matchFile;
-  };
+    },
+    [getProcessesCallback],
+  );
 
-  const onLaunchBpmnEditor = (processId: string) => {
-    const openProcessModelFileInNewTab = (
-      processReference: ProcessReference,
-    ) => {
-      const path = generatePath(
-        '/editor/process-models/:process_model_path/files/:file_name',
-        {
-          process_model_path: modifyProcessIdentifierForPathParam(
-            processReference.relative_location,
-          ),
-          file_name: processReference.file_name,
-        },
-      );
-      window.open(path);
-    };
-
-    const openFileNameForProcessId = (
-      processesReferences: ProcessReference[],
-    ) => {
-      const processRef = processesReferences.find((p) => {
-        return p.identifier === processId;
-      });
-      if (processRef) {
-        openProcessModelFileInNewTab(processRef);
-      }
-    };
-
-    // using the "setState" method with a function gives us access to the
-    // most current state of processes. Otherwise it uses the stale state
-    // when passing the callback to a non-React component like bpmn-js:
-    //   https://stackoverflow.com/a/60643670/6090676
-    setProcesses((upToDateProcesses: ProcessReference[]) => {
-      const processRef = upToDateProcesses.find((p) => {
-        return p.identifier === processId;
-      });
-      if (!processRef) {
-        getProcessesCallback(openFileNameForProcessId);
-      } else {
-        openProcessModelFileInNewTab(processRef);
-      }
-      return upToDateProcesses;
-    });
-  };
-
-  const onLaunchJsonSchemaEditor = (
-    _element: any,
-    fileName: string,
-    eventBus: any,
-  ) => {
-    setFileEventBus(eventBus);
-    setJsonScehmaFileName(fileName);
-    setShowJsonSchemaEditor(true);
-  };
+  const onLaunchJsonSchemaEditor = useCallback(
+    (_element: any, fileName: string, eventBus: any) => {
+      setFileEventBus(eventBus);
+      setJsonScehmaFileName(fileName);
+      setShowJsonSchemaEditor(true);
+    },
+    [],
+  );
 
   const handleJsonScehmaEditorClose = () => {
     fileEventBus.fire('spiff.jsonSchema.update', {
@@ -1283,28 +1301,31 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchDmnEditor = (processId: string) => {
-    const file = findFileNameForReferenceId(processId, 'dmn');
-    let path = '';
-    if (file) {
-      path = generatePath(
-        '/editor/process-models/:process_model_id/files/:file_name',
-        {
-          process_model_id: params.process_model_id || null,
-          file_name: file.name,
-        },
-      );
+  const onLaunchDmnEditor = useCallback(
+    (processId: string) => {
+      const file = findFileNameForReferenceId(processId, 'dmn');
+      let path = '';
+      if (file) {
+        path = generatePath(
+          '/editor/process-models/:process_model_id/files/:file_name',
+          {
+            process_model_id: params.process_model_id || null,
+            file_name: file.name,
+          },
+        );
+        window.open(path);
+      } else {
+        path = generatePath(
+          '/editor/process-models/:process_model_id/files?file_type=dmn',
+          {
+            process_model_id: params.process_model_id || null,
+          },
+        );
+      }
       window.open(path);
-    } else {
-      path = generatePath(
-        '/editor/process-models/:process_model_id/files?file_type=dmn',
-        {
-          process_model_id: params.process_model_id || null,
-        },
-      );
-    }
-    window.open(path);
-  };
+    },
+    [findFileNameForReferenceId, params.process_model_id],
+  );
 
   const isDmn = () => {
     const fileName = params.file_name || '';

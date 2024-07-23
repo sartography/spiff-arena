@@ -202,11 +202,6 @@ export default function ReactDiagramEditor({
   };
 
   useEffect(() => {
-    // if (diagramModelerState) {
-    //   return;
-    // }
-    console.log('WE IN THIS USE EFFECT');
-
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
       canvasClass = 'diagram-viewer-canvas';
@@ -318,7 +313,6 @@ export default function ReactDiagramEditor({
 
     function handleElementClick(event: any) {
       if (onElementClick) {
-        console.log('WE SET HANDL');
         const canvas = diagramModeler.get('canvas');
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
           canvas.getRootElement(),
@@ -436,22 +430,21 @@ export default function ReactDiagramEditor({
       }
     });
   }, [
-    // diagramModelerState,
-    // diagramType,
+    diagramType,
     onDataStoresRequested,
-    // onDmnFilesRequested,
+    onDmnFilesRequested,
     onElementClick,
-    // onElementsChanged,
-    // onJsonSchemaFilesRequested,
-    // onLaunchBpmnEditor,
-    // onLaunchDmnEditor,
-    // onLaunchJsonSchemaEditor,
-    // onLaunchMarkdownEditor,
-    // onLaunchScriptEditor,
-    // onLaunchMessageEditor,
-    // onMessagesRequested,
-    // onSearchProcessModels,
-    // onServiceTasksRequested,
+    onElementsChanged,
+    onJsonSchemaFilesRequested,
+    onLaunchBpmnEditor,
+    onLaunchDmnEditor,
+    onLaunchJsonSchemaEditor,
+    onLaunchMarkdownEditor,
+    onLaunchScriptEditor,
+    onLaunchMessageEditor,
+    onMessagesRequested,
+    onSearchProcessModels,
+    onServiceTasksRequested,
   ]);
 
   useEffect(() => {
@@ -560,7 +553,6 @@ export default function ReactDiagramEditor({
       if (diagramXMLToDisplay === diagramXMLString) {
         return;
       }
-      // console.log('diagramXMLToDisplay', diagramXMLToDisplay);
       setDiagramXMLString(diagramXMLToDisplay);
       diagramModelerToUse.importXML(diagramXMLToDisplay);
       zoom(0);
@@ -610,7 +602,7 @@ export default function ReactDiagramEditor({
       return undefined;
     }
 
-    if (!diagramXMLString) {
+    if (!diagramXMLToUse) {
       if (url) {
         fetchDiagramFromURL(url);
         return undefined;
