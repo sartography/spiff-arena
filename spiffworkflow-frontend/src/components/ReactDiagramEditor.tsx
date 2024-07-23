@@ -17,7 +17,7 @@ import {
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 } from 'dmn-js-properties-panel';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 // @ts-ignore
 import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
@@ -134,8 +134,6 @@ export default function ReactDiagramEditor({
   const [diagramModelerState, setDiagramModelerState] = useState(null);
   const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
 
-  const alreadyImportedXmlRef = useRef(false);
-
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
 
@@ -204,9 +202,10 @@ export default function ReactDiagramEditor({
   };
 
   useEffect(() => {
-    if (diagramModelerState) {
-      return;
-    }
+    // if (diagramModelerState) {
+    //   return;
+    // }
+    console.log('WE IN THIS USE EFFECT');
 
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
@@ -319,6 +318,7 @@ export default function ReactDiagramEditor({
 
     function handleElementClick(event: any) {
       if (onElementClick) {
+        console.log('WE SET HANDL');
         const canvas = diagramModeler.get('canvas');
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
           canvas.getRootElement(),
@@ -436,22 +436,22 @@ export default function ReactDiagramEditor({
       }
     });
   }, [
-    diagramModelerState,
-    diagramType,
+    // diagramModelerState,
+    // diagramType,
     onDataStoresRequested,
-    onDmnFilesRequested,
+    // onDmnFilesRequested,
     onElementClick,
-    onElementsChanged,
-    onJsonSchemaFilesRequested,
-    onLaunchBpmnEditor,
-    onLaunchDmnEditor,
-    onLaunchJsonSchemaEditor,
-    onLaunchMarkdownEditor,
-    onLaunchScriptEditor,
-    onLaunchMessageEditor,
-    onMessagesRequested,
-    onSearchProcessModels,
-    onServiceTasksRequested,
+    // onElementsChanged,
+    // onJsonSchemaFilesRequested,
+    // onLaunchBpmnEditor,
+    // onLaunchDmnEditor,
+    // onLaunchJsonSchemaEditor,
+    // onLaunchMarkdownEditor,
+    // onLaunchScriptEditor,
+    // onLaunchMessageEditor,
+    // onMessagesRequested,
+    // onSearchProcessModels,
+    // onServiceTasksRequested,
   ]);
 
   useEffect(() => {
@@ -557,15 +557,16 @@ export default function ReactDiagramEditor({
       diagramModelerToUse: any,
       diagramXMLToDisplay: any,
     ) {
-      if (alreadyImportedXmlRef.current) {
+      if (diagramXMLToDisplay === diagramXMLString) {
         return;
       }
+      // console.log('diagramXMLToDisplay', diagramXMLToDisplay);
+      setDiagramXMLString(diagramXMLToDisplay);
       diagramModelerToUse.importXML(diagramXMLToDisplay);
       zoom(0);
       if (diagramType !== 'dmn') {
         fixUnresolvedReferences(diagramModelerToUse);
       }
-      alreadyImportedXmlRef.current = true;
     }
 
     function dmnTextHandler(text: string) {
@@ -604,9 +605,6 @@ export default function ReactDiagramEditor({
 
     const diagramXMLToUse = diagramXML || diagramXMLString;
     if (diagramXMLToUse) {
-      if (!diagramXMLString) {
-        setDiagramXMLString(diagramXMLToUse);
-      }
       displayDiagram(diagramModelerState, diagramXMLToUse);
 
       return undefined;
