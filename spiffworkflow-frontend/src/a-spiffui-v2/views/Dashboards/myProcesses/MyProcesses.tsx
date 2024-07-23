@@ -90,9 +90,9 @@ export default function MyProcesses({
           headerName: column.Header,
           colSpan: 0,
           flex: 1,
-          renderCell: (params: Record<string, any>) => (
-            <CellRenderer header={column.Header} data={params} />
-          ),
+          renderCell: (params: Record<string, any>) => {
+            return <CellRenderer header={column.Header} data={params} />;
+          },
         }),
       );
 

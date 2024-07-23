@@ -9,6 +9,8 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailDict
+from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.logging_service import LoggingService
 
@@ -30,6 +32,7 @@ class ProcessInstanceTmpService:
         exception: Exception | None = None,
         timestamp: float | None = None,
         add_to_db_session: bool | None = True,
+        migration_details: ProcessInstanceMigrationDetailDict | None = None,
     ) -> tuple[ProcessInstanceEventModel, ProcessInstanceErrorDetailModel | None]:
         if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
@@ -47,6 +50,10 @@ class ProcessInstanceTmpService:
 
         process_instance_error_detail = None
         if exception is not None:
+            # NOTE: I tried to move this to its own method but
+            # est_unlocks_if_an_exception_is_thrown_with_a__dequeued_process_instance
+            # gave sqlalchemy rollback errors. I could not figure out why so went back to this.
+            #
             # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             stacktrace = traceback.format_exc().split("\n")
             message = str(exception)[0:1023]
@@ -81,7 +88,25 @@ class ProcessInstanceTmpService:
 
         LoggingService.log_event(event_type, task_guid)
         
+        if migration_details is not None:
+            pi_detail = cls.add_process_instance_migration_detail(process_instance_event, migration_details)
+            if add_to_db_session:
+                db.session.add(pi_detail)
+                
         return (process_instance_event, process_instance_error_detail)
+
+    @classmethod
+    def add_process_instance_migration_detail(
+        cls, process_instance_event: ProcessInstanceEventModel, migration_details: ProcessInstanceMigrationDetailDict
+    ) -> ProcessInstanceMigrationDetailModel:
+        pi_detail = ProcessInstanceMigrationDetailModel(
+            process_instance_event=process_instance_event,
+            initial_git_revision=migration_details["initial_git_revision"],
+            target_git_revision=migration_details["target_git_revision"],
+            initial_bpmn_process_hash=migration_details["initial_bpmn_process_hash"],
+            target_bpmn_process_hash=migration_details["target_bpmn_process_hash"],
+        )
+        return pi_detail
 
     @staticmethod
     def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:

@@ -122,8 +122,11 @@ export default function ProcessModelEditDiagram() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageModelListPath]: ['GET'],
+    [targetUris.processModelFileCreatePath]: ['PUT', 'POST'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData,
+  );
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -1251,7 +1254,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const jsonSchemaEditor = () => {
-    if (!showJsonSchemaEditor) {
+    if (!showJsonSchemaEditor || !permissionsLoaded) {
       return null;
     }
     return (
@@ -1267,6 +1270,14 @@ export default function ProcessModelEditDiagram() {
           processModelId={params.process_model_id || ''}
           fileName={jsonScehmaFileName}
           onFileNameSet={setJsonScehmaFileName}
+          canUpdateFiles={ability.can(
+            'POST',
+            targetUris.processModelFileCreatePath,
+          )}
+          canCreateFiles={ability.can(
+            'PUT',
+            targetUris.processModelFileCreatePath,
+          )}
         />
       </Modal>
     );

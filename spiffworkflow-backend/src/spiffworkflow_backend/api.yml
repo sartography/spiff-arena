@@ -1344,6 +1344,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: target_bpmn_process_hash
+        in: query
+        required: false
+        description: The full bpmn process hash of the target version of the process model.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
@@ -1509,6 +1515,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: target_bpmn_process_hash
+        in: query
+        required: false
+        description: The full bpmn process hash of the target version of the process model.
+        schema:
+          type: string
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_migrate
       summary: Migrate a process instance to the new version of its process model.
@@ -1736,7 +1748,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  # NOT USED
   /tasks:
     parameters:
       - name: process_instance_id
@@ -2921,6 +2932,33 @@ paths:
         - Process Instance Events
       operationId: spiffworkflow_backend.routes.process_instance_events_controller.log_list
       summary: returns a list of logs associated with the process instance
+      responses:
+        "200":
+          description: list of logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessInstanceLog"
+
+  /process-instance-events/{modified_process_model_identifier}/{process_instance_id}/migration:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: the id of the process instance
+        schema:
+          type: integer
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The process_model_id, modified to replace slashes (/)
+        schema:
+          type: string
+    get:
+      tags:
+        - Process Instance Events
+      operationId: spiffworkflow_backend.routes.process_instance_events_controller.process_instance_migration_event_list
+      summary: returns a list of migration events associated with the process instance
       responses:
         "200":
           description: list of logs

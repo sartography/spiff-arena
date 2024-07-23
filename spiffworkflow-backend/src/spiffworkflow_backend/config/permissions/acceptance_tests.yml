@@ -1,13 +1,13 @@
 users:
   ciadmin1:
     service: local_open_id
-    email: ciadmin1@spiffworkflow.org
+    email: ciadmin1@example.com
     password: ciadmin1
     preferred_username: ciadmin1
 
 groups:
   admin:
-    users: [ciadmin1@spiffworkflow.org]
+    users: [ciadmin1@example.com]
   spiff_public:
     users: []
 

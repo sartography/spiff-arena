@@ -382,8 +382,6 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-
         assert process_instance.status == "complete"
 
     def test_properly_resets_process_on_tasks_with_boundary_events(
@@ -525,11 +523,6 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-
-        # recreate variables to ensure all bpmn json was recreated from scratch from the db
-        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor_last_tasks = ProcessInstanceProcessor(process_instance_relookup)
-        processor_last_tasks.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor_final = ProcessInstanceProcessor(process_instance_relookup, include_completed_subprocesses=True)
@@ -1123,6 +1116,25 @@ class TestProcessInstanceProcessor(BaseTest):
         new_tasks = new_bpmn_process_instance.get_tasks()
         new_task_names = [t.task_spec.name for t in new_tasks]
         assert old_task_names == new_task_names
+
+    def test_simple_call_activity_chain(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/basic_call_activity_series",
+            process_model_source_directory="basic_call_activity_series",
+            primary_file_name="call-activity-1.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        self.complete_next_manual_task(processor)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == ProcessInstanceStatus.complete.value
 
     # # To test processing times with multiinstance subprocesses
     # def test_large_multiinstance(

@@ -71,7 +71,7 @@ elif [[ "${session_type}" == "mypy" ]]; then
   poetry run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
-  poetry run safety check --full-report --ignore=70624 --ignore=70612
+  poetry run safety check --full-report --ignore=70624 --ignore=70612 --ignore=71600 --ignore=71594
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then

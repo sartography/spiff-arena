@@ -23,6 +23,7 @@ import {
   Warning,
   Link as LinkIcon,
   View,
+  Migrate,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -151,6 +152,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       : targetUris.processInstanceTaskListForMePath;
 
   const permissionRequestData: PermissionsToCheck = {
+    [`${targetUris.processInstanceMigratePath}`]: ['POST'],
     [`${targetUris.processInstanceResumePath}`]: ['POST'],
     [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
@@ -591,6 +593,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const navigateToProcessInstanceMigratePage = () => {
+    navigate(
+      `/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
+    );
+  };
+
   const terminateButton = () => {
     if (
       processInstance &&
@@ -626,6 +634,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={PauseOutline}
           iconDescription="Suspend"
+          hasIconOnly
+          size="lg"
+        />
+      );
+    }
+    return <div />;
+  };
+  const migrateButton = () => {
+    if (processInstance && processInstance.status === 'suspended') {
+      return (
+        <Button
+          onClick={navigateToProcessInstanceMigratePage}
+          kind="ghost"
+          renderIcon={Migrate}
+          iconDescription="Migrate"
           hasIconOnly
           size="lg"
         />
@@ -712,9 +735,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const initializeTaskDataToDisplay = (task: Task | null) => {
     if (
       task &&
-      (task.state === 'COMPLETED' ||
-        task.state === 'ERROR' ||
-        task.state === 'READY') &&
+      ['COMPLETED', 'ERROR', 'READY'].includes(task.state) &&
       ability.can('GET', targetUris.processInstanceTaskDataPath)
     ) {
       setShowTaskDataLoading(true);
@@ -1104,7 +1125,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (task.typename === 'CallActivity') {
+    if (
+      task.typename === 'CallActivity' &&
+      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+    ) {
       const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
         task.task_definition_properties_json;
       buttons.push(
@@ -1604,6 +1628,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
       elements.push(suspendButton());
+    }
+    if (ability.can('POST', `${targetUris.processInstanceMigratePath}`)) {
+      elements.push(migrateButton());
     }
     if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
       elements.push(resumeButton());

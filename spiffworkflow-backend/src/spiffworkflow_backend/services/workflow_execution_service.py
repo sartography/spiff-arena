@@ -362,7 +362,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.after_engine_steps(bpmn_process_instance)
 
     def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
-        return (self.task_service.task_model_mapping, self.task_service.bpmn_subprocess_mapping)
+        return self.task_service.get_guid_to_db_object_mappings()
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""

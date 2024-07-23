@@ -20,7 +20,7 @@
         <bpmn:incoming>Flow_0s7769x</bpmn:incoming>
       </bpmn:endEvent>
       <bpmn:sequenceFlow id="Flow_0s7769x" sourceRef="manual_task_one" targetRef="Event_0fx2psf" />
-      <bpmn:manualTask id="manual_task_one">
+      <bpmn:manualTask id="manual_task_one" name="Manual Task 1">
         <bpmn:incoming>Flow_01eckoj</bpmn:incoming>
         <bpmn:outgoing>Flow_0s7769x</bpmn:outgoing>
       </bpmn:manualTask>
