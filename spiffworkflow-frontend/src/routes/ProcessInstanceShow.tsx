@@ -68,7 +68,6 @@ import {
   ProcessInstance,
   ProcessModel,
   Task,
-  TaskDefinitionPropertiesJson,
   User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -862,11 +861,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ],
   );
 
-  const handleClickedDiagramTask = useCallback(
+  const findMatchingTaskFromShapeElement = useCallback(
     (shapeElement: any, bpmnProcessIdentifiers: any) => {
-      if (shapeElement.type === 'bpmn:DataObjectReference') {
-        makeProcessDataCallFromShapeElement(shapeElement);
-      } else if (tasks) {
+      if (tasks) {
         const matchingTask: Task | undefined = tasks.find((task: Task) => {
           return (
             task.bpmn_identifier === shapeElement.id &&
@@ -875,6 +872,42 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             )
           );
         });
+        return matchingTask;
+      }
+      return undefined;
+    },
+    [tasks],
+  );
+
+  const handleCallActivityNavigate = useCallback(
+    (shapeElement: any, bpmnProcessIdentifiers: any) => {
+      const matchingTask = findMatchingTaskFromShapeElement(
+        shapeElement,
+        bpmnProcessIdentifiers,
+      );
+      if (
+        matchingTask &&
+        matchingTask.typename === 'CallActivity' &&
+        !['FUTURE', 'LIKELY', 'MAYBE'].includes(matchingTask.state)
+      ) {
+        const processIdentifierToUse =
+          shapeElement.businessObject.calledElement;
+        const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${matchingTask.guid}`;
+        navigate(url);
+      }
+    },
+    [navigate, findMatchingTaskFromShapeElement],
+  );
+
+  const handleClickedDiagramTask = useCallback(
+    (shapeElement: any, bpmnProcessIdentifiers: any) => {
+      if (shapeElement.type === 'bpmn:DataObjectReference') {
+        makeProcessDataCallFromShapeElement(shapeElement);
+      } else if (tasks) {
+        const matchingTask = findMatchingTaskFromShapeElement(
+          shapeElement,
+          bpmnProcessIdentifiers,
+        );
         if (matchingTask) {
           setTaskToDisplay(matchingTask);
           initializeTaskDataToDisplay(matchingTask);
@@ -883,6 +916,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
     },
     [
+      findMatchingTaskFromShapeElement,
       initializeTaskDataToDisplay,
       initializeTaskInstancesToDisplay,
       makeProcessDataCallFromShapeElement,
@@ -1140,23 +1174,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />,
       );
     }
-
-    if (
-      task.typename === 'CallActivity' &&
-      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
-    ) {
-      const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
-        task.task_definition_properties_json;
-      buttons.push(
-        <Link
-          data-qa="go-to-call-activity-result"
-          to={`${window.location.pathname}?process_identifier=${taskDefinitionPropertiesJson.spec}&bpmn_process_guid=${task.guid}`}
-          // target="_blank"
-        >
-          View Call Activity Diagram
-        </Link>,
-      );
-    }
+    //
+    // if (
+    //   task.typename === 'CallActivity' &&
+    //   !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+    // ) {
+    //   const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
+    //     task.task_definition_properties_json;
+    //   buttons.push(
+    //     <Link
+    //       data-qa="go-to-call-activity-result"
+    //       to={`${window.location.pathname}?process_identifier=${taskDefinitionPropertiesJson.spec}&bpmn_process_guid=${task.guid}`}
+    //       // target="_blank"
+    //     >
+    //       View Call Activity Diagram
+    //     </Link>,
+    //   );
+    // }
 
     if (canEditTaskData(task)) {
       buttons.push(
@@ -1739,6 +1773,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           tasks={tasks}
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
+          onCallActivityOverlayClick={handleCallActivityNavigate}
         />
         <div id="diagram-container" />
       </>

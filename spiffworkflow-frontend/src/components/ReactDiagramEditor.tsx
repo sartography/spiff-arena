@@ -77,6 +77,7 @@ type OwnProps = {
   disableSaveButton?: boolean;
   fileName?: string;
   isPrimaryFile?: boolean;
+  onCallActivityOverlayClick?: (..._args: any[]) => any;
   onDataStoresRequested?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
@@ -109,6 +110,7 @@ export default function ReactDiagramEditor({
   disableSaveButton,
   fileName,
   isPrimaryFile,
+  onCallActivityOverlayClick,
   onDataStoresRequested,
   onDeleteFile,
   onDmnFilesRequested,
@@ -333,7 +335,45 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function domify(htmlString: string) {
+      const template = document.createElement('template');
+      template.innerHTML = htmlString.trim();
+      return template.content.firstChild;
+    }
+    function createCallActivityOverlay(event: any) {
+      if (event.element && event.element.type === 'bpmn:CallActivity') {
+        const overlays = diagramModeler.get('overlays');
+        const ARROW_DOWN_SVG =
+          '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
+        const button: any = domify(
+          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
+        );
+        button.addEventListener('click', () => {
+          if (onCallActivityOverlayClick) {
+            const canvas = diagramModeler.get('canvas');
+            const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+              canvas.getRootElement(),
+            );
+            onCallActivityOverlayClick(event.element, bpmnProcessIdentifiers);
+          }
+        });
+        overlays.add(event.element.id, 'drilldown', {
+          position: {
+            bottom: -10,
+            right: -8,
+          },
+          html: button,
+        });
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
+
+    if (diagramType === 'readonly') {
+      diagramModeler.on('shape.added', (event: any) => {
+        createCallActivityOverlay(event);
+      });
+    }
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
@@ -431,6 +471,7 @@ export default function ReactDiagramEditor({
     });
   }, [
     diagramType,
+    onCallActivityOverlayClick,
     onDataStoresRequested,
     onDmnFilesRequested,
     onElementClick,
