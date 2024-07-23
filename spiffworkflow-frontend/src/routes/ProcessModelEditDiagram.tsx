@@ -1336,12 +1336,12 @@ export default function ProcessModelEditDiagram() {
     if (isDmn()) {
       return (
         <ReactDiagramEditor
-          processModelId={params.process_model_id || ''}
-          saveDiagram={saveDiagram}
-          onDeleteFile={onDeleteFile}
+          diagramType="dmn"
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
-          diagramType="dmn"
+          onDeleteFile={onDeleteFile}
+          processModelId={params.process_model_id || ''}
+          saveDiagram={saveDiagram}
         />
       );
     }
@@ -1373,8 +1373,8 @@ export default function ProcessModelEditDiagram() {
         onLaunchDmnEditor={onLaunchDmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
-        onLaunchScriptEditor={onLaunchScriptEditor}
         onLaunchMessageEditor={onLaunchMessageEditor}
+        onLaunchScriptEditor={onLaunchScriptEditor}
         onMessagesRequested={onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
         onServiceTasksRequested={onServiceTasksRequested}
