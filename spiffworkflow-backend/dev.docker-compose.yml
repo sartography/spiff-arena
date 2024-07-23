@@ -12,9 +12,28 @@ services:
       SPIFFWORKFLOW_BACKEND_LOG_LEVEL: "INFO"
       SPIFFWORKFLOW_BACKEND_ENV: "${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: ""
+      SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST: "${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST:-spiff-arena-events-demo-1}"
+      SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT: "${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT:-8008}"
       XDG_CACHE_HOME: "/app/.cache"
     env_file:
       - path: .env
         required: false
     volumes:
       - ./spiffworkflow-backend:/app
+  events-demo:
+    build:
+      context: events-demo
+      dockerfile: Dockerfile
+    user: "${RUN_AS}"
+    environment:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      SPIFFWORKFLOW_EVENT_STREAM_HOST: "${SPIFFWORKFLOW_EVENT_STREAM_HOST:-0.0.0.0}"
+      SPIFFWORKFLOW_EVENT_STREAM_PORT: "${SPIFFWORKFLOW_EVENT_STREAM_PORT:-8008}"
+      XDG_CACHE_HOME: "/app/.cache"
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${SPIFFWORKFLOW_EVENT_STREAM_PORT:-8008}:${SPIFFWORKFLOW_EVENT_STREAM_PORT:-8008}/tcp"
+    volumes:
+      - ./events-demo:/app

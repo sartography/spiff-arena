@@ -1,3 +1,5 @@
+EVENTS_DEMO_CONTAINER ?= spiff-arena-events-demo-1
+IN_EVENTS_DEMO ?= $(DOCKER_COMPOSE) run --rm $(EVENTS_DEMO_CONTAINER)
 
 net-start:
 	docker network create elastic-net
@@ -55,11 +57,18 @@ events-demo-start: net-start \
 	
 events-demo-stop: kibana-stop elasticsearch-stop net-stop
 	@true
+
+events-demo-logs:
+	docker logs -f $(EVENTS_DEMO_CONTAINER)
 	
+events-demo-sh:
+	$(IN_EVENTS_DEMO) /bin/bash
+
 .PHONY: net-start net-stop \
 	elasticsearch-start \
 	elasticsearch-wait-for-boot \
 	elasticsearch-create-index elasticsearch-kibana-set-pwd \
 	elasticsearch-stop \
 	kibana-start kibana-stop \
-	events-demo-start events-demo-stop
+	events-demo-start events-demo-stop \
+	events-demo-logs events-demo-sh

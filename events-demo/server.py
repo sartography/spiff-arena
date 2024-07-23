@@ -2,9 +2,10 @@ import json
 import os, os.path
 import socket
 import subprocess
+import sys
 
-HOST = os.environ.get('SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST')
-PORT = int(os.environ.get('SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT'))
+HOST = os.environ.get('SPIFFWORKFLOW_EVENT_STREAM_HOST')
+PORT = int(os.environ.get('SPIFFWORKFLOW_EVENT_STREAM_PORT'))
 
 AUTH = f"elastic:{os.environ['ELASTIC_PASSWORD']}"
 
@@ -25,7 +26,7 @@ def send_event(event):
         res = subprocess.run(CURL_TEMPLATE + [event], stdout=subprocess.PIPE).stdout()
         print(json.dumps(json.loads(res)))
     except:
-        print(f"ERROR: Invalid Response: {res}")
+        print(f"ERROR: Invalid Response: {res}", file=sys.stderr)
 
 
 with socket.create_server((HOST, PORT)) as sock:
@@ -37,10 +38,10 @@ with socket.create_server((HOST, PORT)) as sock:
                 while line:
                     line = line.strip()
                     try:
-                        json.loads(line)
                         print(line)
+                        json.loads(line)
                         send_event(line)
                     except:
-                        print(f"ERROR: Invalid Request: {line}")
+                        print(f"ERROR: Invalid Request: {line}", file=sys.stderr)
                     line = fh.readline()
 
