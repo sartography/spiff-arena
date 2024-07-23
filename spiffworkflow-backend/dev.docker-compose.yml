@@ -7,7 +7,6 @@ services:
     user: "${RUN_AS}"
     environment:
       FLASK_DEBUG: "1"
-      #POETRY_CACHE_DIR: "/app/.cache/poetry"
       POETRY_VIRTUALENVS_IN_PROJECT: "true"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: ""
       SPIFFWORKFLOW_BACKEND_LOG_LEVEL: "INFO"
@@ -19,4 +18,3 @@ services:
         required: false
     volumes:
       - ./spiffworkflow-backend:/app
-      - ${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST}:${SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST}
