@@ -3,13 +3,13 @@ import logging
 import os
 import re
 import sys
-from typing import Any
-from logging.handlers import SocketHandler
-from uuid import uuid4
 from datetime import datetime
+from logging.handlers import SocketHandler
+from typing import Any
+from uuid import uuid4
 
-from flask.app import Flask
 from flask import g
+from flask.app import Flask
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -26,68 +26,70 @@ from flask import g
 class InvalidLogLevelError(Exception):
     pass
 
-class SpiffLogHandler(SocketHandler):
 
-    def __init__(self, app, *args):
+class SpiffLogHandler(SocketHandler):
+    def __init__(self, app, *args):  # type: ignore
         super().__init__(
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
 
-    def format(self, record):
-        return json.dumps({
-            'specversion': '1.0',
-            'type': record.name,
-            'id': str(uuid4()),
-            'source': 'spiffworkflow.org',
-            'timestamp': datetime.utcnow().timestamp(),
-            'data': record._spiff_data,
-        })
+    def format(self, record: Any) -> str:
+        return json.dumps(
+            {
+                "specversion": "1.0",
+                "type": record.name,
+                "id": str(uuid4()),
+                "source": "spiffworkflow.org",
+                "timestamp": datetime.utcnow().timestamp(),
+                "data": record._spiff_data,
+            }
+        )
 
-    def get_user_info(self):
+    def get_user_info(self) -> tuple[int | None, str | None]:
         try:
             return g.user.id, g.user.username
-        except:
+        except Exception:
             return None, None
 
-    def get_default_process_info(self):
+    def get_default_process_info(self) -> tuple[int | None, str | None]:
         try:
             tld = self.app.config["THREAD_LOCAL_DATA"]
             return tld.process_instance_id, tld.process_model_identifier
-        except:
+        except Exception:
             return None, None
 
-    def filter(self, record):
-        if record.name == 'spiff' and getattr(record, 'event_type', '') not in ['task_completed', 'task_cancelled']:
+    def filter(self, record: Any) -> bool:
+        if record.name == "spiff" and getattr(record, "event_type", "") not in ["task_completed", "task_cancelled"]:
             user_id, user_name = self.get_user_info()
-            
+
             data = {
-                'message': record.msg,
-                'userid': user_id,
-                'username': user_name,
+                "message": record.msg,
+                "userid": user_id,
+                "username": user_name,
             }
 
             process_instance_id, process_model_identifier = self.get_default_process_info()
-            
-            if not hasattr(record, 'process_instance_id'):
-                data['process_instance_id'] = process_instance_id
-            if not hasattr(record, 'process_model_identifier'):
-                data['process_model_identifier'] = process_model_identifier
-                
-            for attr in ['workflow_spec', 'task_spec', 'task_id', 'task_type']:
+
+            if not hasattr(record, "process_instance_id"):
+                data["process_instance_id"] = process_instance_id
+            if not hasattr(record, "process_model_identifier"):
+                data["process_model_identifier"] = process_model_identifier
+
+            for attr in ["workflow_spec", "task_spec", "task_id", "task_type"]:
                 if hasattr(record, attr):
                     data[attr] = str(getattr(record, attr))
                 else:
                     data[attr] = None
-            setattr(record, '_spiff_data', data)
+            record._spiff_data = data
             return True
         else:
             return False
 
-    def makePickle(self, record):
+    def makePickle(self, record: Any) -> bytes:  # noqa: N802
         # Instead of returning a pickled log record, write the json entry to the socket
-        return (self.format(record) + '\n').encode('utf-8')
+        return (self.format(record) + "\n").encode("utf-8")
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -161,7 +163,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    
+
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
 
@@ -251,9 +253,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         spiff_logger = logging.getLogger("spiff")
         spiff_logger.setLevel(logging.INFO)
         spiff_logger.propagate = False
-        handler = SpiffLogHandler(app)
+        handler = SpiffLogHandler(app)  # type: ignore
         spiff_logger.addHandler(handler)
-        
+
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
     log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -279,14 +281,16 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
 
 class LoggingService:
     _spiff_logger = logging.getLogger("spiff")
-    
+
     @classmethod
-    def log_event(cls, event_type: str,
+    def log_event(
+        cls,
+        event_type: str,
         task_guid: str | None = None,
         process_model_identifier: str | None = None,
         process_instance_id: int | None = None,
     ) -> None:
-        extra = {"event_type": event_type}
+        extra: dict[str, Any] = {"event_type": event_type}
 
         if task_guid is not None:
             extra["task_guid"] = task_guid
@@ -296,6 +300,5 @@ class LoggingService:
 
         if process_instance_id is not None:
             extra["process_instance_id"] = process_instance_id
-        
-        cls._spiff_logger.info(event_type, extra=extra)
 
+        cls._spiff_logger.info(event_type, extra=extra)

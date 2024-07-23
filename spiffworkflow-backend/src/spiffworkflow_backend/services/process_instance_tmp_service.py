@@ -1,4 +1,3 @@
-import logging
 import time
 import traceback
 
@@ -87,12 +86,12 @@ class ProcessInstanceTmpService:
                 db.session.add(process_instance_error_detail)
 
         LoggingService.log_event(event_type, task_guid)
-        
+
         if migration_details is not None:
             pi_detail = cls.add_process_instance_migration_detail(process_instance_event, migration_details)
             if add_to_db_session:
                 db.session.add(pi_detail)
-                
+
         return (process_instance_event, process_instance_error_detail)
 
     @classmethod
