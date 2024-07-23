@@ -3,10 +3,8 @@ import os, os.path
 import socket
 import subprocess
 
-SOCK = "/tmp/event_stream.sock"
-
-if os.path.exists(SOCK):
-    os.remove(SOCK)
+HOST = os.environ.get('SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST')
+PORT = int(os.environ.get('SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT'))
 
 AUTH = f"elastic:{os.environ['ELASTIC_PASSWORD']}"
 
@@ -26,18 +24,17 @@ def send_event(event):
     res = subprocess.run(CURL_TEMPLATE + [event], stdout=subprocess.PIPE)
     print(json.dumps(json.loads(res.stdout)))
 
-server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-server.bind(SOCK)
 
-while True:
-    server.listen(1)
-    client_sock, addr = server.accept()
-    with client_sock:
-        with client_sock.makefile() as fh:
-            line = fh.readline()
-            while line:
-                print(line.strip())
-                send_event(line.strip())
+with socket.create_server((HOST, PORT)) as sock:
+    while True:
+        client_sock, addr = sock.accept()
+        with client_sock:
+            with client_sock.makefile() as fh:
                 line = fh.readline()
+                while line:
+                    line = line.strio()
+                    print(line)
+                    send_event(line)
+                    line = fh.readline()
+        print("socket closed")
 
-print("socket closed")
