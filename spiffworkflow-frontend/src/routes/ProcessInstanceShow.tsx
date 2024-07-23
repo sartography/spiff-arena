@@ -880,23 +880,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   );
 
   const handleCallActivityNavigate = useCallback(
-    (shapeElement: any, bpmnProcessIdentifiers: any) => {
-      const matchingTask = findMatchingTaskFromShapeElement(
-        shapeElement,
-        bpmnProcessIdentifiers,
-      );
+    (task: Task) => {
       if (
-        matchingTask &&
-        matchingTask.typename === 'CallActivity' &&
-        !['FUTURE', 'LIKELY', 'MAYBE'].includes(matchingTask.state)
+        task &&
+        task.typename === 'CallActivity' &&
+        !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
       ) {
         const processIdentifierToUse =
-          shapeElement.businessObject.calledElement;
-        const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${matchingTask.guid}`;
+          task.task_definition_properties_json.spec;
+        const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${task.guid}`;
         navigate(url);
       }
     },
-    [navigate, findMatchingTaskFromShapeElement],
+    [navigate],
   );
 
   const handleClickedDiagramTask = useCallback(
