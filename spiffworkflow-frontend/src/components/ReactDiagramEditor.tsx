@@ -19,7 +19,7 @@ import {
 
 import React, { useEffect, useState, useCallback } from 'react';
 // @ts-ignore
-import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
+import { Button, ButtonSet, Modal, UnorderedList } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -35,6 +35,7 @@ import 'dmn-js/dist/assets/dmn-js-literal-expression.css';
 import 'dmn-js/dist/assets/dmn-js-shared.css';
 import 'dmn-js/dist/assets/dmn-font/css/dmn-embedded.css';
 import 'dmn-js-properties-panel/dist/assets/properties-panel.css';
+import { Link, useNavigate } from 'react-router-dom';
 
 // @ts-expect-error TS(7016) FIXME
 import spiffworkflow from 'bpmn-js-spiffworkflow/app/spiffworkflow';
@@ -51,8 +52,6 @@ import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
 // @ts-expect-error TS(7016) FIXME
 import TouchModule from 'diagram-js/lib/navigation/touch';
-
-import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
@@ -527,27 +526,22 @@ export default function ReactDiagramEditor({
       ) {
         return;
       }
-      function domify(htmlString: string) {
-        const template = document.createElement('template');
-        template.innerHTML = htmlString.trim();
-        return template.content.firstChild;
-      }
       const createCallActivityOverlay = () => {
         const overlays = diagramModelerState.get('overlays');
         const ARROW_DOWN_SVG =
           '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
-        const button: any = domify(
-          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
-        );
-        button.addEventListener('click', () => {
-          onCallActivityOverlayClick(task);
-        });
+        const processIdentifierToUse =
+          task.task_definition_properties_json.spec;
+        const callActivityUrl = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${task.guid}`;
+
+        // using a string because bpmn-js overlay requires a string and react-router-dom's Link is too magical to be converted to a string
+        const link = `<a href=${callActivityUrl}>${ARROW_DOWN_SVG}</a>`;
         overlays.add(task.bpmn_identifier, 'drilldown', {
           position: {
-            bottom: -10,
-            right: -8,
+            bottom: -8,
+            right: 12,
           },
-          html: button,
+          html: link,
         });
       };
       try {
@@ -750,10 +744,10 @@ export default function ReactDiagramEditor({
       >
         <UnorderedList>
           {callers.map((ref: ProcessReference) => (
-            <li key={`list-${ref.relative_location}`}>
+            <li key={`list-${ref.display_name}-${ref.relative_location}`}>
               <Link
                 size="lg"
-                href={`/process-models/${modifyProcessIdentifierForPathParam(
+                to={`/process-models/${modifyProcessIdentifierForPathParam(
                   ref.relative_location,
                 )}`}
               >
