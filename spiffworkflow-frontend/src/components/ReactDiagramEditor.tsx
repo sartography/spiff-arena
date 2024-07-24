@@ -443,8 +443,8 @@ export default function ReactDiagramEditor({
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
     onLaunchMarkdownEditor,
-    onLaunchScriptEditor,
     onLaunchMessageEditor,
+    onLaunchScriptEditor,
     onMessagesRequested,
     onSearchProcessModels,
     onServiceTasksRequested,
@@ -578,12 +578,11 @@ export default function ReactDiagramEditor({
         return;
       }
 
-      let modeler = diagramModelerState;
       if (diagramType === 'dmn') {
-        modeler = (diagramModelerState as any).getActiveViewer();
+        return;
       }
 
-      const canvas = (modeler as any).get('canvas');
+      const canvas = diagramModelerState.get('canvas');
       canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
 
       // highlighting a field
