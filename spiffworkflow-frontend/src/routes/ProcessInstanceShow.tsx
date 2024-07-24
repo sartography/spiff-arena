@@ -890,6 +890,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           task.task_definition_properties_json.spec;
         const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${task.guid}`;
         navigate(url);
+        // window.open(url);
       }
     },
     [navigate],

@@ -687,14 +687,12 @@ export default function ReactDiagramEditor({
     diagramModelerState,
     diagramType,
     diagramXML,
-    diagramXMLString,
     fileName,
     onCallActivityOverlayClick,
     performingXmlUpdates,
     processModelId,
     tasks,
     url,
-    zoom,
   ]);
 
   function handleSave() {
