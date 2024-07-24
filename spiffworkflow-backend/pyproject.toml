@@ -68,7 +68,7 @@ sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", r
 simplejson = "^3.17.6"
 pytz = "^2024.1"
 dateparser = "^1.2.0"
-cryptography = "^42.0"
+cryptography = "^43.0"
 prometheus-flask-exporter = "^0.23.1"
 
 sqlalchemy = "^2.0.31"
@@ -99,7 +99,7 @@ mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.1.5"}
 pre-commit = "^3.7.1"
-ruff = "^0.4.7"
+ruff = "^0.5.4"
 
 pytest-random-order = "^1.1.0"
 pytest-flask = "^1.2.0"
