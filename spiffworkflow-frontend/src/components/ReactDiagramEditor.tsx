@@ -203,6 +203,7 @@ export default function ReactDiagramEditor({
     });
   };
 
+  // get the xml and set the modeler
   useEffect(() => {
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
@@ -449,6 +450,19 @@ export default function ReactDiagramEditor({
     onServiceTasksRequested,
   ]);
 
+  // display the diagram
+  useEffect(() => {
+    if (!diagramXMLString || !diagramModelerState) {
+      return;
+    }
+    diagramModelerState.importXML(diagramXMLString);
+    zoom(0);
+    if (diagramType !== 'dmn') {
+      fixUnresolvedReferences(diagramModelerState);
+    }
+  }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
+
+  // import done operations
   useEffect(() => {
     // These seem to be system tasks that cannot be highlighted
     const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
@@ -608,21 +622,6 @@ export default function ReactDiagramEditor({
       }
     }
 
-    function displayDiagram(
-      diagramModelerToUse: any,
-      diagramXMLToDisplay: any,
-    ) {
-      if (diagramXMLToDisplay === diagramXMLString) {
-        return;
-      }
-      setDiagramXMLString(diagramXMLToDisplay);
-      diagramModelerToUse.importXML(diagramXMLToDisplay);
-      zoom(0);
-      if (diagramType !== 'dmn') {
-        fixUnresolvedReferences(diagramModelerToUse);
-      }
-    }
-
     function dmnTextHandler(text: string) {
       const decisionId = `decision_${makeid(7)}`;
       const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
@@ -641,7 +640,7 @@ export default function ReactDiagramEditor({
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
-        .then(textHandler ?? bpmnTextHandler)
+        .then(textHandler)
         .catch((err) => handleError(err));
     }
 
@@ -657,14 +656,12 @@ export default function ReactDiagramEditor({
     }
     (diagramModelerState as any).on('import.done', onImportDone);
 
-    const diagramXMLToUse = diagramXML || diagramXMLString;
-    if (diagramXMLToUse) {
-      displayDiagram(diagramModelerState, diagramXMLToUse);
-
+    if (diagramXML) {
+      setDiagramXMLString(diagramXML);
       return undefined;
     }
 
-    if (!diagramXMLToUse) {
+    if (!diagramXML) {
       if (url) {
         fetchDiagramFromURL(url);
         return undefined;
@@ -674,7 +671,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler;
+      let textHandler = bpmnTextHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;
