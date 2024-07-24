@@ -182,16 +182,16 @@ In the case of the example, once you resume the instance and complete Manual Tas
 
 #### Cannot migrate in these situations
 
-It is not possible to migrate an instance when the following activities are active (started/ready/waiting):
+Migration is not possible when the following activities are active (started/ready/waiting):
 
 - Call activity/Subprocess - The task itself cannot be changed once it is active.
-  Tasks inside of the call activity or subprocess can be updated if they have not been reached.
-  Tasks that directly follow one of these activities are special, and you cannot migrate an instance if you add or remove one of these
+  Tasks inside the call activity or subprocess can be updated if they have not been reached.
+  Tasks that directly follow one of these activities are special, and you cannot migrate an instance if you add or remove one of these.
+
 - Multi Instance tasks
 - Loop tasks
 - Signal boundary event - add/remove signals
 - Looping back through a part of a process which has already completed once
-
 #### Forms
 
 Forms are not serialized as part of the process model specification, and therefore are not considered during migration.
