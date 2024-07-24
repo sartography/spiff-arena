@@ -111,29 +111,31 @@ describe('process-instances', () => {
     cy.contains(originalDmnOutputForKevin).should('not.exist');
     cy.runPrimaryBpmnFile();
 
+    const processModelFiles = 'process-model-files';
+
     // Change dmn
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(originalDmnOutputForKevin, newDmnOutputForKevin);
 
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(newDmnOutputForKevin, originalDmnOutputForKevin);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     // Change bpmn
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScript(newPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     updateBpmnPythonScript(originalPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
