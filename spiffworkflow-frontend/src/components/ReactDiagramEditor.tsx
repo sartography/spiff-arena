@@ -203,7 +203,9 @@ export default function ReactDiagramEditor({
     });
   };
 
+  // create the diagram modeler and set editor events
   useEffect(() => {
+    console.log('RENDER DIAGRAM');
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
       canvasClass = 'diagram-viewer-canvas';
@@ -230,63 +232,66 @@ export default function ReactDiagramEditor({
     }
 
     let diagramModeler: any = null;
+    // let diagramModeler: any = diagramModelerState;
 
-    if (diagramType === 'bpmn') {
-      diagramModeler = new BpmnModeler({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-        propertiesPanel: {
-          parent: '#js-properties-panel',
-        },
-        additionalModules: [
-          spiffworkflow,
-          BpmnPropertiesPanelModule,
-          BpmnPropertiesProviderModule,
-          ZoomScrollModule,
-          CliModule,
-        ],
-        cli: {
-          bindTo: 'cli',
-        },
-        moddleExtensions: {
-          spiffworkflow: spiffModdleExtension,
-        },
-      });
-    } else if (diagramType === 'dmn') {
-      diagramModeler = new DmnModeler({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-        drd: {
+    if (!diagramModeler) {
+      if (diagramType === 'bpmn') {
+        diagramModeler = new BpmnModeler({
+          container: '#canvas',
+          keyboard: {
+            bindTo: document,
+          },
           propertiesPanel: {
             parent: '#js-properties-panel',
           },
           additionalModules: [
-            DmnPropertiesPanelModule,
-            DmnPropertiesProviderModule,
+            spiffworkflow,
+            BpmnPropertiesPanelModule,
+            BpmnPropertiesProviderModule,
+            ZoomScrollModule,
+            CliModule,
+          ],
+          cli: {
+            bindTo: 'cli',
+          },
+          moddleExtensions: {
+            spiffworkflow: spiffModdleExtension,
+          },
+        });
+      } else if (diagramType === 'dmn') {
+        diagramModeler = new DmnModeler({
+          container: '#canvas',
+          keyboard: {
+            bindTo: document,
+          },
+          drd: {
+            propertiesPanel: {
+              parent: '#js-properties-panel',
+            },
+            additionalModules: [
+              DmnPropertiesPanelModule,
+              DmnPropertiesProviderModule,
+              ZoomScrollModule,
+            ],
+          },
+        });
+      } else if (diagramType === 'readonly') {
+        diagramModeler = new BpmnViewer({
+          container: '#canvas',
+          keyboard: {
+            bindTo: document,
+          },
+
+          // taken from the non-modeling components at
+          //  bpmn-js/lib/Modeler.js
+          additionalModules: [
+            KeyboardMoveModule,
+            MoveCanvasModule,
+            TouchModule,
             ZoomScrollModule,
           ],
-        },
-      });
-    } else if (diagramType === 'readonly') {
-      diagramModeler = new BpmnViewer({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-
-        // taken from the non-modeling components at
-        //  bpmn-js/lib/Modeler.js
-        additionalModules: [
-          KeyboardMoveModule,
-          MoveCanvasModule,
-          TouchModule,
-          ZoomScrollModule,
-        ],
-      });
+        });
+      }
     }
 
     function handleLaunchScriptEditor(
@@ -335,9 +340,12 @@ export default function ReactDiagramEditor({
       }
     }
 
+    // if (!diagramModelerState) {
     setDiagramModelerState(diagramModeler);
+    // }
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
+      console.log('HEY IN EDIT');
       const { error, element, scriptType, script, eventBus } = event;
       if (error) {
         console.error(error);
@@ -382,6 +390,7 @@ export default function ReactDiagramEditor({
     // 'element.mousedown',
     // 'element.mouseup',
     diagramModeler.on('element.click', (element: any) => {
+      console.log('WE CLICK ELMEENT');
       handleElementClick(element);
     });
     diagramModeler.on('elements.changed', (event: any) => {
@@ -449,20 +458,240 @@ export default function ReactDiagramEditor({
     onServiceTasksRequested,
   ]);
 
+  // const addOverlayOnCallActivity = useCallback(
+  //   (task: Task, bpmnProcessIdentifiers: string[]) => {
+  //     if (
+  //       !onCallActivityOverlayClick ||
+  //       diagramType !== 'readonly' ||
+  //       !diagramModelerState
+  //     ) {
+  //       return;
+  //     }
+  //     function domify(htmlString: string) {
+  //       const template = document.createElement('template');
+  //       template.innerHTML = htmlString.trim();
+  //       return template.content.firstChild;
+  //     }
+  //     const createCallActivityOverlay = () => {
+  //       const overlays = diagramModelerState.get('overlays');
+  //       const ARROW_DOWN_SVG =
+  //         '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
+  //       const button: any = domify(
+  //         `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
+  //       );
+  //       button.addEventListener('click', () => {
+  //         onCallActivityOverlayClick(task);
+  //         setDiagramXMLString('');
+  //         setDiagramModelerState(null);
+  //       });
+  //       overlays.add(task.bpmn_identifier, 'drilldown', {
+  //         position: {
+  //           bottom: -10,
+  //           right: -8,
+  //         },
+  //         html: button,
+  //       });
+  //     };
+  //     try {
+  //       if (
+  //         bpmnProcessIdentifiers.includes(
+  //           task.bpmn_process_definition_identifier,
+  //         )
+  //       ) {
+  //         createCallActivityOverlay();
+  //       }
+  //     } catch (bpmnIoError: any) {
+  //       // the task list also contains task for processes called from call activities which will
+  //       // not exist in this diagram so just ignore them for now.
+  //       if (
+  //         bpmnIoError.message !==
+  //         "Cannot read properties of undefined (reading 'id')"
+  //       ) {
+  //         throw bpmnIoError;
+  //       }
+  //     }
+  //   },
+  //   [diagramModelerState, diagramType, onCallActivityOverlayClick],
+  // );
+  //
+  // const handleError = useCallback((err: any) => {
+  //   console.error('ERROR:', err);
+  // }, []);
+  //
+  // const onImportDone = useCallback(
+  //   (event: any) => {
+  //     const { error } = event;
+  //
+  //     if (error) {
+  //       handleError(error);
+  //       return;
+  //     }
+  //
+  //     // These seem to be system tasks that cannot be highlighted
+  //     const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
+  //
+  //     function checkTaskCanBeHighlighted(taskBpmnId: string) {
+  //       return (
+  //         !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
+  //         !taskBpmnId.match(/EndJoin/) &&
+  //         !taskBpmnId.match(/BoundaryEventParent/) &&
+  //         !taskBpmnId.match(/BoundaryEventJoin/) &&
+  //         !taskBpmnId.match(/BoundaryEventSplit/)
+  //       );
+  //     }
+  //
+  //     function highlightBpmnIoElement(
+  //       canvas: any,
+  //       task: Task,
+  //       bpmnIoClassName: string,
+  //       bpmnProcessIdentifiers: string[],
+  //     ) {
+  //       if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
+  //         try {
+  //           if (
+  //             bpmnProcessIdentifiers.includes(
+  //               task.bpmn_process_definition_identifier,
+  //             )
+  //           ) {
+  //             canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
+  //           }
+  //         } catch (bpmnIoError: any) {
+  //           // the task list also contains task for processes called from call activities which will
+  //           // not exist in this diagram so just ignore them for now.
+  //           if (
+  //             bpmnIoError.message !==
+  //             "Cannot read properties of undefined (reading 'id')"
+  //           ) {
+  //             throw bpmnIoError;
+  //           }
+  //         }
+  //       }
+  //     }
+  //
+  //     let modeler = diagramModelerState;
+  //     if (diagramType === 'dmn') {
+  //       modeler = (diagramModelerState as any).getActiveViewer();
+  //     }
+  //
+  //     const canvas = (modeler as any).get('canvas');
+  //     canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
+  //
+  //     // highlighting a field
+  //     // Option 3 at:
+  //     //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
+  //     if (tasks) {
+  //       console.log('tasks', tasks.length);
+  //       const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+  //         canvas.getRootElement(),
+  //       );
+  //       tasks.forEach((task: Task) => {
+  //         let className = '';
+  //         if (task.state === 'COMPLETED') {
+  //           className = 'completed-task-highlight';
+  //         } else if (['READY', 'WAITING', 'STARTED'].includes(task.state)) {
+  //           className = 'active-task-highlight';
+  //         } else if (task.state === 'CANCELLED') {
+  //           className = 'cancelled-task-highlight';
+  //         } else if (task.state === 'ERROR') {
+  //           className = 'errored-task-highlight';
+  //         }
+  //         if (className) {
+  //           highlightBpmnIoElement(
+  //             canvas,
+  //             task,
+  //             className,
+  //             bpmnProcessIdentifiers,
+  //           );
+  //         }
+  //         if (
+  //           task.typename === 'CallActivity' &&
+  //           !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+  //         ) {
+  //           addOverlayOnCallActivity(task, bpmnProcessIdentifiers);
+  //         }
+  //       });
+  //     }
+  //   },
+  //   [
+  //     addOverlayOnCallActivity,
+  //     diagramModelerState,
+  //     diagramType,
+  //     handleError,
+  //     tasks,
+  //   ],
+  // );
+
+  // import xml and update diagram display
   useEffect(() => {
+    // console.log('diagramModelerState111', diagramModelerState);
+    if (!diagramXMLString || !diagramModelerState) {
+      return undefined;
+    }
+    console.log('DISPLAY DIAGRAM');
+    console.log('diagramXMLString', diagramXMLString);
+    console.log('diagramModelerState', diagramModelerState);
+
+    const addOverlayOnCallActivity = (
+      task: Task,
+      bpmnProcessIdentifiers: string[],
+    ) => {
+      if (
+        !onCallActivityOverlayClick ||
+        diagramType !== 'readonly' ||
+        !diagramModelerState
+      ) {
+        return;
+      }
+      function domify(htmlString: string) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlString.trim();
+        return template.content.firstChild;
+      }
+      const createCallActivityOverlay = () => {
+        const overlays = diagramModelerState.get('overlays');
+        const ARROW_DOWN_SVG =
+          '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
+        const button: any = domify(
+          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
+        );
+        button.addEventListener('click', () => {
+          onCallActivityOverlayClick(task);
+          setDiagramXMLString('');
+          setDiagramModelerState(null);
+        });
+        overlays.add(task.bpmn_identifier, 'drilldown', {
+          position: {
+            bottom: -10,
+            right: -8,
+          },
+          html: button,
+        });
+      };
+      try {
+        if (
+          bpmnProcessIdentifiers.includes(
+            task.bpmn_process_definition_identifier,
+          )
+        ) {
+          createCallActivityOverlay();
+        }
+      } catch (bpmnIoError: any) {
+        // the task list also contains task for processes called from call activities which will
+        // not exist in this diagram so just ignore them for now.
+        if (
+          bpmnIoError.message !==
+          "Cannot read properties of undefined (reading 'id')"
+        ) {
+          throw bpmnIoError;
+        }
+      }
+    };
+
+    const handleError = (err: any) => {
+      console.error('ERROR:', err);
+    };
     // These seem to be system tasks that cannot be highlighted
     const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
-
-    if (!diagramModelerState) {
-      return undefined;
-    }
-    if (performingXmlUpdates) {
-      return undefined;
-    }
-
-    function handleError(err: any) {
-      console.error('ERROR:', err);
-    }
 
     function checkTaskCanBeHighlighted(taskBpmnId: string) {
       return (
@@ -502,67 +731,54 @@ export default function ReactDiagramEditor({
       }
     }
 
-    function addOverlayOnCallActivity(
-      task: Task,
-      bpmnProcessIdentifiers: string[],
-    ) {
-      if (
-        !onCallActivityOverlayClick ||
-        diagramType !== 'readonly' ||
-        !diagramModelerState
-      ) {
-        return;
-      }
-      function domify(htmlString: string) {
-        const template = document.createElement('template');
-        template.innerHTML = htmlString.trim();
-        return template.content.firstChild;
-      }
-      const createCallActivityOverlay = () => {
-        const overlays = diagramModelerState.get('overlays');
-        const ARROW_DOWN_SVG =
-          '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
-        const button: any = domify(
-          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
-        );
-        button.addEventListener('click', () => {
-          onCallActivityOverlayClick(task);
-        });
-        overlays.add(task.bpmn_identifier, 'drilldown', {
-          position: {
-            bottom: -10,
-            right: -8,
-          },
-          html: button,
-        });
-      };
-      try {
-        if (
-          bpmnProcessIdentifiers.includes(
-            task.bpmn_process_definition_identifier,
-          )
-        ) {
-          createCallActivityOverlay();
-        }
-      } catch (bpmnIoError: any) {
-        // the task list also contains task for processes called from call activities which will
-        // not exist in this diagram so just ignore them for now.
-        if (
-          bpmnIoError.message !==
-          "Cannot read properties of undefined (reading 'id')"
-        ) {
-          throw bpmnIoError;
-        }
-      }
-    }
-
-    function onImportDone(event: any) {
+    const onImportDone = (event: any) => {
       const { error } = event;
 
       if (error) {
         handleError(error);
         return;
       }
+
+      // These seem to be system tasks that cannot be highlighted
+      // const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
+      //
+      // function checkTaskCanBeHighlighted(taskBpmnId: string) {
+      //   return (
+      //     !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
+      //     !taskBpmnId.match(/EndJoin/) &&
+      //     !taskBpmnId.match(/BoundaryEventParent/) &&
+      //     !taskBpmnId.match(/BoundaryEventJoin/) &&
+      //     !taskBpmnId.match(/BoundaryEventSplit/)
+      //   );
+      // }
+      //
+      // function highlightBpmnIoElement(
+      //   canvas: any,
+      //   task: Task,
+      //   bpmnIoClassName: string,
+      //   bpmnProcessIdentifiers: string[],
+      // ) {
+      //   if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
+      //     try {
+      //       if (
+      //         bpmnProcessIdentifiers.includes(
+      //           task.bpmn_process_definition_identifier,
+      //         )
+      //       ) {
+      //         canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
+      //       }
+      //     } catch (bpmnIoError: any) {
+      //       // the task list also contains task for processes called from call activities which will
+      //       // not exist in this diagram so just ignore them for now.
+      //       if (
+      //         bpmnIoError.message !==
+      //         "Cannot read properties of undefined (reading 'id')"
+      //       ) {
+      //         throw bpmnIoError;
+      //       }
+      //     }
+      //   }
+      // }
 
       let modeler = diagramModelerState;
       if (diagramType === 'dmn') {
@@ -576,6 +792,7 @@ export default function ReactDiagramEditor({
       // Option 3 at:
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
       if (tasks) {
+        console.log('tasks', tasks.length);
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
           canvas.getRootElement(),
         );
@@ -606,22 +823,38 @@ export default function ReactDiagramEditor({
           }
         });
       }
+    };
+
+    // console.log('diagramModelerState', diagramModelerState);
+    diagramModelerState.on('import.done', onImportDone);
+    diagramModelerState.importXML(diagramXMLString);
+    zoom(0);
+    if (diagramType !== 'dmn') {
+      fixUnresolvedReferences(diagramModelerState);
     }
 
-    function displayDiagram(
-      diagramModelerToUse: any,
-      diagramXMLToDisplay: any,
-    ) {
-      if (diagramXMLToDisplay === diagramXMLString) {
-        return;
-      }
-      setDiagramXMLString(diagramXMLToDisplay);
-      diagramModelerToUse.importXML(diagramXMLToDisplay);
-      zoom(0);
-      if (diagramType !== 'dmn') {
-        fixUnresolvedReferences(diagramModelerToUse);
-      }
+    return () => {
+      (diagramModelerState as any).destroy();
+    };
+    // }, [diagramType, diagramXMLString, diagramModelerState, onImportDone, zoom]);
+  }, [
+    diagramType,
+    diagramXMLString,
+    diagramModelerState,
+    zoom,
+    onCallActivityOverlayClick,
+    tasks,
+  ]);
+
+  // get the diagram xml
+  useEffect(() => {
+    if (!diagramModelerState) {
+      return;
     }
+    if (performingXmlUpdates) {
+      return;
+    }
+    console.log('GET DIAGRAM');
 
     function dmnTextHandler(text: string) {
       const decisionId = `decision_${makeid(7)}`;
@@ -635,13 +868,16 @@ export default function ReactDiagramEditor({
       setDiagramXMLString(newText);
     }
 
+    const handleError = (err: any) => {
+      console.error('ERROR:', err);
+    };
     function fetchDiagramFromURL(
       urlToUse: any,
       textHandler?: (text: string) => void,
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
-        .then(textHandler ?? bpmnTextHandler)
+        .then(textHandler)
         .catch((err) => handleError(err));
     }
 
@@ -655,49 +891,55 @@ export default function ReactDiagramEditor({
         successCallback: setDiagramXMLStringFromResponseJson,
       });
     }
-    (diagramModelerState as any).on('import.done', onImportDone);
 
-    const diagramXMLToUse = diagramXML || diagramXMLString;
-    if (diagramXMLToUse) {
-      displayDiagram(diagramModelerState, diagramXMLToUse);
+    if (diagramXML) {
+      setDiagramXMLString(diagramXML);
 
-      return undefined;
+      return;
     }
 
-    if (!diagramXMLToUse) {
+    if (!diagramXML) {
       if (url) {
         fetchDiagramFromURL(url);
-        return undefined;
+        return;
       }
       if (fileName) {
         fetchDiagramFromJsonAPI();
-        return undefined;
+        return;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler;
+      let textHandler = bpmnTextHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;
       }
       fetchDiagramFromURL(`/${newDiagramFileName}`, textHandler);
-      return undefined;
     }
 
-    return () => {
-      (diagramModelerState as any).destroy();
-    };
+    // if (diagramXML) {
+    //   setDiagramXMLString(diagramXML);
+    // } else if (url) {
+    //   fetchDiagramFromURL(url);
+    // } else if (fileName) {
+    //   fetchDiagramFromJsonAPI();
+    // } else {
+    //   let newDiagramFileName = 'new_bpmn_diagram.bpmn';
+    //   let textHandler = bpmnTextHandler;
+    //   if (diagramType === 'dmn') {
+    //     newDiagramFileName = 'new_dmn_diagram.dmn';
+    //     textHandler = dmnTextHandler;
+    //   }
+    //   fetchDiagramFromURL(`/${newDiagramFileName}`, textHandler);
+    // }
   }, [
     diagramModelerState,
     diagramType,
     diagramXML,
-    diagramXMLString,
     fileName,
-    onCallActivityOverlayClick,
+    // handleError,
     performingXmlUpdates,
     processModelId,
-    tasks,
     url,
-    zoom,
   ]);
 
   function handleSave() {
