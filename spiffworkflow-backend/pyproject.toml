@@ -99,7 +99,7 @@ mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.1.5"}
 pre-commit = "^3.7.1"
-ruff = "^0.4.7"
+ruff = "^0.5.4"
 
 pytest-random-order = "^1.1.0"
 pytest-flask = "^1.2.0"
