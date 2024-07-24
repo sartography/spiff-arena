@@ -23,10 +23,11 @@ CURL_TEMPLATE = [
 
 def send_event(event):
     try:
+        res = None
         res = subprocess.run(CURL_TEMPLATE + [event], stdout=subprocess.PIPE).stdout()
         print(json.dumps(json.loads(res)))
     except:
-        print(f"ERROR: Invalid Response: {res}", file=sys.stderr)
+        print(f"ERROR: Invalid Response: {event} - {res}", file=sys.stderr)
 
 
 with socket.create_server((HOST, PORT)) as sock:
@@ -41,7 +42,7 @@ with socket.create_server((HOST, PORT)) as sock:
                         print(line)
                         json.loads(line)
                         send_event(line)
-                    except:
-                        print(f"ERROR: Invalid Request: {line}", file=sys.stderr)
+                    except Exception as e:
+                        print(f"ERROR: Invalid Request: {line} - {e}", file=sys.stderr)
                     line = fh.readline()
 
