@@ -539,8 +539,11 @@ export default function ReactDiagramEditor({
         const button: any = domify(
           `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
         );
-        button.addEventListener('click', () => {
-          onCallActivityOverlayClick(task);
+        button.addEventListener('click', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
+        });
+        button.addEventListener('auxclick', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
         });
         overlays.add(task.bpmn_identifier, 'drilldown', {
           position: {

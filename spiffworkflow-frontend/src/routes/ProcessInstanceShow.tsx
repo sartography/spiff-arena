@@ -880,7 +880,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   );
 
   const handleCallActivityNavigate = useCallback(
-    (task: Task) => {
+    (task: Task, event: any) => {
       if (
         task &&
         task.typename === 'CallActivity' &&
@@ -889,8 +889,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         const processIdentifierToUse =
           task.task_definition_properties_json.spec;
         const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${task.guid}`;
-        navigate(url);
-        // window.open(url);
+        if (event.type === 'auxclick') {
+          window.open(url);
+        } else {
+          navigate(url);
+        }
       }
     },
     [navigate],
