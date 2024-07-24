@@ -1,14 +1,15 @@
 EVENTS_DEMO_CONTAINER ?= spiff-arena-events-demo-1
 IN_EVENTS_DEMO ?= $(DOCKER_COMPOSE) run --rm $(EVENTS_DEMO_CONTAINER)
+NETWORK ?= spiff-arena_default
 
 net-start:
-	docker network create elastic-net
+	@true #docker network create $(NETWORK)
 
 net-stop:
-	docker network rm elastic-net
+	@true #docker network rm $(NETWORK)
 	
 elasticsearch-start:
-	docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network elastic-net \
+	docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network $(NETWORK) \
 		-e ELASTIC_PASSWORD=$(ELASTIC_PASSWORD) \
 		-e "discovery.type=single-node" \
 		-e "xpack.security.http.ssl.enabled=false" \
@@ -35,7 +36,7 @@ elasticsearch-stop:
 	docker stop elasticsearch && docker container rm elasticsearch
 
 kibana-start:
-	docker run -p 127.0.0.1:5601:5601 -d --name kibana --network elastic-net \
+	docker run -p 127.0.0.1:5601:5601 -d --name kibana --network $(NETWORK) \
 		-e ELASTICSEARCH_URL=http://elasticsearch:9200 \
 		-e ELASTICSEARCH_HOSTS=http://elasticsearch:9200 \
 		-e ELASTICSEARCH_USERNAME=kibana_system \
