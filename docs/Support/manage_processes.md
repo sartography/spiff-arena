@@ -178,6 +178,26 @@ You can migrate a process instance as long as the tasks that are added/updated/d
 If the process instance is allowed to migrate, you can click the button to migrate your process instance.
 In the case of the example, once you resume the instance and complete Manual Task A, you will be presented with Manual Task B.
 
+### Caveats
+
+#### Cannot migrate in these situations
+
+It is not possible to migrate an instance when the following activities are active (started/ready/waiting):
+
+- Call activity/Subprocess - The task itself cannot be changed once it is active.
+  Tasks inside of the call activity or subprocess can be updated if they have not been reached.
+  Tasks that directly follow one of these activities are special, and you cannot migrate an instance if you add or remove one of these
+- Multi Instance tasks
+- Loop tasks
+- Signal boundary event - add/remove signals
+- Looping back through a part of a process which has already completed once
+
+#### Forms
+
+Forms are not serialized as part of the process model specification, and therefore are not considered during migration.
+Instead, they rely on the git revision to determine what version of the file to use.
+Therefore, if you change only a form, the system will not allow you to migrate the process instance.
+
 ### APIS
 
 - `GET /process-instances/{modified_process_model_identifier}/{process_instance_id}/check-can-migrate`
