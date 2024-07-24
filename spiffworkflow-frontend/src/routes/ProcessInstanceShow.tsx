@@ -1170,23 +1170,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />,
       );
     }
-    //
-    // if (
-    //   task.typename === 'CallActivity' &&
-    //   !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
-    // ) {
-    //   const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
-    //     task.task_definition_properties_json;
-    //   buttons.push(
-    //     <Link
-    //       data-qa="go-to-call-activity-result"
-    //       to={`${window.location.pathname}?process_identifier=${taskDefinitionPropertiesJson.spec}&bpmn_process_guid=${task.guid}`}
-    //       // target="_blank"
-    //     >
-    //       View Call Activity Diagram
-    //     </Link>,
-    //   );
-    // }
 
     if (canEditTaskData(task)) {
       buttons.push(
