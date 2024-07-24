@@ -3,6 +3,7 @@ import os, os.path
 import socket
 import subprocess
 import sys
+import urllib.request
 
 HOST = os.environ["SPIFFWORKFLOW_EVENT_STREAM_HOST"]
 PORT = int(os.environ["SPIFFWORKFLOW_EVENT_STREAM_PORT"])
@@ -28,27 +29,34 @@ ELASTICSEARCH_URL = f"{ELASTICSEARCH_PROTOCOL}://" \
     f"{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}/" \
     f"{ELASTICSEARCH_INDEX}/_doc"
 
-CURL_TEMPLATE = [
-    "curl",
-    "-u",
-    f"{ELASTICSEARCH_USERNAME}:{ELASTICSEARCH_PASSWORD}",
-    "-s",
-    ELASTICSEARCH_URL,
-    "-XPOST",
-    "-H",
-    "Content-Type: application/json",
-    "-d",
-]
+
+def init_urllib():
+    password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+    password_mgr.add_password(
+        None,
+        ELASTICSEARCH_URL,
+        ELASTICSEARCH_USERNAME,
+        ELASTICSEARCH_PASSWORD,
+    )
+    auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
+    opener = urllib.request.build_opener(auth_handler)
+    urllib.request.install_opener(opener)
 
 def send_event(event):
     try:
-        res = subprocess.run(CURL_TEMPLATE + [event], stdout=subprocess.PIPE)
-        print(json.dumps(json.loads(res.stdout)))
+        post_body = event.encode("utf-8")
+        request = urllib.request.Request(ELASTICSEARCH_URL)
+        request.add_header("Content-Type", "application/json")
+        request.add_header("Content-Length", len(post_body))
+        response = urllib.request.urlopen(request, post_body).read()
+        print(response.decode("utf-8"))
     except Exception as e:
-        print(f"ERROR: Invalid Response: {e} - {res}", file=sys.stderr)
+        print(f"ERROR: Failed to send event: {e} - {response}", file=sys.stderr)
+        
 
 
 with socket.create_server((HOST, PORT)) as sock:
+    init_urllib()
     while True:
         client_sock, addr = sock.accept()
         with client_sock:
