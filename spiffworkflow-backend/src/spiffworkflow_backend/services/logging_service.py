@@ -61,7 +61,7 @@ class SpiffLogHandler(SocketHandler):
             return None, None
 
     def filter(self, record: Any) -> bool:
-        if record.name == "spiff" and getattr(record, "event_type", "") not in ["task_completed", "task_cancelled"]:
+        if record.name.startswith("spiff") and getattr(record, "event_type", "") not in ["task_completed", "task_cancelled"]:
             user_id, user_name = self.get_user_info()
 
             data = {
