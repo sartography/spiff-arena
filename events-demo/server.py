@@ -51,9 +51,8 @@ def send_event(event):
         response = urllib.request.urlopen(request, post_body).read()
         print(response.decode("utf-8"))
     except Exception as e:
-        print(f"ERROR: Failed to send event: {e} - {response}", file=sys.stderr)
+        print(f"ERROR: Failed to send event: {e}", file=sys.stderr)
         
-
 
 with socket.create_server((HOST, PORT)) as sock:
     init_urllib()
