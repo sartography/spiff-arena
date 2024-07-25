@@ -57,8 +57,7 @@ with socket.create_server((HOST, PORT)) as sock:
     init_urllib()
     while True:
         client_sock, addr = sock.accept()
-        with client_sock:
-            with client_sock.makefile() as fh:
+        with client_sock, client_sock.makefile() as fh:
                 line = fh.readline()
                 while line:
                     line = line.strip()
