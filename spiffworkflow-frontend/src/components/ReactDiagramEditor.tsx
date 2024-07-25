@@ -42,16 +42,12 @@ import 'bpmn-js-spiffworkflow/app/css/app.css';
 
 import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
 
-// @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
-// @ts-expect-error TS(7016) FIXME
 import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
-// @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
 // removed in v17
 // https://forum.bpmn.io/t/since-mobile-touch-implementation-was-stripped-out-in-v17-is-there-a-wip-re-implementation-as-an-extension-in-the-wild-yet/11149
-// @ts-expect-error TS(7016) FIXME
 // import TouchModule from 'diagram-js/lib/navigation/touch';
 
 import { useNavigate } from 'react-router-dom';
