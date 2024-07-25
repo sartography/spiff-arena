@@ -61,6 +61,7 @@ import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import {
+  convertSvgComponentToHtmlString,
   getBpmnProcessIdentifiers,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -348,12 +349,9 @@ export default function ReactDiagramEditor({
             (extension: any) => extension.$type === 'spiffworkflow:PostScript',
           );
         const overlays = diagramModeler.get('overlays');
-        // const s = new XMLSerializer();
-        // const scriptIcon = s.serializeToString(BpmnJsScriptIcon);
-        // const scriptIcon = BpmnJsScriptIcon.outerHtml;
-        console.log('BpmnJsScriptIcon', BpmnJsScriptIcon);
-        const scriptIcon = 'HYE';
-        console.log('scriptIcon', scriptIcon);
+        const scriptIcon = convertSvgComponentToHtmlString(
+          <BpmnJsScriptIcon />,
+        );
 
         if (preScript) {
           overlays.add(event.element.id, {
