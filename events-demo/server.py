@@ -44,7 +44,7 @@ def init_urllib():
 
 def send_event(event):
     try:
-        post_body = event.encode("utf-8")
+        post_body = json.dumps(event).encode("utf-8")
         request = urllib.request.Request(ELASTICSEARCH_URL)
         request.add_header("Content-Type", "application/json")
         request.add_header("Content-Length", len(post_body))
@@ -63,10 +63,17 @@ with socket.create_server((HOST, PORT)) as sock:
                 line = fh.readline()
                 while line:
                     line = line.strip()
+                    print(line)
+                    
                     try:
-                        print(line)
-                        json.loads(line)
-                        send_event(line)
+                        request = json.loads(line)
+
+                        if request["action"] == "add_event":
+                            event = request["event"]
+                            send_event(event)
+                        else:
+                            print(f"ERROR: Unknown action: {e} - {line}", file=sys.stderr)
+                            
                     except Exception as e:
                         print(f"ERROR: Invalid Request: {e} - {line}", file=sys.stderr)
                     line = fh.readline()

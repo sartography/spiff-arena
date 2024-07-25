@@ -38,12 +38,16 @@ class SpiffLogHandler(SocketHandler):
     def format(self, record: Any) -> str:
         return json.dumps(
             {
-                "specversion": "1.0",
-                "type": record.name,
-                "id": str(uuid4()),
-                "source": "spiffworkflow.org",
-                "timestamp": datetime.utcnow().timestamp(),
-                "data": record._spiff_data,
+                "version": "1.0",
+                "action": "add_event",
+                "event": {
+                    "specversion": "1.0",
+                    "type": record.name,
+                    "id": str(uuid4()),
+                    "source": "spiffworkflow.org",
+                    "timestamp": datetime.utcnow().timestamp(),
+                    "data": record._spiff_data,
+                },
             }
         )
 
