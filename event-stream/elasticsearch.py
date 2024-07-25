@@ -1,7 +1,6 @@
 import json
 import os, os.path
 import socket
-import subprocess
 import sys
 import urllib.request
 
