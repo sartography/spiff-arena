@@ -23,7 +23,7 @@ import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
+// import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
 import '../bpmn-js-properties-panel.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 
@@ -42,24 +42,24 @@ import 'bpmn-js-spiffworkflow/app/css/app.css';
 
 import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
 
-// @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
-// @ts-expect-error TS(7016) FIXME
 import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
-// @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
-// @ts-expect-error TS(7016) FIXME
-import TouchModule from 'diagram-js/lib/navigation/touch';
+// removed in v17
+// https://forum.bpmn.io/t/since-mobile-touch-implementation-was-stripped-out-in-v17-is-there-a-wip-re-implementation-as-an-extension-in-the-wild-yet/11149
+// import TouchModule from 'diagram-js/lib/navigation/touch';
 
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
+import BpmnJsScriptIcon from '../bpmn_js_script_icon.svg';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import {
+  convertSvgComponentToHtmlString,
   getBpmnProcessIdentifiers,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -284,7 +284,7 @@ export default function ReactDiagramEditor({
         additionalModules: [
           KeyboardMoveModule,
           MoveCanvasModule,
-          TouchModule,
+          // TouchModule,
           ZoomScrollModule,
         ],
       });
@@ -336,7 +336,50 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function createPrePostScriptOverlay(event: any) {
+      // avoid setting on script tasks because it's unnecessary but shouldn't actually cause issues
+      if (event.element && event.element.type !== 'bpmn:ScriptTask') {
+        const preScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PreScript',
+          );
+        const postScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PostScript',
+          );
+        const overlays = diagramModeler.get('overlays');
+        const scriptIcon = convertSvgComponentToHtmlString(
+          <BpmnJsScriptIcon />,
+        );
+
+        if (preScript) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              left: 0,
+            },
+            html: scriptIcon,
+          });
+        }
+        if (postScript) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              right: 25,
+            },
+            html: scriptIcon,
+          });
+        }
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
+
+    if (diagramType !== 'readonly') {
+      diagramModeler.on('shape.added', (event: any) => {
+        createPrePostScriptOverlay(event);
+      });
+    }
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;

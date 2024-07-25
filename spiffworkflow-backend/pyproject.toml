@@ -39,7 +39,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 # and to lower than 67 because i didn't feel like addressing
 # new deprecation warnings. we don't need this library explicitly,
 # but at one time it was pulled in by various libs we depend on.
-setuptools = "^70.2.0"
+setuptools = "^71.1.0"
 
 # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
 werkzeug = "^2.3"
