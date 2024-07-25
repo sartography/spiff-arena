@@ -380,9 +380,10 @@ export default function ReactDiagramEditor({
     // 'element.dblclick',
     // 'element.mousedown',
     // 'element.mouseup',
-    diagramModeler.on('element.click', (element: any) => {
-      handleElementClick(element);
-    });
+    // diagramModeler.on('element.click', (element: any) => {
+    //   console.log('element', element);
+    //   // handleElementClick(element);
+    // });
     diagramModeler.on('elements.changed', (event: any) => {
       if (onElementsChanged) {
         onElementsChanged(event);

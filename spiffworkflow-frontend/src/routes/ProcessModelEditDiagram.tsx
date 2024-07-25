@@ -435,7 +435,7 @@ export default function ProcessModelEditDiagram() {
 
   const onJsonSchemaFilesRequested = useCallback(
     (event: any) => {
-      setFileEventBus(event.eventBus);
+      // setFileEventBus(event.eventBus);
       const re = /.*[-.]schema.json/;
       if (processModel) {
         const jsonFiles = processModel.files.filter((f) => f.name.match(re));
@@ -452,7 +452,7 @@ export default function ProcessModelEditDiagram() {
 
   const onDmnFilesRequested = useCallback(
     (event: any) => {
-      setFileEventBus(event.eventBus);
+      // setFileEventBus(event.eventBus);
       if (processModel) {
         const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
         const options: any[] = [];
@@ -493,27 +493,6 @@ export default function ProcessModelEditDiagram() {
     },
     [ability, targetUris.messageModelListPath],
   );
-
-  useEffect(() => {
-    const updateDiagramFiles = (pm: ProcessModel) => {
-      setProcessModel(pm);
-      const re = /.*[-.]schema.json/;
-      const jsonFiles = pm.files.filter((f) => f.name.match(re));
-      const options = jsonFiles.map((f) => {
-        return { label: f.name, value: f.name };
-      });
-      fileEventBus.fire('spiff.json_schema_files.returned', { options });
-    };
-
-    if (isFocused && fileEventBus) {
-      // Request the process model again, and manually fire off the
-      // commands to update the file lists for json and dmn files.
-      HttpService.makeCallToBackend({
-        path: `/${processModelPath}?include_file_references=true`,
-        successCallback: updateDiagramFiles,
-      });
-    }
-  }, [isFocused, fileEventBus, processModelPath]);
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -1264,7 +1243,7 @@ export default function ProcessModelEditDiagram() {
     [],
   );
 
-  const handleJsonScehmaEditorClose = () => {
+  const handleJsonSchemaEditorClose = () => {
     fileEventBus.fire('spiff.jsonSchema.update', {
       value: jsonScehmaFileName,
     });
@@ -1280,8 +1259,8 @@ export default function ProcessModelEditDiagram() {
         open={showJsonSchemaEditor}
         modalHeading="Edit JSON Schema"
         primaryButtonText="Close"
-        onRequestSubmit={handleJsonScehmaEditorClose}
-        onRequestClose={handleJsonScehmaEditorClose}
+        onRequestSubmit={handleJsonSchemaEditorClose}
+        onRequestClose={handleJsonSchemaEditorClose}
         size="lg"
       >
         <ReactFormBuilder
