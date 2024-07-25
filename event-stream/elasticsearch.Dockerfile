@@ -8,9 +8,6 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
-#RUN pip install poetry==1.8.1 pytest-xdist==3.5.0
+COPY elasticsearch.py elasticsearch.py
 
-COPY server.py server.py
-
-CMD ["python", "server.py"]
+CMD ["python", "elasticsearch.py"]
