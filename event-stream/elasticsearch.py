@@ -71,7 +71,7 @@ with socket.create_server((HOST, PORT)) as sock:
                             event = request["event"]
                             send_event(event)
                         else:
-                            print(f"ERROR: Unknown action: {e} - {line}", file=sys.stderr)
+                            print(f"ERROR: Unknown action: {request['action']} - {line}", file=sys.stderr)
                             
                     except Exception as e:
                         print(f"ERROR: Invalid Request: {e} - {line}", file=sys.stderr)
