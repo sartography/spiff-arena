@@ -54,10 +54,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
+import BpmnJsScriptIcon from '../bpmn_js_script_icon.svg';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import {
+  convertSvgComponentToHtmlString,
   getBpmnProcessIdentifiers,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -334,7 +336,50 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function createPrePostScriptOverlay(event: any) {
+      // avoid setting on script tasks because it's unnecessary but shouldn't actually cause issues
+      if (event.element && event.element.type !== 'bpmn:ScriptTask') {
+        const preScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PreScript',
+          );
+        const postScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PostScript',
+          );
+        const overlays = diagramModeler.get('overlays');
+        const scriptIcon = convertSvgComponentToHtmlString(
+          <BpmnJsScriptIcon />,
+        );
+
+        if (preScript) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              left: 0,
+            },
+            html: scriptIcon,
+          });
+        }
+        if (postScript) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              right: 25,
+            },
+            html: scriptIcon,
+          });
+        }
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
+
+    if (diagramType !== 'readonly') {
+      diagramModeler.on('shape.added', (event: any) => {
+        createPrePostScriptOverlay(event);
+      });
+    }
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
