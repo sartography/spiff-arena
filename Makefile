@@ -146,7 +146,7 @@ sh:
 take-ownership:
 	$(SUDO) chown -R $(ME) .
 
-include events-stream/demo.mk
+include event-stream/demo.mk
 	
 .PHONY: build-images dev-env \
 	start-dev stop-dev \

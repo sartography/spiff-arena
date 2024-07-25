@@ -1,4 +1,4 @@
-EVENTS_DEMO_CONTAINER ?= spiff-arena-events-demo-1
+EVENTS_DEMO_CONTAINER ?= spiff-arena-event-stream-1
 IN_EVENTS_DEMO ?= $(DOCKER_COMPOSE) run --rm $(EVENTS_DEMO_CONTAINER)
 NETWORK ?= spiff-arena_default
 
@@ -52,7 +52,7 @@ kibana-start:
 kibana-stop:
 	docker stop kibana && docker container rm kibana
 	
-events-demo-start: events-demo-stop net-start \
+events-demo-start: net-start \
 	elasticsearch-start \
 	elasticsearch-wait-for-boot \
 	elasticsearch-create-index \
