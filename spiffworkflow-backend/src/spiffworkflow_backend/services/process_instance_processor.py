@@ -1949,9 +1949,6 @@ class ProcessInstanceProcessor:
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
-        LoggingService.log_event(
-            ProcessInstanceEventType.process_instance_terminated.value,
-        )
 
     def suspend(self) -> None:
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
@@ -1960,9 +1957,6 @@ class ProcessInstanceProcessor:
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
-        LoggingService.log_event(
-            ProcessInstanceEventType.process_instance_suspended.value,
-        )
 
     def bring_archived_future_tasks_back_to_life(self) -> None:
         archived_future_tasks = (
@@ -1982,9 +1976,6 @@ class ProcessInstanceProcessor:
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
-        LoggingService.log_event(
-            ProcessInstanceEventType.process_instance_resumed.value,
-        )
 
     def check_all_tasks(self) -> None:
         if current_app.config["SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"] is not True:
