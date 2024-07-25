@@ -17,7 +17,7 @@ import {
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 } from 'dmn-js-properties-panel';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 // @ts-ignore
 import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
@@ -77,6 +77,7 @@ type OwnProps = {
   disableSaveButton?: boolean;
   fileName?: string;
   isPrimaryFile?: boolean;
+  onCallActivityOverlayClick?: (..._args: any[]) => any;
   onDataStoresRequested?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
@@ -109,6 +110,7 @@ export default function ReactDiagramEditor({
   disableSaveButton,
   fileName,
   isPrimaryFile,
+  onCallActivityOverlayClick,
   onDataStoresRequested,
   onDeleteFile,
   onDmnFilesRequested,
@@ -131,10 +133,8 @@ export default function ReactDiagramEditor({
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
-  const [diagramModelerState, setDiagramModelerState] = useState(null);
+  const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
   const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
-
-  const alreadyImportedXmlRef = useRef(false);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
@@ -203,11 +203,8 @@ export default function ReactDiagramEditor({
     });
   };
 
+  // get the xml and set the modeler
   useEffect(() => {
-    if (diagramModelerState) {
-      return;
-    }
-
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
       canvasClass = 'diagram-viewer-canvas';
@@ -436,7 +433,6 @@ export default function ReactDiagramEditor({
       }
     });
   }, [
-    diagramModelerState,
     diagramType,
     onDataStoresRequested,
     onDmnFilesRequested,
@@ -447,13 +443,26 @@ export default function ReactDiagramEditor({
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
     onLaunchMarkdownEditor,
-    onLaunchScriptEditor,
     onLaunchMessageEditor,
+    onLaunchScriptEditor,
     onMessagesRequested,
     onSearchProcessModels,
     onServiceTasksRequested,
   ]);
 
+  // display the diagram
+  useEffect(() => {
+    if (!diagramXMLString || !diagramModelerState) {
+      return;
+    }
+    diagramModelerState.importXML(diagramXMLString);
+    zoom(0);
+    if (diagramType !== 'dmn') {
+      fixUnresolvedReferences(diagramModelerState);
+    }
+  }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
+
+  // import done operations
   useEffect(() => {
     // These seem to be system tasks that cannot be highlighted
     const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
@@ -507,6 +516,63 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function addOverlayOnCallActivity(
+      task: Task,
+      bpmnProcessIdentifiers: string[],
+    ) {
+      if (
+        !onCallActivityOverlayClick ||
+        diagramType !== 'readonly' ||
+        !diagramModelerState
+      ) {
+        return;
+      }
+      function domify(htmlString: string) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlString.trim();
+        return template.content.firstChild;
+      }
+      const createCallActivityOverlay = () => {
+        const overlays = diagramModelerState.get('overlays');
+        const ARROW_DOWN_SVG =
+          '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
+        const button: any = domify(
+          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
+        );
+        button.addEventListener('click', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
+        });
+        button.addEventListener('auxclick', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
+        });
+        overlays.add(task.bpmn_identifier, 'drilldown', {
+          position: {
+            bottom: -10,
+            right: -8,
+          },
+          html: button,
+        });
+      };
+      try {
+        if (
+          bpmnProcessIdentifiers.includes(
+            task.bpmn_process_definition_identifier,
+          )
+        ) {
+          createCallActivityOverlay();
+        }
+      } catch (bpmnIoError: any) {
+        // the task list also contains task for processes called from call activities which will
+        // not exist in this diagram so just ignore them for now.
+        if (
+          bpmnIoError.message !==
+          "Cannot read properties of undefined (reading 'id')"
+        ) {
+          throw bpmnIoError;
+        }
+      }
+    }
+
     function onImportDone(event: any) {
       const { error } = event;
 
@@ -515,12 +581,11 @@ export default function ReactDiagramEditor({
         return;
       }
 
-      let modeler = diagramModelerState;
       if (diagramType === 'dmn') {
-        modeler = (diagramModelerState as any).getActiveViewer();
+        return;
       }
 
-      const canvas = (modeler as any).get('canvas');
+      const canvas = diagramModelerState.get('canvas');
       canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
 
       // highlighting a field
@@ -549,23 +614,14 @@ export default function ReactDiagramEditor({
               bpmnProcessIdentifiers,
             );
           }
+          if (
+            task.typename === 'CallActivity' &&
+            !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+          ) {
+            addOverlayOnCallActivity(task, bpmnProcessIdentifiers);
+          }
         });
       }
-    }
-
-    function displayDiagram(
-      diagramModelerToUse: any,
-      diagramXMLToDisplay: any,
-    ) {
-      if (alreadyImportedXmlRef.current) {
-        return;
-      }
-      diagramModelerToUse.importXML(diagramXMLToDisplay);
-      zoom(0);
-      if (diagramType !== 'dmn') {
-        fixUnresolvedReferences(diagramModelerToUse);
-      }
-      alreadyImportedXmlRef.current = true;
     }
 
     function dmnTextHandler(text: string) {
@@ -586,7 +642,7 @@ export default function ReactDiagramEditor({
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
-        .then(textHandler ?? bpmnTextHandler)
+        .then(textHandler)
         .catch((err) => handleError(err));
     }
 
@@ -602,17 +658,12 @@ export default function ReactDiagramEditor({
     }
     (diagramModelerState as any).on('import.done', onImportDone);
 
-    const diagramXMLToUse = diagramXML || diagramXMLString;
-    if (diagramXMLToUse) {
-      if (!diagramXMLString) {
-        setDiagramXMLString(diagramXMLToUse);
-      }
-      displayDiagram(diagramModelerState, diagramXMLToUse);
-
+    if (diagramXML) {
+      setDiagramXMLString(diagramXML);
       return undefined;
     }
 
-    if (!diagramXMLString) {
+    if (!diagramXML) {
       if (url) {
         fetchDiagramFromURL(url);
         return undefined;
@@ -622,7 +673,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler;
+      let textHandler = bpmnTextHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;
@@ -638,13 +689,12 @@ export default function ReactDiagramEditor({
     diagramModelerState,
     diagramType,
     diagramXML,
-    diagramXMLString,
     fileName,
-    tasks,
+    onCallActivityOverlayClick,
     performingXmlUpdates,
     processModelId,
+    tasks,
     url,
-    zoom,
   ]);
 
   function handleSave() {
