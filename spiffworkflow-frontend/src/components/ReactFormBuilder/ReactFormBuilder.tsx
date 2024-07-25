@@ -214,6 +214,9 @@ export default function ReactFormBuilder({
         saveFile(new File(['{}'], base + DATA_EXTENSION), true, () => {
           setBaseFileName(base);
           onFileNameSet(base + SCHEMA_EXTENSION);
+          setStrSchema('{}');
+          setStrUI('{}');
+          setStrFormData('{}');
         });
       });
     });
@@ -232,9 +235,17 @@ export default function ReactFormBuilder({
     return false;
   };
 
-  const updateStrFileDebounce = useDebouncedCallback(
-    (newContent: string, fileNameToUse: string) => {
-      saveFile(new File([newContent], fileNameToUse));
+  // if we share a debounce and update all str states at once
+  // then only one will get fired so split them out like this.
+  const updateStrFileDebounce = useDebouncedCallback((newContent: string) => {
+    saveFile(new File([newContent], baseFileName + SCHEMA_EXTENSION));
+  }, 500);
+  const updateStrUIFileDebounce = useDebouncedCallback((newContent: string) => {
+    saveFile(new File([newContent], baseFileName + UI_EXTENSION));
+  }, 500);
+  const updateFormDataFileDebounce = useDebouncedCallback(
+    (newContent: string) => {
+      saveFile(new File([newContent], baseFileName + DATA_EXTENSION));
     },
     500,
   );
@@ -452,10 +463,7 @@ export default function ReactFormBuilder({
                 defaultLanguage="json"
                 defaultValue={strSchema}
                 onChange={(value) => {
-                  updateStrFileDebounce(
-                    value || '',
-                    baseFileName + SCHEMA_EXTENSION,
-                  );
+                  updateStrFileDebounce(value || '');
                   setStrSchema(value || '');
                 }}
                 onMount={handleSchemaEditorDidMount}
@@ -480,10 +488,7 @@ export default function ReactFormBuilder({
                 defaultLanguage="json"
                 defaultValue={strUI}
                 onChange={(value) => {
-                  updateStrFileDebounce(
-                    value || '',
-                    baseFileName + UI_EXTENSION,
-                  );
+                  updateStrUIFileDebounce(value || '');
                   setStrUI(value || '');
                 }}
                 onMount={handleUiEditorDidMount}
@@ -504,10 +509,7 @@ export default function ReactFormBuilder({
                 defaultLanguage="json"
                 defaultValue={strFormData}
                 onChange={(value) => {
-                  updateStrFileDebounce(
-                    value || '',
-                    baseFileName + DATA_EXTENSION,
-                  );
+                  updateFormDataFileDebounce(value || '');
                   updateDataFromStr(value || '');
                 }}
                 onMount={handleDataEditorDidMount}
