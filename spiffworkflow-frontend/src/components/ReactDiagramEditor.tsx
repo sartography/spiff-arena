@@ -339,13 +339,14 @@ export default function ReactDiagramEditor({
     }
 
     function createPrePostScriptOverlay(event: any) {
-      if (event.element && event.element.id === 'top_level_manual_task_one') {
+      // avoid setting on script tasks because it's unnecessary but shouldn't actually cause issues
+      if (event.element && event.element.type !== 'bpmn:ScriptTask') {
         const preScript =
-          event.element.businessObject.extensionElements.values.find(
+          event.element.businessObject.extensionElements?.values?.find(
             (extension: any) => extension.$type === 'spiffworkflow:PreScript',
           );
         const postScript =
-          event.element.businessObject.extensionElements.values.find(
+          event.element.businessObject.extensionElements?.values?.find(
             (extension: any) => extension.$type === 'spiffworkflow:PostScript',
           );
         const overlays = diagramModeler.get('overlays');
