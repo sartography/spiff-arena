@@ -320,7 +320,7 @@ export const renderElementsForArray = (elements: ElementForArray[]) => {
 
 export const convertSvgComponentToHtmlString = (svgComponent: ReactElement) => {
   // vite with svgr imports svg files as react components but we need the html string value at times
-  // so this converts the compoent to html string
+  // so this converts the component to html string
   const div = document.createElement('div');
   const root = createRoot(div);
   flushSync(() => {
