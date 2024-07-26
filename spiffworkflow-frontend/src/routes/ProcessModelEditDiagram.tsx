@@ -1243,40 +1243,30 @@ export default function ProcessModelEditDiagram() {
       return;
     }
     const { files } = processModel;
-    const file = files.find((f: ProcessFile) => f.name === jsonSchemaFileName);
-    if (!file) {
-      files.push({
+    const fileNames = [
+      jsonSchemaFileName,
+      jsonSchemaFileName.replace('-schema.json', '-uischema.json'),
+      jsonSchemaFileName.replace('-schema.json', '-exampledata.json'),
+    ];
+
+    const newFiles = fileNames
+      .filter((name) => !files.some((f) => f.name === name))
+      .map((name) => ({
         content_type: 'application/json',
         last_modified: '',
-        name: jsonSchemaFileName,
+        name,
         process_model_id: processModel?.id || '',
         references: [],
         size: 0,
         type: 'json',
-      });
-      files.push({
-        content_type: 'application/json',
-        last_modified: '',
-        name: jsonSchemaFileName.replace('-schema.json', '-uischema.json'),
-        process_model_id: processModel?.id || '',
-        references: [],
-        size: 0,
-        type: 'json',
-      });
-      files.push({
-        content_type: 'application/json',
-        last_modified: '',
-        name: jsonSchemaFileName.replace('-schema.json', '-exampledata.json'),
-        process_model_id: processModel?.id || '',
-        references: [],
-        size: 0,
-        type: 'json',
-      });
-      const processModelToCopy = {
-        ...processModel,
-      };
-      Object.assign(processModelToCopy, { files });
-      setProcessModel(processModelToCopy);
+      }));
+
+    if (newFiles.length > 0) {
+      const updatedFiles = [...files, ...newFiles];
+      setProcessModel((prevProcessModel) => ({
+        ...prevProcessModel,
+        files: updatedFiles,
+      }));
     }
   };
 
