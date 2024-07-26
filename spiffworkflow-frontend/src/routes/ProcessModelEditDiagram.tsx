@@ -192,6 +192,10 @@ export default function ProcessModelEditDiagram() {
     });
   }, []);
 
+  const handleEditorScriptChange = (value: any) => {
+    setScriptText(value);
+  };
+
   useEffect(() => {
     getProcessesCallback();
   }, [getProcessesCallback]);
@@ -201,7 +205,6 @@ export default function ProcessModelEditDiagram() {
       setProcessModelFile(result);
       setBpmnXmlForDiagramRendering(result.file_contents);
     };
-
     HttpService.makeCallToBackend({
       path: `/${processModelPath}?include_file_references=true`,
       successCallback: (result: any) => {
@@ -229,6 +232,24 @@ export default function ProcessModelEditDiagram() {
       setPageTitle([processModel.display_name, processModelFile.name]);
     }
   }, [processModel, processModelFile]);
+
+  /**
+   * When the value of the Editor is updated dynamically async,
+   * it doesn't seem to fire an onChange (discussions as recent as 4.2.1).
+   * The straightforward recommended fix is to handle manually, so when
+   * the scriptAssistResult is updated, call the handler manually.
+   */
+  useEffect(() => {
+    if (scriptAssistResult) {
+      if (scriptAssistResult.result) {
+        handleEditorScriptChange(scriptAssistResult.result);
+      } else if (scriptAssistResult.error_code && scriptAssistResult.message) {
+        setScriptAssistError(scriptAssistResult.message);
+      } else {
+        setScriptAssistError('Received unexpected response from server.');
+      }
+    }
+  }, [scriptAssistResult]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -434,7 +455,7 @@ export default function ProcessModelEditDiagram() {
   const onJsonSchemaFilesRequested = useCallback(
     (event: any) => {
       const re = /.*[-.]schema.json/;
-      if (processModel) {
+      if (processModel?.files) {
         const jsonFiles = processModel.files.filter((f) => f.name.match(re));
         const options = jsonFiles.map((f) => {
           return { label: f.name, value: f.name };
@@ -444,12 +465,12 @@ export default function ProcessModelEditDiagram() {
         console.error('There is no process Model.');
       }
     },
-    [processModel],
+    [processModel?.files],
   );
 
   const onDmnFilesRequested = useCallback(
     (event: any) => {
-      if (processModel) {
+      if (processModel?.files) {
         const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
         const options: any[] = [];
         dmnFiles.forEach((file) => {
@@ -462,7 +483,7 @@ export default function ProcessModelEditDiagram() {
         console.error('There is no process model.');
       }
     },
-    [processModel],
+    [processModel?.files],
   );
 
   const makeMessagesRequestedHandler = (event: any) => {
@@ -548,28 +569,6 @@ export default function ProcessModelEditDiagram() {
     resetUnitTextResult();
     setShowScriptEditor(false);
   };
-
-  const handleEditorScriptChange = (value: any) => {
-    setScriptText(value);
-  };
-
-  /**
-   * When the value of the Editor is updated dynamically async,
-   * it doesn't seem to fire an onChange (discussions as recent as 4.2.1).
-   * The straightforward recommended fix is to handle manually, so when
-   * the scriptAssistResult is updated, call the handler manually.
-   */
-  useEffect(() => {
-    if (scriptAssistResult) {
-      if (scriptAssistResult.result) {
-        handleEditorScriptChange(scriptAssistResult.result);
-      } else if (scriptAssistResult.error_code && scriptAssistResult.message) {
-        setScriptAssistError(scriptAssistResult.message);
-      } else {
-        setScriptAssistError('Received unexpected response from server.');
-      }
-    }
-  }, [scriptAssistResult]);
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
     if (currentScriptUnitTest) {
@@ -1168,7 +1167,7 @@ export default function ProcessModelEditDiagram() {
       // Given a reference id (like a process_id, or decision_id) finds the file
       // that contains that reference and returns it.
       let matchFile = null;
-      if (processModel) {
+      if (processModel?.files) {
         const files = processModel.files.filter((f) => f.type === type);
         files.some((file) => {
           if (file.references.some((ref) => ref.identifier === id)) {
@@ -1180,7 +1179,7 @@ export default function ProcessModelEditDiagram() {
       }
       return matchFile;
     },
-    [processModel],
+    [processModel?.files],
   );
 
   const onLaunchBpmnEditor = useCallback(
@@ -1239,7 +1238,44 @@ export default function ProcessModelEditDiagram() {
     [],
   );
 
+  const addNewFileIfNotExist = () => {
+    if (!processModel) {
+      return;
+    }
+    const { files } = processModel;
+    const fileNames = [
+      jsonSchemaFileName,
+      jsonSchemaFileName.replace('-schema.json', '-uischema.json'),
+      jsonSchemaFileName.replace('-schema.json', '-exampledata.json'),
+    ];
+
+    const newFiles = fileNames
+      .filter((name) => !files.some((f) => f.name === name))
+      .map((name) => ({
+        content_type: 'application/json',
+        last_modified: '',
+        name,
+        process_model_id: processModel?.id || '',
+        references: [],
+        size: 0,
+        type: 'json',
+      }));
+
+    if (newFiles.length > 0) {
+      // we have to push items onto the existing files array.
+      // Otherwise react thinks more of the state changed than we want.
+      newFiles.forEach((file: any) => {
+        files.push(file);
+      });
+      setProcessModel((prevProcessModel: any) => ({
+        ...prevProcessModel,
+        files,
+      }));
+    }
+  };
+
   const handleJsonSchemaEditorClose = () => {
+    addNewFileIfNotExist();
     fileEventBus.fire('spiff.jsonSchema.update', {
       value: jsonSchemaFileName,
     });
