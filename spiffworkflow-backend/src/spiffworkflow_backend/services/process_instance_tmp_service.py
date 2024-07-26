@@ -11,6 +11,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailDict
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.logging_service import LoggingService
 
 
 class ProcessInstanceTmpService:
@@ -84,10 +85,13 @@ class ProcessInstanceTmpService:
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
 
+        LoggingService.log_event(event_type, task_guid)
+
         if migration_details is not None:
             pi_detail = cls.add_process_instance_migration_detail(process_instance_event, migration_details)
             if add_to_db_session:
                 db.session.add(pi_detail)
+
         return (process_instance_event, process_instance_error_detail)
 
     @classmethod

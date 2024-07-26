@@ -95,6 +95,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -1174,6 +1175,9 @@ class ProcessInstanceProcessor:
                 self.process_instance_model.end_in_seconds = round(time.time())
                 if self._workflow_completed_handler is not None:
                     self._workflow_completed_handler(self.process_instance_model)
+                LoggingService.log_event(
+                    ProcessInstanceEventType.process_instance_completed.value,
+                )
 
         db.session.add(self.process_instance_model)
 

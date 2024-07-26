@@ -146,6 +146,8 @@ sh:
 take-ownership:
 	$(SUDO) chown -R $(ME) .
 
+include event-stream/demo.mk
+	
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
