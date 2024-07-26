@@ -72,7 +72,7 @@ class AuthenticationProviderTypes(enum.Enum):
 class AuthenticationOptionForApi(TypedDict):
     identifier: str
     label: str
-    internal_uri: str
+    internal_uri: NotRequired[str]
     uri: str
     additional_valid_client_ids: NotRequired[str]
 
