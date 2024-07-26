@@ -1262,10 +1262,14 @@ export default function ProcessModelEditDiagram() {
       }));
 
     if (newFiles.length > 0) {
-      const updatedFiles = [...files, ...newFiles];
-      setProcessModel((prevProcessModel) => ({
+      // we have to push items onto the existing files array.
+      // Otherwise react thinks more of the state changed than we want.
+      newFiles.forEach((file: any) => {
+        files.push(file);
+      });
+      setProcessModel((prevProcessModel: any) => ({
         ...prevProcessModel,
-        files: updatedFiles,
+        files,
       }));
     }
   };
