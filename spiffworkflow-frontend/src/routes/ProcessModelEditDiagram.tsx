@@ -196,33 +196,15 @@ export default function ProcessModelEditDiagram() {
     setScriptText(value);
   };
 
-  // const getProcessModel = useCallback(
-  //   (onProcessModelFetched: Function) => {
-  //     HttpService.makeCallToBackend({
-  //       path: `/${processModelPath}?include_file_references=true`,
-  //       successCallback: (result: any) => {
-  //         setProcessModel(result);
-  //         if (onProcessModelFetched) {
-  //           onProcessModelFetched(result);
-  //         }
-  //       },
-  //     });
-  //   },
-  //   [processModelPath],
-  // );
-
   useEffect(() => {
-    console.log('USE1');
     getProcessesCallback();
   }, [getProcessesCallback]);
 
   useEffect(() => {
-    console.log('USE2');
     const fileResult = (result: any) => {
       setProcessModelFile(result);
       setBpmnXmlForDiagramRendering(result.file_contents);
     };
-    // getProcessModel();
     HttpService.makeCallToBackend({
       path: `/${processModelPath}?include_file_references=true`,
       successCallback: (result: any) => {
@@ -239,7 +221,6 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath, params.file_name]);
 
   useEffect(() => {
-    console.log('USE3');
     const bpmnProcessIds = processModelFile?.bpmn_process_ids;
     if (processModel !== null && bpmnProcessIds) {
       HttpService.makeCallToBackend({
@@ -259,7 +240,6 @@ export default function ProcessModelEditDiagram() {
    * the scriptAssistResult is updated, call the handler manually.
    */
   useEffect(() => {
-    console.log('USE4');
     if (scriptAssistResult) {
       if (scriptAssistResult.result) {
         handleEditorScriptChange(scriptAssistResult.result);
@@ -480,45 +460,10 @@ export default function ProcessModelEditDiagram() {
         const options = jsonFiles.map((f) => {
           return { label: f.name, value: f.name };
         });
-        // console.log('jsonSchemaFileName', jsonSchemaFileName);
-        // const item = options.find(
-        //   (opt: any) => opt.value === jsonSchemaFileName,
-        // );
-        // if (!item) {
-        //   options.push({
-        //     value: jsonSchemaFileName,
-        //     label: jsonSchemaFileName,
-        //   });
-        // }
         event.eventBus.fire('spiff.json_schema_files.returned', { options });
       } else {
         console.error('There is no process Model.');
       }
-
-      // const runStuff = (newProcessModel: ProcessModel) => {
-      //   const re = /.*[-.]schema.json/;
-      //   const jsonFiles = newProcessModel.files.filter((f) => f.name.match(re));
-      //   const options = jsonFiles.map((f) => {
-      //     return { label: f.name, value: f.name };
-      //   });
-      //   console.log('options', options);
-      //   console.log('event.evenBus', event.eventBus);
-      //   event.eventBus.fire('spiff.json_schema_files.returned', { options });
-      // };
-      // HttpService.makeCallToBackend({
-      //   path: `/${processModelPath}?include_file_references=true`,
-      //   successCallback: (result: any) => {
-      //     runStuff(result);
-      //   },
-      // });
-      // // getProcessModel((newProcessModel: ProcessModel) => {
-      // //   const jsonFiles = newProcessModel.files.filter((f) => f.name.match(re));
-      // //   const options = jsonFiles.map((f) => {
-      // //     return { label: f.name, value: f.name };
-      // //   });
-      // //   console.log('options', options);
-      // //   event.eventBus.fire('spiff.json_schema_files.returned', { options });
-      // // });
     },
     [processModel?.files],
   );
@@ -1293,30 +1238,12 @@ export default function ProcessModelEditDiagram() {
     [],
   );
 
-  const updateProcessModel = (newValues: any) => {
-    const processModelToCopy = {
-      ...processModel,
-    };
-    Object.assign(processModelToCopy, newValues);
-    setProcessModel(processModelToCopy);
-  };
-
-  const handleJsonSchemaEditorClose = () => {
-    // HttpService.makeCallToBackend({
-    //   path: `/${processModelPath}?include_file_references=true`,
-    //   successCallback: (result: any) => {
-    //     setProcessModel(result);
-    //     fileEventBus.fire('spiff.jsonSchema.update', {
-    //       value: jsonSchemaFileName,
-    //     });
-    //     setShowJsonSchemaEditor(false);
-    //   },
-    // });
+  const addNewFileIfNotExist = () => {
+    if (!processModel) {
+      return;
+    }
     const { files } = processModel;
-    console.log('jsonSchemaFileName', jsonSchemaFileName);
-    console.log('files', files);
     const file = files.find((f: ProcessFile) => f.name === jsonSchemaFileName);
-    console.log('file', file);
     if (!file) {
       files.push({
         content_type: 'application/json',
@@ -1345,8 +1272,16 @@ export default function ProcessModelEditDiagram() {
         size: 0,
         type: 'json',
       });
-      updateProcessModel({ files });
+      const processModelToCopy = {
+        ...processModel,
+      };
+      Object.assign(processModelToCopy, { files });
+      setProcessModel(processModelToCopy);
     }
+  };
+
+  const handleJsonSchemaEditorClose = () => {
+    addNewFileIfNotExist();
     fileEventBus.fire('spiff.jsonSchema.update', {
       value: jsonSchemaFileName,
     });
