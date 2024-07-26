@@ -38,13 +38,13 @@ def setup_database_configs(app: Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
-            app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}{parallel_test_suffix}.sqlite3"
-            )
+            app.config[
+                "SQLALCHEMY_DATABASE_URI"
+            ] = f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}{parallel_test_suffix}.sqlite3"
         elif app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
-            app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
-            )
+            app.config[
+                "SQLALCHEMY_DATABASE_URI"
+            ] = f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
         else:
             # use pswd to trick flake8 with hardcoded passwords
             db_pswd = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
@@ -241,12 +241,13 @@ def setup_config(app: Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS") is None:
         app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
             {
-                "identifier": "default",
-                "label": "Default",
-                "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
+                "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
-                "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
+                "identifier": "default",
+                "internal_uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL"),
+                "label": "Default",
+                "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
             }
         ]
 
