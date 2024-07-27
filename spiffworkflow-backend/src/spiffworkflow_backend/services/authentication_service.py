@@ -140,16 +140,17 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str, internal: bool = False) -> str:
+    def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
-        appropriate_server_url = cls.server_url(authentication_identifier, internal=internal)
-        openid_config_url = f"{appropriate_server_url}/.well-known/openid-configuration"
 
         if authentication_identifier not in cls.ENDPOINT_CACHE:
             cls.ENDPOINT_CACHE[authentication_identifier] = {}
         if authentication_identifier not in cls.JSON_WEB_KEYSET_CACHE:
             cls.JSON_WEB_KEYSET_CACHE[authentication_identifier] = {}
+
         if name not in AuthenticationService.ENDPOINT_CACHE[authentication_identifier]:
+            appropriate_server_url = cls.server_url(authentication_identifier, internal=True)
+            openid_config_url = f"{appropriate_server_url}/.well-known/openid-configuration"
             try:
                 response = safe_requests.get(openid_config_url, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
                 AuthenticationService.ENDPOINT_CACHE[authentication_identifier] = response.json()
@@ -172,7 +173,7 @@ class AuthenticationService:
 
     @classmethod
     def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> JWKSKeyConfig:
-        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier, internal=True)
+        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
         json_key_configs: JWKSKeyConfig | None = cls.get_key_config(jwks_configs, key_id)
         if not json_key_configs:
@@ -310,7 +311,7 @@ class AuthenticationService:
         }
 
         request_url = self.open_id_endpoint_for_name(
-            "token_endpoint", authentication_identifier=authentication_identifier, internal=True
+            "token_endpoint", authentication_identifier=authentication_identifier
         )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
@@ -441,7 +442,7 @@ class AuthenticationService:
         }
 
         request_url = cls.open_id_endpoint_for_name(
-            "token_endpoint", authentication_identifier=authentication_identifier, internal=True
+            "token_endpoint", authentication_identifier=authentication_identifier
         )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
