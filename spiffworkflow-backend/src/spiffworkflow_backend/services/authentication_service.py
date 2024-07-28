@@ -140,7 +140,7 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str) -> str:
+    def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str, internal: bool = False) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
 
         if authentication_identifier not in cls.ENDPOINT_CACHE:
@@ -162,8 +162,9 @@ class AuthenticationService:
         config: str = AuthenticationService.ENDPOINT_CACHE[authentication_identifier].get(name, "")
 
         external_server_url = cls.server_url(authentication_identifier)
-        if internal_server_url != external_server_url:
-            config = config.replace(internal_server_url, external_server_url)
+        if internal is False:
+            if internal_server_url != external_server_url:
+                config = config.replace(internal_server_url, external_server_url)
 
         return config
 
@@ -179,7 +180,7 @@ class AuthenticationService:
 
     @classmethod
     def jwks_public_key_for_key_id(cls, authentication_identifier: str, key_id: str) -> JWKSKeyConfig:
-        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier)
+        jwks_uri = cls.open_id_endpoint_for_name("jwks_uri", authentication_identifier, internal=True)
         jwks_configs = cls.get_jwks_config_from_uri(jwks_uri)
         json_key_configs: JWKSKeyConfig | None = cls.get_key_config(jwks_configs, key_id)
         if not json_key_configs:
@@ -316,7 +317,9 @@ class AuthenticationService:
             "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
         }
 
-        request_url = self.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
+        request_url = self.open_id_endpoint_for_name(
+            "token_endpoint", authentication_identifier=authentication_identifier, internal=True
+        )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
@@ -445,7 +448,9 @@ class AuthenticationService:
             "client_secret": cls.secret_key(authentication_identifier),
         }
 
-        request_url = cls.open_id_endpoint_for_name("token_endpoint", authentication_identifier=authentication_identifier)
+        request_url = cls.open_id_endpoint_for_name(
+            "token_endpoint", authentication_identifier=authentication_identifier, internal=True
+        )
 
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
