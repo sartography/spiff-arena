@@ -1100,7 +1100,7 @@
         "saml.force.post.binding": "false",
         "saml.multivalued.roles": "false",
         "frontchannel.logout.session.required": "false",
-        "post.logout.redirect.uris": "https://replace-me-with-spiff-frontend-host-and-path/*##http://localhost:7001/*",
+        "post.logout.redirect.uris": "https://replace-me-with-spiff-frontend-host-and-path/*##http://localhost:7001/*##http://localhost:8001/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "saml.server.signature.keyinfo.ext": "false",
