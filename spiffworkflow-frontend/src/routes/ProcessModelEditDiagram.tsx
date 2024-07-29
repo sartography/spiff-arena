@@ -527,14 +527,14 @@ export default function ProcessModelEditDiagram() {
   };
 
   const setScriptUnitTestElementWithIndex = useCallback(
-    (scriptIndex: number, element: any = scriptElement) => {
+    (scriptIndex: number, element: any) => {
       const unitTestsModdleElements = getScriptUnitTestElements(element);
       if (unitTestsModdleElements.length > 0) {
         setCurrentScriptUnitTest(unitTestsModdleElements[scriptIndex]);
         setCurrentScriptUnitTestIndex(scriptIndex);
       }
     },
-    [scriptElement],
+    [],
   );
 
   const onLaunchScriptEditor = useCallback(
@@ -603,7 +603,7 @@ export default function ProcessModelEditDiagram() {
     resetUnitTextResult();
     const newScriptIndex = currentScriptUnitTestIndex - 1;
     if (newScriptIndex >= 0) {
-      setScriptUnitTestElementWithIndex(newScriptIndex);
+      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
     }
   };
 
@@ -612,7 +612,7 @@ export default function ProcessModelEditDiagram() {
     const newScriptIndex = currentScriptUnitTestIndex + 1;
     const unitTestsModdleElements = getScriptUnitTestElements(scriptElement);
     if (newScriptIndex < unitTestsModdleElements.length) {
-      setScriptUnitTestElementWithIndex(newScriptIndex);
+      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
     }
   };
 
