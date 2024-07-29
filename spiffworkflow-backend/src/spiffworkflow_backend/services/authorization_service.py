@@ -444,7 +444,8 @@ class AuthorizationService:
         name, family_name, given_name, middle_name, nickname, preferred_username,
         profile, picture, website, gender, birthdate, zoneinfo, locale,updated_at, email.
         """
-        is_new_user = False
+        new_group_ids: set[int] = set()
+        old_group_ids: set[int] = set()
         user_attributes = {}
 
         if "email" in user_info:
@@ -485,8 +486,8 @@ class AuthorizationService:
         )
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
-            is_new_user = True
             user_model = UserService().create_user(**user_attributes)
+            new_group_ids = {g.id for g in user_model.groups}
         else:
             # Update with the latest information
             user_db_model_changed = False
@@ -506,14 +507,18 @@ class AuthorizationService:
                 )
             else:
                 for desired_group_identifier in desired_group_identifiers:
-                    UserService.add_user_to_group_by_group_identifier(
+                    new_group = UserService.add_user_to_group_by_group_identifier(
                         user_model, desired_group_identifier, source_is_open_id=True
                     )
-                current_group_identifiers = [g.identifier for g in user_model.groups]
-                groups_to_remove_from_user = [item for item in current_group_identifiers if item not in desired_group_identifiers]
-                for gtrfu in groups_to_remove_from_user:
-                    if gtrfu != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
-                        UserService.remove_user_from_group(user_model, gtrfu)
+                    if new_group is not None:
+                        new_group_ids.add(new_group.id)
+                group_ids_to_remove_from_user = [
+                    item.id for item in user_model.groups if item.identifier not in desired_group_identifiers
+                ]
+                for group_id in group_ids_to_remove_from_user:
+                    if group_id != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
+                        old_group_ids.add(group_id)
+                        UserService.remove_user_from_group(user_model, group_id)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -523,8 +528,10 @@ class AuthorizationService:
         # the external service user identifier.
         cls.import_permissions_from_yaml_file(user_model)
 
-        if is_new_user:
-            UserService.add_user_to_human_tasks_if_appropriate(user_model)
+        if len(new_group_ids) > 0 or len(old_group_ids) > 0:
+            UserService.add_user_to_human_tasks_if_appropriate(
+                user_model, new_group_ids=new_group_ids, old_group_ids=old_group_ids
+            )
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore

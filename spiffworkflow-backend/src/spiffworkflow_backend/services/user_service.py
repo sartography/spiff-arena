@@ -11,7 +11,8 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy, HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -121,12 +122,14 @@ class UserService:
         return principal
 
     @classmethod
-    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
-        exists = UserGroupAssignmentModel.query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
-        if not exists:
+    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> GroupModel | None:
+        existing_assignment_count = UserGroupAssignmentModel.query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
+        if existing_assignment_count == 0:
             ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
             db.session.add(ugam)
             db.session.commit()
+            return group
+        return None
 
     @classmethod
     def add_waiting_group_assignment(
@@ -177,18 +180,27 @@ class UserService:
         return None
 
     @classmethod
-    def add_user_to_human_tasks_if_appropriate(cls, user: UserModel) -> None:
-        group_ids = [g.id for g in user.groups]
-        current_assignments = HumanTaskUserModel.query.filter_by(
-            user_id=user.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
-        ).all()
+    def add_user_to_human_tasks_if_appropriate(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
+        current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
         current_human_task_ids = [ca.human_task_id for ca in current_assignments]
-        assignments_to_delete = []
-        human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(group_ids)).all()  # type: ignore
+        human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(new_group_ids)).all()  # type: ignore
         for human_task in human_tasks:
             if human_task.id not in current_human_task_ids:
-                human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
+                human_task_user = HumanTaskUserModel(
+                    user_id=user.id, human_task_id=human_task.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
+                )
                 db.session.add(human_task_user)
+        human_task_assignments_to_delete = (
+            HumanTaskUserModel.query.join(HumanTaskModel)
+            .filter(
+                HumanTaskUserModel.user_id == user.id,
+                HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                HumanTaskModel.lane_assignment_id.in_(old_group_ids),  # type: ignore
+            )
+            .all()
+        )
+        for assignment_to_delete in human_task_assignments_to_delete:
+            db.sssion.delete(assignment_to_delete)
         db.session.commit()
 
     @classmethod
@@ -260,9 +272,9 @@ class UserService:
     @classmethod
     def add_user_to_group_by_group_identifier(
         cls, user: UserModel, group_identifier: str, source_is_open_id: bool = False
-    ) -> None:
+    ) -> GroupModel | None:
         group = cls.find_or_create_group(group_identifier, source_is_open_id=source_is_open_id)
-        cls.add_user_to_group(user, group)
+        return cls.add_user_to_group(user, group)
 
     @classmethod
     def remove_user_from_group(cls, user: UserModel, group_identifier: str) -> None:

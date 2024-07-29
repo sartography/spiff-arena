@@ -1,13 +1,13 @@
 from __future__ import annotations
-from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from typing import Any
-from sqlalchemy.orm import validates
 
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
 
+from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -35,7 +35,7 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
-    added_by: str = db.Column(db.String(50), index=True)
+    added_by: str = db.Column(db.String(20), index=True)
 
     human_task = relationship(HumanTaskModel, back_populates="human_task_users")
 
