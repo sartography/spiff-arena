@@ -11,7 +11,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy, HumanTaskUserModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -179,11 +179,17 @@ class UserService:
     @classmethod
     def add_user_to_human_tasks_if_appropriate(cls, user: UserModel) -> None:
         group_ids = [g.id for g in user.groups]
+        current_assignments = HumanTaskUserModel.query.filter_by(
+            user_id=user.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
+        ).all()
+        current_human_task_ids = [ca.human_task_id for ca in current_assignments]
+        assignments_to_delete = []
         human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(group_ids)).all()  # type: ignore
         for human_task in human_tasks:
-            human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
-            db.session.add(human_task_user)
-            db.session.commit()
+            if human_task.id not in current_human_task_ids:
+                human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
+                db.session.add(human_task_user)
+        db.session.commit()
 
     @classmethod
     def get_permission_targets_for_user(cls, user: UserModel, check_groups: bool = True) -> set[tuple[str, str, str]]:
