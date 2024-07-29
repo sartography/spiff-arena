@@ -241,12 +241,13 @@ def setup_config(app: Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS") is None:
         app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
             {
-                "identifier": "default",
-                "label": "Default",
-                "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
+                "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
-                "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
+                "identifier": "default",
+                "internal_uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL"),
+                "label": "Default",
+                "uri": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"),
             }
         ]
 
