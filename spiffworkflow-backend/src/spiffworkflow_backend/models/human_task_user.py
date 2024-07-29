@@ -15,9 +15,11 @@ from spiffworkflow_backend.models.user import UserModel
 
 
 class HumanTaskUserAddedBy(SpiffEnum):
-    lane_owner = "lane_owner"
+    guest = "guest"
     lane_assignment = "lane_assignment"
+    lane_owner = "lane_owner"
     manual = "manual"
+    process_initiator = "process_initiator"
 
 
 @dataclass

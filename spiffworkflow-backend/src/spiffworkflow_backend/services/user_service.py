@@ -277,17 +277,17 @@ class UserService:
         return cls.add_user_to_group(user, group)
 
     @classmethod
-    def remove_user_from_group(cls, user: UserModel, group_identifier: str) -> None:
+    def remove_user_from_group(cls, user: UserModel, group_id: int) -> None:
         user_group_assignment = (
             UserGroupAssignmentModel.query.filter_by(user_id=user.id)
             .join(
                 GroupModel,
-                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.identifier == group_identifier),
+                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.id == group_id),
             )
             .first()
         )
         if user_group_assignment is None:
-            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_identifier})"))
+            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_id})"))
         db.session.delete(user_group_assignment)
         db.session.commit()
 

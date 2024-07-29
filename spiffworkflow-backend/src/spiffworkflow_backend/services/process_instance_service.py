@@ -310,17 +310,18 @@ class ProcessInstanceService:
         ready_human_tasks = HumanTaskModel.query.filter(HumanTaskModel.task_guid.in_(user_task_guids)).all()  # type: ignore
         for human_task in ready_human_tasks:
             spiff_task = processor.get_task_by_guid(human_task.task_guid)
-            potential_owner_hash = processor.get_potential_owner_ids_from_task(spiff_task)
+            potential_owner_hash = processor.get_potential_owners_from_task(spiff_task)
             human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid], potential_owner_hash)
             db.session.add(human_task)
             human_task_user_records = HumanTaskUserModel.query.filter_by(human_task=human_task).all()
             currently_assigned_user_ids = {ht.user_id for ht in human_task_user_records}
-            desired_user_ids = set(potential_owner_hash["potential_owner_ids"])
+            desired_user_ids = {p["user_id"] for p in potential_owner_hash["potential_owners"]}
             user_ids_to_remove = currently_assigned_user_ids - desired_user_ids
-            user_ids_to_add = desired_user_ids - currently_assigned_user_ids
-            for potential_owner_id in user_ids_to_add:
-                if potential_owner_id not in currently_assigned_user_ids:
-                    human_task_user = HumanTaskUserModel(user_id=potential_owner_id, human_task=human_task)
+            for potential_owner in potential_owner_hash["potential_owners"]:
+                if potential_owner["user_id"] not in currently_assigned_user_ids:
+                    human_task_user = HumanTaskUserModel(
+                        user_id=potential_owner["user_id"], added_by=potential_owner["added_by"], human_task=human_task
+                    )
                     db.session.add(human_task_user)
             for htur in human_task_user_records:
                 if htur.id in user_ids_to_remove:
