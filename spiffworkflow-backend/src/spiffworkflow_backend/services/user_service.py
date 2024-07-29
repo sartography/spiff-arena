@@ -230,13 +230,19 @@ class UserService:
         return principals
 
     @classmethod
-    def find_or_create_group(cls, group_identifier: str) -> GroupModel:
+    def find_or_create_group(cls, group_identifier: str, source_is_open_id: bool = False) -> GroupModel:
         group: GroupModel | None = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
-            group = GroupModel(identifier=group_identifier)
+            group = GroupModel(identifier=group_identifier, source_is_open_id=source_is_open_id)
             db.session.add(group)
             db.session.commit()
             cls.create_principal(group.id, id_column_name="group_id")
+        elif not group.source_is_open_id and source_is_open_id is True:
+            # if a group ever shows up in an open id token we want to flag it to ensure we
+            # do not accidentally delete it even if it is mentioned / created in another source
+            group.source_is_open_id = True
+            db.session.add(group)
+            db.session.commit()
         return group
 
     @classmethod
@@ -252,8 +258,10 @@ class UserService:
         return (None, None)
 
     @classmethod
-    def add_user_to_group_by_group_identifier(cls, user: UserModel, group_identifier: str) -> None:
-        group = cls.find_or_create_group(group_identifier)
+    def add_user_to_group_by_group_identifier(
+        cls, user: UserModel, group_identifier: str, source_is_open_id: bool = False
+    ) -> None:
+        group = cls.find_or_create_group(group_identifier, source_is_open_id=source_is_open_id)
         cls.add_user_to_group(user, group)
 
     @classmethod
