@@ -180,7 +180,7 @@ class UserService:
         return None
 
     @classmethod
-    def add_user_to_human_tasks_if_appropriate(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
+    def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
         current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
         current_human_task_ids = [ca.human_task_id for ca in current_assignments]
         human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(new_group_ids)).all()  # type: ignore
@@ -200,7 +200,7 @@ class UserService:
             .all()
         )
         for assignment_to_delete in human_task_assignments_to_delete:
-            db.sssion.delete(assignment_to_delete)
+            db.session.delete(assignment_to_delete)
         db.session.commit()
 
     @classmethod

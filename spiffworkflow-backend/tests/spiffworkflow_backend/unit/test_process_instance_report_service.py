@@ -337,7 +337,7 @@ class TestProcessInstanceReportService(BaseTest):
         db.session.commit()
 
         new_group_ids = {g.id for g in user_one.groups}
-        UserService.add_user_to_human_tasks_if_appropriate(user_one, new_group_ids=new_group_ids, old_group_ids=set())
+        UserService.update_human_task_assignments_for_user(user_one, new_group_ids=new_group_ids, old_group_ids=set())
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(user=user_one)
         report_metadata = process_instance_report.report_metadata

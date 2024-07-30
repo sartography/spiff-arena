@@ -529,7 +529,7 @@ class AuthorizationService:
         cls.import_permissions_from_yaml_file(user_model)
 
         if len(new_group_ids) > 0 or len(old_group_ids) > 0:
-            UserService.add_user_to_human_tasks_if_appropriate(
+            UserService.update_human_task_assignments_for_user(
                 user_model, new_group_ids=new_group_ids, old_group_ids=old_group_ids
             )
 
