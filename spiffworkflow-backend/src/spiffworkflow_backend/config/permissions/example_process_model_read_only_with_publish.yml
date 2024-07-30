@@ -1,6 +1,6 @@
 groups:
   admin:
-    users: [admin@spiffworkflow.org]
+    users: [admin@example.com]
 
 permissions:
   process-groups-ro:
