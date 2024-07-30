@@ -1,3 +1,5 @@
+from datetime import datetime
+import pytz
 import json
 import os, os.path
 import socket
@@ -42,6 +44,13 @@ def init_urllib():
     urllib.request.install_opener(opener)
 
 def send_event(event):
+    if 'timestamp' in event:
+        timestamp_value = event['timestamp']
+        # if timestamp is an integer or a float (any numeric type), convert to a iso8601 string so that elastic will index it as a date
+        if isinstance(timestamp_value, (int, float)):
+            utc_time = datetime.fromtimestamp(timestamp_value, tz=pytz.UTC)
+            event['timestamp'] = utc_time.isoformat()
+
     try:
         post_body = json.dumps(event).encode("utf-8")
         request = urllib.request.Request(ELASTICSEARCH_URL)

@@ -49,6 +49,9 @@ dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
 start-dev: stop-dev
 	$(DOCKER_COMPOSE) up -d
 
+start-event-stream:
+	$(DOCKER_COMPOSE) up -d event-stream
+
 stop-dev:
 	$(DOCKER_COMPOSE) down
 

@@ -7,7 +7,7 @@ KIBANA_PASSWORD ?= kibana
 
 
 net-start:
-	docker network create $(NETWORK) || true
+	docker network create --label com.docker.compose.network=default $(NETWORK) || true
 
 net-stop:
 	docker network rm $(NETWORK) || true
