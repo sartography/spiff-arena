@@ -10,6 +10,7 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -253,7 +254,7 @@ def _assign_task_if_guest(task_model: TaskModel) -> bool:
                     status_code=400,
                 )
             )
-        human_task_user = HumanTaskUserModel(user_id=g.user.id, human_task=human_task)
+        human_task_user = HumanTaskUserModel(user_id=g.user.id, human_task=human_task, added_by=HumanTaskUserAddedBy.guest.value)
         db.session.add(human_task_user)
         db.session.commit()
     return True
