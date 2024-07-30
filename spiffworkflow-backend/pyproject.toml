@@ -111,7 +111,7 @@ pytest-flask-sqlalchemy = "^1.1.0"
 pytest-xdist = "3.6.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
-bandit = "1.7.8"
+bandit = "1.7.9"
 
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^4.6.0"
