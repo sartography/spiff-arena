@@ -30,6 +30,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -383,7 +384,9 @@ def task_assign(
     for user_id in body["user_ids"]:
         human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
         if human_task_user is None:
-            human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
+            human_task_user = HumanTaskUserModel(
+                user_id=user_id, human_task=human_task, added_by=HumanTaskUserAddedBy.manual.value
+            )
             db.session.add(human_task_user)
 
     SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
