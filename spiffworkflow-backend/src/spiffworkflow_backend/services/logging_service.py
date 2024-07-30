@@ -81,7 +81,19 @@ class SpiffLogHandler(SocketHandler):
             if not hasattr(record, "process_model_identifier"):
                 data["process_model_identifier"] = process_model_identifier
 
-            for attr in ["workflow_spec", "task_spec", "task_id", "task_type"]:
+            task_properties_from_spiff = [
+                "worflow_spec",
+                "task_spec",
+                "task_id",
+                "task_type",
+                "state",
+                "last_state_change",
+                "elapsed",
+                "parent",
+            ]
+            workflow_properties_from_spiff = ["completed", "success"]
+            properties_from_spiff = task_properties_from_spiff + workflow_properties_from_spiff
+            for attr in properties_from_spiff:
                 if hasattr(record, attr):
                     data[attr] = str(getattr(record, attr))
                 else:
