@@ -1,5 +1,5 @@
 from datetime import datetime
-import pytz
+from datetime import timezone
 import json
 import os, os.path
 import socket
@@ -48,7 +48,7 @@ def send_event(event):
         timestamp_value = event['timestamp']
         # if timestamp is an integer or a float (any numeric type), convert to a iso8601 string so that elastic will index it as a date
         if isinstance(timestamp_value, (int, float)):
-            utc_time = datetime.fromtimestamp(timestamp_value, tz=pytz.UTC)
+            utc_time = datetime.fromtimestamp(timestamp_value, tz=timezone.utc)
             event['timestamp'] = utc_time.isoformat()
 
     try:
