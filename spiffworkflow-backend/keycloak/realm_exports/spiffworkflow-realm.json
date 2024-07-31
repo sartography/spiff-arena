@@ -303,7 +303,6 @@
           "attributes": {}
         }
       ],
-      "spiffworkflow-frontend": [],
       "security-admin-console": [],
       "admin-cli": [],
       "spiffworkflow-backend": [
@@ -332,16 +331,6 @@
           "attributes": {
             "repeat-form-role-2-att-key": ["repeat-form-role-2-att-value"]
           }
-        }
-      ],
-      "withAuth": [
-        {
-          "id": "87673823-6a5a-4cb2-baa7-6c8b5da5d402",
-          "name": "uma_protection",
-          "composite": false,
-          "clientRole": true,
-          "containerId": "5d94a8c3-f56b-4eff-ac39-8580053a7fbe",
-          "attributes": {}
         }
       ],
       "broker": [
@@ -469,9 +458,9 @@
   "otpPolicyPeriod": 30,
   "otpPolicyCodeReusable": false,
   "otpSupportedApplications": [
-    "totpAppGoogleName",
+    "totpAppMicrosoftAuthenticatorName",
     "totpAppFreeOTPName",
-    "totpAppMicrosoftAuthenticatorName"
+    "totpAppGoogleName"
   ],
   "webAuthnPolicyRpEntityName": "keycloak",
   "webAuthnPolicySignatureAlgorithms": ["ES256"],
@@ -507,7 +496,7 @@
           "id": "644ff652-31d1-4349-9340-ce3b5fb76b5c",
           "type": "password",
           "createdDate": 1676302139645,
-          "secretData": "{\"value\":\"P6nrEJgmgdL+HbNA9tPkOyHYaLAqLg6cXh27ACgVQiOox4qwNE8Iv1L4ssispV4gsmuHiY+alio/2UMuyMGvEw==\",\"salt\":\"g214ckcAyig59U/3Oqwq4w==\",\"additionalParameters\":{}}",
+          "secretData": "{\"value\":\"/eyBI5r6kp5hOkRW6fgSm++rGDA4XA/9n0wSLTGqt1o=\",\"salt\":\"dPH+V7T4+ch7YqNtPBaLPA==\",\"additionalParameters\":{}}",
           "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
         }
       ],
@@ -680,24 +669,6 @@
       "realmRoles": ["default-roles-spiffworkflow"],
       "clientRoles": {
         "spiffworkflow-backend": ["uma_protection"]
-      },
-      "notBefore": 0,
-      "groups": []
-    },
-    {
-      "id": "25ee0de5-f0eb-4cb9-8b75-48ed512550e0",
-      "createdTimestamp": 1722366627015,
-      "username": "service-account-withauth",
-      "enabled": true,
-      "totp": false,
-      "emailVerified": false,
-      "serviceAccountClientId": "withAuth",
-      "credentials": [],
-      "disableableCredentialTypes": [],
-      "requiredActions": [],
-      "realmRoles": ["default-roles-spiffworkflow"],
-      "clientRoles": {
-        "withAuth": ["uma_protection"]
       },
       "notBefore": 0,
       "groups": []
@@ -1081,9 +1052,7 @@
       "secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
       "redirectUris": [
         "http://localhost:7000/*",
-        "http://67.205.133.116:7000/*",
-        "http://167.172.242.138:7000/*",
-        "https://for-local-dev.spiffworkflow.org/*"
+        "https://replace-me-with-spiff-backend-host-and-path/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -1357,239 +1326,6 @@
             "displayName": "instantiate"
           }
         ],
-        "decisionStrategy": "UNANIMOUS"
-      }
-    },
-    {
-      "id": "9f340eba-2b84-43d0-a976-010e270e3981",
-      "clientId": "spiffworkflow-frontend",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "https://api.unused-for-local-dev.spiffworkflow.org/*",
-        "http://localhost:7001/*",
-        "http://67.205.133.116:7000/*",
-        "http://167.172.242.138:7001/*",
-        "https://api.demo.spiffworkflow.org/*"
-      ],
-      "webOrigins": ["*"],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
-      "publicClient": true,
-      "frontchannelLogout": false,
-      "protocol": "openid-connect",
-      "attributes": {
-        "saml.force.post.binding": "false",
-        "saml.multivalued.roles": "false",
-        "frontchannel.logout.session.required": "false",
-        "post.logout.redirect.uris": "+",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "saml.server.signature.keyinfo.ext": "false",
-        "use.refresh.tokens": "true",
-        "oidc.ciba.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "client_credentials.use_refresh_token": "false",
-        "require.pushed.authorization.requests": "false",
-        "saml.client.signature": "false",
-        "saml.allow.ecp.flow": "false",
-        "id.token.as.detached.signature": "false",
-        "saml.assertion.signature": "false",
-        "saml.encrypt": "false",
-        "saml.server.signature": "false",
-        "exclude.session.state.from.auth.response": "false",
-        "saml.artifact.binding": "false",
-        "saml_force_name_id_format": "false",
-        "acr.loa.map": "{}",
-        "tls.client.certificate.bound.access.tokens": "false",
-        "saml.authnstatement": "false",
-        "display.on.consent.screen": "false",
-        "token.response.type.bearer.lower-case": "false",
-        "saml.onetimeuse.condition": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
-      "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
-      "defaultClientScopes": [
-        "web-origins",
-        "acr",
-        "profile",
-        "roles",
-        "email"
-      ],
-      "optionalClientScopes": [
-        "address",
-        "phone",
-        "offline_access",
-        "microprofile-jwt"
-      ]
-    },
-    {
-      "id": "5d94a8c3-f56b-4eff-ac39-8580053a7fbe",
-      "clientId": "withAuth",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "client-secret",
-      "secret": "6o8kIKQznQtejHOdRhWeKorBJclMGcgA",
-      "redirectUris": [
-        "https://api.unused-for-local-dev.spiffworkflow.org/*",
-        "http://localhost:7001/*",
-        "http://67.205.133.116:7000/*",
-        "http://167.172.242.138:7001/*",
-        "https://api.demo.spiffworkflow.org/*"
-      ],
-      "webOrigins": [],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": true,
-      "authorizationServicesEnabled": true,
-      "publicClient": false,
-      "frontchannelLogout": false,
-      "protocol": "openid-connect",
-      "attributes": {
-        "saml.force.post.binding": "false",
-        "saml.multivalued.roles": "false",
-        "frontchannel.logout.session.required": "false",
-        "post.logout.redirect.uris": "+",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "saml.server.signature.keyinfo.ext": "false",
-        "use.refresh.tokens": "true",
-        "oidc.ciba.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "client_credentials.use_refresh_token": "false",
-        "require.pushed.authorization.requests": "false",
-        "saml.client.signature": "false",
-        "saml.allow.ecp.flow": "false",
-        "id.token.as.detached.signature": "false",
-        "saml.assertion.signature": "false",
-        "client.secret.creation.time": "1657055472",
-        "saml.encrypt": "false",
-        "saml.server.signature": "false",
-        "exclude.session.state.from.auth.response": "false",
-        "saml.artifact.binding": "false",
-        "saml_force_name_id_format": "false",
-        "acr.loa.map": "{}",
-        "tls.client.certificate.bound.access.tokens": "false",
-        "saml.authnstatement": "false",
-        "display.on.consent.screen": "false",
-        "token.response.type.bearer.lower-case": "false",
-        "saml.onetimeuse.condition": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
-      "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
-      "protocolMappers": [
-        {
-          "id": "abfc756f-fc57-45b4-8a40-0cd0f8081f0c",
-          "name": "Client ID",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usersessionmodel-note-mapper",
-          "consentRequired": false,
-          "config": {
-            "user.session.note": "clientId",
-            "userinfo.token.claim": "true",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "claim.name": "clientId",
-            "jsonType.label": "String"
-          }
-        },
-        {
-          "id": "c05d38b7-9b4d-4286-b40c-f48b3cca42e3",
-          "name": "Client Host",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usersessionmodel-note-mapper",
-          "consentRequired": false,
-          "config": {
-            "user.session.note": "clientHost",
-            "userinfo.token.claim": "true",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "claim.name": "clientHost",
-            "jsonType.label": "String"
-          }
-        },
-        {
-          "id": "b27d0bd8-b8d9-43cb-a07a-3ec4bdc818dc",
-          "name": "Client IP Address",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usersessionmodel-note-mapper",
-          "consentRequired": false,
-          "config": {
-            "user.session.note": "clientAddress",
-            "userinfo.token.claim": "true",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "claim.name": "clientAddress",
-            "jsonType.label": "String"
-          }
-        }
-      ],
-      "defaultClientScopes": [
-        "web-origins",
-        "acr",
-        "profile",
-        "roles",
-        "email"
-      ],
-      "optionalClientScopes": [
-        "address",
-        "phone",
-        "offline_access",
-        "microprofile-jwt"
-      ],
-      "authorizationSettings": {
-        "allowRemoteResourceManagement": true,
-        "policyEnforcementMode": "ENFORCING",
-        "resources": [
-          {
-            "name": "Default Resource",
-            "type": "urn:withAuth:resources:default",
-            "ownerManagedAccess": false,
-            "attributes": {},
-            "_id": "c882ad40-c15d-4f88-ad60-c2ea2f486ce2",
-            "uris": ["/*"]
-          }
-        ],
-        "policies": [
-          {
-            "id": "b8b338bc-884d-43cf-96d8-3776f2b220f3",
-            "name": "Default Policy",
-            "description": "A policy that grants access only for users within this realm",
-            "type": "role",
-            "logic": "POSITIVE",
-            "decisionStrategy": "AFFIRMATIVE",
-            "config": {
-              "roles": "[{\"id\":\"spiffworkflow-backend/repeat-form-role-2\",\"required\":false}]"
-            }
-          },
-          {
-            "id": "4f5afa22-0fdf-4ed7-97b9-35400591bf6f",
-            "name": "Default Permission",
-            "description": "A permission that applies to the default resource type",
-            "type": "resource",
-            "logic": "POSITIVE",
-            "decisionStrategy": "UNANIMOUS",
-            "config": {
-              "defaultResourceType": "urn:withAuth:resources:default",
-              "applyPolicies": "[\"Default Policy\"]"
-            }
-          }
-        ],
-        "scopes": [],
         "decisionStrategy": "UNANIMOUS"
       }
     }
@@ -2171,14 +1907,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-address-mapper",
+            "oidc-full-name-mapper",
             "saml-user-property-mapper",
             "oidc-sha256-pairwise-sub-mapper",
-            "oidc-full-name-mapper",
+            "saml-role-list-mapper",
+            "oidc-usermodel-attribute-mapper",
             "saml-user-attribute-mapper",
             "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-role-list-mapper"
+            "oidc-address-mapper"
           ]
         }
       },
@@ -2200,14 +1936,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-address-mapper",
             "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-property-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-full-name-mapper",
             "saml-role-list-mapper",
             "oidc-usermodel-attribute-mapper",
-            "saml-user-property-mapper",
             "saml-user-attribute-mapper",
-            "oidc-full-name-mapper",
-            "oidc-usermodel-property-mapper"
+            "oidc-address-mapper"
           ]
         }
       },
