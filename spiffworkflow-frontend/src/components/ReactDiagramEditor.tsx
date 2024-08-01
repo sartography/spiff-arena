@@ -54,12 +54,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
-import BpmnJsScriptIcon from '../bpmn_js_script_icon.svg';
+import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
+import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import {
-  convertSvgComponentToHtmlString,
+  convertSvgElementToHtmlString,
   getBpmnProcessIdentifiers,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -348,9 +349,7 @@ export default function ReactDiagramEditor({
             (extension: any) => extension.$type === 'spiffworkflow:PostScript',
           );
         const overlays = diagramModeler.get('overlays');
-        const scriptIcon = convertSvgComponentToHtmlString(
-          <BpmnJsScriptIcon />,
-        );
+        const scriptIcon = convertSvgElementToHtmlString(<BpmnJsScriptIcon />);
 
         if (preScript) {
           overlays.add(event.element.id, {
@@ -521,8 +520,15 @@ export default function ReactDiagramEditor({
       console.error('ERROR:', err);
     }
 
-    function checkTaskCanBeHighlighted(taskBpmnId: string) {
+    function taskIsMultiInstanceChild(task: Task) {
+      // if a task has a runtime_info and iteration then assume it's a child task
+      return Object.hasOwn(task.runtime_info || {}, 'iteration');
+    }
+
+    function checkTaskCanBeHighlighted(task: Task) {
+      const taskBpmnId = task.bpmn_identifier;
       return (
+        !taskIsMultiInstanceChild(task) &&
         !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
         !taskBpmnId.match(/EndJoin/) &&
         !taskBpmnId.match(/BoundaryEventParent/) &&
@@ -537,7 +543,7 @@ export default function ReactDiagramEditor({
       bpmnIoClassName: string,
       bpmnProcessIdentifiers: string[],
     ) {
-      if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
+      if (checkTaskCanBeHighlighted(task)) {
         try {
           if (
             bpmnProcessIdentifiers.includes(
@@ -564,6 +570,7 @@ export default function ReactDiagramEditor({
       bpmnProcessIdentifiers: string[],
     ) {
       if (
+        taskIsMultiInstanceChild(task) ||
         !onCallActivityOverlayClick ||
         diagramType !== 'readonly' ||
         !diagramModelerState
@@ -577,10 +584,11 @@ export default function ReactDiagramEditor({
       }
       const createCallActivityOverlay = () => {
         const overlays = diagramModelerState.get('overlays');
-        const ARROW_DOWN_SVG =
-          '<svg width="20" height="20" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"> <g id="SVGRepo_bgCarrier" stroke-width="0"> <rect x="0" y="0" width="24.00" height="24.00" rx="0" fill="#2196f3" strokewidth="0"/> </g> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"/> <g id="SVGRepo_iconCarrier"> <path d="M7 17L17 7M17 7H8M17 7V16" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/> </g> </svg>';
+        const icon = convertSvgElementToHtmlString(
+          <CallActivityNavigateArrowUp />,
+        );
         const button: any = domify(
-          `<button class="bjs-drilldown">${ARROW_DOWN_SVG}</button>`,
+          `<button class="bjs-drilldown">${icon}</button>`,
         );
         button.addEventListener('click', (newEvent: any) => {
           onCallActivityOverlayClick(task, newEvent);
