@@ -307,7 +307,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     HttpService.makeCallToBackend({
       path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
-      successCallback: setProcessInstance,
+      successCallback: (p: ProcessInstance) => {
+        setProcessInstance(p);
+      },
     });
   }, [
     params.process_instance_id,
@@ -892,6 +894,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         if (event.type === 'auxclick') {
           window.open(url);
         } else {
+          setTasks(null);
+          setProcessInstance(null);
           navigate(url);
         }
       }
@@ -1172,6 +1176,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
         />,
+      );
+    }
+
+    if (
+      task.typename === 'CallActivity' &&
+      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+    ) {
+      buttons.push(
+        <Button
+          kind="ghost"
+          className="button-link indented-content"
+          onAuxClick={(event: any) => {
+            handleCallActivityNavigate(task, event);
+          }}
+          onClick={(event: any) => {
+            setTaskToDisplay(null);
+            handleCallActivityNavigate(task, event);
+          }}
+        >
+          View Call Activity Diagram
+        </Button>,
       );
     }
 
@@ -1750,13 +1775,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) : (
       <>
         <ReactDiagramEditor
-          processModelId={processModelId || ''}
-          diagramXML={processInstance.bpmn_xml_file_contents || ''}
-          fileName={processInstance.bpmn_xml_file_contents || ''}
-          tasks={tasks}
           diagramType="readonly"
-          onElementClick={handleClickedDiagramTask}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
           onCallActivityOverlayClick={handleCallActivityNavigate}
+          onElementClick={handleClickedDiagramTask}
+          processModelId={processModelId || ''}
+          tasks={tasks}
         />
         <div id="diagram-container" />
       </>
