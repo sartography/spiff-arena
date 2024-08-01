@@ -351,7 +351,7 @@ export default function ReactDiagramEditor({
         const overlays = diagramModeler.get('overlays');
         const scriptIcon = convertSvgElementToHtmlString(<BpmnJsScriptIcon />);
 
-        if (preScript) {
+        if (preScript?.value) {
           overlays.add(event.element.id, {
             position: {
               bottom: 25,
@@ -360,7 +360,7 @@ export default function ReactDiagramEditor({
             html: scriptIcon,
           });
         }
-        if (postScript) {
+        if (postScript?.value) {
           overlays.add(event.element.id, {
             position: {
               bottom: 25,
