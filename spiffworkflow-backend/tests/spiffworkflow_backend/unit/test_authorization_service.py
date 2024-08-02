@@ -733,3 +733,35 @@ class TestAuthorizationService(BaseTest):
             assert len(human_task_users) == 0
             tmp_group = GroupModel.query.filter_by(identifier="tmp_group").first()
             assert tmp_group is not None
+
+            ##### run test again but this time without the groups key at all to remove groups
+            user_two = AuthorizationService.create_user_from_sign_in(
+                {
+                    "username": "user_two",
+                    "sub": "user_two",
+                    "iss": "https://test.stuff",
+                    "email": "user_two@example.com",
+                    "groups": ["Finance Team", "tmp_group"],
+                }
+            )
+            assert len(user_two.groups) == 3
+            assert sorted([g.identifier for g in user_two.groups]) == sorted(["Finance Team", "everybody", "tmp_group"])
+            tmp_group = GroupModel.query.filter_by(identifier="tmp_group").first()
+            assert tmp_group is not None
+            assert tmp_group.source_is_open_id is True
+            human_task_users = HumanTaskUserModel.query.filter_by(user_id=user_two.id).all()
+            assert len(human_task_users) == 1
+            user_two = AuthorizationService.create_user_from_sign_in(
+                {
+                    "username": "user_two",
+                    "sub": "user_two",
+                    "iss": "https://test.stuff",
+                    "email": "user_two@example.com",
+                }
+            )
+            assert len(user_two.groups) == 1
+            assert user_two.groups[0].identifier == "everybody"
+            human_task_users = HumanTaskUserModel.query.filter_by(user_id=user_two.id).all()
+            assert len(human_task_users) == 0
+            tmp_group = GroupModel.query.filter_by(identifier="tmp_group").first()
+            assert tmp_group is not None
