@@ -4,6 +4,7 @@ from typing import Any
 from flask import current_app
 from flask import g
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import UserToGroupDict
@@ -183,7 +184,22 @@ class UserService:
     def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
         current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
         current_human_task_ids = [ca.human_task_id for ca in current_assignments]
-        human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(new_group_ids)).all()  # type: ignore
+        human_tasks = (
+            HumanTaskModel.query.outerjoin(HumanTaskUserModel)
+            .filter(
+                HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
+                HumanTaskModel.completed == False,  # noqa: E712
+                or_(
+                    and_(
+                        HumanTaskUserModel.user_id != user.id,
+                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                    ),
+                    HumanTaskUserModel.user_id == None,  # noqa: E711
+                ),
+            )
+            .all()
+        )
+
         for human_task in human_tasks:
             if human_task.id not in current_human_task_ids:
                 human_task_user = HumanTaskUserModel(
@@ -196,6 +212,7 @@ class UserService:
                 HumanTaskUserModel.user_id == user.id,
                 HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
                 HumanTaskModel.lane_assignment_id.in_(old_group_ids),  # type: ignore
+                HumanTaskModel.completed == False,  # noqa: E712
             )
             .all()
         )
