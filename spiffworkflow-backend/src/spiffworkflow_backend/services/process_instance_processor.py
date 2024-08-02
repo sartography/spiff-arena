@@ -1305,7 +1305,7 @@ class ProcessInstanceProcessor:
             )
             self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
         else:
-            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
+            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
             task_model_delegate = TaskModelSavingDelegate(
                 serializer=self._serializer,
                 process_instance=self.process_instance_model,
