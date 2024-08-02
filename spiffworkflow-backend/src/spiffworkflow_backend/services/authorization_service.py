@@ -468,6 +468,7 @@ class AuthorizationService:
         desired_group_identifiers = None
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]:
+            desired_group_identifiers = []
             if "groups" in user_info:
                 desired_group_identifiers = user_info["groups"]
 
@@ -502,7 +503,7 @@ class AuthorizationService:
 
         if desired_group_identifiers is not None:
             if not isinstance(desired_group_identifiers, list):
-                current_app.logger.error(
+                current_app.logger.error(  # type: ignore
                     f"Invalid groups property in token: {desired_group_identifiers}.If groups is specified, it must be a list"
                 )
             else:
