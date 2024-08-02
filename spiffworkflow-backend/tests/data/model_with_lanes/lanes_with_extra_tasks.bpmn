@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:collaboration id="Collaboration_0iyw0q7">
+    <bpmn:participant id="Participant_17eqap4" processRef="Process_yhito9d" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_yhito9d" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_17rankp">
+      <bpmn:lane id="process_initiator" name="Process Initiator">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>initiator_one</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_06f4e68</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>initiator_two</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="finance_team" name="Finance Team">
+        <bpmn:flowNodeRef>finance_approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>finance_confirmation</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1tbyols</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1tbyols" sourceRef="StartEvent_1" targetRef="initiator_one" />
+    <bpmn:sequenceFlow id="Flow_16ppta1" sourceRef="initiator_one" targetRef="finance_approval" />
+    <bpmn:manualTask id="initiator_one" name="Initiator One">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>This is for the initiator user</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1tbyols</bpmn:incoming>
+      <bpmn:outgoing>Flow_16ppta1</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="Event_06f4e68">
+      <bpmn:incoming>Flow_0x92f7d</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0x92f7d" sourceRef="initiator_two" targetRef="Event_06f4e68" />
+    <bpmn:manualTask id="initiator_two" name="Initiator Two">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>This is initiator again</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1q487da</bpmn:incoming>
+      <bpmn:outgoing>Flow_0x92f7d</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="finance_approval" name="Finance Approval">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>This is for a Finance Team user</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_16ppta1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0rug230</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0rug230" sourceRef="finance_approval" targetRef="finance_confirmation" />
+    <bpmn:sequenceFlow id="Flow_1q487da" sourceRef="finance_confirmation" targetRef="initiator_two" />
+    <bpmn:manualTask id="finance_confirmation" name="Finance Confirmation">
+      <bpmn:incoming>Flow_0rug230</bpmn:incoming>
+      <bpmn:outgoing>Flow_1q487da</bpmn:outgoing>
+    </bpmn:manualTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0iyw0q7">
+      <bpmndi:BPMNShape id="Participant_17eqap4_di" bpmnElement="Participant_17eqap4" isHorizontal="true">
+        <dc:Bounds x="129" y="52" width="600" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0irvyol_di" bpmnElement="finance_team" isHorizontal="true">
+        <dc:Bounds x="159" y="302" width="570" height="120" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1ewsife_di" bpmnElement="process_initiator" isHorizontal="true">
+        <dc:Bounds x="159" y="52" width="570" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lm1ald_di" bpmnElement="initiator_one">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_06f4e68_di" bpmnElement="Event_06f4e68">
+        <dc:Bounds x="572" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1c1xxe3_di" bpmnElement="initiator_two">
+        <dc:Bounds x="440" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1y566d5_di" bpmnElement="finance_approval">
+        <dc:Bounds x="270" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0c960hq_di" bpmnElement="finance_confirmation">
+        <dc:Bounds x="430" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1tbyols_di" bpmnElement="Flow_1tbyols">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16ppta1_di" bpmnElement="Flow_16ppta1">
+        <di:waypoint x="320" y="217" />
+        <di:waypoint x="320" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0x92f7d_di" bpmnElement="Flow_0x92f7d">
+        <di:waypoint x="540" y="177" />
+        <di:waypoint x="572" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rug230_di" bpmnElement="Flow_0rug230">
+        <di:waypoint x="370" y="360" />
+        <di:waypoint x="430" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1q487da_di" bpmnElement="Flow_1q487da">
+        <di:waypoint x="480" y="320" />
+        <di:waypoint x="480" y="217" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
