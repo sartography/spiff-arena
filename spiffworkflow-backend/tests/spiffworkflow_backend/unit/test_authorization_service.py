@@ -3,6 +3,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -765,3 +766,96 @@ class TestAuthorizationService(BaseTest):
             assert len(human_task_users) == 0
             tmp_group = GroupModel.query.filter_by(identifier="tmp_group").first()
             assert tmp_group is not None
+
+    def test_user_can_complete_all_tasks_after_assignment(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            process_model_source_directory="model_with_lanes",
+            bpmn_file_name="lanes_with_extra_tasks.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        user_one = self.find_or_create_user(username="user_one")
+        user_group = UserService.find_or_create_group("Finance Team")
+        UserService.add_user_to_group(user_one, user_group)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        self.complete_next_manual_task(processor, data={"itemId": "item1", "itemName": "Item One"})
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            user_two = AuthorizationService.create_user_from_sign_in(
+                {
+                    "username": "user_two",
+                    "sub": "user_two",
+                    "iss": "https://test.stuff",
+                    "email": "user_two@example.com",
+                    "groups": ["Finance Team"],
+                }
+            )
+            human_task_users = (
+                HumanTaskUserModel.query.filter_by(user_id=user_two.id)
+                .join(HumanTaskModel)
+                .filter(HumanTaskModel.completed == False)  # noqa: E712
+                .all()
+            )
+            assert len(human_task_users) == 1
+            self.complete_next_manual_task(processor, user=user_two)
+            human_task_users = (
+                HumanTaskUserModel.query.filter_by(user_id=user_two.id)
+                .join(HumanTaskModel)
+                .filter(HumanTaskModel.completed == False)  # noqa: E712
+                .all()
+            )
+            assert len(human_task_users) == 1
+            self.complete_next_manual_task(processor, user=user_two)
+
+            user_two = AuthorizationService.create_user_from_sign_in(
+                {
+                    "username": "user_two",
+                    "sub": "user_two",
+                    "iss": "https://test.stuff",
+                    "email": "user_two@example.com",
+                }
+            )
+            human_task_count = (
+                HumanTaskUserModel.query.join(HumanTaskModel)
+                .filter(HumanTaskUserModel.user_id == user_two.id, HumanTaskModel.completed == True)  # noqa: E712
+                .count()
+            )
+            assert human_task_count == 2
+
+    def test_user_can_is_not_assigned_task_if_lane_owners_in_use(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            process_model_source_directory="model_with_lanes",
+            bpmn_file_name="lanes_with_lane_owners.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        user_one = self.find_or_create_user(username="user_one")
+        user_group = UserService.find_or_create_group("/Infra")
+        UserService.add_user_to_group(user_one, user_group)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        self.complete_next_manual_task(processor, data={"itemId": "item1", "itemName": "Item One"})
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            user_two = AuthorizationService.create_user_from_sign_in(
+                {
+                    "username": "user_two",
+                    "sub": "user_two",
+                    "iss": "https://test.stuff",
+                    "email": "user_two@example.com",
+                    "groups": ["/Infra"],
+                }
+            )
+            human_task_users = HumanTaskUserModel.query.filter_by(user_id=user_two.id).all()
+            assert len(human_task_users) == 0
