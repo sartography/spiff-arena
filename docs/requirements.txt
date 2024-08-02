@@ -31,7 +31,7 @@ requests==2.32.3
 six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.5
-Sphinx==7.4.7
+Sphinx==8.0.2
 sphinx-autoapi==3.1.2
 sphinx-autobuild==2024.4.16
 sphinx-basic-ng==1.0.0b2
