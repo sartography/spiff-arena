@@ -8,6 +8,7 @@ import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
 import SpiffUIV2 from './routes/SpiffUIV2';
+import SpiffUIV3 from './routes/SpiffUIV3';
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,10 @@ export default function App() {
       {
         path: 'newui/*',
         element: <SpiffUIV2 />,
+      },
+      {
+        path: 'newuiv3/*',
+        element: <SpiffUIV3 />,
       },
       {
         path: '*',
