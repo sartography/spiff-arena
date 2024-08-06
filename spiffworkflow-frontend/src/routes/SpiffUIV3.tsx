@@ -22,7 +22,7 @@ import {
   Brightness7,
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Route, Routes, useLocation } from 'react-router';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
 import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
@@ -34,27 +34,33 @@ const collapsedDrawerWidth = 64;
 const mainBlue = 'primary.main';
 
 type OwnProps = {
-  selectedTab: number;
-  onSelectTab: Function;
   isCollapsed: boolean;
   onToggleCollapse: Function;
   onToggleDarkMode: Function;
   isDark: boolean;
   additionalNavElement?: ReactElement | null;
+  setAdditionalNavElement: Function;
 };
 
 function SideNav({
-  selectedTab,
-  onSelectTab,
   isCollapsed,
   onToggleCollapse,
   onToggleDarkMode,
   isDark,
   additionalNavElement,
+  setAdditionalNavElement,
 }: OwnProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const selectedBackgroundColor = isDark
     ? 'rgba(255, 255, 255, 0.16)'
     : '#F0F9FF';
+
+  let selectedTab = 0;
+  if (location.pathname === '/newuiv3/startprocess') {
+    selectedTab = 1;
+  }
+
   return (
     <Box
       sx={{
@@ -101,7 +107,14 @@ function SideNav({
           <ListItem
             button
             key={item.text}
-            onClick={() => onSelectTab(index)}
+            onClick={() => {
+              setAdditionalNavElement(null);
+              if (index === 0) {
+                navigate('/newuiv3/homepage2');
+              } else if (index === 1) {
+                navigate('/newuiv3/startprocess');
+              }
+            }}
             sx={{
               bgcolor:
                 selectedTab === index ? selectedBackgroundColor : 'inherit',
@@ -152,7 +165,11 @@ function SideNav({
             {isDark ? <Brightness7 /> : <Brightness4 />}
           </IconButton>
         </SpiffTooltip>
-        <IconButton>
+        <IconButton
+          onClick={() => {
+            /* Add appropriate onClick handler if needed */
+          }}
+        >
           <Person />
         </IconButton>
       </Box>
@@ -177,8 +194,8 @@ export default function SpiffUIV3() {
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
 
-  const [selectedTab, setSelectedTab] = useState(1);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+
   const toggleNavCollapse = () => {
     setIsNavCollapsed(!isNavCollapsed);
   };
@@ -242,13 +259,12 @@ export default function SpiffUIV3() {
             }}
           >
             <SideNav
-              selectedTab={selectedTab}
-              onSelectTab={setSelectedTab}
               isCollapsed={isNavCollapsed}
               onToggleCollapse={toggleNavCollapse}
               onToggleDarkMode={toggleDarkMode}
               isDark={isDark}
               additionalNavElement={additionalNavElement}
+              setAdditionalNavElement={setAdditionalNavElement}
             />
             <Box
               className={`${transitionStage}`}

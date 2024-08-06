@@ -39,7 +39,8 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
-  const [treeCollapsed, setTreeCollapsed] = useState(false);
+  // const [treeCollapsed, setTreeCollapsed] = useState(false);
+  const [treeCollapsed] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   // Pass to anything that wants to broadcast to all subscribers
   const clickStream = new Subject<Record<string, any>>();

@@ -184,7 +184,6 @@ export default forwardRef(function TreePanel(
       return;
     }
 
-    console.log(lastSelected);
     // Otherwise, go through the rigamarole of expanding it.
     expandToItem(lastSelected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
