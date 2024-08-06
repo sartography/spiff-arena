@@ -64,11 +64,30 @@ function Homepage() {
       <Typography variant="h5" sx={{ mb: 2 }}>
         Tasks & Processes
       </Typography>
-      <Box sx={{ mb: 2 }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Tabs value={0}>
           <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
           <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
         </Tabs>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{
+            bgcolor: mainBlue,
+            '&:hover': { bgcolor: mainBlue },
+            textTransform: 'none',
+            ml: 'auto',
+          }}
+        >
+          Create custom tab
+        </Button>
       </Box>
       <Box
         sx={{
@@ -177,19 +196,6 @@ function Homepage() {
           </TableBody>
         </Table>
       </TableContainer>
-      <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          sx={{
-            bgcolor: mainBlue,
-            '&:hover': { bgcolor: mainBlue },
-            textTransform: 'none',
-          }}
-        >
-          Create custom tab
-        </Button>
-      </Box>
     </Box>
   );
 }
