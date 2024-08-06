@@ -84,14 +84,14 @@ function TasksProcesses() {
           size="small"
           InputProps={{
             endAdornment: <Search />,
-            sx: { bgcolor: 'white' },
+            sx: { bgcolor: 'background.paper' },
           }}
         />
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Select
             value="Group tasks"
             size="small"
-            sx={{ mr: 2, bgcolor: 'white' }}
+            sx={{ mr: 2, bgcolor: 'background.paper' }}
           >
             <MenuItem value="Group tasks">Group tasks</MenuItem>
           </Select>
