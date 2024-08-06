@@ -90,14 +90,19 @@ function SideNav({
             key={item.text}
             onClick={() => onSelectTab(index)}
             sx={{
-              bgcolor: selectedTab === index ? '#F0F9FF' : 'inherit',
+              bgcolor:
+                selectedTab === index
+                  ? isDark
+                    ? 'rgba(255, 255, 255, 0.16)'
+                    : '#F0F9FF'
+                  : 'inherit',
               color: selectedTab === index ? mainBlue : 'inherit',
               borderLeft:
                 selectedTab === index
                   ? `4px solid ${mainBlue}`
                   : '4px solid transparent',
               '&:hover': {
-                bgcolor: '#F0F9FF',
+                bgcolor: isDark ? 'rgba(255, 255, 255, 0.16)' : '#F0F9FF',
               },
               justifyContent: isCollapsed ? 'center' : 'flex-start',
             }}
