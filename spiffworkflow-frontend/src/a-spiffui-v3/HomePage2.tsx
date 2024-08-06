@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { Search, ViewModule, Add, AccessTime } from '@mui/icons-material';
 
-const mainBlue = '#00A3E0'; // Spiffworkflow blue color
+const mainBlue = 'primary.main';
 
 function TasksProcesses() {
   const [hideCompleted, setHideCompleted] = useState(false);
