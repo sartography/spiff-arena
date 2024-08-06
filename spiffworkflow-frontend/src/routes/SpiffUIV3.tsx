@@ -27,10 +27,11 @@ import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import TasksProcesses from '../a-spiffui-v3/HomePage2';
 import HomePage1 from '../a-spiffui-v3/HomePage1';
+import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
 
 const drawerWidth = 240;
 const collapsedDrawerWidth = 64;
-const mainBlue = '#00A3E0'; // Spiffworkflow blue color
+const mainBlue = 'primary.main';
 function SideNav({
   selectedTab,
   onSelectTab,
@@ -68,8 +69,7 @@ function SideNav({
             color={mainBlue}
             sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
           >
-            <Assignment sx={{ mr: 1 }} />
-            Spiffworkflow
+            <SpiffLogo />
           </Typography>
         )}
         <IconButton
