@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactElement } from 'react';
 import {
   Box,
   Typography,
@@ -28,8 +28,10 @@ import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import TasksProcesses from '../a-spiffui-v3/HomePage2';
 import HomePage1 from '../a-spiffui-v3/HomePage1';
 import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
+import SpiffTooltip from '../components/SpiffTooltip';
+import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
-const drawerWidth = 240;
+const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
 const mainBlue = 'primary.main';
 
@@ -40,6 +42,7 @@ type OwnProps = {
   onToggleCollapse: Function;
   onToggleDarkMode: Function;
   isDark: boolean;
+  additionalNavElement?: ReactElement | null;
 };
 
 function SideNav({
@@ -49,6 +52,7 @@ function SideNav({
   onToggleCollapse,
   onToggleDarkMode,
   isDark,
+  additionalNavElement,
 }: OwnProps) {
   const selectedBackgroundColor = isDark
     ? 'rgba(255, 255, 255, 0.16)'
@@ -134,6 +138,7 @@ function SideNav({
           </ListItem>
         ))}
       </List>
+      {additionalNavElement}
       <Box
         sx={{
           position: 'absolute',
@@ -145,9 +150,11 @@ function SideNav({
           alignItems: 'center',
         }}
       >
-        <IconButton onClick={onToggleDarkMode}>
-          {isDark ? <Brightness7 /> : <Brightness4 />}
-        </IconButton>
+        <SpiffTooltip title="Toggle dark mode">
+          <IconButton onClick={onToggleDarkMode}>
+            {isDark ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+        </SpiffTooltip>
         <IconButton>
           <Person />
         </IconButton>
@@ -170,6 +177,8 @@ export default function SpiffUIV3() {
 
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransistionStage] = useState('fadeIn');
+  const [additionalNavElement, setAdditionalNavElement] =
+    useState<ReactElement | null>(null);
 
   const [selectedTab, setSelectedTab] = useState(1);
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
@@ -242,6 +251,7 @@ export default function SpiffUIV3() {
               onToggleCollapse={toggleNavCollapse}
               onToggleDarkMode={toggleDarkMode}
               isDark={isDark}
+              additionalNavElement={additionalNavElement}
             />
             <Box
               className={`${transitionStage}`}
@@ -260,6 +270,14 @@ export default function SpiffUIV3() {
               <Routes>
                 <Route path="/homepage1" element={<HomePage1 />} />
                 <Route path="/homepage2" element={<TasksProcesses />} />
+                <Route
+                  path="/startprocess"
+                  element={
+                    <StartProcess
+                      setNavElementCallback={setAdditionalNavElement}
+                    />
+                  }
+                />
               </Routes>
             </Box>
           </Box>

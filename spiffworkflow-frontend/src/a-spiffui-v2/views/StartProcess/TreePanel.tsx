@@ -40,7 +40,7 @@ export default forwardRef(function TreePanel(
   const treeItemStyle = {
     borderRadius: 1,
     width: 50,
-    maxHeight: 18,
+    maxHeight: 15,
     textAlign: 'center',
     fontWeight: 600,
     backgroundColor: isDark ? `background.paper` : `background.bluegreymedium`,
