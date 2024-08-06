@@ -24,7 +24,7 @@ import { Search, ViewModule, Add, AccessTime } from '@mui/icons-material';
 
 const mainBlue = 'primary.main';
 
-function TasksProcesses() {
+function Homepage() {
   const [hideCompleted, setHideCompleted] = useState(false);
 
   const tasks = [
@@ -194,4 +194,4 @@ function TasksProcesses() {
   );
 }
 
-export default TasksProcesses;
+export default Homepage;

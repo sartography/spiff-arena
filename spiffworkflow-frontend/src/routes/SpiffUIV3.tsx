@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import {
   Home,
-  Assignment,
   Add,
   Person,
   ChevronLeft,
@@ -25,7 +24,7 @@ import {
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import TasksProcesses from '../a-spiffui-v3/views/HomePage';
+import Homepage from '../a-spiffui-v3/views/Homepage';
 import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
 import SpiffTooltip from '../components/SpiffTooltip';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
@@ -97,7 +96,6 @@ function SideNav({
       <List>
         {[
           { text: 'HOME', icon: <Home /> },
-          { text: 'TASKS & PROCESSES', icon: <Assignment /> },
           { text: 'START NEW PROCESS', icon: <Add /> },
         ].map((item, index) => (
           <ListItem
@@ -267,7 +265,7 @@ export default function SpiffUIV3() {
               }}
             >
               <Routes>
-                <Route path="/homepage2" element={<TasksProcesses />} />
+                <Route path="/homepage2" element={<Homepage />} />
                 <Route
                   path="/startprocess"
                   element={
