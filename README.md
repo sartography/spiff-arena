@@ -26,6 +26,7 @@ When these are installed, you are ready for:
     poetry install
     ./bin/recreate_db clean
     ./bin/run_server_locally
+    ./bin/run_server_locally keycloak # if you want to use keycloak instead of the built-in openid server
 ```
 
 **Mac Port Errors**: On a Mac, port 7000 (used by the backend) might be hijacked by Airplay. For those who upgraded to macOS 12.1 and are running everything locally, your AirPlay receiver may have started on Port 7000 and your server (which uses port 7000 by default) may fail due to this port already being used. You can disable this port in System Preferences > Sharing > AirPlay receiver.
