@@ -23,6 +23,7 @@ import {
   ListItemText,
   Button,
   Tooltip,
+  Chip,
 } from '@mui/material';
 import {
   Search,
@@ -149,20 +150,24 @@ function TasksProcesses() {
 
   const tasks = [
     {
-      category: 'Equipment Purchase',
-      details: 'Authorise purchase order\nLaptop for Caryn Dolley',
-      created: 'Caryn Dolley\nToday, 9:56am',
+      process_model_display_name: 'Equipment Purchase',
+      bpmn_name: 'Authorise purchase order',
+      process_instance_summary: 'Laptop for Caryn Dolley',
+      created_by: 'Caryn Dolley',
+      created_at: 'Today, 9:56am',
       lastMilestone: 'Pending approval',
       lastUpdated: 'This morning, 9:56am',
     },
     {
-      category: 'Expense Claim',
-      details: 'Pre-authorise expense claim\nExpense claim for Mark Erasmus',
-      created: 'Mark Erasmus\nYesterday, 5:09pm',
+      process_model_display_name: 'Expense Claim',
+      bpmn_name: 'Pre-authorise expense claim',
+      process_instance_summary: 'Expense claim for Mark Erasmus',
+      created_by: 'Mark Erasmus',
+      created_at: 'Yesterday, 5:09pm',
       lastMilestone: 'Started',
       lastUpdated: 'Yesterday, 5:09pm',
     },
-    // ... other tasks ...
+    // ... (add more tasks following this structure)
   ];
 
   return (
@@ -247,19 +252,26 @@ function TasksProcesses() {
               {tasks.map((task, index) => (
                 <TableRow key={index}>
                   <TableCell>
-                    <Typography variant="body2" color="textSecondary">
-                      {task.category}
-                    </Typography>
+                    <Chip
+                      label={task.process_model_display_name}
+                      size="small"
+                      sx={{
+                        bgcolor: '#E0E0E0',
+                        color: '#616161',
+                        mb: 1,
+                        fontWeight: 'normal',
+                      }}
+                    />
                     <Typography variant="body2" paragraph>
-                      {task.details.split('\n')[0]}
+                      {task.bpmn_name}
                     </Typography>
                     <Typography variant="body2" color={mainBlue}>
-                      {task.details.split('\n')[1]}
+                      {task.process_instance_summary}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" paragraph>
-                      {task.created.split('\n')[0]}
+                      {task.created_by}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -267,7 +279,7 @@ function TasksProcesses() {
                       sx={{ display: 'flex', alignItems: 'center' }}
                     >
                       <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                      {task.created.split('\n')[1]}
+                      {task.created_at}
                     </Typography>
                   </TableCell>
                   <TableCell>
