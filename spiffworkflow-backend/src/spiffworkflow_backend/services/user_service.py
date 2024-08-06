@@ -4,6 +4,7 @@ from typing import Any
 from flask import current_app
 from flask import g
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import UserToGroupDict
@@ -11,6 +12,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
@@ -121,12 +123,14 @@ class UserService:
         return principal
 
     @classmethod
-    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
-        exists = UserGroupAssignmentModel.query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
-        if not exists:
+    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> GroupModel | None:
+        existing_assignment_count = UserGroupAssignmentModel.query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
+        if existing_assignment_count == 0:
             ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
             db.session.add(ugam)
             db.session.commit()
+            return group
+        return None
 
     @classmethod
     def add_waiting_group_assignment(
@@ -177,13 +181,44 @@ class UserService:
         return None
 
     @classmethod
-    def add_user_to_human_tasks_if_appropriate(cls, user: UserModel) -> None:
-        group_ids = [g.id for g in user.groups]
-        human_tasks = HumanTaskModel.query.filter(HumanTaskModel.lane_assignment_id.in_(group_ids)).all()  # type: ignore
+    def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
+        current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
+        current_human_task_ids = [ca.human_task_id for ca in current_assignments]
+        human_tasks = (
+            HumanTaskModel.query.outerjoin(HumanTaskUserModel)
+            .filter(
+                HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
+                HumanTaskModel.completed == False,  # noqa: E712
+                or_(
+                    and_(
+                        HumanTaskUserModel.user_id != user.id,
+                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                    ),
+                    HumanTaskUserModel.user_id == None,  # noqa: E711
+                ),
+            )
+            .all()
+        )
+
         for human_task in human_tasks:
-            human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
-            db.session.add(human_task_user)
-            db.session.commit()
+            if human_task.id not in current_human_task_ids:
+                human_task_user = HumanTaskUserModel(
+                    user_id=user.id, human_task_id=human_task.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
+                )
+                db.session.add(human_task_user)
+        human_task_assignments_to_delete = (
+            HumanTaskUserModel.query.join(HumanTaskModel)
+            .filter(
+                HumanTaskUserModel.user_id == user.id,
+                HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                HumanTaskModel.lane_assignment_id.in_(old_group_ids),  # type: ignore
+                HumanTaskModel.completed == False,  # noqa: E712
+            )
+            .all()
+        )
+        for assignment_to_delete in human_task_assignments_to_delete:
+            db.session.delete(assignment_to_delete)
+        db.session.commit()
 
     @classmethod
     def get_permission_targets_for_user(cls, user: UserModel, check_groups: bool = True) -> set[tuple[str, str, str]]:
@@ -224,13 +259,19 @@ class UserService:
         return principals
 
     @classmethod
-    def find_or_create_group(cls, group_identifier: str) -> GroupModel:
+    def find_or_create_group(cls, group_identifier: str, source_is_open_id: bool = False) -> GroupModel:
         group: GroupModel | None = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
-            group = GroupModel(identifier=group_identifier)
+            group = GroupModel(identifier=group_identifier, source_is_open_id=source_is_open_id)
             db.session.add(group)
             db.session.commit()
             cls.create_principal(group.id, id_column_name="group_id")
+        elif not group.source_is_open_id and source_is_open_id is True:
+            # if a group ever shows up in an open id token we want to flag it to ensure we
+            # do not accidentally delete it even if it is mentioned / created in another source
+            group.source_is_open_id = True
+            db.session.add(group)
+            db.session.commit()
         return group
 
     @classmethod
@@ -246,22 +287,24 @@ class UserService:
         return (None, None)
 
     @classmethod
-    def add_user_to_group_by_group_identifier(cls, user: UserModel, group_identifier: str) -> None:
-        group = cls.find_or_create_group(group_identifier)
-        cls.add_user_to_group(user, group)
+    def add_user_to_group_by_group_identifier(
+        cls, user: UserModel, group_identifier: str, source_is_open_id: bool = False
+    ) -> GroupModel | None:
+        group = cls.find_or_create_group(group_identifier, source_is_open_id=source_is_open_id)
+        return cls.add_user_to_group(user, group)
 
     @classmethod
-    def remove_user_from_group(cls, user: UserModel, group_identifier: str) -> None:
+    def remove_user_from_group(cls, user: UserModel, group_id: int) -> None:
         user_group_assignment = (
             UserGroupAssignmentModel.query.filter_by(user_id=user.id)
             .join(
                 GroupModel,
-                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.identifier == group_identifier),
+                and_(GroupModel.id == UserGroupAssignmentModel.group_id, GroupModel.id == group_id),
             )
             .first()
         )
         if user_group_assignment is None:
-            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_identifier})"))
+            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_id})"))
         db.session.delete(user_group_assignment)
         db.session.commit()
 

@@ -34,6 +34,9 @@ class TestAuthentication(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            group_one = UserService.find_or_create_group("group_one")
+            assert group_one.source_is_open_id is False
+
             user = self.find_or_create_user("testing@e.com")
             user.email = "testing@e.com"
             user.service = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
@@ -55,6 +58,10 @@ class TestAuthentication(BaseTest):
             assert len(user.groups) == 3
             group_identifiers = [g.identifier for g in user.groups]
             assert sorted(group_identifiers) == ["everybody", "group_one", "group_two"]
+            open_id_array = [g.source_is_open_id for g in user.groups if g.identifier in ["group_one", "group_two"]]
+            assert open_id_array == [True, True]
+            everybody_is_open_id = next((g.source_is_open_id for g in user.groups if g.identifier == "everybody"), None)
+            assert everybody_is_open_id is False
 
             access_token = user.encode_auth_token(
                 {

@@ -4,6 +4,16 @@ users:
     email: admin@example.com
     password: admin
     preferred_username: Admin
+  jason:
+    service: local_open_id
+    email: jason@example.com
+    password: jason
+    preferred_username: Jason
+  kevin:
+    service: local_open_id
+    email: kevin@example.com
+    password: kevin
+    preferred_username: Kevin
   nelson:
     service: local_open_id
     email: nelson@example.com

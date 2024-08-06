@@ -603,14 +603,17 @@ class BaseTest:
         processor: ProcessInstanceProcessor,
         execution_mode: str | None = None,
         data: dict | None = None,
+        user: UserModel | None = None,
     ) -> None:
         user_task = processor.get_ready_user_tasks()[0]
         human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
+        if user is None:
+            user = processor.process_instance_model.process_initiator
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=user_task,
             data=data or {},
-            user=processor.process_instance_model.process_initiator,
+            user=user,
             human_task=human_task,
             execution_mode=execution_mode,
         )

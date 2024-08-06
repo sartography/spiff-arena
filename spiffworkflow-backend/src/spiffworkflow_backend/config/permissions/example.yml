@@ -1,40 +1,30 @@
-
 users:
   admin:
     service: local_open_id
-    email: admin@spiffworkflow.org
+    email: admin@example.com
     password: admin
     preferred_username: Admin
   nelson:
     service: local_open_id
-    email: nelson@spiffworkflow.org
+    email: nelson@example.com
     password: nelson
     preferred_username: Nelson
   malala:
     service: local_open_id
-    email: malala@spiffworkflow.org
+    email: malala@example.com
     password: malala
     preferred_username: Malala
   oskar:
     service: local_open_id
-    email: oskar@spiffworkflow.org
+    email: oskar@example.com
     password: oskar
     preferred_username: Oskar
 
-
 groups:
   admin:
-    users:
-      [
-        admin@spiffworkflow.org,
-        nelson@spiffworkflow.org
-      ]
+    users: [admin@example.com, nelson@example.com]
   approvers:
-    users:
-      [
-        malala@spiffworkflow.org,
-        oskar@spiffworkflow.org
-      ]
+    users: [malala@example.com, oskar@example.com]
 
 permissions:
   # Admins have access to everything.
@@ -52,14 +42,14 @@ permissions:
 
   # Everyone can see everything (all groups, and processes are visible)
   read-all-process-groups:
-    groups: [ everybody ]
-    actions: [ read ]
+    groups: [everybody]
+    actions: [read]
     uri: PG:ALL
   read-all-process-models:
-    groups: [ everybody ]
-    actions: [ read ]
+    groups: [everybody]
+    actions: [read]
     uri: PM:ALL
   run-all-process-models:
-    groups: [ everybody ]
-    actions: [ start ]
+    groups: [everybody]
+    actions: [start]
     uri: PM:ALL

@@ -134,6 +134,7 @@ else:
         SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = url_config
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL")
 
         # comma-separated list of client ids that can be successfully validated against.
         # useful for api users that will login to a different client on the same realm but from something external to backend.
@@ -148,6 +149,7 @@ else:
             {
                 "identifier": "default",
                 "label": "Default",
+                "internal_uri": "http://localhost:7002/realms/spiffworkflow-local",
                 "uri": "http://localhost:7002/realms/spiffworkflow-local",
                 "client_id": "spiffworkflow-backend",
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
@@ -161,6 +163,8 @@ else:
 config_from_env("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")

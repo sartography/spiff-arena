@@ -65,6 +65,7 @@ from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
+from spiffworkflow_backend.interfaces import PotentialOwner
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -77,6 +78,7 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
@@ -95,6 +97,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -931,24 +934,29 @@ class ProcessInstanceProcessor:
         # if we do not use a deep merge, then the data does not end up on the object for some reason
         self.bpmn_process_instance.data = DeepMerge.merge(self.bpmn_process_instance.data, data)
 
-    def raise_if_no_potential_owners(self, potential_owner_ids: list[int], message: str) -> None:
-        if not potential_owner_ids:
+    def raise_if_no_potential_owners(self, potential_owners: list[PotentialOwner], message: str) -> None:
+        if not potential_owners:
             raise NoPotentialOwnersForTaskError(message)
 
-    def get_potential_owner_ids_from_task(self, task: SpiffTask) -> PotentialOwnerIdList:
+    def get_potential_owners_from_task(self, task: SpiffTask) -> PotentialOwnerIdList:
         task_spec = task.task_spec
         task_lane = "process_initiator"
         if task_spec.lane is not None and task_spec.lane != "":
             task_lane = task_spec.lane
 
-        potential_owner_ids = []
+        potential_owners: list[PotentialOwner] = []
         lane_assignment_id = None
 
         if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
             guest_user = UserService.find_or_create_guest_user()
-            potential_owner_ids = [guest_user.id]
+            potential_owners = [{"added_by": HumanTaskUserAddedBy.guest.value, "user_id": guest_user.id}]
         elif re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
-            potential_owner_ids = [self.process_instance_model.process_initiator_id]
+            potential_owners = [
+                {
+                    "added_by": HumanTaskUserAddedBy.process_initiator.value,
+                    "user_id": self.process_instance_model.process_initiator_id,
+                }
+            ]
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
             if group_model is not None:
@@ -957,9 +965,11 @@ class ProcessInstanceProcessor:
                 for username in task.data["lane_owners"][task_lane]:
                     lane_owner_user = UserModel.query.filter_by(username=username).first()
                     if lane_owner_user is not None:
-                        potential_owner_ids.append(lane_owner_user.id)
+                        potential_owners.append(
+                            {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
+                        )
                 self.raise_if_no_potential_owners(
-                    potential_owner_ids,
+                    potential_owners,
                     (
                         "No users found in task data lane owner list for lane:"
                         f" {task_lane}. The user list used:"
@@ -969,14 +979,17 @@ class ProcessInstanceProcessor:
             else:
                 if group_model is None:
                     raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
-                potential_owner_ids = [i.user_id for i in group_model.user_group_assignments]
+                potential_owners = [
+                    {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
+                    for i in group_model.user_group_assignments
+                ]
                 self.raise_if_no_potential_owners(
-                    potential_owner_ids,
+                    potential_owners,
                     f"Could not find any users in group to assign to lane: {task_lane}",
                 )
 
         return {
-            "potential_owner_ids": potential_owner_ids,
+            "potential_owners": potential_owners,
             "lane_assignment_id": lane_assignment_id,
         }
 
@@ -1174,6 +1187,9 @@ class ProcessInstanceProcessor:
                 self.process_instance_model.end_in_seconds = round(time.time())
                 if self._workflow_completed_handler is not None:
                     self._workflow_completed_handler(self.process_instance_model)
+                LoggingService.log_event(
+                    ProcessInstanceEventType.process_instance_completed.value,
+                )
 
         db.session.add(self.process_instance_model)
 
@@ -1187,7 +1203,7 @@ class ProcessInstanceProcessor:
             # filter out non-usertasks
             task_spec = ready_or_waiting_task.task_spec
             if task_spec.manual:
-                potential_owner_hash = self.get_potential_owner_ids_from_task(ready_or_waiting_task)
+                potential_owner_hash = self.get_potential_owners_from_task(ready_or_waiting_task)
                 extensions = task_spec.extensions
 
                 # in the xml, it's the id attribute. this identifies the process where the activity lives.
@@ -1231,8 +1247,10 @@ class ProcessInstanceProcessor:
                     )
                     db.session.add(human_task)
 
-                    for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
-                        human_task_user = HumanTaskUserModel(user_id=potential_owner_id, human_task=human_task)
+                    for potential_owner in potential_owner_hash["potential_owners"]:
+                        human_task_user = HumanTaskUserModel(
+                            user_id=potential_owner["user_id"], added_by=potential_owner["added_by"], human_task=human_task
+                        )
                         db.session.add(human_task_user)
 
         if len(human_tasks) > 0:
@@ -1287,7 +1305,7 @@ class ProcessInstanceProcessor:
             )
             self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
         else:
-            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
+            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
             task_model_delegate = TaskModelSavingDelegate(
                 serializer=self._serializer,
                 process_instance=self.process_instance_model,

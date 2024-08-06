@@ -16,6 +16,8 @@ from spiffworkflow_backend.models.user import UserModel
 
 # event types take the form [SUBJECT]_[PAST_TENSE_VERB] since subject is not always the same.
 class ProcessInstanceEventType(SpiffEnum):
+    process_instance_created = "process_instance_created"
+    process_instance_completed = "process_instance_completed"
     process_instance_error = "process_instance_error"
     process_instance_force_run = "process_instance_force_run"
     process_instance_migrated = "process_instance_migrated"

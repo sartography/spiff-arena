@@ -30,6 +30,7 @@ class GroupModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), index=True)
     identifier: str = db.Column(db.String(255), index=True)
+    source_is_open_id: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")
     user_group_assignments_waiting = relationship("UserGroupAssignmentWaitingModel", cascade="delete")  # type: ignore
