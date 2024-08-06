@@ -19,6 +19,8 @@ import {
   Person,
   ChevronLeft,
   ChevronRight,
+  Brightness4, // Import the dark mode icon
+  Brightness7, // Import the light mode icon
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation } from 'react-router';
@@ -29,7 +31,14 @@ import HomePage1 from '../a-spiffui-v3/HomePage1';
 const drawerWidth = 240;
 const collapsedDrawerWidth = 64;
 const mainBlue = '#00A3E0'; // Spiffworkflow blue color
-function SideNav({ selectedTab, onSelectTab, isCollapsed, onToggleCollapse }) {
+function SideNav({
+  selectedTab,
+  onSelectTab,
+  isCollapsed,
+  onToggleCollapse,
+  onToggleDarkMode,
+  isDark,
+}) {
   return (
     <Box
       sx={{
@@ -37,7 +46,8 @@ function SideNav({ selectedTab, onSelectTab, isCollapsed, onToggleCollapse }) {
         flexShrink: 0,
         borderRight: '1px solid #e0e0e0',
         height: '100vh',
-        bgcolor: 'white',
+        // bgcolor: isDark ? 'background.default' : 'white', // Adjust background color based on theme
+        bgcolor: isDark ? 'background.paper' : 'background.mediumlight',
         transition: 'width 0.3s',
         overflow: 'hidden',
         position: 'relative',
@@ -117,8 +127,14 @@ function SideNav({ selectedTab, onSelectTab, isCollapsed, onToggleCollapse }) {
           bottom: 16,
           left: isCollapsed ? '50%' : 16,
           transform: isCollapsed ? 'translateX(-50%)' : 'none',
+          display: 'flex',
+          flexDirection: isCollapsed ? 'column' : 'row',
+          alignItems: 'center',
         }}
       >
+        <IconButton onClick={onToggleDarkMode}>
+          {isDark ? <Brightness7 /> : <Brightness4 />}
+        </IconButton>
         <IconButton>
           <Person />
         </IconButton>
@@ -148,6 +164,10 @@ export default function SpiffUIV3() {
     setIsNavCollapsed(!isNavCollapsed);
   };
 
+  const toggleDarkMode = () => {
+    setGlobalTheme(createTheme(createSpiffTheme(isDark ? 'light' : 'dark')));
+  };
+
   const fadeIn = 'fadeIn';
   const fadeOutImmediate = 'fadeOutImmediate';
 
@@ -168,6 +188,15 @@ export default function SpiffUIV3() {
       setTransistionStage(fadeOutImmediate);
     }
   }, [location, displayLocation]);
+
+  const handleMenuCallback = (data: MenuItemData) => {
+    // Some TopMenu buttons are for navigation, some aren't
+    if (data?.text === 'Dark Mode') {
+      toggleDarkMode();
+      // } else if (data?.path) {
+      //   navigate(data.path);
+    }
+  };
 
   return (
     <ThemeProvider theme={globalTheme}>
@@ -207,10 +236,13 @@ export default function SpiffUIV3() {
               onSelectTab={setSelectedTab}
               isCollapsed={isNavCollapsed}
               onToggleCollapse={toggleNavCollapse}
+              onToggleDarkMode={toggleDarkMode} // Pass the toggle function
+              isDark={isDark} // Pass the theme information
             />
             <Box
               className={`${transitionStage}`}
               sx={{
+                bgcolor: isDark ? 'background.default' : 'white', // Adjust background color based on theme
                 width: '100%',
                 height: '100%',
               }}

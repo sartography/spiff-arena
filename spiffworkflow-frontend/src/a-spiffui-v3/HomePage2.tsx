@@ -58,7 +58,6 @@ function TasksProcesses() {
         flexGrow: 1,
         p: 3,
         overflow: 'auto',
-        bgcolor: '#F9FAFB',
         height: '100vh',
       }}
     >
