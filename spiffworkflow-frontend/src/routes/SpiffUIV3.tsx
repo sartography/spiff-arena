@@ -25,8 +25,7 @@ import {
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import TasksProcesses from '../a-spiffui-v3/HomePage2';
-import HomePage1 from '../a-spiffui-v3/HomePage1';
+import TasksProcesses from '../a-spiffui-v3/views/HomePage';
 import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
 import SpiffTooltip from '../components/SpiffTooltip';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
@@ -138,7 +137,7 @@ function SideNav({
           </ListItem>
         ))}
       </List>
-      {additionalNavElement}
+      {!isCollapsed && <Box>{additionalNavElement}</Box>}
       <Box
         sx={{
           position: 'absolute',
@@ -268,7 +267,6 @@ export default function SpiffUIV3() {
               }}
             >
               <Routes>
-                <Route path="/homepage1" element={<HomePage1 />} />
                 <Route path="/homepage2" element={<TasksProcesses />} />
                 <Route
                   path="/startprocess"

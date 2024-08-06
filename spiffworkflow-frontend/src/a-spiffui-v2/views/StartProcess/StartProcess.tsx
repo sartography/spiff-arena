@@ -229,16 +229,12 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       setCrumbs([]);
       if (setNavElementCallback) {
         setNavElementCallback(
-          <Box>
-            {!treeCollapsed && (
-              <TreePanel
-                ref={treeRef}
-                processGroups={processGroups}
-                stream={clickStream}
-                callback={() => handleFavorites({ text: SHOW_FAVORITES })}
-              />
-            )}
-          </Box>,
+          <TreePanel
+            ref={treeRef}
+            processGroups={processGroups}
+            stream={clickStream}
+            callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+          />,
         );
       }
     }
