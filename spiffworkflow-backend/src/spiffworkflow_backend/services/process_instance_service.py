@@ -129,10 +129,13 @@ class ProcessInstanceService:
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
+        # FIXME: this should not be necessary. fix the code paths that make this necessary
         db.session.commit()
+        git_revision_error = None
         try:
             current_git_revision = GitService.get_current_revision()
-        except GitCommandError:
+        except GitCommandError as ex:
+            git_revision_error = ex
             current_git_revision = None
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
@@ -145,6 +148,13 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
+
+        if git_revision_error is not None:
+            message = (
+                f"Failed to get the current git revision when attempting to create a process instance"
+                f" ({process_instance_model.id}) for process_model: '{process_model.id}'. Error was {str(git_revision_error)}"
+            )
+            current_app.logger.warn(message)
 
         if start_configuration is None:
             start_configuration = cls.next_start_event_configuration(process_instance_model)
