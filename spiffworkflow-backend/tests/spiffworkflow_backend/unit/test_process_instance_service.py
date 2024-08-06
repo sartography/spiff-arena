@@ -323,9 +323,13 @@ class TestProcessInstanceService(BaseTest):
         self.complete_next_manual_task(processor)
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
-        pi_events = ProcessInstanceEventModel.query.filter_by(
-            process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
-        ).order_by(ProcessInstanceEventModel.id).all()
+        pi_events = (
+            ProcessInstanceEventModel.query.filter_by(
+                process_instance_id=process_instance.id, event_type=ProcessInstanceEventType.process_instance_migrated.value
+            )
+            .order_by(ProcessInstanceEventModel.id)
+            .all()
+        )
         assert len(pi_events) == 2
 
         process_instance_event = pi_events[0]
