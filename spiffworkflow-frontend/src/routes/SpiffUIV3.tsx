@@ -1,12 +1,131 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Container,
+  CssBaseline,
+  Grid,
+} from '@mui/material';
+import {
+  Home,
+  Assignment,
+  Add,
+  Person,
+  ChevronLeft,
+  ChevronRight,
+} from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation, useNavigate } from 'react-router';
+import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
-import { MenuItemData } from '../a-spiffui-v2/views/app/topmenu/MenuItem';
-import TopMenu from '../a-spiffui-v2/views/app/topmenu/TopMenu';
 import TasksProcesses from '../a-spiffui-v3/HomePage2';
 import HomePage1 from '../a-spiffui-v3/HomePage1';
+
+const drawerWidth = 240;
+const collapsedDrawerWidth = 64;
+const mainBlue = '#00A3E0'; // Spiffworkflow blue color
+function SideNav({ selectedTab, onSelectTab, isCollapsed, onToggleCollapse }) {
+  return (
+    <Box
+      sx={{
+        width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
+        flexShrink: 0,
+        borderRight: '1px solid #e0e0e0',
+        height: '100vh',
+        bgcolor: 'white',
+        transition: 'width 0.3s',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <Box
+        sx={{
+          p: 2,
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {!isCollapsed && (
+          <Typography
+            variant="h6"
+            color={mainBlue}
+            sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
+          >
+            <Assignment sx={{ mr: 1 }} />
+            Spiffworkflow
+          </Typography>
+        )}
+        <IconButton
+          onClick={onToggleCollapse}
+          sx={{ ml: isCollapsed ? 'auto' : 0 }}
+        >
+          {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+        </IconButton>
+      </Box>
+      <List>
+        {[
+          { text: 'HOME', icon: <Home /> },
+          { text: 'TASKS & PROCESSES', icon: <Assignment /> },
+          { text: 'START NEW PROCESS', icon: <Add /> },
+        ].map((item, index) => (
+          <ListItem
+            button
+            key={item.text}
+            onClick={() => onSelectTab(index)}
+            sx={{
+              bgcolor: selectedTab === index ? '#F0F9FF' : 'inherit',
+              color: selectedTab === index ? mainBlue : 'inherit',
+              borderLeft:
+                selectedTab === index
+                  ? `4px solid ${mainBlue}`
+                  : '4px solid transparent',
+              '&:hover': {
+                bgcolor: '#F0F9FF',
+              },
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+            }}
+          >
+            <Tooltip title={isCollapsed ? item.text : ''} placement="right">
+              <ListItemIcon
+                sx={{ color: 'inherit', minWidth: isCollapsed ? 24 : 40 }}
+              >
+                {item.icon}
+              </ListItemIcon>
+            </Tooltip>
+            {!isCollapsed && (
+              <ListItemText
+                primary={item.text}
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: selectedTab === index ? 'bold' : 'normal',
+                }}
+              />
+            )}
+          </ListItem>
+        ))}
+      </List>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          left: isCollapsed ? '50%' : 16,
+          transform: isCollapsed ? 'translateX(-50%)' : 'none',
+        }}
+      >
+        <IconButton>
+          <Person />
+        </IconButton>
+      </Box>
+    </Box>
+  );
+}
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -17,12 +136,17 @@ export default function SpiffUIV3() {
   const [globalTheme, setGlobalTheme] = useState(
     createTheme(createSpiffTheme('light')),
   );
-  const navigate = useNavigate();
   const isDark = globalTheme.palette.mode === 'dark';
   const location = useLocation();
 
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransistionStage] = useState('fadeIn');
+
+  const [selectedTab, setSelectedTab] = useState(1);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const toggleNavCollapse = () => {
+    setIsNavCollapsed(!isNavCollapsed);
+  };
 
   const fadeIn = 'fadeIn';
   const fadeOutImmediate = 'fadeOutImmediate';
@@ -44,22 +168,6 @@ export default function SpiffUIV3() {
       setTransistionStage(fadeOutImmediate);
     }
   }, [location, displayLocation]);
-
-  /** One of the TopMenu MenuItems was clicked */
-  const handleMenuCallback = (data: MenuItemData) => {
-    // Some TopMenu buttons are for navigation, some aren't
-    if (data?.text === 'Dark Mode') {
-      setGlobalTheme(
-        createTheme(
-          createSpiffTheme(
-            globalTheme.palette.mode === 'light' ? 'dark' : 'light',
-          ),
-        ),
-      );
-    } else if (data?.path) {
-      navigate(data.path);
-    }
-  };
 
   return (
     <ThemeProvider theme={globalTheme}>
@@ -86,26 +194,20 @@ export default function SpiffUIV3() {
               : 'background.mediumlight',
           }}
         >
-          <Grid item sx={{ width: '100%' }}>
-            <Slide direction="down" in mountOnEnter unmountOnExit>
-              <Box
-                sx={{
-                  height: '100%',
-                  width: '100%',
-                  position: 'relative',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: '100%',
-                  }}
-                >
-                  <TopMenu callback={handleMenuCallback} />
-                </Box>
-              </Box>
-            </Slide>
-          </Grid>
-          <Grid item xs={12} sx={{ height: '100%' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              width: '100%',
+              height: '100vh',
+              overflow: 'hidden',
+            }}
+          >
+            <SideNav
+              selectedTab={selectedTab}
+              onSelectTab={setSelectedTab}
+              isCollapsed={isNavCollapsed}
+              onToggleCollapse={toggleNavCollapse}
+            />
             <Box
               className={`${transitionStage}`}
               sx={{
@@ -124,7 +226,7 @@ export default function SpiffUIV3() {
                 <Route path="/homepage2" element={<TasksProcesses />} />
               </Routes>
             </Box>
-          </Grid>
+          </Box>
         </Grid>
       </Container>
     </ThemeProvider>
