@@ -187,9 +187,11 @@ function TasksProcesses() {
         </Typography>
         <Box sx={{ mb: 2 }}>
           <Tabs value={0}>
-            <Tab label="My tasks" sx={{ textTransform: 'none' }} />
-            <Tab label="My processes" sx={{ textTransform: 'none' }} />
-            <Tab label="My workflows" sx={{ textTransform: 'none' }} />
+            <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
+            <Tab
+              label="Workflows created by me"
+              sx={{ textTransform: 'none' }}
+            />
           </Tabs>
         </Box>
         <Box
