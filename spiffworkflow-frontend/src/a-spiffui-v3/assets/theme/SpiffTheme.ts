@@ -59,6 +59,7 @@ const customPalette = (mode: PaletteMode) => {
       subheading: grey[600],
     },
     borders: {
+      table: '#e7ebed',
       primary: grey[400],
       seconday: grey[600],
     },
@@ -106,6 +107,7 @@ const customPalette = (mode: PaletteMode) => {
       subheading: grey[400],
     },
     borders: {
+      table: grey[800],
       primary: grey[800],
       seconday: cyan[800],
     },
