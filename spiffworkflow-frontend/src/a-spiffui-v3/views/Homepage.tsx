@@ -202,7 +202,12 @@ function Homepage() {
           alignItems: 'center',
         }}
       >
-        <Tabs value={0}>
+        <Tabs
+          value={0}
+          TabIndicatorProps={{
+            style: { height: 3 },
+          }}
+        >
           <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
           <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
         </Tabs>
