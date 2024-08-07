@@ -16,6 +16,7 @@ import {
   Container,
   CssBaseline,
   Grid,
+  Paper,
 } from '@mui/material';
 import {
   Home,
@@ -23,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Logout,
+  Person,
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation, useNavigate } from 'react-router';
@@ -79,6 +81,13 @@ function SideNav({
   if (DOCUMENTATION_URL) {
     externalDocumentationUrl = DOCUMENTATION_URL;
   }
+
+  // State for controlling the display of the user profile section
+  const [showUserProfile, setShowUserProfile] = useState(false);
+
+  const handlePersonIconClick = () => {
+    setShowUserProfile(!showUserProfile);
+  };
 
   // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
   const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
@@ -187,61 +196,52 @@ function SideNav({
           left: isCollapsed ? '50%' : 16,
           transform: isCollapsed ? 'translateX(-50%)' : 'none',
           display: 'flex',
-          flexDirection: isCollapsed ? 'column' : 'row',
+          flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex' }} id="user-profile-toggletip">
-          <Tooltip title="User Actions" arrow placement="bottom-start">
-            <IconButton
-              aria-label="User Actions"
-              className="user-profile-toggletip-button"
-            >
-              <div className="user-circle">{username[0].toUpperCase()}</div>
-            </IconButton>
-          </Tooltip>
-          <div className="user-profile-toggletip-content">
-            <p>
-              <strong>{username}</strong>
-            </p>
+        <Tooltip title="User Actions" arrow placement="top">
+          <IconButton aria-label="User Actions" onClick={handlePersonIconClick}>
+            <Person />
+          </IconButton>
+        </Tooltip>
+        {showUserProfile && (
+          <Paper
+            elevation={3}
+            sx={{
+              position: 'absolute',
+              bottom: 60,
+              left: 0,
+              width: isCollapsed ? '100%' : 256,
+              padding: 2,
+              zIndex: 1,
+              bgcolor: isDark ? 'background.paper' : 'background.default',
+            }}
+          >
+            <strong>{username}</strong>
             {username !== userEmail && <p>{userEmail}</p>}
             <hr />
             {aboutLinkElement}
             <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
               Documentation
             </a>
-            {/* <ExtensionUxElementForDisplay */}
-            {/*   displayLocation="user_profile_item" */}
-            {/*   elementCallback={extensionUserProfileElement} */}
-            {/*   extensionUxElements={extensionUxElements} */}
-            {/* /> */}
-            {!UserService.authenticationDisabled() ? (
+            {!UserService.authenticationDisabled() && (
               <>
                 <hr />
                 <IconButton
                   data-qa="logout-button"
                   className="button-link"
-                  onClick={() => console.log('WE LOG OUT')}
+                  onClick={() => {
+                    UserService.doLogout();
+                  }}
                 >
-                  <Logout />
+                  {' '}
+                  <Logout /> &nbsp;&nbsp;Sign out
                 </IconButton>
               </>
-            ) : null}
-          </div>
-        </div>
-        {/* <SpiffTooltip title="Toggle dark mode"> */}
-        {/*   <IconButton onClick={onToggleDarkMode}> */}
-        {/*     {isDark ? <Brightness7 /> : <Brightness4 />} */}
-        {/*   </IconButton> */}
-        {/* </SpiffTooltip> */}
-        {/* <SpiffTooltip title="Logout"> */}
-        {/*   <IconButton */}
-        {/*     onClick={() => { */}
-        {/*     }} */}
-        {/*   > */}
-        {/*     <Person /> */}
-        {/*   </IconButton> */}
-        {/* </SpiffTooltip> */}
+            )}
+          </Paper>
+        )}
       </Box>
     </Box>
   );
