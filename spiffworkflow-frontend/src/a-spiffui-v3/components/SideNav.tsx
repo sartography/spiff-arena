@@ -56,9 +56,6 @@ function SideNav({
 }: OwnProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedBackgroundColor = isDark
-    ? 'rgba(255, 255, 255, 0.16)'
-    : '#F0F9FF';
 
   let selectedTab = 0;
   if (location.pathname === '/newui/startprocess') {
@@ -114,12 +111,13 @@ function SideNav({
   return (
     <>
       <Box
+        id="HEY ID"
         sx={{
           width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
           flexShrink: 0,
           borderRight: '1px solid #e0e0e0',
           height: '100vh',
-          bgcolor: isDark ? 'background.default' : 'white',
+          bgcolor: 'background.nav',
           transition: 'width 0.3s',
           overflow: 'hidden',
           position: 'relative',
@@ -169,15 +167,14 @@ function SideNav({
                 }
               }}
               sx={{
-                bgcolor:
-                  selectedTab === index ? selectedBackgroundColor : 'inherit',
+                bgcolor: selectedTab === index ? 'background.light' : 'inherit',
                 color: selectedTab === index ? mainBlue : 'inherit',
                 borderLeft:
                   selectedTab === index
                     ? `4px solid ${mainBlue}`
                     : '4px solid transparent',
                 '&:hover': {
-                  bgcolor: selectedBackgroundColor,
+                  bgcolor: 'background.light',
                 },
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
               }}
@@ -258,7 +255,7 @@ function SideNav({
             width: 256,
             padding: 2,
             zIndex: 1300,
-            bgcolor: isDark ? 'background.paper' : 'background.default',
+            bgcolor: 'background.paper',
           }}
         >
           <Typography variant="subtitle1">{username}</Typography>
