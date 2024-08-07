@@ -214,10 +214,11 @@ function SideNav({
           bottom: 16,
           left: isCollapsed ? '50%' : 16,
           transform: isCollapsed ? 'translateX(-50%)' : 'none',
+          alignItems: isCollapsed ? 'center' : 'flex-start',
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: isCollapsed ? 'column' : 'row',
           alignItems: 'center',
-          gap: 1,
+          gap: isCollapsed ? 0 : 1,
         }}
       >
         <Tooltip title="User Actions" arrow placement="top">
