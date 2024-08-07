@@ -169,13 +169,9 @@ function SideNav({
               sx={{
                 bgcolor: selectedTab === index ? 'background.light' : 'inherit',
                 color: selectedTab === index ? mainBlue : 'inherit',
-                borderLeft:
-                  selectedTab === index
-                    ? `4px solid ${mainBlue}`
-                    : '4px solid transparent',
-                '&:hover': {
-                  bgcolor: 'background.light',
-                },
+                borderColor: selectedTab === index ? mainBlue : 'transparent',
+                borderLeftWidth: '4px',
+                borderStyle: 'solid',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
               }}
             >
