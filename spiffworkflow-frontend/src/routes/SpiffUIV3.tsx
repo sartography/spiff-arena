@@ -20,8 +20,9 @@ const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
 
 export default function SpiffUIV3() {
+  const storedTheme = localStorage.getItem('theme') || 'light';
   const [globalTheme, setGlobalTheme] = useState(
-    createTheme(createSpiffTheme('light')),
+    createTheme(createSpiffTheme(storedTheme)),
   );
   const isDark = globalTheme.palette.mode === 'dark';
   const location = useLocation();
@@ -38,7 +39,9 @@ export default function SpiffUIV3() {
   };
 
   const toggleDarkMode = () => {
-    setGlobalTheme(createTheme(createSpiffTheme(isDark ? 'light' : 'dark')));
+    const desiredTheme = isDark ? 'light' : 'dark';
+    setGlobalTheme(createTheme(createSpiffTheme(desiredTheme)));
+    localStorage.setItem('theme', desiredTheme);
   };
 
   useEffect(() => {
