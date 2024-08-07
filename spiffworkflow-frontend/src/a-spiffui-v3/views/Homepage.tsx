@@ -198,6 +198,7 @@ function Homepage() {
           mb: 2,
           display: 'flex',
           justifyContent: 'space-between',
+          borderBottom: '2px solid #e7ebed',
           alignItems: 'center',
         }}
       >
