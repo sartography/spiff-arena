@@ -44,6 +44,28 @@ function Homepage() {
     getTasks();
   }, []);
 
+  const getWaitingForTableCellComponent = (
+    processInstanceTask: ProcessInstanceTask,
+  ) => {
+    let fullUsernameString = '';
+    let shortUsernameString = '';
+    if (processInstanceTask.potential_owner_usernames) {
+      fullUsernameString = processInstanceTask.potential_owner_usernames;
+      const usernames =
+        processInstanceTask.potential_owner_usernames.split(',');
+      const firstTwoUsernames = usernames.slice(0, 2);
+      if (usernames.length > 2) {
+        firstTwoUsernames.push('...');
+      }
+      shortUsernameString = firstTwoUsernames.join(',');
+    }
+    if (processInstanceTask.assigned_user_group_identifier) {
+      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
+    }
+    return <span title={fullUsernameString}>{shortUsernameString}</span>;
+  };
+
   const taskTable = () => {
     if (tasks === null) {
       return null;
@@ -58,6 +80,7 @@ function Homepage() {
               <TableCell>Created</TableCell>
               <TableCell>Last milestone</TableCell>
               <TableCell>Last updated</TableCell>
+              <TableCell>Waiting for</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -117,6 +140,7 @@ function Homepage() {
                     )}
                   </Typography>
                 </TableCell>
+                <TableCell>{getWaitingForTableCellComponent(task)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -172,9 +196,10 @@ function Homepage() {
         }}
       >
         <TextField
-          placeholder="Search"
+          placeholder="Search (coming soon)"
           variant="outlined"
           size="small"
+          disabled
           InputProps={{
             endAdornment: <Search />,
             sx: { bgcolor: 'background.paper' },
