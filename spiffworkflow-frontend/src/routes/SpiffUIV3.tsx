@@ -17,6 +17,7 @@ import {
   CssBaseline,
   Grid,
   Paper,
+  Link as MuiLink,
 } from '@mui/material';
 import {
   Home,
@@ -247,26 +248,38 @@ function SideNav({
               bgcolor: isDark ? 'background.paper' : 'background.default',
             }}
           >
-            <strong>{username}</strong>
-            {username !== userEmail && <p>{userEmail}</p>}
+            <Typography variant="subtitle1">{username}</Typography>
+            {username !== userEmail && (
+              <Typography variant="body2">{userEmail}</Typography>
+            )}
             <hr />
-            {aboutLinkElement}
-            <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
+            <MuiLink component={Link} to="/about">
+              About
+            </MuiLink>
+            <MuiLink
+              component="a"
+              href={externalDocumentationUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
               Documentation
-            </a>
+            </MuiLink>
             {!UserService.authenticationDisabled() && (
               <>
                 <hr />
-                <IconButton
-                  data-qa="logout-button"
-                  className="button-link"
-                  onClick={() => {
-                    UserService.doLogout();
+                <MuiLink
+                  component="button"
+                  onClick={() => UserService.doLogout()}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    textDecoration: 'none',
+                    color: 'inherit',
                   }}
                 >
-                  {' '}
-                  <Logout /> &nbsp;&nbsp;Sign out
-                </IconButton>
+                  <Logout />
+                  &nbsp;&nbsp;Sign out
+                </MuiLink>
               </>
             )}
           </Paper>
