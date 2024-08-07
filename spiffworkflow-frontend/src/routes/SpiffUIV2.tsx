@@ -1,13 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Container, CssBaseline, Grid, Slide } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router';
 import Dashboards from '../a-spiffui-v2/views/Dashboards/Dashboards';
-import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
-import StartProcessInstance from '../a-spiffui-v2/views/StartProcess/StartProcessInstance';
 import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/topmenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/app/topmenu/TopMenu';
+import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -125,10 +124,6 @@ export default function SpiffUIV2() {
                 <Route path="/" element={<Dashboards />} />
                 <Route path="/dashboard" element={<Dashboards />} />
                 <Route path="/startprocess" element={<StartProcess />} />
-                <Route
-                  path="/:modifiedProcessModelId/start"
-                  element={<StartProcessInstance />}
-                />
               </Routes>
             </Box>
           </Grid>
