@@ -92,6 +92,26 @@ function SideNav({
     setShowUserProfile(!showUserProfile);
   };
 
+  // Close user profile section when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const element = event.target as HTMLElement;
+      if (
+        element &&
+        !element.closest('.user-profile') &&
+        !element.closest('.person-icon')
+      ) {
+        setShowUserProfile(false);
+      }
+    };
+
+    window.addEventListener('click', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
   const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
 
@@ -199,18 +219,24 @@ function SideNav({
           left: isCollapsed ? '50%' : 16,
           transform: isCollapsed ? 'translateX(-50%)' : 'none',
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           alignItems: 'center',
+          gap: 1,
         }}
       >
         <Tooltip title="User Actions" arrow placement="top">
-          <IconButton aria-label="User Actions" onClick={handlePersonIconClick}>
+          <IconButton
+            aria-label="User Actions"
+            onClick={handlePersonIconClick}
+            className="person-icon"
+          >
             <Person />
           </IconButton>
         </Tooltip>
         {showUserProfile && (
           <Paper
             elevation={3}
+            className="user-profile"
             sx={{
               position: 'absolute',
               bottom: 60,
