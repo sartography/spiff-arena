@@ -18,11 +18,11 @@ export default function App() {
     return [
       { path: 'public/*', element: <PublicRoutes /> },
       {
-        path: 'newui/*',
+        path: 'newuiv2/*',
         element: <SpiffUIV2 />,
       },
       {
-        path: 'newuiv3/*',
+        path: 'newui/*',
         element: <SpiffUIV3 />,
       },
       {

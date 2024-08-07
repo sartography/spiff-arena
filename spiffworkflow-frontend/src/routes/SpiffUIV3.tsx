@@ -23,11 +23,11 @@ import {
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation, useNavigate } from 'react-router';
-import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
+import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
-import SpiffLogo from '../a-spiffui-v2/components/SpiffLogo';
+import SpiffLogo from '../a-spiffui-v3/components/SpiffLogo';
 import SpiffTooltip from '../components/SpiffTooltip';
-import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
+import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -57,7 +57,7 @@ function SideNav({
     : '#F0F9FF';
 
   let selectedTab = 0;
-  if (location.pathname === '/newuiv3/startprocess') {
+  if (location.pathname === '/newui/startprocess') {
     selectedTab = 1;
   }
 
@@ -110,9 +110,9 @@ function SideNav({
             onClick={() => {
               setAdditionalNavElement(null);
               if (index === 0) {
-                navigate('/newuiv3/homepage2');
+                navigate('/newui/homepage2');
               } else if (index === 1) {
-                navigate('/newuiv3/startprocess');
+                navigate('/newui/startprocess');
               }
             }}
             sx={{
@@ -281,7 +281,7 @@ export default function SpiffUIV3() {
               }}
             >
               <Routes>
-                <Route path="/homepage2" element={<Homepage />} />
+                <Route path="/" element={<Homepage />} />
                 <Route
                   path="/startprocess"
                   element={
