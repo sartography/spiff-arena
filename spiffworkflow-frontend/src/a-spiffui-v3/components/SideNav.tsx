@@ -119,7 +119,7 @@ function SideNav({
           flexShrink: 0,
           borderRight: '1px solid #e0e0e0',
           height: '100vh',
-          bgcolor: isDark ? 'background.paper' : 'background.mediumlight',
+          bgcolor: isDark ? 'background.default' : 'white',
           transition: 'width 0.3s',
           overflow: 'hidden',
           position: 'relative',
