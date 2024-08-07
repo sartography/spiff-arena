@@ -218,7 +218,6 @@ function SideNav({
             alignItems: isCollapsed ? 'center' : 'flex-start',
             display: 'flex',
             flexDirection: isCollapsed ? 'column' : 'row',
-            alignItems: 'center',
             gap: isCollapsed ? 0 : 1,
           }}
         >
