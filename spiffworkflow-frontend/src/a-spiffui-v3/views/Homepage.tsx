@@ -198,7 +198,9 @@ function Homepage() {
           mb: 2,
           display: 'flex',
           justifyContent: 'space-between',
-          borderBottom: '2px solid #e7ebed',
+          borderWidth: '2px',
+          borderBottomStyle: 'solid',
+          borderColor: 'borders.table',
           alignItems: 'center',
         }}
       >
