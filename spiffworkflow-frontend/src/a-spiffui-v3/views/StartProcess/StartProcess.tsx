@@ -260,8 +260,8 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
         height: '100vh',
       }}
     >
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Start New Process
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        Start new process
       </Typography>
       <Container
         id="THI ONE"

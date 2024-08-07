@@ -190,7 +190,7 @@ function Homepage() {
         height: '100vh',
       }}
     >
-      <Typography variant="h5" sx={{ mb: 2 }}>
+      <Typography variant="h1" sx={{ mb: 2 }}>
         Home
       </Typography>
       <Box
