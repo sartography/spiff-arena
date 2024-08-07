@@ -21,7 +21,7 @@
     "@mui/x-data-grid": "^7.12.0",
     "@mui/x-tree-view": "^7.6.1",
     "@preact/preset-vite": "^2.9.0",
-    "@prefresh/vite": "^2.4.5",
+    "@prefresh/vite": "^2.4.6",
     "@react-icons/all-files": "^4.1.0",
     "@rjsf/core": "^5.19.4",
     "@rjsf/mui": "^5.19.4",
