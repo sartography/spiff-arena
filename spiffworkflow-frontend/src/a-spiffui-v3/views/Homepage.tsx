@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -21,35 +21,109 @@ import {
   Chip,
 } from '@mui/material';
 import { Search, ViewModule, Add, AccessTime } from '@mui/icons-material';
+import HttpService from '../../services/HttpService';
+import DateAndTimeService from '../../services/DateAndTimeService';
+import { ProcessInstanceTask } from '../../interfaces';
 
 const mainBlue = 'primary.main';
 
 function Homepage() {
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
 
-  const tasks = [
-    {
-      guid: 'TMPGUID1',
-      process_model_display_name: 'Equipment Purchase',
-      bpmn_name: 'Authorise purchase order',
-      process_instance_summary: 'Laptop for Caryn Dolley',
-      created_by: 'Caryn Dolley',
-      created_at: 'Today, 9:56am',
-      lastMilestone: 'Pending approval',
-      lastUpdated: 'This morning, 9:56am',
-    },
-    {
-      guid: 'TMPGUID2',
-      process_model_display_name: 'Expense Claim',
-      bpmn_name: 'Pre-authorise expense claim',
-      process_instance_summary: 'Expense claim for Mark Erasmus',
-      created_by: 'Mark Erasmus',
-      created_at: 'Yesterday, 5:09pm',
-      lastMilestone: 'Started',
-      lastUpdated: 'Yesterday, 5:09pm',
-    },
-    // ... (add more tasks following this structure)
-  ];
+  useEffect(() => {
+    const getTasks = () => {
+      const setTasksFromResult = (result: any) => {
+        setTasks(result.results);
+      };
+      HttpService.makeCallToBackend({
+        path: '/tasks',
+        successCallback: setTasksFromResult,
+      });
+    };
+    getTasks();
+  }, []);
+
+  const taskTable = () => {
+    if (tasks === null) {
+      return null;
+    }
+
+    return (
+      <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Task details</TableCell>
+              <TableCell>Created</TableCell>
+              <TableCell>Last milestone</TableCell>
+              <TableCell>Last updated</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell>
+                  <Chip
+                    label={task.process_model_display_name}
+                    size="small"
+                    sx={{
+                      bgcolor: '#E0E0E0',
+                      color: '#616161',
+                      mb: 1,
+                      fontWeight: 'normal',
+                    }}
+                  />
+                  <Typography variant="body2" paragraph>
+                    {task.task_name || task.task_title}
+                  </Typography>
+                  <Typography variant="body2" color={mainBlue}>
+                    {task.process_instance_summary}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" paragraph>
+                    {task.process_initiator_username}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+                    {DateAndTimeService.convertSecondsToFormattedDateTime(
+                      task.created_at_in_seconds,
+                    )}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    {'● '}
+                    {task.last_milestone_bpmn_name}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+                    {DateAndTimeService.convertSecondsToFormattedDateTime(
+                      task.created_at_in_seconds,
+                    )}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
 
   return (
     <Box
@@ -128,74 +202,7 @@ function Homepage() {
           </IconButton>
         </Box>
       </Box>
-      <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Task details</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Last milestone</TableCell>
-              <TableCell>Last updated</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.guid}>
-                <TableCell>
-                  <Chip
-                    label={task.process_model_display_name}
-                    size="small"
-                    sx={{
-                      bgcolor: '#E0E0E0',
-                      color: '#616161',
-                      mb: 1,
-                      fontWeight: 'normal',
-                    }}
-                  />
-                  <Typography variant="body2" paragraph>
-                    {task.bpmn_name}
-                  </Typography>
-                  <Typography variant="body2" color={mainBlue}>
-                    {task.process_instance_summary}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" paragraph>
-                    {task.created_by}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {task.created_at}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    {task.lastMilestone === 'Pending approval' ? '◯' : '●'}{' '}
-                    {task.lastMilestone}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {task.lastUpdated}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {taskTable()}
     </Box>
   );
 }

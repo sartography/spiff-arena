@@ -114,11 +114,13 @@ export interface ProcessInstanceTask {
   form_schema: any;
   form_ui_schema: any;
   lane_assignment_id: string;
+  last_milestone_bpmn_name: string;
   name: string; // bpmn_identifier
   process_identifier: string;
   process_initiator_username: string;
   process_instance_id: number;
   process_instance_status: string;
+  process_instance_summary: string;
   process_model_display_name: string;
   process_model_identifier: string;
   properties: any;
