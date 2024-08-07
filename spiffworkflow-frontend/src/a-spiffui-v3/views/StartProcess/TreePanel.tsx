@@ -194,7 +194,7 @@ export default forwardRef(function TreePanel(
       elevation={0}
       sx={{
         width: '100%',
-        height: 'calc(100vh - 275px)',
+        height: '100%',
         borderRadius: 0,
         borderRight: 1,
         borderRightColor: 'divider',

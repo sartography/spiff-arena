@@ -252,170 +252,120 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
 
   return (
     <Container
+      id="THI ONE"
       maxWidth={false}
       sx={{
         padding: '0px !important',
         overflow: 'hidden',
+        height: '100vh',
       }}
     >
-      {/* This may be a little more convulted than it needs to be for a tree collapser,
-       * but it's a start. Possibly refactor into another component or something. */}
-      <Stack direction="row">
-        {/* <Box */}
-        {/*   sx={{ */}
-        {/*     width: treeCollapsed ? 20 : 350, */}
-        {/*     paddingTop: 0.25, */}
-        {/*     position: 'relative', */}
-        {/*   }} */}
-        {/* > */}
-        {/*   <Slide */}
-        {/*     in={!treeCollapsed} */}
-        {/*     direction="right" */}
-        {/*     mountOnEnter */}
-        {/*     unmountOnExit */}
-        {/*   > */}
-        {/*     <Box> */}
-        {/*       {!treeCollapsed && ( */}
-        {/*         <TreePanel */}
-        {/*           ref={treeRef} */}
-        {/*           processGroups={processGroups} */}
-        {/*           stream={clickStream} */}
-        {/*           callback={() => handleFavorites({ text: SHOW_FAVORITES })} */}
-        {/*         /> */}
-        {/*       )} */}
-        {/*     </Box> */}
-        {/*   </Slide> */}
-        {/*   {treeCollapsed && ( */}
-        {/*     <Box */}
-        {/*       sx={{ */}
-        {/*         width: '20px', */}
-        {/*         height: '100%', */}
-        {/*         backgroundColor: 'background.paper', */}
-        {/*         borderRight: '1px solid', */}
-        {/*         borderColor: 'borders.primary', */}
-        {/*       }} */}
-        {/*     /> */}
-        {/*   )} */}
-        {/*   <Box */}
-        {/*     sx={{ */}
-        {/*       position: 'absolute', */}
-        {/*       right: -10, */}
-        {/*       top: 'calc(100vh - 65%)', */}
-        {/*     }} */}
-        {/*   > */}
-        {/*     <CollapseButton */}
-        {/*       startDirection="left" */}
-        {/*       callback={() => setTreeCollapsed((prev) => !prev)} */}
-        {/*     /> */}
-        {/*   </Box> */}
-        {/* </Box> */}
+      <Stack
+        id="STACK1"
+        gap={2}
+        sx={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
         <Stack
-          gap={2}
+          direction="row"
           sx={{
             width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
+            paddingTop: 2,
+            paddingLeft: 2,
+            paddingRight: 2,
+            justifyContent: 'center',
           }}
         >
-          <Stack
-            direction="row"
-            sx={{
-              width: '100%',
-              paddingTop: 2,
-              paddingLeft: 2,
-              paddingRight: 2,
-              justifyContent: 'center',
-            }}
-          >
-            <SearchBar callback={handleSearch} stream={clickStream} />
-          </Stack>
+          <SearchBar callback={handleSearch} stream={clickStream} />
+        </Stack>
 
-          <Stack
-            sx={{
-              width: '100%',
-              height: 'calc(100vh - 180px)',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              paddingLeft: 2,
-              paddingRight: 2,
-            }}
-          >
-            <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
-              {treeCollapsed && (
-                <Stack
-                  direction="row"
-                  gap={1}
+        <Stack
+          sx={{
+            width: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            paddingLeft: 2,
+            paddingRight: 2,
+          }}
+        >
+          <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
+            {treeCollapsed && (
+              <Stack
+                direction="row"
+                gap={1}
+                sx={{
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'borders.primary',
+                  borderRadius: 1,
+                  alignItems: 'center',
+                  paddingRight: 2,
+                  position: 'relative',
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleFavorites({ text: SHOW_FAVORITES })}
+              >
+                <StarRateIcon
                   sx={{
-                    backgroundColor: 'background.paper',
-                    border: '1px solid',
-                    borderColor: 'borders.primary',
-                    borderRadius: 1,
-                    alignItems: 'center',
-                    paddingRight: 2,
+                    transform: 'scale(.8)',
+                    color: 'spotColors.goldStar',
                     position: 'relative',
-                    cursor: 'pointer',
+                    top: -1,
                   }}
-                  onClick={() => handleFavorites({ text: SHOW_FAVORITES })}
-                >
-                  <StarRateIcon
-                    sx={{
-                      transform: 'scale(.8)',
-                      color: 'spotColors.goldStar',
-                      position: 'relative',
-                      top: -1,
-                    }}
-                  />
-                  <Typography variant="caption">Favorites</Typography>
-                </Stack>
-              )}
-              <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} />
-            </Stack>
-            <Accordion
-              expanded={modelsExpanded}
-              onChange={() => setModelsExpanded((prev) => !prev)}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="Process Models Accordion"
-              >
-                ({models.length}) Process Models
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={gridProps}>
-                  {models.map((model: Record<string, any>) => (
-                    <ProcessModelCard
-                      model={model}
-                      stream={clickStream}
-                      lastSelected={lastSelected}
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion
-              expanded={groupsExpanded}
-              onChange={() => setGroupsExpanded((prev) => !prev)}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="Process Groups Accordion"
-              >
-                ({groups.length}) Process Groups
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={gridProps}>
-                  {groups.map((group: Record<string, any>) => (
-                    <ProcessGroupCard
-                      key={group.id}
-                      group={group}
-                      stream={clickStream}
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+                />
+                <Typography variant="caption">Favorites</Typography>
+              </Stack>
+            )}
+            <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} />
           </Stack>
+          <Accordion
+            expanded={modelsExpanded}
+            onChange={() => setModelsExpanded((prev) => !prev)}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="Process Models Accordion"
+            >
+              ({models.length}) Process Models
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={gridProps}>
+                {models.map((model: Record<string, any>) => (
+                  <ProcessModelCard
+                    model={model}
+                    stream={clickStream}
+                    lastSelected={lastSelected}
+                  />
+                ))}
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion
+            expanded={groupsExpanded}
+            onChange={() => setGroupsExpanded((prev) => !prev)}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="Process Groups Accordion"
+            >
+              ({groups.length}) Process Groups
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={gridProps}>
+                {groups.map((group: Record<string, any>) => (
+                  <ProcessGroupCard
+                    key={group.id}
+                    group={group}
+                    stream={clickStream}
+                  />
+                ))}
+              </Box>
+            </AccordionDetails>
+          </Accordion>
         </Stack>
       </Stack>
     </Container>

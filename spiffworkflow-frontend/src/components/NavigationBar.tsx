@@ -19,7 +19,7 @@ import {
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation, Link, LinkProps } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, Tooltip, IconButton } from '@mui/material';
 import Logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
@@ -127,44 +127,40 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
 
     return (
       <div style={{ display: 'flex' }} id="user-profile-toggletip">
-        <Toggletip isTabTip align="bottom-right">
-          <ToggletipButton
-            aria-label="User Actions"
-            className="user-profile-toggletip-button"
-            type="button"
-          >
+        <Tooltip title="User Actions" arrow placement="bottom-start">
+          <IconButton aria-label="User Actions" className="user-profile-toggletip-button">
             <div className="user-circle">{username[0].toUpperCase()}</div>
-          </ToggletipButton>
-          <ToggletipContent className="user-profile-toggletip-content">
-            <p>
-              <strong>{username}</strong>
-            </p>
-            {username !== userEmail && <p>{userEmail}</p>}
-            <hr />
-            {aboutLinkElement}
-            <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
-              Documentation
-            </a>
-            <ExtensionUxElementForDisplay
-              displayLocation="user_profile_item"
-              elementCallback={extensionUserProfileElement}
-              extensionUxElements={extensionUxElements}
-            />
-            {!UserService.authenticationDisabled() ? (
-              <>
-                <hr />
-                <Button
-                  data-qa="logout-button"
-                  className="button-link"
-                  onClick={handleLogout}
-                >
-                  <Logout />
-                  &nbsp;&nbsp;Sign out
-                </Button>
-              </>
-            ) : null}
-          </ToggletipContent>
-        </Toggletip>
+          </IconButton>
+        </Tooltip>
+        <div className="user-profile-toggletip-content">
+          <p>
+            <strong>{username}</strong>
+          </p>
+          {username !== userEmail && <p>{userEmail}</p>}
+          <hr />
+          {aboutLinkElement}
+          <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
+            Documentation
+          </a>
+          <ExtensionUxElementForDisplay
+            displayLocation="user_profile_item"
+            elementCallback={extensionUserProfileElement}
+            extensionUxElements={extensionUxElements}
+          />
+          {!UserService.authenticationDisabled() ? (
+            <>
+              <hr />
+              <Button
+                data-qa="logout-button"
+                className="button-link"
+                onClick={handleLogout}
+              >
+                <Logout />
+                &nbsp;&nbsp;Sign out
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
     );
   };

@@ -1,4 +1,9 @@
-import React, { useState, useEffect, ReactElement } from 'react';
+import React, {
+  useState,
+  useEffect,
+  ReactElement,
+  MouseEventHandler,
+} from 'react';
 import {
   Box,
   Typography,
@@ -15,19 +20,21 @@ import {
 import {
   Home,
   Add,
-  Person,
   ChevronLeft,
   ChevronRight,
-  Brightness4,
-  Brightness7,
+  Logout,
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation, useNavigate } from 'react-router';
+import { Link } from 'react-router-dom';
 import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
 import SpiffLogo from '../a-spiffui-v3/components/SpiffLogo';
-import SpiffTooltip from '../components/SpiffTooltip';
 import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
+import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProcessInstance';
+import UserService from '../services/UserService';
+import appVersionInfo from '../helpers/appVersionInfo';
+import { DOCUMENTATION_URL } from '../config';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -35,8 +42,8 @@ const mainBlue = 'primary.main';
 
 type OwnProps = {
   isCollapsed: boolean;
-  onToggleCollapse: Function;
-  onToggleDarkMode: Function;
+  onToggleCollapse: MouseEventHandler<HTMLButtonElement>;
+  onToggleDarkMode: MouseEventHandler<HTMLButtonElement>;
   isDark: boolean;
   additionalNavElement?: ReactElement | null;
   setAdditionalNavElement: Function;
@@ -60,6 +67,21 @@ function SideNav({
   if (location.pathname === '/newui/startprocess') {
     selectedTab = 1;
   }
+
+  const versionInfo = appVersionInfo();
+  let aboutLinkElement = null;
+  if (Object.keys(versionInfo).length) {
+    aboutLinkElement = <Link to="/about">About</Link>;
+  }
+  const userEmail = UserService.getUserEmail();
+  const username = UserService.getPreferredUsername();
+  let externalDocumentationUrl = 'https://spiff-arena.readthedocs.io';
+  if (DOCUMENTATION_URL) {
+    externalDocumentationUrl = DOCUMENTATION_URL;
+  }
+
+  // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
+  const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
 
   return (
     <Box
@@ -110,7 +132,7 @@ function SideNav({
             onClick={() => {
               setAdditionalNavElement(null);
               if (index === 0) {
-                navigate('/newui/homepage2');
+                navigate('/newui');
               } else if (index === 1) {
                 navigate('/newui/startprocess');
               }
@@ -148,7 +170,16 @@ function SideNav({
           </ListItem>
         ))}
       </List>
-      {!isCollapsed && <Box>{additionalNavElement}</Box>}
+      {!isCollapsed && (
+        <Box
+          sx={{
+            width: '100%',
+            height: `calc(100vh - ${pixelsToRemoveFromAdditionalElement}px)`,
+          }}
+        >
+          {additionalNavElement}
+        </Box>
+      )}
       <Box
         sx={{
           position: 'absolute',
@@ -160,18 +191,57 @@ function SideNav({
           alignItems: 'center',
         }}
       >
-        <SpiffTooltip title="Toggle dark mode">
-          <IconButton onClick={onToggleDarkMode}>
-            {isDark ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-        </SpiffTooltip>
-        <IconButton
-          onClick={() => {
-            /* Add appropriate onClick handler if needed */
-          }}
-        >
-          <Person />
-        </IconButton>
+        <div style={{ display: 'flex' }} id="user-profile-toggletip">
+          <Tooltip title="User Actions" arrow placement="bottom-start">
+            <IconButton
+              aria-label="User Actions"
+              className="user-profile-toggletip-button"
+            >
+              <div className="user-circle">{username[0].toUpperCase()}</div>
+            </IconButton>
+          </Tooltip>
+          <div className="user-profile-toggletip-content">
+            <p>
+              <strong>{username}</strong>
+            </p>
+            {username !== userEmail && <p>{userEmail}</p>}
+            <hr />
+            {aboutLinkElement}
+            <a target="_blank" href={externalDocumentationUrl} rel="noreferrer">
+              Documentation
+            </a>
+            {/* <ExtensionUxElementForDisplay */}
+            {/*   displayLocation="user_profile_item" */}
+            {/*   elementCallback={extensionUserProfileElement} */}
+            {/*   extensionUxElements={extensionUxElements} */}
+            {/* /> */}
+            {!UserService.authenticationDisabled() ? (
+              <>
+                <hr />
+                <IconButton
+                  data-qa="logout-button"
+                  className="button-link"
+                  onClick={() => console.log('WE LOG OUT')}
+                >
+                  <Logout />
+                </IconButton>
+              </>
+            ) : null}
+          </div>
+        </div>
+        {/* <SpiffTooltip title="Toggle dark mode"> */}
+        {/*   <IconButton onClick={onToggleDarkMode}> */}
+        {/*     {isDark ? <Brightness7 /> : <Brightness4 />} */}
+        {/*   </IconButton> */}
+        {/* </SpiffTooltip> */}
+        {/* <SpiffTooltip title="Logout"> */}
+        {/*   <IconButton */}
+        {/*     onClick={() => { */}
+        {/*     }} */}
+        {/*   > */}
+        {/*     <Person /> */}
+        {/*   </IconButton> */}
+        {/* </SpiffTooltip> */}
       </Box>
     </Box>
   );
@@ -289,6 +359,10 @@ export default function SpiffUIV3() {
                       setNavElementCallback={setAdditionalNavElement}
                     />
                   }
+                />
+                <Route
+                  path="/:modifiedProcessModelId/start"
+                  element={<StartProcessInstance />}
                 />
               </Routes>
             </Box>
