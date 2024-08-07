@@ -1,10 +1,8 @@
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
-import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import {
   getStorageValue,
   setStorageValue,
@@ -44,19 +42,9 @@ export default function ProcessModelCard({
     useState<Record<string, any>>(defaultStyle);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const navigate = useNavigate();
-
   const stopEventBubble = (e: PointerEvent) => {
     e.stopPropagation();
     e.preventDefault();
-  };
-
-  const handleStartProcess = (e: PointerEvent) => {
-    stopEventBubble(e);
-    const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-      model.id,
-    );
-    navigate(`/newui/${modifiedProcessModelId}/start`);
   };
 
   const handleClickStream = (item: Record<string, any>) => {
@@ -93,6 +81,10 @@ export default function ProcessModelCard({
 
     const removed = currentValue.filter((id: string) => id !== model.id);
     setStorageValue('spifffavorites', JSON.stringify(removed));
+  };
+
+  const handleStartProcess = (e: PointerEvent) => {
+    stopEventBubble(e);
   };
 
   useEffect(() => {

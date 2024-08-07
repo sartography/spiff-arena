@@ -40,7 +40,7 @@ export default forwardRef(function TreePanel(
   const treeItemStyle = {
     borderRadius: 1,
     width: 50,
-    maxHeight: 15,
+    maxHeight: 18,
     textAlign: 'center',
     fontWeight: 600,
     backgroundColor: isDark ? `background.paper` : `background.bluegreymedium`,
@@ -63,62 +63,55 @@ export default forwardRef(function TreePanel(
    * You have to manage it all yourself.
    */
   const buildTree = (groups: Record<string, any>[]) => {
-    return groups.map((group: Record<string, any>) => {
-      const groupCount = group?.process_groups?.length || 0;
-      const modelCount = group?.process_models?.length || 0;
-      const totalCount = groupCount + modelCount;
-      return (
-        <TreeItem
-          key={group.id}
-          itemId={group.id}
-          onClick={() => stream && stream.next(group)}
-          label={
-            <Stack
-              direction="row"
-              sx={{
-                backgroundColor:
-                  lastSelected.id === group.id
-                    ? 'spotColors.selectedBackground'
-                    : '',
-                padding: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              <Box sx={{ width: '100%' }}>{group.display_name}</Box>
+    return groups.map((group: Record<string, any>) => (
+      <TreeItem
+        key={group.id}
+        itemId={group.id}
+        onClick={() => stream && stream.next(group)}
+        label={
+          <Stack
+            direction="row"
+            sx={{
+              backgroundColor:
+                lastSelected.id === group.id
+                  ? 'spotColors.selectedBackground'
+                  : '',
+              padding: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            <Box sx={{ width: '100%' }}>{group.display_name}</Box>
+            <Box sx={treeItemStyle}>
+              {`${group?.process_models?.length || 0} / 
+                ${group?.process_groups?.length || 0}`}
+            </Box>
+          </Stack>
+        }
+      >
+        {group?.process_models?.map((model: Record<string, any>) => (
+          <TreeItem
+            key={model.id}
+            itemId={model.id}
+            label={
               <Box
-                sx={treeItemStyle}
-                title={`${totalCount} items, including ${modelCount} Process Models and ${groupCount} Process Groups`}
+                sx={{
+                  backgroundColor:
+                    lastSelected.id === model.id
+                      ? 'spotColors.selectedBackground'
+                      : '',
+                  padding: 0.5,
+                  borderRadius: 1,
+                }}
               >
-                {totalCount}
+                {model.display_name}
               </Box>
-            </Stack>
-          }
-        >
-          {group?.process_models?.map((model: Record<string, any>) => (
-            <TreeItem
-              key={model.id}
-              itemId={model.id}
-              label={
-                <Box
-                  sx={{
-                    backgroundColor:
-                      lastSelected.id === model.id
-                        ? 'spotColors.selectedBackground'
-                        : '',
-                    padding: 0.5,
-                    borderRadius: 1,
-                  }}
-                >
-                  {model.display_name}
-                </Box>
-              }
-              onClick={() => stream && stream.next(model)}
-            />
-          ))}
-          {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
-        </TreeItem>
-      );
-    });
+            }
+            onClick={() => stream && stream.next(model)}
+          />
+        ))}
+        {group?.process_groups?.length > 0 && buildTree(group.process_groups)}
+      </TreeItem>
+    ));
   };
 
   const expandToItem = (item: Record<string, any>) => {
@@ -184,6 +177,7 @@ export default forwardRef(function TreePanel(
       return;
     }
 
+    console.log(lastSelected);
     // Otherwise, go through the rigamarole of expanding it.
     expandToItem(lastSelected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,7 +188,7 @@ export default forwardRef(function TreePanel(
       elevation={0}
       sx={{
         width: '100%',
-        height: 'calc(100vh - 275px)',
+        height: 'calc(100vh - 75px)',
         borderRadius: 0,
         borderRight: 1,
         borderRightColor: 'divider',

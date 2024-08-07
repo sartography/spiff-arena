@@ -4,6 +4,7 @@ import {
   AccordionSummary,
   Box,
   Container,
+  Slide,
   Stack,
   Typography,
 } from '@mui/material';
@@ -20,16 +21,14 @@ import {
   SPIFF_FAVORITES,
   getStorageValue,
 } from '../../services/LocalStorageService';
+import CollapseButton from '../../components/CollapseButton';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 
-type OwnProps = {
-  setNavElementCallback: Function;
-};
 /**
  * Top level layout and control container for this view,
  * feeds various streams, data and callbacks to children.
  */
-export default function StartProcess({ setNavElementCallback }: OwnProps) {
+export default function StartProcess() {
   const { processGroups } = useProcessGroups({ processInfo: {} });
   const [groups, setGroups] = useState<Record<string, any>[]>([]);
   const [models, setModels] = useState<Record<string, any>[]>([]);
@@ -39,8 +38,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
-  // const [treeCollapsed, setTreeCollapsed] = useState(false);
-  const [treeCollapsed] = useState(false);
+  const [treeCollapsed, setTreeCollapsed] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   // Pass to anything that wants to broadcast to all subscribers
   const clickStream = new Subject<Record<string, any>>();
@@ -228,16 +226,6 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       setGroups(processGroups.results);
       setGroupsExpanded(!!processGroups.results.length);
       setCrumbs([]);
-      if (setNavElementCallback) {
-        setNavElementCallback(
-          <TreePanel
-            ref={treeRef}
-            processGroups={processGroups}
-            stream={clickStream}
-            callback={() => handleFavorites({ text: SHOW_FAVORITES })}
-          />,
-        );
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processGroups]);
@@ -261,54 +249,54 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       {/* This may be a little more convulted than it needs to be for a tree collapser,
        * but it's a start. Possibly refactor into another component or something. */}
       <Stack direction="row">
-        {/* <Box */}
-        {/*   sx={{ */}
-        {/*     width: treeCollapsed ? 20 : 350, */}
-        {/*     paddingTop: 0.25, */}
-        {/*     position: 'relative', */}
-        {/*   }} */}
-        {/* > */}
-        {/*   <Slide */}
-        {/*     in={!treeCollapsed} */}
-        {/*     direction="right" */}
-        {/*     mountOnEnter */}
-        {/*     unmountOnExit */}
-        {/*   > */}
-        {/*     <Box> */}
-        {/*       {!treeCollapsed && ( */}
-        {/*         <TreePanel */}
-        {/*           ref={treeRef} */}
-        {/*           processGroups={processGroups} */}
-        {/*           stream={clickStream} */}
-        {/*           callback={() => handleFavorites({ text: SHOW_FAVORITES })} */}
-        {/*         /> */}
-        {/*       )} */}
-        {/*     </Box> */}
-        {/*   </Slide> */}
-        {/*   {treeCollapsed && ( */}
-        {/*     <Box */}
-        {/*       sx={{ */}
-        {/*         width: '20px', */}
-        {/*         height: '100%', */}
-        {/*         backgroundColor: 'background.paper', */}
-        {/*         borderRight: '1px solid', */}
-        {/*         borderColor: 'borders.primary', */}
-        {/*       }} */}
-        {/*     /> */}
-        {/*   )} */}
-        {/*   <Box */}
-        {/*     sx={{ */}
-        {/*       position: 'absolute', */}
-        {/*       right: -10, */}
-        {/*       top: 'calc(100vh - 65%)', */}
-        {/*     }} */}
-        {/*   > */}
-        {/*     <CollapseButton */}
-        {/*       startDirection="left" */}
-        {/*       callback={() => setTreeCollapsed((prev) => !prev)} */}
-        {/*     /> */}
-        {/*   </Box> */}
-        {/* </Box> */}
+        <Box
+          sx={{
+            width: treeCollapsed ? 20 : 350,
+            paddingTop: 0.25,
+            position: 'relative',
+          }}
+        >
+          <Slide
+            in={!treeCollapsed}
+            direction="right"
+            mountOnEnter
+            unmountOnExit
+          >
+            <Box>
+              {!treeCollapsed && (
+                <TreePanel
+                  ref={treeRef}
+                  processGroups={processGroups}
+                  stream={clickStream}
+                  callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+                />
+              )}
+            </Box>
+          </Slide>
+          {treeCollapsed && (
+            <Box
+              sx={{
+                width: '20px',
+                height: '100%',
+                backgroundColor: 'background.paper',
+                borderRight: '1px solid',
+                borderColor: 'borders.primary',
+              }}
+            />
+          )}
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -10,
+              top: 'calc(100vh - 65%)',
+            }}
+          >
+            <CollapseButton
+              startDirection="left"
+              callback={() => setTreeCollapsed((prev) => !prev)}
+            />
+          </Box>
+        </Box>
         <Stack
           gap={2}
           sx={{
