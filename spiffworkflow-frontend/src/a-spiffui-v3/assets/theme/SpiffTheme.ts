@@ -43,7 +43,7 @@ const customPalette = (mode: PaletteMode) => {
       bluegreymedium: blueGrey[100],
       dark: grey[500],
       darker: grey[700],
-      default: grey[100],
+      default: grey[50],
       light: grey[100],
       medium: grey[300],
       mediumdark: grey[400],
