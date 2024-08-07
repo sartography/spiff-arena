@@ -112,180 +112,183 @@ function SideNav({
   const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
 
   return (
-    <Box
-      sx={{
-        width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
-        flexShrink: 0,
-        borderRight: '1px solid #e0e0e0',
-        height: '100vh',
-        bgcolor: isDark ? 'background.paper' : 'background.mediumlight',
-        transition: 'width 0.3s',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <>
       <Box
         sx={{
-          p: 2,
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
+          flexShrink: 0,
+          borderRight: '1px solid #e0e0e0',
+          height: '100vh',
+          bgcolor: isDark ? 'background.paper' : 'background.mediumlight',
+          transition: 'width 0.3s',
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
-        {!isCollapsed && (
-          <Typography
-            variant="h6"
-            color={mainBlue}
-            sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
-          >
-            <SpiffLogo />
-          </Typography>
-        )}
-        <IconButton
-          onClick={onToggleCollapse}
-          sx={{ ml: isCollapsed ? 'auto' : 0 }}
-        >
-          {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-        </IconButton>
-      </Box>
-      <List>
-        {[
-          { text: 'HOME', icon: <Home /> },
-          { text: 'START NEW PROCESS', icon: <Add /> },
-        ].map((item, index) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => {
-              setAdditionalNavElement(null);
-              if (index === 0) {
-                navigate('/newui');
-              } else if (index === 1) {
-                navigate('/newui/startprocess');
-              }
-            }}
-            sx={{
-              bgcolor:
-                selectedTab === index ? selectedBackgroundColor : 'inherit',
-              color: selectedTab === index ? mainBlue : 'inherit',
-              borderLeft:
-                selectedTab === index
-                  ? `4px solid ${mainBlue}`
-                  : '4px solid transparent',
-              '&:hover': {
-                bgcolor: selectedBackgroundColor,
-              },
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-            }}
-          >
-            <Tooltip title={isCollapsed ? item.text : ''} placement="right">
-              <ListItemIcon
-                sx={{ color: 'inherit', minWidth: isCollapsed ? 24 : 40 }}
-              >
-                {item.icon}
-              </ListItemIcon>
-            </Tooltip>
-            {!isCollapsed && (
-              <ListItemText
-                primary={item.text}
-                primaryTypographyProps={{
-                  fontSize: '0.875rem',
-                  fontWeight: selectedTab === index ? 'bold' : 'normal',
-                }}
-              />
-            )}
-          </ListItem>
-        ))}
-      </List>
-      {!isCollapsed && (
         <Box
           sx={{
-            width: '100%',
-            height: `calc(100vh - ${pixelsToRemoveFromAdditionalElement}px)`,
+            p: 2,
+            height: 64,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {additionalNavElement}
-        </Box>
-      )}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 16,
-          left: isCollapsed ? '50%' : 16,
-          transform: isCollapsed ? 'translateX(-50%)' : 'none',
-          alignItems: isCollapsed ? 'center' : 'flex-start',
-          display: 'flex',
-          flexDirection: isCollapsed ? 'column' : 'row',
-          alignItems: 'center',
-          gap: isCollapsed ? 0 : 1,
-        }}
-      >
-        <Tooltip title="User Actions" arrow placement="top">
+          {!isCollapsed && (
+            <Typography
+              variant="h6"
+              color={mainBlue}
+              sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
+            >
+              <SpiffLogo />
+            </Typography>
+          )}
           <IconButton
-            aria-label="User Actions"
-            onClick={handlePersonIconClick}
-            className="person-icon"
+            onClick={onToggleCollapse}
+            sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
-            <Person />
+            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </IconButton>
-        </Tooltip>
-        {showUserProfile && (
-          <Paper
-            elevation={3}
-            className="user-profile"
+        </Box>
+        <List>
+          {[
+            { text: 'HOME', icon: <Home /> },
+            { text: 'START NEW PROCESS', icon: <Add /> },
+          ].map((item, index) => (
+            <ListItem
+              button
+              key={item.text}
+              onClick={() => {
+                setAdditionalNavElement(null);
+                if (index === 0) {
+                  navigate('/newui');
+                } else if (index === 1) {
+                  navigate('/newui/startprocess');
+                }
+              }}
+              sx={{
+                bgcolor:
+                  selectedTab === index ? selectedBackgroundColor : 'inherit',
+                color: selectedTab === index ? mainBlue : 'inherit',
+                borderLeft:
+                  selectedTab === index
+                    ? `4px solid ${mainBlue}`
+                    : '4px solid transparent',
+                '&:hover': {
+                  bgcolor: selectedBackgroundColor,
+                },
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+              }}
+            >
+              <Tooltip title={isCollapsed ? item.text : ''} placement="right">
+                <ListItemIcon
+                  sx={{ color: 'inherit', minWidth: isCollapsed ? 24 : 40 }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+              </Tooltip>
+              {!isCollapsed && (
+                <ListItemText
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: selectedTab === index ? 'bold' : 'normal',
+                  }}
+                />
+              )}
+            </ListItem>
+          ))}
+        </List>
+        {!isCollapsed && (
+          <Box
             sx={{
-              position: 'absolute',
-              bottom: 60,
-              left: 0,
-              width: isCollapsed ? '100%' : 256,
-              padding: 2,
-              zIndex: 1,
-              bgcolor: isDark ? 'background.paper' : 'background.default',
+              width: '100%',
+              height: `calc(100vh - ${pixelsToRemoveFromAdditionalElement}px)`,
             }}
           >
-            <Typography variant="subtitle1">{username}</Typography>
-            {username !== userEmail && (
-              <Typography variant="body2">{userEmail}</Typography>
-            )}
-            <hr />
-            {aboutLinkElement}
-            <br />
-            <MuiLink
-              component="a"
-              href={externalDocumentationUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Documentation
-            </MuiLink>
-            {!UserService.authenticationDisabled() && (
-              <>
-                <hr />
-                <MuiLink
-                  component="button"
-                  onClick={() => UserService.doLogout()}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}
-                >
-                  <Logout />
-                  &nbsp;&nbsp;Sign out
-                </MuiLink>
-              </>
-            )}
-          </Paper>
+            {additionalNavElement}
+          </Box>
         )}
-        <SpiffTooltip title="Toggle dark mode">
-          <IconButton onClick={onToggleDarkMode}>
-            {isDark ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-        </SpiffTooltip>
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            left: isCollapsed ? '50%' : 16,
+            transform: isCollapsed ? 'translateX(-50%)' : 'none',
+            alignItems: isCollapsed ? 'center' : 'flex-start',
+            display: 'flex',
+            flexDirection: isCollapsed ? 'column' : 'row',
+            alignItems: 'center',
+            gap: isCollapsed ? 0 : 1,
+          }}
+        >
+          <Tooltip title="User Actions" arrow placement="top">
+            <IconButton
+              aria-label="User Actions"
+              onClick={handlePersonIconClick}
+              className="person-icon"
+            >
+              <Person />
+            </IconButton>
+          </Tooltip>
+          <SpiffTooltip title="Toggle dark mode">
+            <IconButton onClick={onToggleDarkMode}>
+              {isDark ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </SpiffTooltip>
+        </Box>
       </Box>
-    </Box>
+      {showUserProfile && (
+        <Paper
+          elevation={3}
+          className="user-profile"
+          sx={{
+            position: 'fixed',
+            bottom: 60,
+            left: isCollapsed ? '50%' : 80,
+            transform: isCollapsed ? 'translateX(-50%)' : 'none',
+            width: isCollapsed ? 'calc(100% - 32px)' : 256,
+            padding: 2,
+            zIndex: 1300,
+            bgcolor: isDark ? 'background.paper' : 'background.default',
+          }}
+        >
+          <Typography variant="subtitle1">{username}</Typography>
+          {username !== userEmail && (
+            <Typography variant="body2">{userEmail}</Typography>
+          )}
+          <hr />
+          {aboutLinkElement}
+          <br />
+          <MuiLink
+            component="a"
+            href={externalDocumentationUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Documentation
+          </MuiLink>
+          {!UserService.authenticationDisabled() && (
+            <>
+              <hr />
+              <MuiLink
+                component="button"
+                onClick={() => UserService.doLogout()}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+              >
+                <Logout />
+                &nbsp;&nbsp;Sign out
+              </MuiLink>
+            </>
+          )}
+        </Paper>
+      )}
+    </>
   );
 }
 
