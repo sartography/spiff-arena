@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  ReactElement,
-  MouseEventHandler,
-} from 'react';
+import React, { useState, useEffect, ReactElement } from 'react';
 import {
   Box,
   Container,
@@ -18,7 +13,8 @@ import Homepage from '../a-spiffui-v3/views/Homepage';
 import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
 import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProcessInstance';
 import SideNav from '../a-spiffui-v3/components/SideNav';
-import UserService from '../services/UserService';
+import LoginHandler from '../components/LoginHandler';
+import Login from './Login';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -65,6 +61,7 @@ export default function SpiffUIV3() {
 
   return (
     <ThemeProvider theme={globalTheme}>
+      <LoginHandler />
       <CssBaseline />
       <Container
         maxWidth={false}
@@ -132,6 +129,7 @@ export default function SpiffUIV3() {
                   path="/:modifiedProcessModelId/start"
                   element={<StartProcessInstance />}
                 />
+                <Route path="login" element={<Login />} />
               </Routes>
             </Box>
           </Box>
