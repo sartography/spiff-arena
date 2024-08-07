@@ -222,7 +222,11 @@ function SideNav({
             gap: isCollapsed ? 0 : 1,
           }}
         >
-          <Tooltip title="User Actions" arrow placement="top">
+          <Tooltip
+            title="User Actions"
+            arrow
+            placement={isCollapsed ? 'right' : 'top'}
+          >
             <IconButton
               aria-label="User Actions"
               onClick={handlePersonIconClick}
@@ -231,7 +235,10 @@ function SideNav({
               <Person />
             </IconButton>
           </Tooltip>
-          <SpiffTooltip title="Toggle dark mode">
+          <SpiffTooltip
+            title="Toggle dark mode"
+            placement={isCollapsed ? 'right' : 'top'}
+          >
             <IconButton onClick={onToggleDarkMode}>
               {isDark ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
@@ -244,7 +251,7 @@ function SideNav({
           className="user-profile"
           sx={{
             position: 'fixed',
-            bottom: 60,
+            bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
             left: isCollapsed ? 64 : 64,
             right: 'auto',
             width: 256,
