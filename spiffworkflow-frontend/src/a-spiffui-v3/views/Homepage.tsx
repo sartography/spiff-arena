@@ -20,14 +20,23 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import { Search, ViewModule, Add, AccessTime } from '@mui/icons-material';
+import {
+  Search,
+  ViewModule,
+  Add,
+  AccessTime,
+  PlayArrow,
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import { ProcessInstanceTask } from '../../interfaces';
+import SpiffTooltip from '../../components/SpiffTooltip';
 
 const mainBlue = 'primary.main';
 
 function Homepage() {
+  const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
 
@@ -66,6 +75,11 @@ function Homepage() {
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
 
+  const handleRunTask = (processInstanceTask: ProcessInstanceTask) => {
+    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+    navigate(taskUrl);
+  };
+
   const taskTable = () => {
     if (tasks === null) {
       return null;
@@ -81,6 +95,7 @@ function Homepage() {
               <TableCell>Last milestone</TableCell>
               <TableCell>Last updated</TableCell>
               <TableCell>Waiting for</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -141,6 +156,13 @@ function Homepage() {
                   </Typography>
                 </TableCell>
                 <TableCell>{getWaitingForTableCellComponent(task)}</TableCell>
+                <TableCell>
+                  <SpiffTooltip title="Complete task">
+                    <IconButton onClick={() => handleRunTask(task)}>
+                      <PlayArrow />
+                    </IconButton>
+                  </SpiffTooltip>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -160,7 +182,7 @@ function Homepage() {
       }}
     >
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Tasks & Processes
+        Home
       </Typography>
       <Box
         sx={{
