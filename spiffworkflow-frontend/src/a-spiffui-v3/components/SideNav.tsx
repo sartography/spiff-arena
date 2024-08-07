@@ -140,7 +140,9 @@ function SideNav({
               color={mainBlue}
               sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
             >
-              <SpiffLogo />
+              <MuiLink component={Link} to="/">
+                <SpiffLogo />
+              </MuiLink>
             </Typography>
           )}
           <IconButton
