@@ -88,7 +88,7 @@ function Homepage() {
     return (
       <TableContainer
         component={Paper}
-        sx={{ bgcolor: 'background.white', boxShadow: 'none' }}
+        sx={{ bgcolor: 'background.paper', boxShadow: 'none' }}
       >
         <Table>
           <TableHead>

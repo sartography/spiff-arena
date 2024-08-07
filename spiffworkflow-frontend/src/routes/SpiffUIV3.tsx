@@ -80,9 +80,6 @@ export default function SpiffUIV3() {
           container
           sx={{
             height: '100%',
-            backgroundColor: isDark
-              ? 'background.paper'
-              : 'background.mediumlight',
           }}
         >
           <Box
@@ -104,7 +101,7 @@ export default function SpiffUIV3() {
             <Box
               className={`${transitionStage}`}
               sx={{
-                bgcolor: isDark ? 'background.paper' : 'background.light',
+                bgcolor: 'background.default',
                 width: '100%',
                 height: '100%',
               }}

@@ -44,13 +44,13 @@ const customPalette = (mode: PaletteMode) => {
       dark: grey[500],
       darker: grey[700],
       default: grey[100],
-      light: grey[50], // #fafafa
+      light: grey[100],
       medium: grey[300],
       mediumdark: grey[400],
       mediumlight: grey[200],
       nav: '#ffffff',
       offblack: grey[900],
-      paper: grey[100],
+      paper: '#ffffff',
     },
     text: {
       primary: grey[900],
