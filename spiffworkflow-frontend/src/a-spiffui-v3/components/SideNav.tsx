@@ -245,9 +245,9 @@ function SideNav({
           sx={{
             position: 'fixed',
             bottom: 60,
-            left: isCollapsed ? '50%' : 80,
-            transform: isCollapsed ? 'translateX(-50%)' : 'none',
-            width: isCollapsed ? 'calc(100% - 32px)' : 256,
+            left: isCollapsed ? 64 : 64,
+            right: 'auto',
+            width: 256,
             padding: 2,
             zIndex: 1300,
             bgcolor: isDark ? 'background.paper' : 'background.default',
