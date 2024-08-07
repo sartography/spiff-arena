@@ -25,6 +25,8 @@ import {
   ChevronRight,
   Logout,
   Person,
+  Brightness7,
+  Brightness4,
 } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Route, Routes, useLocation, useNavigate } from 'react-router';
@@ -37,6 +39,7 @@ import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProces
 import UserService from '../services/UserService';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { DOCUMENTATION_URL } from '../config';
+import SpiffTooltip from '../components/SpiffTooltip';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -242,6 +245,11 @@ function SideNav({
             )}
           </Paper>
         )}
+        <SpiffTooltip title="Toggle dark mode">
+          <IconButton onClick={onToggleDarkMode}>
+            {isDark ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+        </SpiffTooltip>
       </Box>
     </Box>
   );
