@@ -30,7 +30,7 @@ import {
 import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
 import DateAndTimeService from '../../services/DateAndTimeService';
-import { ProcessInstanceTask } from '../../interfaces';
+import useProcessInstances from '../../hooks/useProcessInstances';
 import SpiffTooltip from '../../components/SpiffTooltip';
 
 const mainBlue = 'primary.main';
@@ -38,20 +38,13 @@ const mainBlue = 'primary.main';
 function InstancesStartedByMe() {
   const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
-  const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
-
-  useEffect(() => {
-    const getTasks = () => {
-      const setTasksFromResult = (result: any) => {
-        setTasks(result.results);
-      };
-      HttpService.makeCallToBackend({
-        path: '/tasks',
-        successCallback: setTasksFromResult,
-      });
-    };
-    getTasks();
-  }, []);
+  const { processInstances, pagination, reportMetadata } = useProcessInstances(
+    'system_report_in_progress_instances_initiated_by_me',
+    undefined,
+    'open_instances_started_by_me',
+    [2, 5, 25],
+    true,
+  );
 
   const getWaitingForTableCellComponent = (
     processInstanceTask: ProcessInstanceTask,
@@ -80,8 +73,8 @@ function InstancesStartedByMe() {
     navigate(taskUrl);
   };
 
-  const taskTable = () => {
-    if (tasks === null) {
+  const instanceTable = () => {
+    if (processInstances.length === 0) {
       return null;
     }
 
@@ -108,29 +101,19 @@ function InstancesStartedByMe() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.id}>
+            {processInstances.map((instance) => (
+              <TableRow key={instance.id}>
                 <TableCell>
-                  <Chip
-                    label={task.process_model_display_name}
-                    size="small"
-                    sx={{
-                      bgcolor: '#E0E0E0',
-                      color: '#616161',
-                      mb: 1,
-                      fontWeight: 'normal',
-                    }}
-                  />
                   <Typography variant="body2" paragraph>
-                    {task.task_name || task.task_title}
+                    {instance.process_model_display_name}
                   </Typography>
                   <Typography variant="body2" color={mainBlue}>
-                    {task.process_instance_summary}
+                    {instance.process_instance_summary}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" paragraph>
-                    {task.process_initiator_username}
+                    {instance.process_initiator_username}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -139,7 +122,7 @@ function InstancesStartedByMe() {
                   >
                     <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
                     {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      task.created_at_in_seconds,
+                      instance.start_in_seconds,
                     )}
                   </Typography>
                 </TableCell>
@@ -149,7 +132,7 @@ function InstancesStartedByMe() {
                     sx={{ display: 'flex', alignItems: 'center' }}
                   >
                     {'● '}
-                    {task.last_milestone_bpmn_name}
+                    {instance.last_milestone_bpmn_name}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -160,18 +143,11 @@ function InstancesStartedByMe() {
                   >
                     <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
                     {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      task.created_at_in_seconds,
+                      instance.updated_at_in_seconds,
                     )}
                   </Typography>
                 </TableCell>
-                <TableCell>{getWaitingForTableCellComponent(task)}</TableCell>
-                <TableCell>
-                  <SpiffTooltip title="Complete task">
-                    <IconButton onClick={() => handleRunTask(task)}>
-                      <PlayArrow />
-                    </IconButton>
-                  </SpiffTooltip>
-                </TableCell>
+                <TableCell>{instance.status}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -271,7 +247,7 @@ function InstancesStartedByMe() {
           </IconButton>
         </Box>
       </Box>
-      {taskTable()}
+      {instanceTable()}
     </Box>
   );
 }
