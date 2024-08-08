@@ -167,7 +167,7 @@ export default function TaskTable({
         </TableCell>
         <TableCell>{waitingFor}</TableCell>
         <TableCell>
-          {hasAccessToCompleteTask && 'task_id' in entry && entry.task_id ? (
+          {hasAccessToCompleteTask ? (
             <SpiffTooltip title="Complete task">
               <IconButton onClick={() => handleRunTask(entry)}>
                 <PlayArrow />
@@ -219,59 +219,42 @@ export default function TaskTable({
         <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <CardContent sx={{ flex: '1 0 auto' }}>
             <Typography variant="h6" gutterBottom>
-              {entry.process_model_display_name}
+              <Chip
+                label={entry.process_model_display_name}
+                size="small"
+                sx={{
+                  bgcolor: '#E0E0E0',
+                  color: '#616161',
+                  mb: 1,
+                  fontWeight: 'normal',
+                }}
+              />
+              {hasAccessToCompleteTask ? (
+                <SpiffTooltip title="Complete task">
+                  <IconButton onClick={() => handleRunTask(entry)}>
+                    <PlayArrow />
+                  </IconButton>
+                </SpiffTooltip>
+              ) : null}
             </Typography>
             <Typography variant="body2" paragraph>
               {entry.task_name || entry.task_title}
             </Typography>
             {getProcessInstanceSummary(entry)}
-            <Typography variant="body2" paragraph>
-              Created by: {entry.process_initiator_username}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ display: 'flex', alignItems: 'center' }}
-              paragraph
-              title={
-                DateAndTimeService.convertSecondsToFormattedDateTime(
-                  entry.created_at_in_seconds,
-                ) || '-'
-              }
-            >
-              <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-              {TimeAgo.inWords(entry.created_at_in_seconds)}
+            <br />
+            <Typography variant="body2">
+              <strong>Created by</strong>: {entry.process_initiator_username}
             </Typography>
             <Typography
               variant="body2"
               sx={{ display: 'flex', alignItems: 'center' }}
             >
-              Last milestone: {entry.last_milestone_bpmn_name}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ display: 'flex', alignItems: 'center' }}
-              paragraph
-              title={
-                DateAndTimeService.convertSecondsToFormattedDateTime(
-                  entry.updated_at_in_seconds,
-                ) || '-'
-              }
-            >
-              Last updated: {TimeAgo.inWords(entry.updated_at_in_seconds)}
+              <strong>Last milestone</strong>: {entry.last_milestone_bpmn_name}
             </Typography>
             {waitingFor ? (
-              <Typography variant="body2" paragraph>
-                Waiting for: {waitingFor}
+              <Typography variant="body2">
+                <strong>Waiting for</strong>: {waitingFor}
               </Typography>
-            ) : null}
-            {hasAccessToCompleteTask && 'task_id' in entry && entry.task_id ? (
-              <SpiffTooltip title="Complete task">
-                <IconButton onClick={() => handleRunTask(entry)}>
-                  <PlayArrow />
-                </IconButton>
-              </SpiffTooltip>
             ) : null}
           </CardContent>
         </Card>
@@ -303,7 +286,11 @@ export default function TaskTable({
         return null;
       }
       let hasAccessToCompleteTask = false;
-      if ((entry.potential_owner_usernames || '').match(regex)) {
+      if (
+        (entry.potential_owner_usernames || '').match(regex) &&
+        'task_id' in entry &&
+        entry.task_id
+      ) {
         hasAccessToCompleteTask = true;
       }
       const waitingFor = getWaitingForTableCellComponent(entry);
