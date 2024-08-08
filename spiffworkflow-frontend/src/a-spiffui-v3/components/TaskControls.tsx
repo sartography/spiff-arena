@@ -10,7 +10,7 @@ import {
 import { ViewModule } from '@mui/icons-material';
 
 type OwnProps = {
-  setHideCompleted: Function;
+  setHideCompleted?: Function;
   hideCompleted?: boolean;
   setViewMode?: Function;
   viewMode?: string;
@@ -31,15 +31,17 @@ function TaskControls({
       >
         <MenuItem value="Group tasks">Group tasks</MenuItem>
       </Select>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={hideCompleted}
-            onChange={(e) => setHideCompleted(e.target.checked)}
-          />
-        }
-        label="Hide completed"
-      />
+      {setHideCompleted ? (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={hideCompleted}
+              onChange={(e) => setHideCompleted(e.target.checked)}
+            />
+          }
+          label="Hide completed"
+        />
+      ) : null}
       {setViewMode ? (
         <IconButton
           onClick={() => setViewMode(viewMode === 'table' ? 'tile' : 'table')}

@@ -65,7 +65,11 @@ function InstancesStartedByMe() {
           viewMode={viewMode}
         />
       </Box>
-      <TaskTable entries={processInstances} viewMode={viewMode} />
+      <TaskTable
+        entries={processInstances}
+        viewMode={viewMode}
+        hideCompleted={hideCompleted}
+      />
     </Box>
   );
 }

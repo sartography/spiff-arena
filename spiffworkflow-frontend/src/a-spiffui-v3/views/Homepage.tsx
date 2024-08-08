@@ -10,7 +10,6 @@ import TaskTable from '../components/TaskTable';
 
 function Homepage() {
   const navigate = useNavigate();
-  const [hideCompleted, setHideCompleted] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
 
@@ -57,12 +56,7 @@ function Homepage() {
         }}
       >
         <SearchBar />
-        <TaskControls
-          hideCompleted={hideCompleted}
-          setHideCompleted={setHideCompleted}
-          setViewMode={setViewMode}
-          viewMode={viewMode}
-        />
+        <TaskControls setViewMode={setViewMode} viewMode={viewMode} />
       </Box>
       <TaskTable entries={tasks} viewMode={viewMode} />
     </Box>
