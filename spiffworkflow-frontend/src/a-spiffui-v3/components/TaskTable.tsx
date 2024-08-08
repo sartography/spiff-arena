@@ -67,7 +67,10 @@ export default function TaskTable({
       fullUsernameString = entry.assigned_user_group_identifier;
       shortUsernameString = entry.assigned_user_group_identifier;
     }
-    return <span title={fullUsernameString}>{shortUsernameString}</span>;
+    if (shortUsernameString) {
+      return <span title={fullUsernameString}>{shortUsernameString}</span>;
+    }
+    return null;
   };
 
   const getProcessInstanceSummary = (
@@ -199,62 +202,71 @@ export default function TaskTable({
     if (!entries) {
       return null;
     }
+    const records = entries.map((entry) => {
+      const waitingFor = getWaitingForTableCellComponent(entry);
+      console.log('waitingFor', waitingFor);
+      return (
+        <Grid item key={entry.id} xs={12} sm={6} md={4}>
+          <Card
+            sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+          >
+            <CardContent sx={{ flex: '1 0 auto' }}>
+              <Typography variant="h6" gutterBottom>
+                {entry.process_model_display_name}
+              </Typography>
+              <Typography variant="body2" paragraph>
+                {entry.task_name || entry.task_title}
+              </Typography>
+              {getProcessInstanceSummary(entry)}
+              <Typography variant="body2" paragraph>
+                Created by: {entry.process_initiator_username}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{ display: 'flex', alignItems: 'center' }}
+                paragraph
+              >
+                <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+                {DateAndTimeService.convertSecondsToFormattedDateTime(
+                  entry.created_at_in_seconds,
+                )}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
+                Last milestone: {entry.last_milestone_bpmn_name}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{ display: 'flex', alignItems: 'center' }}
+                paragraph
+              >
+                Last updated:{' '}
+                {DateAndTimeService.convertSecondsToFormattedDateTime(
+                  entry.created_at_in_seconds,
+                )}
+              </Typography>
+              {waitingFor ? (
+                <Typography variant="body2" paragraph>
+                  Waiting for: {waitingFor}
+                </Typography>
+              ) : null}
+              <SpiffTooltip title="Complete task">
+                <IconButton onClick={() => handleRunTask(entry)}>
+                  <PlayArrow />
+                </IconButton>
+              </SpiffTooltip>
+            </CardContent>
+          </Card>
+        </Grid>
+      );
+    });
     return (
       <Grid container spacing={2}>
-        {entries.map((entry) => (
-          <Grid item key={entry.id} xs={12} sm={6} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {entry.process_model_display_name}
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  {entry.task_name || entry.task_title}
-                </Typography>
-                {getProcessInstanceSummary(entry)}
-                <Typography variant="body2" paragraph>
-                  Created by: {entry.process_initiator_username}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                  paragraph
-                >
-                  <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                  {DateAndTimeService.convertSecondsToFormattedDateTime(
-                    entry.created_at_in_seconds,
-                  )}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                >
-                  Last milestone: {entry.last_milestone_bpmn_name}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                  paragraph
-                >
-                  Last updated:{' '}
-                  {DateAndTimeService.convertSecondsToFormattedDateTime(
-                    entry.created_at_in_seconds,
-                  )}
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  Waiting for: {getWaitingForTableCellComponent(entry)}
-                </Typography>
-                <SpiffTooltip title="Complete task">
-                  <IconButton onClick={() => handleRunTask(entry)}>
-                    <PlayArrow />
-                  </IconButton>
-                </SpiffTooltip>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        {records}
       </Grid>
     );
   };
