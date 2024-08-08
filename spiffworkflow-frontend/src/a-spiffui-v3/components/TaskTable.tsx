@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import SpiffTooltip from '../../components/SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
+import UserService from '../../services/UserService';
 
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
@@ -95,91 +96,83 @@ export default function TaskTable({
     );
   };
 
-  const renderTable = () => {
-    if (!entries) {
-      return null;
-    }
-    const records = entries.map((entry) => {
-      if (
-        !showNonActive &&
-        'status' in entry &&
-        ['complete', 'error'].includes(entry.status)
-      ) {
-        return null;
-      }
-      return (
-        <TableRow key={entry.id}>
-          <TableCell>
-            <Typography variant="body2">
-              {getProcessInstanceId(entry)}
-            </Typography>
-          </TableCell>
-          <TableCell>
-            <Chip
-              label={entry.process_model_display_name}
-              size="small"
-              sx={{
-                bgcolor: '#E0E0E0',
-                color: '#616161',
-                mb: 1,
-                fontWeight: 'normal',
-              }}
-            />
-            <Typography variant="body2" paragraph>
-              {entry.task_name || entry.task_title}
-            </Typography>
-            {getProcessInstanceSummary(entry)}
-          </TableCell>
-          <TableCell>
-            <Typography variant="body2" paragraph>
-              {entry.process_initiator_username}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ display: 'flex', alignItems: 'center' }}
-            >
-              <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-              {DateAndTimeService.convertSecondsToFormattedDateTime(
-                entry.created_at_in_seconds,
-              )}
-            </Typography>
-          </TableCell>
-          <TableCell>
-            <Typography
-              variant="body2"
-              sx={{ display: 'flex', alignItems: 'center' }}
-            >
-              {'● '}
-              {entry.last_milestone_bpmn_name}
-            </Typography>
-          </TableCell>
-          <TableCell>
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ display: 'flex', alignItems: 'center' }}
-            >
-              <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-              {DateAndTimeService.convertSecondsToFormattedDateTime(
-                entry.created_at_in_seconds,
-              )}
-            </Typography>
-          </TableCell>
-          <TableCell>{getWaitingForTableCellComponent(entry)}</TableCell>
-          <TableCell>
-            {'task_id' in entry && entry.task_id ? (
-              <SpiffTooltip title="Complete task">
-                <IconButton onClick={() => handleRunTask(entry)}>
-                  <PlayArrow />
-                </IconButton>
-              </SpiffTooltip>
-            ) : null}
-          </TableCell>
-        </TableRow>
-      );
-    });
+  const tableRow = (
+    entry: ProcessInstance | ProcessInstanceTask,
+    waitingFor: ReactElement | null,
+    hasAccessToCompleteTask: boolean,
+  ) => {
+    return (
+      <TableRow key={entry.id}>
+        <TableCell>
+          <Typography variant="body2">{getProcessInstanceId(entry)}</Typography>
+        </TableCell>
+        <TableCell>
+          <Chip
+            label={entry.process_model_display_name}
+            size="small"
+            sx={{
+              bgcolor: '#E0E0E0',
+              color: '#616161',
+              mb: 1,
+              fontWeight: 'normal',
+            }}
+          />
+          <Typography variant="body2" paragraph>
+            {entry.task_name || entry.task_title}
+          </Typography>
+          {getProcessInstanceSummary(entry)}
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2" paragraph>
+            {entry.process_initiator_username}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            sx={{ display: 'flex', alignItems: 'center' }}
+          >
+            <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+            {DateAndTimeService.convertSecondsToFormattedDateTime(
+              entry.created_at_in_seconds,
+            )}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography
+            variant="body2"
+            sx={{ display: 'flex', alignItems: 'center' }}
+          >
+            {'● '}
+            {entry.last_milestone_bpmn_name}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            sx={{ display: 'flex', alignItems: 'center' }}
+          >
+            <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+            {DateAndTimeService.convertSecondsToFormattedDateTime(
+              entry.created_at_in_seconds,
+            )}
+          </Typography>
+        </TableCell>
+        <TableCell>{waitingFor}</TableCell>
+        <TableCell>
+          {hasAccessToCompleteTask && 'task_id' in entry && entry.task_id ? (
+            <SpiffTooltip title="Complete task">
+              <IconButton onClick={() => handleRunTask(entry)}>
+                <PlayArrow />
+              </IconButton>
+            </SpiffTooltip>
+          ) : null}
+        </TableCell>
+      </TableRow>
+    );
+  };
 
+  const renderTable = (records: any) => {
     return (
       <TableContainer
         component={Paper}
@@ -209,80 +202,72 @@ export default function TaskTable({
     );
   };
 
-  const renderTiles = () => {
-    if (!entries) {
-      return null;
-    }
-    const records = entries.map((entry) => {
-      if (
-        showNonActive &&
-        'status' in entry &&
-        ['complete', 'error'].includes(entry.status)
-      ) {
-        return null;
-      }
-      const waitingFor = getWaitingForTableCellComponent(entry);
-      return (
-        <Grid item key={entry.id} xs={12} sm={6} md={4}>
-          <Card
-            sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-          >
-            <CardContent sx={{ flex: '1 0 auto' }}>
-              <Typography variant="h6" gutterBottom>
-                {entry.process_model_display_name}
-              </Typography>
+  const tileEntry = (
+    entry: ProcessInstance | ProcessInstanceTask,
+    waitingFor: ReactElement | null,
+    hasAccessToCompleteTask: boolean,
+  ) => {
+    return (
+      <Grid item key={entry.id} xs={12} sm={6} md={4}>
+        <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <CardContent sx={{ flex: '1 0 auto' }}>
+            <Typography variant="h6" gutterBottom>
+              {entry.process_model_display_name}
+            </Typography>
+            <Typography variant="body2" paragraph>
+              {entry.task_name || entry.task_title}
+            </Typography>
+            {getProcessInstanceSummary(entry)}
+            <Typography variant="body2" paragraph>
+              Created by: {entry.process_initiator_username}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              sx={{ display: 'flex', alignItems: 'center' }}
+              paragraph
+            >
+              <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
+              {DateAndTimeService.convertSecondsToFormattedDateTime(
+                entry.created_at_in_seconds,
+              )}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
+              Last milestone: {entry.last_milestone_bpmn_name}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              sx={{ display: 'flex', alignItems: 'center' }}
+              paragraph
+            >
+              Last updated:{' '}
+              {DateAndTimeService.convertSecondsToFormattedDateTime(
+                entry.created_at_in_seconds,
+              )}
+            </Typography>
+            {waitingFor ? (
               <Typography variant="body2" paragraph>
-                {entry.task_name || entry.task_title}
+                Waiting for: {waitingFor}
               </Typography>
-              {getProcessInstanceSummary(entry)}
-              <Typography variant="body2" paragraph>
-                Created by: {entry.process_initiator_username}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ display: 'flex', alignItems: 'center' }}
-                paragraph
-              >
-                <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                {DateAndTimeService.convertSecondsToFormattedDateTime(
-                  entry.created_at_in_seconds,
-                )}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ display: 'flex', alignItems: 'center' }}
-              >
-                Last milestone: {entry.last_milestone_bpmn_name}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ display: 'flex', alignItems: 'center' }}
-                paragraph
-              >
-                Last updated:{' '}
-                {DateAndTimeService.convertSecondsToFormattedDateTime(
-                  entry.created_at_in_seconds,
-                )}
-              </Typography>
-              {waitingFor ? (
-                <Typography variant="body2" paragraph>
-                  Waiting for: {waitingFor}
-                </Typography>
-              ) : null}
-              {'task_id' in entry && entry.task_id ? (
-                <SpiffTooltip title="Complete task">
-                  <IconButton onClick={() => handleRunTask(entry)}>
-                    <PlayArrow />
-                  </IconButton>
-                </SpiffTooltip>
-              ) : null}
-            </CardContent>
-          </Card>
-        </Grid>
-      );
-    });
+            ) : null}
+            {hasAccessToCompleteTask && 'task_id' in entry && entry.task_id ? (
+              <SpiffTooltip title="Complete task">
+                <IconButton onClick={() => handleRunTask(entry)}>
+                  <PlayArrow />
+                </IconButton>
+              </SpiffTooltip>
+            ) : null}
+          </CardContent>
+        </Card>
+      </Grid>
+    );
+  };
+
+  const renderTiles = (records: any) => {
     return (
       <Grid container spacing={2}>
         {records}
@@ -290,8 +275,39 @@ export default function TaskTable({
     );
   };
 
+  const renderEntries = () => {
+    if (!entries) {
+      return null;
+    }
+    const regex = new RegExp(
+      `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
+    );
+    const records = entries.map((entry) => {
+      if (
+        !showNonActive &&
+        'status' in entry &&
+        ['complete', 'error'].includes(entry.status)
+      ) {
+        return null;
+      }
+      let hasAccessToCompleteTask = false;
+      if ((entry.potential_owner_usernames || '').match(regex)) {
+        hasAccessToCompleteTask = true;
+      }
+      const waitingFor = getWaitingForTableCellComponent(entry);
+      if (viewMode === 'table') {
+        return tableRow(entry, waitingFor, hasAccessToCompleteTask);
+      }
+      return tileEntry(entry, waitingFor, hasAccessToCompleteTask);
+    });
+    if (viewMode === 'table') {
+      return renderTable(records);
+    }
+    return renderTiles(records);
+  };
+
   if (entries) {
-    return viewMode === 'table' ? renderTable() : renderTiles();
+    return renderEntries();
   }
   return null;
 }
