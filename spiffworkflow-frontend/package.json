@@ -12,7 +12,7 @@
     "@carbon/react": "^1.33.0",
     "@carbon/styles": "^1.51.0",
     "@casl/ability": "^6.7.1",
-    "@casl/react": "^3.1.0",
+    "@casl/react": "^4.0.0",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.4.5",
     "@mui/icons-material": "^5.16.0",
