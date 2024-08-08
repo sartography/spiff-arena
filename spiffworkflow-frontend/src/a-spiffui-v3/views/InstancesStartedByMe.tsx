@@ -35,7 +35,7 @@ import SpiffTooltip from '../../components/SpiffTooltip';
 
 const mainBlue = 'primary.main';
 
-function Homepage() {
+function InstancesStartedByMe() {
   const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -191,7 +191,7 @@ function Homepage() {
       }}
     >
       <Typography variant="h1" sx={{ mb: 2 }}>
-        Home
+        Workflows created by me
       </Typography>
       <Box
         sx={{
@@ -205,13 +205,13 @@ function Homepage() {
         }}
       >
         <Tabs
-          value={0}
+          value={1}
           TabIndicatorProps={{
             style: { height: 3 },
           }}
           onChange={(event, newValue) => {
-            if (newValue === 1) {
-              navigate('/newui/started-by-me');
+            if (newValue === 0) {
+              navigate('/newui');
             }
           }}
         >
@@ -276,4 +276,4 @@ function Homepage() {
   );
 }
 
-export default Homepage;
+export default InstancesStartedByMe;

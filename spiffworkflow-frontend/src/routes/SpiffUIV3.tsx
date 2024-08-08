@@ -15,6 +15,7 @@ import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProces
 import SideNav from '../a-spiffui-v3/components/SideNav';
 import LoginHandler from '../components/LoginHandler';
 import Login from './Login';
+import InstancesStartedByMe from '../a-spiffui-v3/views/InstancesStartedByMe';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -130,6 +131,10 @@ export default function SpiffUIV3() {
                   element={<StartProcessInstance />}
                 />
                 <Route path="login" element={<Login />} />
+                <Route
+                  path="/started-by-me"
+                  element={<InstancesStartedByMe />}
+                />
               </Routes>
             </Box>
           </Box>
