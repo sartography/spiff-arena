@@ -216,8 +216,23 @@ export default function TaskTable({
   ) => {
     return (
       <Grid item key={entry.id} xs={12} sm={6} md={4}>
-        <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Card
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            position: 'relative',
+          }}
+        >
           <CardContent sx={{ flex: '1 0 auto' }}>
+            {hasAccessToCompleteTask ? (
+              <IconButton
+                sx={{ position: 'absolute', top: 8, right: 8 }}
+                onClick={() => handleRunTask(entry)}
+              >
+                <PlayArrow />
+              </IconButton>
+            ) : null}
             <Typography variant="h6" gutterBottom>
               <Chip
                 label={entry.process_model_display_name}
@@ -229,13 +244,6 @@ export default function TaskTable({
                   fontWeight: 'normal',
                 }}
               />
-              {hasAccessToCompleteTask ? (
-                <SpiffTooltip title="Complete task">
-                  <IconButton onClick={() => handleRunTask(entry)}>
-                    <PlayArrow />
-                  </IconButton>
-                </SpiffTooltip>
-              ) : null}
             </Typography>
             <Typography variant="body2" paragraph>
               {entry.task_name || entry.task_title}
