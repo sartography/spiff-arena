@@ -86,6 +86,7 @@
     "lint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "serve": "vite preview",
     "start": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite",
+    "startopen": "VITE_VERSION_INFO='{\"version\":\"local\"}' vite --host 0.0.0.0",
     "test": "vitest run --coverage",
     "typecheck": "./node_modules/.bin/tsc --noEmit"
   },
