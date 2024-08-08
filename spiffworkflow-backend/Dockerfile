@@ -7,7 +7,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
 
-
 ######################## - DEPLOYMENT
 
 # base plus packages needed for deployment. Could just install these in final, but then we can't cache as much.
@@ -21,18 +20,16 @@ FROM base AS deployment
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
-# libpq5 in order to be able to use postgres at runtime
 RUN apt-get update \
-  && apt-get clean -y \
-  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq libpq5 \
+  && apt-get install -y -q libaio1 \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq \
   && rm -rf /var/lib/apt/lists/*
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install poetry==1.8.1 hdbcli oracledb
+RUN pip install poetry==1.8.1 hdbcli oracledb nfelib
 
 RUN apt-get update && apt-get install -y libpq5
-
 
 ######################## - SETUP
 
@@ -48,11 +45,10 @@ RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
-# libpq-dev in order to be able to poetry install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
- && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev dos2unix git
+ && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev dos2unix git nano curl unzip
 
-RUN pip install hdbcli
+RUN pip install hdbcli pandas openpyxl postgres aes-everywhere pybase64
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.
@@ -63,6 +59,9 @@ RUN poetry install --without dev
 RUN git clone https://github.com/emersonlgregorio/connectordb.git
 
 RUN mv connectordb /app/venv/lib/python3.12/site-packages/
+
+# Update library path
+ENV LD_LIBRARY_PATH="/app/oracle/instantclient_21_13:$LD_LIBRARY_PATH"
 
 COPY . /app
 
@@ -79,5 +78,8 @@ LABEL source="https://github.com/sartography/spiff-arena/spiffworkflow-backend"
 LABEL description="Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
 
 COPY --from=setup /app /app
+
+# Set library path in the final stage
+ENV LD_LIBRARY_PATH="/app/oracle/instantclient_21_13:$LD_LIBRARY_PATH"
 
 CMD ["./bin/boot_server_in_docker"]
