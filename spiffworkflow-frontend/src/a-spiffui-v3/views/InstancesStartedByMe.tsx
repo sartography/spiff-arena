@@ -5,11 +5,7 @@ import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
 import useProcessInstances from '../../hooks/useProcessInstances';
 import HeaderTabs from '../components/HeaderTabs';
-import {
-  ProcessInstance,
-  ProcessInstanceTask,
-  ReportFilter,
-} from '../../interfaces';
+import { ReportFilter } from '../../interfaces';
 import TaskTable from '../components/TaskTable';
 
 function InstancesStartedByMe() {
@@ -31,33 +27,6 @@ function InstancesStartedByMe() {
     additionalReportFilters,
     // autoReload: true,
   });
-
-  const getWaitingForTableCellComponent = (
-    processInstanceTask: ProcessInstanceTask,
-  ) => {
-    let fullUsernameString = '';
-    let shortUsernameString = '';
-    if (processInstanceTask.potential_owner_usernames) {
-      fullUsernameString = processInstanceTask.potential_owner_usernames;
-      const usernames =
-        processInstanceTask.potential_owner_usernames.split(',');
-      const firstTwoUsernames = usernames.slice(0, 2);
-      if (usernames.length > 2) {
-        firstTwoUsernames.push('...');
-      }
-      shortUsernameString = firstTwoUsernames.join(',');
-    }
-    if (processInstanceTask.assigned_user_group_identifier) {
-      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
-      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
-    }
-    return <span title={fullUsernameString}>{shortUsernameString}</span>;
-  };
-
-  const handleRunTask = (processInstance: ProcessInstance) => {
-    const taskUrl = `/tasks/${processInstance.id}/${processInstance.task_id}`;
-    navigate(taskUrl);
-  };
 
   return (
     <Box
@@ -94,11 +63,7 @@ function InstancesStartedByMe() {
           setHideCompleted={setHideCompleted}
         />
       </Box>
-      <TaskTable
-        tasks={processInstances}
-        handleRunTask={handleRunTask}
-        getWaitingForTableCellComponent={getWaitingForTableCellComponent}
-      />
+      <TaskTable entries={processInstances} />
     </Box>
   );
 }

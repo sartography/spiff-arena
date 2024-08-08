@@ -26,33 +26,6 @@ function Homepage() {
     getTasks();
   }, []);
 
-  const getWaitingForTableCellComponent = (
-    processInstanceTask: ProcessInstanceTask,
-  ) => {
-    let fullUsernameString = '';
-    let shortUsernameString = '';
-    if (processInstanceTask.potential_owner_usernames) {
-      fullUsernameString = processInstanceTask.potential_owner_usernames;
-      const usernames =
-        processInstanceTask.potential_owner_usernames.split(',');
-      const firstTwoUsernames = usernames.slice(0, 2);
-      if (usernames.length > 2) {
-        firstTwoUsernames.push('...');
-      }
-      shortUsernameString = firstTwoUsernames.join(',');
-    }
-    if (processInstanceTask.assigned_user_group_identifier) {
-      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
-      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
-    }
-    return <span title={fullUsernameString}>{shortUsernameString}</span>;
-  };
-
-  const handleRunTask = (processInstanceTask: ProcessInstanceTask) => {
-    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
-    navigate(taskUrl);
-  };
-
   return (
     <Box
       component="main"
@@ -88,11 +61,7 @@ function Homepage() {
           setHideCompleted={setHideCompleted}
         />
       </Box>
-      <TaskTable
-        tasks={tasks}
-        handleRunTask={handleRunTask}
-        getWaitingForTableCellComponent={getWaitingForTableCellComponent}
-      />
+      <TaskTable entries={tasks} />
     </Box>
   );
 }
