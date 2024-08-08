@@ -31,35 +31,36 @@ export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
           style: { height: 3 },
         }}
         onChange={onChange}
+        sx={{ flexGrow: 1 }} // Make the Tabs container flexible
       >
         <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
         <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
-      </Tabs>
-      <Tab
-        label={
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <span>Create custom tab</span>
-            <Add sx={{ ml: 1 }} />
-          </Box>
-        }
-        sx={{
-          textTransform: 'none',
-          ml: 'auto',
-          color: mainBlue,
-          '& .MuiBox-root': {
-            display: 'flex',
-            alignItems: 'center',
-            '& .MuiSvgIcon-root': {
-              ml: 1,
-              bgcolor: mainBlue,
-              color: 'white',
-              borderRadius: '50%',
-              padding: '2px',
+        <Tab
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <span>Create custom tab</span>
+              <Add sx={{ ml: 1 }} />
+            </Box>
+          }
+          sx={{
+            ml: 'auto',
+            textTransform: 'none',
+            color: mainBlue,
+            '& .MuiBox-root': {
+              display: 'flex',
+              alignItems: 'center',
+              '& .MuiSvgIcon-root': {
+                ml: 1,
+                bgcolor: mainBlue,
+                color: 'white',
+                borderRadius: '50%',
+                padding: '2px',
+              },
             },
-          },
-        }}
-        onClick={() => navigate('/create-custom-tab')}
-      />
+          }}
+          onClick={() => navigate('/create-custom-tab')}
+        />
+      </Tabs>
     </Box>
   );
 }
