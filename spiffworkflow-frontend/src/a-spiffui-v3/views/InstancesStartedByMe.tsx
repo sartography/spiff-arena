@@ -20,13 +20,9 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import {
-  Search,
-  ViewModule,
-  Add,
-  AccessTime,
-  PlayArrow,
-} from '@mui/icons-material';
+import SearchBar from '../components/SearchBar';
+import TaskControls from '../components/TaskControls';
+import TaskTableWrapper from '../components/TaskTableWrapper';
 import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
 import DateAndTimeService from '../../services/DateAndTimeService';
@@ -104,45 +100,14 @@ function InstancesStartedByMe() {
           mb: 2,
         }}
       >
-        <TextField
-          placeholder="Search (coming soon)"
-          variant="outlined"
-          size="small"
-          disabled
-          InputProps={{
-            endAdornment: <Search />,
-            sx: { bgcolor: 'background.paper' },
-          }}
-        />
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Select
-            value="Group tasks"
-            size="small"
-            sx={{ mr: 2, bgcolor: 'background.paper' }}
-          >
-            <MenuItem value="Group tasks">Group tasks</MenuItem>
-          </Select>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={hideCompleted}
-                onChange={(e) => setHideCompleted(e.target.checked)}
-              />
-            }
-            label="Hide completed"
-          />
-          <IconButton>
-            <ViewModule />
-          </IconButton>
-        </Box>
+        <SearchBar />
+        <TaskControls hideCompleted={hideCompleted} setHideCompleted={setHideCompleted} />
       </Box>
-      {processInstances.length > 0 && (
-        <TaskTable
-          tasks={processInstances}
-          handleRunTask={handleRunTask}
-          getWaitingForTableCellComponent={getWaitingForTableCellComponent}
-        />
-      )}
+      <TaskTableWrapper
+        tasks={processInstances}
+        handleRunTask={handleRunTask}
+        getWaitingForTableCellComponent={getWaitingForTableCellComponent}
+      />
     </Box>
   );
 }
