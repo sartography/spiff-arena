@@ -51,18 +51,22 @@ export const TimeAgo = (function awesomeFunc() {
       minute: seconds / 60,
     };
 
-    let distance = locales.seconds;
-
-    for (const key in intervals) {
+    let distance: any = null;
+    Object.keys(intervals).forEach((key: string) => {
+      if (distance !== null) {
+        return;
+      }
       interval = Math.floor(intervals[key]);
 
       if (interval > 1) {
         distance = locales[`${key}s` as keyof Locales];
-        break;
-      } else if (interval === 1) {
-        distance = locales[key as keyof Locales];
-        break;
       }
+      if (interval === 1) {
+        distance = locales[key as keyof Locales];
+      }
+    });
+    if (distance === null) {
+      distance = locales.seconds;
     }
 
     distance = distance.replace(/%d/i, interval.toString());
