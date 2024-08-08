@@ -191,7 +191,7 @@ function InstancesStartedByMe() {
       }}
     >
       <Typography variant="h1" sx={{ mb: 2 }}>
-        Workflows created by me
+        Home
       </Typography>
       <Box
         sx={{
