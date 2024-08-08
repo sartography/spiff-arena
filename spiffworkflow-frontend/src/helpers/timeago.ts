@@ -1,10 +1,24 @@
 /* eslint-disable no-restricted-syntax */
 // https://gist.github.com/caiotarifa/30ae974f2293c761f3139dd194abd9e5
-export const TimeAgo = (function awesomeFunc() {
-  const self = {};
+type Locales = {
+  prefix: string;
+  sufix: string;
+  seconds: string;
+  minute: string;
+  minutes: string;
+  hour: string;
+  hours: string;
+  day: string;
+  days: string;
+  month: string;
+  months: string;
+  year: string;
+  years: string;
+  separator?: string;
+};
 
-  // Public Methods
-  self.locales = {
+export const TimeAgo = (function awesomeFunc() {
+  const locales: Locales = {
     prefix: '',
     sufix: 'ago',
 
@@ -21,15 +35,15 @@ export const TimeAgo = (function awesomeFunc() {
     years: '%d years',
   };
 
-  self.inWords = function inWords(timeAgo) {
+  function inWords(timeAgo: number): string {
     const milliseconds = timeAgo * 1000;
     const seconds = Math.floor(
-      (new Date() - parseInt(milliseconds, 10)) / 1000,
+      (new Date().getTime() - parseInt(milliseconds.toString(), 10)) / 1000
     );
-    const separator = this.locales.separator || ' ';
-    let words = this.locales.prefix + separator;
+    const separator = locales.separator || ' ';
+    let words = locales.prefix + separator;
     let interval = 0;
-    const intervals = {
+    const intervals: Record<string, number> = {
       year: seconds / 31536000,
       month: seconds / 2592000,
       day: seconds / 86400,
@@ -37,26 +51,26 @@ export const TimeAgo = (function awesomeFunc() {
       minute: seconds / 60,
     };
 
-    let distance = this.locales.seconds;
+    let distance = locales.seconds;
 
-    // eslint-disable-next-line guard-for-in
     for (const key in intervals) {
       interval = Math.floor(intervals[key]);
 
       if (interval > 1) {
-        distance = this.locales[`${key}s`];
+        distance = locales[`${key}s` as keyof Locales];
         break;
       } else if (interval === 1) {
-        distance = this.locales[key];
+        distance = locales[key as keyof Locales];
         break;
       }
     }
 
-    distance = distance.replace(/%d/i, interval);
-    words += distance + separator + this.locales.sufix;
+    distance = distance.replace(/%d/i, interval.toString());
+    words += distance + separator + locales.sufix;
 
     return words.trim();
-  };
+  }
 
-  return self;
+  return { locales, inWords };
 })();
+
