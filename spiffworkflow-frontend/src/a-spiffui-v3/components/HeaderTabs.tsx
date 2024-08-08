@@ -37,10 +37,11 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ value, onChange }) => {
       </Tabs>
       <Button
         variant="contained"
-        startIcon={<Add />}
+        endIcon={<Add />}
         sx={{
-          bgcolor: mainBlue,
-          '&:hover': { bgcolor: mainBlue },
+          bgcolor: 'background.paper',
+          color: 'text.secondary',
+          '&:hover': { bgcolor: 'background.default' },
           textTransform: 'none',
           ml: 'auto',
         }}
