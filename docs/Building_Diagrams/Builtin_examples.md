@@ -37,7 +37,8 @@ General
 -   The Name field is usually empty unless the user wants to provide it.
 It serves as a label or identifier for the process.
 
--   The ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
+-   The ID is automatically populated by the system (default behavior).
+However, it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
 
 -   By default, all processes are executable, which means the engine can run the process.
 
@@ -56,7 +57,7 @@ See full article [here](https://medium.com/@danfunk/understanding-bpmns-data-obj
 **1. Start Event**
 
 
-The first event in the minimal example is the start event.
+The first event in the Minimal Example is the start event.
 Each process diagram begins with a Start Event.
 Now explore the properties panel when you click on the first process of the diagram, “Start Event”.
 
@@ -64,10 +65,11 @@ Now explore the properties panel when you click on the first process of the diag
 
 General
 
--   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
+-   The name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
 
--   ID is automatically populated by the system (default behavior). However, it can be updated by the user, but it must remain unique within the process.
-Often the ID would be updated to allow easier referencing in messages and also Logs as long as it’s unique in the process.
+-   ID is automatically populated by the system (default behavior).
+However, it can be updated by the user, but it must remain unique within the process.
+Often the ID would be updated to allow easier referencing in messages and also logs as long as it’s unique in the process.
 
 
 Documentation
@@ -77,7 +79,7 @@ Documentation
 
 ```{admonition} Note:
 
-In the minimal example, the Start Event is a None Start Event.
+In the Minimal Example, the Start Event is a None Start Event.
 This type of Start Event signifies that the process can be initiated without any triggering message or timer event.
 It is worth noting that there are other types of Start Events available, such as Message Start Events and Timer Start Events.
 These advanced Start Events will be discussed in detail in the subsequent sections, providing further insights into their specific use cases and functionalities.
@@ -108,9 +110,9 @@ Documentation Section
 
 SpiffWorkflow Scripts
 
--   Pre-Script: Updates Task Data using Python prior to execution of the Activity.
+-   Pre-Script: Updates Task Data using Python prior to the execution of the Activity.
 
--   Post-Script: Updates Task Data using Python immediately after execution of the Activity.
+-   Post-Script: Updates Task Data using Python immediately after the execution of the Activity.
 
 
 Instructions
@@ -135,9 +137,10 @@ Now explore the properties panel when you click on the last end event process:
 
 General
 
--   The Name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
+-   The name for a Start Event is often left blank unless it needs to be named to provide more clarity on the flow or to be able to view this name in Process Instance logs.
 
--   ID is automatically populated by the system (default behavior). However, the user can update it, but it must remain unique within the process.
+-   ID is automatically populated by the system (default behavior).
+However, the user can update it, but it must remain unique within the process.
 
 
 Documentation
@@ -147,7 +150,8 @@ Documentation
 
 Instructions
 
--   These are the Instructions for the End User, which will be displayed when this task is executed.You can click on launch editor to see the markdown file.
+-   These are the instructions for the end user, which will be displayed when this task is executed.
+You can click on launch editor to see the markdown file.
 
 
 ![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
@@ -155,15 +159,16 @@ Instructions
 
 ## Essential Example
 
-Now that we have explored the minimal example, let's delve into a more comprehensive BPMN model known as the Essential Example.
+Now that we have explored the Minimal Example, let's delve into a more comprehensive BPMN model known as the Essential Example.
 This example serves as a stepping stone towards a deeper understanding of BPMN, as it incorporates a variety of fundamental concepts that work harmoniously together.
 
 ### Access the Process Directory
 
 Clicking on the process name will open the directory dedicated to the Essential Example process.
-Here are the four files in the Process:
+Here are the four files in the process:
 
-**BPMN editor** : The BPMN editor is a primary file that runs the engine. In the minimal example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard.
+**BPMN editor**: The BPMN editor is a primary file that runs the engine.
+In the Minimal Example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard.
 
 ![image](images/BPMN_Editor.png)
 
@@ -183,13 +188,14 @@ Here's what a DMN table looks like:
 
 ### Process Workflow
 
-In this BPMN diagram example, the process is outlined step by step: The process initiates with a start event, serving as the entry point for the workflow.
+In this BPMN diagram example, the process is outlined step by step.
+The process initiates with a start event, serving as the entry point for the workflow.
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
 
 ![](images/Manual_EM.png)
 
-Next, a **User task** named "Display Questions"is added, facilitating the collection of information from real individuals through web forms.
+Next, a **User task** named "Display Questions" is added, facilitating the collection of information from real individuals through web forms.
 In the properties section, a JSON form is created to specify the questions for the users to respond to.
 
 ![](images/User_EM.png)
@@ -201,7 +207,7 @@ The script for this calculation is embedded in the properties section.
 
 As an alternative approach, the data score can also be determined using a **DMN table** named "Determine Score Message".
 Decision tables offer an effective means of defining business rules in an easily comprehensible format.
-The DMN table calculates the score based on pre-defined rules.
+The DMN table calculates the score based on predefined rules.
 
 ![](images/DMN_EM.png)
 

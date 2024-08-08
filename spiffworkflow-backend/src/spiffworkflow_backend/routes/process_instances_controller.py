@@ -1,3 +1,5 @@
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationUnnecessaryError
+from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationError, ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 
 # black and ruff are in competition with each other in import formatting so ignore ruff
@@ -31,6 +33,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
@@ -48,6 +51,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -65,6 +69,13 @@ def process_instance_create(
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
 
     process_instance = _process_instance_create(process_model_identifier)
+
+    LoggingService.log_event(
+        ProcessInstanceEventType.process_instance_created.value,
+        process_model_identifier=process_model_identifier,
+        process_instance_id=process_instance.id,
+    )
+
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -543,6 +554,48 @@ def process_instance_reset(
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_instance_check_can_migrate(
+    process_instance_id: int,
+    modified_process_model_identifier: str,
+    target_bpmn_process_hash: str | None = None,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    return_dict: dict = {
+        "can_migrate": True,
+        "process_instance_id": process_instance.id,
+        "current_git_revision": process_instance.bpmn_version_control_identifier,
+        "current_bpmn_process_hash": process_instance.bpmn_process.bpmn_process_definition.full_process_model_hash,
+    }
+    try:
+        ProcessInstanceService.check_process_instance_can_be_migrated(
+            process_instance, target_bpmn_process_hash=target_bpmn_process_hash
+        )
+    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
+        return_dict["can_migrate"] = False
+        return_dict["exception_class"] = exception.__class__.__name__
+    return Response(
+        json.dumps(return_dict),
+        status=200,
+        mimetype="application/json",
+    )
+
+
+def process_instance_migrate(
+    process_instance_id: int,
+    modified_process_model_identifier: str,
+    target_bpmn_process_hash: str | None = None,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if process_instance.status != "suspended":
+        raise ProcessInstanceMigrationError(
+            f"The process instance needs to be suspended to migrate it. It is currently: {process_instance.status}"
+        )
+    ProcessInstanceService.migrate_process_instance(
+        process_instance, user=g.user, target_bpmn_process_hash=target_bpmn_process_hash
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

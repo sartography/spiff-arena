@@ -19,7 +19,8 @@ import {
 import { Logout } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation, Link, LinkProps } from 'react-router-dom';
-import logo from '../logo.svg';
+import { Box } from '@mui/material';
+import Logo from '../logo.svg';
 import UserService from '../services/UserService';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
@@ -66,6 +67,16 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
   const processGroupPath = '/process-groups';
 
   const versionInfo = appVersionInfo();
+
+  const logoStyle = {
+    marginTop: '1rem',
+    marginBottom: '1rem',
+    color: 'pink',
+    svg: {
+      height: 37,
+      width: 152,
+    },
+  };
 
   useEffect(() => {
     let newActiveKey = 'unknown';
@@ -327,7 +338,10 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
         render={() => (
           <Header aria-label="IBM Platform Name" className="cds--g100">
             <HeaderName as={Link} to="/" prefix="" data-qa="spiffworkflow-logo">
-              <img src={logo} className="app-logo" alt="logo" />
+              <Box sx={logoStyle}>
+                {/* @ts-expect-error TS(2322) FIXME */}
+                <Logo style={{ ...logoStyle }} />
+              </Box>
             </HeaderName>
           </Header>
         )}
@@ -365,7 +379,9 @@ export default function NavigationBar({ extensionUxElements }: OwnProps) {
                 prefix=""
                 data-qa="spiffworkflow-logo"
               >
-                <img src={logo} className="app-logo" alt="logo" />
+                <Box sx={logoStyle}>
+                  <Logo />
+                </Box>
               </HeaderName>
               <HeaderNavigation
                 data-qa="main-nav-header"

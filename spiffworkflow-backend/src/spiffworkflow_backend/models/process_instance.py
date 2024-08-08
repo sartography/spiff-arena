@@ -33,6 +33,10 @@ class ProcessInstanceCannotBeDeletedError(Exception):
     pass
 
 
+class ProcessInstanceCannotBeRunError(Exception):
+    pass
+
+
 class ProcessInstanceStatus(SpiffEnum):
     complete = "complete"
     error = "error"
@@ -50,6 +54,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
+    summary: str | None = db.Column(db.String(255), nullable=True, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process_definition_id: int | None = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id),  # type: ignore
@@ -151,6 +156,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "process_model_identifier": self.process_model_identifier,
             "start_in_seconds": self.start_in_seconds,
             "status": self.status,
+            "summary": self.summary,
             "task_updated_at_in_seconds": self.task_updated_at_in_seconds,
             "updated_at_in_seconds": self.updated_at_in_seconds,
         }

@@ -20,9 +20,9 @@ By leveraging Jinja's syntax and functionality, you can customize your content t
 ## Combining Markdown and Jinja: Unleashing the Power
 
 By utilizing the strengths of Markdown and Jinja, you can create rich, interactive, and data-driven content that goes beyond static text.
-We'll demonstrate using an example on how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents dynamic information.
+We'll demonstrate using an example of how to leverage Markdown and Jinja together to create captivating content that responds to user input and presents dynamic information.
 
-## Basic Example for displaying content
+## Basic Example for Displaying Content
 
 In our SpiffArena dashboard, we have a simple example of how to display content in the basics section.
 Now, let's explore the process workflow of the content display process model and discover various ways to present content in different scenarios.
@@ -42,7 +42,7 @@ The process begins with a Start Event, signaling the start of the workflow.
 It is followed by a Manual Task called "Introduction" that displays a welcome message or instructions for the users.
 The content to be displayed is specified in the task's properties panel.
 
-![Image](images/Manu_instructions_panel.png)
+![Image](images/Manual_instructions_panel.png)
 
 2. **User Task with Form**
 
@@ -69,7 +69,7 @@ A Manual Task will display content based on the collected data and script-genera
 The instructions panel of the Manual Task provides the content to be displayed, which includes the form data entered by the user.
 It also offers an optional Chuck Norris joke based on user preference and a table of silly color names generated using Jinja templating.
 
-![Image](images/Manual_instructionss.png)
+![Image](images/Manual_instructions_side_by_side.png)
 
 5. **End Event**
 
@@ -79,4 +79,3 @@ The process concludes with an End Event, indicating the end of the workflow.
 The instructions panel of the End Event suggests next steps, such as exploring the diagram in edit mode and completing the "Request a Playground" task.
 
 ![Image](images/end_message.png)
-

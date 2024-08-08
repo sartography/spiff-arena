@@ -27,8 +27,8 @@ describe('process-models', () => {
     cy.url().should(
       'include',
       `process-models/${modifyProcessIdentifierForPathParam(
-        groupId
-      )}:${modelId}`
+        groupId,
+      )}:${modelId}`,
     );
     cy.contains(`Process Model: ${modelDisplayName}`);
 
@@ -65,8 +65,8 @@ describe('process-models', () => {
     cy.url().should(
       'include',
       `process-models/${modifyProcessIdentifierForPathParam(
-        groupId
-      )}:${modelId}`
+        groupId,
+      )}:${modelId}`,
     );
     cy.contains(`Process Model: ${modelDisplayName}`);
     cy.contains(`${bpmnFileName}.bpmn`).should('not.exist');

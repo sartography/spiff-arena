@@ -7,6 +7,7 @@
   "correlations": {},
   "last_task": "a8052b4d-65ed-4e55-8233-062113ebe18f",
   "success": true,
+  "completed": false,
   "tasks": {
     "098e4fc2-a399-4325-b0a9-76d6c330fbf4": {
       "id": "098e4fc2-a399-4325-b0a9-76d6c330fbf4",
@@ -635,6 +636,7 @@
       },
       "correlations": {},
       "last_task": "5eb9e777-cfbf-4ef9-8ba8-79fa5d172b7e",
+      "completed": false,
       "success": true,
       "tasks": {
         "0315382d-fdf6-4c27-8d7d-63dddf0b05fb": {
@@ -761,6 +763,7 @@
       },
       "correlations": {},
       "last_task": "af12522c-811b-4258-a569-65890838677f",
+      "completed": false,
       "success": true,
       "tasks": {
         "6e6ad5c3-e701-4b59-8a81-4ed2c63bd0e1": {

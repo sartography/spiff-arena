@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 
 realms="$*"
 if [[ -z "$realms" ]]; then
-  realms="spiffworkflow-realm"
+  realms="spiffworkflow-local-realm"
 fi
 
 docker_container_path=/tmp/hey
@@ -20,8 +23,8 @@ docker exec keycloak rm -rf "$docker_container_path"
 docker exec keycloak /opt/keycloak/bin/kc.sh export --dir "${docker_container_path}" --users realm_file || echo ''
 docker cp "keycloak:${docker_container_path}" "$local_tmp_dir"
 
-for realm in $realms ; do
-  if ! grep -Eq '\-realm$' <<< "$realm"; then
+for realm in $realms; do
+  if ! grep -Eq '\-realm$' <<<"$realm"; then
     realm="${realm}-realm"
   fi
   cp "${local_tmp_dir}/hey/${realm}.json" "${script_dir}/../realm_exports/"

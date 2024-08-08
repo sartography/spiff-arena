@@ -23,6 +23,7 @@ import {
   Warning,
   Link as LinkIcon,
   View,
+  Migrate,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -67,7 +68,6 @@ import {
   ProcessInstance,
   ProcessModel,
   Task,
-  TaskDefinitionPropertiesJson,
   User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -151,6 +151,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       : targetUris.processInstanceTaskListForMePath;
 
   const permissionRequestData: PermissionsToCheck = {
+    [`${targetUris.processInstanceMigratePath}`]: ['POST'],
     [`${targetUris.processInstanceResumePath}`]: ['POST'],
     [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
@@ -306,7 +307,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     HttpService.makeCallToBackend({
       path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
-      successCallback: setProcessInstance,
+      successCallback: (p: ProcessInstance) => {
+        setProcessInstance(p);
+      },
     });
   }, [
     params.process_instance_id,
@@ -591,6 +594,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const navigateToProcessInstanceMigratePage = () => {
+    navigate(
+      `/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
+    );
+  };
+
   const terminateButton = () => {
     if (
       processInstance &&
@@ -626,6 +635,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           kind="ghost"
           renderIcon={PauseOutline}
           iconDescription="Suspendido"
+          hasIconOnly
+          size="lg"
+        />
+      );
+    }
+    return <div />;
+  };
+  const migrateButton = () => {
+    if (processInstance && processInstance.status === 'suspended') {
+      return (
+        <Button
+          onClick={navigateToProcessInstanceMigratePage}
+          kind="ghost"
+          renderIcon={Migrate}
+          iconDescription="Migrate"
           hasIconOnly
           size="lg"
         />
@@ -684,21 +708,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return <div />;
   };
 
-  const initializeTaskInstancesToDisplay = (task: Task | null) => {
-    if (!task) {
-      return;
-    }
-    HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
-      httpMethod: 'GET',
-      // reverse operates on self as well as return the new ordered array so reverse it right away
-      successCallback: (results: Task[]) =>
-        setTaskInstancesToDisplay(results.reverse()),
-      failureCallback: (error: any) => {
-        setTaskDataToDisplay(`ERROR: ${error.message}`);
-      },
-    });
-  };
+  const initializeTaskInstancesToDisplay = useCallback(
+    (task: Task | null) => {
+      if (!task) {
+        return;
+      }
+      HttpService.makeCallToBackend({
+        path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
+        httpMethod: 'GET',
+        // reverse operates on self as well as return the new ordered array so reverse it right away
+        successCallback: (results: Task[]) =>
+          setTaskInstancesToDisplay(results.reverse()),
+        failureCallback: (error: any) => {
+          setTaskDataToDisplay(`ERROR: ${error.message}`);
+        },
+      });
+    },
+    [params.process_instance_id],
+  );
 
   const processTaskResult = (result: Task) => {
     if (result == null) {
@@ -709,28 +736,29 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setShowTaskDataLoading(false);
   };
 
-  const initializeTaskDataToDisplay = (task: Task | null) => {
-    if (
-      task &&
-      (task.state === 'COMPLETED' ||
-        task.state === 'ERROR' ||
-        task.state === 'READY') &&
-      ability.can('GET', targetUris.processInstanceTaskDataPath)
-    ) {
-      setShowTaskDataLoading(true);
-      HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
-        httpMethod: 'GET',
-        successCallback: processTaskResult,
-        failureCallback: (error: any) => {
-          setTaskDataToDisplay(`ERROR: ${error.message}`);
-          setShowTaskDataLoading(false);
-        },
-      });
-    } else {
-      setTaskDataToDisplay('');
-    }
-  };
+  const initializeTaskDataToDisplay = useCallback(
+    (task: Task | null) => {
+      if (
+        task &&
+        ['COMPLETED', 'ERROR', 'READY'].includes(task.state) &&
+        ability.can('GET', targetUris.processInstanceTaskDataPath)
+      ) {
+        setShowTaskDataLoading(true);
+        HttpService.makeCallToBackend({
+          path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
+          httpMethod: 'GET',
+          successCallback: processTaskResult,
+          failureCallback: (error: any) => {
+            setTaskDataToDisplay(`ERROR: ${error.message}`);
+            setShowTaskDataLoading(false);
+          },
+        });
+      } else {
+        setTaskDataToDisplay('');
+      }
+    },
+    [ability, targetUris.processInstanceTaskDataPath],
+  );
 
   const handleProcessDataDisplayClose = () => {
     setProcessDataToDisplay(null);
@@ -786,72 +814,119 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setProcessDataToDisplay(processData);
   };
 
-  const makeProcessDataCallFromShapeElement = (shapeElement: any) => {
-    const { dataObjectRef } = shapeElement.businessObject;
-    let category = 'default';
-    if ('extensionElements' in dataObjectRef) {
-      const categoryExtension = dataObjectRef.extensionElements.values.find(
-        (extension: any) => {
-          return extension.$type === 'spiffworkflow:category';
-        },
-      );
-      if (categoryExtension) {
-        category = categoryExtension.$body;
-      }
-    }
-    const dataObjectIdentifer = dataObjectRef.id;
-    const parentProcess = shapeElement.businessObject.$parent;
-    const parentProcessIdentifier = parentProcess.id;
-
-    let additionalParams = '';
-    if (tasks) {
-      const matchingTask: Task | undefined = tasks.find((task: Task) => {
-        return task.bpmn_identifier === parentProcessIdentifier;
-      });
-      if (matchingTask) {
-        additionalParams = `?process_identifier=${parentProcessIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
-      } else if (
-        searchParams.get('process_identifier') &&
-        searchParams.get('bpmn_process_guid')
-      ) {
-        additionalParams = `?process_identifier=${searchParams.get(
-          'process_identifier',
-        )}&bpmn_process_guid=${searchParams.get('bpmn_process_guid')}`;
-      }
-    }
-
-    HttpService.makeCallToBackend({
-      path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
-      httpMethod: 'GET',
-      successCallback: handleProcessDataShowResponse,
-      failureCallback: addError,
-      onUnauthorized: (result: any) =>
-        handleProcessDataShowReponseUnauthorized(dataObjectIdentifer, result),
-    });
-  };
-
-  const handleClickedDiagramTask = (
-    shapeElement: any,
-    bpmnProcessIdentifiers: any,
-  ) => {
-    if (shapeElement.type === 'bpmn:DataObjectReference') {
-      makeProcessDataCallFromShapeElement(shapeElement);
-    } else if (tasks) {
-      const matchingTask: Task | undefined = tasks.find((task: Task) => {
-        return (
-          task.bpmn_identifier === shapeElement.id &&
-          bpmnProcessIdentifiers.includes(
-            task.bpmn_process_definition_identifier,
-          )
+  const makeProcessDataCallFromShapeElement = useCallback(
+    (shapeElement: any) => {
+      const { dataObjectRef } = shapeElement.businessObject;
+      let category = 'default';
+      if ('extensionElements' in dataObjectRef) {
+        const categoryExtension = dataObjectRef.extensionElements.values.find(
+          (extension: any) => {
+            return extension.$type === 'spiffworkflow:category';
+          },
         );
-      });
-      if (matchingTask) {
-        setTaskToDisplay(matchingTask);
-        initializeTaskDataToDisplay(matchingTask);
-        initializeTaskInstancesToDisplay(matchingTask);
+        if (categoryExtension) {
+          category = categoryExtension.$body;
+        }
       }
-    }
-  };
+      const dataObjectIdentifer = dataObjectRef.id;
+      const parentProcess = shapeElement.businessObject.$parent;
+      const parentProcessIdentifier = parentProcess.id;
+
+      let additionalParams = '';
+      if (tasks) {
+        const matchingTask: Task | undefined = tasks.find((task: Task) => {
+          return task.bpmn_identifier === parentProcessIdentifier;
+        });
+        if (matchingTask) {
+          additionalParams = `?process_identifier=${parentProcessIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
+        } else if (processIdentifier && bpmnProcessGuid) {
+          additionalParams = `?process_identifier=${processIdentifier}&bpmn_process_guid=${bpmnProcessGuid}`;
+        }
+      }
+
+      HttpService.makeCallToBackend({
+        path: `/process-data/${category}/${params.process_model_id}/${dataObjectIdentifer}/${params.process_instance_id}${additionalParams}`,
+        httpMethod: 'GET',
+        successCallback: handleProcessDataShowResponse,
+        failureCallback: addError,
+        onUnauthorized: (result: any) =>
+          handleProcessDataShowReponseUnauthorized(dataObjectIdentifer, result),
+      });
+    },
+    [
+      addError,
+      params.process_instance_id,
+      params.process_model_id,
+      tasks,
+      bpmnProcessGuid,
+      processIdentifier,
+    ],
+  );
+
+  const findMatchingTaskFromShapeElement = useCallback(
+    (shapeElement: any, bpmnProcessIdentifiers: any) => {
+      if (tasks) {
+        const matchingTask: Task | undefined = tasks.find((task: Task) => {
+          return (
+            task.bpmn_identifier === shapeElement.id &&
+            bpmnProcessIdentifiers.includes(
+              task.bpmn_process_definition_identifier,
+            )
+          );
+        });
+        return matchingTask;
+      }
+      return undefined;
+    },
+    [tasks],
+  );
+
+  const handleCallActivityNavigate = useCallback(
+    (task: Task, event: any) => {
+      if (
+        task &&
+        task.typename === 'CallActivity' &&
+        !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+      ) {
+        const processIdentifierToUse =
+          task.task_definition_properties_json.spec;
+        const url = `${window.location.pathname}?process_identifier=${processIdentifierToUse}&bpmn_process_guid=${task.guid}`;
+        if (event.type === 'auxclick') {
+          window.open(url);
+        } else {
+          setTasks(null);
+          setProcessInstance(null);
+          navigate(url);
+        }
+      }
+    },
+    [navigate],
+  );
+
+  const handleClickedDiagramTask = useCallback(
+    (shapeElement: any, bpmnProcessIdentifiers: any) => {
+      if (shapeElement.type === 'bpmn:DataObjectReference') {
+        makeProcessDataCallFromShapeElement(shapeElement);
+      } else if (tasks) {
+        const matchingTask = findMatchingTaskFromShapeElement(
+          shapeElement,
+          bpmnProcessIdentifiers,
+        );
+        if (matchingTask) {
+          setTaskToDisplay(matchingTask);
+          initializeTaskDataToDisplay(matchingTask);
+          initializeTaskInstancesToDisplay(matchingTask);
+        }
+      }
+    },
+    [
+      findMatchingTaskFromShapeElement,
+      initializeTaskDataToDisplay,
+      initializeTaskInstancesToDisplay,
+      makeProcessDataCallFromShapeElement,
+      tasks,
+    ],
+  );
 
   const resetTaskActionDetails = () => {
     setEditingTaskData(false);
@@ -1104,17 +1179,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (task.typename === 'CallActivity') {
-      const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
-        task.task_definition_properties_json;
+    if (
+      task.typename === 'CallActivity' &&
+      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+    ) {
       buttons.push(
-        <Link
-          data-qa="go-to-call-activity-result"
-          to={`${window.location.pathname}?process_identifier=${taskDefinitionPropertiesJson.spec}&bpmn_process_guid=${task.guid}`}
-          target="_blank"
+        <Button
+          kind="ghost"
+          className="button-link indented-content"
+          onAuxClick={(event: any) => {
+            handleCallActivityNavigate(task, event);
+          }}
+          onClick={(event: any) => {
+            setTaskToDisplay(null);
+            handleCallActivityNavigate(task, event);
+          }}
         >
-          Visualizar Diagrama de Atividade de Chamada
-        </Link>
+          Exibir diagrama de atividade de chamada
+        </Button>,
       );
     }
 
@@ -1604,6 +1686,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
       elements.push(suspendButton());
     }
+    if (ability.can('POST', `${targetUris.processInstanceMigratePath}`)) {
+      elements.push(migrateButton());
+    }
     if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
       elements.push(resumeButton());
     }
@@ -1689,12 +1774,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) : (
       <>
         <ReactDiagramEditor
-          processModelId={processModelId || ''}
-          diagramXML={processInstance.bpmn_xml_file_contents || ''}
-          fileName={processInstance.bpmn_xml_file_contents || ''}
-          tasks={tasks}
           diagramType="readonly"
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          onCallActivityOverlayClick={handleCallActivityNavigate}
           onElementClick={handleClickedDiagramTask}
+          processModelId={processModelId || ''}
+          tasks={tasks}
         />
         <div id="diagram-container" />
       </>

@@ -43,3 +43,13 @@ class GroupPermissionsDict(TypedDict):
     users: list[str]
     name: str
     permissions: list[DesiredGroupPermissionDict]
+
+
+class PotentialOwner(TypedDict):
+    added_by: str
+    user_id: int
+
+
+class PotentialOwnerIdList(TypedDict):
+    potential_owners: list[PotentialOwner]
+    lane_assignment_id: int | None

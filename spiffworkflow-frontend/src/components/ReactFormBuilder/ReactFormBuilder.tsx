@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import merge from 'lodash/merge';
@@ -15,7 +15,7 @@ import {
   Button,
   Loading,
 } from '@carbon/react';
-import { useDebounce } from 'use-debounce';
+import { useDebouncedCallback } from 'use-debounce';
 import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
@@ -50,12 +50,16 @@ type OwnProps = {
   processModelId: string;
   fileName: string;
   onFileNameSet: (fileName: string) => void;
+  canCreateFiles: boolean;
+  canUpdateFiles: boolean;
 };
 
 export default function ReactFormBuilder({
   processModelId,
   fileName,
   onFileNameSet,
+  canCreateFiles,
+  canUpdateFiles,
 }: OwnProps) {
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
@@ -68,11 +72,8 @@ export default function ReactFormBuilder({
     useState<boolean>(false);
 
   const [strSchema, setStrSchema] = useState<string>('');
-  const [debouncedStrSchema] = useDebounce(strSchema, 500);
   const [strUI, setStrUI] = useState<string>('');
-  const [debouncedStrUI] = useDebounce(strUI, 500);
   const [strFormData, setStrFormData] = useState<string>('');
-  const [debouncedFormData] = useDebounce(strFormData, 500);
 
   const [postJsonSchema, setPostJsonSchema] = useState<object>({});
   const [postJsonUI, setPostJsonUI] = useState<object>({});
@@ -102,98 +103,6 @@ export default function ReactFormBuilder({
     dataEditorRef.current = editor;
   }
 
-  const saveFile = useCallback(
-    (file: File, create: boolean = false, callback: Function | null = null) => {
-      let httpMethod = 'PUT';
-      let url = `/process-models/${processModelId}/files`;
-      if (create) {
-        httpMethod = 'POST';
-      } else {
-        url += `/${file.name}`;
-      }
-      const submission = new FormData();
-      submission.append('file', file);
-      submission.append('fileName', file.name);
-
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: () => {
-          if (callback) {
-            callback();
-          }
-        },
-        failureCallback: (e: any) => {
-          setErrorMessage(`Failed to save file: '${fileName}'. ${e.message}`);
-        },
-        httpMethod,
-        postBody: submission,
-      });
-    },
-    [processModelId, fileName],
-  );
-
-  const hasValidName = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
-  };
-
-  const createFiles = (base: string) => {
-    if (hasValidName(base)) {
-      // meaning it switched from invalid to valid
-      if (filenameBaseInvalid) {
-        setFilenameBaseInvalid(false);
-      }
-    } else {
-      setFilenameBaseInvalid(true);
-      return;
-    }
-    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true, () => {
-      saveFile(new File(['{}'], base + UI_EXTENSION), true, () => {
-        saveFile(new File(['{}'], base + DATA_EXTENSION), true, () => {
-          setBaseFileName(base);
-          onFileNameSet(base + SCHEMA_EXTENSION);
-        });
-      });
-    });
-  };
-
-  const isReady = () => {
-    // Use a ready flag so that we still allow people to completely delete
-    // the schema, ui or data if they want to clear it out.
-    if (ready) {
-      return true;
-    }
-    if (
-      debouncedStrSchema !== '' &&
-      debouncedStrUI !== '' &&
-      debouncedFormData !== ''
-    ) {
-      setReady(true);
-      return true;
-    }
-    return false;
-  };
-
-  // Auto save schema changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedStrSchema], baseFileName + SCHEMA_EXTENSION));
-    }
-  }, [debouncedStrSchema, baseFileName, saveFile, ready]);
-
-  // Auto save ui changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedStrUI], baseFileName + UI_EXTENSION));
-    }
-  }, [debouncedStrUI, baseFileName, saveFile, ready]);
-
-  // Auto save example data changes
-  useEffect(() => {
-    if (baseFileName !== '' && ready) {
-      saveFile(new File([debouncedFormData], baseFileName + DATA_EXTENSION));
-    }
-  }, [debouncedFormData, baseFileName, saveFile, ready]);
-
   useEffect(() => {
     /**
      * we need to run the schema and ui through a backend call before rendering the form,
@@ -204,30 +113,30 @@ export default function ReactFormBuilder({
     let ui = {};
     let data = {};
 
-    if (
-      debouncedFormData === '' ||
-      debouncedStrSchema === '' ||
-      debouncedStrUI === ''
-    ) {
+    if (strSchema === '' || strUI === '' || strFormData === '') {
       return;
     }
 
     try {
-      schema = JSON.parse(debouncedStrSchema);
+      schema = JSON.parse(strSchema);
     } catch (e) {
       setErrorMessage('Please check the Json Schema for errors.');
       return;
     }
     try {
-      ui = JSON.parse(debouncedStrUI);
+      ui = JSON.parse(strUI);
     } catch (e) {
       setErrorMessage('Please check the UI Settings for errors.');
       return;
     }
     try {
-      data = JSON.parse(debouncedFormData);
+      data = JSON.parse(strFormData);
     } catch (e) {
       setErrorMessage('Please check the Data View for errors.');
+      return;
+    }
+
+    if (!canCreateFiles) {
       return;
     }
     setErrorMessage('');
@@ -249,7 +158,97 @@ export default function ReactFormBuilder({
         task_data: data,
       },
     });
-  }, [debouncedStrSchema, debouncedStrUI, debouncedFormData]);
+  }, [strSchema, strUI, strFormData, canCreateFiles]);
+
+  const saveFile = (
+    file: File,
+    create: boolean = false,
+    callback: Function | null = null,
+  ) => {
+    if ((create && !canCreateFiles) || (!create && !canUpdateFiles)) {
+      return;
+    }
+    let httpMethod = 'PUT';
+    let url = `/process-models/${processModelId}/files`;
+    if (create && canCreateFiles) {
+      httpMethod = 'POST';
+    } else if (canUpdateFiles) {
+      url += `/${file.name}`;
+    }
+
+    const submission = new FormData();
+    submission.append('file', file);
+    submission.append('fileName', file.name);
+
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: () => {
+        if (callback) {
+          callback();
+        }
+      },
+      failureCallback: (e: any) => {
+        setErrorMessage(`Failed to save file: '${fileName}'. ${e.message}`);
+      },
+      httpMethod,
+      postBody: submission,
+    });
+  };
+
+  const hasValidName = (identifierToCheck: string) => {
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
+  };
+
+  const createFiles = (base: string) => {
+    if (hasValidName(base)) {
+      // meaning it switched from invalid to valid
+      if (filenameBaseInvalid) {
+        setFilenameBaseInvalid(false);
+      }
+    } else {
+      setFilenameBaseInvalid(true);
+      return;
+    }
+    saveFile(new File(['{}'], base + SCHEMA_EXTENSION), true, () => {
+      saveFile(new File(['{}'], base + UI_EXTENSION), true, () => {
+        saveFile(new File(['{}'], base + DATA_EXTENSION), true, () => {
+          setBaseFileName(base);
+          onFileNameSet(base + SCHEMA_EXTENSION);
+          setStrSchema('{}');
+          setStrUI('{}');
+          setStrFormData('{}');
+        });
+      });
+    });
+  };
+
+  const isReady = () => {
+    // Use a ready flag so that we still allow people to completely delete
+    // the schema, ui or data if they want to clear it out.
+    if (ready) {
+      return true;
+    }
+    if (strSchema !== '' && strUI !== '' && strFormData !== '') {
+      setReady(true);
+      return true;
+    }
+    return false;
+  };
+
+  // if we share a debounce and update all str states at once
+  // then only one will get fired so split them out like this.
+  const updateStrFileDebounce = useDebouncedCallback((newContent: string) => {
+    saveFile(new File([newContent], baseFileName + SCHEMA_EXTENSION));
+  }, 500);
+  const updateStrUIFileDebounce = useDebouncedCallback((newContent: string) => {
+    saveFile(new File([newContent], baseFileName + UI_EXTENSION));
+  }, 500);
+  const updateFormDataFileDebounce = useDebouncedCallback(
+    (newContent: string) => {
+      saveFile(new File([newContent], baseFileName + DATA_EXTENSION));
+    },
+    500,
+  );
 
   const handleTabChange = (evt: any) => {
     setSelectedIndex(evt.selectedIndex);
@@ -419,15 +418,17 @@ export default function ReactFormBuilder({
               {DATA_EXTENSION} (for example data to test the form
             </li>
           </ul>
-          <Button
-            className="react-json-schema-form-submit-button"
-            type="submit"
-            onClick={() => {
-              createFiles(newFileName);
-            }}
-          >
-            Create Files
-          </Button>
+          {canCreateFiles ? (
+            <Button
+              className="react-json-schema-form-submit-button"
+              type="submit"
+              onClick={() => {
+                createFiles(newFileName);
+              }}
+            >
+              Create Files
+            </Button>
+          ) : null}
         </Column>
       </Grid>
     );
@@ -440,7 +441,7 @@ export default function ReactFormBuilder({
             <Tab>Json Schema</Tab>
             <Tab>UI Settings</Tab>
             <Tab>Data View</Tab>
-            <Tab>Examples</Tab>
+            {canUpdateFiles ? <Tab>Examples</Tab> : null}
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -461,8 +462,12 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 defaultValue={strSchema}
-                onChange={(value) => setStrSchema(value || '')}
+                onChange={(value) => {
+                  updateStrFileDebounce(value || '');
+                  setStrSchema(value || '');
+                }}
                 onMount={handleSchemaEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
             <TabPanel>
@@ -482,8 +487,12 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 defaultValue={strUI}
-                onChange={(value) => setStrUI(value || '')}
+                onChange={(value) => {
+                  updateStrUIFileDebounce(value || '');
+                  setStrUI(value || '');
+                }}
                 onMount={handleUiEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
             <TabPanel>
@@ -499,18 +508,24 @@ export default function ReactFormBuilder({
                 width="auto"
                 defaultLanguage="json"
                 defaultValue={strFormData}
-                onChange={(value: any) => updateDataFromStr(value || '')}
+                onChange={(value) => {
+                  updateFormDataFileDebounce(value || '');
+                  updateDataFromStr(value || '');
+                }}
                 onMount={handleDataEditorDidMount}
+                options={{ readOnly: !canUpdateFiles }}
               />
             </TabPanel>
-            <TabPanel>
-              <p>
-                If you are looking for a place to start, try adding these
-                example fields to your form and changing them to meet your
-                needs.
-              </p>
-              <ExamplesTable onSelect={insertFields} />
-            </TabPanel>
+            {canUpdateFiles ? (
+              <TabPanel>
+                <p>
+                  If you are looking for a place to start, try adding these
+                  example fields to your form and changing them to meet your
+                  needs.
+                </p>
+                <ExamplesTable onSelect={insertFields} />
+              </TabPanel>
+            ) : null}
           </TabPanels>
         </Tabs>
       </Column>

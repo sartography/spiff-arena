@@ -1,5 +1,6 @@
 from typing import Any
 
+from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
@@ -72,7 +73,10 @@ class MessageService:
                     if user is None:
                         user = UserService.find_or_create_system_user()
                     receiving_process_instance = MessageService.start_process_with_message(
-                        message_triggerable_process_model, user, execution_mode=execution_mode
+                        message_triggerable_process_model,
+                        user,
+                        message_instance_send=message_instance_send,
+                        execution_mode=execution_mode,
                     )
                     message_instance_receive = MessageInstanceModel.query.filter_by(
                         process_instance_id=receiving_process_instance.id,
@@ -135,6 +139,10 @@ class MessageService:
         message_instances_send = MessageInstanceModel.query.filter_by(message_type="send", status="ready").all()
 
         for message_instance_send in message_instances_send:
+            current_app.logger.info(
+                f"Processor waiting send messages: Processing message id {message_instance_send.id}. "
+                f"Name: '{message_instance_send.name}'"
+            )
             cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
 
     @classmethod
@@ -142,6 +150,7 @@ class MessageService:
         cls,
         message_triggerable_process_model: MessageTriggerableProcessModel,
         user: UserModel,
+        message_instance_send: MessageInstanceModel | None = None,
         execution_mode: str | None = None,
     ) -> ProcessInstanceModel:
         """Start up a process instance, so it is ready to catch the event."""
@@ -157,6 +166,16 @@ class MessageService:
         execution_strategy_name = None
         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
             execution_strategy_name = "greedy"
+
+        # add correlations to bpmn_process_instance if not set already so we can use them in the receive message instance later.
+        # these should never be set at this point but check just in case.
+        if (
+            message_instance_send
+            and message_instance_send.correlation_keys
+            and not processor_receive.bpmn_process_instance.correlations
+        ):
+            processor_receive.bpmn_process_instance.correlations = message_instance_send.correlation_keys
+
         processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
         return receiving_process_instance

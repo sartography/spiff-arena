@@ -52,7 +52,11 @@ def queue_future_task_if_appropriate(
         # celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown + 1)  # type: ignore
 
         async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
-        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
+        message = (
+            f"Queueing process instance ({process_instance.id}) for future task ({task_guid}). "
+            f"new celery task id: ({async_result.task_id})"
+        )
+        current_app.logger.info(message)
         return True
 
     return False

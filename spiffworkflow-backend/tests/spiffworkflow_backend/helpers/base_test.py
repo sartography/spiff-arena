@@ -1,3 +1,5 @@
+import copy
+import datetime
 import io
 import json
 import os
@@ -10,6 +12,7 @@ from typing import Any
 from flask import current_app
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -27,6 +30,7 @@ from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -35,6 +39,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.test import TestResponse  # type: ignore
 
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -99,6 +104,38 @@ class BaseTest:
         )
 
         return process_model
+
+    def create_and_run_process_instance(
+        self,
+        client: FlaskClient,
+        user: UserModel,
+        process_group_id: str | None = "test_group",
+        process_model_id: str | None = "random_fact",
+        bpmn_file_name: str | None = None,
+        bpmn_file_location: str | None = None,
+    ) -> tuple[ProcessModelInfo, int]:
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        headers = self.logged_in_headers(user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+
+        return (process_model, int(process_instance_id))
 
     def create_process_group(
         self,
@@ -306,19 +343,27 @@ class BaseTest:
         process_model: ProcessModelInfo,
         status: str | None = "not_started",
         user: UserModel | None = None,
+        save_start_and_end_times: bool = True,
+        bpmn_version_control_identifier: str | None = None,
     ) -> ProcessInstanceModel:
         if user is None:
             user = self.find_or_create_user()
 
         current_time = round(time.time())
+        start_in_seconds = None
+        end_in_seconds = None
+        if save_start_and_end_times:
+            start_in_seconds = current_time - (3600 * 1)
+            end_in_seconds = current_time - (3600 * 1 - 20)
         process_instance = ProcessInstanceModel(
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
             process_model_display_name=process_model.display_name,
             updated_at_in_seconds=round(time.time()),
-            start_in_seconds=current_time - (3600 * 1),
-            end_in_seconds=current_time - (3600 * 1 - 20),
+            start_in_seconds=start_in_seconds,
+            end_in_seconds=end_in_seconds,
+            bpmn_version_control_identifier=bpmn_version_control_identifier,
         )
         db.session.add(process_instance)
         db.session.commit()
@@ -558,14 +603,17 @@ class BaseTest:
         processor: ProcessInstanceProcessor,
         execution_mode: str | None = None,
         data: dict | None = None,
+        user: UserModel | None = None,
     ) -> None:
         user_task = processor.get_ready_user_tasks()[0]
         human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
+        if user is None:
+            user = processor.process_instance_model.process_initiator
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=user_task,
             data=data or {},
-            user=processor.process_instance_model.process_initiator,
+            user=user,
             human_task=human_task,
             execution_mode=execution_mode,
         )
@@ -604,3 +652,24 @@ class BaseTest:
 
     def get_test_file(self, *args: str) -> str:
         return os.path.join(current_app.instance_path, "..", "..", "tests", "files", *args)
+
+    def set_timer_event_to_new_time(self, task_model: TaskModel, timedelta_args: dict) -> None:
+        new_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(**timedelta_args)
+        new_time_formatted = new_time.isoformat()
+
+        new_properties_json = copy.copy(task_model.properties_json)
+        new_properties_json["internal_data"]["event_value"]["next"] = new_time_formatted
+        task_model.properties_json = new_properties_json
+        # make sure we actually commit
+        flag_modified(task_model, "properties_json")  # type: ignore
+        db.session.add(task_model)
+        db.session.commit()
+        task_model = TaskModel.query.filter_by(guid=task_model.guid).first()
+        assert task_model.properties_json["internal_data"]["event_value"]["next"] == new_time_formatted
+
+    def get_all_children_of_spiff_task(self, spiff_task: SpiffTask) -> list[SpiffTask]:
+        children = []
+        for child in spiff_task.children:
+            children.append(child)
+            children += self.get_all_children_of_spiff_task(child)
+        return children

@@ -100,7 +100,7 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 
   cy.url().should(
     'include',
-    `process-models/${modifyProcessIdentifierForPathParam(groupId)}:${modelId}`
+    `process-models/${modifyProcessIdentifierForPathParam(groupId)}:${modelId}`,
   );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
@@ -111,7 +111,7 @@ Cypress.Commands.add(
   (
     expectAutoRedirectToHumanTask = false,
     returnToProcessModelShow = true,
-    processInstanceExpectedToBeComplete = true
+    processInstanceExpectedToBeComplete = true,
   ) => {
     cy.getBySel('start-process-instance').click();
     if (expectAutoRedirectToHumanTask) {
@@ -130,7 +130,7 @@ Cypress.Commands.add(
         cy.getBySel('process-model-show-permissions-loaded').should('exist');
       }
     }
-  }
+  },
 );
 
 Cypress.Commands.add(
@@ -144,14 +144,14 @@ Cypress.Commands.add(
     // https://stackoverflow.com/q/51254946/6090676
     cy.getBySel('process-model-show-link').contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
-  }
+  },
 );
 
 Cypress.Commands.add(
   'basicPaginationTest',
   (
     dataQaTagToUseToEnsureTableHasLoaded = 'paginated-entity-id',
-    paginationOptionsDataQa = 'pagination-options'
+    paginationOptionsDataQa = 'pagination-options',
   ) => {
     cy.getBySel(paginationOptionsDataQa).scrollIntoView();
     cy.getBySel(paginationOptionsDataQa)
@@ -185,7 +185,7 @@ Cypress.Commands.add(
         cy.getBySel(paginationOptionsDataQa).contains(/\b1–2 of \d+/);
         cy.contains(`[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`, oldId);
       });
-  }
+  },
 );
 
 Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
@@ -204,6 +204,6 @@ Cypress.Commands.add('deleteProcessModelAndConfirm', (buttonId, groupId) => {
     .click();
   cy.url().should(
     'include',
-    `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`,
   );
 });

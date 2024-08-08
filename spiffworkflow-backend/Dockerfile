@@ -21,9 +21,10 @@ FROM base AS deployment
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
+# libpq5 in order to be able to use postgres at runtime
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq libpq5 \
   && rm -rf /var/lib/apt/lists/*
 
 # keep pip up to date
@@ -47,6 +48,7 @@ RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
+# libpq-dev in order to be able to poetry install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
  && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev dos2unix git
 

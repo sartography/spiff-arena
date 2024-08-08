@@ -260,6 +260,7 @@ class TestTasksController(BaseTest):
             f"/v1.0/tasks/{process_instance_id}/{json_results[0]['task']['id']}?with_form_data=true",
             headers=self.logged_in_headers(finance_user),
         )
+        assert response.status_code == 200
 
         # We should now be on the end task with a valid message, even after loading it many times.
         list(_dequeued_interstitial_stream(process_instance_id))

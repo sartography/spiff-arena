@@ -90,7 +90,7 @@ describe('process-instances', () => {
     cy.login();
     cy.navigateToProcessModel(
       'Acceptance Tests Group One',
-      'Acceptance Tests Model 1'
+      'Acceptance Tests Model 1',
     );
   });
   afterEach(() => {
@@ -111,29 +111,31 @@ describe('process-instances', () => {
     cy.contains(originalDmnOutputForKevin).should('not.exist');
     cy.runPrimaryBpmnFile();
 
+    const processModelFiles = 'process-model-files';
+
     // Change dmn
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(originalDmnOutputForKevin, newDmnOutputForKevin);
 
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(newDmnOutputForKevin, originalDmnOutputForKevin);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     // Change bpmn
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScript(newPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-model-files').click();
+    cy.getBySel(processModelFiles).click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     updateBpmnPythonScript(originalPythonScript);
     cy.contains(acceptanceTestOneDisplayName).click();
@@ -213,7 +215,7 @@ describe('process-instances', () => {
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
         cy.get('div[aria-label="Clear all selected items"]:first').click();
         cy.get('div[aria-label="Clear all selected items"]').should(
-          'not.exist'
+          'not.exist',
         );
         clickOnHeaderToMakeSureMultiSelectComponentStateIsStable();
       }

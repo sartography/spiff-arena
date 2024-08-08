@@ -255,7 +255,6 @@ class ProcessInstanceReportService:
         metadata_columns: list[ReportMetadataColumn],
     ) -> list[dict]:
         results = []
-        cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
             process_instance_dict = process_instance_row[0].serialized()
@@ -335,7 +334,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def non_metadata_columns(cls) -> list[str]:
-        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_name"]
+        return cls.process_instance_stock_columns() + ["process_initiator_username", "last_milestone_bpmn_name", "summary"]
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:

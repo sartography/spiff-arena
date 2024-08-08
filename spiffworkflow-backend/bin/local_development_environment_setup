@@ -16,14 +16,13 @@ PORT="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
 use_local_open_id="false"
 acceptance_test_mode="false"
 
-arg_1="${1:-}"
-
 use_local_open_id="true"
-if [[ "$arg_1" == "keycloak" ]]; then
+# always check $@ so we can pass in multiple args
+if [[ "${1:-}" == "keycloak" ]]; then
   use_local_open_id="false"
   shift
 fi
-if [[ "$arg_1" == "acceptance" ]]; then
+if [[ "${1:-}" == "acceptance" ]]; then
   acceptance_test_mode="true"
   shift
 fi
@@ -45,7 +44,8 @@ fi
 if [[ "$acceptance_test_mode" == "true" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
-elif [[ "$use_local_open_id" == "true" ]]; then
+fi
+if [[ "$use_local_open_id" == "true" ]]; then
   backend_base_url="${SPIFFWORKFLOW_BACKEND_URL:-}"
   if [[ -z "$backend_base_url" ]]; then
     backend_base_url="http://localhost:$PORT"

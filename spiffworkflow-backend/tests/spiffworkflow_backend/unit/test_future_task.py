@@ -22,6 +22,7 @@ class TestFutureTask(BaseTest):
             process_model = load_test_spec(
                 process_model_id="test_group/user-task-with-timer",
                 process_model_source_directory="user-task-with-timer",
+                bpmn_file_name="user_task_with_timer.bpmn",
             )
             process_instance = self.create_process_instance_from_process_model(process_model=process_model)
             processor = ProcessInstanceProcessor(process_instance)

@@ -258,6 +258,8 @@ def should_notify_sentry(exception: Exception) -> bool:
         return False
 
     # like a 404, 405 Method Not Allowed: The method is not allowed for the requested URL
+    # it doesn't seem to work to exclude this here. i guess it happens before it gets to our app?
+    # excluded via before_send in configure_sentry
     if isinstance(exception, MethodNotAllowed):
         return False
 

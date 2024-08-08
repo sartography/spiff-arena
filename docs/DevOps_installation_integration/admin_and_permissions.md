@@ -99,8 +99,13 @@ The new Process Groups tile will be available under the Process Groups view.
 - Identifier: Enter a unique identifier for the process model.
 - Description: Provide a brief description of the process model, outlining its purpose or functionality.
 - Notification Type: Specify the type of notification related to the process model.
-- Notification Addresses: Enter the addresses or destinations where notifications should be sent in the event that a process instance encounters an error. You do not need to worry about setting these values unless you are interested in custom {ref}`process_error_handling`.
-- Metadata Extraction Path: You can provide one or more metadata extractions to uplift data from your process instances to provide quick access in searches and perspectives. Specify the key and path/location where metadata extraction should occur within the process model. For example, if you have a script task that runs the statement `great_color = "blue"`, then you would set extraction path to `great_color`. You would probably also set the extraction key to `great_color`. But if you wanted to, you could just call it `color`, assuming you wanted that to be the name used in reports, etc.
+- Notification Addresses: Enter the addresses or destinations where notifications should be sent in the event that a process instance encounters an error.
+You do not need to worry about setting these values unless you are interested in custom {ref}`process_error_handling`.
+- Metadata Extraction Path: You can provide one or more metadata extractions to uplift data from your process instances to provide quick access in searches and perspectives.
+Specify the key and path/location where metadata extraction should occur within the process model.
+For example, if you have a script task that runs the statement `great_color = "blue"`, then you would set the extraction path to `great_color`.
+You would probably also set the extraction key to `great_color`.
+But if you wanted to, you could just call it `color`, assuming you wanted that to be the name used in reports, etc.
 
 Make sure to accurately fill in all the required fields in the Process Model form to ensure proper configuration and functionality.
 
@@ -137,7 +142,8 @@ Look for common patterns or similarities in their job functions and tasks relate
 Add a user email under the users 'column' and the group name under 'groups' and don't forget to add double quotes.
 
 ```{admonition} Note
-Based on DMN functionality, leaving the "*" column empty means that all rules ('When') will be triggered without specifying a condition. Read more about DMN tables to understand how the rules engine can be utilized for many different scenarios.
+Based on DMN functionality, leaving the "*" column empty means that all rules ('When') will be triggered without specifying a condition.
+Read more about DMN tables to understand how the rules engine can be utilized for many different scenarios.
 ```
 
 ![user_to_groups](images/user_to_groups.png)
@@ -146,19 +152,26 @@ Based on DMN functionality, leaving the "*" column empty means that all rules ('
 
 Now that the groups have been identified, their permissions can be set by adding the group name under the "permissions_group" column.
 
-- To determine a user's capabilities within the permissible scope, you can define specific permissions. These permissions can be combined in a sequence if multiple apply to a particular rule. For instance, ["read", "start"] indicates that the user can perform both reading and starting actions. Alternatively, [All] can be employed to grant unrestricted access.
-- The hit policy is set to "Collect" which means that all conditions that are true will be applied. [Read more about DMN tables and hit policies here.](../Building_Diagrams/dmn.md)
-- The permission URL can be configured to define the user's access privileges. Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs. In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient. However, it is also feasible to directly incorporate any API URL into the permissions.
+- To determine a user's capabilities within the permissible scope, you can define specific permissions.
+These permissions can be combined in a sequence if multiple apply to a particular rule.
+For instance, ["read", "start"] indicates that the user can perform both reading and starting actions.
+Alternatively, [All] can be employed to grant unrestricted access.
+- The hit policy is set to "Collect" which means that all conditions that are true will be applied.
+[Read more about DMN tables and hit policies here.](../Building_Diagrams/dmn.md)
+- The permission URL can be configured to define the user's access privileges.
+Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs.
+In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient.
+However, it is also feasible to directly incorporate any API URL into the permissions.
 
 In truth, what you are doing is writing an expression.
 In this case, it would read that if the variable 'permissions_group' type string is equal to 'permissions' variable of type string then set the 'permission_url' equal to the associated value.
 
 ```{admonition} Note
-If you find coding more familiar and preferable to constructing DMN tables, you may notice similarities between this DMN table and the shared permission configuration file. This similarity can help clarify or make it easier for you to understand the DMN table structure and its relation to the permission configuration.
+If you find coding more familiar and preferable to constructing DMN tables, you may notice similarities between this DMN table and the shared permission configuration file.
+This similarity can help clarify or make it easier for you to understand the DMN table structure and its relation to the permission configuration.
 ```
 
 ![group_permission](images/group_permission.png)
-
 
 ### Step 5: Start Process
 

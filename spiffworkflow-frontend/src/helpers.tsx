@@ -1,5 +1,8 @@
 import { Buffer } from 'buffer';
 
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
+import { ReactElement } from 'react';
 import { ElementForArray, ProcessInstance } from './interfaces';
 
 export const DEFAULT_PER_PAGE = 5;
@@ -313,4 +316,15 @@ export const renderElementsForArray = (elements: ElementForArray[]) => {
   return elements.map((element: any) => (
     <div key={element.key}>{element.component}</div>
   ));
+};
+
+export const convertSvgElementToHtmlString = (svgElement: ReactElement) => {
+  // vite with svgr imports svg files as react components but we need the html string value at times
+  // so this converts the component to html string
+  const div = document.createElement('div');
+  const root = createRoot(div);
+  flushSync(() => {
+    root.render(svgElement);
+  });
+  return div.innerHTML;
 };

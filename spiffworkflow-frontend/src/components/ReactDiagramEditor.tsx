@@ -17,13 +17,13 @@ import {
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
 } from 'dmn-js-properties-panel';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 // @ts-ignore
 import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
+// import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
 import '../bpmn-js-properties-panel.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 
@@ -42,24 +42,25 @@ import 'bpmn-js-spiffworkflow/app/css/app.css';
 
 import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
 
-// @ts-expect-error TS(7016) FIXME
 import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
-// @ts-expect-error TS(7016) FIXME
 import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
-// @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
-// @ts-expect-error TS(7016) FIXME
-import TouchModule from 'diagram-js/lib/navigation/touch';
+// removed in v17
+// https://forum.bpmn.io/t/since-mobile-touch-implementation-was-stripped-out-in-v17-is-there-a-wip-re-implementation-as-an-extension-in-the-wild-yet/11149
+// import TouchModule from 'diagram-js/lib/navigation/touch';
 
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
+import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
+import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import {
+  convertSvgElementToHtmlString,
   getBpmnProcessIdentifiers,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -77,6 +78,7 @@ type OwnProps = {
   disableSaveButton?: boolean;
   fileName?: string;
   isPrimaryFile?: boolean;
+  onCallActivityOverlayClick?: (..._args: any[]) => any;
   onDataStoresRequested?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
@@ -109,6 +111,7 @@ export default function ReactDiagramEditor({
   disableSaveButton,
   fileName,
   isPrimaryFile,
+  onCallActivityOverlayClick,
   onDataStoresRequested,
   onDeleteFile,
   onDmnFilesRequested,
@@ -131,10 +134,8 @@ export default function ReactDiagramEditor({
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
-  const [diagramModelerState, setDiagramModelerState] = useState(null);
+  const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
   const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
-
-  const alreadyImportedXmlRef = useRef(false);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
@@ -203,11 +204,8 @@ export default function ReactDiagramEditor({
     });
   };
 
+  // get the xml and set the modeler
   useEffect(() => {
-    if (diagramModelerState) {
-      return;
-    }
-
     let canvasClass = 'diagram-editor-canvas';
     if (diagramType === 'readonly') {
       canvasClass = 'diagram-viewer-canvas';
@@ -287,7 +285,7 @@ export default function ReactDiagramEditor({
         additionalModules: [
           KeyboardMoveModule,
           MoveCanvasModule,
-          TouchModule,
+          // TouchModule,
           ZoomScrollModule,
         ],
       });
@@ -339,7 +337,48 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function createPrePostScriptOverlay(event: any) {
+      // avoid setting on script tasks because it's unnecessary but shouldn't actually cause issues
+      if (event.element && event.element.type !== 'bpmn:ScriptTask') {
+        const preScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PreScript',
+          );
+        const postScript =
+          event.element.businessObject.extensionElements?.values?.find(
+            (extension: any) => extension.$type === 'spiffworkflow:PostScript',
+          );
+        const overlays = diagramModeler.get('overlays');
+        const scriptIcon = convertSvgElementToHtmlString(<BpmnJsScriptIcon />);
+
+        if (preScript?.value) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              left: 0,
+            },
+            html: scriptIcon,
+          });
+        }
+        if (postScript?.value) {
+          overlays.add(event.element.id, {
+            position: {
+              bottom: 25,
+              right: 25,
+            },
+            html: scriptIcon,
+          });
+        }
+      }
+    }
+
     setDiagramModelerState(diagramModeler);
+
+    if (diagramType !== 'readonly') {
+      diagramModeler.on('shape.added', (event: any) => {
+        createPrePostScriptOverlay(event);
+      });
+    }
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
@@ -436,7 +475,6 @@ export default function ReactDiagramEditor({
       }
     });
   }, [
-    diagramModelerState,
     diagramType,
     onDataStoresRequested,
     onDmnFilesRequested,
@@ -447,13 +485,26 @@ export default function ReactDiagramEditor({
     onLaunchDmnEditor,
     onLaunchJsonSchemaEditor,
     onLaunchMarkdownEditor,
-    onLaunchScriptEditor,
     onLaunchMessageEditor,
+    onLaunchScriptEditor,
     onMessagesRequested,
     onSearchProcessModels,
     onServiceTasksRequested,
   ]);
 
+  // display the diagram
+  useEffect(() => {
+    if (!diagramXMLString || !diagramModelerState) {
+      return;
+    }
+    diagramModelerState.importXML(diagramXMLString);
+    zoom(0);
+    if (diagramType !== 'dmn') {
+      fixUnresolvedReferences(diagramModelerState);
+    }
+  }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
+
+  // import done operations
   useEffect(() => {
     // These seem to be system tasks that cannot be highlighted
     const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
@@ -469,8 +520,15 @@ export default function ReactDiagramEditor({
       console.error('ERROR:', err);
     }
 
-    function checkTaskCanBeHighlighted(taskBpmnId: string) {
+    function taskIsMultiInstanceChild(task: Task) {
+      // if a task has a runtime_info and iteration then assume it's a child task
+      return Object.hasOwn(task.runtime_info || {}, 'iteration');
+    }
+
+    function checkTaskCanBeHighlighted(task: Task) {
+      const taskBpmnId = task.bpmn_identifier;
       return (
+        !taskIsMultiInstanceChild(task) &&
         !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
         !taskBpmnId.match(/EndJoin/) &&
         !taskBpmnId.match(/BoundaryEventParent/) &&
@@ -485,7 +543,7 @@ export default function ReactDiagramEditor({
       bpmnIoClassName: string,
       bpmnProcessIdentifiers: string[],
     ) {
-      if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
+      if (checkTaskCanBeHighlighted(task)) {
         try {
           if (
             bpmnProcessIdentifiers.includes(
@@ -507,6 +565,65 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function addOverlayOnCallActivity(
+      task: Task,
+      bpmnProcessIdentifiers: string[],
+    ) {
+      if (
+        taskIsMultiInstanceChild(task) ||
+        !onCallActivityOverlayClick ||
+        diagramType !== 'readonly' ||
+        !diagramModelerState
+      ) {
+        return;
+      }
+      function domify(htmlString: string) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlString.trim();
+        return template.content.firstChild;
+      }
+      const createCallActivityOverlay = () => {
+        const overlays = diagramModelerState.get('overlays');
+        const icon = convertSvgElementToHtmlString(
+          <CallActivityNavigateArrowUp />,
+        );
+        const button: any = domify(
+          `<button class="bjs-drilldown">${icon}</button>`,
+        );
+        button.addEventListener('click', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
+        });
+        button.addEventListener('auxclick', (newEvent: any) => {
+          onCallActivityOverlayClick(task, newEvent);
+        });
+        overlays.add(task.bpmn_identifier, 'drilldown', {
+          position: {
+            bottom: -10,
+            right: -8,
+          },
+          html: button,
+        });
+      };
+      try {
+        if (
+          bpmnProcessIdentifiers.includes(
+            task.bpmn_process_definition_identifier,
+          )
+        ) {
+          createCallActivityOverlay();
+        }
+      } catch (bpmnIoError: any) {
+        // the task list also contains task for processes called from call activities which will
+        // not exist in this diagram so just ignore them for now.
+        if (
+          bpmnIoError.message !==
+          "Cannot read properties of undefined (reading 'id')"
+        ) {
+          throw bpmnIoError;
+        }
+      }
+    }
+
     function onImportDone(event: any) {
       const { error } = event;
 
@@ -515,12 +632,11 @@ export default function ReactDiagramEditor({
         return;
       }
 
-      let modeler = diagramModelerState;
       if (diagramType === 'dmn') {
-        modeler = (diagramModelerState as any).getActiveViewer();
+        return;
       }
 
-      const canvas = (modeler as any).get('canvas');
+      const canvas = diagramModelerState.get('canvas');
       canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
 
       // highlighting a field
@@ -549,23 +665,14 @@ export default function ReactDiagramEditor({
               bpmnProcessIdentifiers,
             );
           }
+          if (
+            task.typename === 'CallActivity' &&
+            !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
+          ) {
+            addOverlayOnCallActivity(task, bpmnProcessIdentifiers);
+          }
         });
       }
-    }
-
-    function displayDiagram(
-      diagramModelerToUse: any,
-      diagramXMLToDisplay: any,
-    ) {
-      if (alreadyImportedXmlRef.current) {
-        return;
-      }
-      diagramModelerToUse.importXML(diagramXMLToDisplay);
-      zoom(0);
-      if (diagramType !== 'dmn') {
-        fixUnresolvedReferences(diagramModelerToUse);
-      }
-      alreadyImportedXmlRef.current = true;
     }
 
     function dmnTextHandler(text: string) {
@@ -586,7 +693,7 @@ export default function ReactDiagramEditor({
     ) {
       fetch(urlToUse)
         .then((response) => response.text())
-        .then(textHandler ?? bpmnTextHandler)
+        .then(textHandler)
         .catch((err) => handleError(err));
     }
 
@@ -602,17 +709,12 @@ export default function ReactDiagramEditor({
     }
     (diagramModelerState as any).on('import.done', onImportDone);
 
-    const diagramXMLToUse = diagramXML || diagramXMLString;
-    if (diagramXMLToUse) {
-      if (!diagramXMLString) {
-        setDiagramXMLString(diagramXMLToUse);
-      }
-      displayDiagram(diagramModelerState, diagramXMLToUse);
-
+    if (diagramXML) {
+      setDiagramXMLString(diagramXML);
       return undefined;
     }
 
-    if (!diagramXMLString) {
+    if (!diagramXML) {
       if (url) {
         fetchDiagramFromURL(url);
         return undefined;
@@ -622,7 +724,7 @@ export default function ReactDiagramEditor({
         return undefined;
       }
       let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler;
+      let textHandler = bpmnTextHandler;
       if (diagramType === 'dmn') {
         newDiagramFileName = 'new_dmn_diagram.dmn';
         textHandler = dmnTextHandler;
@@ -638,13 +740,12 @@ export default function ReactDiagramEditor({
     diagramModelerState,
     diagramType,
     diagramXML,
-    diagramXMLString,
     fileName,
-    tasks,
+    onCallActivityOverlayClick,
     performingXmlUpdates,
     processModelId,
+    tasks,
     url,
-    zoom,
   ]);
 
   function handleSave() {

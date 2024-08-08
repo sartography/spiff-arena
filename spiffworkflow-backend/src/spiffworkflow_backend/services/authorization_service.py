@@ -70,6 +70,8 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     },
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/process-instance-events", "relevant_permissions": ["read"]},
+    {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
@@ -442,7 +444,8 @@ class AuthorizationService:
         name, family_name, given_name, middle_name, nickname, preferred_username,
         profile, picture, website, gender, birthdate, zoneinfo, locale,updated_at, email.
         """
-        is_new_user = False
+        new_group_ids: set[int] = set()
+        old_group_ids: set[int] = set()
         user_attributes = {}
 
         if "email" in user_info:
@@ -465,6 +468,7 @@ class AuthorizationService:
         desired_group_identifiers = None
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]:
+            desired_group_identifiers = []
             if "groups" in user_info:
                 desired_group_identifiers = user_info["groups"]
 
@@ -483,8 +487,8 @@ class AuthorizationService:
         )
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
-            is_new_user = True
             user_model = UserService().create_user(**user_attributes)
+            new_group_ids = {g.id for g in user_model.groups}
         else:
             # Update with the latest information
             user_db_model_changed = False
@@ -499,17 +503,23 @@ class AuthorizationService:
 
         if desired_group_identifiers is not None:
             if not isinstance(desired_group_identifiers, list):
-                current_app.logger.error(
+                current_app.logger.error(  # type: ignore
                     f"Invalid groups property in token: {desired_group_identifiers}.If groups is specified, it must be a list"
                 )
             else:
                 for desired_group_identifier in desired_group_identifiers:
-                    UserService.add_user_to_group_by_group_identifier(user_model, desired_group_identifier)
-                current_group_identifiers = [g.identifier for g in user_model.groups]
-                groups_to_remove_from_user = [item for item in current_group_identifiers if item not in desired_group_identifiers]
-                for gtrfu in groups_to_remove_from_user:
-                    if gtrfu != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
-                        UserService.remove_user_from_group(user_model, gtrfu)
+                    new_group = UserService.add_user_to_group_by_group_identifier(
+                        user_model, desired_group_identifier, source_is_open_id=True
+                    )
+                    if new_group is not None:
+                        new_group_ids.add(new_group.id)
+                group_ids_to_remove_from_user = [
+                    item.id for item in user_model.groups if item.identifier not in desired_group_identifiers
+                ]
+                for group_id in group_ids_to_remove_from_user:
+                    if group_id != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
+                        old_group_ids.add(group_id)
+                        UserService.remove_user_from_group(user_model, group_id)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -519,8 +529,10 @@ class AuthorizationService:
         # the external service user identifier.
         cls.import_permissions_from_yaml_file(user_model)
 
-        if is_new_user:
-            UserService.add_user_to_human_tasks_if_appropriate(user_model)
+        if len(new_group_ids) > 0 or len(old_group_ids) > 0:
+            UserService.update_human_task_assignments_for_user(
+                user_model, new_group_ids=new_group_ids, old_group_ids=old_group_ids
+            )
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore
@@ -558,6 +570,7 @@ class AuthorizationService:
                 f"/logs/{process_related_path_segment}",
                 f"/logs/typeahead-filter-values/{process_related_path_segment}",
                 f"/process-data-file-download/{process_related_path_segment}",
+                f"/process-instance-events/{process_related_path_segment}",
                 f"/event-error-details/{process_related_path_segment}",
             ]:
                 permissions_to_assign.append(PermissionToAssign(permission="read", target_uri=target_uri))
@@ -637,7 +650,7 @@ class AuthorizationService:
     def set_support_permissions(cls) -> list[PermissionToAssign]:
         """Just like elevated permissions minus access to secrets."""
         permissions_to_assign = cls.set_basic_permissions()
-        for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
+        for process_instance_action in ["migrate", "resume", "terminate", "suspend", "reset"]:
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")
             )
@@ -661,6 +674,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data-file-download/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instance-events/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
 
         for permission in ["create", "read", "update", "delete"]:
@@ -943,7 +957,8 @@ class AuthorizationService:
         added_group_identifiers.add(SPIFF_GUEST_GROUP)
         groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()  # type: ignore
         for gtd in groups_to_delete:
-            db.session.delete(gtd)
+            if not gtd.source_is_open_id:
+                db.session.delete(gtd)
 
         for wugam in initial_waiting_group_assignments:
             if wugam not in added_waiting_group_assignments:

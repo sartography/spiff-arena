@@ -15,6 +15,7 @@ interface typeaheadArgs {
   readonly?: boolean;
   rawErrors?: any;
   placeholder?: string;
+  reactJsonSchemaFormTheme?: string;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -30,6 +31,7 @@ export default function TypeaheadWidget({
   placeholder,
   label,
   rawErrors = [],
+  reactJsonSchemaFormTheme,
 }: typeaheadArgs) {
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
@@ -131,7 +133,9 @@ export default function TypeaheadWidget({
       itemToString={itemToString}
       placeholder={placeholderText}
       selectedItem={selectedItem}
-      helperText={commonAttributes.helperText}
+      helperText={
+        reactJsonSchemaFormTheme === 'mui' ? '' : commonAttributes.helperText
+      }
       disabled={disabled}
       readOnly={readonly}
       invalid={commonAttributes.invalid}

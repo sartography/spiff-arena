@@ -30,12 +30,15 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import ProcessInstanceTaskDataCannotBeUpdatedError
+from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
@@ -381,7 +384,9 @@ def task_assign(
     for user_id in body["user_ids"]:
         human_task_user = HumanTaskUserModel.query.filter_by(user_id=user_id, human_task=human_task).first()
         if human_task_user is None:
-            human_task_user = HumanTaskUserModel(user_id=user_id, human_task=human_task)
+            human_task_user = HumanTaskUserModel(
+                user_id=user_id, human_task=human_task, added_by=HumanTaskUserAddedBy.manual.value
+            )
             db.session.add(human_task_user)
 
     SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
@@ -447,7 +452,7 @@ def task_submit(
 def process_instance_progress(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-    response: dict[str, Task | ProcessInstanceModel | list] = {}
+    response: dict[str, Task | ProcessInstanceModel | list | dict[str, str]] = {}
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id, include_actions=True)
 
     principal = _find_principal_or_raise()
@@ -460,6 +465,34 @@ def process_instance_progress(
     ):
         # any time we assign this process_instance, the frontend progress page will redirect to process instance show
         response["process_instance"] = process_instance
+
+        # look for the most recent error event for this instance
+        if process_instance.status in [ProcessInstanceStatus.error.value, ProcessInstanceStatus.suspended.value]:
+            pi_error_details = (
+                ProcessInstanceErrorDetailModel.query.join(
+                    ProcessInstanceEventModel,
+                    ProcessInstanceErrorDetailModel.process_instance_event_id == ProcessInstanceEventModel.id,
+                )
+                .filter(
+                    ProcessInstanceEventModel.process_instance_id == process_instance.id,
+                    ProcessInstanceEventModel.event_type.in_(  # type: ignore
+                        [
+                            ProcessInstanceEventType.process_instance_error.value,
+                            ProcessInstanceEventType.task_failed.value,
+                        ]
+                    ),
+                )
+                .order_by(ProcessInstanceEventModel.timestamp.desc())  # type: ignore
+                .first()
+            )
+            if pi_error_details is not None:
+                response["error_details"] = pi_error_details
+                task_model = pi_error_details.process_instance_event.task()
+                if task_model is not None:
+                    response["process_instance_event"] = {
+                        "task_definition_identifier": task_model.task_definition.bpmn_identifier,
+                        "task_definition_name": task_model.task_definition.bpmn_name,
+                    }
 
     user_instructions = TaskInstructionsForEndUserModel.retrieve_and_clear(process_instance.id)
     response["instructions"] = user_instructions

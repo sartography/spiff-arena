@@ -65,12 +65,12 @@ export default function ProcessModelShow() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceCreatePath]: ['POST'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
+    [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
+    [targetUris.processModelPublishPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelTestsPath]: ['POST'],
-    [targetUris.processModelPublishPath]: ['POST'],
-    [targetUris.processInstanceListForMePath]: ['POST'],
-    [targetUris.processInstanceCreatePath]: ['POST'],
-    [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,

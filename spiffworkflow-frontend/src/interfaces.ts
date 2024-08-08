@@ -503,8 +503,10 @@ export interface TaskInstructionForEndUser {
 }
 
 export interface ProcessInstanceProgressResponse {
+  error_details?: ProcessInstanceEventErrorDetail;
   instructions: TaskInstructionForEndUser[];
   process_instance?: ProcessInstance;
+  process_instance_event?: ProcessInstanceLogEntry;
   task?: ProcessInstanceTask;
 }
 
@@ -547,4 +549,20 @@ export interface PublicTask {
 
 export interface RJSFFormObject {
   formData: any;
+}
+
+export interface MigrationEvent {
+  id: number;
+  initial_bpmn_process_hash: string;
+  initial_git_revision: string;
+  target_bpmn_process_hash: string;
+  target_git_revision: string;
+  timestamp: string;
+  username: string;
+}
+export interface MigrationCheckResult {
+  can_migrate: boolean;
+  process_instance_id: number;
+  current_git_revision: string;
+  current_bpmn_process_hash: string;
 }

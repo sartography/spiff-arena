@@ -3,8 +3,12 @@ import logging
 import os
 import re
 import sys
+from datetime import datetime
+from logging.handlers import SocketHandler
 from typing import Any
+from uuid import uuid4
 
+from flask import g
 from flask.app import Flask
 
 # flask logging formats:
@@ -21,6 +25,87 @@ from flask.app import Flask
 
 class InvalidLogLevelError(Exception):
     pass
+
+
+class SpiffLogHandler(SocketHandler):
+    def __init__(self, app, *args):  # type: ignore
+        super().__init__(
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
+            app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
+        )
+        self.app = app
+
+    def format(self, record: Any) -> str:
+        return json.dumps(
+            {
+                "version": "1.0",
+                "action": "add_event",
+                "event": {
+                    "specversion": "1.0",
+                    "type": record.name,
+                    "id": str(uuid4()),
+                    "source": "spiffworkflow.org",
+                    "timestamp": datetime.utcnow().timestamp(),
+                    "data": record._spiff_data,
+                },
+            }
+        )
+
+    def get_user_info(self) -> tuple[int | None, str | None]:
+        try:
+            return g.user.id, g.user.username
+        except Exception:
+            return None, None
+
+    def get_default_process_info(self) -> tuple[int | None, str | None]:
+        try:
+            tld = self.app.config["THREAD_LOCAL_DATA"]
+            return tld.process_instance_id, tld.process_model_identifier
+        except Exception:
+            return None, None
+
+    def filter(self, record: Any) -> bool:
+        if record.name.startswith("spiff") and getattr(record, "event_type", "") not in ["task_completed", "task_cancelled"]:
+            user_id, user_name = self.get_user_info()
+
+            data = {
+                "message": record.msg,
+                "userid": user_id,
+                "username": user_name,
+            }
+
+            process_instance_id, process_model_identifier = self.get_default_process_info()
+
+            if not hasattr(record, "process_instance_id"):
+                data["process_instance_id"] = process_instance_id
+            if not hasattr(record, "process_model_identifier"):
+                data["process_model_identifier"] = process_model_identifier
+
+            task_properties_from_spiff = [
+                "worflow_spec",
+                "task_spec",
+                "task_id",
+                "task_type",
+                "state",
+                "last_state_change",
+                "elapsed",
+                "parent",
+            ]
+            workflow_properties_from_spiff = ["completed", "success"]
+            properties_from_spiff = task_properties_from_spiff + workflow_properties_from_spiff
+            for attr in properties_from_spiff:
+                if hasattr(record, attr):
+                    data[attr] = str(getattr(record, attr))
+                else:
+                    data[attr] = None
+            record._spiff_data = data
+            return True
+        else:
+            return False
+
+    def makePickle(self, record: Any) -> bytes:  # noqa: N802
+        # Instead of returning a pickled log record, write the json entry to the socket
+        return (self.format(record) + "\n").encode("utf-8")
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -100,7 +185,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     log_level = logging.getLevelName(upper_log_level_string)
     log_formatter = get_log_formatter(app)
-    app.logger.debug("Printing log to create app logger")
+    app.logger.debug(f"Printing log to create app logger with level: {upper_log_level_string}")
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
@@ -180,6 +265,13 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
             level_number = logging.getLevelName(log_level_to_use)
             logger_for_name.setLevel(level_number)
 
+    if app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None:
+        spiff_logger = logging.getLogger("spiff")
+        spiff_logger.setLevel(logging.INFO)
+        spiff_logger.propagate = False
+        handler = SpiffLogHandler(app)  # type: ignore
+        spiff_logger.addHandler(handler)
+
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
     log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -201,3 +293,28 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
         )
         log_formatter = json_formatter
     return log_formatter
+
+
+class LoggingService:
+    _spiff_logger = logging.getLogger("spiff")
+
+    @classmethod
+    def log_event(
+        cls,
+        event_type: str,
+        task_guid: str | None = None,
+        process_model_identifier: str | None = None,
+        process_instance_id: int | None = None,
+    ) -> None:
+        extra: dict[str, Any] = {"event_type": event_type}
+
+        if task_guid is not None:
+            extra["task_guid"] = task_guid
+
+        if process_model_identifier is not None:
+            extra["process_model_Identifier"] = process_model_identifier
+
+        if process_instance_id is not None:
+            extra["process_instance_id"] = process_instance_id
+
+        cls._spiff_logger.info(event_type, extra=extra)

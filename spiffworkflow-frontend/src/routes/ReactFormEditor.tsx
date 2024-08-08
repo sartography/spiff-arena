@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 // @ts-ignore
@@ -245,23 +245,30 @@ export default function ReactFormEditor() {
     );
   };
 
+  // use a useRef and add the file name when it is available to avoid additional network calls to process-model-show when the breadcrumb re-renders due to file name changing.
+  // without the useRef, it causes a network call (in Breadcrumb code) everytime a character is typed in the save as filename modal.
+  const hotCrumbs = useRef<any[]>([
+    ['Process Groups', '/process-groups'],
+    {
+      entityToExplode: params.process_model_id || '',
+      entityType: 'process-model-id',
+      linkLastItem: true,
+    },
+  ]);
+
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
+    if (
+      processModelFileName &&
+      (hotCrumbs.current.at(-1) || [])[0] !== processModelFileName
+    ) {
+      hotCrumbs.current.push([processModelFileName]);
+    }
     return (
       <main>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            ['Grupos de Processo', '/process-groups'],
-            {
-              entityToExplode: params.process_model_id || '',
-              entityType: 'process-model-id',
-              linkLastItem: true,
-            },
-            [processModelFileName],
-          ]}
-        />
+        <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
         <h1>
-          Process Model File{processModelFile ? ': ' : ''}
+          Arquivo de modelo de processo{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
         {newFileNameBox()}

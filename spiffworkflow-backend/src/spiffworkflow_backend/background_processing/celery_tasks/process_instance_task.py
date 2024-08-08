@@ -3,13 +3,11 @@ from celery import shared_task
 from flask import current_app
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_future_task_if_appropriate,
-)
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -26,31 +24,44 @@ class SpiffCeleryWorkerError(Exception):
     pass
 
 
-@shared_task(ignore_result=False, time_limit=ten_minutes)
-def celery_task_process_instance_run(process_instance_id: int, task_guid: str | None = None) -> dict:
+# ignore types so we can use self and get the celery task id from self.request.id.
+@shared_task(ignore_result=False, time_limit=ten_minutes, bind=True)
+def celery_task_process_instance_run(self, process_instance_id: int, task_guid: str | None = None) -> dict:  # type: ignore
     proc_index = current_process().index
 
-    message = f"celery_task_process_instance_run: process_instance_id: {process_instance_id}"
+    celery_task_id = self.request.id
+    logger_prefix = f"celery_task_process_instance_run[{celery_task_id}]"
+    worker_intro_log_message = f"{logger_prefix}: process_instance_id: {process_instance_id}"
     if task_guid:
-        message += f" task_guid: {task_guid}"
-    current_app.logger.info(message)
+        worker_intro_log_message += f" task_guid: {task_guid}"
+    current_app.logger.info(worker_intro_log_message)
 
     ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
-    if task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+    skipped_mesage = None
+    if process_instance is None:
+        skipped_mesage = "Skipped because the process instance no longer exists in the database. It could have been deleted."
+    elif task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+        skipped_mesage = "Skipped because the process instance is set to run in the future."
+    if skipped_mesage is not None:
         return {
             "ok": True,
             "process_instance_id": process_instance_id,
             "task_guid": task_guid,
-            "message": "Skipped because the process instance is set to run in the future.",
+            "message": skipped_mesage,
         }
+
     try:
         task_guid_for_requeueing = task_guid
         with ProcessInstanceQueueService.dequeued(process_instance):
+            # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
+            # has a should_break_before that will exit if there are instructions.
             ProcessInstanceService.run_process_instance_with_processor(
-                process_instance, execution_strategy_name="run_current_ready_tasks"
+                process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
             )
+            # we need to save instructions to the db so the frontend progress page can view them,
+            # and this is the only way to do it
             _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
@@ -74,19 +85,16 @@ def celery_task_process_instance_run(process_instance_id: int, task_guid: str | 
         if task_runnability == TaskRunnability.has_ready_tasks:
             queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
         return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
-    except ProcessInstanceIsAlreadyLockedError as exception:
+    except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
         current_app.logger.info(
-            f"Could not run process instance with worker: {current_app.config['PROCESS_UUID']} - {proc_index}. Error was:"
-            f" {str(exception)}"
+            f"{logger_prefix}: Could not run process instance with worker: {current_app.config['PROCESS_UUID']}"
+            f" - {proc_index}. Error was: {str(exception)}"
         )
-        # NOTE: consider exponential backoff
-        queue_future_task_if_appropriate(process_instance, eta_in_seconds=10, task_guid=task_guid)
         return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
     except Exception as exception:
         db.session.rollback()  # in case the above left the database with a bad transaction
         error_message = (
-            f"Error running process_instance {process_instance.id} "
-            + f"({process_instance.process_model_identifier}) and task_guid {task_guid}. {str(exception)}"
+            f"{logger_prefix}: Error running process_instance {process_instance_id} task_guid {task_guid}. {str(exception)}"
         )
         current_app.logger.error(error_message)
         db.session.add(process_instance)

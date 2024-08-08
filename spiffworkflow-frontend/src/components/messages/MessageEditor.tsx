@@ -186,22 +186,6 @@ export function MessageEditor({
     });
   }, [modifiedProcessGroupIdentifier, correlationProperties, messageId]);
 
-  // Setup event listeners on message.save
-  useEffect(() => {
-    const handleSaveEvent = (_event: any) => {
-      updateProcessGroupWithMessages({
-        formData: currentFormData,
-      });
-    };
-
-    messageEvent.eventBus.on('spiff.message.save', handleSaveEvent);
-
-    // Cleanup event listener on unmount
-    return () => {
-      messageEvent.eventBus.off('spiff.message.save', handleSaveEvent);
-    };
-  }, [currentFormData, messageEvent.eventBus, updateProcessGroupWithMessages]);
-
   const schema = {
     type: 'object',
     required: ['processGroupIdentifier', 'messageId'],
@@ -219,7 +203,7 @@ export function MessageEditor({
       messageId: {
         type: 'string',
         title: 'Message Name',
-        pattern: '^[\\w -]+$',
+        pattern: '^[\\w-]+$',
         validationErrorMessage:
           'must contain only alphanumeric characters, underscores, or hyphens',
         description:
@@ -236,6 +220,9 @@ export function MessageEditor({
               type: 'string',
               title: 'Property Name',
               description: '',
+              pattern: '^[\\w-]+$',
+              validationErrorMessage:
+                'The property name should contain no spaces or special characters',
             },
             retrievalExpression: {
               type: 'string',
@@ -318,6 +305,7 @@ export function MessageEditor({
           hideSubmitButton
           onChange={updateFormData}
           submitButtonText="Save"
+          bpmnEvent={messageEvent}
         />
       </>
     );
