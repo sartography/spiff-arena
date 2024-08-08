@@ -8,10 +8,17 @@ import HeaderTabs from '../components/HeaderTabs';
 import { ReportFilter } from '../../interfaces';
 import TaskTable from '../components/TaskTable';
 
-function InstancesStartedByMe() {
+type InstancesStartedByMeProps = {
+  viewMode: 'table' | 'tile';
+  setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
+};
+
+function InstancesStartedByMe({
+  viewMode,
+  setViewMode,
+}: InstancesStartedByMeProps) {
   const navigate = useNavigate();
   const [showNonActive, setShowNonActive] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
 
   const additionalReportFilters = useMemo<ReportFilter[]>(() => {
     return [

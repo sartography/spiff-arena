@@ -8,9 +8,13 @@ import { ProcessInstanceTask } from '../../interfaces';
 import HeaderTabs from '../components/HeaderTabs';
 import TaskTable from '../components/TaskTable';
 
-function Homepage() {
+type HomepageProps = {
+  viewMode: 'table' | 'tile';
+  setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
+};
+
+function Homepage({ viewMode, setViewMode }: HomepageProps) {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
 
   useEffect(() => {
@@ -56,7 +60,7 @@ function Homepage() {
         }}
       >
         <SearchBar />
-        <TaskControls setViewMode={setViewMode} viewMode={viewMode} />
+        <TaskControls viewMode={viewMode} setViewMode={setViewMode} />
       </Box>
       <TaskTable entries={tasks} viewMode={viewMode} />
     </Box>

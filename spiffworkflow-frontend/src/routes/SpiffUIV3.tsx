@@ -5,6 +5,7 @@ import {
   CssBaseline,
   Grid,
   ThemeProvider,
+  useMediaQuery,
   createTheme,
 } from '@mui/material';
 import { Route, Routes, useLocation } from 'react-router';
@@ -34,6 +35,11 @@ export default function SpiffUIV3() {
     useState<ReactElement | null>(null);
 
   const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+
+  const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
+  const [viewMode, setViewMode] = useState<'table' | 'tile'>(
+    isMobile ? 'tile' : 'table',
+  );
 
   const toggleNavCollapse = () => {
     setIsNavCollapsed(!isNavCollapsed);
@@ -117,7 +123,12 @@ export default function SpiffUIV3() {
               }}
             >
               <Routes>
-                <Route path="/" element={<Homepage />} />
+                <Route
+                  path="/"
+                  element={
+                    <Homepage viewMode={viewMode} setViewMode={setViewMode} />
+                  }
+                />
                 <Route
                   path="/startprocess"
                   element={
@@ -133,7 +144,12 @@ export default function SpiffUIV3() {
                 <Route path="login" element={<Login />} />
                 <Route
                   path="/started-by-me"
-                  element={<InstancesStartedByMe />}
+                  element={
+                    <InstancesStartedByMe
+                      viewMode={viewMode}
+                      setViewMode={setViewMode}
+                    />
+                  }
                 />
               </Routes>
             </Box>

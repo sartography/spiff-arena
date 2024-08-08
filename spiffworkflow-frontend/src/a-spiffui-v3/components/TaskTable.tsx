@@ -276,43 +276,36 @@ export default function TaskTable({
     );
   };
 
-  const renderEntries = () => {
-    if (!entries) {
+  if (!entries) {
+    return null;
+  }
+
+  const regex = new RegExp(
+    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
+  );
+
+  const records = entries.map((entry) => {
+    if (
+      !showNonActive &&
+      'status' in entry &&
+      ['complete', 'error'].includes(entry.status)
+    ) {
       return null;
     }
-    const regex = new RegExp(
-      `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
-    );
-    const records = entries.map((entry) => {
-      if (
-        !showNonActive &&
-        'status' in entry &&
-        ['complete', 'error'].includes(entry.status)
-      ) {
-        return null;
-      }
-      let hasAccessToCompleteTask = false;
-      if (
-        (entry.potential_owner_usernames || '').match(regex) &&
-        'task_id' in entry &&
-        entry.task_id
-      ) {
-        hasAccessToCompleteTask = true;
-      }
-      const waitingFor = getWaitingForTableCellComponent(entry);
-      if (viewMode === 'table') {
-        return tableRow(entry, waitingFor, hasAccessToCompleteTask);
-      }
-      return tileEntry(entry, waitingFor, hasAccessToCompleteTask);
-    });
-    if (viewMode === 'table') {
-      return renderTable(records);
+    let hasAccessToCompleteTask = false;
+    if (
+      (entry.potential_owner_usernames || '').match(regex) &&
+      'task_id' in entry &&
+      entry.task_id
+    ) {
+      hasAccessToCompleteTask = true;
     }
-    return renderTiles(records);
-  };
+    const waitingFor = getWaitingForTableCellComponent(entry);
+    if (viewMode === 'table') {
+      return tableRow(entry, waitingFor, hasAccessToCompleteTask);
+    }
+    return tileEntry(entry, waitingFor, hasAccessToCompleteTask);
+  });
 
-  if (entries) {
-    return renderEntries();
-  }
-  return null;
+  return viewMode === 'table' ? renderTable(records) : renderTiles(records);
 }
