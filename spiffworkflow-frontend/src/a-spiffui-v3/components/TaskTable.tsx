@@ -179,11 +179,13 @@ export default function TaskTable({
                 </TableCell>
                 <TableCell>{getWaitingForTableCellComponent(entry)}</TableCell>
                 <TableCell>
-                  <SpiffTooltip title="Complete task">
-                    <IconButton onClick={() => handleRunTask(entry)}>
-                      <PlayArrow />
-                    </IconButton>
-                  </SpiffTooltip>
+                  {'task_id' in entry && entry.task_id ? (
+                    <SpiffTooltip title="Complete task">
+                      <IconButton onClick={() => handleRunTask(entry)}>
+                        <PlayArrow />
+                      </IconButton>
+                    </SpiffTooltip>
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}
