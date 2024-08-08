@@ -1,0 +1,12 @@
+default_group: everybody
+
+groups:
+  admin:
+    users: [admin@spiffworkflow.org]
+
+permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /*
