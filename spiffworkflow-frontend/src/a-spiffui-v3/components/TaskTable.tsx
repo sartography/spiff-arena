@@ -16,10 +16,11 @@ import {
 } from '@mui/material';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
-import DateAndTimeService from '../../services/DateAndTimeService';
 import SpiffTooltip from '../../components/SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 import UserService from '../../services/UserService';
+import { TimeAgo } from '../../helpers/timeago';
+import DateAndTimeService from '../../services/DateAndTimeService';
 
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
@@ -130,11 +131,14 @@ export default function TaskTable({
             variant="body2"
             color="textSecondary"
             sx={{ display: 'flex', alignItems: 'center' }}
+            title={
+              DateAndTimeService.convertSecondsToFormattedDateTime(
+                entry.created_at_in_seconds,
+              ) || '-'
+            }
           >
             <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-            {DateAndTimeService.convertSecondsToFormattedDateTime(
-              entry.created_at_in_seconds,
-            )}
+            {TimeAgo.inWords(entry.created_at_in_seconds)}
           </Typography>
         </TableCell>
         <TableCell>
@@ -151,11 +155,14 @@ export default function TaskTable({
             variant="body2"
             color="textSecondary"
             sx={{ display: 'flex', alignItems: 'center' }}
+            title={
+              DateAndTimeService.convertSecondsToFormattedDateTime(
+                entry.updated_at_in_seconds,
+              ) || '-'
+            }
           >
             <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-            {DateAndTimeService.convertSecondsToFormattedDateTime(
-              entry.created_at_in_seconds,
-            )}
+            {TimeAgo.inWords(entry.updated_at_in_seconds)}
           </Typography>
         </TableCell>
         <TableCell>{waitingFor}</TableCell>
@@ -226,11 +233,14 @@ export default function TaskTable({
               color="textSecondary"
               sx={{ display: 'flex', alignItems: 'center' }}
               paragraph
+              title={
+                DateAndTimeService.convertSecondsToFormattedDateTime(
+                  entry.created_at_in_seconds,
+                ) || '-'
+              }
             >
               <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-              {DateAndTimeService.convertSecondsToFormattedDateTime(
-                entry.created_at_in_seconds,
-              )}
+              {TimeAgo.inWords(entry.created_at_in_seconds)}
             </Typography>
             <Typography
               variant="body2"
@@ -243,11 +253,13 @@ export default function TaskTable({
               color="textSecondary"
               sx={{ display: 'flex', alignItems: 'center' }}
               paragraph
+              title={
+                DateAndTimeService.convertSecondsToFormattedDateTime(
+                  entry.updated_at_in_seconds,
+                ) || '-'
+              }
             >
-              Last updated:{' '}
-              {DateAndTimeService.convertSecondsToFormattedDateTime(
-                entry.created_at_in_seconds,
-              )}
+              Last updated: {TimeAgo.inWords(entry.updated_at_in_seconds)}
             </Typography>
             {waitingFor ? (
               <Typography variant="body2" paragraph>

@@ -38,7 +38,7 @@ export const TimeAgo = (function awesomeFunc() {
   function inWords(timeAgo: number): string {
     const milliseconds = timeAgo * 1000;
     const seconds = Math.floor(
-      (new Date().getTime() - parseInt(milliseconds.toString(), 10)) / 1000
+      (new Date().getTime() - parseInt(milliseconds.toString(), 10)) / 1000,
     );
     const separator = locales.separator || ' ';
     let words = locales.prefix + separator;
@@ -73,4 +73,3 @@ export const TimeAgo = (function awesomeFunc() {
 
   return { locales, inWords };
 })();
-
