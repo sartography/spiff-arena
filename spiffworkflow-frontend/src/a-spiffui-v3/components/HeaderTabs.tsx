@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router';
 
 const mainBlue = 'primary.main';
 
-interface HeaderTabsProps {
+type HeaderTabsProps = {
   value: number;
   onChange: (event: React.SyntheticEvent, newValue: number) => void;
-}
+};
 
-const HeaderTabs: React.FC<HeaderTabsProps> = ({ value, onChange }) => {
+export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
   const navigate = useNavigate();
 
   return (
@@ -42,12 +42,12 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ value, onChange }) => {
             <Add sx={{ ml: 1 }} />
           </Box>
         }
-        sx={{ 
-          textTransform: 'none', 
-          ml: 'auto', 
+        sx={{
+          textTransform: 'none',
+          ml: 'auto',
           color: mainBlue,
           '& .MuiBox-root': {
-            display: 'flex', 
+            display: 'flex',
             alignItems: 'center',
             '& .MuiSvgIcon-root': {
               ml: 1,
@@ -55,13 +55,11 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({ value, onChange }) => {
               color: 'white',
               borderRadius: '50%',
               padding: '2px',
-            }
-          }
+            },
+          },
         }}
         onClick={() => navigate('/create-custom-tab')}
       />
     </Box>
   );
-};
-
-export default HeaderTabs;
+}

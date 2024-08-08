@@ -17,8 +17,6 @@ import DateAndTimeService from '../../services/DateAndTimeService';
 import SpiffTooltip from '../../components/SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 
-const mainBlue = 'primary.main';
-
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
 };
@@ -78,7 +76,7 @@ export default function TaskTable({ entries }: TaskTableProps) {
       return null;
     }
     return (
-      <Typography variant="body2" color={mainBlue}>
+      <Typography variant="body2" color="primary.main">
         {summary}
       </Typography>
     );
