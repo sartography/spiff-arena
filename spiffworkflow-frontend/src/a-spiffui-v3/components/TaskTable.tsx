@@ -217,6 +217,7 @@ export default function TaskTable({
     return (
       <Grid item key={entry.id} xs={12} sm={6} md={4}>
         <Card
+          onClick={() => hasAccessToCompleteTask && handleRunTask(entry)}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -226,10 +227,7 @@ export default function TaskTable({
         >
           <CardContent sx={{ flex: '1 0 auto' }}>
             {hasAccessToCompleteTask ? (
-              <IconButton
-                sx={{ position: 'absolute', top: 8, right: 8 }}
-                onClick={() => handleRunTask(entry)}
-              >
+              <IconButton sx={{ position: 'absolute', top: 8, right: 8 }}>
                 <PlayArrow />
               </IconButton>
             ) : null}
