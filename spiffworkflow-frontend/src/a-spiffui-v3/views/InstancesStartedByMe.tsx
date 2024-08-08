@@ -31,7 +31,8 @@ import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import useProcessInstances from '../../hooks/useProcessInstances';
-import SpiffTooltip from '../../components/SpiffTooltip';
+import TaskTable from '../components/TaskTable';
+import HeaderTabs from '../components/HeaderTabs';
 
 const mainBlue = 'primary.main';
 
@@ -73,88 +74,6 @@ function InstancesStartedByMe() {
     navigate(taskUrl);
   };
 
-  const instanceTable = () => {
-    if (processInstances.length === 0) {
-      return null;
-    }
-
-    return (
-      <TableContainer
-        component={Paper}
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-          borderWidth: '1px',
-          borderStyle: 'solid',
-          borderColor: 'borders.table',
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Task details</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Last milestone</TableCell>
-              <TableCell>Last updated</TableCell>
-              <TableCell>Waiting for</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {processInstances.map((instance) => (
-              <TableRow key={instance.id}>
-                <TableCell>
-                  <Typography variant="body2" paragraph>
-                    {instance.process_model_display_name}
-                  </Typography>
-                  <Typography variant="body2" color={mainBlue}>
-                    {instance.process_instance_summary}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" paragraph>
-                    {instance.process_initiator_username}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      instance.start_in_seconds,
-                    )}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    {'● '}
-                    {instance.last_milestone_bpmn_name}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      instance.updated_at_in_seconds,
-                    )}
-                  </Typography>
-                </TableCell>
-                <TableCell>{instance.status}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  };
 
   return (
     <Box
@@ -169,44 +88,14 @@ function InstancesStartedByMe() {
       <Typography variant="h1" sx={{ mb: 2 }}>
         Home
       </Typography>
-      <Box
-        sx={{
-          mb: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          borderWidth: '2px',
-          borderBottomStyle: 'solid',
-          borderColor: 'borders.table',
-          alignItems: 'center',
+      <HeaderTabs
+        value={1}
+        onChange={(event, newValue) => {
+          if (newValue === 0) {
+            navigate('/newui');
+          }
         }}
-      >
-        <Tabs
-          value={1}
-          TabIndicatorProps={{
-            style: { height: 3 },
-          }}
-          onChange={(event, newValue) => {
-            if (newValue === 0) {
-              navigate('/newui');
-            }
-          }}
-        >
-          <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
-          <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
-        </Tabs>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          sx={{
-            bgcolor: mainBlue,
-            '&:hover': { bgcolor: mainBlue },
-            textTransform: 'none',
-            ml: 'auto',
-          }}
-        >
-          Create custom tab
-        </Button>
-      </Box>
+      />
       <Box
         sx={{
           display: 'flex',
@@ -247,7 +136,13 @@ function InstancesStartedByMe() {
           </IconButton>
         </Box>
       </Box>
-      {instanceTable()}
+      {processInstances.length > 0 && (
+        <TaskTable
+          tasks={processInstances}
+          handleRunTask={handleRunTask}
+          getWaitingForTableCellComponent={getWaitingForTableCellComponent}
+        />
+      )}
     </Box>
   );
 }

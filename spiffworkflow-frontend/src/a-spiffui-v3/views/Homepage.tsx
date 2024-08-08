@@ -31,7 +31,8 @@ import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import { ProcessInstanceTask } from '../../interfaces';
-import SpiffTooltip from '../../components/SpiffTooltip';
+import TaskTable from '../components/TaskTable';
+import HeaderTabs from '../components/HeaderTabs';
 
 const mainBlue = 'primary.main';
 
@@ -80,105 +81,6 @@ function Homepage() {
     navigate(taskUrl);
   };
 
-  const taskTable = () => {
-    if (tasks === null) {
-      return null;
-    }
-
-    return (
-      <TableContainer
-        component={Paper}
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-          borderWidth: '1px',
-          borderStyle: 'solid',
-          borderColor: 'borders.table',
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Task details</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Last milestone</TableCell>
-              <TableCell>Last updated</TableCell>
-              <TableCell>Waiting for</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell>
-                  <Chip
-                    label={task.process_model_display_name}
-                    size="small"
-                    sx={{
-                      bgcolor: '#E0E0E0',
-                      color: '#616161',
-                      mb: 1,
-                      fontWeight: 'normal',
-                    }}
-                  />
-                  <Typography variant="body2" paragraph>
-                    {task.task_name || task.task_title}
-                  </Typography>
-                  <Typography variant="body2" color={mainBlue}>
-                    {task.process_instance_summary}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" paragraph>
-                    {task.process_initiator_username}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      task.created_at_in_seconds,
-                    )}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    {'● '}
-                    {task.last_milestone_bpmn_name}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <AccessTime sx={{ fontSize: 'small', mr: 0.5 }} />
-                    {DateAndTimeService.convertSecondsToFormattedDateTime(
-                      task.created_at_in_seconds,
-                    )}
-                  </Typography>
-                </TableCell>
-                <TableCell>{getWaitingForTableCellComponent(task)}</TableCell>
-                <TableCell>
-                  <SpiffTooltip title="Complete task">
-                    <IconButton onClick={() => handleRunTask(task)}>
-                      <PlayArrow />
-                    </IconButton>
-                  </SpiffTooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  };
 
   return (
     <Box
@@ -193,44 +95,14 @@ function Homepage() {
       <Typography variant="h1" sx={{ mb: 2 }}>
         Home
       </Typography>
-      <Box
-        sx={{
-          mb: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          borderWidth: '2px',
-          borderBottomStyle: 'solid',
-          borderColor: 'borders.table',
-          alignItems: 'center',
+      <HeaderTabs
+        value={0}
+        onChange={(event, newValue) => {
+          if (newValue === 1) {
+            navigate('/newui/started-by-me');
+          }
         }}
-      >
-        <Tabs
-          value={0}
-          TabIndicatorProps={{
-            style: { height: 3 },
-          }}
-          onChange={(event, newValue) => {
-            if (newValue === 1) {
-              navigate('/newui/started-by-me');
-            }
-          }}
-        >
-          <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
-          <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
-        </Tabs>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          sx={{
-            bgcolor: mainBlue,
-            '&:hover': { bgcolor: mainBlue },
-            textTransform: 'none',
-            ml: 'auto',
-          }}
-        >
-          Create custom tab
-        </Button>
-      </Box>
+      />
       <Box
         sx={{
           display: 'flex',
@@ -271,7 +143,13 @@ function Homepage() {
           </IconButton>
         </Box>
       </Box>
-      {taskTable()}
+      {tasks && (
+        <TaskTable
+          tasks={tasks}
+          handleRunTask={handleRunTask}
+          getWaitingForTableCellComponent={getWaitingForTableCellComponent}
+        />
+      )}
     </Box>
   );
 }
