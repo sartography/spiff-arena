@@ -15,6 +15,7 @@ import {
   Tooltip,
   Paper,
   Link as MuiLink,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Home,
@@ -55,6 +56,15 @@ function SideNav({
   setAdditionalNavElement,
 }: OwnProps) {
   const navigate = useNavigate();
+  const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
+  const [userToggled, setUserToggled] = useState(false);
+
+  useEffect(() => {
+    if (isMobile && !isCollapsed && !userToggled) {
+      onToggleCollapse();
+    }
+  }, [isMobile, isCollapsed, onToggleCollapse, userToggled]);
+
   const location = useLocation();
 
   let selectedTab = 0;
@@ -144,7 +154,10 @@ function SideNav({
             </Typography>
           )}
           <IconButton
-            onClick={onToggleCollapse}
+            onClick={() => {
+              setUserToggled(true);
+              onToggleCollapse();
+            }}
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
