@@ -1,47 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  TextField,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Button,
-  Chip,
-} from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { useNavigate } from 'react-router';
 import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
-import TaskTableWrapper from '../components/TaskTableWrapper';
-import { useNavigate } from 'react-router';
-import HttpService from '../../services/HttpService';
-import DateAndTimeService from '../../services/DateAndTimeService';
 import useProcessInstances from '../../hooks/useProcessInstances';
-import TaskTable from '../components/TaskTable';
 import HeaderTabs from '../components/HeaderTabs';
-
-const mainBlue = 'primary.main';
+import {
+  ProcessInstance,
+  ProcessInstanceTask,
+  ReportFilter,
+} from '../../interfaces';
+import TaskTable from '../components/TaskTable';
 
 function InstancesStartedByMe() {
   const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
-  const { processInstances, pagination, reportMetadata } = useProcessInstances(
-    'system_report_in_progress_instances_initiated_by_me',
-    undefined,
-    'open_instances_started_by_me',
-    [2, 5, 25],
-    true,
-  );
+
+  const additionalReportFilters = useMemo<ReportFilter[]>(() => {
+    return [
+      {
+        field_name: 'with_oldest_open_task',
+        field_value: true,
+      },
+    ];
+  }, []);
+
+  const { processInstances, pagination, reportMetadata } = useProcessInstances({
+    reportIdentifier: 'system_report_in_progress_instances_initiated_by_me',
+    paginationQueryParamPrefix: 'open_instances_started_by_me',
+    additionalReportFilters,
+    // autoReload: true,
+  });
 
   const getWaitingForTableCellComponent = (
     processInstanceTask: ProcessInstanceTask,
@@ -65,11 +54,10 @@ function InstancesStartedByMe() {
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
 
-  const handleRunTask = (processInstanceTask: ProcessInstanceTask) => {
-    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+  const handleRunTask = (processInstance: ProcessInstance) => {
+    const taskUrl = `/tasks/${processInstance.id}/${processInstance.task_id}`;
     navigate(taskUrl);
   };
-
 
   return (
     <Box
@@ -86,7 +74,7 @@ function InstancesStartedByMe() {
       </Typography>
       <HeaderTabs
         value={1}
-        onChange={(event, newValue) => {
+        onChange={(_event, newValue) => {
           if (newValue === 0) {
             navigate('/newui');
           }
@@ -101,9 +89,12 @@ function InstancesStartedByMe() {
         }}
       >
         <SearchBar />
-        <TaskControls hideCompleted={hideCompleted} setHideCompleted={setHideCompleted} />
+        <TaskControls
+          hideCompleted={hideCompleted}
+          setHideCompleted={setHideCompleted}
+        />
       </Box>
-      <TaskTableWrapper
+      <TaskTable
         tasks={processInstances}
         handleRunTask={handleRunTask}
         getWaitingForTableCellComponent={getWaitingForTableCellComponent}

@@ -1,36 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  TextField,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Button,
-  Chip,
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { useNavigate } from 'react-router';
 import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
-import TaskTableWrapper from '../components/TaskTableWrapper';
-import { useNavigate } from 'react-router';
 import HttpService from '../../services/HttpService';
-import DateAndTimeService from '../../services/DateAndTimeService';
 import { ProcessInstanceTask } from '../../interfaces';
-import TaskTable from '../components/TaskTable';
 import HeaderTabs from '../components/HeaderTabs';
-
-const mainBlue = 'primary.main';
+import TaskTable from '../components/TaskTable';
 
 function Homepage() {
   const navigate = useNavigate();
@@ -77,7 +53,6 @@ function Homepage() {
     navigate(taskUrl);
   };
 
-
   return (
     <Box
       component="main"
@@ -93,7 +68,7 @@ function Homepage() {
       </Typography>
       <HeaderTabs
         value={0}
-        onChange={(event, newValue) => {
+        onChange={(_event, newValue) => {
           if (newValue === 1) {
             navigate('/newui/started-by-me');
           }
@@ -108,9 +83,12 @@ function Homepage() {
         }}
       >
         <SearchBar />
-        <TaskControls hideCompleted={hideCompleted} setHideCompleted={setHideCompleted} />
+        <TaskControls
+          hideCompleted={hideCompleted}
+          setHideCompleted={setHideCompleted}
+        />
       </Box>
-      <TaskTableWrapper
+      <TaskTable
         tasks={tasks}
         handleRunTask={handleRunTask}
         getWaitingForTableCellComponent={getWaitingForTableCellComponent}

@@ -207,6 +207,8 @@ export interface ProcessInstance {
   // from tasks
   potential_owner_usernames?: string;
   task_id?: string;
+  task_name?: string;
+  task_title?: string;
   task_updated_at_in_seconds?: number;
   waiting_for?: string;
 

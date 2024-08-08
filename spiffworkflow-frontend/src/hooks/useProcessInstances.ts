@@ -9,13 +9,19 @@ import {
   ReportFilter,
 } from '../interfaces';
 
-const useProcessInstances = (
-  reportIdentifier: string,
-  additionalReportFilters?: ReportFilter[],
-  paginationQueryParamPrefix?: string,
-  perPageOptions?: number[],
+type OwnProps = {
+  reportIdentifier: string;
+  additionalReportFilters?: ReportFilter[];
+  paginationQueryParamPrefix?: string;
+  autoReload?: boolean;
+};
+
+const useProcessInstances = ({
+  reportIdentifier,
+  additionalReportFilters,
+  paginationQueryParamPrefix,
   autoReload = false,
-) => {
+}: OwnProps) => {
   const [processInstances, setProcessInstances] = useState<ProcessInstance[]>(
     [],
   );
@@ -55,7 +61,7 @@ const useProcessInstances = (
       });
     }
 
-    const queryParamString = `per_page=${perPageOptions ? perPageOptions[1] : 5}&page=1`;
+    const queryParamString = `per_page=1000&page=1`;
     HttpService.makeCallToBackend({
       path: `/process-instances?${queryParamString}`,
       successCallback: setProcessInstancesFromResult,
@@ -66,12 +72,7 @@ const useProcessInstances = (
         report_metadata: reportMetadataToUse,
       },
     });
-  }, [
-    additionalReportFilters,
-    perPageOptions,
-    setProcessInstancesFromResult,
-    stopRefreshing,
-  ]);
+  }, [additionalReportFilters, setProcessInstancesFromResult, stopRefreshing]);
 
   useEffect(() => {
     const setReportMetadataFromReport = (processInstanceReport: any) => {
