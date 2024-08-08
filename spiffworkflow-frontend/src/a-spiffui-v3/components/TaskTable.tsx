@@ -215,7 +215,7 @@ export default function TaskTable({
     }
     const records = entries.map((entry) => {
       if (
-        hideCompleted &&
+        showNonActive &&
         'status' in entry &&
         ['complete', 'error'].includes(entry.status)
       ) {
