@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import false
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -30,7 +31,7 @@ class GroupModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(255), index=True)
     identifier: str = db.Column(db.String(255), index=True)
-    source_is_open_id: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    source_is_open_id: bool = db.Column(db.Boolean, default=False, server_default=false(), nullable=False, index=True)
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")
     user_group_assignments_waiting = relationship("UserGroupAssignmentWaitingModel", cascade="delete")  # type: ignore
