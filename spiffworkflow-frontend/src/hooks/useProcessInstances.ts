@@ -12,14 +12,12 @@ import {
 type OwnProps = {
   reportIdentifier: string;
   additionalReportFilters?: ReportFilter[];
-  paginationQueryParamPrefix?: string;
   autoReload?: boolean;
 };
 
 const useProcessInstances = ({
   reportIdentifier,
   additionalReportFilters,
-  paginationQueryParamPrefix,
   autoReload = false,
 }: OwnProps) => {
   const [processInstances, setProcessInstances] = useState<ProcessInstance[]>(
@@ -75,7 +73,7 @@ const useProcessInstances = ({
   }, [additionalReportFilters, setProcessInstancesFromResult, stopRefreshing]);
 
   useEffect(() => {
-    const setReportMetadataFromReport = (processInstanceReport: any) => {
+    const setReportMetadataFromReport = (_processInstanceReport: any) => {
       getProcessInstances();
     };
 

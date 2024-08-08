@@ -13,7 +13,6 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
 fi
 
 PORT="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
-use_local_open_id="false"
 acceptance_test_mode="false"
 
 use_local_open_id="true"

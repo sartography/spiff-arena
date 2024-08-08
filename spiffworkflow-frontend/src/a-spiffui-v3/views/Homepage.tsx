@@ -11,6 +11,7 @@ import TaskTable from '../components/TaskTable';
 function Homepage() {
   const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
 
   useEffect(() => {
@@ -59,9 +60,11 @@ function Homepage() {
         <TaskControls
           hideCompleted={hideCompleted}
           setHideCompleted={setHideCompleted}
+          setViewMode={setViewMode}
+          viewMode={viewMode}
         />
       </Box>
-      <TaskTable entries={tasks} />
+      <TaskTable entries={tasks} viewMode={viewMode} />
     </Box>
   );
 }

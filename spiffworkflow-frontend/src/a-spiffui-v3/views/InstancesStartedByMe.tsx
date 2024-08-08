@@ -11,6 +11,7 @@ import TaskTable from '../components/TaskTable';
 function InstancesStartedByMe() {
   const navigate = useNavigate();
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
 
   const additionalReportFilters = useMemo<ReportFilter[]>(() => {
     return [
@@ -21,9 +22,8 @@ function InstancesStartedByMe() {
     ];
   }, []);
 
-  const { processInstances, pagination, reportMetadata } = useProcessInstances({
+  const { processInstances } = useProcessInstances({
     reportIdentifier: 'system_report_in_progress_instances_initiated_by_me',
-    paginationQueryParamPrefix: 'open_instances_started_by_me',
     additionalReportFilters,
     // autoReload: true,
   });
@@ -61,9 +61,11 @@ function InstancesStartedByMe() {
         <TaskControls
           hideCompleted={hideCompleted}
           setHideCompleted={setHideCompleted}
+          setViewMode={setViewMode}
+          viewMode={viewMode}
         />
       </Box>
-      <TaskTable entries={processInstances} />
+      <TaskTable entries={processInstances} viewMode={viewMode} />
     </Box>
   );
 }

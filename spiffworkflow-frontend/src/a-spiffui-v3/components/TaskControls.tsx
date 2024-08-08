@@ -9,7 +9,19 @@ import {
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
 
-function TaskControls({ hideCompleted, setHideCompleted }) {
+type OwnProps = {
+  setHideCompleted: Function;
+  hideCompleted?: boolean;
+  setViewMode?: Function;
+  viewMode?: string;
+};
+
+function TaskControls({
+  hideCompleted,
+  setHideCompleted,
+  setViewMode,
+  viewMode = 'table',
+}: OwnProps) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Select
@@ -28,9 +40,13 @@ function TaskControls({ hideCompleted, setHideCompleted }) {
         }
         label="Hide completed"
       />
-      <IconButton>
-        <ViewModule />
-      </IconButton>
+      {setViewMode ? (
+        <IconButton
+          onClick={() => setViewMode(viewMode === 'table' ? 'tile' : 'table')}
+        >
+          <ViewModule />
+        </IconButton>
+      ) : null}
     </Box>
   );
 }
