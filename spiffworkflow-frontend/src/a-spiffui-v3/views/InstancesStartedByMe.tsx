@@ -10,7 +10,7 @@ import TaskTable from '../components/TaskTable';
 
 function InstancesStartedByMe() {
   const navigate = useNavigate();
-  const [hideCompleted, setHideCompleted] = useState(false);
+  const [showNonActive, setShowNonActive] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
 
   const additionalReportFilters = useMemo<ReportFilter[]>(() => {
@@ -59,8 +59,8 @@ function InstancesStartedByMe() {
       >
         <SearchBar />
         <TaskControls
-          hideCompleted={hideCompleted}
-          setHideCompleted={setHideCompleted}
+          showNonActive={showNonActive}
+          setShowNonActive={setShowNonActive}
           setViewMode={setViewMode}
           viewMode={viewMode}
         />
@@ -68,7 +68,7 @@ function InstancesStartedByMe() {
       <TaskTable
         entries={processInstances}
         viewMode={viewMode}
-        hideCompleted={hideCompleted}
+        showNonActive={showNonActive}
       />
     </Box>
   );

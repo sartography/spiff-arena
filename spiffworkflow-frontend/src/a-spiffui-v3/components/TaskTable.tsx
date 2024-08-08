@@ -23,13 +23,13 @@ import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
   viewMode?: string;
-  hideCompleted?: boolean;
+  showNonActive?: boolean;
 };
 
 export default function TaskTable({
   entries,
   viewMode = 'table',
-  hideCompleted = false,
+  showNonActive = false,
 }: TaskTableProps) {
   // const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
   const navigate = useNavigate();
@@ -101,7 +101,7 @@ export default function TaskTable({
     }
     const records = entries.map((entry) => {
       if (
-        hideCompleted &&
+        !showNonActive &&
         'status' in entry &&
         ['complete', 'error'].includes(entry.status)
       ) {

@@ -10,15 +10,15 @@ import {
 import { ViewModule } from '@mui/icons-material';
 
 type OwnProps = {
-  setHideCompleted?: Function;
-  hideCompleted?: boolean;
+  setShowNonActive?: Function;
+  showNonActive?: boolean;
   setViewMode?: Function;
   viewMode?: string;
 };
 
 function TaskControls({
-  hideCompleted,
-  setHideCompleted,
+  showNonActive,
+  setShowNonActive,
   setViewMode,
   viewMode = 'table',
 }: OwnProps) {
@@ -31,15 +31,15 @@ function TaskControls({
       >
         <MenuItem value="Group tasks">Group tasks</MenuItem>
       </Select>
-      {setHideCompleted ? (
+      {setShowNonActive ? (
         <FormControlLabel
           control={
             <Checkbox
-              checked={hideCompleted}
-              onChange={(e) => setHideCompleted(e.target.checked)}
+              checked={showNonActive}
+              onChange={(e) => setShowNonActive(e.target.checked)}
             />
           }
-          label="Hide completed"
+          label="Show non-active"
         />
       ) : null}
       {setViewMode ? (
