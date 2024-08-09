@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material';
+import { Box, Button, CircularProgress, Stack } from '@mui/material';
 
 import { useDebouncedCallback } from 'use-debounce';
 import HttpService from '../../../services/HttpService';
@@ -332,14 +332,14 @@ export default function TaskShow() {
             disabled={formButtonsDisabled}
             title="Save data as draft and close the form."
             variant="contained"
-            color="primary"
+            color="secondary"
           >
             Save and close
           </Button>
         );
       }
       reactFragmentToHideSubmitButton = (
-        <ButtonGroup>
+        <Stack direction="row" spacing={2}>
           <Button
             type="submit"
             id="submit-button"
@@ -356,17 +356,18 @@ export default function TaskShow() {
                 disabled={formButtonsDisabled}
                 onClick={() => handleSignalSubmit(signal.event)}
                 variant="contained"
+                color="secondary"
               >
                 {signal.label}
               </Button>
             ))}
           </>
-        </ButtonGroup>
+        </Stack>
       );
     }
 
     return (
-      <Box>
+      <Box className="limited-width-for-readability">
         <CustomForm
           id={`form-to-submit-${taskWithTaskData.guid}`}
           key={`form-to-submit-${taskWithTaskData.guid}`}
@@ -438,5 +439,7 @@ export default function TaskShow() {
     pageElements.push({ key: 'loading-icon', component: getLoadingIcon() });
   }
 
-  return <Box sx={{ p: 4, m: 4 }}>{renderElementsForArray(pageElements)}</Box>;
+  return (
+    <Box sx={{ my: 4, mx: 8 }}>{renderElementsForArray(pageElements)}</Box>
+  );
 }

@@ -149,29 +149,56 @@ const customComponents = (mode: PaletteMode) => {
 };
 
 /** Base, used by all core MUI components */
-const baseTheme = {
-  palette: {
-    primary: {
-      main: cyan[600],
-      light: cyan[400],
-      dark: cyan[800],
-      contrastText: '#ffffff',
+const baseTheme = (mode: PaletteMode) => {
+  const lightModeColors = {
+    palette: {
+      primary: {
+        main: cyan[600],
+        light: cyan[400],
+        dark: cyan[800],
+        contrastText: '#ffffff',
+      },
+      secondary: {
+        main: '#ffffff',
+        contrastText: '#000000',
+      },
     },
-  },
-  typography: {
-    button: {
-      textTransform: undefined,
+    typography: {
+      button: {
+        textTransform: undefined,
+      },
     },
-  },
+  };
+
+  const darkModeColors = {
+    palette: {
+      primary: {
+        main: cyan[800],
+        light: cyan[600],
+        dark: cyan[900],
+        contrastText: '#ffffff',
+      },
+      secondary: {
+        main: grey[300],
+        contrastText: '#000000',
+      },
+    },
+    typography: {
+      button: {
+        textTransform: undefined,
+      },
+    },
+  };
+  return mode === 'light' ? lightModeColors : darkModeColors;
 };
 
 /** Compose custom palette, components and base them into MUI ThemeOptions object. */
 export const createSpiffTheme = (mode: PaletteMode = 'light'): ThemeOptions => {
   return {
-    ...baseTheme,
+    ...baseTheme(mode),
     palette: {
       mode,
-      ...baseTheme.palette,
+      ...baseTheme(mode).palette,
       ...customPalette(mode),
     },
     components: {
