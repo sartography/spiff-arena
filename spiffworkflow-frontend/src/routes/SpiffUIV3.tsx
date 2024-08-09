@@ -50,7 +50,9 @@ export default function SpiffUIV3() {
     } else {
       setIsNavCollapsed(!isNavCollapsed);
     }
-    setIsNavCollapsed(!isNavCollapsed);
+    if (!isMobile) {
+      setIsNavCollapsed(!isNavCollapsed);
+    }
   };
 
   const toggleDarkMode = () => {
@@ -116,13 +118,13 @@ export default function SpiffUIV3() {
                 isDark={isDark}
                 additionalNavElement={additionalNavElement}
                 setAdditionalNavElement={setAdditionalNavElement}
-                onClose={() => setIsSideNavVisible(false)}
+                setIsSideNavVisible={setIsSideNavVisible}
               />
             )}
             {isMobile && !isSideNavVisible && (
               <IconButton
                 onClick={() => setIsSideNavVisible(true)}
-                sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1300 }}
+                sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1300 }}
               >
                 <MenuIcon />
               </IconButton>

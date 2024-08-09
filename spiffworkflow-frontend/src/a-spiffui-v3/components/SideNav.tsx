@@ -26,6 +26,7 @@ import {
   Person,
   Brightness7,
   Brightness4,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import appVersionInfo from '../../helpers/appVersionInfo';
@@ -45,6 +46,7 @@ type OwnProps = {
   isDark: boolean;
   additionalNavElement?: ReactElement | null;
   setAdditionalNavElement: Function;
+  setIsSideNavVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function SideNav({
@@ -54,6 +56,7 @@ function SideNav({
   isDark,
   additionalNavElement,
   setAdditionalNavElement,
+  setIsSideNavVisible,
 }: OwnProps) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
@@ -152,7 +155,13 @@ function SideNav({
             }}
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
-            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+            {isMobile ? (
+              <CloseIcon />
+            ) : isCollapsed ? (
+              <ChevronRight />
+            ) : (
+              <ChevronLeft />
+            )}
           </IconButton>
         </Box>
         <List>
