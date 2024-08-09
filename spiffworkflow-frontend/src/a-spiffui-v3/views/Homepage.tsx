@@ -24,7 +24,10 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
   const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
   const [selectedGroupBy, setSelectedGroupBy] = useState<string | null>(null);
 
-  const groupByOptions = useMemo(() => ['Responsible party'], []);
+  const groupByOptions = useMemo(
+    () => ['Responsible party', 'Process Group'],
+    [],
+  );
 
   const responsiblePartyMeKey = 'spiff_synthetic_key_indicating_assigned_to_me';
 
@@ -47,7 +50,24 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         return;
       }
       setSelectedGroupBy(groupBy);
-      if (groupBy === '') {
+
+      if (groupBy === 'Process Group') {
+        const grouped = tasks.reduce(
+          (acc: GroupedItems, task: ProcessInstanceTask) => {
+            const processGroupIdentifier = task.process_model_identifier
+              .split('/')
+              .slice(0, -1)
+              .join('/');
+            if (!acc[processGroupIdentifier]) {
+              acc[processGroupIdentifier] = [];
+            }
+            acc[processGroupIdentifier].push(task);
+            return acc;
+          },
+          {},
+        );
+        setGroupedTasks(grouped);
+      } else if (groupBy === '') {
         setGroupedTasks(null);
         setSelectedGroupBy(null);
       } else {
@@ -91,7 +111,12 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
       return sortedKeys.map((groupName: string) => {
         const taskList = groupedTasks[groupName];
         const isMe = groupName === responsiblePartyMeKey;
-        const headerText = isMe ? 'Tasks for ' : 'Tasks for the ';
+        const isProcessGroup = selectedGroupBy === 'Process Group';
+        const headerText = isMe
+          ? 'Tasks for '
+          : isProcessGroup
+            ? 'Tasks from process group: '
+            : 'Tasks for user group: ';
         const groupText = isMe ? 'me' : groupName;
         return (
           <Box key={groupName} sx={{ mb: 2 }}>
@@ -100,7 +125,6 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
               <Box component="span" sx={{ color: 'text.accent' }}>
                 {groupText}
               </Box>
-              {!isMe && ' group'}
             </Typography>
             <TaskTable entries={taskList} viewMode={viewMode} />
           </Box>
