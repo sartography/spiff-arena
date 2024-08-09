@@ -34,6 +34,7 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
       <ProcessInterstitial
         processInstanceId={Number(params.process_instance_id)}
         processInstanceShowPageUrl={processInstanceShowPageUrl}
+        isNewUi
         allowRedirect
       />
     </>

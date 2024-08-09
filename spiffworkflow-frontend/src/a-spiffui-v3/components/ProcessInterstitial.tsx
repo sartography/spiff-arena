@@ -19,6 +19,7 @@ type OwnProps = {
   smallSpinner?: boolean;
   collapsableInstructions?: boolean;
   executeTasks?: boolean;
+  isNewUi?: boolean;
 };
 
 export default function ProcessInterstitial({
@@ -28,6 +29,7 @@ export default function ProcessInterstitial({
   smallSpinner = false,
   collapsableInstructions = false,
   executeTasks = true,
+  isNewUi = false,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
@@ -96,7 +98,11 @@ export default function ProcessInterstitial({
     if (shouldRedirectToTask(lastTask)) {
       lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
-        navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
+        let taskUrl = `/tasks/${lastTask.process_instance_id}/${lastTask.id}`;
+        if (isNewUi) {
+          taskUrl = `/newui${taskUrl}`;
+        }
+        navigate(taskUrl);
       }, 500);
       return () => clearInterval(timerId);
     }
