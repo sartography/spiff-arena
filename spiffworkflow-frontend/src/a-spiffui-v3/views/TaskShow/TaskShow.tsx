@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Grid, Column, Button, ButtonSet, Loading } from '@carbon/react';
+import {
+  Grid,
+  Box,
+  Button,
+  ButtonGroup,
+  CircularProgress,
+} from '@mui/material';
 
 import { useDebouncedCallback } from 'use-debounce';
 import HttpService from '../../../services/HttpService';
@@ -26,18 +32,8 @@ import ProcessBreadcrumb from '../../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../../components/InstructionsForEndUser';
 
 export default function TaskShow() {
-  // get a basic task which doesn't get the form data so we can load
-  // the basic form and structure of the page without waiting for form data.
-  // this was mainly to help with loading form data with large files attached to it
   const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
   const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
-
-  // put this in a state so ProcessBreadCrumb does not attempt to re-render
-  // since javascript cannot tell if an array or object has changed
-  // but react states can. If we simply initialize a ProcessBreadCrumb when
-  // this parent component renders, we get a request to process model show
-  // every time someone types a character into a user task form (because we change ANY
-  // state. in this case, setTaskData).
   const [hotCrumbs, setHotCrumbs] = useState<HotCrumbItem[]>([]);
 
   const params = useParams();
@@ -58,8 +54,6 @@ export default function TaskShow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // if a user can complete a task then the for-me page should
-  // always work for them so use that since it will work in all cases
   const navigateToInterstitial = useCallback(
     (myTask: BasicTask) => {
       navigate(
@@ -111,7 +105,6 @@ export default function TaskShow() {
     const processTaskWithDataResult = (result: Task) => {
       setTaskWithTaskData(result);
 
-      // convert null back to undefined so rjsf doesn't attempt to incorrectly validate them
       const taskDataToUse = result.saved_form_data || result.data;
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
@@ -138,12 +131,7 @@ export default function TaskShow() {
     addErrorCallback,
   ]);
 
-  // Before we auto-saved form data, we remembered what data was in the form, and then created a synthetic submit event
-  // in order to implement a "Save and close" button. That button no longer saves (since we have auto-save), but the crazy
-  // frontend code to support that Save and close button is here, in case we need to reference that someday:
-  //   https://github.com/sartography/spiff-arena/blob/182f56a1ad23ce780e8f5b0ed00efac3e6ad117b/spiffworkflow-frontend/src/routes/TaskShow.tsx#L329
   const autoSaveTaskData = (formData: any, successCallback?: Function) => {
-    // save-draft gets called when a manual task form loads but there's no data to save so don't do it
     if (['ManualTask', 'Task'].includes(taskWithTaskData?.typename || '')) {
       return undefined;
     }
@@ -178,15 +166,11 @@ export default function TaskShow() {
     }
   };
 
-  const addDebouncedTaskDataAutoSave = useDebouncedCallback(
-    () => {
-      if (autosaveOnFormChanges) {
-        sendAutosaveEvent();
-      }
-    },
-    // delay in ms
-    500,
-  );
+  const addDebouncedTaskDataAutoSave = useDebouncedCallback(() => {
+    if (autosaveOnFormChanges) {
+      sendAutosaveEvent();
+    }
+  }, 500);
 
   const processSubmitResult = (result: any) => {
     removeError();
@@ -239,8 +223,6 @@ export default function TaskShow() {
     removeError();
     delete dataToSubmit.isManualTask;
 
-    // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
-    // so we convert undefined values to null recursively so that we can unset values in form fields
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
     HttpService.makeCallToBackend({
@@ -277,11 +259,6 @@ export default function TaskShow() {
     sendAutosaveEvent({ successCallback });
   };
 
-  // we had to duplicate this logic because we pass chlidren to the Form.
-  // we pass children to the form because of additional submit buttons on the form for signals, and we
-  // probably want these to be styled next to the default button.
-  // if we remove the children prop from the Form, the submit button text works perfectly per the
-  // docs at https://rjsf-team.github.io/react-jsonschema-form/docs/api-reference/uiSchema
   const getSubmitButtonOptions = (formUiSchema: any) => {
     const uiOptionsString = 'ui:options';
     let submitButtonOptions = {};
@@ -347,10 +324,6 @@ export default function TaskShow() {
         'ui:readonly': true,
       });
 
-      // It doesn't seem as if Form allows for removing the default submit button
-      // so passing a blank fragment or children seem to do it though
-      //
-      // from: https://github.com/rjsf-team/react-jsonschema-form/issues/1602
       reactFragmentToHideSubmitButton = <div />;
     }
 
@@ -363,19 +336,21 @@ export default function TaskShow() {
             id="close-button"
             onClick={handleCloseButton}
             disabled={formButtonsDisabled}
-            kind="primary"
             title="Save data as draft and close the form."
+            variant="contained"
+            color="primary"
           >
             Save and close
           </Button>
         );
       }
       reactFragmentToHideSubmitButton = (
-        <ButtonSet>
+        <ButtonGroup>
           <Button
             type="submit"
             id="submit-button"
             disabled={formButtonsDisabled}
+            variant="contained"
           >
             {submitButtonText}
           </Button>
@@ -386,21 +361,19 @@ export default function TaskShow() {
                 name="signal.signal"
                 disabled={formButtonsDisabled}
                 onClick={() => handleSignalSubmit(signal.event)}
+                variant="contained"
               >
                 {signal.label}
               </Button>
             ))}
           </>
-        </ButtonSet>
+        </ButtonGroup>
       );
     }
 
-    // we are using two forms here so we can have one that validates data and one that does not.
-    // this allows us to autosave form data without extra attributes and without validations
-    // but still requires validations when the user submits the form that they can edit.
     return (
-      <Grid fullWidth condensed className="megacondensed">
-        <Column sm={4} md={5} lg={8}>
+      <Grid container spacing={2}>
+        <Box sm={4} md={5} lg={8}>
           <CustomForm
             id={`form-to-submit-${taskWithTaskData.guid}`}
             key={`form-to-submit-${taskWithTaskData.guid}`}
@@ -413,7 +386,6 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
-            restrictedWidth
           >
             {reactFragmentToHideSubmitButton}
           </CustomForm>
@@ -426,22 +398,15 @@ export default function TaskShow() {
             schema={jsonSchema}
             uiSchema={formUiSchema}
             noValidate
-            restrictedWidth
           />
-        </Column>
+        </Box>
       </Grid>
     );
   };
 
   const getLoadingIcon = () => {
-    const style = { margin: '50px 0 50px 50px' };
-    return (
-      <Loading
-        description="Active loading indicator"
-        withOverlay={false}
-        style={style}
-      />
-    );
+    const style = { margin: '50px' };
+    return <CircularProgress style={style} />;
   };
 
   const pageElements: ElementForArray[] = [];
