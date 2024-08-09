@@ -3,11 +3,13 @@ import {
   Box,
   Container,
   CssBaseline,
+  IconButton,
   Grid,
   ThemeProvider,
   useMediaQuery,
   createTheme,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
@@ -37,11 +39,17 @@ export default function SpiffUIV3() {
   const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
 
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
+  const [isSideNavVisible, setIsSideNavVisible] = useState<boolean>(!isMobile);
   const [viewMode, setViewMode] = useState<'table' | 'tile'>(
     isMobile ? 'tile' : 'table',
   );
 
   const toggleNavCollapse = () => {
+    if (isMobile) {
+      setIsSideNavVisible(!isSideNavVisible);
+    } else {
+      setIsNavCollapsed(!isNavCollapsed);
+    }
     setIsNavCollapsed(!isNavCollapsed);
   };
 
@@ -100,14 +108,25 @@ export default function SpiffUIV3() {
               overflow: 'hidden',
             }}
           >
-            <SideNav
-              isCollapsed={isNavCollapsed}
-              onToggleCollapse={toggleNavCollapse}
-              onToggleDarkMode={toggleDarkMode}
-              isDark={isDark}
-              additionalNavElement={additionalNavElement}
-              setAdditionalNavElement={setAdditionalNavElement}
-            />
+            {isSideNavVisible && (
+              <SideNav
+                isCollapsed={isNavCollapsed}
+                onToggleCollapse={toggleNavCollapse}
+                onToggleDarkMode={toggleDarkMode}
+                isDark={isDark}
+                additionalNavElement={additionalNavElement}
+                setAdditionalNavElement={setAdditionalNavElement}
+                onClose={() => setIsSideNavVisible(false)}
+              />
+            )}
+            {isMobile && !isSideNavVisible && (
+              <IconButton
+                onClick={() => setIsSideNavVisible(true)}
+                sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1300 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
             <Box
               className={`${transitionStage}`}
               sx={{
