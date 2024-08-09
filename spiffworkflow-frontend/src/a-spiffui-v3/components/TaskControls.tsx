@@ -33,14 +33,20 @@ function TaskControls({
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       {onGroupBySelect ? (
         <Select
-          value={selectedGroupBy || ''}
+          value={selectedGroupBy || 'placeholder'}
           size="small"
           onChange={(e) => {
             onGroupBySelect(e.target.value);
           }}
           sx={{ mr: 2, bgcolor: 'background.paper' }}
         >
-          {selectedGroupBy && <MenuItem value="">Ungrouped</MenuItem>}
+          {selectedGroupBy ? (
+            <MenuItem value="">Ungrouped</MenuItem>
+          ) : (
+            <MenuItem value="placeholder" disabled>
+              Group by
+            </MenuItem>
+          )}
           {groupByOptions?.map((group) => (
             <MenuItem key={group} value={group}>
               {group}
