@@ -3,39 +3,50 @@ import {
   Box,
   Select,
   MenuItem,
-  FormControlLabel,
   Checkbox,
   IconButton,
+  FormControlLabel,
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
 import SpiffTooltip from '../../components/SpiffTooltip';
 
 type OwnProps = {
-  onUserGroupSelect?: Function;
+  onGroupBySelect?: Function;
   setShowNonActive?: Function;
   setViewMode?: Function;
   showNonActive?: boolean;
-  userGroups?: string[];
+  groupByOptions?: string[] | null;
   viewMode?: string;
+  selectedGroupBy?: string | null;
 };
 
 function TaskControls({
-  onUserGroupSelect,
+  onGroupBySelect,
   setShowNonActive,
   setViewMode,
   showNonActive,
-  userGroups,
+  groupByOptions,
   viewMode = 'table',
+  selectedGroupBy,
 }: OwnProps) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Select
-        value="Group tasks"
-        size="small"
-        sx={{ mr: 2, bgcolor: 'background.paper' }}
-      >
-        <MenuItem value="Group tasks">Group tasks</MenuItem>
-      </Select>
+      {onGroupBySelect ? (
+        <Select
+          value={selectedGroupBy || ''}
+          size="small"
+          onChange={(e) => {
+            onGroupBySelect(e.target.value);
+          }}
+          sx={{ mr: 2, bgcolor: 'background.paper' }}
+        >
+          {groupByOptions?.map((group) => (
+            <MenuItem key={group} value={group}>
+              {group}
+            </MenuItem>
+          ))}
+        </Select>
+      ) : null}
       {setShowNonActive ? (
         <FormControlLabel
           control={

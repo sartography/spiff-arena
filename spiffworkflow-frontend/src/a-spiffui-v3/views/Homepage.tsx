@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import SearchBar from '../components/SearchBar';
@@ -13,10 +13,19 @@ type HomepageProps = {
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
 };
 
+type GroupedItems = {
+  [key: string]: ProcessInstanceTask[];
+};
+
 function Homepage({ viewMode, setViewMode }: HomepageProps) {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
-  const [userGroups, setUserGroups] = useState<string[] | null>(null);
+  const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
+  const [selectedGroupBy, setSelectedGroupBy] = useState<string | null>(null);
+
+  const groupByOptions = useMemo(() => ['Responsible party'], []);
+
+  const responsiblePartyMeKey = 'spiff_synthetic_key_indicating_assigned_to_me';
 
   useEffect(() => {
     const getTasks = () => {
@@ -27,17 +36,66 @@ function Homepage({ viewMode, setViewMode }: HomepageProps) {
         path: '/tasks',
         successCallback: setTasksFromResult,
       });
-      HttpService.makeCallToBackend({
-        path: `/user-groups/for-current-user`,
-        successCallback: setUserGroups,
-      });
     };
     getTasks();
   }, []);
 
-  const onUserGroupSelect = useCallback((userGroup: string) => {
-    console.log('userGroup', userGroup);
-  }, []);
+  const onGroupBySelect = useCallback(
+    (groupBy: string) => {
+      if (!tasks) {
+        return;
+      }
+      setSelectedGroupBy(groupBy);
+      if (groupBy === 'Responsible party') {
+        const grouped = tasks.reduce(
+          (acc: GroupedItems, task: ProcessInstanceTask) => {
+            const key =
+              task.assigned_user_group_identifier || responsiblePartyMeKey;
+            if (!acc[key]) {
+              acc[key] = [];
+            }
+            acc[key].push(task);
+            return acc;
+          },
+          {},
+        );
+        setGroupedTasks(grouped);
+      }
+    },
+    [tasks],
+  );
+
+  const taskTableElement = () => {
+    if (!tasks) {
+      return null;
+    }
+
+    if (groupedTasks) {
+      const specialKeyToSortFirst = responsiblePartyMeKey;
+      const sortedKeys = Object.keys(groupedTasks).sort((a, b) => {
+        if (a === specialKeyToSortFirst) {
+          return -1;
+        }
+        if (b === specialKeyToSortFirst) {
+          return 1;
+        }
+        return a.localeCompare(b); // Alphabetical order for the rest
+      });
+      return sortedKeys.map((groupName: string) => {
+        const taskList = groupedTasks[groupName];
+        const tableName =
+          groupName === responsiblePartyMeKey ? 'Me' : groupName;
+        return (
+          <>
+            <h1>{tableName}</h1>
+            <TaskTable entries={taskList} viewMode={viewMode} />
+          </>
+        );
+      });
+    }
+
+    return <TaskTable entries={tasks} viewMode={viewMode} />;
+  };
 
   return (
     <Box
@@ -72,11 +130,12 @@ function Homepage({ viewMode, setViewMode }: HomepageProps) {
         <TaskControls
           viewMode={viewMode}
           setViewMode={setViewMode}
-          userGroups={userGroups}
-          onUserGroupSelect={onUserGroupSelect}
+          groupByOptions={groupByOptions}
+          onGroupBySelect={onGroupBySelect}
+          selectedGroupBy={selectedGroupBy}
         />
       </Box>
-      <TaskTable entries={tasks} viewMode={viewMode} />
+      {taskTableElement()}
     </Box>
   );
 }
