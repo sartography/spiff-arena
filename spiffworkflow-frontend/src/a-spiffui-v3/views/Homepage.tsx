@@ -84,15 +84,24 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         }
         return a.localeCompare(b); // Alphabetical order for the rest
       });
-      return sortedKeys.map((groupName: string) => {
+      return sortedKeys.map((groupName: string, index: number) => {
         const taskList = groupedTasks[groupName];
         const tableName =
-          groupName === responsiblePartyMeKey ? 'Me' : groupName;
+          groupName === responsiblePartyMeKey ? 'me' : groupName;
+        const isMe = groupName === responsiblePartyMeKey;
+        const headerText = isMe ? 'Tasks for ' : 'Tasks for the ';
+        const groupText = isMe ? 'me' : groupName;
         return (
-          <>
-            <h1>{tableName}</h1>
+          <Box key={index} sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'normal' }}>
+              {headerText}
+              <Box component="span" sx={{ color: 'text.accent' }}>
+                {groupText}
+              </Box>
+              {!isMe && ' group'}
+            </Typography>
             <TaskTable entries={taskList} viewMode={viewMode} />
-          </>
+          </Box>
         );
       });
     }
