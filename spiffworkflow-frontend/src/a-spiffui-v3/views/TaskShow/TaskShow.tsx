@@ -438,5 +438,5 @@ export default function TaskShow() {
     pageElements.push({ key: 'loading-icon', component: getLoadingIcon() });
   }
 
-  return <>{renderElementsForArray(pageElements)}</>;
+  return <Box sx={{ p: 4, m: 4 }}>{renderElementsForArray(pageElements)}</Box>;
 }
