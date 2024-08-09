@@ -50,7 +50,9 @@ export default function SpiffUIV3() {
     } else {
       setIsNavCollapsed(!isNavCollapsed);
     }
-    if (!isMobile) {
+    if (isMobile) {
+      setIsSideNavVisible(!isSideNavVisible);
+    } else {
       setIsNavCollapsed(!isNavCollapsed);
     }
   };
@@ -79,7 +81,16 @@ export default function SpiffUIV3() {
     }
   }, [location, displayLocation]);
 
-  return (
+  useEffect(() => {
+    if (isMobile) {
+      setIsSideNavVisible(false);
+    } else {
+      setIsSideNavVisible(true);
+      setIsNavCollapsed(false);
+    }
+  }, [isMobile]);
+
+return (
     <ThemeProvider theme={globalTheme}>
       <LoginHandler />
       <CssBaseline />
