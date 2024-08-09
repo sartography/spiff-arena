@@ -161,7 +161,11 @@ export default function SpiffUIV3() {
                 <Route
                   path="/"
                   element={
-                    <Homepage viewMode={viewMode} setViewMode={setViewMode} />
+                    <Homepage
+                      viewMode={viewMode}
+                      setViewMode={setViewMode}
+                      isMobile={isMobile}
+                    />
                   }
                 />
                 <Route
@@ -183,6 +187,7 @@ export default function SpiffUIV3() {
                     <InstancesStartedByMe
                       viewMode={viewMode}
                       setViewMode={setViewMode}
+                      isMobile={isMobile}
                     />
                   }
                 />
