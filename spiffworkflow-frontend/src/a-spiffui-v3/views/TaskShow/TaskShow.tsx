@@ -1,13 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import {
-  Grid,
-  Box,
-  Button,
-  ButtonGroup,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material';
 
 import { useDebouncedCallback } from 'use-debounce';
 import HttpService from '../../../services/HttpService';
@@ -372,35 +366,33 @@ export default function TaskShow() {
     }
 
     return (
-      <Grid container spacing={2}>
-        <Box sm={4} md={5} lg={8}>
-          <CustomForm
-            id={`form-to-submit-${taskWithTaskData.guid}`}
-            key={`form-to-submit-${taskWithTaskData.guid}`}
-            disabled={formButtonsDisabled}
-            formData={taskData}
-            onChange={(obj: any) => {
-              setTaskData(obj.formData);
-              addDebouncedTaskDataAutoSave();
-            }}
-            onSubmit={handleFormSubmit}
-            schema={jsonSchema}
-            uiSchema={formUiSchema}
-          >
-            {reactFragmentToHideSubmitButton}
-          </CustomForm>
-          <CustomForm
-            id={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
-            key={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
-            className="hidden-form-for-autosave"
-            formData={taskData}
-            onSubmit={handleAutosaveFormSubmit}
-            schema={jsonSchema}
-            uiSchema={formUiSchema}
-            noValidate
-          />
-        </Box>
-      </Grid>
+      <Box>
+        <CustomForm
+          id={`form-to-submit-${taskWithTaskData.guid}`}
+          key={`form-to-submit-${taskWithTaskData.guid}`}
+          disabled={formButtonsDisabled}
+          formData={taskData}
+          onChange={(obj: any) => {
+            setTaskData(obj.formData);
+            addDebouncedTaskDataAutoSave();
+          }}
+          onSubmit={handleFormSubmit}
+          schema={jsonSchema}
+          uiSchema={formUiSchema}
+        >
+          {reactFragmentToHideSubmitButton}
+        </CustomForm>
+        <CustomForm
+          id={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+          key={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
+          className="hidden-form-for-autosave"
+          formData={taskData}
+          onSubmit={handleAutosaveFormSubmit}
+          schema={jsonSchema}
+          uiSchema={formUiSchema}
+          noValidate
+        />
+      </Box>
     );
   };
 
