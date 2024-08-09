@@ -57,13 +57,6 @@ function SideNav({
 }: OwnProps) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
-  const [userToggled, setUserToggled] = useState(false);
-
-  useEffect(() => {
-    if (isMobile && !isCollapsed && !userToggled) {
-      onToggleCollapse();
-    }
-  }, [isMobile, isCollapsed, onToggleCollapse, userToggled]);
 
   const location = useLocation();
 
@@ -155,7 +148,6 @@ function SideNav({
           )}
           <IconButton
             onClick={() => {
-              setUserToggled(true);
               onToggleCollapse();
             }}
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
