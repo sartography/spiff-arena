@@ -90,7 +90,7 @@ export default function SpiffUIV3() {
     }
   }, [isMobile]);
 
-return (
+  return (
     <ThemeProvider theme={globalTheme}>
       <LoginHandler />
       <CssBaseline />

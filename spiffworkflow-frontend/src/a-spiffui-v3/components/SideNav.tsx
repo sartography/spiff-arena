@@ -46,7 +46,6 @@ type OwnProps = {
   isDark: boolean;
   additionalNavElement?: ReactElement | null;
   setAdditionalNavElement: Function;
-  setIsSideNavVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function SideNav({
@@ -56,7 +55,6 @@ function SideNav({
   isDark,
   additionalNavElement,
   setAdditionalNavElement,
-  setIsSideNavVisible,
 }: OwnProps) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
@@ -114,6 +112,8 @@ function SideNav({
   // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
   const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
 
+  const collapseOrExpandIcon = isCollapsed ? <ChevronRight /> : <ChevronLeft />;
+
   return (
     <>
       <Box
@@ -155,14 +155,8 @@ function SideNav({
             }}
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
-            {isMobile ? (
-              <CloseIcon />
-            ) : isCollapsed ? (
-              <ChevronRight />
-            ) : (
-              <ChevronLeft />
-            )}
-          </IconButton>
+            {isMobile ? <CloseIcon /> : collapseOrExpandIcon}
+          </IconButton>{' '}
         </Box>
         <List>
           {[
@@ -260,7 +254,7 @@ function SideNav({
           sx={{
             position: 'fixed',
             bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
-            left: isCollapsed ? 64 : 64,
+            left: 64,
             right: 'auto',
             width: 256,
             padding: 2,
