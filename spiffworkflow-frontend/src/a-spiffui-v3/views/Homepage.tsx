@@ -53,14 +53,18 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
       } else {
         setSelectedGroupBy(groupBy);
         if (groupBy === 'Responsible party') {
-          const grouped = tasks.reduce((acc: GroupedItems, task: ProcessInstanceTask) => {
-            const key = task.assigned_user_group_identifier || responsiblePartyMeKey;
-            if (!acc[key]) {
-              acc[key] = [];
-            }
-            acc[key].push(task);
-            return acc;
-          }, {});
+          const grouped = tasks.reduce(
+            (acc: GroupedItems, task: ProcessInstanceTask) => {
+              const key =
+                task.assigned_user_group_identifier || responsiblePartyMeKey;
+              if (!acc[key]) {
+                acc[key] = [];
+              }
+              acc[key].push(task);
+              return acc;
+            },
+            {},
+          );
           setGroupedTasks(grouped);
         }
       }
@@ -84,15 +88,13 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         }
         return a.localeCompare(b); // Alphabetical order for the rest
       });
-      return sortedKeys.map((groupName: string, index: number) => {
+      return sortedKeys.map((groupName: string) => {
         const taskList = groupedTasks[groupName];
-        const tableName =
-          groupName === responsiblePartyMeKey ? 'me' : groupName;
         const isMe = groupName === responsiblePartyMeKey;
         const headerText = isMe ? 'Tasks for ' : 'Tasks for the ';
         const groupText = isMe ? 'me' : groupName;
         return (
-          <Box key={index} sx={{ mb: 2 }}>
+          <Box key={groupName} sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 'normal' }}>
               {headerText}
               <Box component="span" sx={{ color: 'text.accent' }}>

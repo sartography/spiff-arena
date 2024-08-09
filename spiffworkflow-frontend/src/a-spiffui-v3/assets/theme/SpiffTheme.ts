@@ -57,7 +57,7 @@ const customPalette = (mode: PaletteMode) => {
       secondary: grey[800],
       disabled: grey[400],
       subheading: grey[600],
-      accent: yellow[700], // see also spotColors.goldStar
+      accent: yellow[800], // see also spotColors.goldStar
     },
     borders: {
       table: '#e7ebed',
@@ -106,6 +106,7 @@ const customPalette = (mode: PaletteMode) => {
       secondary: grey[200],
       disabled: grey[600],
       subheading: grey[400],
+      accent: yellow[700], // see also spotColors.goldStar
     },
     borders: {
       table: grey[800],
