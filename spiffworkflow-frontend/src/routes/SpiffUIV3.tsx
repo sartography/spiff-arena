@@ -19,6 +19,7 @@ import SideNav from '../a-spiffui-v3/components/SideNav';
 import LoginHandler from '../components/LoginHandler';
 import Login from './Login';
 import InstancesStartedByMe from '../a-spiffui-v3/views/InstancesStartedByMe';
+import TaskShow from '../a-spiffui-v3/views/TaskShow/TaskShow';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -181,6 +182,10 @@ export default function SpiffUIV3() {
                   element={<StartProcessInstance />}
                 />
                 <Route path="login" element={<Login />} />
+                <Route
+                  path="/tasks/:process_instance_id/:task_guid"
+                  element={<TaskShow />}
+                />
                 <Route
                   path="/started-by-me"
                   element={

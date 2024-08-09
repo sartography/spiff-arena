@@ -122,17 +122,17 @@ export default function TaskShow() {
     };
 
     HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}`,
+      path: `/tasks/${params.process_instance_id}/${params.task_guid}`,
       successCallback: processBasicTaskResult,
       failureCallback: handleTaskFetchError,
     });
     HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}?with_form_data=true`,
+      path: `/tasks/${params.process_instance_id}/${params.task_guid}?with_form_data=true`,
       successCallback: processTaskWithDataResult,
       failureCallback: handleTaskFetchError,
     });
   }, [
-    params.task_id,
+    params.task_guid,
     params.process_instance_id,
     processBasicTaskResult,
     addErrorCallback,
@@ -152,7 +152,7 @@ export default function TaskShow() {
       successCallbackToUse = doNothing;
     }
     HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}/save-draft`,
+      path: `/tasks/${params.process_instance_id}/${params.task_guid}/save-draft`,
       postBody: formData,
       httpMethod: 'POST',
       successCallback: successCallbackToUse,
@@ -244,7 +244,7 @@ export default function TaskShow() {
     recursivelyChangeNullAndUndefined(dataToSubmit, null);
 
     HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
+      path: `/tasks/${params.process_instance_id}/${params.task_guid}${queryParams}`,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
