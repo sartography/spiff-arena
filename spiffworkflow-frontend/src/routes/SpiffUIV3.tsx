@@ -134,7 +134,10 @@ return (
             )}
             {isMobile && !isSideNavVisible && (
               <IconButton
-                onClick={() => setIsSideNavVisible(true)}
+                onClick={() => {
+                  setIsSideNavVisible(true);
+                  setIsNavCollapsed(false);
+                }}
                 sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1300 }}
               >
                 <MenuIcon />
