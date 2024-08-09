@@ -11,13 +11,14 @@ import TaskTable from '../components/TaskTable';
 type HomepageProps = {
   viewMode: 'table' | 'tile';
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
+  isMobile: boolean;
 };
 
 type GroupedItems = {
   [key: string]: ProcessInstanceTask[];
 };
 
-function Homepage({ viewMode, setViewMode }: HomepageProps) {
+function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
@@ -104,12 +105,35 @@ function Homepage({ viewMode, setViewMode }: HomepageProps) {
         flexGrow: 1,
         p: 3,
         overflow: 'auto',
-        height: '100vh',
+        height: isMobile ? 'calc(100vh - 64px)' : '100vh',
+        mt: isMobile ? '64px' : 0,
       }}
     >
-      <Typography variant="h1" sx={{ mb: 2 }}>
-        Home
-      </Typography>
+      {isMobile ? (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            zIndex: 1300,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            bgcolor: 'background.default',
+            p: 2,
+            boxShadow: 1,
+          }}
+        >
+          <Typography variant="h1" sx={{ fontSize: '1.5rem' }}>
+            Home
+          </Typography>
+        </Box>
+      ) : (
+        <Typography variant="h1" sx={{ mb: 2 }}>
+          Home
+        </Typography>
+      )}
       <HeaderTabs
         value={0}
         onChange={(_event, newValue) => {
