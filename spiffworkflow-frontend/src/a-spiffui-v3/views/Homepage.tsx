@@ -47,19 +47,18 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         return;
       }
       setSelectedGroupBy(groupBy);
-      if (groupBy === 'Responsible party') {
-        const grouped = tasks.reduce(
-          (acc: GroupedItems, task: ProcessInstanceTask) => {
-            const key =
-              task.assigned_user_group_identifier || responsiblePartyMeKey;
-            if (!acc[key]) {
-              acc[key] = [];
-            }
-            acc[key].push(task);
-            return acc;
-          },
-          {},
-        );
+      if (groupBy === '') {
+        setGroupedTasks(null);
+        setSelectedGroupBy(null);
+      } else if (groupBy === 'Responsible party') {
+        const grouped = tasks.reduce((acc: GroupedItems, task: ProcessInstanceTask) => {
+          const key = task.assigned_user_group_identifier || responsiblePartyMeKey;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(task);
+          return acc;
+        }, {});
         setGroupedTasks(grouped);
       }
     },

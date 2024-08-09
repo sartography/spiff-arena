@@ -40,6 +40,7 @@ function TaskControls({
           }}
           sx={{ mr: 2, bgcolor: 'background.paper' }}
         >
+          <MenuItem value="">Ungrouped</MenuItem>
           {groupByOptions?.map((group) => (
             <MenuItem key={group} value={group}>
               {group}
