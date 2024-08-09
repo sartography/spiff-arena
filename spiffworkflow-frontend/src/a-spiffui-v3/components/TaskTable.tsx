@@ -33,7 +33,6 @@ export default function TaskTable({
   viewMode = 'table',
   showNonActive = false,
 }: TaskTableProps) {
-  // const [viewMode, setViewMode] = useState<'table' | 'tile'>('table');
   const navigate = useNavigate();
 
   const getProcessInstanceId = (

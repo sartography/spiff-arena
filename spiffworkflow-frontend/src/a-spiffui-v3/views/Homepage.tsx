@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import SearchBar from '../components/SearchBar';
@@ -16,6 +16,7 @@ type HomepageProps = {
 function Homepage({ viewMode, setViewMode }: HomepageProps) {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
+  const [userGroups, setUserGroups] = useState<string[] | null>(null);
 
   useEffect(() => {
     const getTasks = () => {
@@ -26,8 +27,16 @@ function Homepage({ viewMode, setViewMode }: HomepageProps) {
         path: '/tasks',
         successCallback: setTasksFromResult,
       });
+      HttpService.makeCallToBackend({
+        path: `/user-groups/for-current-user`,
+        successCallback: setUserGroups,
+      });
     };
     getTasks();
+  }, []);
+
+  const onUserGroupSelect = useCallback((userGroup: string) => {
+    console.log('userGroup', userGroup);
   }, []);
 
   return (
@@ -60,7 +69,12 @@ function Homepage({ viewMode, setViewMode }: HomepageProps) {
         }}
       >
         <SearchBar />
-        <TaskControls viewMode={viewMode} setViewMode={setViewMode} />
+        <TaskControls
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          userGroups={userGroups}
+          onUserGroupSelect={onUserGroupSelect}
+        />
       </Box>
       <TaskTable entries={tasks} viewMode={viewMode} />
     </Box>

@@ -8,18 +8,23 @@ import {
   IconButton,
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
+import SpiffTooltip from '../../components/SpiffTooltip';
 
 type OwnProps = {
+  onUserGroupSelect?: Function;
   setShowNonActive?: Function;
-  showNonActive?: boolean;
   setViewMode?: Function;
+  showNonActive?: boolean;
+  userGroups?: string[];
   viewMode?: string;
 };
 
 function TaskControls({
-  showNonActive,
+  onUserGroupSelect,
   setShowNonActive,
   setViewMode,
+  showNonActive,
+  userGroups,
   viewMode = 'table',
 }: OwnProps) {
   return (
@@ -43,11 +48,13 @@ function TaskControls({
         />
       ) : null}
       {setViewMode ? (
-        <IconButton
-          onClick={() => setViewMode(viewMode === 'table' ? 'tile' : 'table')}
-        >
-          <ViewModule />
-        </IconButton>
+        <SpiffTooltip title="Toggle table / tiles">
+          <IconButton
+            onClick={() => setViewMode(viewMode === 'table' ? 'tile' : 'table')}
+          >
+            <ViewModule />
+          </IconButton>
+        </SpiffTooltip>
       ) : null}
     </Box>
   );
