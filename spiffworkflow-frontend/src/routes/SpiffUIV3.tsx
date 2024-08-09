@@ -20,6 +20,8 @@ import LoginHandler from '../components/LoginHandler';
 import Login from './Login';
 import InstancesStartedByMe from '../a-spiffui-v3/views/InstancesStartedByMe';
 import TaskShow from '../a-spiffui-v3/views/TaskShow/TaskShow';
+import ProcessInterstitialPage from '../a-spiffui-v3/views/TaskShow/ProcessInterstitialPage';
+import ProcessInstanceProgressPage from '../a-spiffui-v3/views/TaskShow/ProcessInstanceProgressPage';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -195,6 +197,22 @@ export default function SpiffUIV3() {
                       isMobile={isMobile}
                     />
                   }
+                />
+                <Route
+                  path="process-instances/for-me/:process_model_id/:process_instance_id/interstitial"
+                  element={<ProcessInterstitialPage variant="for-me" />}
+                />
+                <Route
+                  path="process-instances/:process_model_id/:process_instance_id/interstitial"
+                  element={<ProcessInterstitialPage variant="all" />}
+                />
+                <Route
+                  path="process-instances/for-me/:process_model_id/:process_instance_id/progress"
+                  element={<ProcessInstanceProgressPage variant="for-me" />}
+                />
+                <Route
+                  path="process-instances/:process_model_id/:process_instance_id/progress"
+                  element={<ProcessInstanceProgressPage variant="all" />}
                 />
               </Routes>
             </Box>

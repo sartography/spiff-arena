@@ -51,7 +51,7 @@ export default function TaskShow() {
   const navigateToInterstitial = useCallback(
     (myTask: BasicTask) => {
       navigate(
-        `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+        `/newui/process-instances/for-me/${modifyProcessIdentifierForPathParam(
           myTask.process_model_identifier,
         )}/${myTask.process_instance_id}/interstitial`,
       );
@@ -66,7 +66,7 @@ export default function TaskShow() {
       if (!result.can_complete) {
         if (result.process_model_uses_queued_execution) {
           navigate(
-            `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+            `/newui/process-instances/for-me/${modifyProcessIdentifierForPathParam(
               result.process_model_identifier,
             )}/${result.process_instance_id}/progress`,
           );
@@ -169,13 +169,13 @@ export default function TaskShow() {
   const processSubmitResult = (result: any) => {
     removeError();
     if (result.ok) {
-      navigate(`/tasks`);
+      navigate(`/newui`);
     } else if (result.process_instance_id) {
       if (result.can_complete) {
-        navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+        navigate(`/newui/tasks/${result.process_instance_id}/${result.id}`);
       } else if (result.process_model_uses_queued_execution) {
         navigate(
-          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+          `/newui/process-instances/for-me/${modifyProcessIdentifierForPathParam(
             result.process_model_identifier,
           )}/${result.process_instance_id}/progress`,
         );
