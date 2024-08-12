@@ -112,11 +112,14 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         const taskList = groupedTasks[groupName];
         const isMe = groupName === responsiblePartyMeKey;
         const isProcessGroup = selectedGroupBy === 'Process Group';
-        const headerText = isMe
-          ? 'Tasks for '
-          : isProcessGroup
-            ? 'Tasks from process group: '
-            : 'Tasks for user group: ';
+        let headerText = 'Tasks for ';
+        if (!isMe) {
+          if (isProcessGroup) {
+            headerText = 'Tasks from process group: ';
+          } else {
+            headerText = 'Tasks for user group: ';
+          }
+        }
         const groupText = isMe ? 'me' : groupName;
         return (
           <Box key={groupName} sx={{ mb: 2 }}>
@@ -144,7 +147,6 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         overflow: 'auto',
         height: '100%',
         mt: isMobile ? '64px' : 0,
-        overflow: 'auto',
       }}
     >
       {isMobile ? (
