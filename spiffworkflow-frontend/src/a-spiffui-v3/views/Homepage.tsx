@@ -165,9 +165,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
             boxShadow: 1,
           }}
         >
-          <Typography variant="h1" sx={{ fontSize: '1.5rem' }}>
-            Home
-          </Typography>
+          <Typography variant="h1">Home</Typography>
         </Box>
       ) : (
         <Typography variant="h1" sx={{ mb: 2 }}>

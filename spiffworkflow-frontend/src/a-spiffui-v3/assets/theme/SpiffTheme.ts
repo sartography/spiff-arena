@@ -150,6 +150,30 @@ const customComponents = (mode: PaletteMode) => {
 
 /** Base, used by all core MUI components */
 const baseTheme = (mode: PaletteMode) => {
+  const typographyOptions = {
+    button: {
+      textTransform: undefined,
+    },
+    h1: {
+      fontSize: '3rem', // Slightly smaller than default 6rem
+    },
+    h2: {
+      fontSize: '1.875rem', // Slightly smaller than default 3.75rem
+    },
+    h3: {
+      fontSize: '1.5rem', // Slightly smaller than default 3rem
+    },
+    h4: {
+      fontSize: '1.0625rem', // Slightly smaller than default 2.125rem
+    },
+    h5: {
+      fontSize: '0.75rem', // Slightly smaller than default 1.5rem
+    },
+    h6: {
+      fontSize: '0.625rem', // Slightly smaller than default 1.25rem
+    },
+  };
+
   const lightModeColors = {
     palette: {
       primary: {
@@ -163,11 +187,7 @@ const baseTheme = (mode: PaletteMode) => {
         contrastText: '#000000',
       },
     },
-    typography: {
-      button: {
-        textTransform: undefined,
-      },
-    },
+    typography: typographyOptions,
   };
 
   const darkModeColors = {
@@ -183,11 +203,7 @@ const baseTheme = (mode: PaletteMode) => {
         contrastText: '#000000',
       },
     },
-    typography: {
-      button: {
-        textTransform: undefined,
-      },
-    },
+    typography: typographyOptions,
   };
   return mode === 'light' ? lightModeColors : darkModeColors;
 };

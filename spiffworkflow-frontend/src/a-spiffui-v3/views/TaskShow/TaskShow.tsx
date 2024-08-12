@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Box, Button, CircularProgress, Stack } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 import { useDebouncedCallback } from 'use-debounce';
 import HttpService from '../../../services/HttpService';
@@ -416,10 +422,10 @@ export default function TaskShow() {
     pageElements.push({
       key: 'task-name',
       component: (
-        <h3>
+        <Typography variant="h3">
           Task: {basicTask.name_for_display} (
           {basicTask.process_model_display_name}){statusString}
-        </h3>
+        </Typography>
       ),
     });
   }
