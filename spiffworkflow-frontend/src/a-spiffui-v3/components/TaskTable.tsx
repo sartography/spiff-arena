@@ -13,6 +13,7 @@ import {
   Grid,
   Card,
   CardContent,
+  Container,
 } from '@mui/material';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
@@ -247,6 +248,18 @@ export default function TaskTable({
             </Typography>
             {getProcessInstanceSummary(entry)}
             <br />
+          </CardContent>
+          <Container
+            id="workflow-details"
+            sx={{
+              mb: 2,
+              px: {
+                xs: '16px',
+                sm: '16px',
+                md: '16px',
+              },
+            }}
+          >
             <Typography variant="body2">
               <strong>Created by</strong>: {entry.process_initiator_username}
             </Typography>
@@ -261,7 +274,7 @@ export default function TaskTable({
                 <strong>Waiting for</strong>: {waitingFor}
               </Typography>
             ) : null}
-          </CardContent>
+          </Container>
         </Card>
       </Grid>
     );
