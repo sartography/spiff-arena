@@ -100,7 +100,7 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
-.cds-white h1 {
+.cds--white h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
@@ -108,14 +108,14 @@ a.cds--header__menu-item {
   letter-spacing: 0.00938em;
 }
 
-.cds-white h2 {
+.cds--white h2 {
   font-weight: 400;
   font-size: 20px;
   line-height: 28px;
   color: #161616;
 }
 
-.cds-white h3 {
+.cds--white h3 {
   font-weight: 400;
   font-size: 18px;
   line-height: 20px;
