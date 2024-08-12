@@ -1040,14 +1040,14 @@ class ProcessInstanceProcessor:
                         process_instance_id=self.process_instance_model.id,
                         key=key,
                     )
-                pim.value = str(data_for_key)[0:255]
+                pim.value = self.__class__.truncate_string(str(data_for_key), 255)
                 db.session.add(pim)
 
     def update_summary(self) -> None:
         current_data = self.get_current_data()
         if "spiff_process_instance_summary" in current_data:
             summary = current_data["spiff_process_instance_summary"]
-            self.process_instance_model.summary = summary[:255]
+            self.process_instance_model.summary = self.__class__.truncate_string(summary, 255)
 
     @classmethod
     def _store_bpmn_process_definition(
@@ -1090,10 +1090,12 @@ class ProcessInstanceProcessor:
             )
             for task_bpmn_identifier, task_bpmn_properties in task_specs.items():
                 task_bpmn_name = task_bpmn_properties["bpmn_name"]
+                truncated_name = cls.truncate_string(task_bpmn_name, 255)
+                task_bpmn_properties["bpmn_name"] = truncated_name
                 task_definition = TaskDefinitionModel(
                     bpmn_process_definition=bpmn_process_definition,
                     bpmn_identifier=task_bpmn_identifier,
-                    bpmn_name=task_bpmn_name,
+                    bpmn_name=truncated_name,
                     properties_json=task_bpmn_properties,
                     typename=task_bpmn_properties["typename"],
                 )
@@ -1171,6 +1173,12 @@ class ProcessInstanceProcessor:
             )
         process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
+    @classmethod
+    def truncate_string(cls, input_string: str | None, max_length: int) -> str | None:
+        if input_string is None:
+            return None
+        return input_string[:max_length]
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
@@ -1240,7 +1248,7 @@ class ProcessInstanceProcessor:
                         task_guid=task_model.guid,
                         task_id=task_guid,
                         task_name=ready_or_waiting_task.task_spec.bpmn_id,
-                        task_title=ready_or_waiting_task.task_spec.bpmn_name,
+                        task_title=self.__class__.truncate_string(ready_or_waiting_task.task_spec.bpmn_name, 255),
                         task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                         task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
