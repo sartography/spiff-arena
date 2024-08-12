@@ -35,10 +35,12 @@ export default function ProcessModelCard({
   model,
   stream,
   lastSelected,
+  onStartProcess,
 }: {
   model: Record<string, any>;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
+  onStartProcess?: Function;
 }) {
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
@@ -53,6 +55,9 @@ export default function ProcessModelCard({
 
   const handleStartProcess = (e: PointerEvent) => {
     stopEventBubble(e);
+    if (onStartProcess) {
+      onStartProcess();
+    }
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );
@@ -175,7 +180,7 @@ export default function ProcessModelCard({
             size="small"
             onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
           >
-            Start This Process
+            Start this process
           </Button>
         </Stack>
       </Stack>

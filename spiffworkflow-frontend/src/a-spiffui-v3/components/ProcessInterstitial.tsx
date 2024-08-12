@@ -112,13 +112,14 @@ export default function ProcessInterstitial({
     }
     return undefined;
   }, [
+    isNewUi,
     lastTask,
     navigate,
-    shouldRedirectToTask,
     processInstanceId,
     processInstanceShowPageUrl,
-    state,
     shouldRedirectToProcessInstance,
+    shouldRedirectToTask,
+    state,
   ]);
 
   const getLoadingIcon = () => {

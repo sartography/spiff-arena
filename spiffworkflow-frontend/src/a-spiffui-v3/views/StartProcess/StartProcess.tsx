@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
+import { useDebouncedCallback } from 'use-debounce';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
 import SearchBar from './SearchBar';
@@ -22,7 +23,6 @@ import {
 } from '../../services/LocalStorageService';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
-import { useDebounce, useDebouncedCallback } from 'use-debounce';
 
 type OwnProps = {
   setNavElementCallback: Function;
@@ -367,6 +367,10 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
                       model={model}
                       stream={clickStream}
                       lastSelected={lastSelected}
+                      onStartProcess={() => {
+                        // remove the TreePanel from the SideNav when starting a process
+                        setNavElementCallback(null);
+                      }}
                     />
                   ))}
                 </Box>

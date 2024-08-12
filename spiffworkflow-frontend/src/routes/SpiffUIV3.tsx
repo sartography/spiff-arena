@@ -181,7 +181,7 @@ export default function SpiffUIV3() {
                 />
                 <Route
                   path="/:modifiedProcessModelId/start"
-                  element={<StartProcessInstance />}
+                  element={<StartProcessInstance isMobile={isMobile} />}
                 />
                 <Route path="login" element={<Login />} />
                 <Route
