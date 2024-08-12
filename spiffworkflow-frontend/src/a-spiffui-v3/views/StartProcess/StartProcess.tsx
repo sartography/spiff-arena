@@ -21,6 +21,8 @@ import {
   getStorageValue,
 } from '../../services/LocalStorageService';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
+import { modifyProcessIdentifierForPathParam } from '../../../helpers';
+import { useDebounce, useDebouncedCallback } from 'use-debounce';
 
 type OwnProps = {
   setNavElementCallback: Function;
@@ -113,6 +115,19 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
     if (itemToUse?.process_groups) {
       setGroups(itemToUse.process_groups);
     }
+
+    const container = document.getElementById('scrollable-process-card-area');
+    const cardElement = document.getElementById(
+      `card-${modifyProcessIdentifierForPathParam(item.id)}`,
+    );
+    if (container && cardElement) {
+      setTimeout(() => {
+        container.scrollTo({
+          top: cardElement.offsetTop - container.offsetTop,
+          behavior: 'smooth',
+        });
+      }, 100); // Slight delay before scrolling to ensure rendering
+    }
   };
 
   /** Tree calls back here so we can imperatively rework groups etc. */
@@ -138,7 +153,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
    * This is simple and works and is easily expanded,
    * but eventually might need to be more robust.
    */
-  const handleSearch = (search: string) => {
+  const handleSearch = useDebouncedCallback((search: string) => {
     // Indicate to user this is a search result.
     setCrumbs([
       { id: search, displayName: `Searching for: ${search || '(all)'}` },
@@ -164,7 +179,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
     setModelsExpanded(!!foundModels.length);
     // The tree isn't connected to these results, so imperatively wipe the expanded nodes.
     treeRef.current?.clearExpanded();
-  };
+  }, 250);
 
   /**
    * When a crumb is clicked, we need to find the item in the flatItems list
@@ -264,16 +279,15 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
         Start new process
       </Typography>
       <Container
-        id="THI ONE"
         maxWidth={false}
         sx={{
           padding: '0px !important',
           overflow: 'hidden',
           height: '100vh',
         }}
+        id="list-container"
       >
         <Stack
-          id="STACK1"
           gap={2}
           sx={{
             width: '100%',
@@ -303,6 +317,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
               paddingLeft: 2,
               paddingRight: 2,
             }}
+            id="scrollable-process-card-area"
           >
             <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
               {treeCollapsed && (
@@ -348,6 +363,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
                 <Box sx={gridProps}>
                   {models.map((model: Record<string, any>) => (
                     <ProcessModelCard
+                      key={model.id}
                       model={model}
                       stream={clickStream}
                       lastSelected={lastSelected}

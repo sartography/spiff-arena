@@ -117,7 +117,6 @@ function SideNav({
   return (
     <>
       <Box
-        id="HEY ID"
         sx={{
           width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
           flexShrink: 0,

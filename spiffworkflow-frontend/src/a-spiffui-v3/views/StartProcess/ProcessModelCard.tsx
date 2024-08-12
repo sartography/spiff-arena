@@ -134,6 +134,7 @@ export default function ProcessModelCard({
       elevation={0}
       sx={selectedStyle}
       onClick={() => stream && stream.next(model)}
+      id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
       <Box
         sx={{ position: 'absolute', right: 8, top: 8 }}
