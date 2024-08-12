@@ -152,6 +152,10 @@ export default function SpiffUIV3() {
                 bgcolor: 'background.default',
                 width: '100%',
                 height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                overflow: 'auto',
               }}
               onAnimationEnd={() => {
                 if (transitionStage === fadeOutImmediate) {

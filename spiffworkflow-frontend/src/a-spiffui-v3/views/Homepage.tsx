@@ -142,8 +142,9 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         flexGrow: 1,
         p: 3,
         overflow: 'auto',
-        height: isMobile ? 'calc(100vh - 64px)' : '100vh',
+        height: '100%',
         mt: isMobile ? '64px' : 0,
+        overflow: 'auto',
       }}
     >
       {isMobile ? (
