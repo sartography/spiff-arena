@@ -119,7 +119,7 @@ export default function TaskTable({
             }}
           />
           <Typography variant="body2" paragraph>
-            {entry.task_name || entry.task_title}
+            {entry.task_title || entry.task_name}
           </Typography>
           {getProcessInstanceSummary(entry)}
         </TableCell>
@@ -244,7 +244,7 @@ export default function TaskTable({
               />
             </Typography>
             <Typography variant="body2" paragraph>
-              {entry.task_name || entry.task_title}
+              {entry.task_title || entry.task_name}
             </Typography>
             {getProcessInstanceSummary(entry)}
             <br />
