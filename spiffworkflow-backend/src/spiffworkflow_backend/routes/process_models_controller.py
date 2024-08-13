@@ -253,7 +253,7 @@ def process_model_list(
             )
             process_model.parent_groups = parent_group_lites_with_cache["process_groups"]
         if group_by_process_group:
-            ProcessModelService.group_process_models_by_process_groups(process_models_to_return)
+            process_models_to_return = ProcessModelService.group_process_models_by_process_groups(process_models_to_return)
 
     pages = len(process_models) // per_page
     remainder = len(process_models) % per_page

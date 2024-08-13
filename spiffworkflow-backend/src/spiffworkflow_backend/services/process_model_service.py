@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import shutil
@@ -380,18 +381,49 @@ class ProcessModelService(FileSystemService):
                         "id": parent_group.id,
                         "display_name": parent_group.display_name,
                         "description": parent_group.description,
-                        "process_models": None,
-                        "process_groups": None,
+                        "process_models": [],
+                        "process_groups": [],
                     }
                 )
         return {"cache": process_group_cache, "process_groups": parent_group_array}
 
     @classmethod
     def group_process_models_by_process_groups(cls, process_models: list[ProcessModelInfo]) -> list[ProcessGroupLite]:
-        process_group_list = {}
-        # for process_model in process_models:
+        def add_to_group_hierarchy(group_hierarchy, group_path, process_model):
+            if not group_path:
+                return
 
-        return []
+            current_group = group_path[0]
+            # print(f"➡️ ➡️ ➡️  group_path: {group_path}")
+            current_group_id = current_group["id"]
+            if "process_groups_dict" not in current_group:
+                current_group["process_groups_dict"] = {}
+            if current_group_id not in group_hierarchy:
+                group_hierarchy[current_group_id] = current_group
+            # print(f"➡️ ➡️ ➡️  current_group: {current_group}")
+
+            if len(group_path) == 1:
+                process_model.parent_groups = None
+                group_hierarchy[current_group_id]["process_models"].append(process_model)
+            else:
+                add_to_group_hierarchy(group_hierarchy[current_group_id]["process_groups_dict"], group_path[1:], process_model)
+
+        group_hierarchy = {}
+        for process_model in process_models:
+            if process_model.parent_groups:
+                add_to_group_hierarchy(group_hierarchy, process_model.parent_groups, process_model)
+
+        def convert_to_list(group_hierarchy):
+            result = []
+            for _group_id, group_data in group_hierarchy.items():
+                group_data_copy = copy.deepcopy(group_data)
+                process_group_list = convert_to_list(group_data["process_groups_dict"])
+                del group_data_copy['process_groups_dict']
+                group_data_copy['process_groups'] = process_group_list
+                result.append( group_data_copy)
+            return result
+
+        return convert_to_list(group_hierarchy)
 
     @classmethod
     def reference_for_primary_file(cls, references: list[Reference], primary_file: str) -> Reference | None:

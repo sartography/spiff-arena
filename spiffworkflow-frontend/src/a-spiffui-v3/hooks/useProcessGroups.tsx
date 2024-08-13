@@ -35,7 +35,9 @@ export default function useProcessGroups({
     // });
   };
 
-  const path = '/process-groups?filter_runnable_by_user=true';
+  // const path = '/process-groups?filter_runnable_by_user=true';
+  const path =
+    '/process-models?filter_runnable_by_user=false&recursive=true&group_by_process_group=True&per_page=1000';
   const getProcessGroups = async () => {
     setLoading(true);
     HttpService.makeCallToBackend({
