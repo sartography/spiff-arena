@@ -23,6 +23,7 @@ import {
 } from '../../services/LocalStorageService';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
+import { ProcessGroup, ProcessGroupLite } from '../../../interfaces';
 
 type OwnProps = {
   setNavElementCallback: Function;
@@ -32,10 +33,15 @@ type OwnProps = {
  * feeds various streams, data and callbacks to children.
  */
 export default function StartProcess({ setNavElementCallback }: OwnProps) {
-  const { processGroups } = useProcessGroups({ processInfo: {} });
-  const [groups, setGroups] = useState<Record<string, any>[]>([]);
+  const { processGroups } = useProcessGroups({
+    processInfo: {},
+    getRunnableProcessModels: true,
+  });
+  const [groups, setGroups] = useState<
+    ProcessGroup[] | ProcessGroupLite[] | null
+  >(null);
   const [models, setModels] = useState<Record<string, any>[]>([]);
-  const [flatItems, setFlatItems] = useState<Record<string, any>[]>([]);
+  const [flatItems, setFlatItems] = useState<Record<string, any>>([]);
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
@@ -69,7 +75,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
 
     // Look up the display names in the flattened items and return.
     return pathIds.map((id) => {
-      const found = flatItems.find((flatItem) => flatItem.id === id);
+      const found = flatItems.find((flatItem: any) => flatItem.id === id);
       return { id, displayName: found?.display_name || id };
     });
   };
@@ -100,7 +106,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       };
       // Remove the last part of the id, which is not and expandable entity.
       const parentId = item.id.split('/').slice(0, -1).join('/');
-      findParent(processGroups.results, parentId);
+      findParent(processGroups || [], parentId);
     }
 
     if (itemToUse?.process_models) {
@@ -134,11 +140,11 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const handleFavorites = ({ text }: { text: string }) => {
     if (text === SHOW_FAVORITES) {
       const storage = JSON.parse(getStorageValue('spifffavorites'));
-      const favs = flatItems.filter((item) => storage.includes(item.id));
+      const favs = flatItems.filter((item: any) => storage.includes(item.id));
       // If there's no favorites, the user is just left looking at nothing.
       // Load the top level groups instead.
       // Expand accordions accordingly (haha).
-      setGroups(favs.length ? [] : processGroups.results);
+      setGroups(favs.length ? [] : processGroups);
       setModels(favs);
       setModelsExpanded(!!favs.length);
       setGroupsExpanded(!favs.length);
@@ -159,13 +165,13 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       { id: search, displayName: `Searching for: ${search || '(all)'}` },
     ]);
     // Search the flattened items for the search term.
-    const foundGroups = flatItems.filter((item) => {
+    const foundGroups = flatItems.filter((item: any) => {
       return (
         item.id.toLowerCase().includes(search.toLowerCase()) &&
         item?.process_groups
       );
     });
-    const foundModels = flatItems.filter((item) => {
+    const foundModels = flatItems.filter((item: any) => {
       return (
         (item.id + item.display_name + item.description)
           .toLowerCase()
@@ -188,7 +194,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const handleCrumbClick = (crumb: Crumb) => {
     // If this is s top-level crumb, just reset the view.
     if (crumb.id === SPIFF_ID) {
-      setGroups(processGroups.results);
+      setGroups(processGroups);
       setModels([]);
       setModelsExpanded(false);
       setGroupsExpanded(true);
@@ -197,22 +203,22 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       return;
     }
     // Otherwise, find the item in the flatItems list and feed it to the clickstream.
-    const found = flatItems.find((item) => item.id === crumb.id);
+    const found = flatItems.find((item: any) => item.id === crumb.id);
     if (found) {
       clickStream.next(found);
     }
   };
 
   /** Recursively flatten the entire hierarchy of process groups and models */
-  const flattenAllItems = (
-    items: Record<string, any>[],
-    flat: Record<string, any>[],
-  ) => {
+  const flattenAllItems = (items: ProcessGroup[], flat: ProcessGroup[]) => {
     items.forEach((item) => {
       flat.push(item);
       // Duck type to see if it's a group, and if so, recurse.
       if (item.process_groups) {
-        flattenAllItems([...item.process_groups, ...item.process_models], flat);
+        flattenAllItems(
+          [...item.process_groups, ...(item.process_models || [])],
+          flat,
+        );
       }
     });
 
@@ -221,13 +227,13 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
 
   useEffect(() => {
     // If no favorites, proceed with the normal process groups.
-    if (processGroups?.results) {
+    if (processGroups) {
       /**
        * Do this now and put it in state.
        * You do not want to do this on every change to the search filter.
        * The flattened map makes searching globally simple.
        */
-      const flattened = flattenAllItems(processGroups?.results || [], []);
+      const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
       // If there are favorites, that's all we want to display, return.
@@ -240,8 +246,8 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
         setCrumbs([favoriteCrumb]);
         return;
       }
-      setGroups(processGroups.results);
-      setGroupsExpanded(!!processGroups.results.length);
+      setGroups(processGroups);
+      setGroupsExpanded(!!processGroups.length);
       setCrumbs([]);
       if (setNavElementCallback) {
         setNavElementCallback(
@@ -384,11 +390,11 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="Process Groups Accordion"
               >
-                ({groups.length}) Process Groups
+                ({groups?.length}) Process Groups
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={gridProps}>
-                  {groups.map((group: Record<string, any>) => (
+                  {groups?.map((group: Record<string, any>) => (
                     <ProcessGroupCard
                       key={group.id}
                       group={group}

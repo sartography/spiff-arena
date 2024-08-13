@@ -7,6 +7,7 @@ import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import MenuItem from '../app/topmenu/MenuItem';
 import { SPIFF_FAVORITES } from '../../services/LocalStorageService';
+import { ProcessGroup } from '../../../interfaces';
 
 export const SHOW_FAVORITES = 'SHOW_FAVORITES';
 
@@ -26,7 +27,7 @@ export default forwardRef(function TreePanel(
     callback,
     stream,
   }: {
-    processGroups: Record<string, any>;
+    processGroups: ProcessGroup[];
     callback?: (data: Record<string, any>) => void;
     stream?: Subject<Record<string, any>>;
   },
@@ -252,7 +253,7 @@ export default forwardRef(function TreePanel(
             },
           }}
         >
-          {processGroups?.results?.length && buildTree(processGroups.results)}
+          {processGroups?.length && buildTree(processGroups)}
         </SimpleTreeView>
       </Stack>
     </Paper>
