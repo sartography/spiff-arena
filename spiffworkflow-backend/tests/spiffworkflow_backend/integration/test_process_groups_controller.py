@@ -254,26 +254,3 @@ class TestProcessGroupsController(BaseTest):
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["total"] == 1
         assert response.json["pagination"]["pages"] == 1
-
-    def test_process_model_list_with_grouping_by_process_group(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        self.create_group_and_model_with_bpmn(
-            client, with_super_admin_user, process_group_id="top_group", process_model_id="random_fact"
-        )
-        self.create_group_and_model_with_bpmn(
-            client, with_super_admin_user, process_group_id="top_group/subgroup1", process_model_id="hello_world"
-        )
-
-        response = client.get(
-            "/v1.0/process-models?group_by_process_group=true&recursive=true",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        # assert response.status_code == 200
-        # assert response.json is not None
-        print(f"➡️ ➡️ ➡️  response.json: {response.json}")
-        # assert len(response.json["results"]) == 1

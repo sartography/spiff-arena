@@ -394,15 +394,14 @@ class ProcessModelService(FileSystemService):
                 return
 
             current_group = group_path[0]
-            # print(f"➡️ ➡️ ➡️  group_path: {group_path}")
             current_group_id = current_group["id"]
             if "process_groups_dict" not in current_group:
                 current_group["process_groups_dict"] = {}
             if current_group_id not in group_hierarchy:
                 group_hierarchy[current_group_id] = current_group
-            # print(f"➡️ ➡️ ➡️  current_group: {current_group}")
 
             if len(group_path) == 1:
+                # null out parent groups since they are not needed in this context and it causes recursion errors with json
                 process_model.parent_groups = None
                 group_hierarchy[current_group_id]["process_models"].append(process_model)
             else:
@@ -418,9 +417,9 @@ class ProcessModelService(FileSystemService):
             for _group_id, group_data in group_hierarchy.items():
                 group_data_copy = copy.deepcopy(group_data)
                 process_group_list = convert_to_list(group_data["process_groups_dict"])
-                del group_data_copy['process_groups_dict']
-                group_data_copy['process_groups'] = process_group_list
-                result.append( group_data_copy)
+                del group_data_copy["process_groups_dict"]
+                group_data_copy["process_groups"] = process_group_list
+                result.append(group_data_copy)
             return result
 
         return convert_to_list(group_hierarchy)
