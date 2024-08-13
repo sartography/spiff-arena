@@ -23,7 +23,7 @@ import {
 } from '../../services/LocalStorageService';
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
-import { ProcessGroup } from '../../../interfaces';
+import { ProcessGroup, ProcessGroupLite } from '../../../interfaces';
 
 type OwnProps = {
   setNavElementCallback: Function;
@@ -35,10 +35,13 @@ type OwnProps = {
 export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const { processGroups } = useProcessGroups({
     processInfo: {},
+    getRunnableProcessModels: true,
   });
-  const [groups, setGroups] = useState<ProcessGroup[] | null>(null);
+  const [groups, setGroups] = useState<
+    ProcessGroup[] | ProcessGroupLite[] | null
+  >(null);
   const [models, setModels] = useState<Record<string, any>[]>([]);
-  const [flatItems, setFlatItems] = useState<ProcessGroup[]>([]);
+  const [flatItems, setFlatItems] = useState<Record<string, any>>([]);
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
@@ -72,7 +75,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
 
     // Look up the display names in the flattened items and return.
     return pathIds.map((id) => {
-      const found = flatItems.find((flatItem) => flatItem.id === id);
+      const found = flatItems.find((flatItem: any) => flatItem.id === id);
       return { id, displayName: found?.display_name || id };
     });
   };
@@ -137,7 +140,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   const handleFavorites = ({ text }: { text: string }) => {
     if (text === SHOW_FAVORITES) {
       const storage = JSON.parse(getStorageValue('spifffavorites'));
-      const favs = flatItems.filter((item) => storage.includes(item.id));
+      const favs = flatItems.filter((item: any) => storage.includes(item.id));
       // If there's no favorites, the user is just left looking at nothing.
       // Load the top level groups instead.
       // Expand accordions accordingly (haha).
@@ -162,13 +165,13 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       { id: search, displayName: `Searching for: ${search || '(all)'}` },
     ]);
     // Search the flattened items for the search term.
-    const foundGroups = flatItems.filter((item) => {
+    const foundGroups = flatItems.filter((item: any) => {
       return (
         item.id.toLowerCase().includes(search.toLowerCase()) &&
         item?.process_groups
       );
     });
-    const foundModels = flatItems.filter((item) => {
+    const foundModels = flatItems.filter((item: any) => {
       return (
         (item.id + item.display_name + item.description)
           .toLowerCase()
@@ -200,7 +203,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
       return;
     }
     // Otherwise, find the item in the flatItems list and feed it to the clickstream.
-    const found = flatItems.find((item) => item.id === crumb.id);
+    const found = flatItems.find((item: any) => item.id === crumb.id);
     if (found) {
       clickStream.next(found);
     }

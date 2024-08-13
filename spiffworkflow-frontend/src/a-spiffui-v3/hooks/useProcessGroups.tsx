@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ProcessGroup } from '../../interfaces';
+import { ProcessGroup, ProcessGroupLite } from '../../interfaces';
 import HttpService from '../../services/HttpService';
 
 /**
@@ -10,34 +10,26 @@ import HttpService from '../../services/HttpService';
  */
 export default function useProcessGroups({
   processInfo,
+  getRunnableProcessModels = false,
 }: {
   processInfo: Record<string, any>;
+  getRunnableProcessModels?: boolean;
 }) {
-  const [processGroups, setProcessGroups] = useState<ProcessGroup[] | null>(
-    null,
-  );
-  // const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
-  //   null,
-  // );
+  const [processGroups, setProcessGroups] = useState<
+    ProcessGroup[] | ProcessGroupLite[] | null
+  >(null);
   const [loading, setLoading] = useState(false);
 
-  // const handleProcessModelResponse = (result: any) => {
-  //   setProcessModels(result.results);
-  //   setLoading(false);
-  // };
   const handleProcessGroupResponse = (result: any) => {
     setProcessGroups(result.results);
     setLoading(false);
-    // HttpService.makeCallToBackend({
-    //   path: '/process-models?per_page=1000&recursive=true&filter_runnable_by_user=true',
-    //   httpMethod: 'GET',
-    //   successCallback: handleProcessModelResponse,
-    // });
   };
 
-  // const path = '/process-groups?filter_runnable_by_user=true';
-  const path =
-    '/process-models?filter_runnable_by_user=false&recursive=true&group_by_process_group=True&per_page=1000';
+  let path = '/process-groups';
+  if (getRunnableProcessModels) {
+    path =
+      '/process-models?filter_runnable_by_user=false&recursive=true&group_by_process_group=True&per_page=1000';
+  }
   const getProcessGroups = async () => {
     setLoading(true);
     HttpService.makeCallToBackend({
@@ -57,7 +49,6 @@ export default function useProcessGroups({
 
   return {
     processGroups,
-    // processModels,
     loading,
   };
 }

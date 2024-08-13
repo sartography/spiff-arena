@@ -44,9 +44,9 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     task_guid: str = db.Column(ForeignKey(TaskModel.guid), nullable=True, index=True)
     task_model = relationship(TaskModel)
 
-    task_id: str = db.Column(db.String(50)) # guid
-    task_name: str = db.Column(db.String(255)) # bpmn id
-    task_title: str = db.Column(db.String(50)) # bpmn name
+    task_id: str = db.Column(db.String(50))  # guid
+    task_name: str = db.Column(db.String(255))  # bpmn id
+    task_title: str = db.Column(db.String(50))  # bpmn name
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))

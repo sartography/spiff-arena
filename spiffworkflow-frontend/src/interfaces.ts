@@ -295,6 +295,10 @@ export interface ProcessInstanceReport {
 export interface ProcessGroupLite {
   id: string;
   display_name: string;
+  description: string;
+  // eslint-disable-next-line no-use-before-define
+  process_models?: ProcessModel[];
+  process_groups?: ProcessGroupLite[];
 }
 
 export interface MetadataExtractionPath {

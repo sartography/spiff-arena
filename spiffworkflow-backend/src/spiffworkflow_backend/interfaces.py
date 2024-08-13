@@ -19,12 +19,12 @@ class ProcessGroupLite(TypedDict):
     id: str
     display_name: str
     description: str
-    process_models: list["ProcessModelInfo"] | None
+    process_models: list[ProcessModelInfo] | None
     process_groups: list[ProcessGroupLite] | None
 
 
 class ProcessGroupLitesWithCache(TypedDict):
-    cache: dict[str, "ProcessGroup"]
+    cache: dict[str, ProcessGroup]
     process_groups: list[ProcessGroupLite]
 
 
