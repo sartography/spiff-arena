@@ -14,6 +14,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { Route, Routes, useLocation } from 'react-router';
 import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
+import '../a-spiffui-v3/assets/styles/transitions.css';
 import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
 import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProcessInstance';
 import SideNav from '../a-spiffui-v3/components/SideNav';

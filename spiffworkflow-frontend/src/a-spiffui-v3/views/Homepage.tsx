@@ -140,6 +140,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
 
   return (
     <Box
+      className="fade-in"
       component="main"
       sx={{
         flexGrow: 1,

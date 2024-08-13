@@ -1,0 +1,72 @@
+/** slow 2 second transition (plus another second from the fade in) from the interstitial page to homepage to allow time for the user to view the message */
+.fade-in {
+  animation: fadeInStandard 1s ease-in-out;
+}
+
+.fade-out {
+  animation: fadeOutStandard 2s ease-in-out;
+}
+
+@keyframes fadeInStandard {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutStandard {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/** Classes for view transitions */
+.fadeIn {
+  animation: 0.5s fadeIn forwards;
+}
+
+.fadeOut {
+  animation: 0.5s fadeOut forwards;
+}
+
+.fadeOutImmediate {
+  animation: 0s fadeOutImmediate forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+  to {
+    transform: translate(-20px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOutImmediate {
+  from {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+  to {
+    transform: translate(0px, 0);
+    opacity: 0;
+  }
+}

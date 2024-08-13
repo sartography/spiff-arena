@@ -32,6 +32,7 @@ export default function ProcessInterstitial({
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
   const [state, setState] = useState<string>('RUNNING');
+  const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
 
@@ -106,7 +107,10 @@ export default function ProcessInterstitial({
     }
     if (shouldRedirectToProcessInstance()) {
       // Navigate without pause as we will be showing the same information.
-      navigate(processInstanceShowPageUrl);
+      setIsFadingOut(true);
+      setTimeout(() => {
+        navigate(processInstanceShowPageUrl);
+      }, 2000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
   }, [
@@ -279,6 +283,7 @@ export default function ProcessInterstitial({
   };
   return (
     <Box
+      className={isFadingOut ? 'fade-out' : ''}
       component="main"
       sx={{
         flexGrow: 1,
