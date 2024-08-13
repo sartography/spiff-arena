@@ -84,7 +84,11 @@ export default function SpiffUIV3() {
     if (location !== displayLocation) {
       setTransistionStage(fadeOutImmediate);
     }
-  }, [location, displayLocation]);
+    if (transitionStage === fadeOutImmediate) {
+      setDisplayLocation(location);
+      setTransistionStage(fadeIn);
+    }
+  }, [location, displayLocation, transitionStage]);
 
   useEffect(() => {
     if (isMobile) {
@@ -158,10 +162,10 @@ export default function SpiffUIV3() {
                 flexGrow: 1,
                 overflow: 'auto',
               }}
-              onAnimationEnd={() => {
-                if (transitionStage === fadeOutImmediate) {
-                  setTransistionStage(fadeIn);
+              onAnimationEnd={(e) => {
+                if (e.animationName === fadeOutImmediate) {
                   setDisplayLocation(location);
+                  setTransistionStage(fadeIn);
                 }
               }}
             >
