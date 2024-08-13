@@ -46,7 +46,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
 
     task_id: str = db.Column(db.String(50))  # guid
     task_name: str = db.Column(db.String(255))  # bpmn id
-    task_title: str = db.Column(db.String(50))  # bpmn name
+    task_title: str | None = db.Column(db.String(255))  # bpmn name
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))
@@ -78,7 +78,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         new_task = Task(
             task.task_guid,
             task.task_name,
-            task.task_title,
+            task.task_title or "",
             task.task_type,
             task.task_status,
             can_complete,
