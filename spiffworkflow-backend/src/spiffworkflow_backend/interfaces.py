@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from typing import NewType
 from typing import TypedDict
@@ -7,6 +9,7 @@ from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroup
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.process_group import ProcessGroup
+    from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
 IdToProcessGroupMapping = NewType("IdToProcessGroupMapping", dict[str, "ProcessGroup"])
@@ -15,6 +18,9 @@ IdToProcessGroupMapping = NewType("IdToProcessGroupMapping", dict[str, "ProcessG
 class ProcessGroupLite(TypedDict):
     id: str
     display_name: str
+    description: str
+    process_models: list["ProcessModelInfo"] | None
+    process_groups: list[ProcessGroupLite] | None
 
 
 class ProcessGroupLitesWithCache(TypedDict):

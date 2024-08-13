@@ -375,8 +375,23 @@ class ProcessModelService(FileSystemService):
             if parent_group:
                 if full_group_id_path not in process_group_cache:
                     process_group_cache[full_group_id_path] = parent_group
-                parent_group_array.append({"id": parent_group.id, "display_name": parent_group.display_name})
+                parent_group_array.append(
+                    {
+                        "id": parent_group.id,
+                        "display_name": parent_group.display_name,
+                        "description": parent_group.description,
+                        "process_models": None,
+                        "process_groups": None,
+                    }
+                )
         return {"cache": process_group_cache, "process_groups": parent_group_array}
+
+    @classmethod
+    def group_process_models_by_process_groups(cls, process_models: list[ProcessModelInfo]) -> list[ProcessGroupLite]:
+        process_group_list = {}
+        # for process_model in process_models:
+
+        return []
 
     @classmethod
     def reference_for_primary_file(cls, references: list[Reference], primary_file: str) -> Reference | None:

@@ -364,6 +364,12 @@ paths:
         description: Optional parameter to filter by a single group
         schema:
           type: string
+      - name: filter_runnable_by_user
+        in: query
+        required: false
+        description: Get only the process models that the user can run
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false
@@ -527,6 +533,12 @@ paths:
         in: query
         required: false
         description: Get the display names for the parent groups as well
+        schema:
+          type: boolean
+      - name: group_by_process_group
+        in: query
+        required: false
+        description: Returns a list of process_groups instead which include the process models. Useful alongside filter_runnable_by_user.
         schema:
           type: boolean
       - name: page
