@@ -1,5 +1,6 @@
 import React, { useState, useEffect, ReactElement } from 'react';
 import {
+  PaletteMode,
   Box,
   Container,
   CssBaseline,
@@ -27,7 +28,8 @@ const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
 
 export default function SpiffUIV3() {
-  const storedTheme = localStorage.getItem('theme') || 'light';
+  const storedTheme: PaletteMode = (localStorage.getItem('theme') ||
+    'light') as PaletteMode;
   const [globalTheme, setGlobalTheme] = useState(
     createTheme(createSpiffTheme(storedTheme)),
   );
@@ -61,7 +63,7 @@ export default function SpiffUIV3() {
   };
 
   const toggleDarkMode = () => {
-    const desiredTheme = isDark ? 'light' : 'dark';
+    const desiredTheme: PaletteMode = isDark ? 'light' : 'dark';
     setGlobalTheme(createTheme(createSpiffTheme(desiredTheme)));
     localStorage.setItem('theme', desiredTheme);
   };
@@ -132,7 +134,6 @@ export default function SpiffUIV3() {
                 isDark={isDark}
                 additionalNavElement={additionalNavElement}
                 setAdditionalNavElement={setAdditionalNavElement}
-                setIsSideNavVisible={setIsSideNavVisible}
               />
             )}
             {isMobile && !isSideNavVisible && (

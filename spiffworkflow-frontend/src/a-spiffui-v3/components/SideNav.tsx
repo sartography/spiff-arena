@@ -149,8 +149,8 @@ function SideNav({
             </Typography>
           )}
           <IconButton
-            onClick={() => {
-              onToggleCollapse();
+            onClick={(event) => {
+              onToggleCollapse(event);
             }}
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
