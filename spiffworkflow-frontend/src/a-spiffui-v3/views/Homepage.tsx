@@ -12,13 +12,19 @@ type HomepageProps = {
   viewMode: 'table' | 'tile';
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
   isMobile: boolean;
+  isLongFadeIn?: boolean;
 };
 
 type GroupedItems = {
   [key: string]: ProcessInstanceTask[];
 };
 
-function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
+function Homepage({
+  viewMode,
+  setViewMode,
+  isMobile,
+  isLongFadeIn,
+}: HomepageProps) {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
@@ -140,7 +146,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
 
   return (
     <Box
-      className="fade-in"
+      className={isLongFadeIn ? 'fade-in-long' : 'fadeIn'}
       component="main"
       sx={{
         flexGrow: 1,

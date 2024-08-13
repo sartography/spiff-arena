@@ -39,6 +39,7 @@ export default function SpiffUIV3() {
 
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransistionStage] = useState('fadeIn');
+  const [isLongFadeIn, setIsLongFadeIn] = useState(false);
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
 
@@ -83,6 +84,8 @@ export default function SpiffUIV3() {
   /** Respond to transition events, this softens screen changes (UX) */
   useEffect(() => {
     if (location !== displayLocation) {
+      const isComingFromInterstitialOrProgress = /\/interstitial$|\/progress$/.test(displayLocation.pathname);
+      setIsLongFadeIn(isComingFromInterstitialOrProgress && location.pathname === '/newui');
       setTransistionStage(fadeOutImmediate);
     }
     if (transitionStage === fadeOutImmediate) {
@@ -178,6 +181,7 @@ export default function SpiffUIV3() {
                       viewMode={viewMode}
                       setViewMode={setViewMode}
                       isMobile={isMobile}
+                      isLongFadeIn={isLongFadeIn}
                     />
                   }
                 />
