@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
-import { Loading, InlineNotification } from '@carbon/react';
+import { InlineNotification } from '@carbon/react';
+import { Box, CircularProgress } from '@mui/material';
 import { BACKEND_BASE_URL } from '../../config';
 import { getBasicHeaders } from '../../services/HttpService';
 
@@ -128,14 +129,7 @@ export default function ProcessInterstitial({
       if (smallSpinner) {
         style = { margin: '2x 5px 2px 2px' };
       }
-      return (
-        <Loading
-          description="Active loading indicator"
-          withOverlay={false}
-          small={smallSpinner}
-          style={style}
-        />
-      );
+      return <CircularProgress style={style} />;
     }
     return null;
   };
@@ -264,23 +258,37 @@ export default function ProcessInterstitial({
     return index < 4 ? `user_instructions_${index}` : `user_instructions_4`;
   };
 
-  if (lastTask) {
-    return (
-      <div>
-        {getLoadingIcon()}
-        {displayableData.map((d, index) => (
-          <div className={className(index)}>{userMessage(d)}</div>
-        ))}
-      </div>
-    );
-  }
-  if (processInstance) {
-    return (
-      <div>
-        {getLoadingIcon()}
-        {userMessageForProcessInstance(processInstance)}
-      </div>
-    );
-  }
-  return <div>{getLoadingIcon()}</div>;
+  const innerComponents = () => {
+    if (lastTask) {
+      return (
+        <>
+          {getLoadingIcon()}
+          {displayableData.map((d, index) => (
+            <div className={className(index)}>{userMessage(d)}</div>
+          ))}
+        </>
+      );
+    }
+    if (processInstance) {
+      return (
+        <>
+          {getLoadingIcon()}
+          {userMessageForProcessInstance(processInstance)}
+        </>
+      );
+    }
+    return getLoadingIcon();
+  };
+  return (
+    <Box
+      component="main"
+      sx={{
+        flexGrow: 1,
+        p: 3,
+        overflow: 'auto',
+      }}
+    >
+      {innerComponents()}
+    </Box>
+  );
 }

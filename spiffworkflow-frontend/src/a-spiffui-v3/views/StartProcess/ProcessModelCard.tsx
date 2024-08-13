@@ -1,9 +1,7 @@
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { Button, Paper, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
-import StarRateIcon from '@mui/icons-material/StarRate';
-import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import {
   getStorageValue,
@@ -141,20 +139,20 @@ export default function ProcessModelCard({
       onClick={() => stream && stream.next(model)}
       id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
-      <Box
-        sx={{ position: 'absolute', right: 8, top: 8 }}
-        onClick={(e) => handleFavoriteClick(e as unknown as PointerEvent)}
-      >
-        {isFavorite ? (
-          <StarRateIcon
-            sx={{
-              color: 'spotColors.goldStar',
-            }}
-          />
-        ) : (
-          <StarBorderOutlinedIcon />
-        )}
-      </Box>
+      {/* <Box */}
+      {/*   sx={{ position: 'absolute', right: 8, top: 8 }} */}
+      {/*   onClick={(e) => handleFavoriteClick(e as unknown as PointerEvent)} */}
+      {/* > */}
+      {/*   {isFavorite ? ( */}
+      {/*     <StarRateIcon */}
+      {/*       sx={{ */}
+      {/*         color: 'spotColors.goldStar', */}
+      {/*       }} */}
+      {/*     /> */}
+      {/*   ) : ( */}
+      {/*     <StarBorderOutlinedIcon /> */}
+      {/*   )} */}
+      {/* </Box> */}
       <Stack gap={1} sx={{ height: '100%' }}>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {model.display_name}

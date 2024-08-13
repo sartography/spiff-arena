@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box } from '@carbon/icons-react';
 import HttpService from '../../../services/HttpService';
 import useAPIError from '../../../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
@@ -61,18 +60,19 @@ export default function StartProcessInstance({ isMobile }: OwnProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        p: 3,
-        overflow: 'auto',
-        height: isMobile ? 'calc(100vh - 64px)' : '100vh',
-        mt: isMobile ? '64px' : 0,
-      }}
-    >
-      <p>Starting Process...</p>
-    </Box>
-  );
+  // return (
+  //   <Box
+  //     component="main"
+  //     sx={{
+  //       flexGrow: 1,
+  //       p: 3,
+  //       overflow: 'auto',
+  //       height: isMobile ? 'calc(100vh - 64px)' : '100vh',
+  //       mt: isMobile ? '64px' : 0,
+  //     }}
+  //   >
+  //     <p>Starting Process...</p>
+  //   </Box>
+  // );
+  return null;
 }
