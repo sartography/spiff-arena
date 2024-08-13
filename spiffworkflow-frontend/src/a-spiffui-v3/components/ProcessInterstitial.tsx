@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-// @ts-ignore
-import { InlineNotification } from '@carbon/react';
-import { Box, CircularProgress } from '@mui/material';
+import { Alert, Box, CircularProgress } from '@mui/material';
 import { BACKEND_BASE_URL } from '../../config';
 import { getBasicHeaders } from '../../services/HttpService';
 
-// @ts-ignore
 import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 import useAPIError from '../../hooks/UseApiError';
@@ -137,16 +134,13 @@ export default function ProcessInterstitial({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info',
+    kind: 'info' | 'warning' | 'error' = 'info',
   ) => {
     return (
       <div>
-        <InlineNotification
-          kind={kind}
-          subtitle={subtitle}
-          title={title}
-          lowContrast
-        />
+        <Alert severity={kind} title={title}>
+          {subtitle}
+        </Alert>
       </div>
     );
   };
@@ -242,7 +236,11 @@ export default function ProcessInterstitial({
     if (processInstance) {
       navigate(processInstanceShowPageUrl);
     } else {
-      navigate(`/tasks`);
+      let taskUrl = '/tasks';
+      if (isNewUi) {
+        taskUrl = `/newui${taskUrl}`;
+      }
+      navigate(taskUrl);
     }
   }
 

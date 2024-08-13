@@ -190,7 +190,7 @@ export default function SpiffUIV3() {
                 />
                 <Route
                   path="/:modifiedProcessModelId/start"
-                  element={<StartProcessInstance isMobile={isMobile} />}
+                  element={<StartProcessInstance />}
                 />
                 <Route path="login" element={<Login />} />
                 <Route
@@ -211,18 +211,18 @@ export default function SpiffUIV3() {
                   path="process-instances/for-me/:process_model_id/:process_instance_id/interstitial"
                   element={<ProcessInterstitialPage variant="for-me" />}
                 />
-                <Route
-                  path="process-instances/:process_model_id/:process_instance_id/interstitial"
-                  element={<ProcessInterstitialPage variant="all" />}
-                />
+                {/* <Route */}
+                {/*   path="process-instances/:process_model_id/:process_instance_id/interstitial" */}
+                {/*   element={<ProcessInterstitialPage variant="all" />} */}
+                {/* /> */}
                 <Route
                   path="process-instances/for-me/:process_model_id/:process_instance_id/progress"
                   element={<ProcessInstanceProgressPage variant="for-me" />}
                 />
-                <Route
-                  path="process-instances/:process_model_id/:process_instance_id/progress"
-                  element={<ProcessInstanceProgressPage variant="all" />}
-                />
+                {/* <Route */}
+                {/*   path="process-instances/:process_model_id/:process_instance_id/progress" */}
+                {/*   element={<ProcessInstanceProgressPage variant="all" />} */}
+                {/* /> */}
               </Routes>
             </Box>
           </Box>
