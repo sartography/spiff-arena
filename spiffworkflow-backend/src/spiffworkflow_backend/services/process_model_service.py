@@ -389,7 +389,9 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def group_process_models_by_process_groups(cls, process_models: list[ProcessModelInfo]) -> list[ProcessGroupLite]:
-        def add_to_group_hierarchy(group_hierarchy, group_path, process_model):
+        def add_to_group_hierarchy(
+            group_hierarchy: dict[str, ProcessGroupLite], group_path: list, process_model: ProcessModelInfo
+        ) -> None:
             if not group_path:
                 return
 
@@ -407,12 +409,12 @@ class ProcessModelService(FileSystemService):
             else:
                 add_to_group_hierarchy(group_hierarchy[current_group_id]["process_groups_dict"], group_path[1:], process_model)
 
-        group_hierarchy = {}
+        group_hierarchy: dict[str, ProcessGroupLite] = {}
         for process_model in process_models:
             if process_model.parent_groups:
                 add_to_group_hierarchy(group_hierarchy, process_model.parent_groups, process_model)
 
-        def convert_to_list(group_hierarchy):
+        def convert_to_list(group_hierarchy: dict) -> list[ProcessGroupLite]:
             result = []
             for _group_id, group_data in group_hierarchy.items():
                 group_data_copy = copy.deepcopy(group_data)

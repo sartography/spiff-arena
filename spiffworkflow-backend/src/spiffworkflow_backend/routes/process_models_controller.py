@@ -243,7 +243,7 @@ def process_model_list(
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
     )
-    process_models_to_return = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
+    process_models_to_return: list = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
 
     if include_parent_groups or group_by_process_group:
         process_group_cache = IdToProcessGroupMapping({})
