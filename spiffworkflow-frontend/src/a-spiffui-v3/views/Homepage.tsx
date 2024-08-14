@@ -13,6 +13,7 @@ type HomepageProps = {
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
   isMobile: boolean;
   isLongFadeIn?: boolean;
+  lastProcessInstanceId?: number | null;
 };
 
 type GroupedItems = {
@@ -24,6 +25,7 @@ function Homepage({
   setViewMode,
   isMobile,
   isLongFadeIn,
+  lastProcessInstanceId,
 }: HomepageProps) {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -179,6 +181,27 @@ function Homepage({
           Home
         </Typography>
       )}
+      {lastProcessInstanceId && (
+        <Box
+          className="fadeIn"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            bgcolor: 'background.paper',
+            boxShadow: 3,
+            p: 2,
+            borderRadius: 1,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="h6">Last Process Instance ID</Typography>
+          <Typography variant="body2">
+            ID: {lastProcessInstanceId}
+          </Typography>{' '}
+        </Box>
+      )}
+
       <HeaderTabs
         value={0}
         onChange={(_event, newValue) => {

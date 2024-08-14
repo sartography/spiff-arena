@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
-import {
-  getStorageValue,
-  setStorageValue,
-} from '../../services/LocalStorageService';
+import { getStorageValue } from '../../services/LocalStorageService';
 
 const defaultStyle = {
   borderRadius: 2,
@@ -81,22 +78,22 @@ export default function ProcessModelCard({
    * If this becomes a favorite, add to localstorage list and return,
    * otherwise remove.
    */
-  const handleFavoriteClick = (e: PointerEvent) => {
-    stopEventBubble(e);
-    const currentValue = JSON.parse(getStorageValue('spifffavorites') || '[]');
-    // Do not set this into state and immediately try to retrieve it.
-    const favorite = !isFavorite;
-    setIsFavorite(favorite);
-    if (favorite) {
-      // No duplicates
-      const set: Set<string> = new Set([...currentValue, model.id]);
-      setStorageValue('spifffavorites', JSON.stringify(Array.from(set)));
-      return;
-    }
-
-    const removed = currentValue.filter((id: string) => id !== model.id);
-    setStorageValue('spifffavorites', JSON.stringify(removed));
-  };
+  // const handleFavoriteClick = (e: PointerEvent) => {
+  //   stopEventBubble(e);
+  //   const currentValue = JSON.parse(getStorageValue('spifffavorites') || '[]');
+  //   // Do not set this into state and immediately try to retrieve it.
+  //   const favorite = !isFavorite;
+  //   setIsFavorite(favorite);
+  //   if (favorite) {
+  //     // No duplicates
+  //     const set: Set<string> = new Set([...currentValue, model.id]);
+  //     setStorageValue('spifffavorites', JSON.stringify(Array.from(set)));
+  //     return;
+  //   }
+  //
+  //   const removed = currentValue.filter((id: string) => id !== model.id);
+  //   setStorageValue('spifffavorites', JSON.stringify(removed));
+  // };
 
   useEffect(() => {
     const favorites = JSON.parse(getStorageValue('spifffavorites'));
