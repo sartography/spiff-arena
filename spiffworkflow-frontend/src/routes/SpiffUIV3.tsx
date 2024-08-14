@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Route, Routes, useLocation } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
 import '../a-spiffui-v3/assets/styles/transitions.css';
@@ -40,9 +41,7 @@ export default function SpiffUIV3() {
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransistionStage] = useState('fadeIn');
   const [isLongFadeIn, setIsLongFadeIn] = useState(false);
-  const [lastProcessInstanceId, setLastProcessInstanceId] = useState<
-    number | null
-  >(null);
+  const [lastProcessInstanceId, setLastProcessInstanceId] = useState<number | null>(null);
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
 
@@ -94,9 +93,9 @@ export default function SpiffUIV3() {
       );
       setTransistionStage(fadeOutImmediate);
       if (isComingFromInterstitialOrProgress) {
-        const processInstanceId = localStorage.getItem('lastProcessInstanceId');
-        if (processInstanceId) {
-          setLastProcessInstanceId(Number(processInstanceId));
+        const processInstanceIdMatch = displayLocation.pathname.match(/\/(\d+)\/(interstitial|progress)$/);
+        if (processInstanceIdMatch) {
+          setLastProcessInstanceId(Number(processInstanceIdMatch[1]));
         }
       }
     }

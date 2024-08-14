@@ -107,10 +107,6 @@ export default function ProcessInterstitial({
     }
     if (shouldRedirectToProcessInstance()) {
       setIsFadingOut(true);
-      localStorage.setItem(
-        'lastProcessInstanceId',
-        processInstanceId.toString(),
-      );
       setTimeout(() => {
         navigate(processInstanceShowPageUrl);
       }, 2000); // Adjust the timeout to match the CSS transition duration
