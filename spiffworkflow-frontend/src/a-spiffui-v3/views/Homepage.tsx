@@ -181,12 +181,12 @@ function Homepage({
           Home
         </Typography>
       )}
-      {lastProcessInstanceId && (
+      {lastProcessInstanceId && !isMobile && (
         <Box
           className="fadeIn"
           sx={{
             position: 'fixed',
-            bottom: 16,
+            top: 16,
             right: 16,
             bgcolor: 'background.paper',
             boxShadow: 3,
@@ -195,10 +195,8 @@ function Homepage({
             zIndex: 1300,
           }}
         >
-          <Typography variant="h6">Last Process Instance ID</Typography>
-          <Typography variant="body2">
-            ID: {lastProcessInstanceId}
-          </Typography>{' '}
+          <Typography variant="h6">Last Process Instance</Typography>
+          <Typography variant="body2">ID: {lastProcessInstanceId}</Typography>
         </Box>
       )}
 
