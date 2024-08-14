@@ -13,7 +13,6 @@ type HomepageProps = {
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
   isMobile: boolean;
   isLongFadeIn?: boolean;
-  lastProcessInstanceId?: number | null;
 };
 
 type GroupedItems = {
@@ -25,8 +24,10 @@ function Homepage({
   setViewMode,
   isMobile,
   isLongFadeIn,
-  lastProcessInstanceId,
 }: HomepageProps) {
+  const [lastProcessInstanceId, setLastProcessInstanceId] = useState<
+    number | null
+  >(null);
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
@@ -50,6 +51,16 @@ function Homepage({
       });
     };
     getTasks();
+  }, []);
+
+  useEffect(() => {
+    const storedProcessInstanceId = localStorage.getItem(
+      'lastProcessInstanceId',
+    );
+    if (storedProcessInstanceId) {
+      setLastProcessInstanceId(Number(storedProcessInstanceId));
+      localStorage.removeItem('lastProcessInstanceId');
+    }
   }, []);
 
   const onGroupBySelect = useCallback(
