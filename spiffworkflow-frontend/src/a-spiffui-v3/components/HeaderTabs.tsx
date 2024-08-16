@@ -58,7 +58,7 @@ export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
               },
             },
           }}
-          onClick={() => navigate('/create-custom-tab')}
+          onClick={() => navigate('/newui/create-custom-tab')}
         />
       </Tabs>
     </Box>

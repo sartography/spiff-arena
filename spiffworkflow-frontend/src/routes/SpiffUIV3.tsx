@@ -27,6 +27,7 @@ import ProcessInstanceProgressPage from '../a-spiffui-v3/views/TaskShow/ProcessI
 import ErrorDisplay from '../components/ErrorDisplay';
 import About from '../a-spiffui-v3/views/About';
 import useAPIError from '../hooks/UseApiError';
+import ComingSoon from '../components/ComingSoon';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -190,10 +191,7 @@ export default function SpiffUIV3() {
             >
               <ErrorDisplay />
               <Routes>
-                <Route
-                  path="/about"
-                  element={<About />}
-                />
+                <Route path="/about" element={<About />} />
                 <Route
                   path="/"
                   element={
@@ -218,6 +216,7 @@ export default function SpiffUIV3() {
                   element={<StartProcessInstance />}
                 />
                 <Route path="login" element={<Login />} />
+                <Route path="/create-custom-tab" element={<ComingSoon />} />
                 <Route
                   path="/tasks/:process_instance_id/:task_guid"
                   element={<TaskShow />}
