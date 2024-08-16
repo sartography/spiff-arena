@@ -223,7 +223,7 @@ function SideNav({
             gap: isCollapsed ? 0 : 1,
           }}
         >
-          <Tooltip
+          <SpiffTooltip
             title="User Actions"
             arrow
             placement={isCollapsed ? 'right' : 'top'}
@@ -235,13 +235,25 @@ function SideNav({
             >
               <Person />
             </IconButton>
-          </Tooltip>
+          </SpiffTooltip>
           <SpiffTooltip
             title="Toggle dark mode"
             placement={isCollapsed ? 'right' : 'top'}
           >
             <IconButton onClick={onToggleDarkMode}>
               {isDark ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </SpiffTooltip>
+          <SpiffTooltip
+            title="Switch to Classic UI"
+            arrow
+            placement={isCollapsed ? 'right' : 'top'}
+          >
+            <IconButton
+              aria-label="Switch Site"
+              onClick={() => navigate('/')}
+            >
+              <Home />
             </IconButton>
           </SpiffTooltip>
         </Box>
