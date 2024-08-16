@@ -1,21 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loading } from '@carbon/react';
 
+import { CircularProgress } from '@mui/material';
 import {
   ErrorForDisplay,
   ProcessInstanceProgressResponse,
   ProcessInstanceTask,
   TaskInstructionForEndUser,
-} from '../../interfaces';
-import { HUMAN_TASK_TYPES, refreshAtInterval } from '../../helpers';
-import HttpService from '../../services/HttpService';
-import DateAndTimeService from '../../services/DateAndTimeService';
+} from '../interfaces';
+import { HUMAN_TASK_TYPES, refreshAtInterval } from '../helpers';
+import HttpService from '../services/HttpService';
+import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {
   ErrorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
-} from '../../components/ErrorDisplay';
+} from './ErrorDisplay';
 
 type OwnProps = {
   processInstanceId: number;
@@ -119,14 +119,7 @@ export default function ProcessInstanceProgress({
     if (smallSpinner) {
       style = { margin: '2x 5px 2px 2px' };
     }
-    return (
-      <Loading
-        description="Active loading indicator"
-        withOverlay={false}
-        small={smallSpinner}
-        style={style}
-      />
-    );
+    return <CircularProgress style={style} />;
   };
 
   const userMessage = (

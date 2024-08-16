@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
-import useProcessInstances from '../../hooks/useProcessInstances';
+import useProcessInstances from '../hooks/useProcessInstances';
 import HeaderTabs from '../components/HeaderTabs';
 import { ReportFilter } from '../../interfaces';
 import TaskTable from '../components/TaskTable';
