@@ -240,7 +240,6 @@ export default function StartProcess() {
 
   return (
     <Container
-      id="THI ONE"
       maxWidth={false}
       sx={{
         padding: '0px !important',
