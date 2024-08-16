@@ -255,7 +255,7 @@ export default function TaskShow() {
   const handleCloseButton = () => {
     setAutosaveOnFormChanges(false);
     setFormButtonsDisabled(true);
-    const successCallback = () => navigate(`/tasks`);
+    const successCallback = () => navigate(`/newui`);
     sendAutosaveEvent({ successCallback });
   };
 
