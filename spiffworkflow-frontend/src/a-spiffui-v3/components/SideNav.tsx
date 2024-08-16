@@ -225,7 +225,6 @@ function SideNav({
         >
           <SpiffTooltip
             title="User Actions"
-            arrow
             placement={isCollapsed ? 'right' : 'top'}
           >
             <IconButton
@@ -246,13 +245,9 @@ function SideNav({
           </SpiffTooltip>
           <SpiffTooltip
             title="Switch to Classic UI"
-            arrow
             placement={isCollapsed ? 'right' : 'top'}
           >
-            <IconButton
-              aria-label="Switch Site"
-              onClick={() => navigate('/')}
-            >
+            <IconButton aria-label="Switch Site" onClick={() => navigate('/')}>
               <Home />
             </IconButton>
           </SpiffTooltip>
