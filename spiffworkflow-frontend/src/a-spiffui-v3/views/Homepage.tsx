@@ -142,7 +142,7 @@ function Homepage({
         const groupText = isMe ? 'me' : groupName;
         return (
           <Box key={groupName} sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 'normal' }}>
+            <Typography variant="h2" sx={{ fontWeight: 'normal' }}>
               {headerText}
               <Box component="span" sx={{ color: 'text.accent' }}>
                 {groupText}
