@@ -70,7 +70,7 @@ function SideNav({
   let aboutLinkElement = null;
   if (Object.keys(versionInfo).length) {
     aboutLinkElement = (
-      <MuiLink component={Link} to="/about">
+      <MuiLink component={Link} to="/newui/about">
         About
       </MuiLink>
     );
