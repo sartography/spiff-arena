@@ -530,10 +530,15 @@ class WorkflowExecutionService:
                 self.bpmn_process_instance, exit_at=exit_at, process_instance_model=self.process_instance_model
             )
 
+            bpmn_event_groups = self.group_bpmn_events()
+            message_events = bpmn_event_groups.pop(MessageEventDefinition.__name__, [])
+
+            current_app.logger.info(f"-------> {bpmn_event_groups}")
+
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            self.process_bpmn_messages()
+            self.process_bpmn_messages(message_events)
             self.queue_waiting_receive_messages()
             return task_runnability
         except WorkflowTaskException as wte:
@@ -585,16 +590,17 @@ class WorkflowExecutionService:
                         queued_to_run_at_in_seconds=queued_to_run_at_in_seconds,
                     )
 
-    def process_bpmn_messages(self) -> None:
-        # FIXE: get_events clears out the events so if we have other events we care about
-        #   this will clear them out as well.
-        # Right now we only care about messages though.
-        bpmn_events = self.bpmn_process_instance.get_events()
+    def group_bpmn_events(self) -> dict[str, Any]:
+        event_groups = {}
+        for bpmn_event in self.bpmn_process_instance.get_events():
+            key = type(bpmn_event.event_definition).__name__
+            if key not in event_groups:
+                event_groups[key] = []
+            event_groups[key] = bpmn_event
+        return event_groups
+        
+    def process_bpmn_messages(self, bpmn_events: list[MessageEventDefinition]) -> None:
         for bpmn_event in bpmn_events:
-            if not isinstance(bpmn_event.event_definition, MessageEventDefinition):
-                current_app.logger.info(f"--------> {bpmn_event.event_definition.code}")
-                current_app.logger.info(f"--------> {self.bpmn_process_instance.completed}")
-                continue
             bpmn_message = bpmn_event.event_definition
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
