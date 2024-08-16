@@ -35,7 +35,7 @@ export default function ProcessModelCard({
   model: Record<string, any>;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
-  onStartProcess?: Function;
+  onStartProcess?: () => void;
 }) {
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
@@ -133,7 +133,7 @@ export default function ProcessModelCard({
     <Paper
       elevation={0}
       sx={selectedStyle}
-      onClick={() => stream && stream.next(model)}
+      onClick={() => stream?.next(model)}
       id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
       {/* <Box */}

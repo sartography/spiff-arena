@@ -62,7 +62,7 @@ const customPalette = (mode: PaletteMode) => {
     borders: {
       table: '#e7ebed',
       primary: grey[400],
-      seconday: grey[600],
+      secondary: grey[600],
     },
     spotColors: {
       goldStar: yellow[700],
@@ -111,7 +111,7 @@ const customPalette = (mode: PaletteMode) => {
     borders: {
       table: grey[800],
       primary: grey[800],
-      seconday: cyan[800],
+      secondary: cyan[800],
     },
     spotColors: {
       goldStar: yellow[700],

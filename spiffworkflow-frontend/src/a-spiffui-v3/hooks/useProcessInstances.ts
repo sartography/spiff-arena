@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import HttpService from '../services/HttpService';
-import DateAndTimeService from '../services/DateAndTimeService';
-import { refreshAtInterval } from '../helpers';
+import HttpService from '../../services/HttpService';
+import DateAndTimeService from '../../services/DateAndTimeService';
+import { refreshAtInterval } from '../../helpers';
 import {
   PaginationObject,
   ProcessInstance,
   ReportMetadata,
   ReportFilter,
-} from '../interfaces';
+} from '../../interfaces';
 
 type OwnProps = {
   reportIdentifier: string;

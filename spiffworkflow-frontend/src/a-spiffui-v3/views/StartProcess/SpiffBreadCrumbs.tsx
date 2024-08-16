@@ -38,15 +38,14 @@ export default function SpiffBreadCrumbs({
           Root
         </Typography>
       </Box>
-      {crumbs &&
-        crumbs.map((crumb) => (
-          // Crumbs are built from a Set, there should be no duplicates
-          <Box key={crumb.id} onClick={() => callback(crumb)} sx={crumbStyle}>
-            <Typography key={crumb.id} variant="caption">
-              {crumb.displayName}
-            </Typography>
-          </Box>
-        ))}
+      {crumbs?.map((crumb) => (
+        // Crumbs are built from a Set, there should be no duplicates
+        <Box key={crumb.id} onClick={() => callback(crumb)} sx={crumbStyle}>
+          <Typography key={crumb.id} variant="caption">
+            {crumb.displayName}
+          </Typography>
+        </Box>
+      ))}
     </Stack>
   );
 }

@@ -29,7 +29,6 @@ export default function ProcessInterstitial({
   executeTasks = true,
   isNewUi = false,
 }: OwnProps) {
-
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
   const [state, setState] = useState<string>('RUNNING');
@@ -109,7 +108,10 @@ export default function ProcessInterstitial({
     if (shouldRedirectToProcessInstance()) {
       setIsFadingOut(true);
       setTimeout(() => {
-        localStorage.setItem('lastProcessInstanceId', processInstanceId.toString());
+        localStorage.setItem(
+          'lastProcessInstanceId',
+          processInstanceId.toString(),
+        );
         navigate(processInstanceShowPageUrl);
       }, 2000); // Adjust the timeout to match the CSS transition duration
     }
