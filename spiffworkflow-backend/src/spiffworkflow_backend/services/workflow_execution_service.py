@@ -592,6 +592,8 @@ class WorkflowExecutionService:
         bpmn_events = self.bpmn_process_instance.get_events()
         for bpmn_event in bpmn_events:
             if not isinstance(bpmn_event.event_definition, MessageEventDefinition):
+                current_app.logger.info(f"--------> {bpmn_event.event_definition.code}")
+                current_app.logger.info(f"--------> {self.bpmn_process_instance.completed}")
                 continue
             bpmn_message = bpmn_event.event_definition
             message_instance = MessageInstanceModel(
