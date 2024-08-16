@@ -38,9 +38,7 @@ export default function ProcessInstanceProgress({
 
   const shouldRedirectToTask = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
-      return (
-        myTask && myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)
-      );
+      return myTask?.can_complete && HUMAN_TASK_TYPES.includes(myTask.type);
     },
     [],
   );
@@ -117,7 +115,7 @@ export default function ProcessInstanceProgress({
     }
     let style = { margin: '50px 0 50px 50px' };
     if (smallSpinner) {
-      style = { margin: '2x 5px 2px 2px' };
+      style = { margin: '2px 5px 2px 2px' };
     }
     return <CircularProgress style={style} />;
   };
@@ -160,7 +158,12 @@ export default function ProcessInstanceProgress({
         {getLoadingIcon()}
         {taskInstructionForEndUserList.map((instruction, index) => {
           return (
-            <div className={className(index)}>{userMessage(instruction)}</div>
+            <div
+              key={`instruction-${instruction.task_guid}`}
+              className={className(index)}
+            >
+              {userMessage(instruction)}
+            </div>
           );
         })}
       </div>
