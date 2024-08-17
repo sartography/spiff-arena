@@ -70,7 +70,7 @@ function SideNav({
   let aboutLinkElement = null;
   if (Object.keys(versionInfo).length) {
     aboutLinkElement = (
-      <MuiLink component={Link} to="/about">
+      <MuiLink component={Link} to="/newui/about">
         About
       </MuiLink>
     );
@@ -143,7 +143,7 @@ function SideNav({
               color={mainBlue}
               sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
             >
-              <MuiLink component={Link} to="/">
+              <MuiLink component={Link} to="/newui">
                 <SpiffLogo />
               </MuiLink>
             </Typography>
@@ -223,9 +223,8 @@ function SideNav({
             gap: isCollapsed ? 0 : 1,
           }}
         >
-          <Tooltip
+          <SpiffTooltip
             title="User Actions"
-            arrow
             placement={isCollapsed ? 'right' : 'top'}
           >
             <IconButton
@@ -235,13 +234,21 @@ function SideNav({
             >
               <Person />
             </IconButton>
-          </Tooltip>
+          </SpiffTooltip>
           <SpiffTooltip
             title="Toggle dark mode"
             placement={isCollapsed ? 'right' : 'top'}
           >
             <IconButton onClick={onToggleDarkMode}>
               {isDark ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </SpiffTooltip>
+          <SpiffTooltip
+            title="Switch to Classic UI"
+            placement={isCollapsed ? 'right' : 'top'}
+          >
+            <IconButton aria-label="Switch Site" onClick={() => navigate('/')}>
+              <Home />
             </IconButton>
           </SpiffTooltip>
         </Box>

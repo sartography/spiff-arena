@@ -936,14 +936,17 @@ fieldset fieldset fieldset legend.header {
 .limited-width-for-readability,
 p,
 li,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
 blockquote,
 hr {
+  max-width: 640px;
+}
+
+.cds--white h1,
+.cds--white h2,
+.cds--white h3,
+.cds--white h4,
+.cds--white h5,
+.cds--white h6 {
   max-width: 640px;
 }
 
