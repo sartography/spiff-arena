@@ -181,6 +181,85 @@ class TestProcessModelsController(BaseTest):
         }
         assert expected_specification == response.json
 
+    def test_process_model_list_with_grouping_by_process_group(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="top_group", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="top_group/subgroup1", process_model_id="hello_world"
+        )
+
+        response = client.get(
+            "/v1.0/process-models?group_by_process_group=true&recursive=true",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+
+        top_process_group = response.json["results"][0]
+        assert top_process_group["id"] == "top_group"
+        assert top_process_group["display_name"] == "top_group"
+        assert top_process_group["description"] is None
+
+        assert len(top_process_group["process_models"]) == 1
+        assert top_process_group["process_models"][0]["id"] == "top_group/random_fact"
+
+        assert len(top_process_group["process_groups"]) == 1
+        assert top_process_group["process_groups"][0]["id"] == "top_group/subgroup1"
+        assert len(top_process_group["process_groups"][0]["process_groups"]) == 0
+        assert len(top_process_group["process_groups"][0]["process_models"]) == 1
+        assert top_process_group["process_groups"][0]["process_models"][0]["id"] == "top_group/subgroup1/hello_world"
+
+    def test_get_process_model_when_found(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user, bpmn_file_name="random_fact.bpmn")
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
+
+        response = client.get(
+            f"/v1.0/process-models/{modified_process_model_identifier}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["id"] == process_model.id
+        assert len(response.json["files"]) == 1
+        assert response.json["files"][0]["name"] == "random_fact.bpmn"
+        assert response.json["parent_groups"] == [
+            {"display_name": "test_group", "id": "test_group", "description": None, "process_models": [], "process_groups": []}
+        ]
+
+    def test_get_process_model_when_not_found(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_dir_name = "THIS_NO_EXISTS"
+        group_id = self.create_process_group_with_api(client, with_super_admin_user, "my_group")
+        bad_process_model_id = f"{group_id}/{process_model_dir_name}"
+        modified_bad_process_model_id = bad_process_model_id.replace("/", ":")
+        response = client.get(
+            f"/v1.0/process-models/{modified_bad_process_model_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert response.json is not None
+        assert response.json["error_code"] == "process_model_cannot_be_found"
+
     def _get_process_show_show_response(
         self, client: FlaskClient, user: UserModel, process_model_id: str, expected_response: int = 200
     ) -> dict:

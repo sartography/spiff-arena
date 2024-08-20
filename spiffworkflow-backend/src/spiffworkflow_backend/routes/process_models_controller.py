@@ -233,6 +233,7 @@ def process_model_list(
     recursive: bool | None = False,
     filter_runnable_by_user: bool | None = False,
     include_parent_groups: bool | None = False,
+    group_by_process_group: bool | None = False,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
@@ -242,15 +243,17 @@ def process_model_list(
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
     )
-    process_models_to_return = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
+    process_models_to_return: list = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
 
-    if include_parent_groups:
+    if include_parent_groups or group_by_process_group:
         process_group_cache = IdToProcessGroupMapping({})
         for process_model in process_models_to_return:
             parent_group_lites_with_cache = ProcessModelService.get_parent_group_array_and_cache_it(
                 process_model.id, process_group_cache
             )
             process_model.parent_groups = parent_group_lites_with_cache["process_groups"]
+        if group_by_process_group:
+            process_models_to_return = ProcessModelService.group_process_models_by_process_groups(process_models_to_return)
 
     pages = len(process_models) // per_page
     remainder = len(process_models) % per_page

@@ -4,52 +4,6 @@
 @import 'slick-carousel/slick/slick.css';
 @import 'slick-carousel/slick/slick-theme.css';
 
-/** Classes for view transitions */
-.fadeIn {
-  animation: 0.5s fadeIn forwards;
-}
-
-.fadeOut {
-  animation: 0.5s fadeOut forwards;
-}
-
-.fadeOutImmediate {
-  animation: 0s fadeOutImmediate forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translate(-20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-  to {
-    transform: translate(-20px, 0);
-    opacity: 0;
-  }
-}
-
-@keyframes fadeOutImmediate {
-  from {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-  to {
-    transform: translate(0px, 0);
-    opacity: 0;
-  }
-}
-
 body {
   /* This prevents the annoying MUI select box layout shift */
   overflow-y: auto !important;
@@ -100,24 +54,22 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
-h1,
-h1.MuiTypography-h1 {
+.cds--white h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
-  color: #161616;
   margin-bottom: 1rem;
   letter-spacing: 0.00938em;
 }
 
-h2 {
+.cds--white h2 {
   font-weight: 400;
   font-size: 20px;
   line-height: 28px;
   color: #161616;
 }
 
-h3 {
+.cds--white h3 {
   font-weight: 400;
   font-size: 18px;
   line-height: 20px;
@@ -981,16 +933,20 @@ fieldset fieldset fieldset legend.header {
   }
 }
 
+.limited-width-for-readability,
 p,
 li,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
 blockquote,
 hr {
+  max-width: 640px;
+}
+
+.cds--white h1,
+.cds--white h2,
+.cds--white h3,
+.cds--white h4,
+.cds--white h5,
+.cds--white h6 {
   max-width: 640px;
 }
 
@@ -1027,6 +983,11 @@ div.markdown-collapsed {
 
 .cds--data-table-content {
   overflow-x: auto;
+}
+
+.MuiContainer-root .wmde-markdown {
+  background-color: inherit;
+  color: inherit;
 }
 
 .wmde-markdown table {

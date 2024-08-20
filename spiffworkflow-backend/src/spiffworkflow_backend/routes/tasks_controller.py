@@ -127,6 +127,8 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         func.max(ProcessInstanceModel.status).label("process_instance_status"),
         func.max(ProcessInstanceModel.updated_at_in_seconds).label("updated_at_in_seconds"),
         func.max(ProcessInstanceModel.created_at_in_seconds).label("created_at_in_seconds"),
+        func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
+        func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
         func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
         potential_owner_usernames_from_group_concat_or_similar,
