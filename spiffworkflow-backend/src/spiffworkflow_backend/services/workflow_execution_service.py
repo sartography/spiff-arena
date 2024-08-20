@@ -19,6 +19,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefin
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.bpmn.util.event.BpmnEvent import EscalationEventDefinition  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskFilter  # type: ignore
