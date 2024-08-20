@@ -19,7 +19,8 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefin
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-#from SpiffWorkflow.bpmn.util.event.BpmnEvent import EscalationEventDefinition  # type: ignore
+
+# from SpiffWorkflow.bpmn.util.event.BpmnEvent import EscalationEventDefinition  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskFilter  # type: ignore
@@ -602,7 +603,7 @@ class WorkflowExecutionService:
                     )
 
     def group_bpmn_events(self) -> dict[str, Any]:
-        event_groups = {}
+        event_groups: dict[str, Any] = {}
         for bpmn_event in self.bpmn_process_instance.get_events():
             key = type(bpmn_event.event_definition).__name__
             if key not in event_groups:
@@ -616,12 +617,11 @@ class WorkflowExecutionService:
 
         if bpmn_event_groups and self.bpmn_process_instance.is_completed():
             raise WorkflowExecutionServiceError.from_completion_with_unhandled_events(
-                self.bpmn_process_instance.last_task,
-                bpmn_event_groups
+                self.bpmn_process_instance.last_task, bpmn_event_groups
             )
 
         self.process_bpmn_messages(message_events)
-        
+
     def process_bpmn_messages(self, bpmn_events: list[MessageEventDefinition]) -> None:
         for bpmn_event in bpmn_events:
             bpmn_message = bpmn_event.event_definition
