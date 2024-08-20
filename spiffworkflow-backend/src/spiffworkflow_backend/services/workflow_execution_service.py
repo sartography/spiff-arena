@@ -19,7 +19,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefin
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.bpmn.util.event.BpmnEvent import EscalationEventDefinition  # type: ignore
+#from SpiffWorkflow.bpmn.util.event.BpmnEvent import EscalationEventDefinition  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskFilter  # type: ignore
@@ -61,6 +61,21 @@ class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
             line_number=workflow_task_exception.line_number,
             offset=workflow_task_exception.offset,
             error_line=workflow_task_exception.error_line,
+        )
+
+    @classmethod
+    def from_completion_with_unhandled_events(
+        cls,
+        task: SpiffTask,
+        unhandled_events: dict[str, Any],
+    ) -> WorkflowExecutionServiceError:
+        return cls(
+            error_msg=f"The process completed with unhandled events: {unhandled_events}",
+            task=task,
+            exception=None,
+            line_number=None,
+            offset=None,
+            error_line=None,
         )
 
 
@@ -531,15 +546,10 @@ class WorkflowExecutionService:
                 self.bpmn_process_instance, exit_at=exit_at, process_instance_model=self.process_instance_model
             )
 
-            bpmn_event_groups = self.group_bpmn_events()
-            message_events = bpmn_event_groups.pop(MessageEventDefinition.__name__, [])
-
-            current_app.logger.info(f"-------> {bpmn_event_groups}")
-
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            self.process_bpmn_messages(message_events)
+            self.process_bpmn_events()
             self.queue_waiting_receive_messages()
             return task_runnability
         except WorkflowTaskException as wte:
@@ -599,6 +609,18 @@ class WorkflowExecutionService:
                 event_groups[key] = []
             event_groups[key] = bpmn_event
         return event_groups
+
+    def process_bpmn_events(self) -> None:
+        bpmn_event_groups = self.group_bpmn_events()
+        message_events = bpmn_event_groups.pop(MessageEventDefinition.__name__, [])
+
+        if bpmn_event_groups and self.bpmn_process_instance.is_completed():
+            raise WorkflowExecutionServiceError.from_completion_with_unhandled_events(
+                self.bpmn_process_instance.last_task,
+                bpmn_event_groups
+            )
+
+        self.process_bpmn_messages(message_events)
         
     def process_bpmn_messages(self, bpmn_events: list[MessageEventDefinition]) -> None:
         for bpmn_event in bpmn_events:
