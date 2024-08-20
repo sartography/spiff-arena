@@ -608,7 +608,7 @@ class WorkflowExecutionService:
             key = type(bpmn_event.event_definition).__name__
             if key not in event_groups:
                 event_groups[key] = []
-            event_groups[key] = bpmn_event
+            event_groups[key].append(bpmn_event)
         return event_groups
 
     def process_bpmn_events(self) -> None:
