@@ -70,13 +70,10 @@ class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
         task: SpiffTask,
         unhandled_events: dict[str, Any],
     ) -> WorkflowExecutionServiceError:
+        
         return cls(
             error_msg=f"The process completed with unhandled events: {unhandled_events}",
             task=task,
-            exception=None,
-            line_number=None,
-            offset=None,
-            error_line=None,
         )
 
 
