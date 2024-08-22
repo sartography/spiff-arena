@@ -37,3 +37,19 @@ This policy is useful when you want to prioritize the order of rules.
 
 **Collect:** All rules that match the inputs are selected, and the outputs from those rules are collected and returned as a list or a collection.
 This policy allows for gathering multiple results.
+
+## Using Numeric Ranges in DMN Tables for BPMN Workflows
+
+In BPMN workflows that utilize DMN tables to make decisions based on numerical data, it is crucial to use the correct syntax for specifying numeric ranges. 
+
+The recommended syntax for defining numeric ranges in a DMN table is shown in the example. It is straightforward and ensures that the DMN engine evaluates the conditions correctly without errors.
+
+If specifying a numeric range for a decision, use the proper DMN format:
+  - Incorrect Format: [0..5]
+  - Correct Format: <=5
+
+Expression for Range:
+- For values from 7 to 10 inclusive: 7 <= ? <= 10
+- For values from 10 to 12 inclusive: 10 <= ? <= 12
+
+These expressions set up the conditions in a way that the DMN engine can clearly understand and process, ensuring that the workflow behaves as expected based on the input values.

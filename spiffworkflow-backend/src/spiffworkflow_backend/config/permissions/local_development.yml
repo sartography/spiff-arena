@@ -57,6 +57,11 @@ permissions:
     actions: [read]
     uri: PM:site-administration:set-permissions
 
+  pm-start:
+    groups: [group2]
+    actions: [start]
+    uri: PM:misc:category_number_one:workflow_one
+
   public_access:
     groups: [spiff_public]
     actions: [read, create, update]
