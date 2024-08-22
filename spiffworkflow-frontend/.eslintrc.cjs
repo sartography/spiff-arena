@@ -49,6 +49,7 @@ module.exports = {
     'react/require-default-props': 'off',
     'import/prefer-default-export': 'off',
     'no-unused-vars': 'off',
+    'sonarjs/no-duplicate-string': ['error', { threshold: 7 }],
     'unused-imports/no-unused-imports': 'error',
     'unused-imports/no-unused-vars': [
       'warn',

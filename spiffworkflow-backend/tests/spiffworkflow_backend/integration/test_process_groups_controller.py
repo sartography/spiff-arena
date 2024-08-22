@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 from flask.app import Flask
@@ -181,3 +182,138 @@ class TestProcessGroupsController(BaseTest):
         assert response.json["pagination"]["count"] == 2
         assert response.json["pagination"]["total"] == 5
         assert response.json["pagination"]["pages"] == 2
+
+    def test_process_group_list_when_none(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["results"] == []
+
+    def test_process_group_list_when_there_are_some(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+        assert response.json["pagination"]["count"] == 1
+        assert response.json["pagination"]["total"] == 1
+        assert response.json["pagination"]["pages"] == 1
+
+    def test_process_group_list_when_user_has_resticted_access(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="admin_only", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="all_users", process_model_id="hello_world"
+        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/all_users:*")
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/process-groups", permission_names=["read"])
+
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json["pagination"]["count"] == 2
+        assert response.json["pagination"]["total"] == 2
+        assert response.json["pagination"]["pages"] == 1
+
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+        assert response.json["results"][0]["id"] == "all_users"
+        assert response.json["pagination"]["count"] == 1
+        assert response.json["pagination"]["total"] == 1
+        assert response.json["pagination"]["pages"] == 1
+
+    def test_get_process_group_when_found(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
+        process_group_id, process_model_id = os.path.split(process_model.id)
+
+        response = client.get(
+            f"/v1.0/process-groups/{process_group_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["id"] == process_group_id
+        assert response.json["process_models"] == []
+        assert response.json["parent_groups"] == []
+
+    def test_get_process_group_show_when_nested(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one",
+            process_model_id="simple_form",
+            bpmn_file_location="simple_form",
+        )
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one/test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+
+        response = client.get(
+            "/v1.0/process-groups/test_group_one:test_group_two",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["id"] == "test_group_one/test_group_two"
+        assert response.json["parent_groups"] == [
+            {
+                "display_name": "test_group_one",
+                "id": "test_group_one",
+                "description": None,
+                "process_models": [],
+                "process_groups": [],
+            }
+        ]

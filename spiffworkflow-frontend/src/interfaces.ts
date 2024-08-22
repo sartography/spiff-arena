@@ -114,11 +114,13 @@ export interface ProcessInstanceTask {
   form_schema: any;
   form_ui_schema: any;
   lane_assignment_id: string;
+  last_milestone_bpmn_name: string;
   name: string; // bpmn_identifier
   process_identifier: string;
   process_initiator_username: string;
   process_instance_id: number;
   process_instance_status: string;
+  process_instance_summary: string;
   process_model_display_name: string;
   process_model_identifier: string;
   properties: any;
@@ -185,26 +187,30 @@ export interface ProcessInstanceMetadata {
 
 export interface ProcessInstance {
   id: number;
-  process_model_identifier: string;
-  process_model_display_name: string;
-  status: string;
-  start_in_seconds: number | null;
-  end_in_seconds: number | null;
-  process_initiator_username: string;
+  actions?: ApiActions;
+  bpmn_version_control_identifier: string;
+  bpmn_version_control_type: string;
   bpmn_xml_file_contents?: string;
   bpmn_xml_file_contents_retrieval_error?: string;
   created_at_in_seconds: number;
-  updated_at_in_seconds: number;
-  bpmn_version_control_identifier: string;
-  bpmn_version_control_type: string;
-  process_metadata?: ProcessInstanceMetadata[];
-  process_model_with_diagram_identifier?: string;
+  end_in_seconds: number | null;
   last_milestone_bpmn_name?: string;
-  actions?: ApiActions;
+  process_initiator_username: string;
+  process_metadata?: ProcessInstanceMetadata[];
+  process_model_display_name: string;
+  process_model_identifier: string;
+  process_model_with_diagram_identifier?: string;
+  start_in_seconds: number | null;
+  status: string;
+  summary?: string;
+  updated_at_in_seconds: number;
 
   // from tasks
+  assigned_user_group_identifier?: string;
   potential_owner_usernames?: string;
   task_id?: string;
+  task_name?: string;
+  task_title?: string;
   task_updated_at_in_seconds?: number;
   waiting_for?: string;
 
@@ -289,6 +295,10 @@ export interface ProcessInstanceReport {
 export interface ProcessGroupLite {
   id: string;
   display_name: string;
+  description: string;
+  // eslint-disable-next-line no-use-before-define
+  process_models?: ProcessModel[];
+  process_groups?: ProcessGroupLite[];
 }
 
 export interface MetadataExtractionPath {
