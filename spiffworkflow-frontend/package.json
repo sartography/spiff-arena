@@ -8,7 +8,7 @@
     "@babel/plugin-transform-react-jsx": "^7.18.6",
     "@babel/preset-react": "^7.24.7",
     "@carbon/colors": "^11.23.1",
-    "@carbon/icons-react": "^11.36.0",
+    "@carbon/icons-react": "^11.47.1",
     "@carbon/react": "^1.33.0",
     "@carbon/styles": "^1.51.0",
     "@casl/ability": "^6.7.1",
