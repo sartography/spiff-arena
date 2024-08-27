@@ -97,7 +97,7 @@ coverage = {extras = ["toml"], version = "^7.6"}
 safety = "^3.2.6"
 mypy = ">=0.961"
 typeguard = "^4"
-xdoctest = {extras = ["colors"], version = "^1.1.6"}
+xdoctest = {extras = ["colors"], version = "^1.2.0"}
 pre-commit = "^3.8.0"
 ruff = "^0.5.5"
 
