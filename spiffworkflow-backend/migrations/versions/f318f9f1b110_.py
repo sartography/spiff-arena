@@ -27,6 +27,7 @@ def upgrade():
     # Altera a coluna para ser NOT NULL
     with op.batch_alter_table('group', schema=None) as batch_op:
         batch_op.alter_column('source_is_open_id', nullable=False)
+
         batch_op.create_index(batch_op.f('ix_group_source_is_open_id'), ['source_is_open_id'], unique=False)
 
     # Adiciona a coluna 'added_by' na tabela 'human_task_user'

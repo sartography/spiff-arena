@@ -45,7 +45,7 @@ setuptools = "^72.1.0"
 werkzeug = "^2.3"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 
-lxml = "^5.2.2"
+lxml = "^5.3.0"
 marshmallow-enum = "^1.5.1"
 PyJWT = "^2.9.0"
 APScheduler = "*"
@@ -94,10 +94,10 @@ spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 coverage = {extras = ["toml"], version = "^7.6"}
-safety = "^3.2.3"
+safety = "^3.2.6"
 mypy = ">=0.961"
 typeguard = "^4"
-xdoctest = {extras = ["colors"], version = "^1.1.6"}
+xdoctest = {extras = ["colors"], version = "^1.2.0"}
 pre-commit = "^3.8.0"
 ruff = "^0.5.5"
 

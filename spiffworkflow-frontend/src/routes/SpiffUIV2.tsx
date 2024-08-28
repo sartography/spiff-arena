@@ -7,6 +7,8 @@ import { createSpiffTheme } from '../a-spiffui-v2/assets/theme/SpiffTheme';
 import { MenuItemData } from '../a-spiffui-v2/views/app/topmenu/MenuItem';
 import TopMenu from '../a-spiffui-v2/views/app/topmenu/TopMenu';
 import StartProcess from '../a-spiffui-v2/views/StartProcess/StartProcess';
+import Login from './Login';
+import LoginHandler from '../components/LoginHandler';
 
 /**
  * This is the main entry point for the new SpiffUI V2.
@@ -63,6 +65,7 @@ export default function SpiffUIV2() {
 
   return (
     <ThemeProvider theme={globalTheme}>
+      <LoginHandler />
       <CssBaseline />
       <Container
         maxWidth={false}
@@ -124,6 +127,7 @@ export default function SpiffUIV2() {
                 <Route path="/" element={<Dashboards />} />
                 <Route path="/dashboard" element={<Dashboards />} />
                 <Route path="/startprocess" element={<StartProcess />} />
+                <Route path="login" element={<Login />} />
               </Routes>
             </Box>
           </Grid>

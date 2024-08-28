@@ -1,7 +1,6 @@
 import { ReactElement, useEffect, useState } from 'react';
 import { Button, Table, Modal, Stack } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-// @ts-ignore
 import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
