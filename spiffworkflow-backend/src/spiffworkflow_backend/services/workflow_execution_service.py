@@ -610,8 +610,8 @@ class WorkflowExecutionService:
     def process_bpmn_events(self) -> None:
         bpmn_event_groups = self.group_bpmn_events()
         message_events = bpmn_event_groups.pop(MessageEventDefinition.__name__, [])
-
-        if bpmn_event_groups and self.bpmn_process_instance.is_completed():
+        
+        if bpmn_event_groups:
             raise WorkflowExecutionServiceError.from_completion_with_unhandled_events(
                 self.bpmn_process_instance.last_task, bpmn_event_groups
             )
