@@ -156,4 +156,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 ![JSON data_store](images/DataStore_JSON_Output.png)
 
+```{admonition} Note
+⚠  In the data store creation, you will see fields like 'Name' and 'Identifier'. If you are using script tasks that interacts with the data store, reference the `identifier` exactly as it is named in the data store configuration.
+```
 By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
