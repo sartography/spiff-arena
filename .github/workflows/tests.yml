@@ -16,471 +16,445 @@ defaults:
     working-directory: spiffworkflow-backend
 
 jobs:
-  test-upload:
+  tests-backend:
+    name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { python: "3.12", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.12", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.11", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
+            }
+          - {
+              python: "3.12",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
+              upload_coverage: true,
+            }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "postgres",
+            }
+          - {
+              python: "3.12",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "postgres",
+            }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.12",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          # FIXME: tests cannot pass on windows and we currently cannot debug
+          # since none of us have a windows box that can run the python app.
+          # so ignore windows tests until we can get it fixed.
+          # - {
+          #     python: "3.10",
+          #     os: "windows-latest",
+          #     session: "tests",
+          #     database: "sqlite",
+          #   }
+          - {
+              python: "3.11",
+              os: "macos-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
+              # probably the next release fixes it.
+              # https://github.com/agronholm/typeguard/issues/242
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "typeguard",
+              database: "sqlite",
+            }
+          - {
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
+              # probably the next release fixes it.
+              # https://github.com/agronholm/typeguard/issues/242
+              python: "3.12",
+              os: "ubuntu-latest",
+              session: "typeguard",
+              database: "sqlite",
+            }
+          # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+
+    env:
+      FLASK_SESSION_SECRET_KEY: super_secret_key
+      FORCE_COLOR: "1"
+      PRE_COMMIT_COLOR: "always"
+      SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
+      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
+      SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: "true"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install pip and poetry
+        run: |
+          pwd
+          ls -al
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip --version
+          poetry --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+
+      # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
+      # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
+      # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
+      # - name: Checkout Samples
+      #   if: matrix.database == 'sqlite'
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: sartography/sample-process-models
+      #     path: sample-process-models
+      # - name: Poetry Install
+      #   if: matrix.database == 'sqlite'
+      #   run: poetry install
+      # - name: Setup sqlite
+      #   if: matrix.database == 'sqlite'
+      #   env:
+      #     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
+      #   run: ./bin/recreate_db clean rmall
+
+      - name: Setup Mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          host port: 3306
+          container port: 3306
+          mysql version: "8.0"
+          mysql database: "spiffworkflow_backend_unit_testing"
+          mysql root password: password
+          collation server: "utf8mb4_0900_as_cs"
+        if: matrix.database == 'mysql'
+
+      - name: Setup Postgres
+        run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
+        if: matrix.database == 'postgres'
+
+      - name: Install mysqlclient and psycopg2 lib dependencies
+        if: matrix.os == 'macos-latest'
+        # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
+        # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
+        run: |
+          brew install mysql@8.0 postgresql@14 && brew link mysql@8.0
+
+      - name: Run Session
+        run: |
+          ./bin/run_ci_session ${{ matrix.session }}
+
+      - name: Upload coverage data
+        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
+        if: matrix.upload_coverage
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: coverage-data
+          path: "spiffworkflow-backend/.coverage.*"
+          include-hidden-files: true
+
+      # - name: Upload documentation
+      #   if: matrix.session == 'docs-build'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: docs
+      #     path: docs/_build
+      #
+      - name: Upload logs
+        if: failure() && matrix.session == 'tests'
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
+          path: "./spiffworkflow-backend/log/*.log"
+
+  run_pre_commit_checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        run: |
+          pwd
+          ls -al
+          pip --version
+          pip install --constraint=.github/workflows/constraints.txt pip poetry
+          poetry --version
+      - name: Poetry Install
+        run: poetry install
+      - name: run_pre_commit
+        run: ./bin/run_pre_commit_in_ci
+
+  check_docker_start_script:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
-      - name: hidden file with path
+      - name: Checkout Samples
+        uses: actions/checkout@v4
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
+      - name: start_backend
+        run: ./bin/build_and_run_with_docker_compose
+        timeout-minutes: 20
+        env:
+          SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
+      - name: wait_for_backend
+        run: ./bin/wait_for_backend_to_be_up 5
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install pip and poetry
+        run: |
+          pwd
+          ls -al
+          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip --version
+          poetry --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: coverage-data
+          # this action doesn't seem to respect working-directory so include working-directory value in path
+          path: spiffworkflow-backend
+
+      - name: Run Coverage
+        run: |
+          ./bin/run_ci_session coverage
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4.5.0
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v3.0.0
+        # thought about just skipping dependabot
+        # if: ${{ github.actor != 'dependabot[bot]' }}
+        # but figured all pull requests seems better, since none of them will have access to sonarcloud.
+        # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
+        # if: ${{ github.event_name != 'pull_request' }}
+        # so just skip everything but main
+        if: github.ref_name == 'main'
+        with:
+          projectBaseDir: spiffworkflow-backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: Write PR number to spiffworkflow-backend/pr dir
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./pr
+          echo "$PR_NUMBER" > ./pr/pr_number
+      - name: Upload PR number as artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: pr_number
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
+          if-no-files-found: error
+
+  tests-frontend:
+    runs-on: ubuntu-latest
+    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    defaults:
+      run:
+        working-directory: spiffworkflow-frontend
+    steps:
+      - name: Development Code
+        uses: actions/checkout@v4
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build --if-present
+      - name: SonarCloud Scan
+        # thought about just skipping dependabot
+        # if: ${{ github.actor != 'dependabot[bot]' }}
+        # but figured all pull requests seems better, since none of them will have access to sonarcloud.
+        # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
+        # if: ${{ github.event_name != 'pull_request' }}
+        # so just skip everything but main
+        if: github.ref_name == 'main'
+        uses: sonarsource/sonarcloud-github-action@v3.0.0
+        with:
+          projectBaseDir: spiffworkflow-frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  cypress-run:
+    runs-on: ubuntu-latest
+    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    defaults:
+      run:
+        working-directory: spiffworkflow-frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Checkout Samples
+        uses: actions/checkout@v4
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
+      - name: start_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/start_keycloak
+      - name: start_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/build_and_run_with_docker_compose
+        timeout-minutes: 20
+        env:
+          SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
+          SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
+      - name: start_frontend
+        # working-directory: ./spiffworkflow-frontend
+        run: ./bin/build_and_run_with_docker_compose
+      - name: wait_for_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/wait_for_backend_to_be_up 5
+      - name: wait_for_frontend
+        # working-directory: ./spiffworkflow-frontend
+        run: ./bin/wait_for_frontend_to_be_up 5
+      - name: wait_for_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/wait_for_keycloak 5
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./spiffworkflow-frontend
+          browser: chrome
+          # only record on push, not pull_request, since we do not have secrets for PRs,
+          # so the required CYPRESS_RECORD_KEY will not be available.
+          # we have limited runs in cypress cloud, so only record main builds
+          # the direct check for github.event_name == 'push' is for if we want to go back to triggering this workflow
+          # directly, rather than when Backend Tests complete.
+          # note that github.event.workflow_run is referring to the Backend Tests workflow and another option
+          # for github.event.workflow_run.event is 'pull_request', which we want to ignore.
+          record: ${{ github.ref_name == 'main' && ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push') || (github.event_name == 'push')) }}
+        env:
+          # pass the Dashboard record key as an environment variable
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          # pass GitHub token to allow accurately detecting a build vs a re-run build
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
+      - name: get_backend_logs_from_docker_compose
+        if: failure()
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
+      - name: Upload logs
+        if: failure()
         uses: "actions/upload-artifact@v4"
         with:
-          name: cookiecutter-path
-          path: "spiffworkflow-backend/.cookie*"
-      - name: hidden file without path
-        uses: "actions/upload-artifact@v4"
+          name: spiffworkflow-backend-logs
+          path: "./spiffworkflow-backend/log/*.log"
+
+      #  https://github.com/cypress-io/github-action#artifacts
+      - name: upload_screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          name: cookiecutter-no-path
-          path: ".cookie*"
-      - name: hidden file with path hidden option
-        uses: "actions/upload-artifact@v4"
+          name: cypress-screenshots
+          path: ./spiffworkflow-frontend/cypress/screenshots
+      # Test run video was always captured, so this action uses "always()" condition
+      - name: upload_videos
+        uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          name: cookiecutter-path
-          path: "spiffworkflow-backend/.cookie*"
-          include-hidden-files: true
-      - name: hidden file without path hidden option
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: cookiecutter-no-path
-          path: ".cookie*"
-          include-hidden-files: true
-  # tests-backend:
-  #   name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - { python: "3.12", os: "ubuntu-latest", session: "safety" }
-  #         - { python: "3.12", os: "ubuntu-latest", session: "mypy" }
-  #         - { python: "3.11", os: "ubuntu-latest", session: "safety" }
-  #         - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
-  #         - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
-  #         - {
-  #             python: "3.11",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "mysql",
-  #           }
-  #         - {
-  #             python: "3.12",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "mysql",
-  #             upload_coverage: true,
-  #           }
-  #         - {
-  #             python: "3.11",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "postgres",
-  #           }
-  #         - {
-  #             python: "3.12",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "postgres",
-  #           }
-  #         - {
-  #             python: "3.11",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "sqlite",
-  #           }
-  #         - {
-  #             python: "3.12",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "sqlite",
-  #           }
-  #         - {
-  #             python: "3.10",
-  #             os: "ubuntu-latest",
-  #             session: "tests",
-  #             database: "sqlite",
-  #           }
-  #         # FIXME: tests cannot pass on windows and we currently cannot debug
-  #         # since none of us have a windows box that can run the python app.
-  #         # so ignore windows tests until we can get it fixed.
-  #         # - {
-  #         #     python: "3.10",
-  #         #     os: "windows-latest",
-  #         #     session: "tests",
-  #         #     database: "sqlite",
-  #         #   }
-  #         - {
-  #             python: "3.11",
-  #             os: "macos-latest",
-  #             session: "tests",
-  #             database: "sqlite",
-  #           }
-  #         - {
-  #             # typeguard 2.13.3 is broken with TypeDict in 3.11.
-  #             # probably the next release fixes it.
-  #             # https://github.com/agronholm/typeguard/issues/242
-  #             python: "3.11",
-  #             os: "ubuntu-latest",
-  #             session: "typeguard",
-  #             database: "sqlite",
-  #           }
-  #         - {
-  #             # typeguard 2.13.3 is broken with TypeDict in 3.11.
-  #             # probably the next release fixes it.
-  #             # https://github.com/agronholm/typeguard/issues/242
-  #             python: "3.12",
-  #             os: "ubuntu-latest",
-  #             session: "typeguard",
-  #             database: "sqlite",
-  #           }
-  #         # - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-  #         # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
-  #
-  #   env:
-  #     FLASK_SESSION_SECRET_KEY: super_secret_key
-  #     FORCE_COLOR: "1"
-  #     PRE_COMMIT_COLOR: "always"
-  #     SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
-  #     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
-  #     SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: "true"
-  #
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v5.2.0
-  #       with:
-  #         python-version: ${{ matrix.python }}
-  #
-  #     - name: Install pip and poetry
-  #       run: |
-  #         pwd
-  #         ls -al
-  #         pip install --constraint=../.github/workflows/constraints.txt pip poetry
-  #         pip --version
-  #         poetry --version
-  #
-  #     - name: Upgrade pip in virtual environments
-  #       shell: python
-  #       run: |
-  #         import os
-  #         import pip
-  #
-  #         with open(os.environ["GITHUB_ENV"], mode="a") as io:
-  #             print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-  #
-  #     # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
-  #     # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
-  #     # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
-  #     # - name: Checkout Samples
-  #     #   if: matrix.database == 'sqlite'
-  #     #   uses: actions/checkout@v4
-  #     #   with:
-  #     #     repository: sartography/sample-process-models
-  #     #     path: sample-process-models
-  #     # - name: Poetry Install
-  #     #   if: matrix.database == 'sqlite'
-  #     #   run: poetry install
-  #     # - name: Setup sqlite
-  #     #   if: matrix.database == 'sqlite'
-  #     #   env:
-  #     #     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
-  #     #   run: ./bin/recreate_db clean rmall
-  #
-  #     - name: Setup Mysql
-  #       uses: mirromutth/mysql-action@v1.1
-  #       with:
-  #         host port: 3306
-  #         container port: 3306
-  #         mysql version: "8.0"
-  #         mysql database: "spiffworkflow_backend_unit_testing"
-  #         mysql root password: password
-  #         collation server: "utf8mb4_0900_as_cs"
-  #       if: matrix.database == 'mysql'
-  #
-  #     - name: Setup Postgres
-  #       run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-  #       if: matrix.database == 'postgres'
-  #
-  #     - name: Install mysqlclient and psycopg2 lib dependencies
-  #       if: matrix.os == 'macos-latest'
-  #       # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
-  #       # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
-  #       run: |
-  #         brew install mysql@8.0 postgresql@14 && brew link mysql@8.0
-  #
-  #     - name: Run Session
-  #       run: |
-  #         ./bin/run_ci_session ${{ matrix.session }}
-  #
-  #     - name: Upload coverage data
-  #       # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-  #       if: matrix.upload_coverage
-  #       uses: "actions/upload-artifact@v4"
-  #       with:
-  #         name: coverage-data
-  #         path: ".coverage.*"
-  #
-  #     # - name: Upload documentation
-  #     #   if: matrix.session == 'docs-build'
-  #     #   uses: actions/upload-artifact@v4
-  #     #   with:
-  #     #     name: docs
-  #     #     path: docs/_build
-  #     #
-  #     - name: Upload logs
-  #       if: failure() && matrix.session == 'tests'
-  #       uses: "actions/upload-artifact@v4"
-  #       with:
-  #         name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
-  #         path: "./spiffworkflow-backend/log/*.log"
-  #
-  # run_pre_commit_checks:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: .
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5.2.0
-  #       with:
-  #         python-version: "3.11"
-  #     - name: Install Poetry
-  #       run: |
-  #         pwd
-  #         ls -al
-  #         pip --version
-  #         pip install --constraint=.github/workflows/constraints.txt pip poetry
-  #         poetry --version
-  #     - name: Poetry Install
-  #       run: poetry install
-  #     - name: run_pre_commit
-  #       run: ./bin/run_pre_commit_in_ci
-  #
-  # check_docker_start_script:
-  #   permissions:
-  #     contents: read # for actions/checkout to fetch code
-  #     security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-  #     actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-  #     - name: Checkout Samples
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: sartography/sample-process-models
-  #         path: sample-process-models
-  #     - name: start_backend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #       timeout-minutes: 20
-  #       env:
-  #         SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
-  #     - name: wait_for_backend
-  #       run: ./bin/wait_for_backend_to_be_up 5
-  #
-  # coverage:
-  #   runs-on: ubuntu-latest
-  #   needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-  #         fetch-depth: 0
-  #
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5.2.0
-  #       with:
-  #         python-version: "3.11"
-  #
-  #     - name: Install pip and poetry
-  #       run: |
-  #         pwd
-  #         ls -al
-  #         pip install --constraint=../.github/workflows/constraints.txt pip poetry
-  #         pip --version
-  #         poetry --version
-  #
-  #     - name: Upgrade pip in virtual environments
-  #       shell: python
-  #       run: |
-  #         import os
-  #         import pip
-  #
-  #         with open(os.environ["GITHUB_ENV"], mode="a") as io:
-  #             print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-  #
-  #     - name: Download coverage data
-  #       uses: actions/download-artifact@v4.1.8
-  #       with:
-  #         name: coverage-data
-  #         # this action doesn't seem to respect working-directory so include working-directory value in path
-  #         path: spiffworkflow-backend
-  #
-  #     - name: Run Coverage
-  #       run: |
-  #         ./bin/run_ci_session coverage
-  #
-  #     - name: Upload coverage report
-  #       uses: codecov/codecov-action@v4.5.0
-  #
-  #     - name: SonarCloud Scan
-  #       uses: sonarsource/sonarcloud-github-action@v3.0.0
-  #       # thought about just skipping dependabot
-  #       # if: ${{ github.actor != 'dependabot[bot]' }}
-  #       # but figured all pull requests seems better, since none of them will have access to sonarcloud.
-  #       # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
-  #       # if: ${{ github.event_name != 'pull_request' }}
-  #       # so just skip everything but main
-  #       if: github.ref_name == 'main'
-  #       with:
-  #         projectBaseDir: spiffworkflow-backend
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #     # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-  #     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-  #     - name: Write PR number to spiffworkflow-backend/pr dir
-  #       if: ${{ github.event_name == 'pull_request' }}
-  #       env:
-  #         PR_NUMBER: ${{ github.event.number }}
-  #       run: |
-  #         mkdir -p ./pr
-  #         echo "$PR_NUMBER" > ./pr/pr_number
-  #     - name: Upload PR number as artifact
-  #       uses: actions/upload-artifact@v4
-  #       if: ${{ github.event_name == 'pull_request' }}
-  #       with:
-  #         name: pr_number
-  #         # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
-  #         # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
-  #         # from spiff-arena root rather than the default working-directory we specified, and therefore
-  #         # trying to explicitly add spiffworkflow-backend to path
-  #         path: spiffworkflow-backend/pr/
-  #         if-no-files-found: error
-  #
-  # tests-frontend:
-  #   runs-on: ubuntu-latest
-  #   needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
-  #   defaults:
-  #     run:
-  #       working-directory: spiffworkflow-frontend
-  #   steps:
-  #     - name: Development Code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-  #         fetch-depth: 0
-  #         ref: ${{ github.event.workflow_run.head_sha }}
-  #     - name: Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 18.x
-  #     - run: npm install
-  #     - run: npm run lint
-  #     - run: npm test
-  #     - run: npm run build --if-present
-  #     - name: SonarCloud Scan
-  #       # thought about just skipping dependabot
-  #       # if: ${{ github.actor != 'dependabot[bot]' }}
-  #       # but figured all pull requests seems better, since none of them will have access to sonarcloud.
-  #       # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
-  #       # if: ${{ github.event_name != 'pull_request' }}
-  #       # so just skip everything but main
-  #       if: github.ref_name == 'main'
-  #       uses: sonarsource/sonarcloud-github-action@v3.0.0
-  #       with:
-  #         projectBaseDir: spiffworkflow-frontend
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #
-  # cypress-run:
-  #   runs-on: ubuntu-latest
-  #   needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
-  #   defaults:
-  #     run:
-  #       working-directory: spiffworkflow-frontend
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: ${{ github.event.workflow_run.head_sha }}
-  #     - name: Checkout Samples
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: sartography/sample-process-models
-  #         path: sample-process-models
-  #     - name: start_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/start_keycloak
-  #     - name: start_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #       timeout-minutes: 20
-  #       env:
-  #         SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
-  #         SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
-  #     - name: start_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #     - name: wait_for_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/wait_for_backend_to_be_up 5
-  #     - name: wait_for_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/wait_for_frontend_to_be_up 5
-  #     - name: wait_for_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/wait_for_keycloak 5
-  #     - name: Dump GitHub context
-  #       env:
-  #         GITHUB_CONTEXT: ${{ toJson(github) }}
-  #       run: |
-  #         echo "$GITHUB_CONTEXT"
-  #     - name: Cypress run
-  #       uses: cypress-io/github-action@v6
-  #       with:
-  #         working-directory: ./spiffworkflow-frontend
-  #         browser: chrome
-  #         # only record on push, not pull_request, since we do not have secrets for PRs,
-  #         # so the required CYPRESS_RECORD_KEY will not be available.
-  #         # we have limited runs in cypress cloud, so only record main builds
-  #         # the direct check for github.event_name == 'push' is for if we want to go back to triggering this workflow
-  #         # directly, rather than when Backend Tests complete.
-  #         # note that github.event.workflow_run is referring to the Backend Tests workflow and another option
-  #         # for github.event.workflow_run.event is 'pull_request', which we want to ignore.
-  #         record: ${{ github.ref_name == 'main' && ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push') || (github.event_name == 'push')) }}
-  #       env:
-  #         # pass the Dashboard record key as an environment variable
-  #         CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-  #         # pass GitHub token to allow accurately detecting a build vs a re-run build
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
-  #     - name: get_backend_logs_from_docker_compose
-  #       if: failure()
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
-  #     - name: Upload logs
-  #       if: failure()
-  #       uses: "actions/upload-artifact@v4"
-  #       with:
-  #         name: spiffworkflow-backend-logs
-  #         path: "./spiffworkflow-backend/log/*.log"
-  #
-  #     #  https://github.com/cypress-io/github-action#artifacts
-  #     - name: upload_screenshots
-  #       uses: actions/upload-artifact@v4
-  #       if: failure()
-  #       with:
-  #         name: cypress-screenshots
-  #         path: ./spiffworkflow-frontend/cypress/screenshots
-  #     # Test run video was always captured, so this action uses "always()" condition
-  #     - name: upload_videos
-  #       uses: actions/upload-artifact@v4
-  #       if: failure()
-  #       with:
-  #         name: cypress-videos
-  #         path: ./spiffworkflow-frontend/cypress/videos
+          name: cypress-videos
+          path: ./spiffworkflow-frontend/cypress/videos
