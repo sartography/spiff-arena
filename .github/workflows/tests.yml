@@ -189,6 +189,7 @@ jobs:
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
         uses: "actions/upload-artifact@v4"
+        # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
           path: "spiffworkflow-backend/.coverage.*"
