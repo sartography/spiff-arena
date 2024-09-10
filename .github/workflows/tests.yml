@@ -19,6 +19,8 @@ jobs:
   test-upload:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
       - name: hidden file with path
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
