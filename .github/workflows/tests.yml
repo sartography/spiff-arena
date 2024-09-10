@@ -22,30 +22,22 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
       - name: hidden file with path
-        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v4"
         with:
           name: cookiecutter-path
           path: "spiffworkflow-backend/.cookie*"
       - name: hidden file without path
-        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v4"
         with:
           name: cookiecutter-no-path
           path: ".cookie*"
       - name: hidden file with path hidden option
-        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v4"
         with:
           name: cookiecutter-path
           path: "spiffworkflow-backend/.cookie*"
           include-hidden-files: true
       - name: hidden file without path hidden option
-        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: matrix.upload_coverage
         uses: "actions/upload-artifact@v4"
         with:
           name: cookiecutter-no-path
