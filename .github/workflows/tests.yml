@@ -193,6 +193,7 @@ jobs:
         with:
           name: coverage-data
           path: "spiffworkflow-backend/.coverage.*"
+          include-hidden-files: true
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
