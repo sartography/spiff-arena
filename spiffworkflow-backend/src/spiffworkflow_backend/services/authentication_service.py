@@ -328,7 +328,7 @@ class AuthenticationService:
     @classmethod
     def is_valid_azp(cls, authentication_identifier: str, azp: str | None) -> bool:
         # not all open id token include an azp so only check if present
-        if azp is None:
+        if azp is None or not current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP"]:
             return True
 
         valid_client_ids = [cls.client_id(authentication_identifier)]
