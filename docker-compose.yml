@@ -16,6 +16,9 @@ services:
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
     image: ghcr.io/sartography/spiffworkflow-backend:latest
+    # Enable setting the ownership of created files to match the local user:group. For example:
+    #     UGID="$(id -u):$(id -g)" docker compose up -d
+    user: ${UGID:-0:0}
     environment:
       SPIFFWORKFLOW_BACKEND_ENV: "local_docker"
       FLASK_DEBUG: "0"
