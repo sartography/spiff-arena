@@ -108,6 +108,9 @@ cp-poetry-i:
 cp-poetry-lock:
 	$(IN_CONNECTOR_PROXY) poetry lock --no-update
 
+cp-logs:
+	docker logs -f $(CONNECTOR_PROXY_CONTAINER)
+
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
 
@@ -166,7 +169,7 @@ include event-stream/demo.mk
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	cp-poetry-i \
+	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	git-debranch git-debranch-offline \
 	poetry-i poetry-rm pre-commit ruff run-pyl \
