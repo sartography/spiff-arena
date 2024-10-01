@@ -102,6 +102,9 @@ be-tests: be-clear-log-file
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
+cp-sh:
+	$(IN_CONNECTOR_PROXY) /bin/bash
+
 cp-poetry-i:
 	$(IN_CONNECTOR_PROXY) poetry install
 
