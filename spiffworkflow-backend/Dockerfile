@@ -32,7 +32,7 @@ RUN pip install --upgrade pip
 RUN pip install poetry==1.8.1
 
 # Avoid host:container file ownership issues
-RUN git config --global --add safe.directory *
+RUN git config --global --add safe.directory '*'
 
 
 ######################## - SETUP
