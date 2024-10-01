@@ -105,6 +105,9 @@ be-tests-par: be-clear-log-file
 cp-poetry-i:
 	$(IN_CONNECTOR_PROXY) poetry install
 
+cp-poetry-lock:
+	$(IN_CONNECTOR_PROXY) poetry lock --no-update
+
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
 
