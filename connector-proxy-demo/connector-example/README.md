@@ -1,9 +1,9 @@
-# connector-smtp
-SMTP Connector
+# connector-example
+Example Connector
 
 
-## Testing
+## Happy Hacking
 
-```
-python -m smtpd -c DebuggingServer -n 127.0.0.1:1025
-```
+When running the dev containers, you can edit this connector and see
+changes reflected next time you run a process model with a Service Task
+that calls this connector.
