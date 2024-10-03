@@ -30,7 +30,8 @@ services:
     #     RUN_AS="$(id -u):$(id -g)" docker compose up -d
     user: ${RUN_AS:-0:0}
     depends_on:
-      - match-volume-ownership
+      match-volume-ownership:
+        condition: service_completed_successfully
     environment:
       SPIFFWORKFLOW_BACKEND_ENV: "local_docker"
       FLASK_DEBUG: "0"
