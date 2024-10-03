@@ -18,6 +18,7 @@ services:
   match-volume-ownership:
     image: alpine
     restart: "no"
+    # Use RUN_AS if set, otherwise default to root (0:0)
     entrypoint: |
       /bin/sh -c "chown ${RUN_AS:-0:0} /app/db_volume"
     volumes:
