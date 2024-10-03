@@ -17,6 +17,8 @@ connector-aws = { git = "https://github.com/sartography/connector-aws.git"}
 connector-http = {git = "https://github.com/sartography/connector-http.git"}
 connector-slack = {git = "https://github.com/sartography/connector-slack.git"}
 connector-smtp = {git = "https://github.com/sartography/connector-smtp.git"}
+connector-example = {develop = true, path = "./connector-example" }
+
 gunicorn = "^20.1.0"
 
 [build-system]
