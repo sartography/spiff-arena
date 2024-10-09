@@ -21,9 +21,9 @@ FROM base AS deployment
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
 RUN apt-get update \
- && apt-get clean -y \
- && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get clean -y \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
 
@@ -42,12 +42,11 @@ RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
- && apt-get install -y -q gcc libssl-dev pkg-config
+  && apt-get install -y -q gcc libssl-dev pkg-config
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.
 COPY pyproject.toml poetry.lock /app/
-RUN poetry install
 
 COPY . /app
 RUN poetry install
