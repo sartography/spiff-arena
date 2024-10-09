@@ -1934,7 +1934,7 @@ class ProcessInstanceProcessor:
 
     def remove_spiff_tasks_for_termination(self) -> None:
         start_time = time.time()
-        deleted_tasks = self.bpmn_process_instance.cancel() or []
+        self.bpmn_process_instance.cancel()
         spiff_tasks = self.bpmn_process_instance.get_tasks()
 
         task_service = TaskService(
@@ -1944,7 +1944,7 @@ class ProcessInstanceProcessor:
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             task_model_mapping=self.task_model_mapping,
         )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
 
         # we may want to move this to task_service.update_all_tasks_from_spiff_tasks,
         # but not sure it's always good to it.
