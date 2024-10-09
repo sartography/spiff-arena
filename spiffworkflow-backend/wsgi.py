@@ -8,7 +8,8 @@ app = create_app()
 if app.config["SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX"]:
     from werkzeug.middleware.proxy_fix import ProxyFix
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
+    # https://flask.palletsprojects.com/en/2.2.x/deploying/proxy_fix/
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # this is in here because when we put it in the create_app function,
 # it also loaded when we were running migrations, which resulted in a chicken/egg thing.
