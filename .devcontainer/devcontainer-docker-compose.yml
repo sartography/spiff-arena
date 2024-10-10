@@ -6,7 +6,7 @@ services:
       - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api
 
   spiffworkflow-backend:
-    image: ghcr.io/sartography/spiffworkflow-backend:codespaces-2024-10-10_15-02-26-7f57002
+    image: ghcr.io/sartography/spiffworkflow-backend:codespaces-2024-10-10_15-40-14-9b3729a
     environment:
       # browser
       - SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}
