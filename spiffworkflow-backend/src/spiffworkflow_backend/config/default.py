@@ -249,6 +249,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)
 
+# how many proxies are in front of this flask server (for use with ProxyFix)
+config_from_env("SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX", default=0)
+
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)
 
