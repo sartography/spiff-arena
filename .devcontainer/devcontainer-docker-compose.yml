@@ -1,6 +1,6 @@
 services:
   spiffworkflow-frontend:
-    image: ghcr.io/sartography/spiffworkflow-backend:main-latest
+    image: ghcr.io/sartography/spiffworkflow-frontend:main-latest
     environment:
       - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
       - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api
