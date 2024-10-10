@@ -1,10 +1,12 @@
 services:
   spiffworkflow-frontend:
+    image: ghcr.io/sartography/spiffworkflow-backend:main-latest
     environment:
       - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
       - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api
 
   spiffworkflow-backend:
+    image: ghcr.io/sartography/spiffworkflow-backend:codespaces-2024-10-10_14-04-43-913d179
     environment:
       # browser
       - SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}
