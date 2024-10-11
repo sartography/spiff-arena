@@ -15,9 +15,19 @@ BACKEND_DEV_OVERLAY ?= spiffworkflow-backend/dev.docker-compose.yml
 FRONTEND_CONTAINER ?= spiffworkflow-frontend
 FRONTEND_DEV_OVERLAY ?= spiffworkflow-frontend/dev.docker-compose.yml
 
+CONNECTOR_PROXY_CONTAINER ?= spiffworkflow-connector
+CONNECTOR_PROXY_DEV_OVERLAY ?= connector-proxy-demo/dev.docker-compose.yml
+
+YML_FILES := -f docker-compose.yml \
+	-f $(BACKEND_DEV_OVERLAY) \
+	-f $(FRONTEND_DEV_OVERLAY) \
+	-f $(CONNECTOR_PROXY_DEV_OVERLAY) \
+	-f $(ARENA_DEV_OVERLAY)
+
 DOCKER_COMPOSE ?= RUN_AS=$(ME) docker compose $(YML_FILES)
 IN_ARENA ?= $(DOCKER_COMPOSE) run --rm $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run --rm $(BACKEND_CONTAINER)
+IN_CONNECTOR_PROXY ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run --rm $(FRONTEND_CONTAINER)
 
 SPIFFWORKFLOW_BACKEND_ENV ?= local_development
@@ -26,11 +36,6 @@ BACKEND_SQLITE_FILE ?= src/instance/db_$(SPIFFWORKFLOW_BACKEND_ENV).sqlite3
 NODE_MODULES_DIR ?= spiffworkflow-frontend/node_modules
 JUST ?=
 ARGS ?=
-
-YML_FILES := -f docker-compose.yml \
-	-f $(BACKEND_DEV_OVERLAY) \
-	-f $(FRONTEND_DEV_OVERLAY) \
-	-f $(ARENA_DEV_OVERLAY)
 
 all: dev-env start-dev run-pyl
 	@true
@@ -43,7 +48,7 @@ build-images:
 		--build-arg GROUP_NAME=$(GROUP_NAME) \
 		$(JUST)
 
-dev-env: stop-dev build-images poetry-i be-poetry-i be-db-clean fe-npm-i
+dev-env: stop-dev build-images poetry-i cp-poetry-i be-poetry-i be-db-clean fe-npm-i
 	@true
 
 start-dev: stop-dev
@@ -96,6 +101,18 @@ be-tests: be-clear-log-file
 
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) poetry run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+
+cp-sh:
+	$(IN_CONNECTOR_PROXY) /bin/bash
+
+cp-poetry-i:
+	$(IN_CONNECTOR_PROXY) poetry install
+
+cp-poetry-lock:
+	$(IN_CONNECTOR_PROXY) poetry lock --no-update
+
+cp-logs:
+	docker logs -f $(CONNECTOR_PROXY_CONTAINER)
 
 fe-lint-fix:
 	$(IN_FRONTEND) npm run lint:fix
@@ -155,6 +172,7 @@ include event-stream/demo.mk
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
+	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	git-debranch git-debranch-offline \
 	poetry-i poetry-rm pre-commit ruff run-pyl \

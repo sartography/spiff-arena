@@ -1,0 +1,16 @@
+
+services:
+  spiffworkflow-connector:
+    build:
+      context: connector-proxy-demo
+      dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
+    environment:
+      FLASK_DEBUG: "1"
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      XDG_CACHE_HOME: "/app/.cache"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./connector-proxy-demo:/app
