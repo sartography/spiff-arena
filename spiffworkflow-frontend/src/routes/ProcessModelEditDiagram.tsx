@@ -454,6 +454,7 @@ export default function ProcessModelEditDiagram() {
 
   const onJsonSchemaFilesRequested = useCallback(
     (event: any) => {
+      // eslint-disable-next-line sonarjs/slow-regex
       const re = /.*[-.]schema.json/;
       if (processModel?.files) {
         const jsonFiles = processModel.files.filter((f) => f.name.match(re));

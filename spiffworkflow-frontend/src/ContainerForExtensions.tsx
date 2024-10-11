@@ -129,7 +129,7 @@ export default function ContainerForExtensions() {
   };
 
   const backendIsDownPage = () => {
-    return [<BackendIsDown />];
+    return [<BackendIsDown key="backendIsDownPage" />];
   };
 
   const innerComponents = () => {

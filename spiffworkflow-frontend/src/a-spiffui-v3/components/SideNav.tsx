@@ -48,6 +48,7 @@ type OwnProps = {
   setAdditionalNavElement: Function;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({
   isCollapsed,
   onToggleCollapse,

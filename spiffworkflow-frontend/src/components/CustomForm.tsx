@@ -65,9 +65,7 @@ export default function CustomForm({
 }: OwnProps) {
   let reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
-    if (uiSchema['ui:theme'] === 'carbon') {
-      reactJsonSchemaFormTheme = 'carbon';
-    } else if (uiSchema['ui:theme'] === 'mui') {
+    if (uiSchema['ui:theme'] === 'mui') {
       reactJsonSchemaFormTheme = 'mui';
     } else {
       console.error(
@@ -122,6 +120,7 @@ export default function CustomForm({
     //    field:[field_name_to_use]:[start or end]
     //
     // defaults to "start" in all cases
+    // eslint-disable-next-line sonarjs/sonar-no-unused-vars
     const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(

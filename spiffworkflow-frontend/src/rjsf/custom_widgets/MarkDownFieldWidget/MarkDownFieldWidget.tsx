@@ -3,7 +3,7 @@
 import MDEditor from '@uiw/react-md-editor';
 import React, { useCallback } from 'react';
 
-interface widgetArgs {
+interface WidgetArgs {
   id: string;
   value: any;
   schema?: any;
@@ -28,7 +28,7 @@ export default function MarkDownFieldWidget({
   autofocus,
   label,
   rawErrors = [],
-}: widgetArgs) {
+}: WidgetArgs) {
   let invalid = false;
   let errorMessageForField = null;
 

@@ -191,6 +191,7 @@ export default function ReactFormEditor() {
         onRequestSubmit={handleFileNameSave}
         onRequestClose={handleFileNameCancel}
       >
+        {/* eslint-disable-next-line sonarjs/label-has-associated-control */}
         <label>File Name:</label>
         <span>
           <input

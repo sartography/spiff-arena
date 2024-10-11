@@ -132,6 +132,7 @@ backendCallProps) => {
         return { response, text: result };
       });
     })
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     .then((result: any) => {
       let jsonResult = null;
       try {

@@ -405,7 +405,7 @@ export default function ProcessModelShow() {
   };
 
   const [fileUploadEvent, setFileUploadEvent] = useState(null);
-  const [duplicateFilename, setDuplicateFilename] = useState<String>('');
+  const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
     useState(false);
 
@@ -455,7 +455,7 @@ export default function ProcessModelShow() {
       />
     );
   };
-  const displayOverwriteConfirmation = (filename: String) => {
+  const displayOverwriteConfirmation = (filename: string) => {
     setDuplicateFilename(filename);
     setShowOverwriteConfirmationPrompt(true);
   };
