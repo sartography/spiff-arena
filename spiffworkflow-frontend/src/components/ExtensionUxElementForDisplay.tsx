@@ -7,7 +7,7 @@ type OwnProps = {
   extensionUxElements?: UiSchemaUxElement[] | null;
 };
 
-export function ExtensionUxElementMap({
+export function extensionUxElementMap({
   displayLocation,
   elementCallback,
   extensionUxElements,
@@ -34,10 +34,10 @@ export function ExtensionUxElementMap({
 export default function ExtensionUxElementForDisplay(
   args: OwnProps,
 ): ReactElement | null {
-  const result = ExtensionUxElementMap(args);
+  const result = extensionUxElementMap(args);
   if (result === null) {
     return null;
   }
-  // eslint-disable-next-line react/jsx-no-useless-fragment
+  // eslint-disable-next-line react/jsx-no-useless-fragment, sonarjs/jsx-no-useless-fragment
   return <>{result}</>;
 }

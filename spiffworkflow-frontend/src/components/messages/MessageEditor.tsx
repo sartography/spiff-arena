@@ -38,7 +38,7 @@ export function MessageEditor({
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const [isSynced, setSynced] = useState<boolean>(true);
+  const [isSynced, setIsSynced] = useState<boolean>(true);
 
   const updateCorrelationPropertiesOnProcessGroup = useCallback(
     (currentMessagesForId: MessageDefinition, formData: any) => {
@@ -80,7 +80,7 @@ export function MessageEditor({
         correlation_properties: updatedMessagesForId.correlation_properties,
         elementId,
       });
-      setSynced(true);
+      setIsSynced(true);
     },
     [elementId, messageEvent.eventBus],
   );
@@ -174,7 +174,7 @@ export function MessageEditor({
         messageId,
         correlationProperties,
       );
-      setSynced(newIsSynced);
+      setIsSynced(newIsSynced);
       setProcessGroup(result);
       setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);

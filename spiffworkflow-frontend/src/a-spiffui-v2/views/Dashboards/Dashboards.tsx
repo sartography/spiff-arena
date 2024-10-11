@@ -43,7 +43,7 @@ export default function Dashboards() {
   const [searchText, setSearchText] = useState('');
   const [panelData, setPanelData] = useState<Record<string, any>>({});
   const [dashboardAccordionOpen, setDashboardAccordionOpen] = useState(true);
-  const [infoPanelOpen, setInfoPanelIsOpen] = useState(false);
+  const [infoPanelIsOpen, setInfoPanelIsOpen] = useState(false);
   const [isTaskData, setIsTaskData] = useState(false);
   const { processInstanceCollection } = useProcessInstanceCollection();
   const { processInstanceTimesReport, setProcessInstances } =
@@ -72,7 +72,7 @@ export default function Dashboards() {
       setPanelData(data);
       setInfoPanelIsOpen(true);
     } else {
-      setInfoPanelIsOpen(!infoPanelOpen);
+      setInfoPanelIsOpen(!infoPanelIsOpen);
     }
   };
 
@@ -82,7 +82,7 @@ export default function Dashboards() {
       setPanelData(data);
       setInfoPanelIsOpen(true);
     } else {
-      setInfoPanelIsOpen(!infoPanelOpen);
+      setInfoPanelIsOpen(!infoPanelIsOpen);
     }
   };
 
@@ -244,7 +244,7 @@ export default function Dashboards() {
       </Grid>
       {/** Absolutely positioned info window */}
       {Object.keys(panelData).length ? (
-        <Slide in={infoPanelOpen} direction="left" mountOnEnter unmountOnExit>
+        <Slide in={infoPanelIsOpen} direction="left" mountOnEnter unmountOnExit>
           <Stack
             sx={{
               display: { xs: 'none', sm: 'block' },

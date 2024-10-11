@@ -9,7 +9,7 @@ import {
 import { getCommonAttributes } from '../../helpers';
 import DateAndTimeService from '../../../services/DateAndTimeService';
 
-interface widgetArgs {
+interface WidgetArgs {
   id: string;
   value: any;
   label: string;
@@ -38,7 +38,7 @@ export default function DateRangePickerWidget({
   autofocus,
   label,
   rawErrors = [],
-}: widgetArgs) {
+}: WidgetArgs) {
   const commonAttributes = getCommonAttributes(
     label,
     schema,
@@ -77,11 +77,11 @@ export default function DateRangePickerWidget({
     try {
       startDate = DateAndTimeService.convertStringToDate(startDateString);
       // eslint-disable-next-line no-empty
-    } catch (RangeError) {}
+    } catch (rangeError) {}
     try {
       endDate = DateAndTimeService.convertStringToDate(endDateString);
       // eslint-disable-next-line no-empty
-    } catch (RangeError) {}
+    } catch (rangeError) {}
 
     dateValue = [startDate, endDate];
   }

@@ -151,7 +151,7 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   ];
 };
 
-export function ErrorDisplayStateless(
+export function errorDisplayStateless(
   errorObject: ErrorForDisplay,
   onClose?: Function,
 ) {
@@ -176,7 +176,7 @@ export default function ErrorDisplay() {
   let errorTag = null;
 
   if (errorObject) {
-    errorTag = ErrorDisplayStateless(errorObject, removeError);
+    errorTag = errorDisplayStateless(errorObject, removeError);
   }
   return errorTag;
 }

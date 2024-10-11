@@ -15,7 +15,7 @@ import Page404 from './Page404';
 import AdminRedirect from './AdminRedirect';
 import RootRoute from './RootRoute';
 import LoginHandler from '../components/LoginHandler';
-import { ExtensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
+import { extensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
 import Extension from './Extension';
 
 type OwnProps = {
@@ -34,7 +34,7 @@ export default function BaseRoutes({ extensionUxElements }: OwnProps) {
   };
 
   if (extensionUxElements !== null) {
-    const extensionRoutes = ExtensionUxElementMap({
+    const extensionRoutes = extensionUxElementMap({
       displayLocation: 'routes',
       elementCallback,
       extensionUxElements,

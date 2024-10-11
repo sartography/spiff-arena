@@ -42,7 +42,7 @@ export default function SpiffUIV3() {
   const location = useLocation();
 
   const [displayLocation, setDisplayLocation] = useState(location);
-  const [transitionStage, setTransistionStage] = useState('fadeIn');
+  const [transitionStage, setTransitionStage] = useState('fadeIn');
   const [isLongFadeIn, setIsLongFadeIn] = useState(false);
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
@@ -102,11 +102,11 @@ export default function SpiffUIV3() {
       setIsLongFadeIn(
         isComingFromInterstitialOrProgress && location.pathname === '/newui',
       );
-      setTransistionStage(fadeOutImmediate);
+      setTransitionStage(fadeOutImmediate);
     }
     if (transitionStage === fadeOutImmediate) {
       setDisplayLocation(location);
-      setTransistionStage(fadeIn);
+      setTransitionStage(fadeIn);
     }
   }, [location, displayLocation, transitionStage]);
 
@@ -185,7 +185,7 @@ export default function SpiffUIV3() {
               onAnimationEnd={(e) => {
                 if (e.animationName === fadeOutImmediate) {
                   setDisplayLocation(location);
-                  setTransistionStage(fadeIn);
+                  setTransitionStage(fadeIn);
                 }
               }}
             >

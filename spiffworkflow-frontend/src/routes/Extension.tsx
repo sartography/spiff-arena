@@ -56,7 +56,7 @@ export default function Extension({
     useState<UiSchemaPageDefinition | null>(null);
   const [readyForComponentsToDisplay, setReadyForComponentsToDisplay] =
     useState<boolean>(false);
-  const [uiSchemaPageComponents, setuiSchemaPageComponents] = useState<
+  const [uiSchemaPageComponents, setUiSchemaPageComponents] = useState<
     UiSchemaPageComponent[] | null
   >(null);
 
@@ -117,7 +117,7 @@ export default function Extension({
         pageDefinition.on_load &&
         pageDefinition.on_load.ui_schema_page_components_variable
       ) {
-        setuiSchemaPageComponents(
+        setUiSchemaPageComponents(
           result.task_data[
             pageDefinition.on_load.ui_schema_page_components_variable
           ],
@@ -160,7 +160,7 @@ export default function Extension({
         ) {
           const pageDefinition = extensionUiSchema.pages[pageIdentifierToUse];
           setUiSchemaPageDefinition(pageDefinition);
-          setuiSchemaPageComponents(pageDefinition.components || null);
+          setUiSchemaPageComponents(pageDefinition.components || null);
           setProcessModel(pm);
           pm.files.forEach((file: ProcessFile) => {
             filesByName[file.name] = file;

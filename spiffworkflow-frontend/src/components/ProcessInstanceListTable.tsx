@@ -90,7 +90,7 @@ export default function ProcessInstanceListTable({
   );
   const [
     reportMetadataFromProcessInstances,
-    setreportMetadataFromProcessInstances,
+    setReportMetadataFromProcessInstances,
   ] = useState<ReportMetadata | null>(null);
 
   // this is used from pages like the home page that have multiple tables
@@ -125,7 +125,7 @@ export default function ProcessInstanceListTable({
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
       setPagination(result.pagination);
-      setreportMetadataFromProcessInstances(result.report_metadata);
+      setReportMetadataFromProcessInstances(result.report_metadata);
       setReportHash(result.report_hash);
       if (onProcessInstanceTableListUpdate) {
         onProcessInstanceTableListUpdate(result);
