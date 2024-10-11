@@ -16,6 +16,9 @@ services:
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
     image: ghcr.io/sartography/spiffworkflow-backend:latest
+    # Enable setting the ownership of created files to match the local user:group. For example:
+    #     RUN_AS="$(id -u):$(id -g)" docker compose up -d
+    user: ${RUN_AS:-0:0}
     environment:
       SPIFFWORKFLOW_BACKEND_ENV: "local_docker"
       FLASK_DEBUG: "0"
@@ -24,7 +27,7 @@ services:
       SPIFFWORKFLOW_BACKEND_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}"
 
       SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
-      SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: "http://spiffworkflow-connector:8004"
+      SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: "${SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL:-http://spiffworkflow-connector:8004}"
       SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: "sqlite"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: "sqlite:////app/db_volume/db.sqlite3"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"

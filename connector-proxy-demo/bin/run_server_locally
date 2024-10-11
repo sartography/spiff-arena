@@ -12,4 +12,4 @@ if [[ -z "${FLASK_DEBUG:-}" ]]; then
 fi
 
 export FLASK_SESSION_SECRET_KEY=super_secret_key
-poetry run flask run -p 7004
+poetry run flask run -p ${CONNECTOR_PROXY_PORT:-7004} --host=0.0.0.0

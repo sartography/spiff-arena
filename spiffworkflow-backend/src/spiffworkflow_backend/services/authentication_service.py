@@ -363,9 +363,19 @@ class AuthenticationService:
             audience_array_in_token = [aud]
         overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
-        if iss not in [cls.server_url(authentication_identifier), UserModel.spiff_generated_jwt_issuer()]:
+        internal_server_url = cls.server_url(authentication_identifier, internal=True)
+
+        trusted_issuer_urls = [
+            cls.server_url(authentication_identifier),
+            UserModel.spiff_generated_jwt_issuer(),
+        ]
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER"]:
+            trusted_issuer_urls.append(internal_server_url)
+
+        if iss not in trusted_issuer_urls:
             current_app.logger.error(
-                f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
+                f"TOKEN INVALID because ISS '{iss}' does not match any of the trusted issuer urls '{trusted_issuer_urls}'"
             )
             valid = False
         # aud could be an array or a string

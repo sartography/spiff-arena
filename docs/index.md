@@ -27,6 +27,7 @@ Building_Diagrams/data.md
 Building_Diagrams/multiinstance.md
 Building_Diagrams/dmn.md
 Building_Diagrams/pools_and_lanes.md
+Building_Diagrams/guest_user.md
 Building_Diagrams/Builtin_examples.md
 ```
 
@@ -35,7 +36,6 @@ Building_Diagrams/Builtin_examples.md
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
 Debugging_Diagrams/process_error_handling.md
-Debugging_Diagrams/Private_data.md
 ```
 
 ```{toctree}
