@@ -59,14 +59,14 @@ In our **Chef** process:
 
 To ensure that messages are delivered to the correct process instance, correlation properties are used. These properties act as keys to match the right sender and receiver of the message.
 
-For example:
-- In the Waiter process, the message `order_accept` is sent with a payload containing `table_number`. The correlation property is configured so that the message is received by the correct Chef process instance that is linked to the same `table_number`.
+- In the Waiter process, the message `order_accept` is sent with a payload containing `table_number`. Since this message triggers the Chef process via a message start event, correlation is not required at this stage. The message simply starts a new instance of the Chef process without needing to reference any ongoing process instances. 
 
-![Message Example](images/message_example4.png)
-
-Similarly:
 - In the Chef process, when the chef sends a response message (`order_dispatch`) back to the waiter, the correlation property ensures that the message is directed to the correct waiter process.
 
 ![Message Example](images/message_example6.png)
+
+- Correlation becomes relevant only for ongoing communication between processes, such as when the Chef sends a response back to the Waiter process using the order_dispatch message, ensuring the message is directed to the correct process instance.
+
+![Message Example](images/message_example4.png)
 
 By using messages and correlation properties, you can effectively manage communication between multiple BPMN processes. This ensures that the right data reaches the right process at the right time, allowing for dynamic and responsive workflows. 
