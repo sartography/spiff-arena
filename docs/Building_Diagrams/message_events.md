@@ -133,3 +133,10 @@ The connected catch event is configured in precisely the same manner as the thro
 | ![conditions](images/message_1.png) | **Message:** order_approval | This input isn't an open-text field; instead, it consists of a dropdown list populated by the Messages configured in the preceding Collaboration section. |
 | ![conditions](images/payload_msg.png) | **Variable Name:** order_amount | The Variable Name can include a variable, holding unique information specific to the instance, or in this scenario, the order. |
 | ![conditions](images/event_correlation_msg.png) | **Correlation:** invoice_number | Select the correlation that can identify the distinct property distinguishing one process instance from another. |
+
+Check out this example on Message Event.
+```{toctree}
+:maxdepth: 1
+:caption: Message Event Example
+message_example_event.md
+```
