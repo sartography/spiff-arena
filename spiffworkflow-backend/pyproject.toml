@@ -98,7 +98,7 @@ safety = "^3.2.7"
 mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.2.0"}
-pre-commit = "^3.8.0"
+pre-commit = "^4.0.1"
 ruff = "^0.5.5"
 
 pytest-random-order = "^1.1.0"
