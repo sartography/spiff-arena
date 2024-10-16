@@ -68,7 +68,7 @@ It is used when the process flow needs to make an inclusive choice, where multip
 Each outgoing sequence flow can have a condition associated with it, but even if multiple conditions evaluate to true, all the flows are taken.
 
 ```{admonition} Note
-⚠ Note that Default Flow is not possible with Inclusive Gateways.
+⚠ Note that the Default Flow is only followed if no other outgoing flows are valid.
 ```
 
 ![inclusive_gateway_mp](images/inclusive_gateway_mp.png)
