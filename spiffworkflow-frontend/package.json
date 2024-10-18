@@ -45,7 +45,7 @@
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^0.6.0",
     "date-fns": "^3.6.0",
-    "diagram-js": "^14.8.0",
+    "diagram-js": "^14.11.3",
     "dmn-js": "^16.5.0",
     "dmn-js-properties-panel": "^3.0.0",
     "dmn-js-shared": "^16.4.0",
