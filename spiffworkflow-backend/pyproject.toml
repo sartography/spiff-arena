@@ -76,7 +76,7 @@ marshmallow-sqlalchemy = "^1.0.0"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
-mysqlclient = "^2.2.3"
+mysqlclient = "^2.2.5"
 flask-session = "^0.8.0"
 flask-oauthlib = "^0.9.6"
 celery = {extras = ["redis"], version = "^5.4.0"}
