@@ -377,6 +377,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                         .first()
                     )
                     if user_model is None:
+                        if current_app.config["SPIFFWORKFLOW_BACKEND_CREATE_USERMODEL_WITHOUT_LOGIN"]:
+                            user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                         AuthenticationService.set_user_has_logged_out()
                         raise ApiError(
                             error_code="invalid_user",
