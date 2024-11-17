@@ -114,7 +114,15 @@ def login(
     task_guid: str | None = None,
 ) -> Response:
     frontend_url = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"))
-    if not redirect_url.startswith(frontend_url):
+
+    # strip either :80 and :443 off the end of the frontend url string
+    frontend_url = re.sub(r":(80|443)$", "", frontend_url)
+
+    # strip trailing slash off redirect_url, since we want
+    # redirect url http://localhost/ to be valid if the frontend url is http://localhost frontend, etc
+    redirect_url_for_check = redirect_url.rstrip("/")
+
+    if not redirect_url_for_check.startswith(frontend_url):
         raise InvalidRedirectUrlError(
             f"Invalid redirect url was given: '{redirect_url}'. It must start with the frontend url: '{frontend_url}'"
         )
