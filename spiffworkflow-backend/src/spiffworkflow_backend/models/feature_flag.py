@@ -28,7 +28,7 @@ class FeatureFlagModel(SpiffworkflowBaseDBModel):
             return {}
 
         result = cls.query.filter_by(generation_id=cache_generation.id).first()
-        return {} if result is None else result.value  # type: ignore
+        return {} if result is None else result.value
 
     @classmethod
     def set_most_recent_feature_flags(cls, value: dict[str, Any]) -> None:
