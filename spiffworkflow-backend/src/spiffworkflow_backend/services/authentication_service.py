@@ -358,10 +358,12 @@ class AuthenticationService:
         iat = decoded_token["iat"]
 
         valid_audience_values = cls.valid_audiences(authentication_identifier)
-        audience_array_in_token = aud
-        if isinstance(aud, str):
-            audience_array_in_token = [aud]
-        overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
+        overlapping_aud_values = []
+        if aud is not None:
+            audience_array_in_token = aud
+            if isinstance(aud, str):
+                audience_array_in_token = [aud]
+            overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
         internal_server_url = cls.server_url(authentication_identifier, internal=True)
 
