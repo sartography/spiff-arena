@@ -62,15 +62,12 @@ export default function CustomForm({
   hideSubmitButton = false,
   bpmnEvent,
 }: OwnProps) {
-  let reactJsonSchemaFormTheme = reactJsonSchemaForm;
+  const reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
-    if (uiSchema['ui:theme'] === 'mui') {
-      reactJsonSchemaFormTheme = 'mui';
-    } else {
+    if (uiSchema['ui:theme'] !== 'mui') {
       console.error(
         `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`,
       );
-      reactJsonSchemaFormTheme = 'mui';
     }
   }
 
@@ -119,6 +116,7 @@ export default function CustomForm({
     //    field:[field_name_to_use]:[start or end]
     //
     // defaults to "start" in all cases
+    // eslint-disable-next-line sonarjs/sonar-no-unused-vars
     const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(

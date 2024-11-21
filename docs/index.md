@@ -22,11 +22,13 @@ Building_Diagrams/conditional_events.md
 Building_Diagrams/error_events.md
 Building_Diagrams/Displaying_Content.md
 Building_Diagrams/Script_Tasks.md
+Building_Diagrams/service_tasks.md
 Building_Diagrams/sub-processes_and_call_activities.md
 Building_Diagrams/data.md
 Building_Diagrams/multiinstance.md
 Building_Diagrams/dmn.md
 Building_Diagrams/pools_and_lanes.md
+Building_Diagrams/guest_user.md
 Building_Diagrams/Builtin_examples.md
 ```
 
@@ -35,7 +37,6 @@ Building_Diagrams/Builtin_examples.md
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
 Debugging_Diagrams/process_error_handling.md
-Debugging_Diagrams/Private_data.md
 ```
 
 ```{toctree}

@@ -86,7 +86,6 @@ fi
 # ensure that the Process Models Directory is initialized as a git repo
 log_info "Running git init"
 git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
-git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER:-}" ]]; then
   # default to 3 * 2 = 6 threads per worker

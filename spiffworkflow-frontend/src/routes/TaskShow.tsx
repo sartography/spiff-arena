@@ -430,6 +430,7 @@ export default function TaskShow() {
           <>
             {taskWithTaskData.signal_buttons.map((signal) => (
               <Button
+                key={`signal.signal-${signal.label}`}
                 name="signal.signal"
                 disabled={formButtonsDisabled}
                 onClick={() => handleSignalSubmit(signal.event)}

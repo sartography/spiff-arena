@@ -1,0 +1,45 @@
+services:
+  spiffworkflow-frontend:
+    image: ghcr.io/sartography/spiffworkflow-frontend:main-latest
+    environment:
+      - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
+      - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api
+
+  spiffworkflow-backend:
+    image: ghcr.io/sartography/spiffworkflow-backend:codespaces-2024-10-10_15-40-14-9b3729a
+    environment:
+      # browser
+      - SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}
+      - SPIFFWORKFLOW_BACKEND_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api
+      - SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=https://${CODESPACE_NAME}-8003.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-localhost:8003}/api/openid
+
+      # internal
+      - SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL=http://spiffworkflow-backend:8000/api/openid
+      - SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER=true
+      - SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL=http://spiffworkflow-connector:-localhost}:8004
+      - SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX=/api
+      - SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX=true
+      # All of these options for reaching the "internal" OpenID URL work from inside the container:
+      #
+      # Via the compose host to the proxy's mapped port...
+      #   curl http://host.docker.internal:8003/api/openid/.well-known/openid-configuration
+      # Via compose DNS to the proxy service's internal port...
+      #   curl http://spiffworkflow-proxy:8003/api/openid/.well-known/openid-configuration
+      # Directly within the container itself...
+      #   curl http://localhost:8000/api/openid/.well-known/openid-configuration
+      # Via compose DNS to our own internal port
+      #   curl http://spiffworkflow-backend:8000/api/openid/.well-known/openid-configuration
+
+    healthcheck:
+      test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/api/v1.0/status --fail"
+
+  spiffworkflow-proxy:
+    container_name: proxy
+    image: nginx:latest
+    ports:
+      - "8003:8003"
+    volumes:
+      - .devcontainer/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - spiffworkflow-frontend
+      - spiffworkflow-backend

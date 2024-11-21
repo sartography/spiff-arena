@@ -28,9 +28,9 @@ flask-restful = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
-sentry-sdk = {extras = ['flask'], version = "^2.10"}
+sentry-sdk = {extras = ['flask'], version = "^2.16"}
 # sphinx-autoapi = "^2.0"
-psycopg2 = "^2.9.3"
+psycopg2 = "^2.9.10"
 typing-extensions = "^4.12.2"
 
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
@@ -50,13 +50,13 @@ marshmallow-enum = "^1.5.1"
 PyJWT = "^2.9.0"
 APScheduler = "*"
 Jinja2 = "^3.1.3"
-RestrictedPython = "^7.1"
+RestrictedPython = "^7.4"
 Flask-SQLAlchemy = "^3"
 
 # 22.0.0 breaks passing in SCRIPT_NAME as a header which breaks status environments
 # https://github.com/benoitc/gunicorn/issues/3200
 # https://github.com/benoitc/gunicorn/issues/2650
-gunicorn = "21.2.0"
+gunicorn = "23.0.0"
 
 # https://github.com/dropbox/sqlalchemy-stubs/pull/251
 # someday get off github
@@ -65,8 +65,8 @@ gunicorn = "21.2.0"
 # sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
-simplejson = "^3.17.6"
-pytz = "^2024.1"
+simplejson = "^3.19.3"
+pytz = "^2024.2"
 dateparser = "^1.2.0"
 cryptography = "^43.0"
 prometheus-flask-exporter = "^0.23.1"
@@ -76,12 +76,12 @@ marshmallow-sqlalchemy = "^1.0.0"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
-mysqlclient = "^2.2.3"
+mysqlclient = "^2.2.5"
 flask-session = "^0.8.0"
 flask-oauthlib = "^0.9.6"
 celery = {extras = ["redis"], version = "^5.4.0"}
 celery-stubs = "^0.1.3"
-jsonschema = "^4.22.0"
+jsonschema = "^4.23.0"
 chardet = "^5.2.0"
 
 # 1.3.0 adds an print statement that keeps printing None
@@ -92,13 +92,13 @@ security = "^1.3.1"
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
+pytest = "^8.3.2"
 coverage = {extras = ["toml"], version = "^7.6"}
-safety = "^3.2.6"
+safety = "^3.2.7"
 mypy = ">=0.961"
 typeguard = "^4"
 xdoctest = {extras = ["colors"], version = "^1.2.0"}
-pre-commit = "^3.8.0"
+pre-commit = "^4.0.1"
 ruff = "^0.5.5"
 
 pytest-random-order = "^1.1.0"
@@ -114,7 +114,7 @@ pytest-xdist = "3.6.1"
 bandit = "1.7.9"
 
 # flask-sqlalchemy-stubs = "^0.2"
-pre-commit-hooks = "^4.6.0"
+pre-commit-hooks = "^5.0.0"
 Pygments = "^2.18.0"
 
 # type hinting stuff
@@ -123,7 +123,7 @@ types-Werkzeug = "^1.0.9"
 types-PyYAML = "^6.0.12"
 types-Flask = "^1.1.6"
 types-requests = "^2.32.0"
-types-pytz = "^2024.1.0"
+types-pytz = "^2024.2.0"
 
 [tool.pytest.ini_options]
 # ignore deprecation warnings from various packages that we don't control

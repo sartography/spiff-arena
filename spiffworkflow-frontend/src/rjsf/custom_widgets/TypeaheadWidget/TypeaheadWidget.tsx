@@ -3,7 +3,7 @@ import { ComboBox } from '@carbon/react';
 import HttpService from '../../../services/HttpService';
 import { getCommonAttributes } from '../../helpers';
 
-interface typeaheadArgs {
+interface TypeaheadArgs {
   id: string;
   onChange: any;
   options: any;
@@ -32,7 +32,7 @@ export default function TypeaheadWidget({
   label,
   rawErrors = [],
   reactJsonSchemaFormTheme,
-}: typeaheadArgs) {
+}: TypeaheadArgs) {
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);

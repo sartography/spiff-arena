@@ -87,7 +87,7 @@ type OwnProps = {
   tableHtmlId?: string;
 };
 
-interface dateParameters {
+interface DateParameters {
   [key: string]: ((..._args: any[]) => any)[];
 }
 
@@ -195,7 +195,7 @@ export default function ProcessInstanceListTableWithFilters({
     useState<boolean>(false);
   const [withOldestOpenTask, setWithOldestOpenTask] =
     useState<boolean>(showActionsColumn);
-  const [withRelationToMe, setwithRelationToMe] =
+  const [withRelationToMe, setWithRelationToMe] =
     useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
@@ -216,7 +216,7 @@ export default function ProcessInstanceListTableWithFilters({
 
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
-  const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
+  const dateParametersToAlwaysFilterBy: DateParameters = useMemo(() => {
     return {
       start_from: [setStartFromDate, setStartFromTime],
       start_to: [setStartToDate, setStartToTime],
@@ -253,7 +253,7 @@ export default function ProcessInstanceListTableWithFilters({
     setStartToTime('');
     setSystemReport(null);
     setWithOldestOpenTask(false);
-    setwithRelationToMe(false);
+    setWithRelationToMe(false);
     if (reportMetadata) {
       const reportMetadataCopy = { ...reportMetadata };
       reportMetadataCopy.filter_by = [];
@@ -318,7 +318,7 @@ export default function ProcessInstanceListTableWithFilters({
           } else if (reportFilter.field_name === 'with_oldest_open_task') {
             setWithOldestOpenTask(reportFilter.field_value);
           } else if (reportFilter.field_name === 'with_relation_to_me') {
-            setwithRelationToMe(reportFilter.field_value);
+            setWithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
@@ -653,6 +653,8 @@ export default function ProcessInstanceListTableWithFilters({
     onChangeTimeFunction: any,
     timeInvalid: boolean,
     setTimeInvalid: any,
+    // TODO: fix this to use an object instead and avoid max params issue
+    // eslint-disable-next-line sonarjs/sonar-max-params
   ) => {
     if (!reportMetadata) {
       return null;
@@ -1273,7 +1275,7 @@ export default function ProcessInstanceListTableWithFilters({
                     'with_relation_to_me',
                     value.target.checked,
                   );
-                  setwithRelationToMe(value.target.checked);
+                  setWithRelationToMe(value.target.checked);
                 }}
               />
             </Column>

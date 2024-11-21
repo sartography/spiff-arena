@@ -35,7 +35,6 @@ export default function ProcessModelForm({
   const [idHasBeenUpdatedByUser, setIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
-  useState<boolean>(false);
   const navigate = useNavigate();
 
   const navigateToProcessModel = (result: ProcessModel) => {

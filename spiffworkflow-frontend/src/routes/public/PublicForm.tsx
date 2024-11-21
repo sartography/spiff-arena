@@ -8,7 +8,7 @@ import { ErrorForDisplay, PublicTask } from '../../interfaces';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import InstructionsForEndUser from '../../components/InstructionsForEndUser';
 import {
-  ErrorDisplayStateless,
+  errorDisplayStateless,
   errorForDisplayFromString,
 } from '../../components/ErrorDisplay';
 import Page404 from '../Page404';
@@ -109,7 +109,7 @@ export default function PublicForm() {
       }
       return (
         <>
-          {ErrorDisplayStateless(currentPageError)}
+          {errorDisplayStateless(currentPageError)}
           <p>
             Ir para{' '}
             <a href="/" data-qa="public-home-link">

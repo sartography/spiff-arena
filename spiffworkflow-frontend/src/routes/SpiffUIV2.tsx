@@ -24,7 +24,7 @@ export default function SpiffUIV2() {
   const location = useLocation();
 
   const [displayLocation, setDisplayLocation] = useState(location);
-  const [transitionStage, setTransistionStage] = useState('fadeIn');
+  const [transitionStage, setTransitionStage] = useState('fadeIn');
 
   const fadeIn = 'fadeIn';
   const fadeOutImmediate = 'fadeOutImmediate';
@@ -43,7 +43,7 @@ export default function SpiffUIV2() {
   /** Respond to transition events, this softens screen changes (UX) */
   useEffect(() => {
     if (location !== displayLocation) {
-      setTransistionStage(fadeOutImmediate);
+      setTransitionStage(fadeOutImmediate);
     }
   }, [location, displayLocation]);
 
@@ -118,7 +118,7 @@ export default function SpiffUIV2() {
               }}
               onAnimationEnd={() => {
                 if (transitionStage === fadeOutImmediate) {
-                  setTransistionStage(fadeIn);
+                  setTransitionStage(fadeIn);
                   setDisplayLocation(location);
                 }
               }}

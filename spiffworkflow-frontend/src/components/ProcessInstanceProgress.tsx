@@ -13,7 +13,7 @@ import HttpService from '../services/HttpService';
 import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {
-  ErrorDisplayStateless,
+  errorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
 
@@ -144,7 +144,7 @@ export default function ProcessInstanceProgress({
     if (currentPageError) {
       return (
         <>
-          {ErrorDisplayStateless(currentPageError)}
+          {errorDisplayStateless(currentPageError)}
           <p>
             Ir para <a href={processInstanceShowPageUrl}>Instância de Processo</a>
           </p>

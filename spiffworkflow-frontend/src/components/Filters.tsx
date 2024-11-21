@@ -24,7 +24,7 @@ export default function Filters({
     setShowFilterOptions(!showFilterOptions);
   };
 
-  const [copiedReportLinktoClipboard, setCopiedReportLinkToClipboard] =
+  const [copiedReportLinkToClipboard, setCopiedReportLinkToClipboard] =
     useState<boolean>(false);
 
   const copyReportLink = () => {
@@ -59,7 +59,7 @@ export default function Filters({
         onClick={toggleShowFilterOptions}
       />,
     );
-    if (copiedReportLinktoClipboard) {
+    if (copiedReportLinkToClipboard) {
       elements.push(
         <Notification
           onClose={() => setCopiedReportLinkToClipboard(false)}

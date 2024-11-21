@@ -3,21 +3,16 @@
 This feature allows you to create custom forms for collecting and managing data within your workflows.
 Whether you need a simple feedback form or a complex multi-step form, SpiffArena provides you with the tools to build and integrate forms seamlessly.
 
-With SpiffArena's form builder, you can start with basic form elements and gradually add more advanced components as your form requirements evolve.
 Let's dive in and explore the possibilities of creating forms in SpiffArena.
 
-## Instructions on Creating Forms
-
-Forms play a crucial role in capturing data, and SpiffArena offers a powerful form-building capability.
+## Creating Forms
 Here are the ways to create forms:
 
-1. Leveraging JSON Schema
+1. **Using JSON Schema**
 
-JSON Schema is a standard for describing the structure of data in a JSON file.
-JSON Schema forms the foundation for building forms in SpiffArena.
+JSON Schema is a standard for describing the structure of data in a JSON file. JSON Schema forms the foundation for building forms in SpiffArena.
 
-To simplify the form creation process, we leverage the React JSON Schema Form (RJSF) library.
-RJSF is a powerful tool that uses JSON Schema as its basis.
+To simplify the form creation process, we use the React JSON Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON Schema as its basis.
 It enables you to create dynamic and interactive forms with ease.
 The RJSF library is open source, free to use, and follows the principles of open standards.
 
@@ -26,7 +21,7 @@ The RJSF library is open source, free to use, and follows the principles of open
 Please note that while this guide provides a basic understanding of JSON Schema and RJSF, there is much more to explore.
 We encourage you to refer to the official [RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details and advanced techniques.
 
-2. Using Form Builder
+2. **Using Form Builder**
 
 An alternative approach to creating JSON code is to utilize the form builder feature, which allows you to easily create various fields without the need for writing JSON manually.
 
@@ -36,27 +31,30 @@ While the form builder provides convenience and simplicity, using the JSON edito
 
 ![Image](images/Form-Builder.png)
 
-3. Creating Forms from BPMN Editor
+3. **Creating Forms from BPMN Editor**
 
 To create forms inside the editor, we utilize user tasks within the BPMN file.
 Upon creating a new BPMN file, open it to access the editor.
 
-**Initiating the Form Editor**
+**Start the Form Editor**
 
-- In the editor, proceed to the "Web form" section. Navigate to the "Web form" section. If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data.
+- In the editor, go to the "Web form" section. Navigate to the "Web form" and If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data.
 
 ![Form Editor](images/Form_editor.png)
 
 **Understanding the Three Core Files**
 
 - **JSON Schema**: This file describes the form. It allows you to define titles, property names, and more. As you make changes in this file, they will reflect in the form preview window. This schema outlines the properties or data points you aim to collect.
-  ![Form Editor](images/Form_editor1.png)
+
+![Form Editor](images/Form_editor1.png)
 
 - **UI Settings**: This file offers customization options for your form. You can edit descriptions, titles, and more. Changes made here are reflected in real-time on the form.
-  ![Form Editor](images/Form_editor2.png)
+
+![Form Editor](images/Form_editor2.png)
 
 - **Data View**: This section displays the data users input into the form. It provides a preview of what will be captured when the form is submitted. Both the data view and the form stay synchronized, ensuring consistency.
-  ![Form Editor](images/Form_editor3.png)
+
+![Form Editor](images/Form_editor3.png)
 
 **Adding and Customizing Form Elements**
 
@@ -73,10 +71,13 @@ SpiffArena has enhanced the capabilities of react-jsonschema-form to provide use
 ### Dynamic Enumerations
 
 Dynamic enumerations allow you to provide users with a list of options (in a select/dropdown) that can change based on variables in the process instance.
+
 This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
+
 To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
 In a script task, that would look like this:
-
+```python
+#python
     fruits = [
         {
             "value": "apples",
@@ -91,11 +92,11 @@ In a script task, that would look like this:
             "label": "Bananas"
         }
     ]
-
+```
 Instead of using a script task to define the options directly, you could request information from a user using a form, access an API, or query an external database.
 
 Then use JSON like this (note the `options_from_task_data_var:fruits`) when defining the form in order to pull information from the variable called `fruits` that you defined in task data:
-
+```json
     {
         "title": "Dropdown list",
         "description": "A dropdown list with options pulled from existing Task Data. IMPORTANT - Add 'fruits' to Task Data before using this component!!!",
@@ -110,21 +111,26 @@ Then use JSON like this (note the `options_from_task_data_var:fruits`) when defi
             }
         }
     }
+```
 
-### Serious Checkbox Validation
+### Checkbox Validation
 
 Checkbox validation ensures that checkboxes, especially required boolean fields, are properly validated.
 By default, react-jsonschema-form only triggers validation when a checkbox field is left undefined.
-This enhancement allows you to enforce validation for checkboxes with default values of `false` to support scenarios like "I have read the EULA" checkboxes.
+
+This allows you to enforce validation for checkboxes with default values of `false` to support scenarios like "I have read the EULA" checkboxes.
 To use checkbox validation, mark your boolean field required.
 This will force the value to be `true` (the checkbox must be checked) before the form can be submitted.
 
+```{admonition} Note
+When working with both Python and JSON, be aware that `True` and `False` are capitalized in Python but must be lowercase (`true` and `false`) in JSON format. 
+```
 ### Regex Validation
 
 Regex validation allows you to validate text input fields based on regular expressions.
 This is useful when you need to ensure that user inputs match a specific pattern or format, such as email addresses or phone numbers.
 
-- In your JSON schema, include a "pattern" property with a regular expression pattern that defines the valid format for the input field.
+In your JSON schema, include a `pattern` property with a regular expression pattern that defines the valid format for the input field.
 
 ### Date Range Selector
 
@@ -134,22 +140,22 @@ You will use this feature when building forms that involve specifying date inter
 Use a date range selector by creating a form field using the following structure:
 
 Example for JSON schema:
-
+```json
     "travel_date_range": {
         "type": "string",
         "title": "Travel Dates",
         "pattern": "\\d{4}-\\d{2}-\\d{2}:::\\d{4}-\\d{2}-\\d{2}",
         "validationErrorMessage": "You must select Travel dates"
     },
-
+```
 Example for UI schema:
-
+```json
     "travel_date_range":{
         "ui:widget": "date-range",
         "ui:help": "Indicate the travel start and end dates"
     },
-
-### Date Validation When Compared to Another Date
+```
+### Date Validation
 
 Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
 
@@ -163,15 +169,14 @@ For instance, you can require that a date must be equal to or greater than anoth
   You can choose to use "end" if the reference field is part of a range.
 
 This is an example where the end_date must be after the start_date:
-
+```json
     "end_date": {
       "type": "string",
       "title": "End date",
       "format": "date",
       "minimumDate": "field:start_date"
     }
-
-These enhancements provide you with more flexibility and control when building forms in SpiffArena.
+```
 
 #### Maximum date validation
 
@@ -194,16 +199,15 @@ Here’s an example where `delivery_date` must be on or before `end_date`:
 
 If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
 
-These schema configurations provide a robust framework for ensuring date fields in forms maintain logical consistency and adhere to process requirements.
-Utilizing maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
+Using maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
-By incorporating these validations into SpiffWorkflow forms, you can create interactive forms that automatically enforce business rules, improving data quality and user experience.
 
 #### Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints
 
 #### Scenario Overview
 
 Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines.
+
 This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 #### JSON Schema Configuration:
@@ -243,7 +247,7 @@ The "test-maximum-date-schema.json" process model outlines a form structure that
 - **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
 - **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
 
-#### Implementation in SpiffWorkflow Forms:
+#### Implementation:
 
 The schema enforces the following rules:
 
@@ -253,6 +257,7 @@ The schema enforces the following rules:
 ### Display Fields Side-By-Side on Same Row
 
 When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically.
+
 The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
 
 #### Form Schema Example:
@@ -297,13 +302,12 @@ Here's how to use it:
 - **Simplified Configuration**: If column widths are unspecified, the layout will automatically adjust, providing flexibility in design.
 
 #### Example Illustrated:
+In this setup, we’re arranging `firstName` and `lastName` to appear in the same row, as they are grouped in the first element of the `ui:layout` array.
 
-In this case, we are saying that we want the `firstName` and `lastName` in the same row, since they are both in the first element of the `ui:layout` array.
-We are saying that the `firstName` should take up 4 columns when a large display is used.
-The `lastName` also takes up 4 columns, so the two of them together fill up the whole row, which has 8 columns available for large displays.
-Medium displays have 5 columns available, and small displays have 4.
-If you just specify a `uiSchema` like this, it will figure out the column widths for you:
+We specify that `firstName` should occupy 4 columns on large displays, with `lastName` also taking up 4 columns, together filling the full row of 8 columns on large screens. For medium screens, the layout adapts to 5 columns, and for small screens, it adjusts to 4 columns. 
 
+By defining a `uiSchema` like this, the layout will automatically adjust the column widths for each screen size.
+```json
     {
       "ui:layout": [
         {
@@ -312,12 +316,12 @@ If you just specify a `uiSchema` like this, it will figure out the column widths
         }
       ]
     }
-
-By leveraging the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
+```
+By using the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
 
 ### Display UI Help in Web Forms
 
-When designing web forms, it's essential to provide users with contextual help to ensure they understand the purpose and requirements of each field.
+When designing web forms, it's important to provide users with contextual help to ensure they understand the purpose and requirements of each field.
 This guidance can be achieved by adding help text to specific form fields.
 
 To add help text to a web form field, use the following format:

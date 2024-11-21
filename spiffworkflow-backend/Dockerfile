@@ -30,6 +30,9 @@ RUN pip install --upgrade pip
 RUN pip install poetry==1.8.1 hdbcli oracledb nfelib
 
 RUN apt-get update && apt-get install -y libpq5
+# Avoid host:container file ownership issues
+RUN git config --global --add safe.directory '*'
+
 
 ######################## - SETUP
 

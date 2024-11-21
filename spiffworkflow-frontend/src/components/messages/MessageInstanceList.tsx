@@ -22,7 +22,7 @@ type OwnProps = {
 const paginationQueryParamPrefix = 'message-list';
 
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
-  const [messageIntances, setMessageInstances] = useState([]);
+  const [messageInstances, setMessageInstances] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [searchParams] = useSearchParams();
 
@@ -88,7 +88,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   };
 
   const buildTable = () => {
-    const rows = messageIntances.map((row: MessageInstance) => {
+    const rows = messageInstances.map((row: MessageInstance) => {
       let errorIcon = null;
       let errorTitle = null;
       if (row.failure_cause) {

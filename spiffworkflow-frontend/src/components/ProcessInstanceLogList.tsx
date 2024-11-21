@@ -181,7 +181,7 @@ export default function ProcessInstanceLogList({
           eventErrorDetails,
         );
         const errorChildren = childrenForErrorObject(errorForDisplay);
-        // eslint-disable-next-line react/jsx-no-useless-fragment
+        // eslint-disable-next-line react/jsx-no-useless-fragment, sonarjs/jsx-no-useless-fragment
         errorMessageTag = <>{errorChildren}</>;
       }
       return (
