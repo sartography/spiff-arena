@@ -285,7 +285,7 @@ class AuthenticationService:
         )
         return state
 
-    def get_redirect_uri_for_login_to_server(self):
+    def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
         login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
         redirect_url_to_use = f"{host_url}{login_return_path}"
