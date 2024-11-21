@@ -22,7 +22,7 @@ FROM base AS deployment
 # vim ftw
 RUN apt-get update \
  && apt-get clean -y \
- && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
+ && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny dos2unix \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
@@ -33,17 +33,13 @@ RUN pip install poetry==1.6.1
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-# poetry 1.4 seems to cause an issue where it errors with
-#   This error originates from the build backend, and is likely not a
-#   problem with poetry but with lazy-object-proxy (1.7.1) not supporting PEP 517 builds.
-#   You can verify this by running 'pip wheel --use-pep517 "lazy-object-proxy (==1.7.1) ; python_version >= "3.6""'.
-# Pinnning to 1.3.2 to attempt to avoid it.
 RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
  && apt-get install -y -q gcc libssl-dev pkg-config
 
+RUN pip install postgres
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.
 COPY pyproject.toml poetry.lock /app/
@@ -62,5 +58,8 @@ LABEL source="https://github.com/sartography/spiff-arena/connector-proxy-demo"
 LABEL description="Demo connector proxy component for SpiffWorkflow"
 
 COPY --from=setup /app /app
+
+# Apply dos2unix to the boot script to remove Windows-style line endings
+RUN dos2unix /app/bin/boot_server_in_docker
 
 CMD ["./bin/boot_server_in_docker"]
