@@ -112,7 +112,8 @@ def _check_extension_api_configs(app: Flask) -> None:
 def _check_scopes_variable(app: Flask) -> None:
     if app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"] is not None:
         app.logger.warning(
-            "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead"
+            "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. "
+            "Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead which expects a comma separated list."
         )
         if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
             app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = ",".join(app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"])
