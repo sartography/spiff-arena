@@ -109,14 +109,23 @@ def _check_extension_api_configs(app: Flask) -> None:
         )
 
 
-def _check_scopes_variable(app: Flask) -> None:
-    if app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"] is not None:
+def _set_up_open_id_scopes(app: Flask) -> None:
+    scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
+    if os.environ.get("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE") is not None:
         app.logger.warning(
             "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. "
-            "Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead which expects a comma separated list."
+            "Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead which expects a comma separated list like: profile,email"
         )
         if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
-            app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = ",".join(app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"])
+            scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
+    if (
+        os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None
+        and app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]
+        and "groups" not in scopes
+    ):
+        scopes.append("groups")
+
+    app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = scopes
 
 
 # see the message in the ConfigurationError below for why we are checking this.
@@ -281,3 +290,4 @@ def setup_config(app: Flask) -> None:
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
     _setup_cipher(app)
+    _set_up_open_id_scopes(app)
