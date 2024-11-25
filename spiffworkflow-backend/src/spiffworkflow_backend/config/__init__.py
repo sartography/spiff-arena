@@ -109,6 +109,15 @@ def _check_extension_api_configs(app: Flask) -> None:
         )
 
 
+def _check_scopes_variable(app: Flask) -> None:
+    if app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"] is not None:
+        app.logger.warning(
+            "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead"
+        )
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
+            app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = ",".join(app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"])
+
+
 # see the message in the ConfigurationError below for why we are checking this.
 # we really do not want this to raise when there is not a problem, so there are lots of return statements littered throughout.
 def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
