@@ -285,12 +285,16 @@ class AuthenticationService:
         )
         return state
 
+    def get_redirect_uri_for_login_to_server(self) -> str:
+        host_url = request.host_url.strip("/")
+        login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
+        redirect_url_to_use = f"{host_url}{login_return_path}"
+        return redirect_url_to_use
+
     def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str | None = None) -> str:
         redirect_url_to_use = redirect_url
         if redirect_url_to_use is None:
-            host_url = request.host_url.strip("/")
-            login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
-            redirect_url_to_use = f"{host_url}{login_return_path}"
+            redirect_url_to_use = self.get_redirect_uri_for_login_to_server()
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
@@ -301,20 +305,23 @@ class AuthenticationService:
         )
         return login_redirect_url
 
-    def get_auth_token_object(self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> dict:
+    def get_auth_token_object(self, code: str, authentication_identifier: str) -> dict:
         backend_basic_auth_string = (
             f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
         )
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        redirect_to_use = self.get_redirect_uri_for_login_to_server()
+
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
+
         data = {
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
+            "redirect_uri": redirect_to_use,
         }
 
         request_url = self.open_id_endpoint_for_name(
