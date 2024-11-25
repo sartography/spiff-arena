@@ -300,7 +300,7 @@ class AuthenticationService:
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
-            + f"scope={current_app.config['SPIFFWORKFLOW_BACKEND_OPENID_SCOPE']}&"
+            + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
             + f"redirect_uri={redirect_url_to_use}"
         )
         return login_redirect_url
