@@ -437,6 +437,7 @@ SpiffWorkflow can interact with these systems through various mechanisms to enha
 **Example and Resources**:
 
 For practical implementation, refer to examples and guides available on SpiffWorkflow’s documentation site, such as the [external services integration example](https://spiffdemo.org/process-groups/examples:2-in-depth:2-2-external-services).
+
 This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
 By adjusting the return value of your script task's `execute` method and understanding the underlying mechanics of task state management in SpiffWorkflow, you can effectively control the flow of your workflow processes.
 
@@ -464,7 +465,9 @@ The SpiffWorkflow backend is highly modular, supporting various worker types thr
 **Q:** Do multiple instances of the SpiffWorkflow backend require a shared filesystem for storing process models?
 
 **A**
-No, multiple instances of the SpiffWorkflow backend do not require a shared filesystem. Each backend instance can write to a local directory, and configurations can be extended to commit process models to a Git repository. This allows each instance to maintain an independent set of models while ensuring access to updated versions through Git synchronization.
+No, multiple instances of the SpiffWorkflow backend do not require a shared filesystem. Each backend instance can write to a local directory, and configurations can be extended to commit process models to a Git repository. 
+
+This allows each instance to maintain an independent set of models while ensuring access to updated versions through Git synchronization.
 
 **Q:** What steps should I take if I encounter errors related to environment variable settings during backend configuration?
 
@@ -492,7 +495,9 @@ For a detailed guide on setting up and managing a connector proxy in just five m
 **Q:** How can I create a process that retrieves data from a REST endpoint using a service task in SpiffWorkflow?
 
 **A:**
-To retrieve data from a REST endpoint using a service task (`serviceTaskOperator: "http/GetRequest"`), you need to define a connector. When running SpiffWorkflow as a library, service tasks act as placeholders and require a custom script engine or connector proxy to execute the tasks. Ensure your service task is correctly configured with parameters such as URL, headers, and authentication details. The URL must be properly quoted in the configuration to avoid syntax errors.
+To retrieve data from a REST endpoint using a service task (`serviceTaskOperator: "http/GetRequest"`), you need to define a connector. When running SpiffWorkflow as a library, service tasks act as placeholders and require a custom script engine or connector proxy to execute the tasks. 
+
+Ensure your service task is correctly configured with parameters such as URL, headers, and authentication details. The URL must be properly quoted in the configuration to avoid syntax errors.
 
 **Example Configuration:**
 
@@ -515,8 +520,73 @@ To retrieve data from a REST endpoint using a service task (`serviceTaskOperator
 **Q:** Why do I receive different behaviors when running the same service task in SpiffWorkflow library vs. SpiffArena?
 
 **A:**
-In SpiffWorkflow library, service tasks do not have built-in functionality and are essentially placeholders that require external implementations to function. In contrast, SpiffArena requires connectors to be set up for service tasks to function, which might lead to errors if the connectors or their configurations are incorrect. Errors such as "invalid syntax" typically occur when expressions (like URLs) are not properly formatted.
+In SpiffWorkflow library, service tasks do not have built-in functionality and are essentially placeholders that require external implementations to function. 
 
-### **45: not JSON serializable error in Script Task**
+In contrast, SpiffArena requires connectors to be set up for service tasks to function, which might lead to errors if the connectors or their configurations are incorrect. Errors such as "invalid syntax" typically occur when expressions (like URLs) are not properly formatted.
 
-Please see [documentation on what is possible in Script Tasks](/Building_Diagrams/Script_Tasks.md#what-can-you-do-and-not-do-in-script-tasks).
+**Q:** How do I configure and fix errors in HTTP Service Tasks?**
+
+**A:**
+Common errors occur when configuring HTTP Service Tasks.
+- **Configuration Basics:**
+  - **Headers:** Set to `{}` if no headers are required.
+  - **Basic Authentication:** Use `basic_auth_username` and `basic_auth_password` fields.
+  - **Data Payload:** Provide a JSON object in the `data` field for POST requests.
+- **Common Errors:**
+  - **Missing `headers`:** Add `{}` to the `headers` field.
+  - **Connection Refused:** Replace `localhost` with `host.docker.internal` in containerized environments.
+
+### **45: Mapping input/Output for Call Activity Subprocess**
+**Q:**  How do I map input and output for Call Activity subprocesses?**
+
+**A:** In the subprocess:
+  - Use single `=` for variable assignments (e.g., `result = "approve"`).
+  - Avoid using double `==`, as it is a comparison operator, not an assignment.
+  
+  Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
+
+### **46: Embed the BPMN editor in an iframe**
+**Q:** How can I embed the BPMN editor in an iframe as CORS (Cross-Origin Resource Sharing) policies block embedding the BPMN editor in an iframe?
+
+**A:**  To solve this:
+- Update the backend to include appropriate `Access-Control-Allow-Origin` headers for allowed domains.
+- For separate deployments:
+  - Use the standalone `bpmn-js-spiffworkflow` editor package.
+  - Monitor updates for the upcoming editor version that supports running Python workflows in WASM, enabling backend-independent usage.
+
+### **47: Retrieve Lane or Group Information**
+**Q:** How do I retrieve lane or group information during task execution?**
+
+**A:** 
+Users need to retrieve the group or username associated with a specific lane during task execution for sending notifications or dynamic task assignment.
+- Use the lane name with `get_group_members()` to fetch the corresponding group or users dynamically:
+  ```python
+  group_members = get_group_members(lane_name)
+  ```
+- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/Script_Tasks.html) for additional details.
+
+### **48: Modify Process Instances during Execution**
+**Q:** Can I modify process instances during execution?**
+
+**A:** 
+Users need to change task data or adjust token positions in running processes. The solution is: 
+1. Pause the process instance.
+2. Edit the task data via the admin panel.
+3. Resume the process after applying changes.
+
+**Limitations:**  
+- Modifying data objects directly is not supported.
+- BPMN diagram changes cannot be made during runtime.
+
+### **49: Generate UUIDs in Python Script Tasks** 
+
+**Q:** How do I generate UUIDs in Python Script Tasks?**
+
+**A:**  
+Errors occur when attempting to generate unique identifiers in script tasks.  
+- Use Python’s built-in `uuid` library:
+  ```python
+  import uuid
+  unique_id = str(uuid.uuid4())
+  ```
+- Avoid using the `random` module to generate UUIDs, as it may cause errors due to misconfiguration.
