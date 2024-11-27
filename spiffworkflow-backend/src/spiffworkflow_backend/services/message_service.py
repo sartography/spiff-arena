@@ -65,6 +65,7 @@ class MessageService:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
                     message_instance_receive = message_instance
             receiving_process_instance = None
+            message_triggerable_process_model = None
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
                 message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -106,6 +107,9 @@ class MessageService:
                 exception_message = f"Bad Message Instance: Receive {message_instance_receive}."
                 if receiving_process_instance:
                     exception_message += f" PI: {receiving_process_instance.can_receive_message()}"
+                if message_triggerable_process_model:
+                    exception_message += f" TRIGGER: {message_triggerable_process_model}"
+                exception_message += f" SEND: {message_instance_send}"
                 raise Exception(exception_message)
 
             try:
