@@ -509,6 +509,7 @@ class WorkflowExecutionService:
         save: bool = False,
         should_schedule_waiting_timer_events: bool = True,
         profile: bool = False,
+        needs_dequeue: bool = True,
     ) -> TaskRunnability:
         if profile:
             import cProfile
@@ -516,19 +517,22 @@ class WorkflowExecutionService:
 
             task_runnability = TaskRunnability.unknown_if_ready_tasks
             with cProfile.Profile() as pr:
-                task_runnability = self._run_and_save(exit_at, save, should_schedule_waiting_timer_events)
+                task_runnability = self._run_and_save(
+                    exit_at, save, should_schedule_waiting_timer_events, needs_dequeue=needs_dequeue
+                )
             pr.print_stats(sort=SortKey.CUMULATIVE)
             return task_runnability
 
-        return self._run_and_save(exit_at, save, should_schedule_waiting_timer_events)
+        return self._run_and_save(exit_at, save, should_schedule_waiting_timer_events, needs_dequeue=needs_dequeue)
 
     def _run_and_save(
         self,
         exit_at: None = None,
         save: bool = False,
         should_schedule_waiting_timer_events: bool = True,
+        needs_dequeue: bool = True,
     ) -> TaskRunnability:
-        if self.process_instance_model.persistence_level != "none":
+        if needs_dequeue and self.process_instance_model.persistence_level != "none":
             with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
                     raise AssertionError(
