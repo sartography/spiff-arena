@@ -1,4 +1,3 @@
-import time
 from typing import Any
 
 from flask import current_app
@@ -65,8 +64,8 @@ class MessageService:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
                     message_instance_receive = message_instance
-            receiving_process_instance = None
             message_triggerable_process_model = None
+            receiving_process_instance = None
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
                 message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -96,7 +95,11 @@ class MessageService:
                 db.session.add(message_instance_receive)
                 db.session.commit()
 
-            if message_instance_receive is None or not receiving_process_instance.can_receive_message():
+            if (
+                message_instance_receive is None
+                or receiving_process_instance is None
+                or not receiving_process_instance.can_receive_message()
+            ):
                 # Assure we can send the message, otherwise keep going.
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
@@ -107,15 +110,15 @@ class MessageService:
                     processor_receive.save()
                 else:
                     db.session.commit()
-                # return None
-                exception_message = f"Bad Message Instance: Receive {message_instance_receive}."
-                if receiving_process_instance:
-                    exception_message += f" PI: {receiving_process_instance.can_receive_message()}"
-                else:
-                    exception_message += " PI: None"
-                exception_message += f" TRIGGER: {message_triggerable_process_model}"
-                exception_message += f" SEND: {message_instance_send}"
-                raise Exception(exception_message)
+                return None
+                # exception_message = f"Bad Message Instance: Receive {message_instance_receive}."
+                # if receiving_process_instance:
+                #     exception_message += f" PI: {receiving_process_instance.can_receive_message()}"
+                # else:
+                #     exception_message += " PI: None"
+                # exception_message += f" TRIGGER: {message_triggerable_process_model}"
+                # exception_message += f" SEND: {message_instance_send}"
+                # raise Exception(exception_message)
 
             try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
@@ -151,8 +154,8 @@ class MessageService:
                     processor_receive.save()
                 else:
                     db.session.commit()
-                # return None
-                raise
+                return None
+                # raise
 
         except Exception as exception:
             db.session.rollback()

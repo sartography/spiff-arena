@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import os
-import sys
-import subprocess
 import concurrent.futures
 import json
-from datetime import datetime
+import os
+import subprocess
+import sys
 
 
 def get_access_token(script_dir, username="admin", password="admin", realm_name="spiffworkflow"):
@@ -80,13 +79,13 @@ def load_test(message_identifier, num_requests=10, max_workers=5, username="admi
 
     # Log failures to a file if any exist
     if failure_log:
-        filename = f"failure_log.json"
+        filename = "failure_log.json"
         with open(filename, "w") as f:
             json.dump(failure_log, f, indent=2)
         print(f"\nFailure details logged to {filename}")
 
     # Print summary
-    print(f"\nLoad Test Summary:")
+    print("\nLoad Test Summary:")
     print(f"Total Requests: {num_requests}")
     print(f"Successful Requests: {successful_requests}")
     print(f"Failed Requests: {failed_requests}")

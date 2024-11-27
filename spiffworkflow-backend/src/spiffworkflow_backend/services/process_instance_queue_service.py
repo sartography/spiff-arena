@@ -141,7 +141,8 @@ class ProcessInstanceQueueService:
                     )
 
                 # we call dequeued multiple times but we want this code to only happen once.
-                # assume that if we are not reentering_lock then this is the top level call and should be the one to handle the error.
+                # assume that if we are not reentering_lock then this is the top level call and
+                # should be the one to handle the error.
                 if not reentering_lock:
                     ErrorHandlingService.handle_error(process_instance, ex)
                 raise ex

@@ -227,7 +227,8 @@ line-length = 130
 target-version = "py310"
 
 exclude = [
-  "migrations"
+  "migrations",
+  "bin/load_test_message_start_event.py"
 ]
 
 [tool.ruff.lint.per-file-ignores]
