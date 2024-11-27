@@ -24,4 +24,3 @@ node_modules
 /process.json
 /spiffworkflow_backend.svg
 /.venv
-/failure_log.json

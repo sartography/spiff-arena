@@ -129,8 +129,6 @@ class ProcessInstanceService:
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
-        # FIXME: this should not be necessary. fix the code paths that make this necessary
-        # db.session.commit()
         git_revision_error = None
         try:
             current_git_revision = GitService.get_current_revision()

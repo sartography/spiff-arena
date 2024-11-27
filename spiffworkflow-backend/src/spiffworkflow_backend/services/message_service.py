@@ -111,14 +111,6 @@ class MessageService:
                 else:
                     db.session.commit()
                 return None
-                # exception_message = f"Bad Message Instance: Receive {message_instance_receive}."
-                # if receiving_process_instance:
-                #     exception_message += f" PI: {receiving_process_instance.can_receive_message()}"
-                # else:
-                #     exception_message += " PI: None"
-                # exception_message += f" TRIGGER: {message_triggerable_process_model}"
-                # exception_message += f" SEND: {message_instance_send}"
-                # raise Exception(exception_message)
 
             try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
@@ -139,7 +131,6 @@ class MessageService:
                         processor_receive.save()
                     else:
                         db.session.commit()
-                    # ALL message instances are processed and will not be picked up elsewhere
                 if should_queue_process_instance(receiving_process_instance, execution_mode=execution_mode):
                     queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
                 return message_instance_receive
@@ -155,7 +146,6 @@ class MessageService:
                 else:
                     db.session.commit()
                 return None
-                # raise
 
         except Exception as exception:
             db.session.rollback()
@@ -202,7 +192,6 @@ class MessageService:
         with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
             processor_receive = ProcessInstanceProcessor(receiving_process_instance)
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
-            # processor_receive.save()
 
         execution_strategy_name = None
         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
