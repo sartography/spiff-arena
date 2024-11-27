@@ -64,6 +64,7 @@ class MessageService:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
                     message_instance_receive = message_instance
+            receiving_process_instance = None
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
                 message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -102,9 +103,10 @@ class MessageService:
                     db.session.add(message_instance_receive)
                 db.session.commit()
                 # return None
-                raise Exception(
-                    f"Bad Message Instance: Receive {message_instance_receive}. PI: {receiving_process_instance.can_receive_message()}"
-                )
+                exception_message = f"Bad Message Instance: Receive {message_instance_receive}."
+                if receiving_process_instance:
+                    exception_message += f" PI: {receiving_process_instance.can_receive_message()}"
+                raise Exception(exception_message)
 
             try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance):
