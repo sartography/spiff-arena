@@ -32,8 +32,9 @@ class ProcessInstanceQueueService:
         queue_entry.locked_by = None
         queue_entry.locked_at_in_seconds = None
 
-        db.session.add(queue_entry)
-        db.session.commit()
+        with db.session.session_factory() as new_session:
+            new_session.add(queue_entry)
+            new_session.commit()
 
     @classmethod
     def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel, run_at_in_seconds: int) -> None:
@@ -56,16 +57,17 @@ class ProcessInstanceQueueService:
         locked_by = ProcessInstanceLockService.locked_by()
         current_time = round(time.time())
 
-        db.session.query(ProcessInstanceQueueModel).filter(
-            ProcessInstanceQueueModel.process_instance_id == process_instance.id,
-            ProcessInstanceQueueModel.locked_by.is_(None),  # type: ignore
-        ).update(
-            {
-                "locked_by": locked_by,
-                "locked_at_in_seconds": current_time,
-            }
-        )
-        db.session.commit()
+        with db.session.session_factory() as new_session:
+            new_session.query(ProcessInstanceQueueModel).filter(
+                ProcessInstanceQueueModel.process_instance_id == process_instance.id,
+                ProcessInstanceQueueModel.locked_by.is_(None),  # type: ignore
+            ).update(
+                {
+                    "locked_by": locked_by,
+                    "locked_at_in_seconds": current_time,
+                }
+            )
+            new_session.commit()
 
         queue_entry = (
             db.session.query(ProcessInstanceQueueModel)
@@ -74,6 +76,7 @@ class ProcessInstanceQueueService:
             )
             .first()
         )
+        db.session.refresh(queue_entry)
 
         if queue_entry is None:
             raise ProcessInstanceIsNotEnqueuedError(
@@ -85,7 +88,7 @@ class ProcessInstanceQueueService:
             if queue_entry.locked_by is None:
                 message = "It was locked by something else when we tried to lock it in the db, but it has since been unlocked."
             raise ProcessInstanceIsAlreadyLockedError(
-                f"{locked_by} cannot lock process instance {process_instance.id}. {message}"
+                f"{locked_by} cannot lock process instance {process_instance.id}. {queue_entry.locked_by}. {message}"
             )
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
@@ -115,6 +118,7 @@ class ProcessInstanceQueueService:
         max_attempts: int = 1,
         ignore_cannot_be_run_error: bool = False,
     ) -> Generator[None, None, None]:
+        # yield
         reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
 
         if not reentering_lock:
