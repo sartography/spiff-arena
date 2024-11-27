@@ -4,16 +4,13 @@ import sys
 import subprocess
 import concurrent.futures
 import json
+from datetime import datetime
 
 
 def run_curl_command(message_identifier, username="admin", password="admin", realm_name="spiffworkflow"):
     """
     Execute the curl command for load testing
 
-    :param message_identifier: Identifier for the message
-    :param username: Username for authentication (default: admin)
-    :param password: Password for authentication (default: admin)
-    :param realm_name: Realm name (default: spiffworkflow)
     :return: Tuple of (success, result)
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -52,17 +49,11 @@ def run_curl_command(message_identifier, username="admin", password="admin", rea
 
 def load_test(message_identifier, num_requests=10, max_workers=5, username="admin", password="admin", realm_name="spiffworkflow"):
     """
-    Perform load testing with concurrent requests
-
-    :param message_identifier: Identifier for the message
-    :param num_requests: Number of total requests to make
-    :param max_workers: Maximum number of concurrent workers
-    :param username: Username for authentication
-    :param password: Password for authentication
-    :param realm_name: Realm name
+    Perform load testing with concurrent requests and failure logging
     """
     successful_requests = 0
     failed_requests = 0
+    failure_log = []
 
     # Use ThreadPoolExecutor for I/O-bound tasks like network requests
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -72,14 +63,22 @@ def load_test(message_identifier, num_requests=10, max_workers=5, username="admi
         ]
 
         # Collect and process results
-        for future in concurrent.futures.as_completed(futures):
+        for i, future in enumerate(concurrent.futures.as_completed(futures), 1):
             success, result = future.result()
             if success:
                 successful_requests += 1
-                print(f"Success: {result}")
+                print(f"Request {i}: Success")
             else:
                 failed_requests += 1
-                print(f"Failure: {result}")
+                failure_log.append({"request_number": i, "error_message": result})
+                print(f"Request {i}: Failure")
+
+    # Log failures to a file if any exist
+    if failure_log:
+        filename = f"failure_log.json"
+        with open(filename, "w") as f:
+            json.dump(failure_log, f, indent=2)
+        print(f"\nFailure details logged to {filename}")
 
     # Print summary
     print(f"\nLoad Test Summary:")
@@ -107,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
