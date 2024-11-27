@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 from flask import current_app
@@ -96,7 +97,11 @@ class MessageService:
             try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                     # Set the receiving message to running, so it is not altered elswhere ...
+                    current_app.logger.info(f"HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEY")
                     message_instance_receive.status = "running"
+                    db.session.add(message_instance_receive)
+                    db.session.commit()
+                    # time.sleep(0.5)
 
                     cls.process_message_receive(
                         receiving_process_instance, message_instance_receive, message_instance_send, execution_mode=execution_mode
