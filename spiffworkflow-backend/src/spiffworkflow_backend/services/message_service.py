@@ -87,21 +87,33 @@ class MessageService:
             else:
                 receiving_process_instance = MessageService.get_process_instance_for_message_instance(message_instance_receive)
 
-            # Assure we can send the message, otherwise keep going.
+            if message_instance_receive is not None:
+                # Set the receiving message to running, so it is not altered elswhere ...
+                message_instance_receive.status = "running"
+                db.session.add(message_instance_receive)
+                db.session.commit()
+
             if message_instance_receive is None or not receiving_process_instance.can_receive_message():
+                # Assure we can send the message, otherwise keep going.
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
+                if message_instance_receive is not None:
+                    message_instance_receive.status = "ready"
+                    db.session.add(message_instance_receive)
                 db.session.commit()
-                return None
+                # return None
+                raise Exception(
+                    f"Bad Message Instance: Receive {message_instance_receive}. PI: {receiving_process_instance.can_receive_message()}"
+                )
 
             try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance):
-                    # Set the receiving message to running, so it is not altered elswhere ...
-                    current_app.logger.info(f"HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEY")
-                    message_instance_receive.status = "running"
-                    db.session.add(message_instance_receive)
-                    db.session.commit()
-                    # time.sleep(0.5)
+                    # # Set the receiving message to running, so it is not altered elswhere ...
+                    # current_app.logger.info(f"HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEY")
+                    # message_instance_receive.status = "running"
+                    # db.session.add(message_instance_receive)
+                    # db.session.commit()
+                    # # time.sleep(0.5)
 
                     cls.process_message_receive(
                         receiving_process_instance, message_instance_receive, message_instance_send, execution_mode=execution_mode
@@ -120,8 +132,12 @@ class MessageService:
             except ProcessInstanceIsAlreadyLockedError:
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
+                if message_instance_receive is not None:
+                    message_instance_receive.status = "ready"
+                    db.session.add(message_instance_receive)
                 db.session.commit()
-                return None
+                # return None
+                raise
 
         except Exception as exception:
             db.session.rollback()
