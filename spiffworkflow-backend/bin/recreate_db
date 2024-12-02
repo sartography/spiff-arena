@@ -26,6 +26,13 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 fi
 
+echo "Present Working Directory: $PWD"
+echo "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
+echo "SPIFFWORKFLOW_BACKEND_ENV: ${SPIFFWORKFLOW_BACKEND_ENV:-not set}"
+echo "SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-not set}"
+echo "SPIFFWORKFLOW_BACKEND_DATABASE_URI: ${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-not set}"
+echo "FLASK_SESSION_SECRET_KEY: ${FLASK_SESSION_SECRET_KEY:-not set}"
+
 if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<<"$SPIFFWORKFLOW_BACKEND_ENV"; then
   echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_ENV is set to '${SPIFFWORKFLOW_BACKEND_ENV}'. Only local_development and unit_testing are allowed."
   exit 1
@@ -37,17 +44,19 @@ database_username="root"
 database_password=""
 databases_to_run_on="spiffworkflow_backend_local_development spiffworkflow_backend_unit_testing"
 database_name_from_uri=""
-if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
-  database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
-  database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
-  database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
-  database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
-  database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
-  database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
-  database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
-  if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
-    databases_to_run_on="$database_name_from_uri"
-  fi
+if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "sqlite" ]]; then
+    if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
+      database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
+      database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
+      database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
+      database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
+      database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
+      database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
+      database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+      if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
+        databases_to_run_on="$database_name_from_uri"
+      fi
+    fi
 fi
 
 database_host_args="-h $database_host -u $database_username"
