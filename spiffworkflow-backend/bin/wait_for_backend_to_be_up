@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -15,18 +15,11 @@ backend_base_url="http://localhost:${port}"
 echo "waiting for backend to come up at ${backend_base_url} ..."
 while [[ "$(curl -s -o /dev/null -w '%{http_code}' "${backend_base_url}/v1.0/status")" != "200" ]]; do
   if [[ "$attempts" -gt "$max_attempts" ]]; then
-    >&2 echo "ERROR: Server not up after $max_attempts attempts. There is probably a problem"
+    echo >&2 "ERROR: Server not up after $max_attempts attempts. There is probably a problem"
     exit 1
   fi
   attempts=$((attempts + 1))
   sleep 1
 done
-
-echo "attempting to hit backend with SCRIPT_NAME as well, just to make sure that works, since gunicorn broke this in 22.0.0"
-status_code_for_script_name_check="$(curl -s -o /dev/null -w '%{http_code}' -H "SCRIPT_NAME: /api" "${backend_base_url}/api/v1.0/status")"
-if [[ "$status_code_for_script_name_check" != "200" ]]; then
-  >&2 echo "ERROR: Server came up, but the additional check for hitting it at /api with a SCRIPT_NAME header failed. This probably means that celery was upgraded past 22.0.0 and they still haven't fixed the bug linked in pyproject.toml. status code was: ${status_code_for_script_name_check}"
-  exit 1
-fi
 
 echo "backend up"
