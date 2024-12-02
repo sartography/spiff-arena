@@ -1575,6 +1575,7 @@ class ProcessInstanceProcessor:
         execution_strategy: ExecutionStrategy | None = None,
         should_schedule_waiting_timer_events: bool = True,
         ignore_cannot_be_run_error: bool = False,
+        needs_dequeue: bool = True,
     ) -> TaskRunnability:
         if not ignore_cannot_be_run_error and not self.process_instance_model.allowed_to_run():
             raise ProcessInstanceCannotBeRunError(
@@ -1582,7 +1583,7 @@ class ProcessInstanceProcessor:
                 f"'{self.process_instance_model.status}' and therefore cannot run."
             )
         if self.process_instance_model.persistence_level != "none":
-            with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+            with ProcessInstanceQueueService.dequeued(self.process_instance_model, needs_dequeue=needs_dequeue):
                 # TODO: ideally we just lock in the execution service, but not sure
                 # about _add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
@@ -1592,6 +1593,7 @@ class ProcessInstanceProcessor:
                     execution_strategy_name,
                     execution_strategy,
                     should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
+                    needs_dequeue=needs_dequeue,
                 )
         else:
             return self._do_engine_steps(
@@ -1609,6 +1611,7 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str | None = None,
         execution_strategy: ExecutionStrategy | None = None,
         should_schedule_waiting_timer_events: bool = True,
+        needs_dequeue: bool = True,
     ) -> TaskRunnability:
         self._add_bpmn_process_definitions(
             self.serialize(),
@@ -1645,6 +1648,7 @@ class ProcessInstanceProcessor:
             save,
             should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             # profile=True,
+            needs_dequeue=needs_dequeue,
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         self.check_all_tasks()

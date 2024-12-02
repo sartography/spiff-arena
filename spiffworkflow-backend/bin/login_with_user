@@ -18,7 +18,10 @@ if [[ -z "${1:-}" ]]; then
   exit 1
 fi
 
-script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
 
 if [[ -z "${REALM_NAME:-}" ]]; then
   REALM_NAME=spiffworkflow
@@ -30,5 +33,5 @@ if [[ -z "$access_token" || "$access_token" == "null" ]]; then
 else
 
   echo "access_token: ${access_token}"
-  curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${access_token}&authentication_identifier=default" -H "Authorization: Bearer $access_token"
+  curl -v -X POST "${BACKEND_BASE_URL:-http://localhost:7000}/v1.0/login_with_access_token?access_token=${access_token}&authentication_identifier=default" -H "Authorization: Bearer $access_token"
 fi
