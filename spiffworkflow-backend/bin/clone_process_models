@@ -24,10 +24,16 @@ fi
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
-    export SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH=$(mktemp /tmp/ssh_private_key.XXXXXX)
+    SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH=$(mktemp /tmp/ssh_private_key.XXXXXX)
+    export SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH
     chmod 600 "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}"
     echo "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY}" >"${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}"
   fi
+fi
+
+# Only configure SSH if a private key is available; CLONE_URL might be HTTPS, which is still valid
+if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}" ]]; then
+  export GIT_SSH_COMMAND="ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}"
 fi
 
 if [[ ! -d "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}/.git" ]]; then
@@ -36,6 +42,5 @@ if [[ ! -d "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}/.git" ]]; then
     rm -r "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}/lost+found"
   fi
 
-  export GIT_SSH_COMMAND="ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}"
   git clone -b "$SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH" "$SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL" "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
 fi
