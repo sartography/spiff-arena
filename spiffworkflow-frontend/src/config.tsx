@@ -41,7 +41,7 @@ if (!backendBaseUrl) {
     throw new Error(`Invalid app routing strategy: ${appRoutingStrategy}`);
   }
 
-  if (/^\d+\./.test(hostname) || hostname === 'a10') {
+  if (/^\d+\./.test(hostname) || hostname === 'localhost') {
     let serverPort = 7000;
     if (!Number.isNaN(Number(port))) {
       serverPort = Number(port) - 1;
