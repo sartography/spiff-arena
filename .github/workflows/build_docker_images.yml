@@ -34,15 +34,29 @@ on:
     tags: [v*]
 
 jobs:
-  create_frontend_docker_image:
+  create_docker_images:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image_name: sartography/spiffworkflow-frontend
+            context: spiffworkflow-frontend
+            description: "Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
+          - image_name: sartography/spiffworkflow-backend
+            context: spiffworkflow-backend
+            description: "Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
+          - image_name: sartography/connector-proxy-demo
+            context: connector-proxy-demo
+            description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
+
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/spiffworkflow-frontend
+      IMAGE_NAME: ${{ matrix.image_name }}
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
       packages: write
+      security-events: write # Required for uploading Trivy scan results to GitHub Security
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -67,7 +81,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
-            org.opencontainers.image.description=Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
+            org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
             type=ref,event=branch,branch=main,suffix=-latest
@@ -76,139 +90,58 @@ jobs:
             type=ref,event=tag,enable=true,format=latest
 
       - name: Write app version info
-        working-directory: spiffworkflow-frontend
+        working-directory: ${{ matrix.context }}
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
-      - name: Build and push Frontend Docker image
+      - name: Generate full image tag
+        id: full_tag
+        run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
+      - name: Build Docker image
         uses: docker/build-push-action@v6.10.0
         with:
-          # this action doesn't seem to respect working-directory so set context
-          context: spiffworkflow-frontend
+          context: ${{ matrix.context }}
+          push: false  # Don't push yet
+          load: true   # Load image to local Docker daemon
+          tags: ${{ steps.full_tag.outputs.full_tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          image-ref: '${{ steps.full_tag.outputs.full_tag }}'
+          scan-type: 'image'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 1  # Fail the workflow if critical or high vulnerabilities are found
+          timeout: 15m0s
+          ignore-unfixed: true
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()  # Run even if the Trivy scan fails
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Push Docker image
+        uses: docker/build-push-action@v6.10.0
+        with:
+          context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-      - run: echo 'TAGS' >> "$GITHUB_STEP_SUMMARY"
-      - run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
-
-  create_backend_docker_image:
-    runs-on: ubuntu-latest
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/spiffworkflow-backend
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3.3.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get current date
-        id: date
-        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
-      - name: Get short commit sha
-        id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5.6.1
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          labels: |
-            org.opencontainers.image.description=Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
-          tags: |
-            type=ref,event=branch,branch=main,suffix=-latest
-            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
-            type=ref,event=tag,enable=true,format={{version}}
-            type=ref,event=tag,enable=true,format=latest
-
-      - name: Write app version info
-        working-directory: spiffworkflow-backend
-        run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
-      - name: Build and push Backend Docker image
-        uses: docker/build-push-action@v6.10.0
-        with:
-          # this action doesn't seem to respect working-directory so set context
-          context: spiffworkflow-backend
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-      - name: Adding markdown
-        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
-
-  create_demo_proxy_docker_image:
-    runs-on: ubuntu-latest
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/connector-proxy-demo
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3.3.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get current date
-        id: date
-        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
-      - name: Get short commit sha
-        id: commit_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5.6.1
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          labels: |
-            org.opencontainers.image.description=spiffworkflow-connector-proxy-demo
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
-          tags: |
-            type=ref,event=branch,branch=main,suffix=-latest
-            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
-            type=ref,event=tag,enable=true,format={{version}}
-            type=ref,event=tag,enable=true,format=latest
-
-      - name: Build and push the connector proxy
-        uses: docker/build-push-action@v6.10.0
-        with:
-          # this action doesn't seem to respect working-directory so set context
-          context: connector-proxy-demo
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
 
   quickstart-guide-test:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs:
-      [
-        create_frontend_docker_image,
-        create_backend_docker_image,
-        create_demo_proxy_docker_image,
-      ]
+    needs: [create_docker_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
