@@ -56,6 +56,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -91,8 +92,40 @@ jobs:
       - name: Write app version info
         working-directory: ${{ matrix.context }}
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
+      - name: Generate full image tag
+        id: full_tag
+        run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
+      - name: Build Docker image
+        uses: docker/build-push-action@v6.10.0
+        with:
+          context: ${{ matrix.context }}
+          push: false  # Don't push yet
+          load: true   # Load image to local Docker daemon
+          tags: ${{ steps.full_tag.outputs.full_tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build and push Docker image
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          image-ref: '${{ steps.full_tag.outputs.full_tag }}'
+          scan-type: 'image'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 1  # Fail the workflow if critical or high vulnerabilities are found
+          timeout: 15m0s
+          ignore-unfixed: true
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()  # Run even if the Trivy scan fails
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Push Docker image
         uses: docker/build-push-action@v6.10.0
         with:
           context: ${{ matrix.context }}
