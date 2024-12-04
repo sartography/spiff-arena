@@ -47,7 +47,7 @@ jobs:
             description: "Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
           - image_name: sartography/connector-proxy-demo
             context: connector-proxy-demo
-            description: "spiffworkflow-connector-proxy-demo"
+            description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
 
     env:
       REGISTRY: ghcr.io
