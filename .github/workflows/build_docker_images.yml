@@ -56,7 +56,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
+      security-events: write # Required for uploading Trivy scan results to GitHub Security
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -134,7 +134,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
-          cache-to: type=gha,mode=max          
+          cache-to: type=gha,mode=max
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
 
