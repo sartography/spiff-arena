@@ -24,7 +24,7 @@ FROM base AS deployment
 # libpq5 in order to be able to use postgres at runtime
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq libpq5 \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny jq libpq5 libkrb5support0 libexpat1 \
   && rm -rf /var/lib/apt/lists/*
 
 # keep pip up to date

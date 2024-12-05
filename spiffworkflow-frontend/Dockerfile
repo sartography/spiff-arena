@@ -14,6 +14,8 @@ RUN apt-get update \
   curl \
   procps \
   vim-tiny \
+  libkrb5support0 \
+  libexpat1 \
   && rm -rf /var/lib/apt/lists/*
 
 # this matches total memory on spiffworkflow-demo
@@ -46,6 +48,13 @@ RUN ./bin/build
 
 # Use nginx as the base image
 FROM nginx:1.25.4-bookworm
+
+RUN apt-get update \
+  && apt-get clean -y \
+  && apt-get install -y -q \
+  libkrb5support0 \
+  libexpat1 \
+  && rm -rf /var/lib/apt/lists/*
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
