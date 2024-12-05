@@ -54,6 +54,7 @@ RUN apt-get update \
   && apt-get install -y -q \
   libkrb5support0 \
   libexpat1 \
+  libaom3 \
   && rm -rf /var/lib/apt/lists/*
 
 # Remove default nginx configuration
