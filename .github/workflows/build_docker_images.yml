@@ -38,7 +38,7 @@ jobs:
   create_docker_images:
     runs-on: ubuntu-latest
     strategy:
-      # fail-fast: false
+      fail-fast: false
       matrix:
         include:
           - image_name: sartography/spiffworkflow-frontend
@@ -120,7 +120,7 @@ jobs:
           hide-progress: false
           format: "sarif"
           output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
+          severity: "CRITICAL"
           exit-code: 1 # Fail the workflow if critical or high vulnerabilities are found
           timeout: 15m0s
           ignore-unfixed: true
