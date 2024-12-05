@@ -118,6 +118,7 @@ jobs:
           image-ref: "${{ steps.full_tag.outputs.full_tag }}"
           scan-type: "image"
           hide-progress: false
+          limit-severities-for-sarif: true
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL"
