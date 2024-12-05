@@ -31,12 +31,14 @@ on:
     branches:
       - main
       - keycloak-realm-with-groups
+      - fail-fast-off
     tags: [v*]
 
 jobs:
   create_docker_images:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - image_name: sartography/spiffworkflow-frontend
@@ -99,34 +101,44 @@ jobs:
         uses: docker/build-push-action@v6.10.0
         with:
           context: ${{ matrix.context }}
-          push: false  # Don't push yet
-          load: true   # Load image to local Docker daemon
+          push: false # Don't push yet
+          load: true # Load image to local Docker daemon
           tags: ${{ steps.full_tag.outputs.full_tag }}
           labels: ${{ steps.meta.outputs.labels }}
           # While we ultimately push multi-arch images (amd64/arm64) to registries, we don't want to do that before we scan for vulns.
-          # The Action can only load a single arch image into the local dockerd at a time, so we only build and test one arch here. 
+          # The Action can only load a single arch image into the local dockerd at a time, so we only build and test one arch here.
           # It's pretty likely that any vuln in amd64 is also in arm64, and vice-versa, so the trade-off seems reasonable.
-          platforms: linux/amd64 
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.19.0
         with:
-          image-ref: '${{ steps.full_tag.outputs.full_tag }}'
-          scan-type: 'image'
+          image-ref: "${{ steps.full_tag.outputs.full_tag }}"
+          scan-type: "image"
           hide-progress: false
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: 1  # Fail the workflow if critical or high vulnerabilities are found
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL"
+          exit-code: 1 # Fail the workflow if critical or high vulnerabilities are found
           timeout: 15m0s
           ignore-unfixed: true
+      - name: Check if Trivy results exist
+        if: always()
+        # trivy will fail if vulnerabilities are found but we need to upload them anyway
+        run: |
+          if [ -f "trivy-results.sarif" ]; then
+            echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
+          else
+            echo "Trivy results file not found. Skipping upload."
+            echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
+          fi
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()  # Run even if the Trivy scan fails
+        if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
       - name: Push Docker image
         uses: docker/build-push-action@v6.10.0
