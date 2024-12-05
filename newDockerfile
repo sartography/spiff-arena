@@ -1,6 +1,0 @@
-FROM python:3.11.6-slim-bookworm AS base
-
-RUN apt-get update
-RUN apt-get install -q -y git-core curl procps gunicorn3 default-mysql-client vim-tiny
-RUN apt-get install -q -y libkrb5support0 libexpat1
-
