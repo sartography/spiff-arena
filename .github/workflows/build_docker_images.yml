@@ -122,7 +122,7 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL"
-          exit-code: 1 # Fail the workflow if critical or high vulnerabilities are found
+          exit-code: 1 # Fail the workflow if critical vulnerabilities are found
           timeout: 15m0s
           ignore-unfixed: true
       - name: Check if Trivy results exist
