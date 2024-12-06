@@ -299,7 +299,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5.0.7
+        uses: codecov/codecov-action@v5.1.1
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v4.0.0
