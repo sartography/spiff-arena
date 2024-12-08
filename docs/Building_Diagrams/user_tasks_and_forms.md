@@ -1,11 +1,65 @@
-# Using Forms
+# User Tasks and Forms
+User Tasks are a key feature in BPMN (Business Process Model and Notation) workflows where human interaction is required to complete a process. In SpiffWorkflow, User Tasks are closely integrated with Forms, which are used to collect input or display information to users during process execution.
 
-This feature allows you to create custom forms for collecting and managing data within your workflows.
-Whether you need a simple feedback form or a complex multi-step form, SpiffArena provides you with the tools to build and integrate forms seamlessly.
+Some key features of user tasks are:
+
+- Involve direct interaction with the user.
+- Typically linked to a form for data collection or information display.
+- Can include custom validation and dynamic content.
+- Support task assignment to specific users or groups.
+
+**When to Use User Tasks**:
+- To gather approvals or confirmations from users.
+- To collect data required for further process execution.
+- To provide users with critical information during a workflow.
+
+## **Steps to Set Up a User Task**
+**1. Add a User Task in the BPMN Model**
+- Drag and drop the **User Task** symbol onto your BPMN diagram.
+- Connect it to the previous and subsequent tasks in the process flow.
+
+**2. Configuring the User Task**
+Click on the user task in the BPMN editor to display the **Properties Panel** on the right. Below are the key sections and settings for user tasks:
+  ```{image} ./images/user_tasks_properties.png
+:alt: Service Task
+:width: 300px
+:align: right
+```
+**General**
+- **Name**: Provide a meaningful name for the task (e.g., "Name Form").
+- **ID**: Automatically generated or customizable unique identifier for the task.
+
+**Documentation**
+- Add descriptions or notes to document the purpose of the task.
+
+**Pre/Post Scripts**
+- **Pre-Script**: Add Python scripts to execute **before** the task starts.
+- **Post-Script**: Add Python scripts to execute **after** the task is completed.
+- Use the "Launch Editor" button to access the code editor.
+
+**Web Form (With JSON Schemas)**
+- **JSON Schema Filename**: Select or define the form schema to be displayed during task execution.
+- **Form Description (RJSF)**: Provide an additional description for the form.
+- Use the "Launch Editor" button to edit or view the schema, UI settings, or data.
+
+**Instructions**
+- Add instructions that will appear above the form during task execution to guide the user.
+
+
+**Guest Options**
+- **Guest Can Complete This Task**: Allow non-logged-in users (guests) to complete the task. This is useful for workflows requiring external inputs, such as surveys or public forms.
+- **Guest Confirmation**: Add a markdown confirmation message that appears after task submission.
+
+**Input/Output Management**
+- Use the "Inputs" and "Outputs" sections to define specific variables accessible to or from the task. If not defined, all process variables are accessible.
+
+## Forms
+
+Forms in SpiffWorkflow enable you to create intuitive user interfaces for collecting data during User Tasks. They are configured using JSON Schema and can be customized with dynamic elements, validations, and UI enhancements.
 
 Let's dive in and explore the possibilities of creating forms in SpiffArena.
 
-## Creating Forms
+### Creating Forms
 Here are the ways to create forms:
 
 1. **Using JSON Schema**
@@ -64,11 +118,11 @@ For instance, you can set the UI widget correctly for each element, ensuring it 
 
 ![Form Editor](images/Form_editor4.png)
 
-## SpiffArena react-jsonschema-form enhancements
+### SpiffArena react-jsonschema-form enhancements
 
 SpiffArena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
 
-### Dynamic Enumerations
+#### Dynamic Enumerations
 
 Dynamic enumerations allow you to provide users with a list of options (in a select/dropdown) that can change based on variables in the process instance.
 
@@ -113,7 +167,7 @@ Then use JSON like this (note the `options_from_task_data_var:fruits`) when defi
     }
 ```
 
-### Checkbox Validation
+#### Checkbox Validation
 
 Checkbox validation ensures that checkboxes, especially required boolean fields, are properly validated.
 By default, react-jsonschema-form only triggers validation when a checkbox field is left undefined.
@@ -125,14 +179,14 @@ This will force the value to be `true` (the checkbox must be checked) before the
 ```{admonition} Note
 When working with both Python and JSON, be aware that `True` and `False` are capitalized in Python but must be lowercase (`true` and `false`) in JSON format. 
 ```
-### Regex Validation
+#### Regex Validation
 
 Regex validation allows you to validate text input fields based on regular expressions.
 This is useful when you need to ensure that user inputs match a specific pattern or format, such as email addresses or phone numbers.
 
 In your JSON schema, include a `pattern` property with a regular expression pattern that defines the valid format for the input field.
 
-### Date Range Selector
+#### Date Range Selector
 
 The date range selector allows users to select a range of dates, such as a start and end date, within a form.
 You will use this feature when building forms that involve specifying date intervals.
@@ -155,11 +209,11 @@ Example for UI schema:
         "ui:help": "Indicate the travel start and end dates"
     },
 ```
-### Date Validation
+#### Date Validation
 
 Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
 
-#### Minimum date validation
+**Minimum date validation**
 
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
@@ -178,7 +232,7 @@ This is an example where the end_date must be after the start_date:
     }
 ```
 
-#### Maximum date validation
+**Maximum date validation**
 
 Maximum date validation in relation to another date allows you to set constraints on a date field to ensure that it falls on or before another specified date within the form.
 This type of validation is particularly useful for setting deadlines, end dates, or the latest possible dates that are contingent on other dates in the workflow.
@@ -202,9 +256,9 @@ If the referenced field is a date range, and you want to validate against the en
 Using maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
 
-#### Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints
+**Date Validation Scenario: Enforcing Minimum and Maximum Date Constraints**
 
-#### Scenario Overview
+**Scenario Overview**
 
 Workflow processes often require the enforcement of minimum and maximum date constraints to align with operational timelines or project deadlines.
 
@@ -319,7 +373,7 @@ By defining a `uiSchema` like this, the layout will automatically adjust the col
 ```
 By using the `ui:layout` feature, you can design form layouts that are not only functional but also enhance the user experience, making your forms well-organized and accessible across various screen sizes.
 
-### Display UI Help in Web Forms
+#### Display UI Help in Web Forms
 
 When designing web forms, it's important to provide users with contextual help to ensure they understand the purpose and requirements of each field.
 This guidance can be achieved by adding help text to specific form fields.
@@ -377,14 +431,14 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 
 ![rjsf markdown](images/rsjf_markdown.png)
 
-### Numeric Range Field
+#### Numeric Range Field
 
 #### Overview
 
 The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges.
 This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
 
-#### JSON Schema Example
+##### JSON Schema Example
 
 Below is an example JSON schema that includes the numeric range field:
 
@@ -421,11 +475,11 @@ This schema defines a numeric range object with `min` and `max` properties, both
 }
 ```
 
-#### Validation
+##### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
 
-### Adding a New Button for Repeating Sections in Forms
+#### Adding a New Button for Repeating Sections in Forms
 
 Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information.
 For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
@@ -468,11 +522,11 @@ This structure can be represented in the form's schema as follows:
 
 By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
 
-### Character counter
+#### Character counter
 
 To give the user feedback about how they are doing in terms of staying within the limits imposed by the field, you can display a character counter.
 
-#### JSON Schema Configuration
+##### JSON Schema Configuration
 
 To do this, your JSON schema must contain a string with a `maxLength`, like this:
 
@@ -489,7 +543,7 @@ To do this, your JSON schema must contain a string with a `maxLength`, like this
 }
 ```
 
-#### UI Schema Configuration
+##### UI Schema Configuration
 
 Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
 
@@ -502,3 +556,48 @@ Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
   }
 }
 ```
+## Guest User Task
+The Guest User Task feature in SpiffArena allows users who are not logged into the system to complete specified human tasks. This functionality enhances accessibility and usability, enabling a broader range of users to interact with the process models without requiring an account.
+
+### Key Features
+
+- **Task Accessibility**: Allows guest users to complete tasks marked as "allow guest" in the process model.
+- **Direct Navigation**: Guests can access tasks via a constructed URL, eliminating the need for login credentials.
+- **Security Measures**: Guests are redirected to the login screen if they attempt to navigate away from the task page, ensuring secure access control.
+
+### Testing Instructions
+
+To verify the functionality of the Guest User Task feature, follow these steps:
+
+1. **Create a Process Model**:
+
+Design a process model that includes a manual or user task. Ensure you check the **"allow guest"** checkbox.
+
+![Guest user](images/guest_user1.png)
+
+2. **Start the Process Model**:
+
+Initiate the process model using the same user account that created it.
+
+3. **Access the Task GUID**:
+
+Navigate to the process instance show page and retrieve the GUID of the human task.
+
+![Guest user](images/guest_user2.png)
+
+4. **Construct the Access URL**:
+
+Create a URL in this format:
+     ```
+     [domain]/public/tasks/[process_instance_id]/[task_guid]
+     ```
+     
+Replace `[domain]`, `[process_instance_id]`, and `[task_guid]` with appropriate values.
+
+5. **Test as a Guest User**:
+
+Open an incognito or private browsing window (not logged into Spiff). Navigate to the constructed URL. Confirm that the guest user can complete the task.
+![Guest user](images/guest_user3.png)
+
+The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
+

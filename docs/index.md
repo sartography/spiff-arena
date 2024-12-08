@@ -11,7 +11,7 @@ Getting_Started/quick_start.md
 :caption: Building Diagrams
 Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
-Building_Diagrams/Forms.md
+Building_Diagrams/user_tasks_and_forms.md
 Building_Diagrams/gateways.md
 Building_Diagrams/events.md
 Building_Diagrams/message_events.md
@@ -28,7 +28,6 @@ Building_Diagrams/data.md
 Building_Diagrams/multiinstance.md
 Building_Diagrams/dmn.md
 Building_Diagrams/pools_and_lanes.md
-Building_Diagrams/guest_user.md
 Building_Diagrams/Builtin_examples.md
 ```
 
@@ -37,6 +36,7 @@ Building_Diagrams/Builtin_examples.md
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
 Debugging_Diagrams/process_error_handling.md
+Debugging_Diagrams/executable_non_executable.md
 ```
 
 ```{toctree}
