@@ -6,7 +6,7 @@ t
 version_info.json
 .coverage*
 UNKNOWN.egg-info/
-process_models/
+process_models
 .ipynb_checkpoints
 .env*
 .cache
