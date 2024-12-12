@@ -279,9 +279,16 @@ class AuthenticationService:
         return redirect(request_url)
 
     @staticmethod
-    def generate_state(redirect_url: str, authentication_identifier: str) -> bytes:
+    def generate_state(authentication_identifier: str, final_url: str | None = None) -> bytes:
+        # The final_url is where we want to return the user to, within the application - in case they
+        # where headed to a specific page. This is different than the "redirect url" we specify to
+        # the open id server - we want the open id server to always send us back to the login_return
+        # endpoint, and we'll redirect again from there.
+        my_final_url = final_url
+        if final_url is None:
+            my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
         state = base64.b64encode(
-            bytes(str({"redirect_url": redirect_url, "authentication_identifier": authentication_identifier}), "UTF-8")
+            bytes(str({"final_url": my_final_url, "authentication_identifier": authentication_identifier}), "UTF-8")
         )
         return state
 
@@ -289,19 +296,19 @@ class AuthenticationService:
         host_url = request.host_url.strip("/")
         login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
         redirect_url_to_use = f"{host_url}{login_return_path}"
+        current_app.logger.debug(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
         return redirect_url_to_use
 
-    def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str | None = None) -> str:
-        redirect_url_to_use = redirect_url
-        if redirect_url_to_use is None:
-            redirect_url_to_use = self.get_redirect_uri_for_login_to_server()
+    def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
+        redirect_url = self.get_redirect_uri_for_login_to_server()
+        state = self.generate_state(authentication_identifier, final_url).decode("UTF-8")
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
             + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
-            + f"redirect_uri={redirect_url_to_use}"
+            + f"redirect_uri={redirect_url}"
         )
         return login_redirect_url
 
