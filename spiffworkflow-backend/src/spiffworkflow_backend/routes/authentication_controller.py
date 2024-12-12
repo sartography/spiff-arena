@@ -203,7 +203,7 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
 
 def login_api(authentication_identifier: str) -> Response:
     state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
-    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))
+    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), authentication_identifier)
     return redirect(login_redirect_url)
 
 
