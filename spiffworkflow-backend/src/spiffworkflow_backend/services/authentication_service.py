@@ -289,12 +289,13 @@ class AuthenticationService:
         host_url = request.host_url.strip("/")
         login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
         redirect_url_to_use = f"{host_url}{login_return_path}"
+        current_app.logger.debug(
+            f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' "
+        )
         return redirect_url_to_use
 
-    def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str | None = None) -> str:
-        redirect_url_to_use = redirect_url
-        if redirect_url_to_use is None:
-            redirect_url_to_use = self.get_redirect_uri_for_login_to_server()
+    def get_login_redirect_url(self, state: str, authentication_identifier: str) -> str:
+        redirect_url_to_use = self.get_redirect_uri_for_login_to_server()
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"

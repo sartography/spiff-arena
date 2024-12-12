@@ -178,7 +178,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
         # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
-            error_code="invalid_token",
+            error_code="missing_token",
             message="Login failed. Please try again",
             status_code=401,
         )
@@ -202,11 +202,8 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
 
 
 def login_api(authentication_identifier: str) -> Response:
-    host_url = request.host_url.strip("/")
-    login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
-    redirect_url = f"{host_url}{login_return_path}"
     state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
-    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), redirect_url)
+    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))
     return redirect(login_redirect_url)
 
 
