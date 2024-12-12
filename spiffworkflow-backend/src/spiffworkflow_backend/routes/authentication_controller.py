@@ -9,7 +9,6 @@ from flask import jsonify
 from flask import make_response
 from flask import redirect
 from flask import request
-from flask import url_for
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -137,16 +136,15 @@ def login(
         )
         return redirect(redirect_url)
 
-    state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
     login_redirect_url = AuthenticationService().get_login_redirect_url(
-        state.decode("UTF-8"), authentication_identifier=authentication_identifier
+        authentication_identifier=authentication_identifier, final_url=redirect_url
     )
     return redirect(login_redirect_url)
 
 
 def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
-    state_redirect_url = state_dict["redirect_url"]
+    state_redirect_url = state_dict["final_url"]
     authentication_identifier = state_dict["authentication_identifier"]
     auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
     if "id_token" in auth_token_object:
@@ -202,14 +200,13 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
 
 
 def login_api(authentication_identifier: str) -> Response:
-    state = AuthenticationService.generate_state(redirect_url, authentication_identifier)
-    login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"), authentication_identifier)
+    login_redirect_url = AuthenticationService().get_login_redirect_url(authentication_identifier)
     return redirect(login_redirect_url)
 
 
 def login_api_return(code: str, state: str, session_state: str) -> str:
-    state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
-    state_dict["redirect_url"]
+    # state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+    # state_dict["final_url"]
 
     auth_token_object = AuthenticationService().get_auth_token_object(code, "/v1.0/login_api_return")
     access_token: str = auth_token_object["access_token"]
