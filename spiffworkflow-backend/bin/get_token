@@ -38,15 +38,15 @@ if openid_token_url is None:
                 raise Exception("Could not determine openid url based on backend url")
             env_domain = match.group(1)
             keycloak_base_url = "https://keycloak.${env_domain}"
-import urllib.parse
+        import urllib.parse
 
-token_path = "/protocol/openid-connect/token"
-if "/realms" in keycloak_base_url:
-    openid_token_url = f"{keycloak_base_url}{token_path}"
-else:
-    # Sanitize realm_name to prevent path traversal
-    safe_realm = urllib.parse.quote(realm_name, safe='')
-    openid_token_url = f"{keycloak_base_url}/realms/{safe_realm}{token_path}"
+        token_path = "/protocol/openid-connect/token"
+        if "/realms" in keycloak_base_url:
+            openid_token_url = f"{keycloak_base_url}{token_path}"
+        else:
+            # Sanitize realm_name to prevent path traversal
+            safe_realm = urllib.parse.quote(realm_name, safe="")
+            openid_token_url = f"{keycloak_base_url}/realms/{safe_realm}{token_path}"
     else:
         openid_token_url = f"{backend_base_url}/openid/token"
 
