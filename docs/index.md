@@ -73,6 +73,7 @@ DevOps_installation_integration/Secrets.md
 DevOps_installation_integration/redis_celery_broker.md
 DevOps_installation_integration/path_based_routing.md
 DevOps_installation_integration/process_model_management.md
+DevOps_installation_integration/okta_config.md
 ```
 
 ```{toctree}
