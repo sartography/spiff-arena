@@ -59,7 +59,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
             wte.add_note(str(e))
             raise wte from e
         parsed_result = json.loads(result)
-        spiff_task.data[self._result_variable(spiff_task)] = parsed_result
+        spiff_task.data[self.result_variable] = parsed_result
         return True
 
 

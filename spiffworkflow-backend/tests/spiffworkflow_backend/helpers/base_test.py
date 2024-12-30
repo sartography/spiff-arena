@@ -12,6 +12,7 @@ from typing import Any
 from flask import current_app
 from flask.app import Flask
 from flask.testing import FlaskClient
+from flask.wrappers import Response
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -40,8 +41,6 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy.orm.attributes import flag_modified
-from werkzeug.test import TestResponse
-from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named  # type: ignore
 
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -197,7 +196,7 @@ class BaseTest:
         primary_process_id: str | None = None,
         primary_file_name: str | None = None,
         user: UserModel | None = None,
-    ) -> TestResponse:
+    ) -> Response:
         if process_model_id is not None:
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
@@ -219,7 +218,7 @@ class BaseTest:
                 if user is None:
                     user = self.find_or_create_user()
 
-                response = client.post(
+                response: Response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
                     content_type="application/json",
                     data=json.dumps(ProcessModelInfoSchema().dump(model)),
@@ -307,7 +306,7 @@ class BaseTest:
         client: FlaskClient,
         test_process_model_id: str,
         headers: dict[str, str],
-    ) -> TestResponse:
+    ) -> Response:
         """Create_process_instance.
 
         There must be an existing process model to instantiate.
@@ -324,7 +323,7 @@ class BaseTest:
                 bpmn_file_name=basename,
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
-        response = client.post(
+        response: Response = client.post(
             f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
@@ -459,11 +458,11 @@ class BaseTest:
         user: UserModel,
         report_metadata: ReportMetadata | None = None,
         param_string: str | None = "",
-    ) -> TestResponse:
+    ) -> Response:
         report_metadata_to_use = report_metadata
         if report_metadata_to_use is None:
             report_metadata_to_use = self.empty_report_metadata_body()
-        response = client.post(
+        response: Response = client.post(
             f"/v1.0/process-instances{param_string}",
             headers=self.logged_in_headers(user),
             content_type="application/json",
