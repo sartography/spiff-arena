@@ -40,7 +40,8 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 from sqlalchemy.orm.attributes import flag_modified
-from werkzeug.test import TestResponse  # type: ignore
+from werkzeug.test import TestResponse
+from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named  # type: ignore
 
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -503,7 +504,9 @@ class BaseTest:
         processor_send_receive.save()
         return process_instance
 
-    def assure_a_message_was_sent(self, process_instance: ProcessInstanceModel, payload: dict) -> None:
+    def ensure_a_message_was_sent(
+        self, process_instance: ProcessInstanceModel, payload: dict, message_name: str = "Request Approval"
+    ) -> None:
         # There should be one new send message for the given process instance.
         send_messages = (
             MessageInstanceModel.query.filter_by(message_type="send")
@@ -514,10 +517,10 @@ class BaseTest:
         assert len(send_messages) == 1
         send_message = send_messages[0]
         assert send_message.payload == payload, "The send message should match up with the payload"
-        assert send_message.name == "Request Approval"
+        assert send_message.name == message_name
         assert send_message.status == "ready"
 
-    def assure_there_is_a_process_waiting_on_a_message(self, process_instance: ProcessInstanceModel) -> None:
+    def ensure_there_is_a_process_waiting_on_a_message(self, process_instance: ProcessInstanceModel) -> None:
         # There should be one new send message for the given process instance.
         waiting_messages = (
             MessageInstanceModel.query.filter_by(message_type="receive")
@@ -528,9 +531,9 @@ class BaseTest:
         )
         assert len(waiting_messages) == 1
         waiting_message = waiting_messages[0]
-        self.assure_correlation_properties_are_right(waiting_message)
+        self.ensure_correlation_properties_are_right(waiting_message)
 
-    def assure_correlation_properties_are_right(self, message: MessageInstanceModel) -> None:
+    def ensure_correlation_properties_are_right(self, message: MessageInstanceModel) -> None:
         # Correlation Properties should match up
         po_curr = next(c for c in message.correlation_rules if c.name == "po_number")
         customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")

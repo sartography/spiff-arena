@@ -34,8 +34,8 @@ class TestMessages(BaseTest):
             "amount": "100.00",
         }
         process_instance = self.start_sender_process(client, payload, "test_from_api")
-        self.assure_a_message_was_sent(process_instance, payload)
-        self.assure_there_is_a_process_waiting_on_a_message(process_instance)
+        self.ensure_a_message_was_sent(process_instance, payload)
+        self.ensure_there_is_a_process_waiting_on_a_message(process_instance)
         g.user = process_instance.process_initiator
 
         # Make an API call to the service endpoint, but use the wrong po number

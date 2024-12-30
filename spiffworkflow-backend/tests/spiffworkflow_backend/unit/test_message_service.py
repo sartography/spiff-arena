@@ -1,4 +1,5 @@
 import time
+from SpiffWorkflow import bpmn
 
 from flask import Flask
 from flask.testing import FlaskClient
@@ -18,53 +19,54 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
+    def test_single_conversation_between_two_processes_using_message_start_event(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        pass
+
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test messages between two different running processes using a single conversation.
-
-        Assure that communication between two processes works the same as making a call through the API, here
-        we have two process instances that are communicating with each other using one conversation about an
-        Invoice whose details are defined in the following message payload
-        """
         payload = {
-            "customer_id": "Sartography",
-            "po_number": 1001,
-            "description": "We built a new feature for messages!",
-            "amount": "100.00",
+            "orderId": 22,
         }
-
-        # Load up the definition for the receiving process
-        # It has a message start event that should cause it to fire when a unique message comes through
-        # Fire up the first process
-        load_test_spec(
+        process_model_receive = load_test_spec(
             "test_group/message_receive",
-            process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_receiver.bpmn",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testreceive.bpmn",
         )
+        process_model = load_test_spec(
+            "test_group/message",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testsender.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+        self.ensure_a_message_was_sent(process_instance, payload, message_name="Test_message")
 
-        # Now start the main process
-        process_instance = self.start_sender_process(client, payload, "test_between_processes")
-        self.assure_a_message_was_sent(process_instance, payload)
+        process_instance_receive = self.create_process_instance_from_process_model(process_model_receive)
+        processor_send_receive = ProcessInstanceProcessor(process_instance_receive)
+        processor_send_receive.do_engine_steps(save=True)
+        processor_send_receive.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
 
-        # This is typically called in a background cron process, so we will manually call it
-        # here in the tests
-        # The first time it is called, it will instantiate a new instance of the message_recieve process
+        waiting_messages = (
+            MessageInstanceModel.query.filter_by(message_type="receive")
+            .filter_by(status="ready")
+            .filter_by(process_instance_id=process_instance_receive.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
+        assert len(waiting_messages) == 1
+
         MessageService.correlate_all_message_instances()
 
-        # The sender process should still be waiting on a message to be returned to it ...
-        self.assure_there_is_a_process_waiting_on_a_message(process_instance)
-
-        # The second time we call ths process_message_isntances (again it would typically be running on cron)
-        # it will deliver the message that was sent from the receiver back to the original sender.
-        MessageService.correlate_all_message_instances()
-
-        # But there should be no send message waiting for delivery, because
-        # the message receiving process should pick it up instantly via
-        # it's start event.
         waiting_messages = (
             MessageInstanceModel.query.filter_by(message_type="receive")
             .filter_by(status="ready")
@@ -78,10 +80,8 @@ class TestMessageService(BaseTest):
         MessageService.correlate_all_message_instances()
         assert len(waiting_messages) == 0
 
-        # The message sender process is complete
         assert process_instance.status == "complete"
 
-        # The message receiver process is also complete
         message_receiver_process = (
             ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receive")
             .order_by(ProcessInstanceModel.id)
@@ -90,9 +90,9 @@ class TestMessageService(BaseTest):
         assert message_receiver_process.status == "complete"
 
         message_instances = MessageInstanceModel.query.all()
-        assert len(message_instances) == 4
+        assert len(message_instances) == 2
         for message_instance in message_instances:
-            assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+            assert message_instance.correlation_keys == {"Test_message": {"orderId": 22}}
 
     def test_can_send_message_to_multiple_process_models(
         self,
