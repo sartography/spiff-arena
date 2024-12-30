@@ -82,7 +82,9 @@ appendices/glossary.md
 appendices/articles.md
 appendices/bpmn_terminology.md
 documentation/documentation.md
+Building_Diagrams/custom_metadata.md
 wish_list/wish_list.md
+Creating_Process_Model_with_Metadata.md
 ```
 
 ## Indices and tables
