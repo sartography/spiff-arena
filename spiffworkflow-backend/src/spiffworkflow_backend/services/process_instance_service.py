@@ -729,7 +729,7 @@ class ProcessInstanceService:
             tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
             JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
         elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+            with sentry_sdk.start_span(op="task", name="backend_do_engine_steps"):
                 execution_strategy_name = None
                 if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                     execution_strategy_name = "greedy"
