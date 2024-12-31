@@ -40,7 +40,7 @@ if openid_token_url is None:
             keycloak_base_url = "https://keycloak.${env_domain}"
         import urllib.parse
 
-        token_path = "/protocol/openid-connect/token"
+        token_path = "/protocol/openid-connect/token"  # noqa: S105
         if "/realms" in keycloak_base_url:
             openid_token_url = f"{keycloak_base_url}{token_path}"
         else:
