@@ -8,7 +8,7 @@ Python offers a rich array of libraries, frameworks, and tools that facilitate s
 
 ## **Script Task Properties**
   ```{image} ./images/script_task_update.png
-:alt: Service Task
+:alt: Script Task
 :width: 300px
 :align: right
 ```
