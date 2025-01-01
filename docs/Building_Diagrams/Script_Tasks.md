@@ -7,7 +7,7 @@ In SpiffArena, the scripting language used for writing scripts is Python, a wide
 Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
 ## **Script Task Properties**
-  ```{image} ./images/script_task_update.png
+  ```{image} ./images/Script_task_update.png
 :alt: Script Task
 :width: 300px
 :align: right
