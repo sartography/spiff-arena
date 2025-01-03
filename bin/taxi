@@ -14,5 +14,5 @@ set -o errtrace -o errexit -o nounset -o pipefail
 for file in $(find docs -name '*.md'); do
   echo "Processing file: ${file}"
   # echo "Aider says: $(aider -f ${file} --read-only docs/diataxis.md --no-auto-commits --message "just return one word for each file, one of: tutorial, howtoguide, reference, explanation, or donottouch")"
-  custom_aider -f "${file}" --read docs/diataxis.md --no-auto-commits --message "add Keywords: to the end of ${file}, including tutorial, how_to_guide, reference, explanation, building_diagrams, debugging_diagrams, dev_docs, devops"
+  custom_aider --yes -f "${file}" --read docs/diataxis.md --no-auto-commits --message "add a line with a list of keywords (like Keywords: tutorial, debugging_diagrams) to the end of ${file}, including these possible keywords: tutorial, how_to_guide, reference, explanation, building_diagrams, debugging_diagrams, dev_docs, devops"
 done
