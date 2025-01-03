@@ -9,10 +9,10 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 # find all markdown files in docs and iterate over them
 # for each one, run aider to with that file and the Diátaxis overview at diataxis.md
-# ask aider to return one word for each file, one of: tutorial, howtoguide, reference, explanation, or donottouch
+# ask aider to return one word for each file, one of: tutorial, how_to_guide, reference, explanation, or do_not_touch
 
 for file in $(find docs -name '*.md'); do
   echo "Processing file: ${file}"
   # echo "Aider says: $(aider -f ${file} --read-only docs/diataxis.md --no-auto-commits --message "just return one word for each file, one of: tutorial, howtoguide, reference, explanation, or donottouch")"
-  custom_aider -f "${file}" --read-only docs/diataxis.md --no-auto-commits --message "add Keywords: to the end of each file"
+  custom_aider -f "${file}" --read docs/diataxis.md --no-auto-commits --message "add Keywords: to the end of ${file}, including tutorial, how_to_guide, reference, explanation, building_diagrams, debugging_diagrams, dev_docs, devops"
 done
