@@ -28,6 +28,7 @@ import ErrorDisplay from '../components/ErrorDisplay';
 import About from '../a-spiffui-v3/views/About';
 import useAPIError from '../hooks/UseApiError';
 import ComingSoon from '../components/ComingSoon';
+import MessageListPage from '../a-spiffui-v3/views/MessageListPage';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -247,6 +248,7 @@ export default function SpiffUIV3() {
                 {/*   path="process-instances/:process_model_id/:process_instance_id/progress" */}
                 {/*   element={<ProcessInstanceProgressPage variant="all" />} */}
                 {/* /> */}
+                <Route path="/messages" element={<MessageListPage />} />
               </Routes>
             </Box>
           </Box>
