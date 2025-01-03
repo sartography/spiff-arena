@@ -1,5 +1,17 @@
 # Welcome to SpiffWorkflow's documentation
 
+**SpiffWorkflow: Streamline Your Processes with Ease.** SpiffWorkflow is a platform designed to help you automate and manage complex workflows efficiently.
+
+**What SpiffWorkflow Does:** It provides a comprehensive suite of tools to model, execute, and monitor business processes, enabling organizations to improve productivity and ensure compliance.
+
+**Meeting Your Needs:** Whether you're looking to automate routine tasks or manage intricate workflows, SpiffWorkflow offers the flexibility and scalability to meet your business needs.
+
+**Who Benefits from SpiffWorkflow:** Ideal for businesses of all sizes, SpiffWorkflow is perfect for process managers, IT professionals, and anyone looking to optimize their workflow management.
+
+---
+
+## In this documentation
+
 ```{toctree}
 :maxdepth: 1
 :caption: Tutorials
@@ -116,5 +128,18 @@ wish_list/wish_list.md
 - [](genindex)
 - [](modindex)
 - [](search)
+
+## Project and community
+
+SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
+
+- [Code of conduct](https://www.example.com)
+- [Get support](https://www.example.com)
+- [Join our online chat](https://www.example.com)
+- [Contribute](https://www.example.com)
+- [Roadmap](https://www.example.com)
+- [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://canonical.com/)
+
+---
 
 Keywords: tutorial, how_to_guide, reference, explanation, building_diagrams, debugging_diagrams, dev_docs, devops
