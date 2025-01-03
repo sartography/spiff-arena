@@ -38,12 +38,6 @@ Debugging_Diagrams/process_error_handling.md
 
 ```{toctree}
 :maxdepth: 1
-:caption: Getting Started
-Getting_Started/quick_start.md
-```
-
-```{toctree}
-:maxdepth: 1
 :caption: Building Diagrams
 Building_Diagrams/learn_basics.md
 Building_Diagrams/bpmn.md
