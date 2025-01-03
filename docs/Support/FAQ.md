@@ -462,13 +462,6 @@ The SpiffWorkflow backend is highly modular, supporting various worker types thr
 - **External APIs and Service Tasks:** We utilize Service Tasks and a Connector Proxy to facilitate connections to external APIs. This setup allows for parameters of service calls to be directly accessible under the Service Task properties in the BPMN diagram, enabling custom task configurations.
 - **Custom Tasks and Workflow Nesting:** SpiffWorkflow allows the nesting of workflows and the creation of custom tasks through service tasks, scripts, and Decision Model and Notation (DMN).
 
-**Q:** Do multiple instances of the SpiffWorkflow backend require a shared filesystem for storing process models?
-
-**A**
-No, multiple instances of the SpiffWorkflow backend do not require a shared filesystem. Each backend instance can write to a local directory, and configurations can be extended to commit process models to a Git repository. 
-
-This allows each instance to maintain an independent set of models while ensuring access to updated versions through Git synchronization.
-
 **Q:** What steps should I take if I encounter errors related to environment variable settings during backend configuration?
 
 **A**
@@ -534,7 +527,6 @@ Common errors occur when configuring HTTP Service Tasks.
   - **Data Payload:** Provide a JSON object in the `data` field for POST requests.
 - **Common Errors:**
   - **Missing `headers`:** Add `{}` to the `headers` field.
-  - **Connection Refused:** Replace `localhost` with `host.docker.internal` in containerized environments.
 
 ### **45: Mapping input/Output for Call Activity Subprocess**
 **Q:**  How do I map input and output for Call Activity subprocesses?**
@@ -544,15 +536,6 @@ Common errors occur when configuring HTTP Service Tasks.
   - Avoid using double `==`, as it is a comparison operator, not an assignment.
   
   Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
-
-### **46: Embed the BPMN editor in an iframe**
-**Q:** How can I embed the BPMN editor in an iframe as CORS (Cross-Origin Resource Sharing) policies block embedding the BPMN editor in an iframe?
-
-**A:**  To solve this:
-- Update the backend to include appropriate `Access-Control-Allow-Origin` headers for allowed domains.
-- For separate deployments:
-  - Use the standalone `bpmn-js-spiffworkflow` editor package.
-  - Monitor updates for the upcoming editor version that supports running Python workflows in WASM, enabling backend-independent usage.
 
 ### **47: Retrieve Lane or Group Information**
 **Q:** How do I retrieve lane or group information during task execution?**
@@ -577,16 +560,3 @@ Users need to change task data or adjust token positions in running processes. T
 **Limitations:**  
 - Modifying data objects directly is not supported.
 - BPMN diagram changes cannot be made during runtime.
-
-### **49: Generate UUIDs in Python Script Tasks** 
-
-**Q:** How do I generate UUIDs in Python Script Tasks?**
-
-**A:**  
-Errors occur when attempting to generate unique identifiers in script tasks.  
-- Use Python’s built-in `uuid` library:
-  ```python
-  import uuid
-  unique_id = str(uuid.uuid4())
-  ```
-- Avoid using the `random` module to generate UUIDs, as it may cause errors due to misconfiguration.
