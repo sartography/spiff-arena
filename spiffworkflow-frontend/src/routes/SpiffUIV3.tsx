@@ -29,6 +29,9 @@ import About from '../a-spiffui-v3/views/About';
 import useAPIError from '../hooks/UseApiError';
 import ComingSoon from '../components/ComingSoon';
 import MessageListPage from '../a-spiffui-v3/views/MessageListPage';
+import DataStoreRoutes from '../a-spiffui-v3/views/DataStoreRoutes';
+import DataStoreNew from '../a-spiffui-v3/views/DataStoreNew';
+import DataStoreList from '../a-spiffui-v3/views/DataStoreList'; // Import the DataStoreList component
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -249,6 +252,13 @@ export default function SpiffUIV3() {
                 {/*   element={<ProcessInstanceProgressPage variant="all" />} */}
                 {/* /> */}
                 <Route path="/messages" element={<MessageListPage />} />
+                <Route path="/data-stores/*" element={<DataStoreRoutes />} />
+                <Route path="/data-store/new" element={<DataStoreNew />} />
+                <Route
+                  path="/data-storelist"
+                  element={<DataStoreList />}
+                />{' '}
+                {/* Add route for DataStoreList */}
               </Routes>
             </Box>
           </Box>

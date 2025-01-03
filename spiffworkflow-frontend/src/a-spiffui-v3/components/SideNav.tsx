@@ -162,6 +162,7 @@ function SideNav({
           {[
             { text: 'HOME', icon: <Home /> },
             { text: 'START NEW PROCESS', icon: <Add /> },
+            { text: 'DATA STORES' },
           ].map((item, index) => (
             <ListItem
               button
@@ -172,6 +173,8 @@ function SideNav({
                   navigate('/newui');
                 } else if (index === 1) {
                   navigate('/newui/startprocess');
+                } else if (item.text === 'DATA STORES') {
+                  navigate('/newui/data-stores');
                 }
               }}
               sx={{
