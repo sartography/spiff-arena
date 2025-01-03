@@ -129,3 +129,5 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 💡 Note: Timer events, especially those set for short durations, may face delays of 20-30 seconds, varying with the number of active instances.
 Despite significant improvements, our ongoing efforts aim to further reduce these delays.
 ```
+
+Keywords: reference, building_diagrams

@@ -26,3 +26,5 @@ After the script task, signal the successful completion of the process with the 
 **Output**:
 After running the task, it will compute and show the result:
 ![Parallel Gateway Example](images/parallel_gateway_ex2.png)
+
+Keywords: explanation, building_diagrams

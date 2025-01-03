@@ -79,3 +79,5 @@ The process concludes with an End Event, indicating the end of the workflow.
 The instructions panel of the End Event suggests next steps, such as exploring the diagram in edit mode and completing the "Request a Playground" task.
 
 ![Image](images/end_message.png)
+
+Keywords: how_to_guide, building_diagrams

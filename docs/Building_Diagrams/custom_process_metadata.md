@@ -39,3 +39,5 @@ This guide will walk you through the steps to create a process model that genera
    - You can also filter process instances based on your custom column using the same column options.
 
 By following these steps, you can create a process model that generates custom metadata and efficiently query that metadata using process instance filtering.
+
+Keywords: how_to_guide, building_diagrams

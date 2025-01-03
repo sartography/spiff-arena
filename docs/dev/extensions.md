@@ -60,3 +60,5 @@ Here are some of the use cases already implemented by our users:
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
 When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](/dev/connector_proxy.md).
 In cases where an extension is appropriate, by following the instructions in this guide, organizations can expand the system's functionality to meet their unique needs.
+
+Keywords: how_to_guide, dev_docs

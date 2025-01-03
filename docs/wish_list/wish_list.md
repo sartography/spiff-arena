@@ -161,3 +161,5 @@ But a separate system for comments would also allow for adding comments at any t
 Comments from people tend to be highly relevant for coworkers who need to interact with processes, such as with approvals.
 These comments could be more easily presented in the UI associated with a process instance.
 The approver will be looking for this type of information, so having a standard place to put it might be beneficial.
+
+Keywords: explanation

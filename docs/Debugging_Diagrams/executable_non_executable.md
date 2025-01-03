@@ -36,3 +36,4 @@ In SpiffWorkflow, a process model can be either **Executable** or **Non-Executab
 | Workflow design phase                 | ❌                      | ✅                         |
 | System integration                    | ✅                      | ❌                         |
 
+Keywords: how_to_guide, debugging_diagrams

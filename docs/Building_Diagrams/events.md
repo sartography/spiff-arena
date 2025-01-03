@@ -237,3 +237,5 @@ A message, much like a signal, will only be caught in an intermediate event if t
 ```{admonition} Note
 ⚠ Remember the key distinction between signals and message events is that while messages adhere to a one-to-one correspondence, signals can potentially relate to multiple recipients in a one-to-many fashion.
 ```
+
+**Keywords:** reference, building_diagrams

@@ -26,3 +26,5 @@ graph TD;
 
 API, Celery Worker, Connector Proxy, and Frontend can run any number of replicas.
 The Background container is like a cron container, so it should run only one replica.
+
+Keywords: how_to_guide

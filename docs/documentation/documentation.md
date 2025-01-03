@@ -150,3 +150,5 @@ Documentation people: please ignore this for now.
 We may decide to check the documentation with a "linter" which is designed to keep the documentation consistent and standardized.
 One option is [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli), which uses David Anson's [NodeJS-based markdownlint](https://github.com/DavidAnson/markdownlint), which these days seems to be more popular than the [ruby-based markdownlint](https://github.com/markdownlint/markdownlint).
 A `.markdownlint.jsonc` file has been added that configures the same markdownlint program (basically to ignore the rule about long lines, since we are using ventilated prose).
+
+Keywords: tutorial

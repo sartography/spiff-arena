@@ -50,3 +50,5 @@ graph LR
 code[Hammer code] --> PR
 PR --> Profit
 ```
+
+Keywords: how_to_guide, dev_docs

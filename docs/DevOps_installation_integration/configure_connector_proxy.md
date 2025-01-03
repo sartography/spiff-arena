@@ -43,7 +43,7 @@ In this demo, we deployed HTTP GET and POST connectors:
 Choose the `http/GetRequest` operator ID and enter the [dog fact API](https://dog-api.kinduff.com/api/facts) URL.
 Remember to quote it since parameters are evaluated as Python expressions.
 
-![Screenshot from 2023-04-06 16-50-42](https://user-images.githubusercontent.com/100367399/230491661-abdfdd3a-48f5-4f50-b6e5-9e3a5f562961.png)
+![Screenshot from 2023-04-06 16-50-42](https://user-images.githubusercontent.com/100367399/230491661-abdfdd3a-48f5-4b6e5-9e3a5f562961.png)
 
 Run the process and once it's complete, you can see the response in the workflow:
 
@@ -52,3 +52,5 @@ Run the process and once it's complete, you can see the response in the workflow
 You have successfully configured a `Connector Proxy` for use with `SpiffArena`.
 You made a call from a workflow to get a dog fact.
 Now, imagine if that call was to communicate with an external system relevant to your business processes.
+
+Keywords: how_to_guide, devops

@@ -86,3 +86,5 @@ Ensure that each case reaches a conclusive outcome.
 Implement timers to manage actions or decisions within specific time frames, enabling progress through the process despite delays or inactivity.
 Additionally, utilize intermediate events, such as message events, signal events, or error events, to capture specific occurrences during the process.
 These events guide the process towards a conclusion and allow for the cancellation of instances from within the process or through external triggers.
+
+Keywords: how_to_guide, building_diagrams

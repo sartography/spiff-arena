@@ -601,3 +601,4 @@ Open an incognito or private browsing window (not logged into Spiff). Navigate t
 
 The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
 
+Keywords: how_to_guide, building_diagrams

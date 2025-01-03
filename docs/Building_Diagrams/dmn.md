@@ -53,3 +53,5 @@ Expression for Range:
 - For values from 10 to 12 inclusive: 10 <= ? <= 12
 
 These expressions set up the conditions in a way that the DMN engine can clearly understand and process, ensuring that the workflow behaves as expected based on the input values.
+
+Keywords: reference, building_diagrams

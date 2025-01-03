@@ -39,3 +39,5 @@ As such, if you wanted to get ALL of the results, you could use a command like:
 ```sh
 echo 'keys celery-task-meta-\*' | redis-cli | sed 's/^/get /' | redis-cli
 ```
+
+Keywords: how_to_guide, dev_docs

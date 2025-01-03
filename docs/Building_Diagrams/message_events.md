@@ -140,3 +140,5 @@ Check out this example on Message Event.
 :caption: Message Event Example
 message_example_event.md
 ```
+
+Keywords: how_to_guide, building_diagrams
