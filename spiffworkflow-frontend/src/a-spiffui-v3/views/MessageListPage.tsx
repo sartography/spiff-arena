@@ -1,33 +1,36 @@
-import React from 'react';
-import { Typography, Tabs, Tab, Box } from '@mui/material';
 import MessageInstanceList from '../components/messages/MessageInstanceList';
-import { setPageTitle } from '../../helpers';
+import { setPageTitle } from '../helpers';
+import { Typography, Box } from '@mui/material';
 
 export default function MessageListPage() {
   setPageTitle(['Messages']);
 
-  const [value, setValue] = React.useState(0);
-
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
+  // TODO: add tabs back in when MessageModelList is working again
+  // TODO: only load the component for the tab we are currently on
+  // return (
+  //   <>
+  //     <h1>Messages</h1>
+  //     <Tabs>
+  //       <TabList aria-label="List of tabs">
+  //         <Tab>Message Instances</Tab>
+  //         <Tab>Message Models</Tab>
+  //       </TabList>
+  //       <TabPanels>
+  //         <TabPanel>
+  //           <MessageInstanceList />
+  //         </TabPanel>
+  //         <TabPanel>
+  //           <MessageModelList />
+  //         </TabPanel>
+  //       </TabPanels>
+  //     </Tabs>
+  //   </>
+  // );
 
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Messages
-      </Typography>
-      <Tabs value={value} onChange={handleChange} aria-label="Message tabs">
-        <Tab label="Message Instances" />
-        <Tab label="Message Models" />
-      </Tabs>
-      <Box role="tabpanel" hidden={value !== 0}>
-        <MessageInstanceList />
-      </Box>
-      <Box role="tabpanel" hidden={value !== 1}>
-        {/* Placeholder for MessageModelList */}
-        <Typography variant="body1">Message Models content goes here.</Typography>
-      </Box>
-    </>
+    <Box>
+      <Typography variant="h1">Messages</Typography>
+      <MessageInstanceList />
+    </Box>
   );
 }
