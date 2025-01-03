@@ -168,11 +168,10 @@ docker compose up -d
 By doing this, you'll pull the latest images, shut down the current containers, and then start them up again with the updated configurations.
 This should help in ensuring that the frontend loads completely and communicates effectively with the backend.
 
-### \*\*24: Fixing Resolving Docker Permission Issues When Installing SpiffArena (Linux)
+### **24: Fixing  Resolving Docker Permission Issues When Installing SpiffArena (Linux)
 
 **Q:**
 When installing Spiff Arena on Linux using Docker, users may encounter the following error:
-
 ```
 unable to get image 'ghcr.io/sartography/spiffworkflow-backend:latest': permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/images/ghcr.io/sartography/spiffworkflow-backend:latest/json": dial unix /var/run/docker.sock: connect: permission denied
 ```
@@ -181,18 +180,16 @@ unable to get image 'ghcr.io/sartography/spiffworkflow-backend:latest': permissi
 This happens because Docker requires elevated (root) permissions, and the user is not part of the Docker group.
 
 **Solution:**
-
 1. **Check Docker Status:**  
    Run `docker ps` to check if Docker is running. If permission denied, proceed with the steps below.
 
 2. **Add User to Docker Group:**  
    Run the following commands:
-
    ```bash
    sudo groupadd docker  # Only if Docker group doesn't exist
    sudo usermod -aG docker $USER
    ```
-
+   
 3. **Log Out and Back In:**  
    Log out and log back in for the changes to take effect.
 
@@ -200,6 +197,7 @@ This happens because Docker requires elevated (root) permissions, and the user i
    Run `docker ps` again to confirm the issue is resolved.
 
 For more details, refer to Docker’s [guide](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
+
 
 ### **25: Resolving Docker Compose Issues on M1/M2 Mac in SpiffArena**
 
@@ -490,7 +488,7 @@ For a detailed guide on setting up and managing a connector proxy in just five m
 **Q:** How can I create a process that retrieves data from a REST endpoint using a service task in SpiffWorkflow?
 
 **A:**
-To retrieve data from a REST endpoint using a service task (`serviceTaskOperator: "http/GetRequest"`), you need to define a connector. When running SpiffWorkflow as a library, service tasks act as placeholders and require a custom script engine or connector proxy to execute the tasks.
+To retrieve data from a REST endpoint using a service task (`serviceTaskOperator: "http/GetRequest"`), you need to define a connector. When running SpiffWorkflow as a library, service tasks act as placeholders and require a custom script engine or connector proxy to execute the tasks. 
 
 Ensure your service task is correctly configured with parameters such as URL, headers, and authentication details. The URL must be properly quoted in the configuration to avoid syntax errors.
 
@@ -515,15 +513,14 @@ Ensure your service task is correctly configured with parameters such as URL, he
 **Q:** Why do I receive different behaviors when running the same service task in SpiffWorkflow library vs. SpiffArena?
 
 **A:**
-In SpiffWorkflow library, service tasks do not have built-in functionality and are essentially placeholders that require external implementations to function.
+In SpiffWorkflow library, service tasks do not have built-in functionality and are essentially placeholders that require external implementations to function. 
 
 In contrast, SpiffArena requires connectors to be set up for service tasks to function, which might lead to errors if the connectors or their configurations are incorrect. Errors such as "invalid syntax" typically occur when expressions (like URLs) are not properly formatted.
 
-**Q:** How do I configure and fix errors in HTTP Service Tasks?\*\*
+**Q:** How do I configure and fix errors in HTTP Service Tasks?**
 
 **A:**
 Common errors occur when configuring HTTP Service Tasks.
-
 - **Configuration Basics:**
   - **Headers:** Set to `{}` if no headers are required.
   - **Basic Authentication:** Use `basic_auth_username` and `basic_auth_password` fields.
@@ -532,46 +529,36 @@ Common errors occur when configuring HTTP Service Tasks.
   - **Missing `headers`:** Add `{}` to the `headers` field.
 
 ### **45: Mapping input/Output for Call Activity Subprocess**
-
-**Q:** How do I map input and output for Call Activity subprocesses?\*\*
+**Q:**  How do I map input and output for Call Activity subprocesses?**
 
 **A:** In the subprocess:
-
-- Use single `=` for variable assignments (e.g., `result = "approve"`).
-- Avoid using double `==`, as it is a comparison operator, not an assignment.
-
-Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
+  - Use single `=` for variable assignments (e.g., `result = "approve"`).
+  - Avoid using double `==`, as it is a comparison operator, not an assignment.
+  
+  Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
 
 ### **47: Retrieve Lane or Group Information**
+**Q:** How do I retrieve lane or group information during task execution?**
 
-**Q:** How do I retrieve lane or group information during task execution?\*\*
-
-**A:**
+**A:** 
 Users need to retrieve the group or username associated with a specific lane during task execution for sending notifications or dynamic task assignment.
-
 - Use the lane name with `get_group_members()` to fetch the corresponding group or users dynamically:
-
   ```python
   group_members = get_group_members(lane_name)
   ```
-
 - Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/Script_Tasks.html) for additional details.
 
 ### **48: Modify Process Instances during Execution**
+**Q:** Can I modify process instances during execution?**
 
-**Q:** Can I modify process instances during execution?\*\*
-
-**A:**
-Users need to change task data or adjust token positions in running processes. The solution is:
-
+**A:** 
+Users need to change task data or adjust token positions in running processes. The solution is: 
 1. Pause the process instance.
 2. Edit the task data via the admin panel.
 3. Resume the process after applying changes.
 
-**Limitations:**
-
+**Limitations:**  
 - Modifying data objects directly is not supported.
 - BPMN diagram changes cannot be made during runtime.
 
 Keywords: how_to_guide
-
