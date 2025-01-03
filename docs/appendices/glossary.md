@@ -1,4 +1,4 @@
-# Glossary and BPMN Terminology
+# Glossary
 
 ## Activity
 
