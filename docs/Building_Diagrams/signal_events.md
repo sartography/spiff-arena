@@ -163,3 +163,6 @@ After starting the task, the signal buttons "Eat Cheetos" and "Eat Spam" will ap
 Clicking on any button will lead to the respective manual task.
 
 ![signal_event_example](images/Signal_events_spiff_example3.png)
+
+```{tags} reference, building_diagrams
+```

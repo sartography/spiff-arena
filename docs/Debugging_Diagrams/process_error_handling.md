@@ -9,3 +9,6 @@ You can use this process model to handle the error in whatever way is most benef
 Process models often have ways to communicate with users--using an email connector if you use email, or a Slack connector if you use Slack, etc.--and you can use these same capabilities to inform the appropriate users when an error occurs.
 You can choose to ignore errors that occur in less important models, and you can escalate errors in other models to the CEO.
 Since you are using a process model, you have all the power you need to handle errors in a way that matches your business requirements.
+
+```{tags} explanation, debugging_diagrams
+```

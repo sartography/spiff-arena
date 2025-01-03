@@ -1,9 +1,39 @@
-# Welcome to SpiffWorkflow's documentation
+# Welcome to SpiffWorkflow's Documentation
+
+**SpiffWorkflow: Streamline Your Processes with Ease.** SpiffWorkflow is a platform designed to help you automate and manage complex workflows efficiently.
+
+**What SpiffWorkflow Does:** It provides a comprehensive suite of tools to model, execute, and monitor business processes, enabling organizations to improve productivity and transparency.
+
+**Meeting Your Needs:** Whether you're looking to automate routine tasks or manage intricate workflows--including AI and Human-in-the-loop--SpiffWorkflow offers the flexibility and scalability to meet your business needs, in an open and standards-based package.
+
+**Who Benefits from SpiffWorkflow:** Ideal for businesses of all sizes, SpiffWorkflow is perfect for process architects, IT professionals, and anyone looking to optimize their workflow management.
+
+---
+
+## In This Documentation
 
 ```{toctree}
 :maxdepth: 1
-:caption: Getting Started
+:caption: Tutorials
 Getting_Started/quick_start.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: How-to Guides
+Building_Diagrams/user_tasks_and_forms.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Reference
+appendices/glossary.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Explanation
+Debugging_Diagrams/process_error_handling.md
 ```
 
 ```{toctree}
@@ -79,16 +109,24 @@ DevOps_installation_integration/okta_config.md
 ```{toctree}
 :maxdepth: 1
 :caption: Appendices
-appendices/glossary.md
 appendices/articles.md
-appendices/bpmn_terminology.md
 documentation/documentation.md
 Building_Diagrams/custom_process_metadata.md
 wish_list/wish_list.md
+_tags/tagsindex.md
 ```
 
-## Indices and tables
+## Indices and Tables
 
 - [](genindex)
 - [](modindex)
 - [](search)
+
+## Project and Community
+
+SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
+
+- [Join our online chat](https://discord.gg/F6Kb7HNK7B)
+- [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
+- [Roadmap](https://github.com/sartography/spiff-arena/issues)
+- [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)

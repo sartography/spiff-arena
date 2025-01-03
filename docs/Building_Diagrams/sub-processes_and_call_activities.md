@@ -118,3 +118,6 @@ A restaurant management workflow handles customer orders, calculates the bill, a
 In the example of "Handle Payment," the main workflow remains focused on order management while delegating payment logic to a reusable process, improving both clarity and efficiency.
 
 Therefore, the Call Process is a critical tool for creating modular, reusable, and scalable workflows in SpiffWorkflow. 
+
+```{tags} reference, building_diagrams
+```

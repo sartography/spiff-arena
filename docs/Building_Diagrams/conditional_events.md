@@ -99,3 +99,6 @@ Always revert the condition to its default state to ensure appropriate behavior.
 ```{admonition} Note
 ⚠  When configuring the conditional expression, ensure there's such a variable in your process context.
 ```
+
+```{tags} reference, building_diagrams
+```

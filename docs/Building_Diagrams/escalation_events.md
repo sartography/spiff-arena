@@ -150,3 +150,6 @@ You may need to set additional properties for the escalation event, such as:
 - **Documentation**: Providing details on when the escalation should be triggered and how it should be handled.
 
 After setting up the escalation event, test the workflow to ensure the escalation is triggered under the right conditions and that the catch event handles it as expected.
+
+```{tags} reference, building_diagrams
+```

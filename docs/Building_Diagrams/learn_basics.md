@@ -88,3 +88,6 @@ These elements can be arranged either horizontally or vertically.
 Not only do swimlanes organize activities into separate categories, but they also reveal delays, inefficiencies, and the individuals responsible for each step in a process.
 
 ![Untitled](images/BPMN_swimlane-500x197.png)
+
+```{tags} reference, building_diagrams
+```

@@ -167,3 +167,6 @@ The task is marked with a loop indicator, and the loop condition ensures the tas
 4. **End Event**: Marks the completion of the process once the loop condition is no longer satisfied.
 
 This example illustrates the use of a standard loop in BPMN to model repetitive actions within a workflow, showcasing how loops can automate iterative tasks based on dynamic conditions.
+
+```{tags} tutorial, building_diagrams
+```

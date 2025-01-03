@@ -15,3 +15,6 @@ Then, when the data is merged back together at a merging gateway, if multiple br
 Therefore, if you have tasks a, b, and c that run in parallel, it might not be a good idea for both a and b to set the "desired_withdrawal_amount" variable since, depending on how fast a and b run (and other implementation details around the parallel processing), the expected "winner" would not be knowable in advance.
 
 This general branching and merging strategy is applied to all parallel constructs, including inclusive gateways.
+
+```{tags} explanation, building_diagrams
+```

@@ -46,3 +46,6 @@ The test will also fail if the process never completes or if an error occurs.
 Go to a process model and either click “Run Unit Tests” to run all tests for the process model or click on the “play icon” next to a "test_something.json" file.
 Next, you will see either a green check mark or a red x.
 You can click on these colored icons to get more details about the passing or failing test.
+
+```{tags} how_to_guide, debugging_diagrams
+```

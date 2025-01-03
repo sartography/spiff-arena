@@ -184,3 +184,6 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | set_user_properties                    | Sets given user properties on the current user.                                                                                                                |
 | times_executed_by_user                 | Returns the number of times the user has started an instance of the current process model.                                                                     |
 | user_has_started_instance              | Returns a boolean indicating if the user has started an instance of the current process model.                                                                 |
+
+```{tags} tutorial, reference, building_diagrams
+```
