@@ -115,9 +115,7 @@ DevOps_installation_integration/okta_config.md
 ```{toctree}
 :maxdepth: 1
 :caption: Appendices
-appendices/glossary.md
 appendices/articles.md
-appendices/bpmn_terminology.md
 documentation/documentation.md
 Building_Diagrams/custom_process_metadata.md
 wish_list/wish_list.md
