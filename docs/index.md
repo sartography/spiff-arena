@@ -119,6 +119,7 @@ appendices/articles.md
 documentation/documentation.md
 Building_Diagrams/custom_process_metadata.md
 wish_list/wish_list.md
+_tags/tagsindex.md
 ```
 
 ## Indices and tables

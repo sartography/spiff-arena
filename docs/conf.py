@@ -18,9 +18,12 @@ release = "0.1"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["myst_parser", "sphinxcontrib.mermaid"]
+extensions = ["myst_parser", "sphinxcontrib.mermaid", "sphinx_tags"]
 myst_fence_as_directive = ["mermaid"]
 myst_heading_anchors = 2
+
+tags_create_tags = True
+tags_extension = ["md"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv"]
@@ -46,6 +49,5 @@ html_theme_options = {
     "includehidden": True,
     "titles_only": False,
 }
-
 
 html_css_files = ["custom.css"]
