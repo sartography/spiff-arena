@@ -2,6 +2,30 @@
 
 ```{toctree}
 :maxdepth: 1
+:caption: Tutorials
+Getting_Started/quick_start.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: How-to guides
+Building_Diagrams/user_tasks_and_forms.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Reference
+appendices/glossary.md
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Explanation
+Debugging_Diagrams/process_error_handling.md
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: Getting Started
 Getting_Started/quick_start.md
 ```
