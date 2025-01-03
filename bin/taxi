@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# find all markdown files in docs and iterate over them
+# for each one, run aider to with that file and the Diátaxis overview at diataxis.md
+# ask aider to return one word for each file, one of: tutorial, howtoguide, reference, explanation, or donottouch
+
+for file in $(find docs -name '*.md'); do
+  echo "Processing file: ${file}"
+  # echo "Aider says: $(aider -f ${file} --read-only docs/diataxis.md --no-auto-commits --message "just return one word for each file, one of: tutorial, howtoguide, reference, explanation, or donottouch")"
+  custom_aider -f "${file}" --read-only docs/diataxis.md --no-auto-commits --message "add Keywords: to the end of each file"
+done
