@@ -133,12 +133,10 @@ wish_list/wish_list.md
 
 SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
 
-- [Code of conduct](https://www.example.com)
-- [Get support](https://www.example.com)
-- [Join our online chat](https://www.example.com)
-- [Contribute](https://www.example.com)
-- [Roadmap](https://www.example.com)
-- [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://canonical.com/)
+- [Join our online chat](https://discord.gg/F6Kb7HNK7B)
+- [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
+- [Roadmap](https://github.com/sartography/spiff-arena/issues)
+- [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)
 
 ---
 
