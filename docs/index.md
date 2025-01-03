@@ -135,7 +135,3 @@ SpiffWorkflow is an open-source project that welcomes community contributions, s
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
 - [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)
-
----
-
-Keywords: tutorial, how_to_guide, reference, explanation, building_diagrams, debugging_diagrams, dev_docs, devops
