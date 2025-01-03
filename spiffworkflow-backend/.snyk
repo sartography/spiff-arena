@@ -31,8 +31,18 @@ ignore:
   SNYK-PYTHON-WERKZEUG-6808933:
     - '*':
         reason: unable to upgrade. see above comment.
-        expires: 2024-11-01T00:00:00.000Z
+        expires: 2025-11-01T00:00:00.000Z
         created: 2024-05-13T17:22:47.098Z
+  SNYK-PYTHON-WERKZEUG-8309091:
+    - '*':
+        reason: unable to upgrade. see above comment.
+        expires: 2025-11-01T00:00:00.000Z
+        created: 2024-12-03T17:22:47.098Z
+  SNYK-PYTHON-WERKZEUG-8309092:
+    - '*':
+        reason: unable to upgrade. see above comment.
+        expires: 2025-11-01T00:00:00.000Z
+        created: 2024-12-03T17:22:47.098Z
 
 patch: {}
 

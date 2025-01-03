@@ -35,7 +35,7 @@ repos:
         require_serial: true
         # this is also specified in spiffworkflow-backend/pyproject.toml but we run pre-commit
         # with all-files which ignores that
-        exclude: "/migrations/"
+        exclude: "/migrations/|bin/load_test_message_start_event.py"
       - id: ruff-format
         args: [format]
         files: ^spiffworkflow-backend/

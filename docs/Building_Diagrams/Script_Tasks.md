@@ -6,6 +6,40 @@ In SpiffArena, the scripting language used for writing scripts is Python, a wide
 
 Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
+## **Script Task Properties**
+  ```{image} ./images/Script_task_update.png
+:alt: Script Task
+:width: 300px
+:align: right
+```
+1. **General**
+   - **Name**: Allows users to name the Script Task. The name should reflect the task's purpose for easy identification.
+   - **ID**: Automatically generated unique identifier for the Script Task within the workflow. This ID can be used for referencing in code or debugging.
+   
+2. **Documentation**
+   - **Element Documentation**: A free-text field to add notes or explanations about the purpose and function of this task. This is helpful for maintaining clear documentation within the workflow for team collaboration or future updates.
+
+3. **Script**
+   - **Script Field**: A text area for entering the code to be executed. This script should be written in Python, adhering to the rules and libraries supported by SpiffWorkflow.
+     - Example: 
+       ```python
+       result = context.get('input_variable', 0) * 2
+       context['output_variable'] = result
+       ```
+     - In the example above:
+       - **context.get** retrieves a process variable.
+       - **context['output_variable']** saves the result back to the workflow.
+   - **Launch Editor**: A button to open a more robust code editor for longer or more complex scripts. This improves readability and enables developers to write, format, and debug scripts more effectively.
+
+4. **Instructions**
+   - **Instructions Field**: Use this section to define task-specific guidance or additional notes visible during task execution.
+     - Example: *"Ensure the input variable `amount` is defined before running this task."*
+   - Markdown-supported formatting enables rich-text documentation.
+
+5. **Input/Output Management Section**
+   - **Inputs**: Define the process variables required for the script task to execute. For example, a variable `amount` could be an input for calculations.
+   - **Outputs**: Specify the variables the task will produce. These variables can be accessed in subsequent tasks in the workflow.
+
 Let's explore an example of a Script Task in our basics section:
 
 1. **Start Event and User Task - "Form"**

@@ -129,8 +129,6 @@ class ProcessInstanceService:
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
-        # FIXME: this should not be necessary. fix the code paths that make this necessary
-        db.session.commit()
         git_revision_error = None
         try:
             current_git_revision = GitService.get_current_revision()
@@ -147,7 +145,6 @@ class ProcessInstanceService:
             bpmn_version_control_identifier=current_git_revision,
         )
         db.session.add(process_instance_model)
-        db.session.commit()
 
         if git_revision_error is not None:
             message = (
@@ -381,10 +378,13 @@ class ProcessInstanceService:
         cls,
         process_model_identifier: str,
         user: UserModel,
+        commit_db: bool = True,
     ) -> ProcessInstanceModel:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
+        if commit_db:
+            db.session.commit()
         return process_instance_model
 
     @classmethod
@@ -397,8 +397,6 @@ class ProcessInstanceService:
 
         for cycle in cycles:
             db.session.delete(cycle)
-
-        db.session.commit()
 
         if cycle_count != 0:
             if duration_in_seconds == 0:
@@ -414,7 +412,6 @@ class ProcessInstanceService:
                 current_cycle=0,
             )
             db.session.add(cycle)
-            db.session.commit()
 
     @classmethod
     def schedule_next_process_model_cycle(cls, process_instance_model: ProcessInstanceModel) -> None:

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -17,6 +18,8 @@ class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
     locked_by: str | None = db.Column(db.String(80), index=True, nullable=True)
     locked_at_in_seconds: int | None = db.Column(db.Integer, index=True, nullable=True)
     status: str = db.Column(db.String(50), index=True)
+
+    process_instance = relationship(ProcessInstanceModel)
 
     # for timers. right now the apscheduler jobs without celery check for waiting process instances.
     # if the instance's run_at_in_seconds is now or earlier, the instance will run.

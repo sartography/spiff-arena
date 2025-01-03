@@ -299,10 +299,10 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5.0.7
+        uses: codecov/codecov-action@v5.1.1
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v3.1.0
+        uses: sonarsource/sonarcloud-github-action@v4.0.0
         # thought about just skipping dependabot
         # if: ${{ github.actor != 'dependabot[bot]' }}
         # but figured all pull requests seems better, since none of them will have access to sonarcloud.
@@ -365,7 +365,7 @@ jobs:
         # if: ${{ github.event_name != 'pull_request' }}
         # so just skip everything but main
         if: github.ref_name == 'main'
-        uses: sonarsource/sonarcloud-github-action@v3.1.0
+        uses: sonarsource/sonarcloud-github-action@v4.0.0
         with:
           projectBaseDir: spiffworkflow-frontend
         env:

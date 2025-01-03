@@ -19,7 +19,7 @@ def get_argv(index: int, default: Any = None) -> Any:
 
 username = get_argv(1, "admin")
 password = get_argv(2, "admin")
-realm_name = get_argv(3, "spiffworkflow")
+realm_name = get_argv(3, "spiffworkflow-local")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
 
@@ -38,9 +38,15 @@ if openid_token_url is None:
                 raise Exception("Could not determine openid url based on backend url")
             env_domain = match.group(1)
             keycloak_base_url = "https://keycloak.${env_domain}"
-        elif "localhost:7000" in backend_base_url:
-            keycloak_base_url = "http://localhost:7000"
-        openid_token_url = f"{keycloak_base_url}/realms/{realm_name}/protocol/openid-connect/token"
+        import urllib.parse
+
+        token_path = "/protocol/openid-connect/token"  # noqa: S105
+        if "/realms" in keycloak_base_url:
+            openid_token_url = f"{keycloak_base_url}{token_path}"
+        else:
+            # Sanitize realm_name to prevent path traversal
+            safe_realm = urllib.parse.quote(realm_name, safe="")
+            openid_token_url = f"{keycloak_base_url}/realms/{safe_realm}{token_path}"
     else:
         openid_token_url = f"{backend_base_url}/openid/token"
 

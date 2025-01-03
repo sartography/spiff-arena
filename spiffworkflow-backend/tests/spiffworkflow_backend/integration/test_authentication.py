@@ -20,12 +20,12 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 class TestAuthentication(BaseTest):
     def test_get_login_state(self) -> None:
         redirect_url = "http://example.com/"
-        state = AuthenticationService.generate_state(redirect_url, authentication_identifier="default")
+        state = AuthenticationService.generate_state(authentication_identifier="default", final_url=redirect_url)
         state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
 
         assert isinstance(state_dict, dict)
-        assert "redirect_url" in state_dict.keys()
-        assert state_dict["redirect_url"] == redirect_url
+        assert "final_url" in state_dict.keys()
+        assert state_dict["final_url"] == redirect_url
 
     def test_properly_adds_user_to_groups_from_token_on_login(
         self,

@@ -22,7 +22,7 @@ FROM base AS deployment
 # vim ftw
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1

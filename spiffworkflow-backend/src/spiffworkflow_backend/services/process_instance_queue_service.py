@@ -33,11 +33,10 @@ class ProcessInstanceQueueService:
         queue_entry.locked_at_in_seconds = None
 
         db.session.add(queue_entry)
-        db.session.commit()
 
     @classmethod
     def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel, run_at_in_seconds: int) -> None:
-        queue_entry = ProcessInstanceQueueModel(process_instance_id=process_instance.id, run_at_in_seconds=run_at_in_seconds)
+        queue_entry = ProcessInstanceQueueModel(process_instance=process_instance, run_at_in_seconds=run_at_in_seconds)
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     @classmethod
@@ -50,6 +49,7 @@ class ProcessInstanceQueueService:
         if current_time > queue_entry.run_at_in_seconds:
             queue_entry.run_at_in_seconds = current_time
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
+        db.session.commit()
 
     @classmethod
     def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
@@ -74,6 +74,7 @@ class ProcessInstanceQueueService:
             )
             .first()
         )
+        db.session.refresh(queue_entry)
 
         if queue_entry is None:
             raise ProcessInstanceIsNotEnqueuedError(
@@ -85,7 +86,7 @@ class ProcessInstanceQueueService:
             if queue_entry.locked_by is None:
                 message = "It was locked by something else when we tried to lock it in the db, but it has since been unlocked."
             raise ProcessInstanceIsAlreadyLockedError(
-                f"{locked_by} cannot lock process instance {process_instance.id}. {message}"
+                f"{locked_by} cannot lock process instance {process_instance.id}. {queue_entry.locked_by}. {message}"
             )
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
@@ -114,34 +115,42 @@ class ProcessInstanceQueueService:
         process_instance: ProcessInstanceModel,
         max_attempts: int = 1,
         ignore_cannot_be_run_error: bool = False,
+        needs_dequeue: bool = True,
     ) -> Generator[None, None, None]:
-        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
+        # needs_dequeue is more of a hack so we can avoid db commits in special code paths.
+        # ideally all commits would happen at the top level such as in controllers or in background
+        # service entry paths and then we can lock from those same or closer locations when necessary.
+        if needs_dequeue:
+            reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
 
-        if not reentering_lock:
-            # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
-            # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
-            cls._dequeue_with_retries(process_instance, max_attempts=max_attempts)
-        try:
-            yield
-        except ProcessInstanceCannotBeRunError as ex:
-            if not ignore_cannot_be_run_error:
+            if not reentering_lock:
+                # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
+                # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
+                cls._dequeue_with_retries(process_instance, max_attempts=max_attempts)
+            try:
+                yield
+            except ProcessInstanceCannotBeRunError as ex:
+                if not ignore_cannot_be_run_error:
+                    raise ex
+            except Exception as ex:
+                # these events are handled in the WorkflowExecutionService.
+                # that is, we don't need to add error_detail records here, etc.
+                if not isinstance(ex, WorkflowExecutionServiceError):
+                    ProcessInstanceTmpService.add_event_to_process_instance(
+                        process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
+                    )
+
+                # we call dequeued multiple times but we want this code to only happen once.
+                # assume that if we are not reentering_lock then this is the top level call and
+                # should be the one to handle the error.
+                if not reentering_lock:
+                    ErrorHandlingService.handle_error(process_instance, ex)
                 raise ex
-        except Exception as ex:
-            # these events are handled in the WorkflowExecutionService.
-            # that is, we don't need to add error_detail records here, etc.
-            if not isinstance(ex, WorkflowExecutionServiceError):
-                ProcessInstanceTmpService.add_event_to_process_instance(
-                    process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
-                )
-
-            # we call dequeued multiple times but we want this code to only happen once.
-            # assume that if we are not reentering_lock then this is the top level call and should be the one to handle the error.
-            if not reentering_lock:
-                ErrorHandlingService.handle_error(process_instance, ex)
-            raise ex
-        finally:
-            if not reentering_lock:
-                cls._enqueue(process_instance)
+            finally:
+                if not reentering_lock:
+                    cls._enqueue(process_instance)
+        else:
+            yield
 
     @classmethod
     def entries_with_status(
