@@ -1,16 +1,16 @@
-# Welcome to SpiffWorkflow's documentation
+# Welcome to SpiffWorkflow's Documentation
 
 **SpiffWorkflow: Streamline Your Processes with Ease.** SpiffWorkflow is a platform designed to help you automate and manage complex workflows efficiently.
 
-**What SpiffWorkflow Does:** It provides a comprehensive suite of tools to model, execute, and monitor business processes, enabling organizations to improve productivity and ensure compliance.
+**What SpiffWorkflow Does:** It provides a comprehensive suite of tools to model, execute, and monitor business processes, enabling organizations to improve productivity and transparency.
 
-**Meeting Your Needs:** Whether you're looking to automate routine tasks or manage intricate workflows, SpiffWorkflow offers the flexibility and scalability to meet your business needs.
+**Meeting Your Needs:** Whether you're looking to automate routine tasks or manage intricate workflows--including AI and Human-in-the-loop--SpiffWorkflow offers the flexibility and scalability to meet your business needs, in an open and standards-based package.
 
-**Who Benefits from SpiffWorkflow:** Ideal for businesses of all sizes, SpiffWorkflow is perfect for process managers, IT professionals, and anyone looking to optimize their workflow management.
+**Who Benefits from SpiffWorkflow:** Ideal for businesses of all sizes, SpiffWorkflow is perfect for process architects, IT professionals, and anyone looking to optimize their workflow management.
 
 ---
 
-## In this documentation
+## In This Documentation
 
 ```{toctree}
 :maxdepth: 1
@@ -20,7 +20,7 @@ Getting_Started/quick_start.md
 
 ```{toctree}
 :maxdepth: 1
-:caption: How-to guides
+:caption: How-to Guides
 Building_Diagrams/user_tasks_and_forms.md
 ```
 
@@ -122,13 +122,13 @@ wish_list/wish_list.md
 _tags/tagsindex.md
 ```
 
-## Indices and tables
+## Indices and Tables
 
 - [](genindex)
 - [](modindex)
 - [](search)
 
-## Project and community
+## Project and Community
 
 SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
 
