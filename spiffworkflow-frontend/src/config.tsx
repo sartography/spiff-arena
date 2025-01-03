@@ -16,6 +16,9 @@ let spiffEnvironment = '';
 let appRoutingStrategy = 'subdomain_based';
 let backendBaseUrl = null;
 let documentationUrl = null;
+let defaultUiVersion =
+  import.meta.env
+    .VITE_SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DEFAULT_UI_VERSION || 'v3';
 if ('spiffworkflowFrontendJsenv' in window) {
   if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
     appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
@@ -29,6 +32,17 @@ if ('spiffworkflowFrontendJsenv' in window) {
   if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
     documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
   }
+  if ('DEFAULT_UI_VERSION' in window.spiffworkflowFrontendJsenv) {
+    defaultUiVersion = window.spiffworkflowFrontendJsenv.DEFAULT_UI_VERSION;
+  }
+}
+const DEFAULT_UI_VERSION = defaultUiVersion;
+
+const supportedUiVersions = ['v1', 'v3'];
+if (!supportedUiVersions.includes(defaultUiVersion)) {
+  throw new Error(
+    `Invalid default UI version given: '${defaultUiVersion}'. Supported versions are: ${supportedUiVersions}`,
+  );
 }
 
 if (!backendBaseUrl) {
@@ -127,14 +141,15 @@ const DATE_RANGE_DELIMITER = ':::';
 
 const SPIFF_ENVIRONMENT = spiffEnvironment;
 export {
-  DATE_TIME_FORMAT,
-  TIME_FORMAT_HOURS_MINUTES,
+  BACKEND_BASE_URL,
   DATE_FORMAT,
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
-  BACKEND_BASE_URL,
+  DATE_TIME_FORMAT,
+  DEFAULT_UI_VERSION,
   DOCUMENTATION_URL,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
+  TIME_FORMAT_HOURS_MINUTES,
 };

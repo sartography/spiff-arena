@@ -9,11 +9,18 @@ import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
 import SpiffUIV2 from './routes/SpiffUIV2';
 import SpiffUIV3 from './routes/SpiffUIV3';
+import { DEFAULT_UI_VERSION } from './config';
 
 const queryClient = new QueryClient();
 
 export default function App() {
   const ability = defineAbility(() => {});
+  let defaultUiComponent = null;
+  if (DEFAULT_UI_VERSION === 'v3') {
+    defaultUiComponent = <SpiffUIV3 />;
+  } else if (DEFAULT_UI_VERSION === 'v1') {
+    defaultUiComponent = <ContainerForExtensions />;
+  }
   const routeComponents = () => {
     return [
       { path: 'public/*', element: <PublicRoutes /> },
@@ -26,8 +33,12 @@ export default function App() {
         element: <SpiffUIV3 />,
       },
       {
-        path: '*',
+        path: 'legacy/*',
         element: <ContainerForExtensions />,
+      },
+      {
+        path: '*',
+        element: defaultUiComponent,
       },
     ];
   };
