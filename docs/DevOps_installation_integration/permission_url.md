@@ -127,4 +127,5 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /users/search:
 ```
 
-Keywords: reference
+```{tags} reference
+```

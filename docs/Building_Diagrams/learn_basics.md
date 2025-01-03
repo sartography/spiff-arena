@@ -89,4 +89,5 @@ Not only do swimlanes organize activities into separate categories, but they als
 
 ![Untitled](images/BPMN_swimlane-500x197.png)
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

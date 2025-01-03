@@ -53,4 +53,5 @@ You have successfully configured a `Connector Proxy` for use with `SpiffArena`.
 You made a call from a workflow to get a dog fact.
 Now, imagine if that call was to communicate with an external system relevant to your business processes.
 
-Keywords: how_to_guide, devops
+```{tags} how_to_guide, devops
+```

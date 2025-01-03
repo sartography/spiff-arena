@@ -151,4 +151,5 @@ You may need to set additional properties for the escalation event, such as:
 
 After setting up the escalation event, test the workflow to ensure the escalation is triggered under the right conditions and that the catch event handles it as expected.
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

@@ -64,4 +64,5 @@ This is activated via `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH`, which i
 A publish function appears in the UI when `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH` is set.
 It is possibly not a recommended strategy for promoting changes, however, as it is not a standard Git workflow, and it is more error-prone in situations where multiple process models need to work together.
 
-Keywords: how_to_guide, devops
+```{tags} how_to_guide, devops
+```

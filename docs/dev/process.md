@@ -51,4 +51,5 @@ code[Hammer code] --> PR
 PR --> Profit
 ```
 
-Keywords: how_to_guide, dev_docs
+```{tags} how_to_guide, dev_docs
+```

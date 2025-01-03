@@ -80,4 +80,5 @@ The instructions panel of the End Event suggests next steps, such as exploring t
 
 ![Image](images/end_message.png)
 
-Keywords: how_to_guide, building_diagrams
+```{tags} how_to_guide, building_diagrams
+```

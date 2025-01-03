@@ -73,4 +73,5 @@ git repo for it.
 * You can now create your connectors and they will show up when you edit
   services tasks and select the service you want to call.
 
-Keywords: how_to_guide, dev_docs
+```{tags} how_to_guide, dev_docs
+```

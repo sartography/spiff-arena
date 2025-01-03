@@ -63,4 +63,5 @@ SpiffWorkflow is a Python library that simplifies complex business logic by usin
 It improves communication within teams, increases contributions, and adapts to changing requirements.
 Visual software development environments like SpiffWorkflow represent the future of solving complex problems.
 
-Keywords: tutorial, explanation
+```{tags} tutorial, explanation
+```

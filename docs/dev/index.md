@@ -34,4 +34,5 @@ From a source code perspective, there are three repositories that may be of inte
 * [SpiffWorkflow](https://github.com/sartography/SpiffWorkflow) - The core SpiffWorkflow library, 10 years old, Python, awesome, [well-documented](https://spiffworkflow.readthedocs.io/).
 * [bpmn-js-spiffworkflow](https://github.com/sartography/bpmn-js-spiffworkflow) - The frontend library that extends bpmn-js to work with SpiffWorkflow.
 
-Keywords: reference, dev_docs
+```{tags} reference, dev_docs
+```

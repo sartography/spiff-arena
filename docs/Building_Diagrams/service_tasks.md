@@ -99,4 +99,5 @@ Below is workflow overview:
    - **url**: `'https://api.bamboohr.com/api/gateway.php/{your_company_subdomain}/v1/employees/directory'`
      - Replace `{your_company_subdomain}` with your BambooHR subdomain.
 
-Keywords: how_to_guide, building_diagrams
+```{tags} how_to_guide, building_diagrams
+```

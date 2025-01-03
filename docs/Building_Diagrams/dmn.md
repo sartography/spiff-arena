@@ -54,4 +54,5 @@ Expression for Range:
 
 These expressions set up the conditions in a way that the DMN engine can clearly understand and process, ensuring that the workflow behaves as expected based on the input values.
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

@@ -54,4 +54,5 @@ This inclusive gateway setup is ideal for scenarios where multiple actions might
 
 By employing inclusive gateways, the process adapts dynamically to the user's specific needs without requiring separate processes or redundant tasks for different combinations of travel modes.
 
-Keywords: explanation, building_diagrams
+```{tags} explanation, building_diagrams
+```

@@ -16,4 +16,5 @@ Therefore, if you have tasks a, b, and c that run in parallel, it might not be a
 
 This general branching and merging strategy is applied to all parallel constructs, including inclusive gateways.
 
-Keywords: explanation, building_diagrams
+```{tags} explanation, building_diagrams
+```

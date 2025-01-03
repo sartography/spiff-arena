@@ -141,4 +141,5 @@ Check out this example on Message Event.
 message_example_event.md
 ```
 
-Keywords: how_to_guide, building_diagrams
+```{tags} how_to_guide, building_diagrams
+```

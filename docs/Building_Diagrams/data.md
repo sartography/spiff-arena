@@ -8,4 +8,5 @@ data_objects.md
 data_stores.md
 ```
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

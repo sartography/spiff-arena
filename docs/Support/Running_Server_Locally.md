@@ -75,4 +75,5 @@ Whether you choose to clone the `sample-process-models` repository, use a differ
 
 If you encounter further issues, always refer back to the repository's README or seek assistance from our Discord community.
 
-Keywords: how_to_guide
+```{tags} how_to_guide
+```

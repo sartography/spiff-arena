@@ -161,4 +161,5 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 ```
 By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

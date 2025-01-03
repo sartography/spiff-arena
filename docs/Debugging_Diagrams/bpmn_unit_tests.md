@@ -47,4 +47,5 @@ Go to a process model and either click “Run Unit Tests” to run all tests for
 Next, you will see either a green check mark or a red x.
 You can click on these colored icons to get more details about the passing or failing test.
 
-Keywords: how_to_guide, debugging_diagrams
+```{tags} how_to_guide, debugging_diagrams
+```

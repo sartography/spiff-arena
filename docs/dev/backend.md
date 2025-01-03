@@ -61,4 +61,5 @@ All exception classes should be defined in 1) one file, if there are not too man
 The Gunicorn web server is used to serve the application in the default Dockerfile.
 Many of the environment variables that can be set are documented in src/spiffworkflow_backend/config/default.py.
 
-Keywords: reference, dev_docs
+```{tags} reference, dev_docs
+```

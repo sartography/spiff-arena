@@ -130,4 +130,5 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 Despite significant improvements, our ongoing efforts aim to further reduce these delays.
 ```
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

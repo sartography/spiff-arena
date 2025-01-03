@@ -49,4 +49,5 @@ Secrets are only used in service tasks.
 Configuring secrets in SpiffArena provides a secure way to handle sensitive information in your BPMN diagrams.
 It allows you to make your processes public without exposing critical data, thereby enhancing both transparency and security.
 
-Keywords: how_to_guide
+```{tags} how_to_guide
+```

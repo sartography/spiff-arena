@@ -71,4 +71,5 @@ To ensure that messages are delivered to the correct process instance, correlati
 
 By using messages and correlation properties, you can effectively manage communication between multiple BPMN processes. This ensures that the right data reaches the right process at the right time, allowing for dynamic and responsive workflows.
 
-Keywords: how_to_guide, building_diagrams
+```{tags} how_to_guide, building_diagrams
+```

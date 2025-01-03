@@ -30,4 +30,5 @@ Connectors are usually Python libraries that are included in connector proxy cod
 Our connector-proxy-demo includes a few connectors, including [connector-aws](https://github.com/sartography/connector-aws) and [connector-http](https://github.com/sartography/connector-http).
 Connector-http can be used for many API interactions, but you can also [write your own connectors](/dev/how_to_build_a_connector).
 
-Keywords: how_to_guide, dev_docs
+```{tags} how_to_guide, dev_docs
+```

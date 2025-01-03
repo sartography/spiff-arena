@@ -187,4 +187,5 @@ This example demonstrates the utility of expanded subprocesses for detailed inte
 Error Events in BPMN offer a nuanced approach to managing errors within business processes.
 By defining Error Start, End, and Boundary Events, BPMN provides process designers with the tools necessary to anticipate, signal, and handle errors efficiently.
 
-Keywords: reference, building_diagrams
+```{tags} reference, building_diagrams
+```

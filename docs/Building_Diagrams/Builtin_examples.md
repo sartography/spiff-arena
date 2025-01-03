@@ -227,4 +227,5 @@ Signal events enable external forces or internal errors to interact with the pro
 
 ![](images/Signal_EM.png)
 
-Keywords: tutorial, building_diagrams
+```{tags} tutorial, building_diagrams
+```

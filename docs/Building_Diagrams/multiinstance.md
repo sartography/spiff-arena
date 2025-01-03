@@ -168,4 +168,5 @@ The task is marked with a loop indicator, and the loop condition ensures the tas
 
 This example illustrates the use of a standard loop in BPMN to model repetitive actions within a workflow, showcasing how loops can automate iterative tasks based on dynamic conditions.
 
-Keywords: tutorial, building_diagrams
+```{tags} tutorial, building_diagrams
+```

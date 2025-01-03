@@ -64,4 +64,5 @@ Therefore, Exclusive Gateways are critical in BPMN for managing decisions within
 
 They ensure that the process flow is correctly directed based on specific conditions, preventing incorrect executions and ensuring that the process adapts dynamically to varying inputs.
 
-Keywords: tutorial, building_diagrams
+```{tags} tutorial, building_diagrams
+```
