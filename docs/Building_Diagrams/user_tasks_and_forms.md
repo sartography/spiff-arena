@@ -20,7 +20,7 @@ Some key features of user tasks are:
 
 **2. Configuring the User Task**
 Click on the user task in the BPMN editor to display the **Properties Panel** on the right. Below are the key sections and settings for user tasks:
-  ```{image} ./images/user_tasks_properties.png
+  ```{image} /images/user_tasks_properties.png
 :alt: Service Task
 :width: 300px
 :align: right
@@ -70,7 +70,7 @@ To simplify the form creation process, we use the React JSON Schema Form (RJSF) 
 It enables you to create dynamic and interactive forms with ease.
 The RJSF library is open source, free to use, and follows the principles of open standards.
 
-![Image](images/Form_json.png)
+![Image](/images/Form_json.png)
 
 Please note that while this guide provides a basic understanding of JSON Schema and RJSF, there is much more to explore.
 We encourage you to refer to the official [RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details and advanced techniques.
@@ -83,7 +83,7 @@ However, it's important to note that the form builder may have certain limitatio
 
 While the form builder provides convenience and simplicity, using the JSON editor offers greater flexibility and control over the form structure.
 
-![Image](images/Form-Builder.png)
+![Image](/images/Form-Builder.png)
 
 3. **Creating Forms from BPMN Editor**
 
@@ -94,21 +94,21 @@ Upon creating a new BPMN file, open it to access the editor.
 
 - In the editor, go to the "Web form" section. Navigate to the "Web form" and If starting from scratch, launch the editor and name your file (e.g., "demo"). After saving, it will automatically generate three essential files for us: a schema, UI settings, and some example data.
 
-![Form Editor](images/Form_editor.png)
+![Form Editor](/images/Form_editor.png)
 
 **Understanding the Three Core Files**
 
 - **JSON Schema**: This file describes the form. It allows you to define titles, property names, and more. As you make changes in this file, they will reflect in the form preview window. This schema outlines the properties or data points you aim to collect.
 
-![Form Editor](images/Form_editor1.png)
+![Form Editor](/images/Form_editor1.png)
 
 - **UI Settings**: This file offers customization options for your form. You can edit descriptions, titles, and more. Changes made here are reflected in real-time on the form.
 
-![Form Editor](images/Form_editor2.png)
+![Form Editor](/images/Form_editor2.png)
 
 - **Data View**: This section displays the data users input into the form. It provides a preview of what will be captured when the form is submitted. Both the data view and the form stay synchronized, ensuring consistency.
 
-![Form Editor](images/Form_editor3.png)
+![Form Editor](/images/Form_editor3.png)
 
 **Adding and Customizing Form Elements**
 
@@ -116,7 +116,7 @@ You can add existing templates to add elements to your form, such as text areas,
 Each element can be further customized in the JSON schema and UI settings.
 For instance, you can set the UI widget correctly for each element, ensuring it appears as intended on the form.
 
-![Form Editor](images/Form_editor4.png)
+![Form Editor](/images/Form_editor4.png)
 
 ### SpiffArena react-jsonschema-form enhancements
 
@@ -348,7 +348,7 @@ Here's how to use it:
 }
 ```
 
-![Styling_Form](images/styling_forms.png)
+![Styling_Form](/images/styling_forms.png)
 #### Key Points:
 
 - **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
@@ -411,7 +411,7 @@ In the example above:
 - The help text "Pick whatever # you want!" will be displayed for the `form_num_1` field.
 
 **Output**:
-![Display UI Help](images/Display_UI_Help.png)
+![Display UI Help](/images/Display_UI_Help.png)
 
 By incorporating such help texts, you can enhance the user experience and ensure that users fill out the form correctly.
 
@@ -429,7 +429,7 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 "ui:widget": "markdown"
 ```
 
-![rjsf markdown](images/rsjf_markdown.png)
+![rjsf markdown](/images/rsjf_markdown.png)
 
 #### Numeric Range Field
 
@@ -518,7 +518,7 @@ This structure can be represented in the form's schema as follows:
 
 **Form Preview**:
 
-![Nested Forms](images/Nested_form_display.png)
+![Nested Forms](/images/Nested_form_display.png)
 
 By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
 
@@ -573,7 +573,7 @@ To verify the functionality of the Guest User Task feature, follow these steps:
 
 Design a process model that includes a manual or user task. Ensure you check the **"allow guest"** checkbox.
 
-![Guest user](images/guest_user1.png)
+![Guest user](/images/guest_user1.png)
 
 2. **Start the Process Model**:
 
@@ -583,7 +583,7 @@ Initiate the process model using the same user account that created it.
 
 Navigate to the process instance show page and retrieve the GUID of the human task.
 
-![Guest user](images/guest_user2.png)
+![Guest user](/images/guest_user2.png)
 
 4. **Construct the Access URL**:
 
@@ -597,7 +597,7 @@ Replace `[domain]`, `[process_instance_id]`, and `[task_guid]` with appropriate 
 5. **Test as a Guest User**:
 
 Open an incognito or private browsing window (not logged into Spiff). Navigate to the constructed URL. Confirm that the guest user can complete the task.
-![Guest user](images/guest_user3.png)
+![Guest user](/images/guest_user3.png)
 
 The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
 

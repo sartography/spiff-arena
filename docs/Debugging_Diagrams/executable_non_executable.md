@@ -9,20 +9,20 @@ In SpiffWorkflow, a process model can be either **Executable** or **Non-Executab
 1. Open the BPMN editor in SpiffWorkflow. Select the process canvas or diagram header. Navigate to the **Properties Panel** on the right side.
 2. Under the **General** section, uncheck the **Executable** checkbox.
 
-![non-executable task](images/non_executable.png)
+![non-executable task](/images/non_executable.png)
 
 3. Save your changes. Go to the process model page and the Start Button will not appear, indicating that the process is non-executable.
 
-![non-executable task](images/non_executable1.png)
+![non-executable task](/images/non_executable1.png)
 
 
 ### **Executable Processes**:
 1. Follow the same steps as above, but check the **Executable** checkbox.
 
-![executable task](images/executable.png)
+![executable task](/images/executable.png)
 2. Save your changes. The Start Button will now appear when the model is opened.
 
-![executable task](images/executable1.png)
+![executable task](/images/executable1.png)
 
 
 

@@ -1,6 +1,6 @@
 # Data Stores
 
-![data_store](images/data_store.png)
+![data_store](/images/data_store.png)
 
 A Data Store is a BPMN construct that represents a storage location where data is stored, retrieved, and can be accessed among multiple process instances, including different process models.
 It can represent a database, a file system, or any other storage mechanism.
@@ -32,7 +32,7 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
 ### BPMN Example: Movie Data Management
 
 #### Process Overview
-![KKV data_store](images/DataStore_KKV.png)
+![KKV data_store](/images/DataStore_KKV.png)
 
 1. **Start Event**: Initiates the movie data management workflow.
 
@@ -60,7 +60,7 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
 
 5. **End Event**: Marks the completion of the workflow.
 After running the process, you can view the new movie data in the data store:
-![KKV data_store](images/DataStore_KKV_Store.png)
+![KKV data_store](/images/DataStore_KKV_Store.png)
 
 #### Modeling Data Store Interactions
 
@@ -103,7 +103,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 #### BPMN Example: Gatorade Flavors
 
-![JSON data_store](images/JSON_data_store.png)
+![JSON data_store](/images/JSON_data_store.png)
 
 1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
 
@@ -152,9 +152,9 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 **Output**:
 
-![JSON data_store](images/JSON_Data_Store_1.png)
+![JSON data_store](/images/JSON_Data_Store_1.png)
 
-![JSON data_store](images/DataStore_JSON_Output.png)
+![JSON data_store](/images/DataStore_JSON_Output.png)
 
 ```{admonition} Note
 ⚠  In the data store creation, you will see fields like 'Name' and 'Identifier'. If you are using script tasks that interacts with the data store, reference the `identifier` exactly as it is named in the data store configuration.

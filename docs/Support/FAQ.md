@@ -7,7 +7,7 @@
 **Q:** Is there a setup where I can run it within PyCharm?
 **A:** Yes, you can run SpiffWorkflow within PyCharm. For detailed settings, refer to the provided screenshot of Flask server details.
 
-![Flask](images/Flask.png)
+![Flask](/images/Flask.png)
 
 ### **2. Adding Python Libraries to SpiffWorkflow**
 
@@ -114,7 +114,7 @@ workflow.reset_from_task_id(start.id)
 **Q:** How can we mimic an inclusive gateway since SpiffWorkflow doesn't support it?  
 **A:** You can work around the absence of an inclusive gateway in SpiffWorkflow by using a Parallel Gateway. Within each path following the Parallel Gateway, you can place an Exclusive Gateway to check for the conditions that are or are not required. This approach is effective if the flows can eventually be merged back together.
 
-![Mimicking Inclusive Gateway](images/Mimicking_inclusive_gateway.png)
+![Mimicking Inclusive Gateway](/images/Mimicking_inclusive_gateway.png)
 
 ### **19. Designing an Approval Process in SpiffWorkflow**
 

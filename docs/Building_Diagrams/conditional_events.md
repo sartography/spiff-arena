@@ -18,14 +18,14 @@ Importantly, this variable needs to be accessible within the process context.
 
 ## Start Conditional Event
 
-![start_signal_event](images/start_conditional_event.png)
-![start_signal_event](images/non_interrupting_conditional_start_event.png)
+![start_signal_event](/images/start_conditional_event.png)
+![start_signal_event](/images/non_interrupting_conditional_start_event.png)
 
 A Start Conditional Event marks the beginning of a process or a sub-process, triggered when a specific condition is fulfilled, or in other terms, when the condition evaluates to true.
 
 **Example:**
 
-![conditional_start_example](images/conditional_start_example_1.png)
+![conditional_start_example](/images/conditional_start_example_1.png)
 
 **Conditional Start Event (interrupting):**
 In the first scenario, as a transaction is being processed, funds are withdrawn from a ledger.
@@ -39,8 +39,8 @@ Our goal is to maintain an uninterrupted shopping experience for the customer, y
 
 ## Intermediate Conditional Event
 
-![intermediate_conditional_event](images/intermediate_conditional_event.png)
-![intermediate_conditional_event](images/non_interrupting_intermediate_conditional_event.png)
+![intermediate_conditional_event](/images/intermediate_conditional_event.png)
+![intermediate_conditional_event](/images/non_interrupting_intermediate_conditional_event.png)
 
 An Intermediate Conditional Event serves as a gate or checkpoint within the flow of a process.
 The process flow will proceed once the attached condition evaluates to true.
@@ -49,7 +49,7 @@ This ensures that certain actions are taken or the process is redirected when pa
 
 **Example:**
 
-![conditional_intermediate_example_1](images/conditional_intermediate_example_1.png)
+![conditional_intermediate_example_1](/images/conditional_intermediate_example_1.png)
 
 **Conditional Intermediate Catch Event:**
 Once an order is packed and ready for shipping, it doesn't necessarily imply immediate delivery.
@@ -64,7 +64,7 @@ Given that our pastries need a specific temperature for baking, only when this c
 
 **Example:**
 
-![conditional_intermediate_example_2](images/conditional_intermediate_example_2.png)
+![conditional_intermediate_example_2](/images/conditional_intermediate_example_2.png)
 
 **Conditional Boundary Event (interrupting):**
 Boundary events allow us to redirect our processes based on shifts in certain conditions.
@@ -82,7 +82,7 @@ The task still requires completion, but there's an additional remark or modifica
 
 **Best Modeling Practices:**
 
-![conditional_intermediate_example_3](images/conditional_intermediate_example_3.png)
+![conditional_intermediate_example_3](/images/conditional_intermediate_example_3.png)
 
 When utilizing a condition to loop back to a previous stage, it's crucial to highlight that the condition should be reset to evaluate as false once again.
 If not adjusted, the condition might activate immediately when the instance revisits the task, potentially causing an infinite loop.
@@ -92,9 +92,9 @@ Always revert the condition to its default state to ensure appropriate behavior.
 
 | 💻 Form                                                                | ⌨ Field Input                                         | 📝 Description                                                                      |
 | ---------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| ![name_field](images/name_field.png)                                   | **Name:** Request Assistance                           | A descriptive name given to the element, providing a human-readable label or title. |
-| ![id_field](images/id_field.png)                                       | **ID:** Example - request_assistance                   | An identifier used to uniquely identify the element within the BPMN model.          |
-| ![configure_conditional_event](images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == true | Set the expression that needs to be evaluated to take action.                       |
+| ![name_field](/images/name_field.png)                                   | **Name:** Request Assistance                           | A descriptive name given to the element, providing a human-readable label or title. |
+| ![id_field](/images/id_field.png)                                       | **ID:** Example - request_assistance                   | An identifier used to uniquely identify the element within the BPMN model.          |
+| ![configure_conditional_event](/images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == true | Set the expression that needs to be evaluated to take action.                       |
 
 ```{admonition} Note
 ⚠  When configuring the conditional expression, ensure there's such a variable in your process context.

@@ -8,7 +8,7 @@ Parallel gateways are powerful BPMN elements that split a process flow into mult
 
 ### Process Steps
 
-![Parallel Gateway Example](images/parallel_gateway_ex1.png)
+![Parallel Gateway Example](/images/parallel_gateway_ex1.png)
 1. **Parallel Gateway (Split)**: After the start event, the gateway divides the main flow into two separate paths, enabling tasks to be processed in parallel.
 
 2. **Sequence Flow 1: Script Task [y = 1]**: Assigns the value `1` to variable `y`. This script task initializes variable `y` and demonstrates setting a simple variable in one branch of the parallel flow.
@@ -25,7 +25,7 @@ After the script task, signal the successful completion of the process with the 
 
 **Output**:
 After running the task, it will compute and show the result:
-![Parallel Gateway Example](images/parallel_gateway_ex2.png)
+![Parallel Gateway Example](/images/parallel_gateway_ex2.png)
 
 ```{tags} explanation, building_diagrams
 ```

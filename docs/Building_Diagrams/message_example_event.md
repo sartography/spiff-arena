@@ -21,13 +21,13 @@ Each message you define in a BPMN model can carry a payload (data) and have corr
 To create a new message:
 1. **Access the Message Editor**:
 
-![Message Example](images/message_example1.png)
+![Message Example](/images/message_example1.png)
 
 Click on a **Send Task** or **Message Event** in your process model. Under the **Message** tab, select "Open Message Editor".
 
 2. **Define the Message**:
 
-![Message Example](images/message_example2.png)
+![Message Example](/images/message_example2.png)
    - **Message Name**: Give your message a unique name (e.g., `order_accept`, `order_dispatch`). This should not contain spaces or special characters.
    - **Location**: Define the path where this message will be accessible. Only process models within this path will have access to the message.
    - **JSON Schema**: If you need the message to conform to a specific data format, you can define a JSON schema here. The payload must match this schema if specified.
@@ -46,14 +46,14 @@ For instance, in our **Waiter** process:
   - Open the **Message** tab in the task configuration. Select the **order_accept** message from the drop-down.
   - In the **Payload** section, specify the data variable that holds the payload (e.g., `order`).
   
-  ![Send Task Configuration](images/message_example3.png)
+  ![Send Task Configuration](/images/message_example3.png)
 
 In our **Chef** process:
 - **Message Start Event**: The process is initiated when the `order_accept` message is received.
   - Open the **Message** tab in the Start Event configuration. Select the **order_accept** message.
   - In the **Variable Name** section, specify the variable where the payload will be stored (e.g., `order_to_cook`).
 
-![Message Example](images/message_example6.png)
+![Message Example](/images/message_example6.png)
 
 ### 3. Setting Correlation Properties in Messages
 
@@ -63,11 +63,11 @@ To ensure that messages are delivered to the correct process instance, correlati
 
 - In the Chef process, when the chef sends a response message (`order_dispatch`) back to the waiter, the correlation property ensures that the message is directed to the correct waiter process.
 
-![Message Example](images/message_example6.png)
+![Message Example](/images/message_example6.png)
 
 - Correlation becomes relevant only for ongoing communication between processes, such as when the Chef sends a response back to the Waiter process using the order_dispatch message, ensuring the message is directed to the correct process instance.
 
-![Message Example](images/message_example4.png)
+![Message Example](/images/message_example4.png)
 
 By using messages and correlation properties, you can effectively manage communication between multiple BPMN processes. This ensures that the right data reaches the right process at the right time, allowing for dynamic and responsive workflows.
 

@@ -70,7 +70,7 @@ Adjust the configuration to ensure group information is included in the OpenID C
 
 For one of our users, the following setup was used to pass group information to SpiffWorkflow:
 
-![image](images/okta_config.png)
+![image](/images/okta_config.png)
 
 - Environment variables included the OpenID details and group scope.
 

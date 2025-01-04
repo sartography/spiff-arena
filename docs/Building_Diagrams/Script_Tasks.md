@@ -7,7 +7,7 @@ In SpiffArena, the scripting language used for writing scripts is Python, a wide
 Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
 ## **Script Task Properties**
-  ```{image} ./images/Script_task_update.png
+  ```{image} /images/Script_task_update.png
 :alt: Script Task
 :width: 300px
 :align: right
@@ -56,7 +56,7 @@ The score is then stored in the "score" variable.
 
 Let's delve into how we configured the script tasks:
 
-![Script_Task](images/Script_task_example.png)
+![Script_Task](/images/Script_task_example.png)
 
 **Step 1**: With the script task selected, you will notice the properties tab.
 
@@ -109,7 +109,7 @@ Now, we have configured our script task with a script and unit tests.
 
 After the Script Task, we have a Manual Task with a pre-script and instructions to display the score.
 
-![Script_Task](images/Pre-post_scripts.png)
+![Script_Task](/images/Pre-post_scripts.png)
 
 - **Pre-script** is added as an example.
 

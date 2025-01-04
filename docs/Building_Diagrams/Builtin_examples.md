@@ -170,21 +170,21 @@ Here are the four files in the process:
 **BPMN editor**: The BPMN editor is a primary file that runs the engine.
 In the Minimal Example, we learned that it allows you to visually design and represent business processes using the Business Process Model and Notation (BPMN) standard.
 
-![image](images/BPMN_Editor.png)
+![image](/images/BPMN_Editor.png)
 
 **DMN table**: A file that defines decision-making logic using the Decision Model and Notation (DMN) standard, enabling you to model complex decision rules and outcomes.
 
-![Image](images/DMN_table.png)
+![Image](/images/DMN_table.png)
 
 Here's what a DMN table looks like:
 
-![Image](images/DMN_Properties_Table.png)
+![Image](/images/DMN_Properties_Table.png)
 
 **JSON Schema**: A file that describes the structure, format, and validation rules for data in JSON format, ensuring data integrity and interoperability.
-![Image](images/JSONSchema.png)
+![Image](/images/JSONSchema.png)
 
 **UI Schema**: A file that defines the layout, structure, and behavior of user interfaces, facilitating the development of intuitive and interactive user experiences.
-![Image](images/UI-Schema.png)
+![Image](/images/UI-Schema.png)
 
 ### Process Workflow
 
@@ -193,28 +193,28 @@ The process initiates with a start event, serving as the entry point for the wor
 
 Following the start event, a manual task named "Introduction" is incorporated, responsible for displaying a welcoming message to the user.
 
-![](images/Manual_EM.png)
+![](/images/Manual_EM.png)
 
 Next, a **User task** named "Display Questions" is added, facilitating the collection of information from real individuals through web forms.
 In the properties section, a JSON form is created to specify the questions for the users to respond to.
 
-![](images/User_EM.png)
+![](/images/User_EM.png)
 
 Once the user completes the form, the gathered data is passed on to a **script task** named "Modify Information", responsible for calculating the data score.
 The script for this calculation is embedded in the properties section.
 
-![](images/Script_Em.png)
+![](/images/Script_Em.png)
 
 As an alternative approach, the data score can also be determined using a **DMN table** named "Determine Score Message".
 Decision tables offer an effective means of defining business rules in an easily comprehensible format.
 The DMN table calculates the score based on predefined rules.
 
-![](images/DMN_EM.png)
+![](/images/DMN_EM.png)
 
 After the score calculation, an **exclusive gateway** is employed to make decisions based on the determined score.
 Three manual tasks are defined, each displaying a different message based on the obtained score:
 
-![](images/Exclusive_Em.png)
+![](/images/Exclusive_Em.png)
 
 a. **Worst Possible Response**: If the score indicates the worst possible response, a manual task displays a message stating that it is completely wrong.
 
@@ -225,7 +225,7 @@ c. **Perfect Score**: If the score indicates a perfect score, a manual task disp
 Once the score messages are displayed, a **signal event** is included, providing users with the option to continue and conclude the process or choose to repeat the process from the beginning.
 Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
 
-![](images/Signal_EM.png)
+![](/images/Signal_EM.png)
 
 ```{tags} tutorial, building_diagrams
 ```

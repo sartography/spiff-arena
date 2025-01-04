@@ -76,7 +76,7 @@ In such cases, you have the flexibility to define and tailor admin requirements 
 
 From the main menu select 'Processes' and click on the 'Add a process group' button.
 
-![add_a_process_group](images/add_a_process_group.png)
+![add_a_process_group](/images/add_a_process_group.png)
 
 Complete the Process Groups form by entering the
 
@@ -86,11 +86,11 @@ Complete the Process Groups form by entering the
 
 Once the required fields are filled, the form can be submitted.
 
-![add_a_process_group](images/process_groups_tile.png)
+![add_a_process_group](/images/process_groups_tile.png)
 
 The new Process Groups tile will be available under the Process Groups view.
 
-![site_administration](images/site_administration.png)
+![site_administration](/images/site_administration.png)
 
 ### Step 2: Add Process Model
 
@@ -109,14 +109,14 @@ But if you wanted to, you could just call it `color`, assuming you wanted that t
 
 Make sure to accurately fill in all the required fields in the Process Model form to ensure proper configuration and functionality.
 
-![add_process_model](images/add_process_model.png)
+![add_process_model](/images/add_process_model.png)
 
 ### Step 3: Upload Workflows
 
 All the required workflows can be downloaded from [Github - set-permissions](https://github.com/sartography/sample-process-models/tree/sample-models-1/site-administration/set-permissions)
 
 Select to upload all downloaded files to the newly created Process model.
-![add_file](images/add_file.png)
+![add_file](/images/add_file.png)
 
 **Upload the following files:**
 
@@ -124,10 +124,10 @@ Select to upload all downloaded files to the newly created Process model.
 - groups_permissions.dmn
 - users_to_groups.dmn
 
-![upload_file](images/upload_file.png)
+![upload_file](/images/upload_file.png)
 
 The Process Model view should now include all uploaded files.
-![upload_file](images/admin_workflows.png)
+![upload_file](/images/admin_workflows.png)
 
 ### Step 4: Understand the Process Models
 
@@ -146,7 +146,7 @@ Based on DMN functionality, leaving the "*" column empty means that all rules ('
 Read more about DMN tables to understand how the rules engine can be utilized for many different scenarios.
 ```
 
-![user_to_groups](images/user_to_groups.png)
+![user_to_groups](/images/user_to_groups.png)
 
 #### Group Permission
 
@@ -171,7 +171,7 @@ If you find coding more familiar and preferable to constructing DMN tables, you 
 This similarity can help clarify or make it easier for you to understand the DMN table structure and its relation to the permission configuration.
 ```
 
-![group_permission](images/group_permission.png)
+![group_permission](/images/group_permission.png)
 
 ### Step 5: Start Process
 

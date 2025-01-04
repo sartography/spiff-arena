@@ -24,7 +24,7 @@ For instance, instead of individually assigning a condition or timer to each tas
 ### **Example Use Case: Restaurant Ordering System**
 A restaurant management workflow where customers place an order online, and the system processes their selections step by step. To streamline the workflow, the food selection process is encapsulated in a Subprocess.
 
-![Sub process](images/sub_process.png)
+![Sub process](/images/sub_process.png)
 
 **Step 1**: **Enter Name** 
 - A User Task that collects the customer's name using a web form.
@@ -41,7 +41,7 @@ A restaurant management workflow where customers place an order online, and the 
 **Step 5**: **Order Confirmation** - A User Task that displays the confirmation message to the user.
 
 #### **Subprocess: Select Food**
-![Sub process](images/sub_process1.png)
+![Sub process](/images/sub_process1.png)
 
 **Goal**: Simplify the food selection process into smaller, more manageable steps.
 
@@ -60,7 +60,7 @@ A restaurant management workflow where customers place an order online, and the 
 
 ## Call Process
 
-![active_call_process](images/active_call_process.png)
+![active_call_process](/images/active_call_process.png)
 
 A Call Process is similar to a Sub-Process in that it encapsulates part of a workflow, but it is designed to be reused across multiple different processes.
 It's essentially a stand-alone process that can be "called" into action as required by other processes.
@@ -83,7 +83,7 @@ More information about this can be found in the [Admin and Permission](../DevOps
 ### **Example Use Case: Payment Handling**
 A restaurant management workflow handles customer orders, calculates the bill, and processes payments. To maintain modularity and reusability, the payment processing logic is encapsulated in a separate workflow and invoked using a Call Activity.
 
-![Call Process](images/Call_Activity1.png)
+![Call Process](/images/Call_Activity1.png)
 
 **Step 1**: **Enter Name** - A User Task that collects the customer's name.
 
@@ -98,7 +98,7 @@ A restaurant management workflow handles customer orders, calculates the bill, a
 #### **Call Activity: Handle Payment**:
 A restaurant management workflow handles customer orders, calculates the bill, and processes payments. To maintain modularity and reusability, the payment processing logic is encapsulated in a separate workflow and invoked using a Call Activity.
 
-![Call Process](images/Call_Activity.png)
+![Call Process](/images/Call_Activity.png)
 
 **Goal**: Abstract the logic of handling different payment methods into a reusable process.
 

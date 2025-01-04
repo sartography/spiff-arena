@@ -22,7 +22,7 @@ If an instance is not active, it indicates that the process has already been com
 
 > **Step 2: Locate Suspend Icon**
 
-![suspend](images/suspend.png)
+![suspend](/images/suspend.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Suspend' icon and select it to initiate the suspension of the process instance.
 
@@ -33,12 +33,12 @@ This action will pause the process instance, granting you the ability to make ed
 When ready, the process instance can be resumed.
 The process instance remains highlighted in yellow.
 
-![suspend](images/active_process_instance.png)
+![suspend](/images/active_process_instance.png)
 
 |                            ✅ Success                             |
 | :---------------------------------------------------------------: |
 | Confirm that the status has changed from ‘waiting’ to ‘suspended’ |
-|                ![suspended](images/suspended.png)                 |
+|                ![suspended](/images/suspended.png)                 |
 
 ## Resume a Process Instance
 
@@ -46,7 +46,7 @@ Resuming a process is essential for ensuring that the process can continue its e
 
 > **Step 1: Locate Resume Icon**
 
-![resume](images/resume.png)
+![resume](/images/resume.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Resume' icon and select it to resume the suspended process instance.
 
@@ -57,12 +57,12 @@ Resuming a process is essential for ensuring that the process can continue its e
   Depending on where the process instance is in its journey, the status might be waiting or some other active status.
   The process instance remains highlighted in yellow.
 
-![suspend](images/active_process_instance.png)
+![suspend](/images/active_process_instance.png)
 
 |                                ✅ Success                                 |
 | :-----------------------------------------------------------------------: |
 | Confirm that the status has changed from ‘suspended’ to an active status. |
-|                      ![waiting](images/waiting.png)                       |
+|                      ![waiting](/images/waiting.png)                       |
 
 ## Terminate a Process Instance
 
@@ -71,7 +71,7 @@ There are various reasons for terminating a process instance such as the instanc
 
 > **Step 1: Locate Terminate Icon**
 
-![terminate](images/terminate.png)
+![terminate](/images/terminate.png)
 
 - Next to the Process Instance Id, look for the icon that resembles the 'Terminate' icon and select it to terminate the process instance.
 
@@ -83,15 +83,15 @@ There are various reasons for terminating a process instance such as the instanc
 > **Step 3: Confirm Termination**
 
 - Before proceeding with the termination, it is essential to be absolutely certain about your decision.
-  ![terminate_warning](images/terminate_warning.png)
+  ![terminate_warning](/images/terminate_warning.png)
 
 - The process status will now be 'Terminated' and the last active task will be highlighted in purple.
-  ![suspend](images/terminated_process_instance.png)
+  ![suspend](/images/terminated_process_instance.png)
 
 |                              ✅ Success                              |
 | :------------------------------------------------------------------: |
 | Confirm that the status has changed from ‘suspended’ to 'terminated' |
-|                  ![suspend](images/terminated.png)                   |
+|                  ![suspend](/images/terminated.png)                   |
 
 ## Reset a Process Instance
 
@@ -104,7 +104,7 @@ There are various reasons for terminating a process instance such as the instanc
 > **Step 3: Suspend the Process**
 
 Ensure the status has changed from _user_input_required_ to _suspended_
-![Reset](images/reset_process2.png)
+![Reset](/images/reset_process2.png)
 
 > **Step 4: Go to the relevant past activity**
 
@@ -113,7 +113,7 @@ Only a previously completed section highlighted in grey can be chosen.
 > **Step 5: Select 'View process instance at the time when this task was active.
 > '**
 
-![Reset](images/reset_process3.png)
+![Reset](/images/reset_process3.png)
 
 > **Step 6: Observe the task once highlighted in grey should now be yellow.
 > **
@@ -123,14 +123,14 @@ A previously completed section is now active and shown in yellow.
 > **Step 7: Select 'Reset Process Here' icon in the popup window.
 > **
 
-![Reset](images/reset_process5.png)
+![Reset](/images/reset_process5.png)
 
 > **Step 8: "Resume" process instance.
 > **
 
 The process instance should be resumed by selecting the ‘Resume’ icon next to the Process Instance Id.
 
-![Reset](images/reset_process6.png)
+![Reset](/images/reset_process6.png)
 
 > **Step 9: Refresh page**
 

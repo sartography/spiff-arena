@@ -25,10 +25,10 @@ Secrets are only used in service tasks.
 ### Adding a New Secret
 
 1. **Navigate to the Configuration Section**: Go to the configuration section from the top panel and click on "Add a secret." Ensure you have admin access to SpiffArena.
-![Configuration Section](images/Secrets_step_1.png)
+![Configuration Section](/images/Secrets_step_1.png)
 
 2. **Add New Secret**: Create a new secret by entering a key and its corresponding value. Once saved, the value will be encrypted.
-![Secrets Section](images/Secrets_step_2.png)
+![Secrets Section](/images/Secrets_step_2.png)
 
 ### Using Secrets in Service Tasks
 
@@ -43,7 +43,7 @@ Secrets are only used in service tasks.
     ```
 
     Here, `SPIFF_SECRET:github_oauth` will be replaced by the actual, unencrypted value from the database when the service task runs.
-![Secrets Configuration](images/Secrets_configure_2.png)
+![Secrets Configuration](/images/Secrets_configure_2.png)
 ---
 
 Configuring secrets in SpiffArena provides a secure way to handle sensitive information in your BPMN diagrams.

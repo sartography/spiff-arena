@@ -1,4 +1,4 @@
-# Articles ![data_input](images/articles.png)
+# Articles ![data_input](/images/articles.png)
 
 **[#1 - Build your own Low-Code Business Applications with SpiffWorkflow](https://medium.com/@danfunk/build-your-own-low-code-business-applications-with-spiffworkflow-1d0730acc1f3)**
 

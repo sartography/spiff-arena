@@ -10,7 +10,7 @@ Tasks are executed one after another, ensuring that each task instance begins on
 In the case of a sequential multi-instance activity, the instances are executed one at a time.
 When one instance is completed, a new instance is created for the next element in the input collection.
 
-![Multi_instance_Sequential](images/multiinstance_sequential_example.png)
+![Multi_instance_Sequential](/images/multiinstance_sequential_example.png)
 
 ## **Parallel Execution**
 
@@ -18,13 +18,13 @@ All instances of the task are launched simultaneously, allowing for concurrent p
 In the case of a parallel multi-instance activity, all instances are created when the multi-instance body is activated.
 The instances are executed concurrently and independently of each other.
 
-![Multi_instance_parallel](images/multiinstance_parallel_example.png)
+![Multi_instance_parallel](/images/multiinstance_parallel_example.png)
 
 ## Components of Multi-Instance Tasks
 
 Multi-instance tasks comprise several key properties that define their behavior:
 
-```{image} ./images/multiinstance_properties.png
+```{image} /images/multiinstance_properties.png
 :width: 230px
 :align: right
 ```
@@ -58,7 +58,7 @@ Specifically, the process manages a list of composers, their names, and genres, 
 2. **Script Task - Create Dictionary**: This task initializes a list (array) of dictionaries, each representing a composer with their name and associated genre.
 The script effectively sets up the data structure that will be manipulated in subsequent steps of the process.
 
-![Multi_instance_example](images/multiinstance_example2.png)
+![Multi_instance_example](/images/multiinstance_example2.png)
 
 **Script**:
 
@@ -73,7 +73,7 @@ The script effectively sets up the data structure that will be manipulated in su
 3. **Multi-Instance Task - Edit Composer**: This task is configured as a multi-instance task that iterates over the `composers` array created by the previous script task.
 It allows for the editing of each composer's information within the array.
 
-![Multi_instance_example](images/multiinstance_ex.png)
+![Multi_instance_example](/images/multiinstance_ex.png)
 
 **Properties Configuration**:
 
@@ -88,7 +88,7 @@ It allows for the editing of each composer's information within the array.
 
 4. **Manual Task - Display Edited Composers**: This task presents the edited list of composers and their genres, using a loop to display each composer's name and genre in the format provided.
 
-![Multi_instance_example](images/multiinstance_ex1.png)
+![Multi_instance_example](/images/multiinstance_ex1.png)
 
 **Instructions**:
 
@@ -120,7 +120,7 @@ These loops allow for the execution of a specific task or sequence of tasks repe
 
 ### Key Concepts
 
-![Loop Configuration](images/Loop_Settings.png)
+![Loop Configuration](/images/Loop_Settings.png)
 
 1. **Loop Marker**: A visual indicator (a small loop symbol) placed at the bottom center of an activity to denote that the activity is subject to repeated execution.
 
@@ -151,7 +151,7 @@ This scenario is effectively managed using a standard loop in BPMN.
 
 #### Process Overview
 
-![Loop Example](images/loop_example1.png)
+![Loop Example](/images/loop_example1.png)
 
 1. **Start Event**: Initiates the workflow.
 
@@ -160,7 +160,7 @@ This scenario is effectively managed using a standard loop in BPMN.
 3. **Script Loop Task - Increment Counter**: Implement the Script Loop Task with a loop marker and configure the loop condition (`counter < 10`) and increment script (`counter = counter + 1;`).
 The process engine will increment the `counter` by 1 on each iteration.
 
-![Loop Example](images/loop_example2.png)
+![Loop Example](/images/loop_example2.png)
 
 The task is marked with a loop indicator, and the loop condition ensures the task repeats until `counter` reaches 10.
 

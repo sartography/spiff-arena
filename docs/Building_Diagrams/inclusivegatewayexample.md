@@ -4,11 +4,11 @@ This BPMN example outlines the process of making travel arrangements using an in
 
 ## Process Flow
 
-![Inclusive Gateway Example](images/inclusive_gateway_example.png)
+![Inclusive Gateway Example](/images/inclusive_gateway_example.png)
 
 1. **User Task: Get Travel Information**: The user task collects the travel preferences of the user regarding different modes of transportation.
 
-   ![Inclusive Gateway Example 1](images/inclusive_gateway_example1.png)
+   ![Inclusive Gateway Example 1](/images/inclusive_gateway_example1.png)
    **Form Details**:
 
    ```json

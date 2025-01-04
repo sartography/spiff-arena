@@ -20,21 +20,21 @@ They aid in elucidating the data flow and dependencies within the process, thus 
 
 ### Data Input
 
-![data_input](images/data_input.png)
+![data_input](/images/data_input.png)
 
 This represents the data or information that is needed as an input to initiate or carry out a specific task or process.
 BPMN input defines the data elements that must be provided or available for the task to be performed.
 
 ### Data Output
 
-![data_output](images/data_output.png)
+![data_output](/images/data_output.png)
 
 This signifies the data or information that is created or generated as a result of executing a task or process.
 BPMN output describes the data elements that are produced or altered during the execution of the task.
 
 ### Data Object Reference
 
-![data_object_reference](images/data_object_reference.png)
+![data_object_reference](/images/data_object_reference.png)
 
 A Data Object in BPMN typically signifies a particular piece of information or a data entity that is exchanged or manipulated during the course of a business process.
 It can represent both physical and digital data.
@@ -44,10 +44,10 @@ Examples of Data Objects include documents, forms, reports, databases, or any ot
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![name_field](images/name_field.png) | **Name:** Update Customer Information | An identifier used to uniquely identify the element within the BPMN model. |
-| ![id_field](images/id_field.png) | **ID:** Example - updateCustomerInformation | A descriptive name given to the element, providing a human-readable label or title. |
-| ![documentation_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
-| ![data_object_prop](images/data_object_prop.png) | **Element Documentation:** inventory_items | Enter an existing data object ID |
+| ![name_field](/images/name_field.png) | **Name:** Update Customer Information | An identifier used to uniquely identify the element within the BPMN model. |
+| ![id_field](/images/id_field.png) | **ID:** Example - updateCustomerInformation | A descriptive name given to the element, providing a human-readable label or title. |
+| ![documentation_field](/images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
+| ![data_object_prop](/images/data_object_prop.png) | **Element Documentation:** inventory_items | Enter an existing data object ID |
 
 ## Handling Sensitive Data Using Data Objects
 
@@ -87,7 +87,7 @@ For example, a URL pattern like `/process-data/confidential/*` can be used to co
 - **Initial Setup**: Start by creating a script task where the script sets a variable (e.g., `a=1`).
 This variable `a` could represent sensitive data like a credit card number.
 - **Execution**: Run the task to observe the value of `a`.
-![image](images/private_data_object.png)
+![image](/images/private_data_object.png)
 
 #### 2. Converting to a Data Object
 
@@ -96,9 +96,9 @@ Link this data object to the script task and set the data object ID to `a`.
 - **Assign a Category**: Assume the data object represents a credit card number.
 Assign a category to this data object, such as `creditcards`.
 - **Visibility**: The credit card data is visible until permissions are set to restrict access.
-![image](images/category.png)
+![image](/images/category.png)
 - **Process Execution**: Upon running the process, the value of the data object will be `1`.
-![image](images/sensitive_value.png)
+![image](/images/sensitive_value.png)
 
 #### 3. Setting Permissions with DMN Table
 
@@ -108,7 +108,7 @@ Assign a category to this data object, such as `creditcards`.
   - `permissions` to `"DENY:read"`
   - `permission_urls` to `"/process-data/creditcards/"`
 
-![image](images/setting_permissions.png)
+![image](/images/setting_permissions.png)
 
 #### 4. Implementing Restricted Access
 

@@ -36,13 +36,13 @@ The R denotes recurrence, followed by the number of recurrences, and PT8H is the
 
 ## Start Timer Event
 
-![start_signal_event](images/start_timer_event.png)![start_timer_example](images/non_interrupting_start_timer.png)
+![start_signal_event](/images/start_timer_event.png)![start_timer_example](/images/non_interrupting_start_timer.png)
 
 A Start Timer Event marks the beginning of a process or sub-process, but only once a specified period has elapsed or at a predetermined time.
 
 **Example:**
 
-![start_timer_example](images/start_timer_example.png)
+![start_timer_example](/images/start_timer_example.png)
 
 **Timer Start Event:** Consider a company that sends out a newsletter on the first of every month.
 To achieve this, they could set up a 'Start Timer Event' named 'Monthly Newsletter Timer' with a cyclic timer to activate on the first day of each month.
@@ -59,7 +59,7 @@ The advantage is that it doesn't disrupt the customer's current session, providi
 
 ## Intermediate Timer Event
 
-![intermediate_timer_event](images/intermediate_timer_event.png) ![non_interrupting_intermediate_timer_event](images/non_interrupting_intermediate_timer_event.png)
+![intermediate_timer_event](/images/intermediate_timer_event.png) ![non_interrupting_intermediate_timer_event](/images/non_interrupting_intermediate_timer_event.png)
 
 An Intermediate Timer Event acts as a pause or delay within the flow of a process.
 The process flow will only continue after the set time has been reached or elapsed.
@@ -67,7 +67,7 @@ Furthermore, as a Boundary Event, it can be linked to specific tasks or sub-proc
 
 **Example:**
 
-![timer_intermediate_example_1](images/start_timer_example_1.png)
+![timer_intermediate_example_1](/images/start_timer_example_1.png)
 
 **Timer Intermediate Catch Event:**
 
@@ -83,7 +83,7 @@ An 'Intermediate Timer Event' can be configured here to accumulate the day's ord
 
 **Example:**
 
-![start_timer_example_2](images/start_timer_example_2.png)
+![start_timer_example_2](/images/start_timer_example_2.png)
 
 **Timer Boundary Event (interrupting):**
 
@@ -105,7 +105,7 @@ Note that the original task is still active.
 
 **Best Modeling Practices:**
 
-![start_timer_example_3](images/start_timer_example_3.png)
+![start_timer_example_3](/images/start_timer_example_3.png)
 
 In process automation, ensuring all tasks and processes reach a definitive end is a fundamental aspect of good modeling practice.
 Abandoned or lingering tasks can strain resources and introduce inefficiencies.
@@ -121,9 +121,9 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 
 | 💻 Form                                | ⌨ Field Input                      | 📝 Description                                                                              |
 | -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| ![name_field](images/name_field.png)   | **Name:** Cancel Order              | A descriptive name given to the element, providing a human-readable label or title.         |
-| ![id_field](images/id_field.png)       | **ID:** Example - cancel_order      | An identifier used to uniquely identify the element within the BPMN model.                  |
-| ![timer_field](images/timer_field.png) | **Type:** Duration **Value:** PT48H | Choose the type of trigger you want to set: Specific Date/Time, Duration, or Cycle Trigger. |
+| ![name_field](/images/name_field.png)   | **Name:** Cancel Order              | A descriptive name given to the element, providing a human-readable label or title.         |
+| ![id_field](/images/id_field.png)       | **ID:** Example - cancel_order      | An identifier used to uniquely identify the element within the BPMN model.                  |
+| ![timer_field](/images/timer_field.png) | **Type:** Duration **Value:** PT48H | Choose the type of trigger you want to set: Specific Date/Time, Duration, or Cycle Trigger. |
 
 ```{admonition} Timer Delay
 💡 Note: Timer events, especially those set for short durations, may face delays of 20-30 seconds, varying with the number of active instances.

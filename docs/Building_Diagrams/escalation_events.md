@@ -15,7 +15,7 @@ An escalation represents a one-to-one relationship, whereas a signal event embod
 
 ## Start Escalation Event
 
-![start_escalation_event](images/start_escalation_event.png)![non_interrupting_start_escalation_event](images/non_interrupting_start_escalation_event.png)
+![start_escalation_event](/images/start_escalation_event.png)![non_interrupting_start_escalation_event](/images/non_interrupting_start_escalation_event.png)
 
 A Start Escalation Event indicates the beginning of a sub-process, triggered explicitly by an escalation from another process or activity.
 
@@ -26,7 +26,7 @@ They are mostly used to communicate from a subprocess to an upper process.
 
 **Example:**
 
-![start_escalation_example](images/start_escalation_example_1.png)
+![start_escalation_example](/images/start_escalation_example_1.png)
 
 **Escalation Start Event (interrupting):**
 In a production environment, if a machine malfunctions frequently or requires calibration, the issue might be escalated to a specialized technical team.
@@ -40,7 +40,7 @@ It allows for parallel processing to allow the process to continue seamlessly to
 
 ## Intermediate Escalation Event
 
-![intermediate_escalation_event](images/intermediate_escalation_throw_event.png)![intermediate_escalation_event](images/intermediate_escalation_catch_event.png)![intermediate_escalation_event](images/non_interrupting_intermediate_escalation_event.png)
+![intermediate_escalation_event](/images/intermediate_escalation_throw_event.png)![intermediate_escalation_event](/images/intermediate_escalation_catch_event.png)![intermediate_escalation_event](/images/non_interrupting_intermediate_escalation_event.png)
 
 An Intermediate Escalation Event serves as a mechanism within a process flow to raise an escalation.
 This could be due to an exception, a delay, or any condition that requires intervention.
@@ -48,7 +48,7 @@ As a Boundary Event, it can also be associated with specific tasks or sub-proces
 
 **Example:**
 
-![escalation_intermediate_example_2](images/escalation_example_2.png)
+![escalation_intermediate_example_2](/images/escalation_example_2.png)
 
 In the same BPMN scenario, escalations can be managed at a higher level in the process hierarchy through a boundary escalation event.
 This method involves placing the escalation event on the border of the parent process activity.
@@ -68,7 +68,7 @@ This parallel processing ensures that there are two active instances within the 
 
 **Example:**
 
-![escalation_intermediate_example_2](images/escalation_example_3.png)
+![escalation_intermediate_example_2](/images/escalation_example_3.png)
 
 **Escalation Boundary Event (interrupting):**
 In the given scenario, utilizing a subprocess can lead to the desired outcome similarly.
@@ -88,7 +88,7 @@ The choice of event type should be based on the particular application and conte
 
 ## End Escalation Event
 
-![intermediate_escalation_event](images/end_escalation_event.png)
+![intermediate_escalation_event](/images/end_escalation_event.png)
 
 In our earlier examples, we demonstrated how to use throw and catch events.
 The End Escalation event functions similarly to the Intermediate Throw Escalation event, with the key distinction being its occurrence at the end of a particular pathway.
@@ -97,7 +97,7 @@ Particularly in scenarios involving non-interrupting events, the process instanc
 
 **Example:**
 
-![escalation_intermediate_example_2](images/escalation_example_4.png)
+![escalation_intermediate_example_2](/images/escalation_example_4.png)
 
 In this scenario, we observe an End Escalation following a Boundary Event.
 This thrown End Escalation can be intercepted by the boundary event of a Call Activity or at the start of a sub-process, as shown in previous examples on this page.
@@ -113,7 +113,7 @@ Here's how to set up these components:
 
 **Define the Escalation ID**: Determine the task or process stage where an escalation might need to be triggered due to exceptional circumstances and decide on a unique identifier for your escalation event.
 
-![Escalation ID](images/Escalation_ID.png)
+![Escalation ID](/images/Escalation_ID.png)
 
 ```{admonition} Note
 ⚠  In the above example, the escalation ID is created with `Escalation_Throw_1`.
@@ -123,7 +123,7 @@ Here's how to set up these components:
 Add an Intermediate Throw Escalation Event immediately after the task identified.
 Select the escalation ID and create a unique **escalation code**.
 
-![Escalation Order](images/Escalation_Order.png)
+![Escalation Order](/images/Escalation_Order.png)
 
 ```{admonition} Note
 ⚠  The escalation code is essential for matching the throw event with its corresponding catch event.
@@ -136,7 +136,7 @@ This can be a boundary event attached to a task where the escalation should be c
 For a boundary catch event, attach it to the task designated to handle the escalation.
 For an intermediate catch event, place it at the appropriate point in the process flow.
 
-![Escalation Order](images/Escalation_Order_2.png)
+![Escalation Order](/images/Escalation_Order_2.png)
 
 ```{admonition} Note
 ⚠  Ensure this matches exactly with the code assigned to the throw event to ensure proper linkage.

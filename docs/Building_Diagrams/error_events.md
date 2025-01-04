@@ -8,7 +8,7 @@ Below, we delve into the types of Error Events, offering definitions and enriche
 
 ### 1. Error Start Event
 
-![Error Start Event](images/error-events1.png)
+![Error Start Event](/images/error-events1.png)
 
 The Error Start Event triggers the start of a subprocess in reaction to an error identified in a different process or subprocess.
 It is a specialized event used to initiate error handling workflows dynamically.
@@ -20,7 +20,7 @@ It is a specialized event used to initiate error handling workflows dynamically.
 
 **Example**:
 
-![](images/Start_event_error_example.png)
+![](/images/Start_event_error_example.png)
 
 In an automated supply chain system, an Error Start Event initiates a "Supplier Notification" subprocess when inventory restocking fails due to supplier issues, triggering actions such as alternative supplier selection and impact analysis.
 
@@ -30,7 +30,7 @@ In an automated supply chain system, an Error Start Event initiates a "Supplier 
 
 ### 2. Error Intermediate Event/Error Boundary Event
 
-![Error Intermediate Event](images/error_intermediate_event.png)
+![Error Intermediate Event](/images/error_intermediate_event.png)
 
 An Error Boundary Event is attached to an activity, such as a service task, and is designed to catch errors that occur during the execution of that activity, allowing for an immediate transition to an error handling flow.
 
@@ -44,7 +44,7 @@ Positioned within the normal flow of a process, this event signifies where an er
 
 **Example**:
 
-![Error Boundary Event Error Event](images/error_boundary_event.png)
+![Error Boundary Event Error Event](/images/error_boundary_event.png)
 
 In a customer order workflow, when payment is initiated, a "Process Payment" service task interacts with an external gateway.
 An attached Error Boundary Event catches errors like "Payment Gateway Timeout" or "Payment Declined."
@@ -53,7 +53,7 @@ This setup ensures efficient error handling, guiding the process toward resoluti
 
 ### 3. Error End Event
 
-![Error End Event](images/error_end_event.png)
+![Error End Event](/images/error_end_event.png)
 
 This event marks the termination of a process path due to an error, signaling that the workflow cannot proceed beyond this point due to the encountered issue, and propagates the error to the parent process for further handling.
 
@@ -64,7 +64,7 @@ This event marks the termination of a process path due to an error, signaling th
 
 **Example**:
 
-![Error End Event](images/ErrorEndEventExample.png)
+![Error End Event](/images/ErrorEndEventExample.png)
 
 In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
 This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
@@ -78,13 +78,13 @@ This process begins with a simple task and moves through a service task designed
 
 1. **Start Event**:
 
-![Error Event](images/error_event_example1.png)
+![Error Event](/images/error_event_example1.png)
 
 The process kicks off with an action that requires fetching specific employee details.
 
 2. **Service Task - Fetch Employee Data**:
 
-![Error Event](images/error_event_example2.png)
+![Error Event](/images/error_event_example2.png)
 
    - **Configuration**: This task is configured to make an HTTP GET request to the BambooHR API to retrieve employee information.
      - **Operator ID**: `http/getrequestV2`, indicating the operation type and version.
@@ -94,20 +94,20 @@ The process kicks off with an action that requires fetching specific employee de
 
 3. **Error Handling Setup**:
 
-![Error Event](images/error_event_example3.png)
+![Error Event](/images/error_event_example3.png)
 
 Prior to the service task's execution, one potential error ID is defined as `Error_1`.
 
 4. **Error Boundary Event**:
 
-![Error Event](images/error_event_example5.png)
+![Error Event](/images/error_event_example5.png)
 
 Attached to the service task, this event catches `Error_1`, setting an alternative path for error handling.
 The error details are stored in a variable named `err1`.
 
 5. **Manual Tasks for Error Handling and Success Path**:
 
-![Error Event](images/error_event_example6.png)
+![Error Event](/images/error_event_example6.png)
 
 **A**. **No Errors Path**: If the service task executes without encountering the predefined errors, the process flows to a **Manual task 1** where the fetched employee data can be further processed or reviewed.
 
@@ -134,13 +134,13 @@ In this example, we're outlining a BPMN process that demonstrates how to handle 
 
 1. **Start Event**:
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess1.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess1.png)
 
 The process is triggered by a user action or system event, setting the stage for a sequence of tasks.
 
 2. **Expanded Subprocess**:
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess2.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess2.png)
 
 This element encapsulates a more detailed process flow within itself, starting with its own Start Event and comprising several tasks.
 The **Start Event** marks the beginning of the subprocess.
@@ -150,31 +150,31 @@ The setup of the error end event is:
 
 - **Error ID Setup**
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess6.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess6.png)
 Before proceeding further, an error ID (Error1) is defined in the process.
 
 - **Configure Properties**:
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess3.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess3.png)
 
 Configured to represent the occurrence of Error1, with an error code "Err1" and a payload detailing the error message (`{ "err_msg" : "Error Occurred"}`).
 
 3. **Error Boundary Event**:
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess4.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess4.png)
 
 Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the subprocess, particularly from the Error End Event.
 The error caught is identified by the code "Err1", and its details are captured in a variable named `message`.
 
 4. **Manual Task**
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess5.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess5.png)
 
 **Manual Task 2** is attached to this Error Boundary Event, with its instructions including the usage of the error message payload (`{{msg}}`), indicating a step to address or respond to the error condition.
 
 5. **End Events for Expanded Subprocess**:
 
-![Error Event](images/error_boundary_event_with_expanded-subprocess7.png)
+![Error Event](/images/error_boundary_event_with_expanded-subprocess7.png)
 
 **A**. Beyond the boundary event's error handling path, the subprocess connects to a main End Event, indicating the normal conclusion of the subprocess activities if no errors occur.
 

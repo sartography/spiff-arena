@@ -4,7 +4,7 @@ Events are specific occurrences that dictate the flow or outcome of processes.
 They are visually represented by circles.
 Based on their position and function, events are categorized as: Start Events, Intermediate Events, or End Events.
 
-![start_message_event](images/events_categories.png)
+![start_message_event](/images/events_categories.png)
 
 Start Events initialize a process and have no incoming flows.
 Intermediate Events represent something happening during the process and can have both incoming and outgoing flows.
@@ -29,11 +29,11 @@ For instance, while you cannot initiate a primary process with an escalation eve
 To adhere to BPMN standards, it's crucial to consult and follow the provided guide.
 Always ensure that your processes and diagrams conform to these accepted norms.
 
-![events_table](images/events_table.png)
+![events_table](/images/events_table.png)
 
 ## Start Event
 
-![start_event_t](images/start_event_t.png)
+![start_event_t](/images/start_event_t.png)
 
 Start events signify the beginning of a specific process and can consist of catch, timer, or conditional events.
 They do not possess any incoming sequence flows.
@@ -46,7 +46,7 @@ They do not possess any incoming sequence flows.
 
 ## Intermediate Event
 
-![intermediate_event](images/intermediate_event.png)
+![intermediate_event](/images/intermediate_event.png)
 
 An Intermediate Event takes place between the beginning and the conclusion of a process.
 They can either wait for a specific occurrence (such as receiving a message), initiate an occurrence (like dispatching a message), or pause until a condition is fulfilled or a designated time elapses.
@@ -62,7 +62,7 @@ They can either wait for a specific occurrence (such as receiving a message), in
 
 ## End Event
 
-![intermediate_throw_message_event](images/end_event.png)
+![intermediate_throw_message_event](/images/end_event.png)
 
 End events signify the end of a particular process.
 Once this event is reached, the process stops, and no further activities within this process will be executed.
@@ -81,7 +81,7 @@ Non-Interrupting Events allow the current process or activity to continue its ex
 
 ### Interrupting Events
 
-![interrupting_group](images/interrupting_group.png)
+![interrupting_group](/images/interrupting_group.png)
 
 When an interrupting event is triggered, it interrupts the flow of the process or activity it's attached to.
 Once triggered, the current activity or process is halted, and the process flow directed by the interrupting event is taken up.
@@ -91,7 +91,7 @@ Once triggered, the current activity or process is halted, and the process flow 
 - In the case of an error, where the current activity cannot proceed further and an exception flow needs to be initiated.
 - When an alternative flow should immediately replace the main flow, like when a timer goes off, indicating a timeout.
 
-![interrupting_example](images/interrupting_example.png)
+![interrupting_example](/images/interrupting_example.png)
 
 **Example:**
 Think of a scenario where a manager is given a specific duration to assess a request.
@@ -101,7 +101,7 @@ The provided example demonstrates the same function, but one is with an interrup
 
 ### Non-Interrupting Events
 
-![non-interrupting_group](images/non-interrupting_group.png)
+![non-interrupting_group](/images/non-interrupting_group.png)
 
 When a Non-Interrupting event is triggered, it does not halt or disrupt the main activity it's attached to.
 Instead, the process or activity continues its execution in parallel with the event's associated flow.
@@ -111,7 +111,7 @@ Instead, the process or activity continues its execution in parallel with the ev
 - To initiate parallel activities without disturbing the primary flow, like sending periodic reminders while still waiting for a main task to complete.
 - When you want to monitor situations without interrupting the main flow, such as watching for specific signals or messages.
 
-![interrupting_example](images/non-interrupting_example.png)
+![interrupting_example](/images/non-interrupting_example.png)
 
 **Example:**
 Consider the previous example, but instead of terminating the initial review task when the time elapses, a Non-Interrupting Event is triggered, creating another thread.
@@ -127,7 +127,7 @@ Catch Events passively wait or listen for messages, signals, or events to be rec
 
 ## Throw Event
 
-![throw_events](images/throw_events.png)
+![throw_events](/images/throw_events.png)
 
 Throw events are used to "send" or "throw" a particular type of event.
 In BPMN, when we talk about a throw event, we're generally discussing an activity or a situation where a specific signal, message, or error is being generated or sent out.
@@ -144,7 +144,7 @@ They wait for signals to guide them towards an alternative route, whether it's i
 - To signal an error in a particular part of the process.
 - To indicate the raising or sending of a specific event or signal to other parts of the process or even to other processes.
 
-![throw_example](images/throw_example.png)
+![throw_example](/images/throw_example.png)
 
 **Example:**
 Imagine a situation where, as soon as the manufacturing of an item begins, a signal is sent to trigger a notification to another department or a customer.
@@ -154,7 +154,7 @@ It's crucial to recognize that there are numerous approaches to catching or rece
 
 ## Catch Event
 
-![catch_events](images/catch_events.png)
+![catch_events](/images/catch_events.png)
 
 Catch events are used to "receive" or "catch" a particular type of event.
 In BPMN, when we refer to a catch event, we're talking about a point in the process where it's waiting for or listening to a specific event from another process or activity.
@@ -171,7 +171,7 @@ They serve as triggers to initiate subsequent processes or actions.
 - To catch or handle an error.
 - To wait for a specific signal or event to be triggered before proceeding.
 
-![catch_example](images/catch_example.png)
+![catch_example](/images/catch_example.png)
 
 **Example:**
 The reception of an event can take place in various ways.
@@ -186,7 +186,7 @@ Boundary and Non-Boundary Events are pivotal in determining how certain events a
 
 ### Boundary Event
 
-![boundary_event](images/boundary_event.png)
+![boundary_event](/images/boundary_event.png)
 
 Boundary events are attached to specific activities in a BPMN diagram, representing something that could happen while the activity is being executed.
 If the boundary event gets triggered, it can interrupt or not interrupt the attached activity, depending on its type.
@@ -197,7 +197,7 @@ If the boundary event gets triggered, it can interrupt or not interrupt the atta
 - To capture intermediate events that can interrupt (or sometimes not interrupt) the main flow of an activity.
 - To depict certain conditions under which the process should take an alternative path.
 
-![boundary_example](images/boundary_example.png)
+![boundary_example](/images/boundary_example.png)
 
 **Example:**
 In our initial scenario where a manager needs to approve or review a submission, employing a timer as a start event impacts the entire workflow.
@@ -208,7 +208,7 @@ Note that a boundary event can be interrupting or non-interrupting.
 
 ## Non-Boundary Event
 
-![non-boundary_event](images/non-boundary_event.png)
+![non-boundary_event](/images/non-boundary_event.png)
 
 Non-boundary Events stand alone in the BPMN process flow.
 They aren't attached to any activity, and they represent something that happens between activities.
@@ -219,7 +219,7 @@ Unlike boundary events that are attached to tasks or sub-processes.
 - To depict events that occur independently of specific activities, such as timers or messages that are awaited.
 - To showcase events that affect the current flow but aren't tied to a particular task or activity.
 
-![non-boundary_event_example](images/non-boundary_event_example.png)
+![non-boundary_event_example](/images/non-boundary_event_example.png)
 
 **Example:**
 

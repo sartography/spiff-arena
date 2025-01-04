@@ -30,7 +30,7 @@ Below, we’ll walk through detailed setup instructions for two examples to illu
 This simpler example demonstrates how to retrieve user data from the JSONPlaceholder API, useful for testing or prototyping workflows.
 
 #### Service Task Configuration
-  ```{image} ./images/service_task_doc3.png
+  ```{image} /images/service_task_doc3.png
 :alt: Service Task
 :width: 300px
 :align: right
@@ -57,7 +57,7 @@ In this example, we’ll configure a Service Task that fetches employee details 
 
 Below is workflow overview:
 
-![Service Task](images/service_task_doc1.png)
+![Service Task](/images/service_task_doc1.png)
 
 1. **Start Event**: Begins the workflow.
 2. **Service Task**: Retrieves employee information from BambooHR.
@@ -65,7 +65,7 @@ Below is workflow overview:
 4. **End Event**: Completes the workflow.
 
 #### **Service Task Configuration**
-  ```{image} ./images/service_task_doc2.png
+  ```{image} /images/service_task_doc2.png
 :alt: Login Screen
 :class: bg-primary mb-1
 :width: 300px

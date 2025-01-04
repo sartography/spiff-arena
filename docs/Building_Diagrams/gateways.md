@@ -14,7 +14,7 @@ Gateways are used to evaluate conditions or rules and determine the appropriate 
 
 ## Exclusive Gateway
 
-![exclusive_gateway](images/exclusive_gateway.png)
+![exclusive_gateway](/images/exclusive_gateway.png)
 
 Exclusive Gateway (XOR): An Exclusive Gateway represents a decision point where only one outgoing sequence flow can be taken.
 It is used when the process flow needs to make a mutually exclusive choice between different paths.
@@ -26,14 +26,14 @@ Whenever the conditions on the other paths aren't met, the instance will proceed
 In other words, if none of the conditions for the outgoing sequence flows are met, the Default Flow provides an alternative route for the process to follow.
 This ensures that the process can still progress even if none of the explicitly defined conditions are satisfied, providing a fallback option for handling unexpected scenarios.
 
-![exclusive_gateway_default](images/exclusive_gateway_default.png)
+![exclusive_gateway_default](/images/exclusive_gateway_default.png)
 
 **Challenges:**
 Avoiding conflicting conditions is straightforward when evaluating only one variable that can have only one value (see image 1 below).
 However, with more complex conditions, it's crucial to carefully structure logical expressions ensuring that only one condition can be true at a time.
 This becomes especially important when dealing with multiple variables or scenarios that could potentially lead to conflicting conditions.
 
-![exclusive_gateway_examples](images/exclusive_gateway_examples.png)
+![exclusive_gateway_examples](/images/exclusive_gateway_examples.png)
 
 For example, consider a scenario where multiple variables are involved in a process, and it's possible for more than one variable to be true in the process context (see image 2 above).
 To guarantee that only one condition will be true, you can use additional expressions, such as "voucher == false" to specify distinct paths for each condition.
@@ -50,7 +50,7 @@ When the process encounters the Exclusive Merge, only one of the incoming sequen
 While the Exclusive Merge is commonly used alongside the Exclusive Gateway, it is also compatible with other gateway types in BPMN.
 It serves as a valuable mechanism for synchronizing and consolidating multiple parallel paths, ensuring that only one path is followed based on the given conditions.
 
-![exclusive_merge](images/exclusive_merge.png)
+![exclusive_merge](/images/exclusive_merge.png)
 
 Check out this detailed exclusive gateway example:
 
@@ -61,7 +61,7 @@ exclusivegatewayexample.md
 
 ## Inclusive Gateway
 
-![inclusive_gateway](images/inclusive_gateway.png)
+![inclusive_gateway](/images/inclusive_gateway.png)
 
 Inclusive Gateway (OR): Represents a decision point, but it allows multiple outgoing sequence flows to be taken.
 It is used when the process flow needs to make an inclusive choice, where multiple paths can be followed simultaneously.
@@ -71,13 +71,13 @@ Each outgoing sequence flow can have a condition associated with it, but even if
 ⚠ Note that the Default Flow is only followed if no other outgoing flows are valid.
 ```
 
-![inclusive_gateway_mp](images/inclusive_gateway_mp.png)
+![inclusive_gateway_mp](/images/inclusive_gateway_mp.png)
 
 **Challenges:**
 At least one path should be true for the process to continue.
 Unlike an Exclusive Gateway, where only one path can be taken based on the conditions, the Inclusive Gateway evaluates all incoming sequence flows and enables all the paths for which the conditions are met.
 
-![inclusive_gateway_conditions](images/inclusive_gateway_conditions.png)
+![inclusive_gateway_conditions](/images/inclusive_gateway_conditions.png)
 
 For example, in a career matching system, individuals can input their skill sets, educational qualifications, and work experience.
 An Inclusive Gateway can be employed to assess the compatibility of the individual's skill sets with various job roles.
@@ -91,7 +91,7 @@ The purpose of an Inclusive Gateway merge is to consolidate multiple parallel pa
 Unlike an Exclusive Gateway merge, which selects only one path based on conditions, the Inclusive Gateway merge evaluates all incoming sequence flows and allows all paths with true conditions to proceed.
 This means that if multiple paths were activated during the parallel execution, all these paths will converge.
 
-![inclusive_gateway_merge](images/inclusive_gateway_merge.png)
+![inclusive_gateway_merge](/images/inclusive_gateway_merge.png)
 
 It's important to note that the use of an Inclusive Gateway and its corresponding merge is not mandatory in a process.
 They can be used independently, depending on the specific scenario and process requirements.
@@ -105,7 +105,7 @@ inclusivegatewayexample.md
 
 ## Parallel Gateway
 
-![parallel_gateway](images/parallel_gateway.png)
+![parallel_gateway](/images/parallel_gateway.png)
 
 Parallel Gateway (AND): Is used to split the process flow into multiple parallel paths, allowing concurrent execution of activities.
 All outgoing sequence flows from a Parallel Gateway are taken simultaneously, and the process flow continues along all the paths simultaneously.
@@ -118,7 +118,7 @@ This means that tasks or activities connected to the outgoing sequence flows wil
 ⚠ Note that Default Flow is not possible with Parallel Gateways.
 ```
 
-![parallel_gateways](images/parallel_gateways.png)
+![parallel_gateways](/images/parallel_gateways.png)
 
 **Challenges:**
 Since a Parallel Gateway does not dictate the flow based on conditions, it avoids conflicts that may arise from complex decision-making logic.
@@ -137,7 +137,7 @@ parallelgatewayexample.md
 
 ## Event-Based Gateway
 
-![event_based_gateway](images/event_based_gateway.png)
+![event_based_gateway](/images/event_based_gateway.png)
 
 Event-Based Gateway: An Event-Based Gateway is used to represent a branching point based on events occurring in the process.
 It is often associated with intermediate events in the process flow.
@@ -154,9 +154,9 @@ It's also crucial to understand that conditions aren't required for incoming seq
 
 | 💻 Form                                                | ⌨ Field Input                                       | 📝 Description                                                                                         |
 | ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| ![name_field](images/name_field.png)                   | **Name:** Update Customer Information                | A descriptive name given to the element, providing a human-readable label or title.                    |
-| ![id_field](images/id_field.png)                       | **ID:** Example - updateCustomerInformation          | An identifier used to uniquely identify the element within the BPMN model.                             |
-| ![documentation_field](images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
+| ![name_field](/images/name_field.png)                   | **Name:** Update Customer Information                | A descriptive name given to the element, providing a human-readable label or title.                    |
+| ![id_field](/images/id_field.png)                       | **ID:** Example - updateCustomerInformation          | An identifier used to uniquely identify the element within the BPMN model.                             |
+| ![documentation_field](/images/documentation_field.png) | **Element Documentation:** URL, Raw Data, Plain Text | Additional information or documentation related to the element, such as URLs, plain text, or raw data. |
 
 **Outgoing Sequence:**
 
@@ -166,6 +166,6 @@ It's also crucial to understand that conditions aren't required for incoming seq
 
 | 💻 Form                              | ⌨ Field Input                                 | 📝 Description                                                                        |
 | ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
-| ![conditions](images/conditions.png) | **Condition:** payment_method == "credit_card" | Python expression. Note that multiple conditions can be strung together using AND/OR. |
+| ![conditions](/images/conditions.png) | **Condition:** payment_method == "credit_card" | Python expression. Note that multiple conditions can be strung together using AND/OR. |
 
 **Keywords**: reference, building_diagrams, dev_docs

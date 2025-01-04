@@ -18,7 +18,7 @@ A process can have one or more Pools, each with one or more Lanes.
 A Pool can be configured as an "Empty Pool" (collapsed) or an "Expanded Pool."
 You can choose the desired configuration 🔧 from the element's options after dragging it onto your diagram.
 
-![pools_and_lanes](images/pools_and_lanes_1.png)
+![pools_and_lanes](/images/pools_and_lanes_1.png)
 
 Empty Pools are used to represent role players in cases where a specific process is neither known nor required, but the interaction points remain valuable.
 They serve to illustrate the engagement of certain entities without detailing their internal processes.
@@ -30,16 +30,16 @@ Conversely, Expanded Pools are employed when the processes are known and hold re
 
 Lanes group activities within a single Pool, usually signifying different roles or departments.
 
-![lanes](images/lanes_1.png)
+![lanes](/images/lanes_1.png)
 
 Lanes are incorporated into Pools when the roles they represent belong to the same entity.
 However, if a process doesn't logically fit within the same Pool, like those for different organizations or businesses, it's more appropriate to represent it as a separate Pool rather than another Lane.
 
-![lanes](images/separate_pools_1.png)
+![lanes](/images/separate_pools_1.png)
 
 ## Configuration
 
-![participant_configuration](images/participant_configuration_1.png)
+![participant_configuration](/images/participant_configuration_1.png)
 
 **Collapsed (Empty) Pool configuration:**
 
@@ -47,8 +47,8 @@ Configuring an "Empty Pool" (collapsed) to represent an external entity, such as
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![participant_sales](images/participant_customer_1.png) | **Participant Name:** Sales, **Participant ID:** sales, | A clear and descriptive name serves as a human-readable label or title for the participant. Additionally, a unique ID is essential to distinguish the participant from other participants. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
+| ![participant_sales](/images/participant_customer_1.png) | **Participant Name:** Sales, **Participant ID:** sales, | A clear and descriptive name serves as a human-readable label or title for the participant. Additionally, a unique ID is essential to distinguish the participant from other participants. |
+| ![data_object_pools](/images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
 
 **Expanded Pool configuration:**
 
@@ -56,20 +56,20 @@ Setting up an "Expanded Pool" requires referencing the process, in contrast to t
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![participant_sales](images/participant_sales_1.png) | **Participant Name:** Sales, **Participant ID:** sales,  **Process ID:** process_order, **Process Name:** Process Order | A clear and descriptive name serves as a human-readable label or title for both the participant and the process. Additionally, a unique ID is essential to distinguish both the participant and the process from others. |
-| ![data_object_pools](images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
+| ![participant_sales](/images/participant_sales_1.png) | **Participant Name:** Sales, **Participant ID:** sales,  **Process ID:** process_order, **Process Name:** Process Order | A clear and descriptive name serves as a human-readable label or title for both the participant and the process. Additionally, a unique ID is essential to distinguish both the participant and the process from others. |
+| ![data_object_pools](/images/data_object_pools_1.png) | **Data Objects:** order_details | Create or reference a Data Object to store information for sharing between entities. |
 
 **Collapsed Pool configuration:**
 
-![lanes](images/lane_configuration_1.png)
+![lanes](/images/lane_configuration_1.png)
 
 Remember that each pool requires Lane configuration, even if it contains just a single Lane.
-![lanes](images/pool_settings_1.png)
+![lanes](/images/pool_settings_1.png)
 
 | 💻 Form | ⌨ Field Input | 📝 Description |
 | --- | --- | --- |
-| ![participant_sales](images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
-| ![data_object_pools](images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
+| ![participant_sales](/images/participant_lane_1.png) | **Name:** Manager | A concise and descriptive label that accurately represents the owner and role of the Lane. |
+| ![data_object_pools](/images/data_object_pools_1.png) | **ID:** lane_manager | A distinct ID to differentiate each Lane, especially when there are multiple. |
 
 ---
 ### Example: Using Lanes and Pools for Petty Cash Request Process
@@ -80,7 +80,7 @@ The process is structured around different tasks allocated to Lanes and Pools, e
 
 #### BPMN Diagram
 
-![Lanes and Pools Example](images/lanes_pools_example_1.png)
+![Lanes and Pools Example](/images/lanes_pools_example_1.png)
 
 **Process Flow:**
 
@@ -88,13 +88,13 @@ The process is structured around different tasks allocated to Lanes and Pools, e
 
 1. **User Task: Petty Cash Request**: This task uses a form to collect petty cash requests, including the requested amount and the reason for the request.
 
-    ![Lanes and Pools Example](images/lanes_pools_example_2.png)
+    ![Lanes and Pools Example](/images/lanes_pools_example_2.png)
 
 The process transitions from the Requester Lane to the Cashier Lane within the Cashier Pool for approval.
 
 1. **User Task: Approve Petty Cash**: In this task, cashiers review and approve the petty cash request, recording the approver’s name for accountability.
 
-    ![Lanes and Pools Example](images/lanes_pools_example_3.png)
+    ![Lanes and Pools Example](/images/lanes_pools_example_3.png)
 
 After approval, the workflow returns to the Requester Lane for final confirmation and display of the approval outcome.
 
@@ -109,7 +109,7 @@ Your petty cash request for {{amount}} has been approved by {{approved_by}}
 This message informs the requester of the approval status, including the approved amount and the name of the approver.
 After the manual task, marks the end of the process.
 
-![Lanes and Pools Example](images/lanes_pools_example_4.png)
+![Lanes and Pools Example](/images/lanes_pools_example_4.png)
 
 This BPMN diagram effectively uses Lanes and Pools to structure a petty cash request process, ensuring that responsibilities are clearly assigned and the workflow is logically organized.
 
@@ -198,7 +198,7 @@ For example, a process might involve several departments or roles, each represen
 - **Process Start**
   - The process begins and an initial script task sets the lane owners. The BPMN model below effectively demonstrates a comprehensive workflow leading to a dynamic assignment of reviewers in the "Script Task: Get Reviewers".
 
-![Lane Owners](images/lane_owners.png)
+![Lane Owners](/images/lane_owners.png)
 
 - **Task Execution**:
   - As tasks are executed, the workflow engine checks the `lane_owners` dictionary to determine which users are responsible for tasks in specific lanes.

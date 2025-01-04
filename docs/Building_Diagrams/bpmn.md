@@ -21,7 +21,7 @@ Represent your main process flow, also known as the "Happy Path," at the top in 
 Then, depict alternative scenarios and exceptional cases leading to the bottom.
 This makes the process flow easier to comprehend.
 
-![model_convention](images/model_convention.png)
+![model_convention](/images/model_convention.png)
 
 **Choose Descriptive Names:**
 Use clear and human-readable names for activities, events, and gateways in your process.
@@ -29,7 +29,7 @@ Utilize action verbs to represent activities effectively.
 Start the task name with an action-oriented verb that indicates what needs to be done in the task.
 For example, "Approve Request," "Review Documents," "Send Invoice," etc.
 
-![naming_convention](images/naming_convention.png)
+![naming_convention](/images/naming_convention.png)
 
 **Start with High-Level Overview:**
 Beginning with a high-level overview of the process provides a clear understanding of the overall flow and allows for the identification of major process components before delving into finer details.
@@ -38,19 +38,19 @@ This approach enables the use of placeholders where you are unclear about what t
 It also facilitates the focus on specific sections, preventing feeling overwhelmed by the complexity of the entire process.
 This systematic approach to process modeling ensures that essential aspects are adequately captured while providing room for further refinement.
 
-![high_level](images/high_level.png)
+![high_level](/images/high_level.png)
 
 **Include Exception Handling:**
 Model not only the primary process flow 'Happy Path' but also the exception handling and error recovery paths.
 This makes the process model more robust and prepares stakeholders for potential challenges.
 
-![out_of_stock](images/out_of_stock.png)
+![out_of_stock](/images/out_of_stock.png)
 
 **Use Lanes for Roles and Responsibilities:**
 Utilize swimlanes (pools and lanes) to clearly define the roles and responsibilities when there are different departments or individuals involved in the process.
 This visual representation will help demonstrate the interactions and handoffs between role players, enhancing the understanding of their involvement throughout the process.
 
-![lanes](images/lanes_1.png)
+![lanes](/images/lanes_1.png)
 
 **Embrace Iterative Approach:**
 Creating a perfect model on the first attempt is unlikely.
@@ -60,14 +60,14 @@ Understand that your process model is not static.
 It will evolve over time, and there will always be room for improvement.
 Stay open to finding better ways to represent the process as you gain more insights.
 
-![version](images/version.png)
+![version](/images/version.png)
 
 **Make Note of Assumptions and Possible Challenges:**
 During the modeling process, it is essential to clearly document any assumptions made, especially when you may not have complete knowledge of user behavior or real-life process dynamics.
 By documenting these assumptions, you provide context and ensure transparency when sharing the model with others.
 Remember to verify these assumptions during real-life testing to validate their accuracy and adjust the model accordingly.
 
-![version](images/assumptions.png)
+![version](/images/assumptions.png)
 
 **Example:**
 Initially, we assumed that every customer going to checkout would complete their payment.

@@ -10,7 +10,7 @@ At a high level:
 - Configuration for an extension can be found and modified in its `extension_uischema.json` file.
 - Access to an extension can be set up via permissions.
 
-![Extensions](images/Extensions_dashboard.png)
+![Extensions](/images/Extensions_dashboard.png)
 
 ## Getting Started with Extensions
 
@@ -30,11 +30,11 @@ To create your own custom extension, follow these steps:
 
 - Navigate to the process group repository where extensions are to be implemented.
 
-![Extension Process Group](images/Extension1.png)
+![Extension Process Group](/images/Extension1.png)
 
 - Create a process model in this group. You can give it whatever name you want. Then create a file inside the process model called `extension_uischema.json`. This will control how the extension will work.
 
-![Extension](images/Extension_UI_schema.png)
+![Extension](/images/Extension_UI_schema.png)
 
 As an example, we have created an extension that adds a link to the profile menu in the top right and also adds a new "Support" page to the app so that users of the application know who to talk to if they have issues.
 You can find the full example [on GitHub](https://github.com/sartography/sample-process-models/tree/sample-models-1/extensions/support).

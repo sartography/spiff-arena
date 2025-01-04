@@ -28,7 +28,7 @@ Here are some [quick examples](https://commonmark.org/help/).
 And here is a great [10-minute tutorial](https://commonmark.org/help/tutorial/).
 This will cover a lot of the basics, like bolding text, italics, paragraphs, lists, and other common formatting techniques.
 
-![Markdown screenshot](./images/markdown.png "Markdown example")
+![Markdown screenshot](/images/markdown.png "Markdown example")
 
 ### MyST
 
@@ -100,7 +100,7 @@ So let's open just that folder in VSCode.
 
 Now click on the two pieces of paper at the top corner of your screen, and you should see a project that looks like this without all the rest of the code in your way:
 
-![Docs Directory](./images/docs_dir.png "Docs Directory")
+![Docs Directory](/images/docs_dir.png "Docs Directory")
 
 ### Step 6: Add some extensions
 
@@ -109,7 +109,7 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 - Click the "install" button.
 - Repeat, this time installing the "Python" extension for VSCode (from Microsoft)
 
-![Myst Extension](./images/myst.png "Search for MyST in extensions")
+![Myst Extension](/images/myst.png "Search for MyST in extensions")
 
 ### Step 7: Install Python Dependencies
 
@@ -135,7 +135,7 @@ You can do that by following these steps:
 
 ### Step 10: Commit your changes and push them up for everyone
 
-1. Select the "git" button on the left-hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button")
+1. Select the "git" button on the left-hand side of the toolbar (circles with lines between them) ![Git button](/images/git.png "Git button")
 2. Press the blue "Commit" button.
 3. Any changes you pushed up should be live on our website within 5 to 10 minutes.
 

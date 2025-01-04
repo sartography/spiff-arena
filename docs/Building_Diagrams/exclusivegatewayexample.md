@@ -7,11 +7,11 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
 
 ## Process Steps
 
-![User Task](images/exclusivegatewayexample.png)
+![User Task](/images/exclusivegatewayexample.png)
 
 1. **User Task: Show User Form**
 
-![User Task](images/exclusivegatewayexample1.png)
+![User Task](/images/exclusivegatewayexample1.png)
 
 - **Purpose**: Captures user data which influences pathway decisions.
 - **Form Configuration**:
@@ -39,7 +39,7 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
 
    **a**. **Others**: Leads to a general greeting for users not named "Chuck."
 
-   ![Sequence Flows](images/exclusivegatewayexample3.png)
+   ![Sequence Flows](/images/exclusivegatewayexample3.png)
 
    **For 'Others' Sequence Flow**:
 
@@ -48,7 +48,7 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
 
    **b**. **Chuck**: Directs to a personalized greeting for users named "Chuck."
 
-   ![Sequence Flows](images/exclusivegatewayexample4.png)
+   ![Sequence Flows](/images/exclusivegatewayexample4.png)
 
    **For 'Chuck' Sequence Flow**:
 
@@ -57,11 +57,11 @@ This example demonstrates the use of an Exclusive Gateway to manage conditional 
 
 3. **Exclusive Gateway Merge**: Merges the paths from manual tasks: "Hello to Others" and "Hi to Chuck," continuing to the next unified step in the process.
 
-![Exclusive Gateway Merge](images/exclusivegatewayexample5.png)
+![Exclusive Gateway Merge](/images/exclusivegatewayexample5.png)
 
 4. **Manual Task: Show End Message**: Concludes the interaction by displaying a closing message and displays "Thank you for your participation, {{firstName}}."
 
-![Exclusive Gateway Merge](images/exclusivegatewayexample6.png)
+![Exclusive Gateway Merge](/images/exclusivegatewayexample6.png)
 
 After the manual task, marks the completion of the process through the end event.
 
