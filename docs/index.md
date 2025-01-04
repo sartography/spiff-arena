@@ -14,27 +14,29 @@
 
 ```{toctree}
 :maxdepth: 1
-:caption: Tutorials
-Getting_Started/quick_start.md
+:hidden:
+
+tutorials/index
+how_to_guides/index
+reference/index
+explanation/index
 ```
 
-```{toctree}
-:maxdepth: 1
-:caption: How-to Guides
-Building_Diagrams/user_tasks_and_forms.md
-```
+## [Tutorials](tutorials/index)
 
-```{toctree}
-:maxdepth: 1
-:caption: Reference
-appendices/glossary.md
-```
+**Start here**: A hands-on introduction to SpiffWorkflow for new users.
 
-```{toctree}
-:maxdepth: 1
-:caption: Explanation
-Debugging_Diagrams/process_error_handling.md
-```
+## [How-to guides](how_to_guides/index)
+
+**Step-by-step guides**: Covering key operations and common tasks.
+
+## [Reference](reference/index)
+
+**Technical information**: Specifications, APIs, architecture.
+
+## [Explanation](explanation/index)
+
+**Discussion and clarification**: Background covering key topics
 
 ```{toctree}
 :maxdepth: 1
@@ -129,3 +131,7 @@ SpiffWorkflow is an open-source project that welcomes community contributions, s
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
 - [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)
+
+```
+
+```
