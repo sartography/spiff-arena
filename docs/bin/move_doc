@@ -62,7 +62,7 @@ mkdir -p "$NEW_DIR"
 INDEX_FILE="$NEW_DIR/index.md"
 if [[ ! -f "$INDEX_FILE" ]]; then
   echo "Creating $INDEX_FILE ..."
-  cat <<EOF > "$INDEX_FILE"
+  cat <<EOF >"$INDEX_FILE"
 # Tutorials
 
 Welcome to the Tutorials section. Here you will find step-by-step guides to help you get started with SpiffWorkflow.
@@ -79,16 +79,17 @@ else
   if ! grep -q "$BASENAME" "$INDEX_FILE"; then
     echo "Appending toctree entry for $BASENAME in $INDEX_FILE ..."
     # Inserting the new file at the end of the toctree section
-    sed -i "/^\`\`\`{toctree}/,/^\`\`\`/ {
-      /:maxdepth:/! {
-        /^```\$/! s/$/\n$BASENAME/
-      }
-    }" "$INDEX_FILE"
+    hot_sed -i "/^\`\`\`{toctree}/,/^\`\`\`/ {
+  /:maxdepth:/! {
+    /^\`\`\`$/! s/$/\n$BASENAME/
+  }
+}" "$INDEX_FILE"
+
   fi
 fi
 
 # Check if the project is under Git control for 'git mv'
-if git rev-parse --is-inside-work-tree &> /dev/null; then
+if git rev-parse --is-inside-work-tree &>/dev/null; then
   echo "Using git mv to move the file..."
   git mv "$SOURCE_FILE" "$NEW_DIR/"
 else
