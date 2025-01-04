@@ -13,7 +13,7 @@
 ## In This Documentation
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 :hidden:
 
 tutorials/index
@@ -67,7 +67,6 @@ Building_Diagrams/Builtin_examples.md
 :maxdepth: 1
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
-Debugging_Diagrams/process_error_handling.md
 Debugging_Diagrams/executable_non_executable.md
 ```
 
@@ -78,19 +77,6 @@ Support/manage_processes.md
 Support/Welcome_Messages.md
 Support/Running_Server_Locally.md
 Support/FAQ.md
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Technical Docs
-dev/index.md
-dev/setup.md
-dev/backend.md
-dev/frontend.md
-dev/connector_proxy.md
-dev/how_to_build_a_connector.md
-dev/extensions.md
-dev/process.md
 ```
 
 ```{toctree}

@@ -1,4 +1,5 @@
 # Extensions
+
 Extensions in SpiffArena provide a mechanism to augment the software with custom features and functionalities.
 By leveraging extensions, users can implement functions or features not present in the standard offering.
 This powerful feature ensures adaptability to various business needs, from custom reports to specific user tools.
@@ -58,8 +59,9 @@ Here are some of the use cases already implemented by our users:
 - Rendering the output of these APIs using Jinja templates and markdown
 
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
-When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](/dev/connector_proxy.md).
+When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](connector_proxy).
 In cases where an extension is appropriate, by following the instructions in this guide, organizations can expand the system's functionality to meet their unique needs.
 
 ```{tags} how_to_guide, dev_docs
+
 ```
