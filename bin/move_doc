@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+#
+# Usage:
+#   ./bin/move_doc <source_file> <new_directory>
+#
+# Example:
+#   ./move_doc.sh dev/index.md tutorials
+#   ./move_doc.sh docs/dev/index.md docs/tutorials
+#
+# This script assumes:
+#  1. <source_file> is either in the docs/ directory or is referenced without "docs/" prefix.
+#  2. <new_directory> is a path (relative to docs/).
+#  3. If the doc already exists in <new_directory>, it will exit with a message.
+#  4. If <new_directory>/index.md doesn't exist or the directory doesn't exist, it will be created
+#     with a basic toctree. Otherwise, the script appends the doc to the existing toctree.
+#  5. If your project is tracked under Git, it will use 'git mv'. Otherwise, it uses 'mv'.
+
+SOURCE_FILE="$1"
+NEW_DIR="$2"
+
+if [[ -z "$SOURCE_FILE" || -z "$NEW_DIR" ]]; then
+  echo "Usage: $0 <source_file> <new_directory>"
+  exit 1
+fi
+
+# Remove any leading 'docs/' from SOURCE_FILE or NEW_DIR, if present.
+SOURCE_FILE="${SOURCE_FILE#docs/}"
+NEW_DIR="${NEW_DIR#docs/}"
+
+# If we're not in 'docs/', check if a 'docs' directory exists in the current path.
+if [[ ! $(basename "$PWD") == "docs" ]]; then
+  if [[ -d "docs" ]]; then
+    # Move into the docs directory
+    cd docs
+  else
+    echo "Error: 'docs' directory not found in the current path."
+    exit 1
+  fi
+fi
+
+# Check if the new directory is the same as the source file's directory.
+CURRENT_DIR="$(dirname "$SOURCE_FILE")"
+BASENAME="$(basename "$SOURCE_FILE")"
+
+if [[ "$CURRENT_DIR" == "$NEW_DIR" ]]; then
+  echo "The file is already in the target directory. No action taken."
+  exit 0
+fi
+
+# Create the new directory if it doesn't exist
+mkdir -p "$NEW_DIR"
+
+# Check if the target directory already has an index.md file
+INDEX_FILE="$NEW_DIR/index.md"
+if [[ ! -f "$INDEX_FILE" ]]; then
+  echo "Creating $INDEX_FILE ..."
+  cat <<EOF > "$INDEX_FILE"
+# Tutorials
+
+Welcome to the Tutorials section. Here you will find step-by-step guides to help you get started with SpiffWorkflow.
+
+\`\`\`{toctree}
+:maxdepth: 1
+quick_start
+\`\`\`
+EOF
+else
+  # If index.md exists, we may need to append the new file to the existing toctree
+  # but only if there's more than one entry in that file already or if the file to be moved
+  # is unique.
+  if ! grep -q "$BASENAME" "$INDEX_FILE"; then
+    echo "Appending toctree entry for $BASENAME in $INDEX_FILE ..."
+    # Inserting the new file at the end of the toctree section
+    sed -i "/^\`\`\`{toctree}/,/^\`\`\`/ {
+      /:maxdepth:/! {
+        /^```\$/! s/$/\n$BASENAME/
+      }
+    }" "$INDEX_FILE"
+  fi
+fi
+
+# Check if the project is under Git control for 'git mv'
+if git rev-parse --is-inside-work-tree &> /dev/null; then
+  echo "Using git mv to move the file..."
+  git mv "$SOURCE_FILE" "$NEW_DIR/"
+else
+  echo "Using mv to move the file..."
+  mv "$SOURCE_FILE" "$NEW_DIR/"
+fi
+
+echo "File moved successfully to $NEW_DIR/$BASENAME."
