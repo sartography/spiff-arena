@@ -22,7 +22,10 @@ extensions = ["myst_parser", "sphinxcontrib.mermaid", "sphinx_tags"]
 myst_fence_as_directive = ["mermaid"]
 myst_heading_anchors = 2
 
-tags_create_tags = True
+# tags are sort of annoying and buggy, given that the individual tag show pages are broken when clicked from leaf node pages
+# and they are required to be in the top-level toctree, which forces the side nav to highlight the current page twice, once
+# where it belongs and once in the tags section.
+# tags_create_tags = True
 tags_extension = ["md"]
 
 templates_path = ["_templates"]
