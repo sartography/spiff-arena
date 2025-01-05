@@ -57,10 +57,6 @@ Support/FAQ.md
 :caption: DevOps - Installation & Integration
 DevOps_installation_integration/deployment.md
 DevOps_installation_integration/permission_url.md
-DevOps_installation_integration/configure_connector_proxy.md
-DevOps_installation_integration/deploy_aws_lambda.md
-DevOps_installation_integration/redis_celery_broker.md
-DevOps_installation_integration/process_model_management.md
 ```
 
 ```{toctree}
