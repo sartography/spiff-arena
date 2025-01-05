@@ -4,7 +4,8 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 
 ```{toctree}
 :maxdepth: 1
-glossary.md
+glossary
+wish_list
 ```
 
 ```{toctree}

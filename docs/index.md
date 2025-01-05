@@ -59,7 +59,6 @@ DevOps_installation_integration/deployment.md
 DevOps_installation_integration/permission_url.md
 DevOps_installation_integration/configure_connector_proxy.md
 DevOps_installation_integration/deploy_aws_lambda.md
-DevOps_installation_integration/Secrets.md
 DevOps_installation_integration/redis_celery_broker.md
 DevOps_installation_integration/path_based_routing.md
 DevOps_installation_integration/process_model_management.md
@@ -68,7 +67,6 @@ DevOps_installation_integration/process_model_management.md
 ```{toctree}
 :maxdepth: 1
 :caption: Appendices
-wish_list/wish_list.md
 ```
 
 ## Indices and Tables

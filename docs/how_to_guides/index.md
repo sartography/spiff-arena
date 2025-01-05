@@ -22,6 +22,5 @@ building_diagrams/builtin_examples.md
 ```{toctree}
 :maxdepth: 1
 :caption: Deployment
-deployment/admin_and_permissions.md
-deployment/okta_config.md
+deployment/index
 ```
