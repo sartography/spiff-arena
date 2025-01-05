@@ -41,7 +41,6 @@ explanation/index
 ```{toctree}
 :maxdepth: 1
 :caption: Debugging Diagrams
-Debugging_Diagrams/bpmn_unit_tests.md
 ```
 
 ```{toctree}

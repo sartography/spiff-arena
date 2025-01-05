@@ -3,4 +3,5 @@
 ```{toctree}
 :maxdepth: 1
 executable_non_executable
+bpmn_unit_tests.md
 ```
