@@ -40,31 +40,6 @@ explanation/index
 
 ```{toctree}
 :maxdepth: 1
-:caption: Building Diagrams
-Building_Diagrams/learn_basics.md
-Building_Diagrams/bpmn.md
-Building_Diagrams/user_tasks_and_forms.md
-Building_Diagrams/gateways.md
-Building_Diagrams/events.md
-Building_Diagrams/message_events.md
-Building_Diagrams/signal_events.md
-Building_Diagrams/timer_events.md
-Building_Diagrams/escalation_events.md
-Building_Diagrams/conditional_events.md
-Building_Diagrams/error_events.md
-Building_Diagrams/Displaying_Content.md
-Building_Diagrams/Script_Tasks.md
-Building_Diagrams/service_tasks.md
-Building_Diagrams/sub-processes_and_call_activities.md
-Building_Diagrams/data.md
-Building_Diagrams/multiinstance.md
-Building_Diagrams/dmn.md
-Building_Diagrams/pools_and_lanes.md
-Building_Diagrams/Builtin_examples.md
-```
-
-```{toctree}
-:maxdepth: 1
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
 Debugging_Diagrams/executable_non_executable.md
@@ -99,7 +74,6 @@ DevOps_installation_integration/okta_config.md
 :caption: Appendices
 appendices/articles.md
 documentation/documentation.md
-Building_Diagrams/custom_process_metadata.md
 wish_list/wish_list.md
 ```
 
@@ -117,7 +91,3 @@ SpiffWorkflow is an open-source project that welcomes community contributions, s
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
 - [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)
-
-```
-
-```

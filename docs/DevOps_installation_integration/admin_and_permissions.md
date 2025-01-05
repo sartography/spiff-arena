@@ -34,11 +34,12 @@ This is just for documentation purposes and isn't used by the system.
 In this example, we are describing permissions for an "admin-type-user."
 
 There are three keys allowed under each permission:
-* groups: lists the groups to which the permission applies (admin in this case)
-* actions: lists the specific actions that are permitted for the group
-   * actions can be negated by prepending with "DENY:"
-* uri: defines the target resource for these permissions
-   * /* indicates that the permissions apply to all resources within the system
+
+- groups: lists the groups to which the permission applies (admin in this case)
+- actions: lists the specific actions that are permitted for the group
+  - actions can be negated by prepending with "DENY:"
+- uri: defines the target resource for these permissions
+  - /\* indicates that the permissions apply to all resources within the system
 
 **Permissions allowed:**
 
@@ -56,15 +57,15 @@ There are three keys allowed under each permission:
 
 To allow reading and updating, it would look like this:
 
-````
+```
 ["read", "update"]
-````
+```
 
 To allow reading and DISALLOW updating, it would look like this:
 
-````
+```
 ["read", "DENY:update"]
-````
+```
 
 ## Site Administration
 
@@ -100,12 +101,12 @@ The new Process Groups tile will be available under the Process Groups view.
 - Description: Provide a brief description of the process model, outlining its purpose or functionality.
 - Notification Type: Specify the type of notification related to the process model.
 - Notification Addresses: Enter the addresses or destinations where notifications should be sent in the event that a process instance encounters an error.
-You do not need to worry about setting these values unless you are interested in custom {ref}`process_error_handling`.
+  You do not need to worry about setting these values unless you are interested in custom {ref}`process_error_handling`.
 - Metadata Extraction Path: You can provide one or more metadata extractions to uplift data from your process instances to provide quick access in searches and perspectives.
-Specify the key and path/location where metadata extraction should occur within the process model.
-For example, if you have a script task that runs the statement `great_color = "blue"`, then you would set the extraction path to `great_color`.
-You would probably also set the extraction key to `great_color`.
-But if you wanted to, you could just call it `color`, assuming you wanted that to be the name used in reports, etc.
+  Specify the key and path/location where metadata extraction should occur within the process model.
+  For example, if you have a script task that runs the statement `great_color = "blue"`, then you would set the extraction path to `great_color`.
+  You would probably also set the extraction key to `great_color`.
+  But if you wanted to, you could just call it `color`, assuming you wanted that to be the name used in reports, etc.
 
 Make sure to accurately fill in all the required fields in the Process Model form to ensure proper configuration and functionality.
 
@@ -132,7 +133,7 @@ The Process Model view should now include all uploaded files.
 ### Step 4: Understand the Process Models
 
 [Read more about DMN tables and how they work here.
-](../Building_Diagrams/dmn.md)
+](../reference/bpmn/dmn)
 
 #### Users to Groups
 
@@ -153,15 +154,15 @@ Read more about DMN tables to understand how the rules engine can be utilized fo
 Now that the groups have been identified, their permissions can be set by adding the group name under the "permissions_group" column.
 
 - To determine a user's capabilities within the permissible scope, you can define specific permissions.
-These permissions can be combined in a sequence if multiple apply to a particular rule.
-For instance, ["read", "start"] indicates that the user can perform both reading and starting actions.
-Alternatively, [All] can be employed to grant unrestricted access.
+  These permissions can be combined in a sequence if multiple apply to a particular rule.
+  For instance, ["read", "start"] indicates that the user can perform both reading and starting actions.
+  Alternatively, [All] can be employed to grant unrestricted access.
 - The hit policy is set to "Collect" which means that all conditions that are true will be applied.
-[Read more about DMN tables and hit policies here.](../Building_Diagrams/dmn.md)
+  [Read more about DMN tables and hit policies here.](../reference/bpmn/dmn)
 - The permission URL can be configured to define the user's access privileges.
-Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs.
-In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient.
-However, it is also feasible to directly incorporate any API URL into the permissions.
+  Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs.
+  In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient.
+  However, it is also feasible to directly incorporate any API URL into the permissions.
 
 In truth, what you are doing is writing an expression.
 In this case, it would read that if the variable 'permissions_group' type string is equal to 'permissions' variable of type string then set the 'permission_url' equal to the associated value.
@@ -179,4 +180,5 @@ To ensure that User Groups and Permissions take effect, it is necessary to run t
 Whenever changes are made to any of these diagrams, like adding a user group or permission, the process should be started and completed successfully in order for the changes to be applied.
 
 ```{tags} how_to_guide, dev_docs
+
 ```

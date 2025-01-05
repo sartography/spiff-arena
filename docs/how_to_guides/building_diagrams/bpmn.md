@@ -6,7 +6,7 @@ Here are some helpful tips to guide you through the process and create effective
 **Understand BPMN Symbols:**
 Begin by thoroughly understanding the meaning and usage of each BPMN symbol.
 This will ensure that you use the symbols correctly to represent the various elements of your business process.
-Refer to the [Learn Basics](../appendices/glossary.md) section to learn more about each symbol.
+Refer to the [Learn Basics](/reference/glossary.md) section to learn more about each symbol.
 
 Grouping them together can create a mind map that's easy to remember.
 
@@ -88,4 +88,5 @@ Additionally, utilize intermediate events, such as message events, signal events
 These events guide the process towards a conclusion and allow for the cancellation of instances from within the process or through external triggers.
 
 ```{tags} how_to_guide, building_diagrams
+
 ```
