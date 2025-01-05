@@ -6,6 +6,7 @@
 :maxdepth: 1
 :caption: General How-to Guides
 custom_process_metadata
+documentation
 ```
 
 ```{toctree}

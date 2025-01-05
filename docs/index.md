@@ -71,7 +71,6 @@ DevOps_installation_integration/process_model_management.md
 :maxdepth: 1
 :caption: Appendices
 appendices/articles.md
-documentation/documentation.md
 wish_list/wish_list.md
 ```
 
