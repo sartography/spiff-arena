@@ -2,6 +2,7 @@
 
 ```{toctree}
 :maxdepth: 1
+deployment.md
 secrets
 admin_and_permissions
 okta_config
