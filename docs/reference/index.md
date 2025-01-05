@@ -6,6 +6,7 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 :maxdepth: 1
 glossary
 wish_list
+permission_url.md
 ```
 
 ```{toctree}

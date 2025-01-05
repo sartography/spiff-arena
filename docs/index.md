@@ -56,7 +56,6 @@ Support/FAQ.md
 :maxdepth: 1
 :caption: DevOps - Installation & Integration
 DevOps_installation_integration/deployment.md
-DevOps_installation_integration/permission_url.md
 ```
 
 ```{toctree}
