@@ -16,3 +16,10 @@ building_diagrams/bpmn.md
 building_diagrams/displaying_content.md
 building_diagrams/builtin_examples.md
 ```
+
+```{toctree}
+:maxdepth: 1
+:caption: Deployment
+deployment/admin_and_permissions.md
+deployment/okta_config.md
+```
