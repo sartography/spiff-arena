@@ -5,4 +5,5 @@
 secrets
 admin_and_permissions
 okta_config
+path_based_routing.md
 ```
