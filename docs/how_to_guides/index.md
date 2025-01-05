@@ -12,6 +12,7 @@ documentation
 ```{toctree}
 :maxdepth: 1
 :caption: Building Diagrams
+building_diagrams/index.md
 building_diagrams/learn_basics.md
 building_diagrams/bpmn.md
 building_diagrams/displaying_content.md

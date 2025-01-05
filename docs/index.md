@@ -42,7 +42,6 @@ explanation/index
 :maxdepth: 1
 :caption: Debugging Diagrams
 Debugging_Diagrams/bpmn_unit_tests.md
-Debugging_Diagrams/executable_non_executable.md
 ```
 
 ```{toctree}
