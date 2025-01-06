@@ -58,12 +58,6 @@ explanation/index
 :caption: Appendices
 ```
 
-## Indices and Tables
-
-- [](genindex)
-- [](modindex)
-- [](search)
-
 ## Project and Community
 
 SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
@@ -71,4 +65,4 @@ SpiffWorkflow is an open-source project that welcomes community contributions, s
 - [Join our online chat](https://discord.gg/F6Kb7HNK7B)
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
-- [Thinking about using SpiffWorkflow for your next project? Get in touch!](https://www.spiffworkflow.org/)
+- Thinking about using SpiffWorkflow for your next project? [Get in touch!](https://www.spiffworkflow.org/)
