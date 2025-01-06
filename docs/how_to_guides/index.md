@@ -7,6 +7,9 @@
 :caption: General How-to Guides
 custom_process_metadata
 documentation
+manage_processes
+welcome_messages
+running_server_locally
 ```
 
 ```{toctree}

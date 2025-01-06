@@ -46,9 +46,6 @@ explanation/index
 ```{toctree}
 :maxdepth: 1
 :caption: Support & Administration
-Support/manage_processes.md
-Support/Welcome_Messages.md
-Support/Running_Server_Locally.md
 Support/FAQ.md
 ```
 
