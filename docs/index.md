@@ -46,7 +46,6 @@ explanation/index
 ```{toctree}
 :maxdepth: 1
 :caption: Support & Administration
-Support/FAQ.md
 ```
 
 ```{toctree}
