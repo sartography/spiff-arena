@@ -13,7 +13,7 @@ Users can interact with pre-built models, make modifications, and visualize proc
 
 ## How to Log in to SpiffArena
 
-```{image} ./images/Login.png
+```{image} /images/Login.png
 :alt: Login Screen
 :class: bg-primary mb-1
 :width: 230px
@@ -39,7 +39,7 @@ In this section, we will navigate through the platform and provide a general ove
 Once you are signed in, you can start exploring the home page.
 The home page has three tab sections: **In Progress**, **Completed**, and **Start New**.
 
-![Untitled](images/Untitled_2.png)
+![Untitled](/images/Untitled_2.png)
 
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you, and, if applicable, those with tasks completed by a group of which you are a member.
@@ -55,7 +55,7 @@ Each instance has its own set of data and state that is updated as the instance 
 
 If you are a member of a team, you may also have one or more instances with tasks waiting for [team name] lists as well.
 
-![Untitled](images/Untitled_3.png)
+![Untitled](/images/Untitled_3.png)
 
 ### Step 2: Explore the Processes section
 
@@ -65,7 +65,7 @@ The process section provides a comprehensive view of the process ecosystem by sh
 A **process group** is a way of grouping a bunch of **process models**, and a **process model** contains all the files necessary to execute a specific process.
 ```
 
-![Untitled](images/Untitled_4.png)
+![Untitled](/images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
 
@@ -73,7 +73,7 @@ The Process Instance section provides a detailed view of individual process inst
 
 This section includes essential information such as the instance ID, process name, the individual who started the process, the end date, and the current status.
 
-![Untitled](images/Untitled_5.png)
+![Untitled](/images/Untitled_5.png)
 
 When getting started with SpiffWorkflow, it's essential to take the time to explore and familiarize yourself with the platform's interface and features.
 Feel free to ask questions about the platform's features or how to get started.
@@ -92,7 +92,7 @@ Once you're signed in, you'll see three tabs in the Home section: In progress, C
 If you want to start a new process, click the "Start New +" button.
 This will bring up the "Processes I can start" section.
 
-![Untitled](images/Untitled_6.png)
+![Untitled](/images/Untitled_6.png)
 
 ```{admonition} The Landing Page
 :class: info
@@ -104,7 +104,7 @@ This will bring up the "Processes I can start" section.
 Next, you will see a list of available processes that you have permission to start.
 Choose the process you want to initiate and click “Start”.
 
-![Untitled](images/Untitled_7.png)
+![Untitled](/images/Untitled_7.png)
 
 You have successfully started a new process instance in SpiffWorkflow.
 
@@ -130,11 +130,11 @@ There will be three types of instances shown:
 - **Waiting for me:** This section displays a list of process instances with tasks assigned to you and are currently waiting for you to respond to.
 - **Waiting for [team name]:** If you are a member of SpiffWorkflow, this section displays a list of process instances with tasks assigned to a group you are a member of and currently waiting for someone in that group to complete them.
 
-![Untitled](images/Untitled_8.png)
+![Untitled](/images/Untitled_8.png)
 
 In the case of new users who haven't started or been part of any process or been assigned to any team, you won't be able to see any items on the home page.
 
-![Untitled](images/Untitled_9.png)
+![Untitled](/images/Untitled_9.png)
 
 ### Step 2: Respond to the request
 
@@ -143,7 +143,7 @@ Upon opening the process instance, you can respond to the request based on the r
 
 Depending on the task requirements, this may involve submitting additional information, reviewing the task, or any other action item.
 
-![Untitled](images/Untitled_10.png)
+![Untitled](/images/Untitled_10.png)
 
 That's it!
 With these simple steps, you can efficiently review tasks in SpiffWorkflow.
@@ -165,11 +165,11 @@ There are two ways of finding your process instances.
 Option 1: Once you're signed in, navigate to the home section.
 Here you will find a list of all the process instances you've initiated.
 
-![Untitled](images/Untitled_11.png)
+![Untitled](/images/Untitled_11.png)
 
 Option 2: You can also view the processes you have initiated in the **"Process Instances"** section.
 
-![Untitled](images/Untitled_12.png)
+![Untitled](/images/Untitled_12.png)
 
 ### Step 2: Select the process instance you want to view
 
@@ -179,7 +179,7 @@ Navigate to the BPMN diagram section.
 Here you can see the current task highlighted in **yellow**.
 The grey represents the path which was taken by the current process steps.
 
-![Untitled](images/Untitled_13.png)
+![Untitled](/images/Untitled_13.png)
 
 By following these steps, you can easily view the steps of the process you initiated and keep track of progress.
 
@@ -197,7 +197,7 @@ To check the metadata of a process instance, follow these steps.
 Once you're signed in, navigate to the home section.
 Here you will find a list of all the process instances you've initiated under **“Started by me”**.
 
-![Untitled](images/Untitled_14.png)
+![Untitled](/images/Untitled_14.png)
 
 ### Step 2: View metadata for the selected process instance
 
@@ -205,7 +205,7 @@ Click on the process instance you want to view.
 Upon clicking this, you will be able to view the information about the given instance.
 You'll find the metadata under the details option in the process instance.
 
-![Untitled](images/Untitled_15.png)
+![Untitled](/images/Untitled_15.png)
 
 By following these simple steps, you can easily view the metadata for a process instance in SpiffWorkflow.
 
@@ -222,32 +222,32 @@ With these steps, you'll be able to access process models easily and efficiently
 Once you have successfully signed in, navigate to the process section.
 This section allows you to access all the process groups and process models you have access to.
 
-![Untitled](images/Untitled_16.png)
+![Untitled](/images/Untitled_16.png)
 
 ### Step 2: Find and click on the process
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
-![Untitled](images/View_Forms1.png)
+![Untitled](/images/View_Forms1.png)
 
 ### Step 3: Access the process model files
 
 Once you have clicked on the process you want to view, a list of the model files that are associated with the process will appear.
 
-![Untitled](images/View_Forms3.png)
+![Untitled](/images/View_Forms3.png)
 
 By following these simple steps, you can easily view process model files in SpiffWorkflow.
 
 If you want to view or create information on specific process models, we allow you to create an about section.
 
-![Untitled](images/View_Forms2.png)
+![Untitled](/images/View_Forms2.png)
 
 If you are creating a model, you can add information in the about section.
 We have integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform.
 In order to use this feature, simply create a **README File** inside the process model called README.md and document the model, so everyone can be on the same page.
 
 Furthermore, to check the process instances you started, you can also switch to the "My process instance" tab.
-![View forms](images/View_Forms4.png)
+![View forms](/images/View_Forms4.png)
 
 ---
 
@@ -263,13 +263,13 @@ Here are the steps to view and filter process instances in SpiffWorkflow.
 Once you are signed in, navigate to the "Process Instances" section.
 Within the "Process Instances" section, you'll see a list of all the instances for the processes you can access.
 
-![Untitled](images/Untitled_19.png)
+![Untitled](/images/Untitled_19.png)
 
 If you are on a home page, you can navigate to the table you wish to filter.
 Look for the black funnel icon in the top right-hand corner above the table and click on the icon.
 By clicking on the filter icon, you'll be taken to a full-screen process view.
 
-![Filter Icon](images/Filter_icon.png)
+![Filter Icon](/images/Filter_icon.png)
 
 ### Step 2: Click on Filter option
 
@@ -278,44 +278,44 @@ This will expand the filter section where you will be able to provide details ab
 This allows you to enter various details, including the process model, start date, end date, and time.
 To refine your search, you can enter multiple filter parameters.
 
-![Untitled](images/Untitled_20.png)
+![Untitled](/images/Untitled_20.png)
 
 ### Step 3: Apply Filters
 
 Once you have entered all the relevant filter details, click on the "**Apply**" button to apply the filters.
 The system will then display all the process instances matching the input details.
 
-![Untitled](images/Untitled_21.png)
+![Untitled](/images/Untitled_21.png)
 To filter process instances by **process-defined metadata**, follow these steps:
 - Search for the specific **process** you want to filter and click on the column option to select metadata options.
-![Untitled](images/Untitled_22.png)
+![Untitled](/images/Untitled_22.png)
 - The metadata fields will be displayed in the dropdown.
 Select the field you want to display and click on "**Save**" to apply the changes.
 
-![Untitled](images/Untitled_23.png)
+![Untitled](/images/Untitled_23.png)
 
 - After saving the details, the newly created column will be displayed.
 Finally, click on the “**Apply**” button to reflect the changes.
 
-![Untitled](images/Untitled_24.png)
+![Untitled](/images/Untitled_24.png)
 
 ### (Optional) Step 4: Save Perspectives
 
 If you wish to save the perspectives, click on the "**Save**" button.
 
-![Untitled](images/Untitled_25.png)
+![Untitled](/images/Untitled_25.png)
 
 A prompt will appear, allowing you to provide a name for the identifier associated with the saved filter.
 Enter a descriptive name for the filter identifier and “**Save**” changes.
 Now you can search for specific processes using Process Instance Perspectives.
 
-![Untitled](images/Untitled_26.png)
+![Untitled](/images/Untitled_26.png)
 
-![Untitled](images/Untitled_27.png)
+![Untitled](/images/Untitled_27.png)
 
 ### (Optional) Step 5: Filter by ID
 
-![Untitled](images/Untitled_28.png)
+![Untitled](/images/Untitled_28.png)
 
 If you want to filter by ID, go to the "Find by Id" section of the page.
 Enter the ID and click "Submit".
@@ -336,28 +336,28 @@ Here are the colors used in BPMN Process:
    - **Meaning:** The task is completed.
    - **Implication:** Tasks or activities associated with this process have been successfully completed, and no further action is required.
 
-![Colors](images/Grey_color.png)
+![Colors](/images/Grey_color.png)
 
 2. **Yellow Color:**
    - **Meaning:** The process instance has started and is currently in progress.
    - **Implication:** This color signifies that the task is active and ongoing.
    It may require monitoring or further inputs to proceed.
 
-![Colors](images/Yellow.png)
+![Colors](/images/Yellow.png)
 
 3. **Red/Pink Color:**
    - **Meaning:** Indicates errors in the task.
    - **Implication:** There might be issues or obstacles preventing the task from proceeding as expected.
    Immediate attention and troubleshooting may be required.
 
-![Colors](images/Red.png)
+![Colors](/images/Red.png)
 
 4. **Purple Color:**
    - **Meaning:** The activity has been canceled.
    - **Implication:** This task was intentionally stopped before completion.
    This could be due to time constraints, external triggers, or other predefined conditions that have been set as boundary events.
 
-![Colors](images/Purple.png)
+![Colors](/images/Purple.png)
 
 ---
 ## How to Check Milestones and Events
@@ -367,7 +367,7 @@ Here are the colors used in BPMN Process:
 A milestone is a specific point in a process that signifies a significant event or state.
 It provides a high-level overview of the progress made in the process.
 
-![Milestones](images/Milestone_Screenshot.png)
+![Milestones](/images/Milestone_Screenshot.png)
 
 In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, start, or end) but give it a name, it becomes a milestone.
 Essentially, a milestone is an event that hasn't been set to something specific.
@@ -377,7 +377,7 @@ Essentially, a milestone is an event that hasn't been set to something specific.
 Events provide a detailed log of everything that happens in a process.
 They record every task and its execution time.
 
-![Events](images/Events_Example.png)
+![Events](/images/Events_Example.png)
 
 The events tab provides a detailed log of all the tasks and their execution times.
 It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
@@ -397,7 +397,7 @@ This communication can take various forms:
 To explain the concept, we are using a relatable example involving two processes: the Waiter and the Chef.
 
 **Waiter Process**:
-![Waiter Process](images/waiter.png)
+![Waiter Process](/images/waiter.png)
 
 1. The waiter takes an order.
 2. This order is then communicated to the chef via a message.
@@ -405,7 +405,7 @@ To explain the concept, we are using a relatable example involving two processes
 
 **Chef Process**:
 
-![Chef Process](images/chef.png)
+![Chef Process](/images/chef.png)
 
 1. The chef starts by receiving the order message from the waiter.
 2. After preparing the meal, the chef sends a message back to the waiter, signaling that the order is ready.
@@ -421,7 +421,7 @@ The chef's process starts by listening for the order message, preparing the meal
 One of the complexities in BPMN messaging is ensuring that the right processes are communicating with each other, especially when multiple instances are running.
 This is achieved using correlation keys and properties.
 
-![correlation](images/Corelation.png)
+![correlation](/images/Corelation.png)
 
 - **Correlation Keys**: These represent the topic of the conversation.
 In the given example, the correlation key is the "order".
@@ -448,7 +448,7 @@ To copy the short link:
 - **Access the Process Instance**: Open the process instance that you wish to share.
 - **Find the Short Link Icon**: Look for the link icon near the process instance heading and click on the link icon to copy the short link to your clipboard automatically. Please refer to the screenshot provided.
 
-![Short Link](images/Short_link.png)
+![Short Link](/images/Short_link.png)
 
 Now, you can paste the short link into your desired communication medium to share it with others.
 
@@ -462,12 +462,12 @@ To access and review completed user forms within a specific process model, follo
 2. **Examine Completed Forms**:
    - **Forms You Completed**: In this section, you can view the forms that you have completed.
    It allows you to see the specific details and inputs you provided in each task.
-   ![Completed by me](images/Completed_by_me.png)
+   ![Completed by me](/images/Completed_by_me.png)
 
    - **Forms Completed by Others**: This part shows all the forms completed by any user.
    You can see who completed each form and the last time it was updated.
    However, for privacy and security reasons, you won't be able to view the specific input details of forms completed by others.
-   ![Completed by others](images/Completed_by_others.png)
+   ![Completed by others](/images/Completed_by_others.png)
 
 This approach ensures you can monitor and review the progress of user forms within any process model while maintaining the confidentiality of inputs made by other users.
 
@@ -483,11 +483,11 @@ This guide provides a step-by-step approach to access and understand the task in
 
 2. **Access the Process Instance**: After running the process, navigate to the specific process instance within the SpiffWorkflow interface.
 This is where you can track the progress of the tasks.
-![Access process instance](images/Access_Process_Instance.png)
+![Access process instance](/images/Access_Process_Instance.png)
 
 3. **View Task Details**: Click on the executed task or event that has been completed.
 For instance, in this example, we clicked on "user task".
-![Access task instance](images/Task_instance.png)
+![Access task instance](/images/Task_instance.png)
 
 You will be presented with detailed information about each task instance, including its status and execution timestamp.
 
@@ -495,7 +495,7 @@ For example:
    - `2: 04-01-2024 19:58:11 - MAYBE`
    - `3: 04-01-2024 19:58:10 - COMPLETED`
    - `4: 04-01-2024 19:58:07 - COMPLETED`
-![Access task instance](images/task_instance_history.png)
+![Access task instance](/images/task_instance_history.png)
 
 - **COMPLETED Status**: Tasks marked as 'COMPLETED' have finished their execution successfully and have moved the workflow forward.
 - **MAYBE Status**: Indicates that the task still exists within SpiffWorkflow.
