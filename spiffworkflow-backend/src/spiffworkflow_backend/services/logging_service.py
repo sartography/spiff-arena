@@ -36,20 +36,14 @@ class SpiffLogHandler(SocketHandler):
         self.app = app
 
     def format(self, record: Any) -> str:
-        return json.dumps(
-            {
-                "version": "1.0",
-                "action": "add_event",
-                "event": {
-                    "specversion": "1.0",
-                    "type": record.name,
-                    "id": str(uuid4()),
-                    "source": "spiffworkflow.org",
-                    "timestamp": datetime.utcnow().timestamp(),
-                    "data": record._spiff_data,
-                },
-            }
-        )
+        return json.dumps({
+            "version": "1.0",
+            "type": record.name,
+            "id": str(uuid4()),
+            "source": "spiffworkflow.org",
+            "timestamp": datetime.utcnow().timestamp(),
+            "data": record._spiff_data,
+        })
 
     def get_user_info(self) -> tuple[int | None, str | None]:
         try:
@@ -100,7 +94,7 @@ class SpiffLogHandler(SocketHandler):
             for attr in properties:
                 if hasattr(record, attr):
                     data[attr] = getattr(record, attr)
-                    if data[attr] is not None and attr != "metadata":
+                    if not (data[attr] is None or isinstance(data[attr], dict)):
                         data[attr] = str(data[attr])
                 record._spiff_data = data
 
