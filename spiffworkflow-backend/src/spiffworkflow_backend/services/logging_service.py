@@ -65,40 +65,46 @@ class SpiffLogHandler(SocketHandler):
             return None, None
 
     def filter(self, record: Any) -> bool:
-        if record.name.startswith("spiff") and getattr(record, "event_type", "") not in ["task_completed", "task_cancelled"]:
-            user_id, user_name = self.get_user_info()
+        if record.name.startswith("spiff"):
 
+            user_id, user_name = self.get_user_info()
             data = {
                 "message": record.msg,
                 "userid": user_id,
                 "username": user_name,
+                "process_instance_id": getattr(record, "process_instance_id", None),
+                "process_model_identifier": getattr(record, "process_model_identifier", None),
             }
 
             process_instance_id, process_model_identifier = self.get_default_process_info()
-
-            if not hasattr(record, "process_instance_id"):
+            if data["process_instance_id"] is None:
                 data["process_instance_id"] = process_instance_id
-            if not hasattr(record, "process_model_identifier"):
+            if data["process_model_identifier"] is None:
                 data["process_model_identifier"] = process_model_identifier
 
-            task_properties_from_spiff = [
-                "worflow_spec",
-                "task_spec",
-                "task_id",
-                "task_type",
-                "state",
-                "last_state_change",
-                "elapsed",
-                "parent",
-            ]
-            workflow_properties_from_spiff = ["completed", "success"]
-            properties_from_spiff = task_properties_from_spiff + workflow_properties_from_spiff
-            for attr in properties_from_spiff:
+            if record.name == "spiff.task":
+                properties = [
+                    "workflow_spec",
+                    "task_spec",
+                    "task_id",
+                    "task_type",
+                    "state",
+                    "last_state_change",
+                    "elapsed",
+                    "parent",
+                ]
+            elif record.name == "spiff.workflow":
+                properties = ["workflow_spec", "completed", "success"]
+            elif record.name == "spiff.event":
+                properties = ["bpmn_name", "milestone", "task_id", "task_spec", "metadata", "error_info"]
+
+            for attr in properties:
                 if hasattr(record, attr):
-                    data[attr] = str(getattr(record, attr))
-                else:
-                    data[attr] = None
-            record._spiff_data = data
+                    data[attr] = getattr(record, attr)
+                    if data[attr] is not None and attr != 'metadata':
+                        data[attr] = str(data[attr])
+                record._spiff_data = data
+
             return True
         else:
             return False
@@ -296,25 +302,8 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
 
 
 class LoggingService:
-    _spiff_logger = logging.getLogger("spiff")
+    _spiff_logger = logging.getLogger("spiff.event")
 
     @classmethod
-    def log_event(
-        cls,
-        event_type: str,
-        task_guid: str | None = None,
-        process_model_identifier: str | None = None,
-        process_instance_id: int | None = None,
-    ) -> None:
-        extra: dict[str, Any] = {"event_type": event_type}
-
-        if task_guid is not None:
-            extra["task_guid"] = task_guid
-
-        if process_model_identifier is not None:
-            extra["process_model_Identifier"] = process_model_identifier
-
-        if process_instance_id is not None:
-            extra["process_instance_id"] = process_instance_id
-
-        cls._spiff_logger.info(event_type, extra=extra)
+    def log_event(cls, message: str, log_extras: dict | None = None) -> None:
+        cls._spiff_logger.info(message, extra=log_extras)
