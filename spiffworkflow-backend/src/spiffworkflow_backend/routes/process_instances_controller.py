@@ -70,11 +70,12 @@ def process_instance_create(
 
     process_instance = _process_instance_create(process_model_identifier)
 
-    LoggingService.log_event(
-        ProcessInstanceEventType.process_instance_created.value,
-        process_model_identifier=process_model_identifier,
-        process_instance_id=process_instance.id,
-    )
+    log_extras = {
+        "milestone": "Started",
+        "process_model_identifier": process_model_identifier,
+        "process_instance_id": process_instance.id,
+    }
+    LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
