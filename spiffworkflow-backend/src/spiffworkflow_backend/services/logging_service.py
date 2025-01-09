@@ -77,7 +77,7 @@ class SpiffLogHandler(SocketHandler):
             if data["process_model_identifier"] is None:
                 data["process_model_identifier"] = process_model_identifier
 
-            if record.name == "spiff.task":
+            if record.name in "spiff.task":
                 properties = [
                     "workflow_spec",
                     "task_spec",
@@ -90,8 +90,12 @@ class SpiffLogHandler(SocketHandler):
                 ]
             elif record.name == "spiff.workflow":
                 properties = ["workflow_spec", "completed", "success"]
+            elif record.name == "spiff.data":
+                properties = ["workflow_spec", "task_spec", "task_id", "task_type"]
             elif record.name == "spiff.event":
                 properties = ["bpmn_name", "milestone", "task_id", "task_spec", "metadata", "error_info"]
+            else:
+                properties = []
 
             for attr in properties:
                 if hasattr(record, attr):
