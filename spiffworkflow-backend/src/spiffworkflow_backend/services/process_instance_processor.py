@@ -993,43 +993,14 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def extract_metadata(self) -> None:
-        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
-        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
-        # we also discussed caching this information in new database tables. something like:
-        #   process_model_version
-        #     id
-        #     process_model_identifier
-        #     git_hash
-        #     display_name
-        #     notification_type
-        #   metadata_extraction
-        #     id
-        #     extraction_key
-        #     extraction_path
-        #   metadata_extraction_process_model_version
-        #     process_model_version_id
-        #     metadata_extraction_id
-        process_model_info = ProcessModelService.get_process_model(self.process_instance_model.process_model_identifier)
-        metadata_extraction_paths = process_model_info.metadata_extraction_paths
-        if metadata_extraction_paths is None:
-            return
-        if len(metadata_extraction_paths) <= 0:
-            return
+    def extract_metadata(self) -> dict:
+        return ProcessModelService.extract_metadata(
+            self.process_instance_model.process_model_identifier,
+            self.get_current_data(),
+        )
 
-        current_data = self.get_current_data()
-        for metadata_extraction_path in metadata_extraction_paths:
-            key = metadata_extraction_path["key"]
-            path = metadata_extraction_path["path"]
-            path_segments = path.split(".")
-            data_for_key = current_data
-            for path_segment in path_segments:
-                if path_segment in data_for_key:
-                    data_for_key = data_for_key[path_segment]
-                else:
-                    data_for_key = None  # type: ignore
-                    break
-
+    def store_metadata(self, metadata: dict) -> None:
+        for key, data_for_key in metadata.items():
             if data_for_key is not None:
                 pim = ProcessInstanceMetadataModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
@@ -1190,21 +1161,26 @@ class ProcessInstanceProcessor:
         if self.process_instance_model.start_in_seconds is None:
             self.process_instance_model.start_in_seconds = round(time.time())
 
+        metadata = self.extract_metadata()
         if self.process_instance_model.end_in_seconds is None:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_model.end_in_seconds = round(time.time())
                 if self._workflow_completed_handler is not None:
                     self._workflow_completed_handler(self.process_instance_model)
-                LoggingService.log_event(
-                    ProcessInstanceEventType.process_instance_completed.value,
-                )
+                log_extras = {
+                    "milestone": "Completed",
+                    "process_model_identifier": self.process_instance_model.process_model_identifier,
+                    "process_instance_id": self.process_instance_model.id,
+                    "metadata": metadata,
+                }
+                LoggingService.log_event(ProcessInstanceEventType.process_instance_completed.value, log_extras)
 
         db.session.add(self.process_instance_model)
 
         human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
-        self.extract_metadata()
+        self.store_metadata(metadata)
         self.update_summary()
 
         for ready_or_waiting_task in ready_or_waiting_tasks:
@@ -1839,8 +1815,18 @@ class ProcessInstanceProcessor:
             task_guid=task_model.guid,
             user_id=user.id,
             exception=task_exception,
+            log_event=False,
         )
 
+        log_extras = {
+            "task_id": str(spiff_task.id),
+            "task_spec": spiff_task.task_spec.name,
+            "bpmn_name": spiff_task.task_spec.bpmn_name,
+            "process_model_identifier": self.process_instance_model.process_model_identifier,
+            "process_instance_id": self.process_instance_model.id,
+            "metadata": self.extract_metadata(),
+        }
+        LoggingService.log_event(task_event, log_extras)
         # children of a multi-instance task has the attribute "triggered" set to True
         # so use that to determine if a spiff_task is apart of a multi-instance task
         # and therefore we need to process its parent since the current task will not
