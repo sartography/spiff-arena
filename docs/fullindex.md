@@ -5,7 +5,7 @@ orphan: true
 # Full Index
 
 ```{toctree}
-:hidden:
+:titlesonly:
 
 tutorials/index
 how_to_guides/index
