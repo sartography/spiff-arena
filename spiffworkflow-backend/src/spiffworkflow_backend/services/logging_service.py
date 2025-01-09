@@ -66,7 +66,6 @@ class SpiffLogHandler(SocketHandler):
 
     def filter(self, record: Any) -> bool:
         if record.name.startswith("spiff"):
-
             user_id, user_name = self.get_user_info()
             data = {
                 "message": record.msg,
@@ -101,7 +100,7 @@ class SpiffLogHandler(SocketHandler):
             for attr in properties:
                 if hasattr(record, attr):
                     data[attr] = getattr(record, attr)
-                    if data[attr] is not None and attr != 'metadata':
+                    if data[attr] is not None and attr != "metadata":
                         data[attr] = str(data[attr])
                 record._spiff_data = data
 

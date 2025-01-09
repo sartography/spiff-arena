@@ -1,5 +1,6 @@
 import time
 import traceback
+from typing import Any
 
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -48,7 +49,7 @@ class ProcessInstanceTmpService:
         if add_to_db_session:
             db.session.add(process_instance_event)
 
-        log_extras = {"task_id": task_guid}
+        log_extras: dict[str, Any] = {"task_id": task_guid}
 
         process_instance_error_detail = None
         if exception is not None:

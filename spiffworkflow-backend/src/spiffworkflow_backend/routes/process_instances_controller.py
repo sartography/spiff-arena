@@ -71,7 +71,7 @@ def process_instance_create(
     process_instance = _process_instance_create(process_model_identifier)
 
     log_extras = {
-        "milestone": 'Started',
+        "milestone": "Started",
         "process_model_identifier": process_model_identifier,
         "process_instance_id": process_instance.id,
     }
