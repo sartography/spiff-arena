@@ -1,0 +1,10 @@
+- [ ] Update the structure:
+  - [ ] Move "How to contribute to documentation" to "Reference"
+  - [ ] Move all BPMN elements from "Reference" to "How to guides" under "All Building Diagrams"
+- [ ] Structure "How to guide" as follows:
+  - [ ] How to create a BPMN Diagram
+  - [ ] All Building Diagrams
+  - [ ] Manage Process
+  - [ ] and rest...
+- [ ] Move "Understand the Terminology" to "Reference/Explanation Section"
+- [ ] (Optional) Add a "Reference" section below "Explanation"
