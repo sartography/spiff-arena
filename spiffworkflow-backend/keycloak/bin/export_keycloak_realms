@@ -20,7 +20,14 @@ fi
 docker_container_path=/tmp/hey
 local_tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
 docker exec keycloak rm -rf "$docker_container_path"
-docker exec keycloak /opt/keycloak/bin/kc.sh export --dir "${docker_container_path}" --users realm_file || echo ''
+
+docker exec -it keycloak sh -c \
+  "cp -rp /opt/keycloak/data/h2 /tmp ; \
+  /opt/keycloak/bin/kc.sh export --dir ${docker_container_path} --users realm_file \
+    --http-management-port 9001 \
+    --db dev-file \
+    --db-url 'jdbc:h2:file:/tmp/h2/keycloakdb;NON_KEYWORDS=VALUE'"
+
 docker cp "keycloak:${docker_container_path}" "$local_tmp_dir"
 
 for realm in $realms; do

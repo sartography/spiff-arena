@@ -118,12 +118,6 @@ def _set_up_open_id_scopes(app: Flask) -> None:
         )
         if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
             scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
-    if (
-        os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None
-        and app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]
-        and "groups" not in scopes
-    ):
-        scopes.append("groups")
 
     app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = scopes
 
