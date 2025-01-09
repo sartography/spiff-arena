@@ -40,7 +40,7 @@ class SpiffLogHandler(SocketHandler):
             "version": "1.0",
             "type": record.name,
             "id": str(uuid4()),
-            "source": "spiffworkflow.org",
+            "source": self.app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE"],
             "timestamp": datetime.utcnow().timestamp(),
             "data": record._spiff_data,
         })
