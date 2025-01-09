@@ -36,14 +36,16 @@ class SpiffLogHandler(SocketHandler):
         self.app = app
 
     def format(self, record: Any) -> str:
-        return json.dumps({
-            "version": "1.0",
-            "type": record.name,
-            "id": str(uuid4()),
-            "source": self.app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE"],
-            "timestamp": datetime.utcnow().timestamp(),
-            "data": record._spiff_data,
-        })
+        return json.dumps(
+            {
+                "version": "1.0",
+                "type": record.name,
+                "id": str(uuid4()),
+                "source": self.app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE"],
+                "timestamp": datetime.utcnow().timestamp(),
+                "data": record._spiff_data,
+            }
+        )
 
     def get_user_info(self) -> tuple[int | None, str | None]:
         try:
