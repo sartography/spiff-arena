@@ -5,6 +5,7 @@ In this section, you will find explanations of key concepts and processes in Spi
 ```{toctree}
 :maxdepth: 1
 articles.md
+learn_basics
 ```
 
 ```{toctree}
