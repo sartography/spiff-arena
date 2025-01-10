@@ -4,7 +4,6 @@ This section provides detailed information about the various elements used in Bu
 
 ```{toctree}
 :maxdepth: 1
-:hidden:
 user_tasks_and_forms.md
 gateways.md
 events.md
