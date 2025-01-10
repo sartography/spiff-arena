@@ -7,4 +7,4 @@
   - [ ] Manage Process
   - [ ] and rest...
 - [ ] Move "Understand the Terminology" to "Reference/Explanation Section"
-- [ ] (Optional) Add a "Reference" section below "Explanation"
+- [x] (Optional) Add a "Reference" section below "Explanation"
