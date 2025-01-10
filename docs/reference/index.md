@@ -8,6 +8,7 @@ glossary
 FAQ.md
 wish_list
 permission_url.md
+documentation
 ```
 
 ```{toctree}
