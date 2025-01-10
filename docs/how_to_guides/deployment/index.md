@@ -1,4 +1,4 @@
-# How to Deploy
+# Deploy
 
 ```{toctree}
 :maxdepth: 1

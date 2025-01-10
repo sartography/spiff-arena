@@ -1,4 +1,4 @@
-# How to Build Diagrams
+# Build Diagrams
 
 ```{toctree}
 :maxdepth: 1

@@ -10,15 +10,5 @@ manage_processes
 welcome_messages
 custom_process_metadata
 running_server_locally
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Building Diagrams
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Deployment
 deployment/index
 ```
