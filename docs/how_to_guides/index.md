@@ -6,9 +6,9 @@
 :maxdepth: 1
 :caption: How-to Guides
 building_diagrams/index
-custom_process_metadata
 manage_processes
 welcome_messages
+custom_process_metadata
 running_server_locally
 ```
 
