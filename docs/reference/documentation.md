@@ -1,15 +1,15 @@
 # How to Contribute to the Documentation
 
-This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/).
+The spiff-arena documentation is currently hosted live at [ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/).
 
-Please set aside a couple of hours to work through this, as getting this set up correctly once is 10,000 times better than having problems every day for the rest of your life.
+If you intend to edit the docs on an ongoing basis, please set aside a couple of hours to work through this guide, as getting this set up correctly once is 10,000 times better than having problems every day for the rest of your life.
 
 ## Our Methodology
 
 The methodology we are following is known as ["Docs as Code"](https://www.writethedocs.org/guide/docs-as-code/).
 
 This means using the same tools and processes that software developers use for writing code to write the documentation for code.
-In following this methodology, you will have to pick up some tools you haven't had to use before (Git, Sphinx).
+In following this methodology, you may have to pick up some tools you haven't had to use before (Git, Sphinx).
 Why would a technical writer need to learn these software engineering tools?
 I'll never make the case as well as an article by [Tom Johnson](https://idratherbewriting.com/trends/trends-to-follow-or-forget-docs-as-code.html).
 
@@ -154,7 +154,7 @@ A `.markdownlint.jsonc` file has been added that configures the same markdownlin
 ## Doc Philosphy
 
 We try to use [Diátaxis](https://diataxis.fr/).
-This is also highly related: https://docsfordevelopers.com/
+This is also highly related: <https://docsfordevelopers.com/>
 
 ```{tags} tutorial
 

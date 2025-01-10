@@ -4,15 +4,10 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 
 ```{toctree}
 :maxdepth: 1
+bpmn/index
 glossary
 FAQ.md
 wish_list
-permission_url.md
+permission_url
 documentation
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Elements of BPMN
-bpmn/index.md
 ```
