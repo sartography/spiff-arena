@@ -55,7 +55,7 @@ You may need to install additional system dependencies:
 
 One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, opting instead to run `poetry add pymysql`.
 If you are using mysql, psycopg2 is not necessary, and pymysql is a pure Python implementation of the MySQL client library.
-In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to **init**.py in the backend project:
+In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to `__init__.py` in the backend project:
 
 ```python
 import pymysql
