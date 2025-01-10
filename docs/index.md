@@ -18,8 +18,8 @@
 
 tutorials/index
 how_to_guides/index
-reference/index
 explanation/index
+reference/index
 ```
 
 ## [Tutorials](tutorials/index)

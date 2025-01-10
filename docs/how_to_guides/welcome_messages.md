@@ -1,4 +1,4 @@
-# Welcome Messages in SpiffWorkflow
+# Welcome Messages
 
 ## Introduction
 
@@ -40,4 +40,5 @@ Once you've updated the welcome message, it will be displayed prominently on the
 The message will be positioned in a way that it's one of the first things users see, ensuring they receive the intended greeting every time they access the platform.
 
 ```{tags} how_to_guide
+
 ```

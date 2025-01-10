@@ -1,4 +1,4 @@
-# Troubleshooting: Running Server Locally
+# Troubleshooting Locally
 
 When setting up the SpiffWorkflow backend project locally, you might encounter issues related to the `sample-process-models` directory.
 This documentation aims to address those concerns.
@@ -29,9 +29,9 @@ If you prefer not to use the `sample-process-models` directory or want to start 
 
 - Run the following command with the path to your chosen repository:
 
-   ```
-   SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=/path/to/any/git/repo ./bin/run_server_locally
-   ```
+  ```
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=/path/to/any/git/repo ./bin/run_server_locally
+  ```
 
 ### 3. Use Docker Compose
 
@@ -55,7 +55,7 @@ You may need to install additional system dependencies:
 
 One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, opting instead to run `poetry add pymysql`.
 If you are using mysql, psycopg2 is not necessary, and pymysql is a pure Python implementation of the MySQL client library.
-In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to __init__.py in the backend project:
+In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to `__init__.py` in the backend project:
 
 ```python
 import pymysql
@@ -76,4 +76,5 @@ Whether you choose to clone the `sample-process-models` repository, use a differ
 If you encounter further issues, always refer back to the repository's README or seek assistance from our Discord community.
 
 ```{tags} how_to_guide
+
 ```

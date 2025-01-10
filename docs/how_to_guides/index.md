@@ -4,22 +4,17 @@
 
 ```{toctree}
 :maxdepth: 1
-:caption: General How-to Guides
-custom_process_metadata
-documentation
+:caption: How-to Guides
+building_diagrams/index
 manage_processes
 welcome_messages
+custom_process_metadata
 running_server_locally
 ```
 
 ```{toctree}
 :maxdepth: 1
 :caption: Building Diagrams
-building_diagrams/index.md
-building_diagrams/learn_basics.md
-building_diagrams/bpmn.md
-building_diagrams/displaying_content.md
-building_diagrams/builtin_examples.md
 ```
 
 ```{toctree}
