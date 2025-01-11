@@ -1,4 +1,4 @@
-# Custom Process Metadata
+# Use Custom Process Metadata
 
 This guide will walk you through the steps to create a process model that generates custom metadata using a metadata extraction path and how to query that metadata using process instance filtering.
 

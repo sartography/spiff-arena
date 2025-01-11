@@ -1,4 +1,4 @@
-# Admin and Permissions
+# Manage Permissions
 
 Permissions can be defined and managed at different levels such as process groups, individual processes, or users.
 

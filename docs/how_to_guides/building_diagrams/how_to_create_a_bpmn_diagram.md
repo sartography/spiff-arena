@@ -1,4 +1,4 @@
-# How to Create a BPMN Diagram
+# Create a BPMN Diagram
 
 Starting to model a business process can indeed be a challenging task, especially when multiple departments and users are involved.
 Here are some helpful tips to guide you through the process and create effective process models:

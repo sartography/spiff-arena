@@ -1,4 +1,4 @@
-# Executable and Non-Executable Tasks
+# Use Executable and Non-Executable Tasks
 
 In SpiffWorkflow, a process model can be either **Executable** or **Non-Executable**, and the designation impacts how the workflow behaves:
 - **Executable Process**: Configured for automation and execution by the workflow engine. All tasks within the process are actionable and designed to run dynamically.

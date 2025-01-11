@@ -1,4 +1,4 @@
-# Welcome Messages
+# Manage Welcome Messages
 
 ## Introduction
 

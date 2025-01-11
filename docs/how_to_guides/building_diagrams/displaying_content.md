@@ -1,4 +1,4 @@
-# Displaying Content
+# Display Content
 
 The SpiffArena platform offers powerful features for displaying content within your BPMN processes.
 Follow the steps below to effectively display content in your processes.

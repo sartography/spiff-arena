@@ -1,4 +1,4 @@
-# Redis Celery Broker
+# Work with Redis Celery Broker
 
 SpiffWorkflow can be configured to use Celery for efficient processing.
 Redis can be used as both a broker and backend for Celery.
@@ -41,4 +41,5 @@ echo 'keys celery-task-meta-\*' | redis-cli | sed 's/^/get /' | redis-cli
 ```
 
 ```{tags} how_to_guide, dev_docs
+
 ```

@@ -1,4 +1,4 @@
-# Configuring Okta as an OpenID Provider
+# Configure Okta as an OpenID Provider
 This guide provides steps to configure Okta as an OpenID Provider (alternative to Keycloak) for SpiffWorkflow. 
 
 The setup involves creating an OpenID Connect (OIDC) application, configuring environment variables, and ensuring group information is passed through correctly.  
