@@ -2,10 +2,10 @@
 
 ```{toctree}
 :maxdepth: 1
-bpmn
+how_to_create_a_bpmn_diagram
 user_tasks_and_forms
 displaying_content
-builtin_examples
-executable_non_executable
+builtin_examples_overview
+executable_and_nonexecutable_tasks
 bpmn_unit_tests
 ```

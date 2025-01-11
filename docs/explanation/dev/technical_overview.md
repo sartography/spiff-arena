@@ -24,7 +24,7 @@ C[Connector Proxy]
 ```
 
 SpiffArena is a system that allows users to build and execute BPMN diagrams.
-It is composed of three applications, [spiffworkflow-frontend](frontend), [spiffworkflow-backend](backend), and, optionally, a [connector proxy](connector_proxy).
+It is composed of three applications, [spiffworkflow-frontend](frontend), [spiffworkflow-backend](backend_api), and, optionally, a [connector proxy](connector_proxy).
 
 ## Source code layout
 

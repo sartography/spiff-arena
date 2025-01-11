@@ -138,7 +138,7 @@ Check out this example on Message Event.
 ```{toctree}
 :maxdepth: 1
 :caption: Message Event Example
-message_example_event.md
+configuring_messages_and_correlation_properties
 ```
 
 ```{tags} how_to_guide, building_diagrams

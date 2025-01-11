@@ -64,7 +64,7 @@ Click your function URL again to see a greeting from our deployed Connector Prox
 ## Integrating With SpiffArena
 
 Congratulations, your Connector Proxy has been deployed as a Lambda function.
-For information on configuring SpiffArena to use the new Connector Proxy URL, please see [Configure a Connector Proxy](configure_connector_proxy).
+For information on configuring SpiffArena to use the new Connector Proxy URL, please see [Configure a Connector Proxy](configure_a_connector_proxy).
 
 ```{tags} how_to_guide, devops
 ```

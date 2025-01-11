@@ -3,9 +3,9 @@
 ```{toctree}
 :caption: Technical Docs
 :maxdepth: 1
-overview
-setup
-backend
+technical_overview
+developer_setup
+backend_api
 frontend
 connector_proxy
 how_to_build_a_connector

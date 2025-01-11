@@ -4,5 +4,5 @@ Welcome to the Tutorials section. Here you will find step-by-step guides to help
 
 ```{toctree}
 :maxdepth: 1
-/Getting_Started/quick_start.md
+/Getting_Started/quickstart_guide
 ```

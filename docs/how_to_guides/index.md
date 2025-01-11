@@ -9,6 +9,6 @@ building_diagrams/index
 manage_processes
 welcome_messages
 custom_process_metadata
-running_server_locally
+troubleshooting_locally
 deployment/index
 ```

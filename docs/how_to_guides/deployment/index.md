@@ -3,12 +3,12 @@
 ```{toctree}
 :maxdepth: 1
 deployment.md
-secrets
+how_to_configure_secrets_in_spiffarena
 admin_and_permissions
-okta_config
-path_based_routing.md
+configuring_okta_as_an_openid_provider
+pathbased_routing
 redis_celery_broker.md
-deploy_aws_lambda.md
-configure_connector_proxy
+deploying_a_connector_proxy_as_an_aws_lambda_function
+configure_a_connector_proxy
 process_model_management.md
 ```
