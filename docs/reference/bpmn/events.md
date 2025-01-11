@@ -25,7 +25,7 @@ End Events signify the conclusion of a process and don't have outgoing flows.
 We will delve into the various event types, exploring their categorizations and applications.
 It's vital to note that not every type of event is suitable for all variations; there are specific rules and guidelines governing their use.
 As highlighted in the table, there are distinct limitations.
-For instance, while you cannot initiate a primary process with an escalation event, it's entirely permissible to kickstart a subprocess with such an event.
+For instance, while you cannot initiate a primary process with an escalation event, it's entirely permissible to kickstart a sub-process with such an event.
 To adhere to BPMN standards, it's crucial to consult and follow the provided guide.
 Always ensure that your processes and diagrams conform to these accepted norms.
 
@@ -202,8 +202,8 @@ If the boundary event gets triggered, it can interrupt or not interrupt the atta
 **Example:**
 In our initial scenario where a manager needs to approve or review a submission, employing a timer as a start event impacts the entire workflow.
 This implies that if this timer is triggered, a different process will kick off, regardless of where the main process currently stands.
-On the other hand, when we utilize boundary events, we can confine the timer's influence to a specific task, subprocess, or call-activity.
-This approach grants us greater precision over the timer's scope, as it only applies to the particular task or subprocess it's linked to, and the timer only initiates when the first task within its designated scope begins.
+On the other hand, when we utilize boundary events, we can confine the timer's influence to a specific task, sub-process, or call-activity.
+This approach grants us greater precision over the timer's scope, as it only applies to the particular task or sub-process it's linked to, and the timer only initiates when the first task within its designated scope begins.
 Note that a boundary event can be interrupting or non-interrupting.
 
 ## Non-Boundary Event

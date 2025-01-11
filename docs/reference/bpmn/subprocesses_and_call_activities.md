@@ -53,12 +53,12 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Internal Workflow**:
 
-1. **Start Event**: Initiates the subprocess.
+1. **Start Event**: Initiates the sub-process.
 2. **Appetizer Task**: User selects an appetizer via a form.
 3. **Soup Task**: User selects a soup option.
 4. **Main Course Task**: User chooses a main course.
 5. **Dessert Task**: User selects a dessert.
-6. **End Event**: Marks the completion of the subprocess.
+6. **End Event**: Marks the completion of the sub-process.
 7. **Input Variables**:
 
 - No specific inputs required in this example as tasks dynamically retrieve options from context or form

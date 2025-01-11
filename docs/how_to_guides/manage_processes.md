@@ -185,7 +185,7 @@ In the case of the example, once you resume the instance and complete Manual Tas
 Migration is not possible when the following activities are active (started/ready/waiting):
 
 - Call activity/Subprocess - The task itself cannot be changed once it is active.
-  Tasks inside the call activity or subprocess can be updated if they have not been reached.
+  Tasks inside the call activity or sub-process can be updated if they have not been reached.
   Tasks that directly follow one of these activities are special, and you cannot migrate an instance if you add or remove one of these.
 
 - Multi Instance tasks

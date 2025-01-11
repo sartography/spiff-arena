@@ -10,22 +10,22 @@ Below, we delve into the types of Error Events, offering definitions and enriche
 
 ![Error Start Event](/images/error-events1.png)
 
-The Error Start Event triggers the start of a subprocess in reaction to an error identified in a different process or subprocess.
+The Error Start Event triggers the start of a sub-process in reaction to an error identified in a different process or sub-process.
 It is a specialized event used to initiate error handling workflows dynamically.
 
 **Reason to Use**:
-- **Modular Error Handling**: Separates error handling logic into dedicated subprocesses, improving process organization and maintainability.
-- **Reusability**: Allows for the reuse of error-handling subprocesses across multiple parent processes.
+- **Modular Error Handling**: Separates error handling logic into dedicated sub-processes, improving process organization and maintainability.
+- **Reusability**: Allows for the reuse of error-handling sub-processes across multiple parent processes.
 - **Focused Recovery Strategies**: Enables the development of targeted recovery strategies for specific errors, enhancing error resolution effectiveness.
 
 **Example**:
 
 ![](/images/Start_event_error_example.png)
 
-In an automated supply chain system, an Error Start Event initiates a "Supplier Notification" subprocess when inventory restocking fails due to supplier issues, triggering actions such as alternative supplier selection and impact analysis.
+In an automated supply chain system, an Error Start Event initiates a "Supplier Notification" sub-process when inventory restocking fails due to supplier issues, triggering actions such as alternative supplier selection and impact analysis.
 
 ```{admonition} Note
-⚠ The start event needs to be in an **event subprocess** to be selected.
+⚠ The start event needs to be in an **event sub-process** to be selected.
 ```
 
 ### 2. Error Intermediate Event/Error Boundary Event
@@ -39,7 +39,7 @@ Positioned within the normal flow of a process, this event signifies where an er
 **Reason to Use**:
 - **Error Escalation**: Facilitates the escalation of critical errors that cannot be resolved within the current process context.
 - **Process Integrity**: Maintains the integrity of the business process by preventing the continuation of flawed executions.
-- **Comprehensive Error Management**: Ensures that unresolvable errors within subprocesses are properly managed.
+- **Comprehensive Error Management**: Ensures that unresolvable errors within sub-processes are properly managed.
 - **Clarity in Process Design**: Enhances the readability and understandability of the process model by explicitly marking potential error points.
 
 **Example**:
@@ -66,7 +66,7 @@ This event marks the termination of a process path due to an error, signaling th
 
 ![Error End Event](/images/ErrorEndEventExample.png)
 
-In a retail inventory management workflow, an End Error Event within a stock replenishment subprocess indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
+In a retail inventory management workflow, an End Error Event within a stock replenishment sub-process indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
 This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
 
 ## Example 1: Error Boundary Events in SpiffArena
@@ -128,7 +128,7 @@ This BPMN example highlights the utility of Error Boundary Events in ensuring pr
 
 ## Example 2: Error Boundary Events in Subprocess
 
-In this example, we're outlining a BPMN process that demonstrates how to handle errors within an expanded subprocess and subsequently manage the error through an Error Boundary Event.
+In this example, we're outlining a BPMN process that demonstrates how to handle errors within an expanded sub-process and subsequently manage the error through an Error Boundary Event.
 
 ### Process Description:
 
@@ -143,8 +143,8 @@ The process is triggered by a user action or system event, setting the stage for
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess2.png)
 
 This element encapsulates a more detailed process flow within itself, starting with its own Start Event and comprising several tasks.
-The **Start Event** marks the beginning of the subprocess.
-Next, the **Manual Task 1** represents an initial activity within the subprocess that could be anything from data entry to review by a human operator.
+The **Start Event** marks the beginning of the sub-process.
+Next, the **Manual Task 1** represents an initial activity within the sub-process that could be anything from data entry to review by a human operator.
 Then the Error End Event is used to throw an error within the process.
 The setup of the error end event is:
 
@@ -163,7 +163,7 @@ Configured to represent the occurrence of Error1, with an error code "Err1" and 
 
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess4.png)
 
-Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the subprocess, particularly from the Error End Event.
+Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the sub-process, particularly from the Error End Event.
 The error caught is identified by the code "Err1", and its details are captured in a variable named `message`.
 
 4. **Manual Task**
@@ -176,11 +176,11 @@ The error caught is identified by the code "Err1", and its details are captured 
 
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess7.png)
 
-**A**. Beyond the boundary event's error handling path, the subprocess connects to a main End Event, indicating the normal conclusion of the subprocess activities if no errors occur.
+**A**. Beyond the boundary event's error handling path, the sub-process connects to a main End Event, indicating the normal conclusion of the sub-process activities if no errors occur.
 
 **B**. An End Event follows Manual Task 2, suggesting the conclusion of the error handling path with specific actions taken based on the error encountered.
 
-This example demonstrates the utility of expanded subprocesses for detailed internal workflows, coupled with Error Boundary Events for effective error detection and handling, ensuring processes remain uninterrupted and resilient against anticipated issues.
+This example demonstrates the utility of expanded sub-processes for detailed internal workflows, coupled with Error Boundary Events for effective error detection and handling, ensuring processes remain uninterrupted and resilient against anticipated issues.
 
 ### Conclusion
 

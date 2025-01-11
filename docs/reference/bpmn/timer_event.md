@@ -53,8 +53,8 @@ Here, a 'Start Timer Event' can be used to automatically close the proposal subm
 **Timer Start Event (non-interrupting):**
 Taking a more customer-centric example, envision an online shopping platform.
 While a customer browses and adds items to the cart, they might get distracted and forget to check out.
-To address this, the platform can trigger a 'Non-Interrupting Timer Event' coupled with a subprocess.
-If the cart remains unattended for an hour, this timer triggers the subprocess, sending an email to the customer reminding them of their abandoned cart.
+To address this, the platform can trigger a 'Non-Interrupting Timer Event' coupled with a sub-process.
+If the cart remains unattended for an hour, this timer triggers the sub-process, sending an email to the customer reminding them of their abandoned cart.
 The advantage is that it doesn't disrupt the customer's current session, providing a seamless experience.
 
 ## Intermediate Timer Event
@@ -79,7 +79,7 @@ To manage this, an 'Intermediate Timer Event' can be set, signaling a baking pro
 Transitioning to a logistics scenario, let's consider a company that processes multiple orders throughout the day.
 They might spend hours collecting items, packaging, and preparing them for shipment.
 However, rather than dispatching each order individually, they follow a batch process strategy, consolidating all orders for a one-time dispatch.
-An 'Intermediate Timer Event' can be configured here to accumulate the day's orders and trigger a batch processing subprocess at a specific time, ensuring efficient and streamlined delivery operations.
+An 'Intermediate Timer Event' can be configured here to accumulate the day's orders and trigger a batch processing sub-process at a specific time, ensuring efficient and streamlined delivery operations.
 
 **Example:**
 
@@ -100,7 +100,7 @@ If they don't purchase within this time frame, the timer activates, removing the
 A company prides itself on responding to customer support queries within 12 hours.
 When a new query is logged, a task named "Respond to Customer" is initiated.
 This task has a timer boundary event set for 12 hours.
-If the customer support team hasn't addressed the query within this time frame, the timer boundary event triggers a notification subprocess to alert the team lead or manager about the overdue response.
+If the customer support team hasn't addressed the query within this time frame, the timer boundary event triggers a notification sub-process to alert the team lead or manager about the overdue response.
 Note that the original task is still active.
 
 **Best Modeling Practices:**

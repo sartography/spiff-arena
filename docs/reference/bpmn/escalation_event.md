@@ -10,7 +10,7 @@ An escalation represents a one-to-one relationship, whereas a signal event embod
 
 **Reasons to Use an Escalation Event:**
 
-- Communicate to a subprocess or an upper (parent) process
+- Communicate to a sub-process or an upper (parent) process
 - Provide a structured way to handle exceptions, ensuring processes remain fluid despite interruptions
 
 ## Start Escalation Event
@@ -21,7 +21,7 @@ A Start Escalation Event indicates the beginning of a sub-process, triggered exp
 
 ```{admonition} Note
 ⚠  Escalation Events are typically used in scenarios where the standard process flow is disrupted, and involvement from other actors becomes essential for resolution.
-They are mostly used to communicate from a subprocess to an upper process.
+They are mostly used to communicate from a sub-process to an upper process.
 ```
 
 **Example:**
@@ -71,15 +71,15 @@ This parallel processing ensures that there are two active instances within the 
 ![escalation_intermediate_example_2](/images/escalation_example_3.png)
 
 **Escalation Boundary Event (interrupting):**
-In the given scenario, utilizing a subprocess can lead to the desired outcome similarly.
+In the given scenario, utilizing a sub-process can lead to the desired outcome similarly.
 A gateway is used to assess whether a machine needs calibration.
-With only one potential result from this evaluation—calibration being necessary—the escalation event is captured at the boundary of the subprocess.
+With only one potential result from this evaluation—calibration being necessary—the escalation event is captured at the boundary of the sub-process.
 In this case, since there is a single active process instance, the non-interrupting characteristic of the event does not impact the process's flow.
 
 **Escalation Boundary Event (non-interrupting):**
 In a subsequent setup, a parallel gateway launches two simultaneous paths.
 While one path proceeds with the shipment as usual, the other leverages parallel processing to update the customer.
-The update is facilitated through a non-interrupting boundary event within a subprocess, which ensures the shipment process continues uninterrupted.
+The update is facilitated through a non-interrupting boundary event within a sub-process, which ensures the shipment process continues uninterrupted.
 
 ```{admonition} Note
 ⚠  The same end result was achieved by three different use cases for the escalation events.

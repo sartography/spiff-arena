@@ -20,7 +20,7 @@ Once a signal is sent out, it does not wait for a reply.
 
 ![start_signal_event](/images/start_signal_event.png)
 
-A Start Signal Event serves as a starting point for a process or subprocess, triggered specifically by a signal broadcasted from another part of the system or even a different system entirely.
+A Start Signal Event serves as a starting point for a process or sub-process, triggered specifically by a signal broadcasted from another part of the system or even a different system entirely.
 
 ![signal_event_example_2](/images/signal_event_example_2.png)
 
