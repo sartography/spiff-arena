@@ -126,7 +126,7 @@ Concurrently, the successful execution path without errors would lead directly t
 
 This BPMN example highlights the utility of Error Boundary Events in ensuring process resilience, especially when integrating external services.
 
-## Example 2: Error Boundary Events in Subprocess
+## Example 2: Error Boundary Events in Sub-process
 
 In this example, we're outlining a BPMN process that demonstrates how to handle errors within an expanded sub-process and subsequently manage the error through an Error Boundary Event.
 
@@ -138,7 +138,7 @@ In this example, we're outlining a BPMN process that demonstrates how to handle 
 
 The process is triggered by a user action or system event, setting the stage for a sequence of tasks.
 
-2. **Expanded Subprocess**:
+2. **Expanded Sub-process**:
 
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess2.png)
 
@@ -163,7 +163,7 @@ Configured to represent the occurrence of Error1, with an error code "Err1" and 
 
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess4.png)
 
-Attached to the Expanded Subprocess, an Error Boundary Event is designed to catch Error1 emanating from the sub-process, particularly from the Error End Event.
+Attached to the Expanded Sub-process, an Error Boundary Event is designed to catch Error1 emanating from the sub-process, particularly from the Error End Event.
 The error caught is identified by the code "Err1", and its details are captured in a variable named `message`.
 
 4. **Manual Task**
@@ -172,7 +172,7 @@ The error caught is identified by the code "Err1", and its details are captured 
 
 **Manual Task 2** is attached to this Error Boundary Event, with its instructions including the usage of the error message payload (`{{msg}}`), indicating a step to address or respond to the error condition.
 
-5. **End Events for Expanded Subprocess**:
+5. **End Events for Expanded Sub-process**:
 
 ![Error Event](/images/error_boundary_event_with_expanded-subprocess7.png)
 

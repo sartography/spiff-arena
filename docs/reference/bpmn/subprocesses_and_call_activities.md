@@ -23,7 +23,7 @@ They serve distinct purposes and are used in different scenarios.
 
 ### **Example Use Case: Restaurant Ordering System**
 
-A restaurant management workflow where customers place an order online, and the system processes their selections step by step. To streamline the workflow, the food selection process is encapsulated in a Subprocess.
+A restaurant management workflow where customers place an order online, and the system processes their selections step by step. To streamline the workflow, the food selection process is encapsulated in a Sub-process.
 
 ![Sub process](/images/sub_process.png)
 
@@ -33,7 +33,7 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Step 2**: **Select Food**
 
-- A Subprocess that encapsulates the food selection process.
+- A Sub-process that encapsulates the food selection process.
 
 **Step 3**: **Display Bill Value**
 
@@ -96,7 +96,7 @@ A restaurant management workflow handles customer orders, calculates the bill, a
 
 **Step 1**: **Enter Name** - A User Task that collects the customer's name.
 
-**Step 2**: **Select Food** - A Subprocess to handle food selection.
+**Step 2**: **Select Food** - A Sub-process to handle food selection.
 
 **Step 3**: **Display Bill Value** - A Script Task to calculate the total bill.
 

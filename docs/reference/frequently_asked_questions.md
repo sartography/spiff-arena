@@ -528,7 +528,7 @@ Common errors occur when configuring HTTP Service Tasks.
 - **Common Errors:**
   - **Missing `headers`:** Add `{}` to the `headers` field.
 
-### **45: Mapping input/Output for Call Activity Subprocess**
+### **45: Mapping input/Output for Call Activity Sub-process**
 **Q:**  How do I map input and output for Call Activity sub-processes?**
 
 **A:** In the sub-process:
