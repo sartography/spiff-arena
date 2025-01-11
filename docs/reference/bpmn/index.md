@@ -6,11 +6,11 @@ This section provides detailed information about the various elements used in Bu
 :maxdepth: 1
 gateways.md
 events.md
-message_event
-signal_event
-timer_event
-escalation_event
-conditional_event
+message_events
+signal_events
+timer_events
+escalation_events
+conditional_events
 error_events.md
 script_tasks.md
 service_tasks.md
