@@ -38,7 +38,7 @@ The process instance remains highlighted in yellow.
 |                            ✅ Success                             |
 | :---------------------------------------------------------------: |
 | Confirm that the status has changed from ‘waiting’ to ‘suspended’ |
-|                ![suspended](/images/suspended.png)                 |
+|                ![suspended](/images/suspended.png)                |
 
 ## Resume a Process Instance
 
@@ -62,7 +62,7 @@ Resuming a process is essential for ensuring that the process can continue its e
 |                                ✅ Success                                 |
 | :-----------------------------------------------------------------------: |
 | Confirm that the status has changed from ‘suspended’ to an active status. |
-|                      ![waiting](/images/waiting.png)                       |
+|                      ![waiting](/images/waiting.png)                      |
 
 ## Terminate a Process Instance
 
@@ -91,7 +91,7 @@ There are various reasons for terminating a process instance such as the instanc
 |                              ✅ Success                              |
 | :------------------------------------------------------------------: |
 | Confirm that the status has changed from ‘suspended’ to 'terminated' |
-|                  ![suspend](/images/terminated.png)                   |
+|                  ![suspend](/images/terminated.png)                  |
 
 ## Reset a Process Instance
 
@@ -184,7 +184,7 @@ In the case of the example, once you resume the instance and complete Manual Tas
 
 Migration is not possible when the following activities are active (started/ready/waiting):
 
-- Call activity/Subprocess - The task itself cannot be changed once it is active.
+- Call activity/Sub-process - The task itself cannot be changed once it is active.
   Tasks inside the call activity or sub-process can be updated if they have not been reached.
   Tasks that directly follow one of these activities are special, and you cannot migrate an instance if you add or remove one of these.
 
@@ -192,6 +192,7 @@ Migration is not possible when the following activities are active (started/read
 - Loop tasks
 - Signal boundary event - add/remove signals
 - Looping back through a part of a process which has already completed once
+
 #### Forms
 
 Forms are not serialized as part of the process model specification, and therefore are not considered during migration.
@@ -222,4 +223,5 @@ General path params:
 - **process_instance_id**: the id of the process instance to run on.
 
 ```{tags} how_to_guide
+
 ```

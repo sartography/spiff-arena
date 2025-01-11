@@ -45,7 +45,7 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Step 5**: **Order Confirmation** - A User Task that displays the confirmation message to the user.
 
-#### **Subprocess: Select Food**
+#### **Sub-process: Select Food**
 
 ![Sub process](/images/sub_process1.png)
 
