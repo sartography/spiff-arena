@@ -56,7 +56,7 @@ Check out this detailed exclusive gateway example:
 
 ```{toctree}
 :maxdepth: 1
-exclusivegatewayexample.md
+exclusive_gateways_example
 ```
 
 ## Inclusive Gateway
@@ -100,7 +100,7 @@ Similarly, the Inclusive Gateway merge can be used without an Inclusive Gateway 
 
 ```{toctree}
 :maxdepth: 1
-inclusivegatewayexample.md
+inclusive_gateway_example
 ```
 
 ## Parallel Gateway
@@ -132,7 +132,7 @@ Check out this detailed parallel gateway example:
 
 ```{toctree}
 :maxdepth: 1
-parallelgatewayexample.md
+parallel_gateways_example
 ```
 
 ## Event-Based Gateway

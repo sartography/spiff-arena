@@ -1,4 +1,4 @@
-# Troubleshooting Locally
+# Troubleshoot Locally
 
 When setting up the SpiffWorkflow backend project locally, you might encounter issues related to the `sample-process-models` directory.
 This documentation aims to address those concerns.

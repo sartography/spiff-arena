@@ -1,4 +1,4 @@
-# How to Create a BPMN Diagram
+# Create a BPMN Diagram
 
 Starting to model a business process can indeed be a challenging task, especially when multiple departments and users are involved.
 Here are some helpful tips to guide you through the process and create effective process models:
@@ -6,7 +6,7 @@ Here are some helpful tips to guide you through the process and create effective
 **Understand BPMN Symbols:**
 Begin by thoroughly understanding the meaning and usage of each BPMN symbol.
 This will ensure that you use the symbols correctly to represent the various elements of your business process.
-Refer to the [Learn Basics](/explanation/learn_basics) section to learn more about each symbol.
+Refer to the [Learn Basics](/explanation/understanding_the_terminology) section to learn more about each symbol.
 
 Grouping them together can create a mind map that's easy to remember.
 
@@ -33,7 +33,7 @@ For example, "Approve Request," "Review Documents," "Send Invoice," etc.
 
 **Start with High-Level Overview:**
 Beginning with a high-level overview of the process provides a clear understanding of the overall flow and allows for the identification of major process components before delving into finer details.
-By breaking the process down into smaller subprocesses or call activities with different levels of detail, the model becomes more manageable and easier to comprehend.
+By breaking the process down into smaller sub-processes or call activities with different levels of detail, the model becomes more manageable and easier to comprehend.
 This approach enables the use of placeholders where you are unclear about what the process looks like, allowing for flexibility in filling in missing information as it becomes available.
 It also facilitates the focus on specific sections, preventing feeling overwhelmed by the complexity of the entire process.
 This systematic approach to process modeling ensures that essential aspects are adequately captured while providing room for further refinement.

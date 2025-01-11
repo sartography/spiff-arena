@@ -1,4 +1,4 @@
-# Deploying a Connector Proxy as an AWS Lambda Function
+# Deploy a Connector Proxy as an AWS Lambda Function
 
 This guide shows you how to deploy the demo `Connector Proxy` as an `AWS Lambda Function` and integrate it with [SpiffArena](https://www.spiffworkflow.org/pages/spiffarena/).
 We will use the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) as the basis for integration, but the steps should easily map to any custom installation.
@@ -64,7 +64,7 @@ Click your function URL again to see a greeting from our deployed Connector Prox
 ## Integrating With SpiffArena
 
 Congratulations, your Connector Proxy has been deployed as a Lambda function.
-For information on configuring SpiffArena to use the new Connector Proxy URL, please see [Configure a Connector Proxy](configure_connector_proxy).
+For information on configuring SpiffArena to use the new Connector Proxy URL, please see [Configure a Connector Proxy](configure_a_connector_proxy).
 
 ```{tags} how_to_guide, devops
 ```

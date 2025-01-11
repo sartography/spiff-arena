@@ -23,7 +23,7 @@ They serve distinct purposes and are used in different scenarios.
 
 ### **Example Use Case: Restaurant Ordering System**
 
-A restaurant management workflow where customers place an order online, and the system processes their selections step by step. To streamline the workflow, the food selection process is encapsulated in a Subprocess.
+A restaurant management workflow where customers place an order online, and the system processes their selections step by step. To streamline the workflow, the food selection process is encapsulated in a Sub-process.
 
 ![Sub process](/images/sub_process.png)
 
@@ -33,7 +33,7 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Step 2**: **Select Food**
 
-- A Subprocess that encapsulates the food selection process.
+- A Sub-process that encapsulates the food selection process.
 
 **Step 3**: **Display Bill Value**
 
@@ -45,7 +45,7 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Step 5**: **Order Confirmation** - A User Task that displays the confirmation message to the user.
 
-#### **Subprocess: Select Food**
+#### **Sub-process: Select Food**
 
 ![Sub process](/images/sub_process1.png)
 
@@ -53,12 +53,12 @@ A restaurant management workflow where customers place an order online, and the 
 
 **Internal Workflow**:
 
-1. **Start Event**: Initiates the subprocess.
+1. **Start Event**: Initiates the sub-process.
 2. **Appetizer Task**: User selects an appetizer via a form.
 3. **Soup Task**: User selects a soup option.
 4. **Main Course Task**: User chooses a main course.
 5. **Dessert Task**: User selects a dessert.
-6. **End Event**: Marks the completion of the subprocess.
+6. **End Event**: Marks the completion of the sub-process.
 7. **Input Variables**:
 
 - No specific inputs required in this example as tasks dynamically retrieve options from context or form
@@ -86,7 +86,7 @@ Using a Call Process can help to eliminate redundancy and ensure consistent exec
 - **Delegation:** When different individuals or teams are responsible for executing tasks within a process, a call activity can be assigned to the most appropriate person or team.
 
 - **Access Control:** If a specific segment of a process should not be available to every user, converting it into a call process helps establish access control.
-  More information about this can be found in the [Admin and Permission](/how_to_guides/deployment/admin_and_permissions.md) section.
+  More information about this can be found in the [Admin and Permission](/how_to_guides/deployment/manage_permissions) section.
 
 ### **Example Use Case: Payment Handling**
 
@@ -96,7 +96,7 @@ A restaurant management workflow handles customer orders, calculates the bill, a
 
 **Step 1**: **Enter Name** - A User Task that collects the customer's name.
 
-**Step 2**: **Select Food** - A Subprocess to handle food selection.
+**Step 2**: **Select Food** - A Sub-process to handle food selection.
 
 **Step 3**: **Display Bill Value** - A Script Task to calculate the total bill.
 

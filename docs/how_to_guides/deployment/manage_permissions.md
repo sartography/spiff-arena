@@ -1,4 +1,4 @@
-# Admin and Permissions
+# Manage Permissions
 
 Permissions can be defined and managed at different levels such as process groups, individual processes, or users.
 
@@ -133,7 +133,7 @@ The Process Model view should now include all uploaded files.
 ### Step 4: Understand the Process Models
 
 [Read more about DMN tables and how they work here.
-](/reference/bpmn/dmn)
+](/reference/bpmn/decision_tables)
 
 #### Users to Groups
 
@@ -158,7 +158,7 @@ Now that the groups have been identified, their permissions can be set by adding
   For instance, ["read", "start"] indicates that the user can perform both reading and starting actions.
   Alternatively, [All] can be employed to grant unrestricted access.
 - The hit policy is set to "Collect" which means that all conditions that are true will be applied.
-  [Read more about DMN tables and hit policies here.](/reference/bpmn/dmn)
+  [Read more about DMN tables and hit policies here.](/reference/bpmn/decision_tables)
 - The permission URL can be configured to define the user's access privileges.
   Our objective is to streamline the process by minimizing the necessity of being familiar with the complete set of permission URLs.
   In most instances, utilizing BASIC and ELEVATED permissions, as well as PM/PG, should be sufficient.

@@ -6,7 +6,7 @@ In this section, you will find explanations of key concepts and processes in Spi
 :maxdepth: 1
 :titlesonly:
 articles
-learn_basics
+understanding_the_terminology
 dev/index
 process_error_handling
 ```

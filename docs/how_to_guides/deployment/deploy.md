@@ -1,4 +1,4 @@
-# Deployment
+# Deploy
 
 The minimal deployment is to mimic the docker-compose.yml file at the root of spiff-arena.
 Steps for a more hardened production setup after that baseline include:
@@ -28,4 +28,5 @@ API, Celery Worker, Connector Proxy, and Frontend can run any number of replicas
 The Background container is like a cron container, so it should run only one replica.
 
 ```{tags} how_to_guide
+
 ```

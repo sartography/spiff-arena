@@ -64,10 +64,10 @@ workflow.reset_from_task_id(start.id)
 1. **Script Tasks**: These allow you to execute Python code directly within your workflow. This method is suitable for simpler integrations where the code logic is not too complex.
 2. **Service Tasks**: For more complex integrations, you can write services that can be called via service tasks within your workflow. This method provides more flexibility and is ideal for scenarios where you need to interface with external systems or perform more intricate operations.
 
-### **9. Using Call Activity for preconfigured modular subprocesses**
+### **9. Using Call Activity for preconfigured modular sub-processes**
 
-**Q:** I need my users to generate many BPMN workflows by dropping preconfigured subprocesses into their workflows. Is this possible?
-**A:** Yes, you can use a "Call Activity" in SpiffArena to reference other processes in your diagram. SpiffArena provides a way to search for other processes in the system that can be used as Call Activities. This means you can create modular workflows by designing subprocesses (like ‘send to accounts’) and then incorporating them into multiple main workflows as needed. This modular approach not only streamlines the design process but also ensures consistency across different workflows.
+**Q:** I need my users to generate many BPMN workflows by dropping preconfigured sub-processes into their workflows. Is this possible?
+**A:** Yes, you can use a "Call Activity" in SpiffArena to reference other processes in your diagram. SpiffArena provides a way to search for other processes in the system that can be used as Call Activities. This means you can create modular workflows by designing sub-processes (like ‘send to accounts’) and then incorporating them into multiple main workflows as needed. This modular approach not only streamlines the design process but also ensures consistency across different workflows.
 
 ### **10. Integrating SpiffWorkflow with External Role Management**
 
@@ -447,7 +447,7 @@ By adjusting the return value of your script task's `execute` method and underst
 
 **A:** **Event Handling in SpiffWorkflow:**
 
-- **Internal vs. External Events:** The distinction between internal and external events in SpiffWorkflow is primarily for deciding whether an event should be handled within the workflow or passed up to a parent workflow from a subprocess. This is now managed by targeting a particular subworkflow or leaving the target as None for internal handling.
+- **Internal vs. External Events:** The distinction between internal and external events in SpiffWorkflow is primarily for deciding whether an event should be handled within the workflow or passed up to a parent workflow from a sub-process. This is now managed by targeting a particular subworkflow or leaving the target as None for internal handling.
 - **External Event Management:** For real external events, SpiffWorkflow allows the creation of an event object and passing it to the `send_event` function. This approach is used for events that need to be handled outside the workflow system.
 - **Event Translation and Messaging:** External systems should translate their events into SpiffWorkflow's format and call `send_events` to trigger the workflow. SpiffWorkflow collects all unhandled events, which the workflow system should periodically check using `get_events`. This process allows for the translation and sending of these events to external systems.
 - **Practical Application:** In real-world applications, tasks like UserTasks can be mapped to ApprovalTasks or FormTasks, and ServiceTasks can be mapped to API calls to external systems. The approach to handling events or messages, such as using RabbitMQ for pub/sub events or direct messaging via email or SMS, depends on the specific requirements and design of the workflow system.
@@ -528,10 +528,10 @@ Common errors occur when configuring HTTP Service Tasks.
 - **Common Errors:**
   - **Missing `headers`:** Add `{}` to the `headers` field.
 
-### **45: Mapping input/Output for Call Activity Subprocess**
-**Q:**  How do I map input and output for Call Activity subprocesses?**
+### **45: Mapping input/Output for Call Activity Sub-process**
+**Q:**  How do I map input and output for Call Activity sub-processes?**
 
-**A:** In the subprocess:
+**A:** In the sub-process:
   - Use single `=` for variable assignments (e.g., `result = "approve"`).
   - Avoid using double `==`, as it is a comparison operator, not an assignment.
   
@@ -546,7 +546,7 @@ Users need to retrieve the group or username associated with a specific lane dur
   ```python
   group_members = get_group_members(lane_name)
   ```
-- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/Script_Tasks.html) for additional details.
+- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/script_tasks.html) for additional details.
 
 ### **48: Modify Process Instances during Execution**
 **Q:** Can I modify process instances during execution?**

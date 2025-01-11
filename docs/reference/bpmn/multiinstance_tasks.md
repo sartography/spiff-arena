@@ -108,9 +108,9 @@ This multi-instance example in a BPMN process highlights the capability to dynam
 By iterating over a list of composers, allowing for the editing of each item, and finally displaying the edited list, the process demonstrates how data can be manipulated and presented in a structured workflow, showcasing the flexibility and power of BPMN for data-driven processes.
 
 ```{admonition} Note
-If a data object is to be used within a multi-instance subprocess, ensure that it is created within the subprocess itself.
+If a data object is to be used within a multi-instance sub-process, ensure that it is created within the sub-process itself.
 This practice prevents scope and reference issues that can lead to data inconsistencies and errors during the execution of multiple instances.
-This ensures that each instance of the subprocess has its own unique and correct reference to the data object.
+This ensures that each instance of the sub-process has its own unique and correct reference to the data object.
 ```
 
 ### Loops

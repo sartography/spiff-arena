@@ -1,4 +1,4 @@
-# Conditional Event
+# Conditional Events
 
 A Conditional Event is a type of event that activates based on the evaluation of a condition, typically expressed as a Boolean expression (true or false).
 Conditional Events depend on the state or value of process variables that are part of the process context.

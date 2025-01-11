@@ -1,4 +1,4 @@
-# Process Model Management
+# Manage Process Models
 
 Managing your process models is similar to managing your source code.
 As such, it is recommended to store these models in a version control system like Git so that you can track changes and collaborate with others.

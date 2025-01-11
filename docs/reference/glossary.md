@@ -3,9 +3,9 @@
 ## Activity
 
 Refers to the work carried out by an individual or an organization within a process.
-Activities can be classified into three categories: Task, Subprocess, and Call Activity.
+Activities can be classified into three categories: Task, Sub-process, and Call Activity.
 These activities can be either atomic or non-atomic.
-Atomic activities are indivisible and represent single tasks, while non-atomic activities involve multiple steps or subprocesses that work together to achieve a larger objective.
+Atomic activities are indivisible and represent single tasks, while non-atomic activities involve multiple steps or sub-processes that work together to achieve a larger objective.
 
 ## Boundary Event
 
@@ -30,9 +30,9 @@ This is the visual platform where business processes are represented and mapped 
 This refers to the act of a parent or higher-level process invoking a predefined or reusable child process, which is represented in another process diagram.
 This invocation allows for the utilization of the child process multiple times, enhancing reusability within the overall model.
 
-## Collapsed Subprocess
+## Collapsed Sub-process
 
-This is a Subprocess that conceals the underlying process it includes.
+This is a Sub-process that conceals the underlying process it includes.
 
 ## Connecting Element
 
@@ -72,9 +72,9 @@ Exceptions can be triggered by Time, Error, or Message Events.
 This denotes a juncture within the process where multiple alternative paths are available, but only one path can be chosen.
 The decision regarding the chosen path is determined by a condition.
 
-## Expanded Subprocess
+## Expanded Sub-process
 
-This is a Subprocess that shows the process it contains.
+This is a Sub-process that shows the process it contains.
 
 ## Gateway
 
@@ -109,7 +109,7 @@ The message is transmitted through a Message Flow.
 ## Non-atomic Activity
 
 This refers to an Activity that can be further decomposed into more detailed steps or subtasks.
-A Subprocess is an example of a non-atomic Activity.
+A Sub-process is an example of a non-atomic Activity.
 It is also commonly referred to as a "compound" Activity.
 
 ## Parallel Gateway
@@ -118,7 +118,7 @@ This indicates a specific point within the process where the Flow divides or mer
 
 ## Parent Process
 
-This is a process that contains a Subprocess.
+This is a process that contains a Sub-process.
 
 ## Participant
 
@@ -148,7 +148,7 @@ This is an Event that is transmitted to all individuals or entities participatin
 
 This indicates where a process starts.
 
-## Subprocess
+## Sub-process
 
 This is a self-contained and compound Activity incorporated within a process, capable of being further decomposed into smaller units of work.
 

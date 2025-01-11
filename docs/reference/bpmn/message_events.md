@@ -1,4 +1,4 @@
-# Message Event
+# Message Events
 
 A Message Event acts as a channel for the exchange of information between different process participants or external systems.
 While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence.
@@ -138,7 +138,7 @@ Check out this example on Message Event.
 ```{toctree}
 :maxdepth: 1
 :caption: Message Event Example
-message_example_event.md
+configuring_messages_and_correlation_properties
 ```
 
 ```{tags} how_to_guide, building_diagrams

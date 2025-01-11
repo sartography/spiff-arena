@@ -2,7 +2,7 @@
 
 The permission URL, or target URI, refers to the specific endpoint or resource to which permission is granted to perform certain actions.
 
-- **PG:** [process_group_identifier]: Applies to the specified process group, including all subprocess groups and process models.
+- **PG:** [process_group_identifier]: Applies to the specified process group, including all sub-process groups and process models.
 - **PM:** [process_model_identifier]: Applies to the specified process model.
 - **BASIC:** Allows basic access to complete tasks and use the site.
 - **SUPPORT:** BASIC permissions plus significant administrative permissions.

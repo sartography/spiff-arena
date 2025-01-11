@@ -6,8 +6,8 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 :maxdepth: 1
 bpmn/index
 glossary
-FAQ.md
+frequently_asked_questions
 wish_list
 permission_url
-documentation
+how_to_contribute_to_the_documentation
 ```

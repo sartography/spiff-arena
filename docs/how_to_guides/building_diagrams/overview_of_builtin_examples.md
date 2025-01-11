@@ -1,4 +1,4 @@
-# Built-in Examples Overview
+# Overview of Built-in Examples
 
 When logging into the dashboard, it is crucial to familiarize yourself with the functions it offers and how the underlying engine operates.
 In the demo website, we will explore two examples: the Minimal Example and the Essential Example, to provide a clear understanding of the process.

@@ -1,4 +1,4 @@
-# Path-based Routing
+# Use Path-based Routing
 
 If you are using the frontend, the frontend and backend need to share cookies.
 The backend, in particular, sets a cookie, and the frontend needs to read it.
