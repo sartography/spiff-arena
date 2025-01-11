@@ -12,7 +12,7 @@ timer_events.md
 escalation_events.md
 conditional_events.md
 error_events.md
-Script_Tasks.md
+script_tasks.md
 service_tasks.md
 sub-processes_and_call_activities.md
 data.md

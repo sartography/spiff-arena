@@ -546,7 +546,7 @@ Users need to retrieve the group or username associated with a specific lane dur
   ```python
   group_members = get_group_members(lane_name)
   ```
-- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/Script_Tasks.html) for additional details.
+- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/script_tasks.html) for additional details.
 
 ### **48: Modify Process Instances during Execution**
 **Q:** Can I modify process instances during execution?**
