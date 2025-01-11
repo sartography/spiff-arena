@@ -1,4 +1,4 @@
-# Signal Event
+# Signal Events
 
 A Signal Event is a type of event that provides a mechanism for communication across different processes.
 Unlike messages that are sent from a specific sender to a specific receiver, signals are broadcast to multiple recipients.

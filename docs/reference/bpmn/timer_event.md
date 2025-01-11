@@ -1,4 +1,4 @@
-# Timer Event
+# Timer Events
 
 A Timer Event in BPMN is tied to the concept of time.
 It represents a specific moment or duration after which certain actions in a process are initiated or controlled.

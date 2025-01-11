@@ -1,4 +1,4 @@
-# Message Event
+# Message Events
 
 A Message Event acts as a channel for the exchange of information between different process participants or external systems.
 While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence.
