@@ -75,7 +75,7 @@ This documentation outlines the process of creating and managing sensitive data 
 
 #### 4. Implementing Access Controls
 
-- **Permission Rules**: Establish permission rules, using a Decision Model and Notation (DMN) table or another mechanism as described under [Admin and Permissions](/how_to_guides/deployment/admin_and_permissions).
+- **Permission Rules**: Establish permission rules, using a Decision Model and Notation (DMN) table or another mechanism as described under [Admin and Permissions](/how_to_guides/deployment/manage_permissions).
   This step involves specifying who can access the sensitive data.
 - **Access Restrictions**: Define the access level (e.g., read, write, deny) for different user groups or roles.
   For instance, you might restrict read access to certain groups while denying it to others.

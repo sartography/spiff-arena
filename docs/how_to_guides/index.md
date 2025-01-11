@@ -7,8 +7,8 @@
 :caption: How-to Guides
 building_diagrams/index
 manage_processes
-welcome_messages
-custom_process_metadata
-troubleshooting_locally
+manage_welcome_messages
+use_custom_process_metadata
+troubleshoot_locally
 deployment/index
 ```

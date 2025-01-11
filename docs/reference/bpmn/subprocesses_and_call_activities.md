@@ -86,7 +86,7 @@ Using a Call Process can help to eliminate redundancy and ensure consistent exec
 - **Delegation:** When different individuals or teams are responsible for executing tasks within a process, a call activity can be assigned to the most appropriate person or team.
 
 - **Access Control:** If a specific segment of a process should not be available to every user, converting it into a call process helps establish access control.
-  More information about this can be found in the [Admin and Permission](/how_to_guides/deployment/admin_and_permissions.md) section.
+  More information about this can be found in the [Admin and Permission](/how_to_guides/deployment/manage_permissions) section.
 
 ### **Example Use Case: Payment Handling**
 
