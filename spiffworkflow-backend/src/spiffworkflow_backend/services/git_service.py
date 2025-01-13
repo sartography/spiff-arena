@@ -90,14 +90,23 @@ class GitService:
     @classmethod
     def commit(
         cls,
-        message: str,
-        repo_path: str | None = None,
+        message: str | None = None,
         branch_name: str | None = None,
+        repo_path: str | None = None,
+        actions: list[str] | None = None,
     ) -> str:
         cls.check_for_basic_configs()
+
+        if actions is None:
+            if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
+                actions = ["commit"]
+            else:
+                actions = ["commit", "push"]
+
         branch_name_to_use = branch_name
         if branch_name_to_use is None:
             branch_name_to_use = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
+
         repo_path_to_use = repo_path
         if repo_path is None:
             repo_path_to_use = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
@@ -108,10 +117,18 @@ class GitService:
         shell_command = [
             shell_command_path,
             repo_path_to_use,
-            message,
-            branch_name_to_use,
+            ",".join(actions),
         ]
-        return cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
+        extra_env = {}
+        if "commit" in actions:
+            extra_env["GIT_COMMIT_MESSAGE"]= message
+        if "push" in actions:
+            extra_env["GIT_BRANCH"]= branch_name_to_use
+        result = cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False, extra_env=extra_env)
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] and "push" not in actions:
+            # queue it
+            pass
 
     @classmethod
     def check_for_basic_configs(cls, raise_on_missing: bool = True) -> bool:
@@ -154,11 +171,19 @@ class GitService:
 
     @classmethod
     def run_shell_command_to_get_stdout(
-        cls, command: list[str], context_directory: str | None = None, prepend_with_git: bool = True
+        cls,
+        command: list[str],
+        context_directory: str | None = None,
+        prepend_with_git: bool = True,
+        extra_env: dict | None = None,
     ) -> str:
         # we know result will be a CompletedProcess here
         result: subprocess.CompletedProcess[bytes] = cls.run_shell_command(
-            command, return_success_state=False, context_directory=context_directory, prepend_with_git=prepend_with_git
+            command,
+            return_success_state=False,
+            context_directory=context_directory,
+            prepend_with_git=prepend_with_git,
+            extra_env=extra_env,
         )  # type: ignore
         return result.stdout.decode("utf-8").strip()
 
@@ -169,11 +194,13 @@ class GitService:
         context_directory: str | None = None,
         return_success_state: bool = False,
         prepend_with_git: bool = True,
+        extra_env: dict | None = None,
     ) -> subprocess.CompletedProcess[bytes] | bool:
         my_env = os.environ.copy()
         my_env["GIT_COMMITTER_NAME"] = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME") or "unknown"
 
         my_env["GIT_COMMITTER_EMAIL"] = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL") or "unknown@example.org"
+        my_env = {**my_env, **(extra_env or {})}
 
         # SSH authentication can be also provided via gitconfig.
         ssh_key_path = current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")

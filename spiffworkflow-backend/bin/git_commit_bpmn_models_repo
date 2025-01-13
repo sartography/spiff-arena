@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
@@ -10,40 +10,54 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # HELP: git adds and commits the entire BPMN models directory, including all process groups
 
 bpmn_models_absolute_dir="$1"
-git_commit_message="$2"
-git_branch="$3"
+actions="$2"
 
-if [[ -z "${3:-}" ]]; then
-  >&2 echo "usage: $(basename "${0}") [bpmn_models_absolute_dir] [git_commit_message] [git_branch]"
+if [[ -z "${4:-}" ]]; then
+  echo >&2 "usage: $(basename "${0}") [bpmn_models_absolute_dir] [actions: commit,push]"
   exit 1
 fi
 
 function failed_to_get_lock() {
-  >&2 echo "ERROR: Failed to get lock."
+  echo >&2 "ERROR: Failed to get lock."
   exit 1
 }
+
+if grep -qE '\<commit\>' <<<"$actions" && [[ -z "${GIT_COMMIT_MESSAGE:-}" ]]; then
+  echo >&2 "ERROR: GIT_COMMIT_MESSAGE must be set if committing"
+  exit 1
+fi
+
+if grep -qE '\<push\>' <<<"$actions" && [[ -z "${GIT_BRANCH:-}" ]]; then
+  echo >&2 "ERROR: GIT_BRANCH must be set if pushing"
+  exit 1
+fi
 
 function run() {
   # we are very careful not to run "cd" from python, since it is at the process level and will screw up other threads.
   # we are safe in this case because this entire script is run in a new process.
   cd "${bpmn_models_absolute_dir}"
-  git add .
 
-  # https://unix.stackexchange.com/a/155077/456630
-  if [ -z "$(git status --porcelain)" ]; then
-    echo "No changes to commit"
-    return
+  if grep -qE '\<commit\>' <<<"$actions"; then
+    git add .
+
+    # https://unix.stackexchange.com/a/155077/456630
+    if [ -z "$(git status --porcelain)" ]; then
+      echo "No changes to commit"
+      return
+    fi
+
+    # FIXME: the environment variables may not be working with the root user which we are using in the docker container.
+    # we see some evidence with this issue https://stackoverflow.com/questions/68975943/git-config-environment-variables
+    # and it didn't seem to work for us either so set them like this for now.
+    # One day we should probably not use the root user in the docker container.
+    git config --local user.email "$GIT_COMMITTER_EMAIL"
+    git config --local user.name "$GIT_COMMITTER_NAME"
+    git commit -m "${GIT_COMMIT_MESSAGE}"
   fi
 
-  # FIXME: the environment variables may not be working with the root user which we are using in the docker container.
-  # we see some evidence with this issue https://stackoverflow.com/questions/68975943/git-config-environment-variables
-  # and it didn't seem to work for us either so set them like this for now.
-  # One day we should probably not use the root user in the docker container.
-  git config --local user.email "$GIT_COMMITTER_EMAIL"
-  git config --local user.name "$GIT_COMMITTER_NAME"
-
-  git commit -m "${git_commit_message}"
-  git push --set-upstream origin "${git_branch}"
+  if grep -qE '\<push\>' <<<"$actions"; then
+    git push --set-upstream origin "${GIT_BRANCH}"
+  fi
 }
 
 lock_directory="/var/lock"
@@ -56,7 +70,7 @@ if ! command -v flock >/dev/null 2>&1; then
     # some hero made this available on mac: https://github.com/discoteq/flock
     brew install flock
   else
-    >&2 echo "ERROR: flock is not installed and we cannot install it."
+    echo >&2 "ERROR: flock is not installed and we cannot install it."
     exit 1
   fi
 fi
