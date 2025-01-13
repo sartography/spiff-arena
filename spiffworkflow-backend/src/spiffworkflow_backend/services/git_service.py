@@ -320,7 +320,7 @@ class GitService:
         commit_message = (
             f"Request to publish changes to {process_model_id}, from {g.user.username} on {current_app.config['ENV_IDENTIFIER']}"
         )
-        cls.commit(commit_message, destination_process_root, branch_to_pull_request)
+        cls.commit(commit_message, destination_process_root, branch_to_pull_request, actions=["commit", "push"])
 
         # build url for github page to open PR
         git_remote = cls.run_shell_command_to_get_stdout(
