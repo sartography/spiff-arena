@@ -1,51 +1,100 @@
 # BPMN Unit Tests
+BPMN Unit Tests enable authors to validate their process models through automated testing. These tests help ensure that your models function correctly by providing faster feedback, mocking inputs for user tasks, service tasks, and script tasks, and simulating various execution scenarios.
+Here's why you should use unit tests:
+- **Quick Feedback:** Test your models faster than manual execution.
+- **Mock Inputs:** Simulate form inputs and service task outputs.
+- **Branch Coverage:** Test various branches of your process model by providing different inputs.
+- **Confidence:** Validate initial functionality and ensure future changes don’t break the process.
 
-Software engineers test their code.
-Now, with this feature, BPMN authors can also test their creations.
-These tests can provide faster feedback than you would get by simply running your process model, and they allow you to mock out form input and service task connections as well as provide specific input to exercise different branches of your process model.
-BPMN unit tests are designed to instill greater confidence that your process models will function as intended when they are deployed in real-world scenarios, both initially and after subsequent modifications.
+Lets take a look at in-depth discussion on the two ways of creating BPMN Unit Tests: through a test JSON file and via the properties panel. 
 
-## Creating BPMN Unit Tests
+## Creating Unit Tests with a Test JSON File
+This method involves manually creating a JSON file to define unit tests for your BPMN process. It is especially useful when you want more control over the test configuration or need to test multiple scenarios simultaneously.
 
-First, create a process model that you want to test.
-Navigate to the process model and add a JSON file based on the name of one of the BPMN files.
-For example, if your process model includes a file named `awesome_script_task.bpmn`, your test JSON file would be named `test_awesome_script_task.json`.
-If you have multiple BPMN files you want to test, you can create multiple test JSON files.
-The BPMN files you test do not need to be marked as the primary file for the process model in question.
-The structure of your JSON should be as follows:
+### Steps to Create Unit Tests with JSON
 
-    {
-      "test_case_1": {
-        "tasks": {
-          "ServiceTaskProcess:service_task_one": {
-            "data": [{ "the_result": "result_from_service" }]
-          }
-        },
-        "expected_output_json": { "the_result": "result_from_service" }
-      }
-    }
+1. **Create the JSON File:**
+   - Navigate to your BPMN model and create a JSON file named based on your BPMN file.
+   - Example: For `example_process.bpmn`, create `test_example_process.json`.
 
-The top-level keys should be names of unit tests.
-In this example, the unit test is named "test_case_1."
-Under that, you can specify "tasks" and "expected_output_json."
+2. **Define the Test Cases:**
+   - Structure the JSON file to include:
+     - Test names.
+     - Tasks to test (with input data).
+     - Expected output.
 
-Under "tasks," each key is the BPMN id of a specific task.
-If you're testing a file that uses Call Activities and therefore calls other processes, there can be conflicting BPMN ids.
-In such cases, you can specify the unique activity by prepending the Process id (in the above example, that is "ServiceTaskProcess").
-For simpler processes, "service_task_one" (for example) would suffice as the BPMN id.
-For User Tasks, the "data" (under a specific task) represents the data that will be entered by the user in the form.
-For Service Tasks, the data represents the data that will be returned by the service.
-Note that all User Tasks and Service Tasks must have their BPMN ids mentioned in the JSON file (with mock task data as desired), as otherwise, we won't know what to do when the flow arrives at these types of tasks.
+3. **Example JSON File:**
 
-The "expected_output_json" represents the state of the task data that you expect when the process completes.
-When the test is run, if the actual task data differs from this expectation, the test will fail.
-The test will also fail if the process never completes or if an error occurs.
+   ```json
+   {
+     "test_case_1": {
+       "tasks": {
+         "ServiceTaskProcess:service_task_one": {
+           "data": [{ "the_result": "mocked_service_result" }]
+         }
+       },
+       "expected_output_json": {
+         "the_result": "mocked_service_result"
+       }
+     },
+     "test_case_2": {
+       "tasks": {
+         "user_task_1": {
+           "data": [{ "input_field": "user_input" }]
+         }
+       },
+       "expected_output_json": {
+         "input_field": "user_input"
+       }
+     }
+   }
+   ```
+**`test_case_1`**:
+  - Mocks a Service Task (`service_task_one`) output as `"mocked_service_result"`.
+  - Verifies that the process completes with the expected output: `"mocked_service_result"`.
 
-## Running BPMN Unit Tests
+**`test_case_2`**:
+  - Simulates a User Task (`user_task_1`) where the user enters `"user_input"`.
+  - Ensures the process captures this input correctly in the output.
 
-Go to a process model and either click “Run Unit Tests” to run all tests for the process model or click on the “play icon” next to a "test_something.json" file.
-Next, you will see either a green check mark or a red x.
-You can click on these colored icons to get more details about the passing or failing test.
+## Creating Unit Tests Through the Properties Panel
+This method uses the BPMN editor’s **properties panel** to create unit tests for specific tasks directly in the UI. It is especially useful for **script tasks** or when you prefer an intuitive, UI-driven approach.
 
-```{tags} how_to_guide, debugging_diagrams
-```
+### Steps to Create Unit Tests via Properties Panel
+
+1. **Select the Task to Test:**
+    - Open your BPMN model and select the specific task (e.g., Script Task or Service Task).
+
+2. **Locate the Unit Tests Section:**
+    - In the properties panel, look for the **“Unit Tests”** section.
+
+![model_convention](/images/unit_test_properties_panel.png)
+
+3. **Define the Test:**
+    - Click the **`+`** button to add a new unit test.
+    - Provide:
+      - **ID**: A unique identifier for the test.
+      - **Input JSON**: Mock the input data for the task.
+      - **Expected Output JSON**: Define the expected result after the task executes.
+
+4. **Example Using a Script Task:**
+
+**Task Details**:
+  - **Script Code:** `a = 1`.
+
+**Unit Test Configuration**:
+  - **Input JSON:** `{ "a": 2 }`
+  - **Expected Output JSON:** `{ "a": 2 }`
+
+The test checks whether the process maintains the value of `a` as `2` despite the script setting `a = 1`. This validates data integrity and ensures that the task does not overwrite the expected result.
+
+## Comparing Both Methods
+
+| Feature                        | JSON File Method                                    | Properties Panel Method                          |
+|--------------------------------|----------------------------------------------------|-------------------------------------------------|
+| **Complexity**                 | Suitable for large, complex processes              | Ideal for isolated tasks (e.g., Script Tasks)   |
+| **Flexibility**                | Supports multiple test cases in one file           | Limited to task-specific tests                  |
+| **User-Friendliness**          | Requires familiarity with JSON syntax              | More intuitive and UI-driven                    |
+| **Scalability**                | Excellent for testing multiple BPMN models         | Focused on individual tasks                     |
+
+This documentation comprehensively explains both methods, their use cases, and how to implement them with practical examples. Let me know if further refinements are needed!
