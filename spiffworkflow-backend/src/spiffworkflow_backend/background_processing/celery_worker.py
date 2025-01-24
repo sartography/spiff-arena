@@ -26,6 +26,3 @@ def setup_loggers(logger: Any, *args: Any, **kwargs: Any) -> None:
     stdout_handler.setFormatter(log_formatter)
     logger.addHandler(stdout_handler)
     setup_logger_for_app(the_flask_app, logger, force_run_with_celery=True)
-    # this handler is getting added somewhere but not sure where so set its
-    # level really high since we do not need it
-    logging.getLogger("spiff").setLevel(logging.CRITICAL)
