@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  Download,
-  Edit,
-  Favorite,
-  TrashCan,
-  Upload,
-  View,
-} from '@carbon/icons-react';
+  Download as DownloadIcon,
+  Edit as EditIcon,
+  Favorite as FavoriteIcon,
+  Delete as DeleteIcon,
+  Upload as UploadIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import {
   Button,
-  Column,
-  Dropdown,
-  FileUploader,
   Grid,
   Modal,
   Stack,
@@ -20,14 +17,17 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
   Tabs,
   Tab,
-  TabList,
-  TabPanels,
-  TabPanel,
-} from '@carbon/react';
+  Box,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Typography,
+} from '@mui/material';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
@@ -44,7 +44,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
-// import ProcessModelTestRun from '../components/ProcessModelTestRun';
+import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import MarkdownDisplayForFile from '../components/MarkdownDisplayForFile';
 // import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 
@@ -193,7 +193,7 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/newui/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
+      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
     );
   };
 
@@ -241,35 +241,33 @@ export default function ProcessModelShow() {
     // will be cleared out and it will start fetching permissions from the server, but this
     // component still thinks permissionsLoaded is telling the truth (it says true, but it's actually false).
     // The only bad effect that we know of is that the Edit icon becomes an eye icon even for admins.
-    let icon = View;
+    let icon = VisibilityIcon;
     let actionWord = 'View';
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
-      icon = Edit;
+      icon = EditIcon;
       actionWord = 'Edit';
     }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <Button
-          kind="ghost"
-          renderIcon={icon}
-          iconDescription={`${actionWord} File`}
-          hasIconOnly
-          size="lg"
+        <IconButton
+          aria-label={`${actionWord} File`}
+          size="large"
           data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
           onClick={() => navigateToFileEdit(processModelFile)}
-        />
+        >
+          <icon />
+        </IconButton>
       </Can>,
     );
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <Button
-          kind="ghost"
-          renderIcon={Download}
-          iconDescription="Download File"
-          hasIconOnly
-          size="lg"
+        <IconButton
+          aria-label="Download File"
+          size="large"
           onClick={() => downloadFile(processModelFile.name)}
-        />
+        >
+          <DownloadIcon />
+        </IconButton>
       </Can>,
     );
 
@@ -281,16 +279,14 @@ export default function ProcessModelShow() {
           ability={ability}
         >
           <ButtonWithConfirmation
-            kind="ghost"
-            renderIcon={TrashCan}
-            iconDescription="Delete File"
-            hasIconOnly
+            aria-label="Delete File"
             description={`Delete file: ${processModelFile.name}`}
             onConfirmation={() => {
               onDeleteFile(processModelFile.name);
             }}
             confirmButtonLabel="Delete"
             classNameForModal="modal-within-table-cell"
+            icon={<DeleteIcon />}
           />
         </Can>,
       );
@@ -298,28 +294,27 @@ export default function ProcessModelShow() {
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-          <Button
-            kind="ghost"
-            renderIcon={Favorite}
-            iconDescription="Set As Primary File"
-            hasIconOnly
-            size="lg"
+          <IconButton
+            aria-label="Set As Primary File"
+            size="large"
             onClick={() => onSetPrimaryFile(processModelFile.name)}
+          >
+            <FavoriteIcon />
+          </IconButton>
+        </Can>,
+      );
+    }
+    if (isTestCaseFile(processModelFile)) {
+      elements.push(
+        <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+          <ProcessModelTestRun
+            processModelFile={processModelFile}
+            titleText="Run BPMN unit tests defined in this file"
+            classNameForModal="modal-within-table-cell"
           />
         </Can>,
       );
     }
-    // if (isTestCaseFile(processModelFile)) {
-    //   elements.push(
-    //     <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-    //       <ProcessModelTestRun
-    //         processModelFile={processModelFile}
-    //         titleText="Run BPMN unit tests defined in this file"
-    //         classNameForModal="modal-within-table-cell"
-    //       />
-    //     </Can>,
-    //   );
-    // }
     return elements;
   };
 
@@ -378,23 +373,13 @@ export default function ProcessModelShow() {
 
     if (tags.length > 0) {
       return (
-        <Table
-          size="lg"
-          useZebraStyles={false}
-          className="process-model-file-table"
-        >
+        <Table size="medium" aria-label="Process Model Files">
           <TableHead>
             <TableRow>
-              <TableHeader id="Name" key="Name">
-                Name
-              </TableHeader>
-              <TableHeader
-                id="Actions"
-                key="Actions"
-                className="table-header-right-align"
-              >
+              <TableCell key="Name">Name</TableCell>
+              <TableCell key="Actions" align="right">
                 Actions
-              </TableHeader>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{tags}</TableBody>
@@ -498,22 +483,37 @@ export default function ProcessModelShow() {
         onRequestClose={handleFileUploadCancel}
         onRequestSubmit={handleFileUpload}
       >
-        <FileUploader
-          labelTitle="Upload files"
-          labelDescription="Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are supported."
-          buttonLabel="Add file"
-          buttonKind="primary"
-          size="md"
-          filenameStatus="edit"
-          role="button"
-          accept={['.bpmn', '.dmn', '.json', '.md']}
-          disabled={false}
-          iconDescription="Delete file"
-          name=""
-          multiple={false}
-          onDelete={() => setFilesToUpload(null)}
-          onChange={(event: any) => setFilesToUpload(event.target.files)}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body1">Upload files</Typography>
+          <Typography variant="body2" color="textSecondary">
+            Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
+            supported.
+          </Typography>
+          <input
+            type="file"
+            accept=".bpmn,.dmn,.json,.md"
+            style={{ display: 'none' }}
+            id="file-upload-input"
+            onChange={(event: any) => setFilesToUpload(event.target.files)}
+          />
+          <label htmlFor="file-upload-input">
+            <Button variant="contained" component="span">
+              Add file
+            </Button>
+          </label>
+          {filesToUpload && (
+            <Typography variant="body2">
+              Selected file: {filesToUpload[0].name}
+            </Typography>
+          )}
+          <Button
+            variant="outlined"
+            onClick={() => setFilesToUpload(null)}
+            disabled={!filesToUpload}
+          >
+            Clear file
+          </Button>
+        </Box>
       </Modal>
     );
   };
@@ -530,37 +530,43 @@ export default function ProcessModelShow() {
 
   const addFileComponent = () => {
     return (
-      <Dropdown
-        id="inline"
-        titleText=""
-        size="lg"
-        label="Add File"
-        type="default"
-        data-qa="process-model-add-file"
-        onChange={(a: any) => {
-          if (a.selectedItem.text === 'New BPMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
-            );
-          } else if (a.selectedItem.text === 'Upload File') {
-            setShowFileUploadModal(true);
-          } else if (a.selectedItem.text === 'New DMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
-            );
-          } else if (a.selectedItem.text === 'New JSON File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
-            );
-          } else if (a.selectedItem.text === 'New Markdown File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
-            );
-          }
-        }}
-        items={items}
-        itemToString={(item: any) => (item ? item.text : '')}
-      />
+      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+        <InputLabel id="add-file-dropdown-label">Add File</InputLabel>
+        <Select
+          labelId="add-file-dropdown-label"
+          id="add-file-dropdown"
+          label="Add File"
+          data-qa="process-model-add-file"
+          onChange={(event: any) => {
+            const selectedValue = event.target.value;
+            if (selectedValue === 'New BPMN File') {
+              navigate(
+                `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
+              );
+            } else if (selectedValue === 'Upload File') {
+              setShowFileUploadModal(true);
+            } else if (selectedValue === 'New DMN File') {
+              navigate(
+                `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
+              );
+            } else if (selectedValue === 'New JSON File') {
+              navigate(
+                `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
+              );
+            } else if (selectedValue === 'New Markdown File') {
+              navigate(
+                `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
+              );
+            }
+          }}
+        >
+          {items.map((item) => (
+            <MenuItem key={item.text} value={item.text}>
+              {item.text}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     );
   };
 
@@ -569,36 +575,39 @@ export default function ProcessModelShow() {
       return (
         <div className="readme-container">
           <Grid condensed fullWidth className="megacondensed">
-            <Column md={7} lg={15} sm={3}>
-              <p className="with-icons">{readmeFile.name}</p>
-            </Column>
-            <Column md={1} lg={1} sm={1}>
-              <Can
-                I="PUT"
-                a={targetUris.processModelFileCreatePath}
-                ability={ability}
-              >
-                <Button
-                  kind="ghost"
-                  data-qa="process-model-readme-file-edit"
-                  renderIcon={Edit}
-                  iconDescription="Edit README.md"
-                  hasIconOnly
-                  href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
-                />
-              </Can>
-            </Column>
+            <Grid container alignItems="center">
+              <Grid item xs>
+                <Typography variant="h6" className="with-icons">
+                  {readmeFile.name}
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Can
+                  I="PUT"
+                  a={targetUris.processModelFileCreatePath}
+                  ability={ability}
+                >
+                  <IconButton
+                    data-qa="process-model-readme-file-edit"
+                    aria-label="Edit README.md"
+                    href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Can>
+              </Grid>
+            </Grid>
+            <hr />
+            <MarkdownDisplayForFile
+              apiPath={`/process-models/${modifiedProcessModelId}/files/${readmeFile.name}`}
+            />
           </Grid>
-          <hr />
-          <MarkdownDisplayForFile
-            apiPath={`/process-models/${modifiedProcessModelId}/files/${readmeFile.name}`}
-          />
         </div>
       );
     }
     return (
-      <>
-        <p>No README file found</p>
+      <Box>
+        <Typography>No README file found</Typography>
         <Can
           I="POST"
           a={targetUris.processModelFileCreatePath}
@@ -608,12 +617,13 @@ export default function ProcessModelShow() {
             className="with-top-margin"
             data-qa="process-model-readme-file-create"
             href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
-            size="md"
+            size="medium"
+            variant="contained"
           >
             Add README.md
           </Button>
         </Can>
-      </>
+      </Box>
     );
   };
 
@@ -640,59 +650,66 @@ export default function ProcessModelShow() {
     }
 
     return (
-      <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
-        <TabList aria-label="List of tabs">
-          <Tab>About</Tab>
-          <Tab data-qa="process-model-files">Files</Tab>
-          {/* <Tab data-qa="process-instance-list-link">My process instances</Tab> */}
-        </TabList>
-        <TabPanels>
-          <TabPanel>{readmeFileArea()}</TabPanel>
-          <TabPanel>
-            <Grid condensed fullWidth className="megacondensed">
-              <Column md={6} lg={12} sm={4}>
+      <Box sx={{ width: '100%' }}>
+        <Tabs
+          value={selectedTabIndex}
+          onChange={updateSelectedTab}
+          aria-label="Process Model Tabs"
+        >
+          <Tab label="About" />
+          <Tab label="Files" data-qa="process-model-files" />
+          <Tab
+            label="My process instances"
+            data-qa="process-instance-list-link"
+          />
+        </Tabs>
+        <Box sx={{ padding: 2 }}>
+          {selectedTabIndex === 0 && readmeFileArea()}
+          {selectedTabIndex === 1 && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
                 <Can
                   I="POST"
                   a={targetUris.processModelFileCreatePath}
                   ability={ability}
                 >
                   {helpText}
-                  <div className="with-bottom-margin">
-                    Files
-                    {processModel &&
-                      processModel.bpmn_version_control_identifier &&
-                      ` (revision ${processModel.bpmn_version_control_identifier})`}
-                  </div>
+                  <Box className="with-bottom-margin">
+                    <Typography variant="h6">
+                      Files
+                      {processModel &&
+                        processModel.bpmn_version_control_identifier &&
+                        ` (revision ${processModel.bpmn_version_control_identifier})`}
+                    </Typography>
+                  </Box>
                   {addFileComponent()}
                   <br />
                 </Can>
                 {processModelFileList()}
-              </Column>
+              </Grid>
             </Grid>
-          </TabPanel>
-          {/* <TabPanel> */}
-          {/*   {selectedTabIndex !== 2 ? null : ( */}
-          {/*     <Can */}
-          {/*       I="POST" */}
-          {/*       a={targetUris.processInstanceListForMePath} */}
-          {/*       ability={ability} */}
-          {/*     > */}
-          {/*       <ProcessInstanceListTable */}
-          {/*         additionalReportFilters={[ */}
-          {/*           { */}
-          {/*             field_name: 'process_model_identifier', */}
-          {/*             field_value: processModel.id, */}
-          {/*           }, */}
-          {/*         ]} */}
-          {/*         perPageOptions={[2, 5, 25]} */}
-          {/*         showLinkToReport */}
-          {/*         variant="for-me" */}
-          {/*       /> */}
-          {/*     </Can> */}
-          {/*   )} */}
-          {/* </TabPanel> */}
-        </TabPanels>
-      </Tabs>
+          )}
+          {selectedTabIndex === 2 && (
+            <Can
+              I="POST"
+              a={targetUris.processInstanceListForMePath}
+              ability={ability}
+            >
+              {/* <ProcessInstanceListTable */}
+              {/*   additionalReportFilters={[ */}
+              {/*     { */}
+              {/*       field_name: 'process_model_identifier', */}
+              {/*       field_value: processModel.id, */}
+              {/*     }, */}
+              {/*   ]} */}
+              {/*   perPageOptions={[2, 5, 25]} */}
+              {/*   showLinkToReport */}
+              {/*   variant="for-me" */}
+              {/* /> */}
+            </Can>
+          )}
+        </Box>
+      </Box>
     );
   };
 
@@ -735,7 +752,7 @@ export default function ProcessModelShow() {
         {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/processes'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -743,30 +760,27 @@ export default function ProcessModelShow() {
           ]}
         />
         {processModelPublishMessage()}
-        <Stack orientation="horizontal" gap={1}>
-          <h1 className="with-icons">
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="h4" className="with-icons">
             Process Model: {processModel.display_name}
-          </h1>
+          </Typography>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <Button
-              kind="ghost"
+            <IconButton
               data-qa="edit-process-model-button"
-              renderIcon={Edit}
-              iconDescription="Edit Process Model"
-              hasIconOnly
+              aria-label="Edit Process Model"
               href={`/process-models/${modifiedProcessModelId}/edit`}
-            />
+            >
+              <EditIcon />
+            </IconButton>
           </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
-              kind="ghost"
               data-qa="delete-process-model-button"
-              renderIcon={TrashCan}
-              iconDescription="Delete Process Model"
-              hasIconOnly
+              aria-label="Delete Process Model"
               description={`Delete process model: ${processModel.display_name}`}
               onConfirmation={deleteProcessModel}
               confirmButtonLabel="Delete"
+              icon={<DeleteIcon />}
             />
           </Can>
           {!processModel.actions || processModel.actions.publish ? (
@@ -775,28 +789,29 @@ export default function ProcessModelShow() {
               a={targetUris.processModelPublishPath}
               ability={ability}
             >
-              <Button
-                kind="ghost"
+              <IconButton
                 data-qa="publish-process-model-button"
-                renderIcon={Upload}
-                iconDescription="Publish Changes"
-                hasIconOnly
+                aria-label="Publish Changes"
                 onClick={publishProcessModel}
                 disabled={publishDisabled}
-              />
+              >
+                <UploadIcon />
+              </IconButton>
             </Can>
           ) : null}
-          {/* <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}> */}
-          {/*   {hasTestCaseFiles ? ( */}
-          {/*     <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" /> */}
-          {/*   ) : null} */}
-          {/* </Can> */}
+          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+            {hasTestCaseFiles ? (
+              <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" />
+            ) : null}
+          </Can>
         </Stack>
-        <p className="process-description">{processModel.description}</p>
+        <Typography variant="body1" className="process-description">
+          {processModel.description}
+        </Typography>
         {processModel.primary_file_name && processModel.is_executable
           ? processStartButton
           : null}
-        <div className="with-top-margin">{tabArea()}</div>
+        <Box className="with-top-margin">{tabArea()}</Box>
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />
         ) : null}
