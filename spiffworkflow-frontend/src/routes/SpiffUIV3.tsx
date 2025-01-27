@@ -38,6 +38,9 @@ import AuthenticationList from '../a-spiffui-v3/views/AuthenticationList';
 import SecretList from '../a-spiffui-v3/views/SecretList';
 import SecretNew from '../a-spiffui-v3/views/SecretNew';
 import SecretShow from '../a-spiffui-v3/views/SecretShow';
+import ProcessModelShow from '../a-spiffui-v3/views/ProcessModelShow';
+import ProcessModelNew from '../a-spiffui-v3/views/ProcessModelNew';
+import ProcessModelEdit from '../a-spiffui-v3/views/ProcessModelEdit'; // Import the edited component
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -232,6 +235,10 @@ export default function SpiffUIV3() {
                   />
                   <Route path="/processes" element={<Processes />} />
                   <Route
+                    path="/process-models/:process_model_id"
+                    element={<ProcessModelShow />}
+                  />
+                  <Route
                     path="/:modifiedProcessModelId/start"
                     element={<StartProcessInstance />}
                   />
@@ -285,6 +292,15 @@ export default function SpiffUIV3() {
                     path="/secrets/:secret_identifier"
                     element={<SecretShow />}
                   />
+                  <Route
+                    path="/process-model/new"
+                    element={<ProcessModelNew />}
+                  />
+                  <Route
+                    path="/process-model/edit/:process_model_id"
+                    element={<ProcessModelEdit />}
+                  />{' '}
+                  {/* Add edit route */}
                 </Routes>
               </Box>
             </Box>

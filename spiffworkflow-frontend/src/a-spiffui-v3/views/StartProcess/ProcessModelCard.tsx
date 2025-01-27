@@ -68,7 +68,7 @@ export default function ProcessModelCard({
       model.id,
     );
     // navigate(`/newui/process-models/${modifiedProcessModelId}`);
-    navigate(`/process-models/${modifiedProcessModelId}`);
+    navigate(`/newui/process-models/${modifiedProcessModelId}`);
   };
 
   const handleClickStream = (item: Record<string, any>) => {
