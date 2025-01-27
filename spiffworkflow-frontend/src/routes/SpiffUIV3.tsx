@@ -32,6 +32,7 @@ import MessageListPage from '../a-spiffui-v3/views/MessageListPage';
 import DataStoreRoutes from '../a-spiffui-v3/views/DataStoreRoutes';
 import DataStoreNew from '../a-spiffui-v3/views/DataStoreNew';
 import DataStoreList from '../a-spiffui-v3/views/DataStoreList'; // Import the DataStoreList component
+import Configuration from '../a-spiffui-v3/views/Configuration'; // Import the Configuration component
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -268,6 +269,7 @@ export default function SpiffUIV3() {
                     element={<DataStoreList />}
                   />{' '}
                   {/* Add route for DataStoreList */}
+                  <Route path="/configuration/*" element={<Configuration />} /> {/* Add route for Configuration */}
                 </Routes>
               </Box>
             </Box>
