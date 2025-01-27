@@ -246,6 +246,7 @@ class TaskService:
                 task_guid=task_model.guid,
                 timestamp=timestamp,
                 add_to_db_session=False,
+                log_event=False,  # Log this in the execution service instead
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 

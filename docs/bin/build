@@ -8,15 +8,20 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 run_ci="false"
-if grep -qE -- "--ci\>" <<<"$@" ; then
+if grep -qE -- "--ci\>" <<<"$@"; then
   run_ci="true"
 fi
 
 rm -rf _build/html
 
 sphinx_command="sphinx-autobuild"
+
+# must ignore generated dir with sphinx-autobuild or it becomes recursive
+additional_args="--ignore '**/_tags/*'"
+
 if [[ "$run_ci" == "true" ]]; then
   sphinx_command="sphinx-build"
+  additional_args=""
 fi
 
 #>> sphinx-build --help 2>&1 | grep -E '^ +\-[aWn]\>'
@@ -24,4 +29,4 @@ fi
 #   -j N              build in parallel with N processes where possible
 #   -n                nit-picky mode, warn about all missing references
 #   -W                turn warnings into errors
-"$sphinx_command" . _build/html  -W -a  -n -j auto
+"$sphinx_command" . _build/html -W -a -n -j auto $additional_args

@@ -1,5 +1,6 @@
 import time
 import traceback
+from typing import Any
 
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -32,6 +33,7 @@ class ProcessInstanceTmpService:
         timestamp: float | None = None,
         add_to_db_session: bool | None = True,
         migration_details: ProcessInstanceMigrationDetailDict | None = None,
+        log_event: bool = True,
     ) -> tuple[ProcessInstanceEventModel, ProcessInstanceErrorDetailModel | None]:
         if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
@@ -46,6 +48,8 @@ class ProcessInstanceTmpService:
 
         if add_to_db_session:
             db.session.add(process_instance_event)
+
+        log_extras: dict[str, Any] = {"task_id": task_guid}
 
         process_instance_error_detail = None
         if exception is not None:
@@ -82,10 +86,19 @@ class ProcessInstanceTmpService:
                 task_offset=task_offset,
             )
 
+            log_extras["error_info"] = {
+                "trace": stacktrace,
+                "line_number": task_line_number,
+                "line_offset": task_offset,
+                "line_content": task_line_contents,
+            }
+
             if add_to_db_session:
                 db.session.add(process_instance_error_detail)
 
-        LoggingService.log_event(event_type, task_guid)
+        if log_event:
+            # Some events need to be logged elsewhere so that all required info can be included
+            LoggingService.log_event(event_type, log_extras)
 
         if migration_details is not None:
             pi_detail = cls.add_process_instance_migration_detail(process_instance_event, migration_details)

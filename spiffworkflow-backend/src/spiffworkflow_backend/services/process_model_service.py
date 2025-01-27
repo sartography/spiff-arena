@@ -127,6 +127,46 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, full_json_data)
 
     @classmethod
+    def extract_metadata(cls, process_model_identifier: str, current_data: dict) -> dict[str, Any]:
+        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
+        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
+        # we also discussed caching this information in new database tables. something like:
+        #   process_model_version
+        #     id
+        #     process_model_identifier
+        #     git_hash
+        #     display_name
+        #     notification_type
+        #   metadata_extraction
+        #     id
+        #     extraction_key
+        #     extraction_path
+        #   metadata_extraction_process_model_version
+        #     process_model_version_id
+        #     metadata_extraction_id
+        process_model_info = cls.get_process_model(process_model_identifier)
+        metadata_extraction_paths = process_model_info.metadata_extraction_paths
+        if metadata_extraction_paths is None:
+            return {}
+        if len(metadata_extraction_paths) <= 0:
+            return {}
+
+        current_metadata = {}
+        for metadata_extraction_path in metadata_extraction_paths:
+            key = metadata_extraction_path["key"]
+            path = metadata_extraction_path["path"]
+            path_segments = path.split(".")
+            data_for_key = current_data
+            for path_segment in path_segments:
+                if path_segment in data_for_key:
+                    data_for_key = data_for_key[path_segment]
+                else:
+                    data_for_key = None  # type: ignore
+                    break
+            current_metadata[key] = data_for_key
+        return current_metadata
+
+    @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
         os.makedirs(process_model_path, exist_ok=True)
