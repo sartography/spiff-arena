@@ -69,6 +69,8 @@ function SideNav({
     selectedTab = 2;
   } else if (location.pathname === '/newui/messages') {
     selectedTab = 3;
+  } else if (location.pathname.startsWith('/newui/configuration')) {
+    selectedTab = 4;
   }
 
   const versionInfo = appVersionInfo();
@@ -168,6 +170,7 @@ function SideNav({
             { text: 'START NEW PROCESS', icon: <Add /> },
             { text: 'DATA STORES' },
             { text: 'MESSAGES' },
+            { text: 'CONFIGURATION' },
           ].map((item, index) => (
             <ListItem
               button
@@ -182,6 +185,8 @@ function SideNav({
                   navigate('/newui/data-stores');
                 } else if (item.text === 'MESSAGES') {
                   navigate('/newui/messages');
+                } else if (item.text === 'CONFIGURATION') {
+                  navigate('/newui/configuration');
                 }
               }}
               sx={{

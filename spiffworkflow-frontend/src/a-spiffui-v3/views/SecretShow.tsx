@@ -68,7 +68,7 @@ export default function SecretShow() {
   };
 
   const navigateToSecrets = (_result: any) => {
-    navigate(`/configuration/secrets`);
+    navigate(`/newui/configuration/secrets`);
   };
 
   const deleteSecret = () => {

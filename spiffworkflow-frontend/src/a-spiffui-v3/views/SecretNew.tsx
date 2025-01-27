@@ -11,11 +11,11 @@ export default function SecretNew() {
   const navigate = useNavigate();
 
   const navigateToSecret = (_result: any) => {
-    navigate(`/configuration/secrets/${key}`);
+    navigate(`/newui/configuration/secrets/${key}`);
   };
 
   const navigateToSecrets = () => {
-    navigate(`/configuration/secrets`);
+    navigate(`/newui/configuration/secrets`);
   };
 
   const addSecret = (event: any) => {
@@ -59,7 +59,11 @@ export default function SecretNew() {
             label="Key*"
             value={key}
             error={keyIsInvalid}
-            helperText={keyIsInvalid ? "The key must be alphanumeric characters and underscores" : ""}
+            helperText={
+              keyIsInvalid
+                ? 'The key must be alphanumeric characters and underscores'
+                : ''
+            }
             onChange={(e: any) => setKey(e.target.value)}
             fullWidth
           />
@@ -68,7 +72,7 @@ export default function SecretNew() {
             label="Value*"
             value={value}
             error={valueIsInvalid}
-            helperText={valueIsInvalid ? "The value must be set" : ""}
+            helperText={valueIsInvalid ? 'The value must be set' : ''}
             onChange={(e: any) => {
               setValue(e.target.value);
             }}
