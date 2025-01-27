@@ -31,8 +31,12 @@ import ComingSoon from '../components/ComingSoon';
 import MessageListPage from '../a-spiffui-v3/views/MessageListPage';
 import DataStoreRoutes from '../a-spiffui-v3/views/DataStoreRoutes';
 import DataStoreNew from '../a-spiffui-v3/views/DataStoreNew';
-import DataStoreList from '../a-spiffui-v3/views/DataStoreList'; // Import the DataStoreList component
-import Configuration from '../a-spiffui-v3/views/Configuration'; // Import the Configuration component
+import DataStoreList from '../a-spiffui-v3/views/DataStoreList';
+import Configuration from '../a-spiffui-v3/views/Configuration';
+import AuthenticationList from '../a-spiffui-v3/views/AuthenticationList';
+import SecretList from '../a-spiffui-v3/views/SecretList';
+import SecretNew from '../a-spiffui-v3/views/SecretNew';
+import SecretShow from '../a-spiffui-v3/views/SecretShow';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -268,8 +272,17 @@ export default function SpiffUIV3() {
                     path="/data-storelist"
                     element={<DataStoreList />}
                   />{' '}
-                  {/* Add route for DataStoreList */}
-                  <Route path="/configuration/*" element={<Configuration />} /> {/* Add route for Configuration */}
+                  <Route path="/configuration/*" element={<Configuration />} />{' '}
+                  <Route
+                    path="/authentication-list"
+                    element={<AuthenticationList />}
+                  />{' '}
+                  <Route path="/secrets" element={<SecretList />} />{' '}
+                  <Route path="/secrets/new" element={<SecretNew />} />
+                  <Route
+                    path="/secrets/:secret_identifier"
+                    element={<SecretShow />}
+                  />
                 </Routes>
               </Box>
             </Box>
