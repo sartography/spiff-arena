@@ -11,9 +11,9 @@ import {
 import {
   Button,
   Grid,
-  Modal,
   Stack,
   Table,
+  Modal,
   TableBody,
   TableCell,
   TableHead,
@@ -427,17 +427,32 @@ export default function ProcessModelShow() {
   const confirmOverwriteFileDialog = () => {
     return (
       <Modal
-        danger
         open={showOverwriteConfirmationPrompt}
-        data-qa="file-overwrite-modal-confirmation-dialog"
-        modalHeading={`Overwrite the file: ${duplicateFilename}`}
-        modalLabel="Overwrite file?"
-        primaryButtonText="Yes"
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleOverwriteFileCancel}
-        onRequestSubmit={handleOverwriteFileConfirm}
-        onRequestClose={handleOverwriteFileCancel}
-      />
+        onClose={handleOverwriteFileCancel}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={{position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          border: '2px solid #000',
+          boxShadow: 24,
+          p: 4,}}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Overwrite the file: {duplicateFilename}
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+            Are you sure you want to overwrite this file?
+          </Typography>
+          <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{mt: 2}}>
+            <Button onClick={handleOverwriteFileCancel} variant="outlined">Cancel</Button>
+            <Button onClick={handleOverwriteFileConfirm} variant="contained" color="error">Yes</Button>
+          </Stack>
+        </Box>
+      </Modal>
     );
   };
   const displayOverwriteConfirmation = (filename: string) => {
