@@ -4,6 +4,7 @@ import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import { getStorageValue } from '../../services/LocalStorageService';
+import { ProcessModelAction } from '../../interfaces';
 
 const defaultStyle = {
   borderRadius: 2,
@@ -31,8 +32,10 @@ export default function ProcessModelCard({
   stream,
   lastSelected,
   onStartProcess,
+  processModelAction,
 }: {
   model: Record<string, any>;
+  processModelAction: ProcessModelAction;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
@@ -57,6 +60,15 @@ export default function ProcessModelCard({
       model.id,
     );
     navigate(`/newui/${modifiedProcessModelId}/start`);
+  };
+
+  const handleViewProcess = (e: PointerEvent) => {
+    stopEventBubble(e);
+    const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
+      model.id,
+    );
+    // navigate(`/newui/process-models/${modifiedProcessModelId}`);
+    navigate(`/process-models/${modifiedProcessModelId}`);
   };
 
   const handleClickStream = (item: Record<string, any>) => {
@@ -169,14 +181,25 @@ export default function ProcessModelCard({
             justifyContent: 'flex-end',
           }}
         >
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
-          >
-            Start this process
-          </Button>
+          {processModelAction === ProcessModelAction.StartProcess ? (
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
+            >
+              Start this process
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={(e) => handleViewProcess(e as unknown as PointerEvent)}
+            >
+              View process
+            </Button>
+          )}
         </Stack>
       </Stack>
     </Paper>

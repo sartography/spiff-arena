@@ -1,5 +1,10 @@
 import { ReactElement } from 'react';
 
+export enum ProcessModelAction {
+  Open = 'Open',
+  StartProcess = 'StartProcess',
+}
+
 export interface User {
   id: number;
   username: string;

@@ -65,12 +65,14 @@ function SideNav({
   let selectedTab = 0;
   if (location.pathname === '/newui/startprocess') {
     selectedTab = 1;
-  } else if (location.pathname === '/newui/data-stores') {
+  } else if (location.pathname.startsWith('/newui/processes')) {
     selectedTab = 2;
-  } else if (location.pathname === '/newui/messages') {
+  } else if (location.pathname === '/newui/data-stores') {
     selectedTab = 3;
-  } else if (location.pathname.startsWith('/newui/configuration')) {
+  } else if (location.pathname === '/newui/messages') {
     selectedTab = 4;
+  } else if (location.pathname.startsWith('/newui/configuration')) {
+    selectedTab = 5;
   }
 
   const versionInfo = appVersionInfo();
@@ -168,6 +170,7 @@ function SideNav({
           {[
             { text: 'HOME', icon: <Home /> },
             { text: 'START NEW PROCESS', icon: <Add /> },
+            { text: 'PROCESSES' },
             { text: 'DATA STORES' },
             { text: 'MESSAGES' },
             { text: 'CONFIGURATION' },
@@ -181,6 +184,8 @@ function SideNav({
                   navigate('/newui');
                 } else if (index === 1) {
                   navigate('/newui/startprocess');
+                } else if (item.text === 'PROCESSES') {
+                  navigate('/newui/processes');
                 } else if (item.text === 'DATA STORES') {
                   navigate('/newui/data-stores');
                 } else if (item.text === 'MESSAGES') {

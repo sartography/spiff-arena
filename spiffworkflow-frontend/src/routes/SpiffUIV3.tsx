@@ -16,6 +16,7 @@ import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
 import Homepage from '../a-spiffui-v3/views/Homepage';
 import '../a-spiffui-v3/assets/styles/transitions.css';
 import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
+import Processes from '../a-spiffui-v3/views/StartProcess/Processes';
 import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProcessInstance';
 import SideNav from '../a-spiffui-v3/components/SideNav';
 import LoginHandler from '../components/LoginHandler';
@@ -229,6 +230,7 @@ export default function SpiffUIV3() {
                       />
                     }
                   />
+                  <Route path="/processes" element={<Processes />} />
                   <Route
                     path="/:modifiedProcessModelId/start"
                     element={<StartProcessInstance />}
