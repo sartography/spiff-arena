@@ -272,15 +272,7 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
   }, [clickStream]);
 
   return (
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        p: 3,
-        overflow: 'hidden',
-        height: '100vh',
-      }}
-    >
+    <>
       <Typography variant="h1" sx={{ mb: 2 }}>
         Start new process
       </Typography>
@@ -407,6 +399,6 @@ export default function StartProcess({ setNavElementCallback }: OwnProps) {
           </Stack>
         </Stack>
       </Container>
-    </Box>
+    </>
   );
 }

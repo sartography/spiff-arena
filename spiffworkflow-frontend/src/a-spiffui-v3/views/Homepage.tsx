@@ -158,17 +158,7 @@ function Homepage({
   };
 
   return (
-    <Box
-      className={isLongFadeIn ? 'fade-in-long' : 'fadeIn'}
-      component="main"
-      sx={{
-        flexGrow: 1,
-        p: 3,
-        overflow: 'auto',
-        height: '100%',
-        mt: isMobile ? '64px' : 0,
-      }}
-    >
+    <>
       {isMobile ? (
         <Box
           sx={{
@@ -237,7 +227,7 @@ function Homepage({
         />
       </Box>
       {taskTableElement()}
-    </Box>
+    </>
   );
 }
 

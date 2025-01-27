@@ -193,73 +193,83 @@ export default function SpiffUIV3() {
                 }
               }}
             >
-              <ErrorDisplay />
-              <Routes>
-                <Route path="/about" element={<About />} />
-                <Route
-                  path="/"
-                  element={
-                    <Homepage
-                      viewMode={viewMode}
-                      setViewMode={setViewMode}
-                      isMobile={isMobile}
-                      isLongFadeIn={isLongFadeIn}
-                    />
-                  }
-                />
-                <Route
-                  path="/startprocess"
-                  element={
-                    <StartProcess
-                      setNavElementCallback={setAdditionalNavElement}
-                    />
-                  }
-                />
-                <Route
-                  path="/:modifiedProcessModelId/start"
-                  element={<StartProcessInstance />}
-                />
-                <Route path="login" element={<Login />} />
-                <Route path="/create-custom-tab" element={<ComingSoon />} />
-                <Route
-                  path="/tasks/:process_instance_id/:task_guid"
-                  element={<TaskShow />}
-                />
-                <Route
-                  path="/started-by-me"
-                  element={
-                    <InstancesStartedByMe
-                      viewMode={viewMode}
-                      setViewMode={setViewMode}
-                      isMobile={isMobile}
-                    />
-                  }
-                />
-                <Route
-                  path="process-instances/for-me/:process_model_id/:process_instance_id/interstitial"
-                  element={<ProcessInterstitialPage variant="for-me" />}
-                />
-                {/* <Route */}
-                {/*   path="process-instances/:process_model_id/:process_instance_id/interstitial" */}
-                {/*   element={<ProcessInterstitialPage variant="all" />} */}
-                {/* /> */}
-                <Route
-                  path="process-instances/for-me/:process_model_id/:process_instance_id/progress"
-                  element={<ProcessInstanceProgressPage variant="for-me" />}
-                />
-                {/* <Route */}
-                {/*   path="process-instances/:process_model_id/:process_instance_id/progress" */}
-                {/*   element={<ProcessInstanceProgressPage variant="all" />} */}
-                {/* /> */}
-                <Route path="/messages" element={<MessageListPage />} />
-                <Route path="/data-stores/*" element={<DataStoreRoutes />} />
-                <Route path="/data-store/new" element={<DataStoreNew />} />
-                <Route
-                  path="/data-storelist"
-                  element={<DataStoreList />}
-                />{' '}
-                {/* Add route for DataStoreList */}
-              </Routes>
+              <Box
+                component="main"
+                sx={{
+                  flexGrow: 1,
+                  p: 3,
+                  overflow: 'hidden',
+                  height: '100vh',
+                }}
+              >
+                <ErrorDisplay />
+                <Routes>
+                  <Route path="/about" element={<About />} />
+                  <Route
+                    path="/"
+                    element={
+                      <Homepage
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        isMobile={isMobile}
+                        isLongFadeIn={isLongFadeIn}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/startprocess"
+                    element={
+                      <StartProcess
+                        setNavElementCallback={setAdditionalNavElement}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:modifiedProcessModelId/start"
+                    element={<StartProcessInstance />}
+                  />
+                  <Route path="login" element={<Login />} />
+                  <Route path="/create-custom-tab" element={<ComingSoon />} />
+                  <Route
+                    path="/tasks/:process_instance_id/:task_guid"
+                    element={<TaskShow />}
+                  />
+                  <Route
+                    path="/started-by-me"
+                    element={
+                      <InstancesStartedByMe
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        isMobile={isMobile}
+                      />
+                    }
+                  />
+                  <Route
+                    path="process-instances/for-me/:process_model_id/:process_instance_id/interstitial"
+                    element={<ProcessInterstitialPage variant="for-me" />}
+                  />
+                  {/* <Route */}
+                  {/*   path="process-instances/:process_model_id/:process_instance_id/interstitial" */}
+                  {/*   element={<ProcessInterstitialPage variant="all" />} */}
+                  {/* /> */}
+                  <Route
+                    path="process-instances/for-me/:process_model_id/:process_instance_id/progress"
+                    element={<ProcessInstanceProgressPage variant="for-me" />}
+                  />
+                  {/* <Route */}
+                  {/*   path="process-instances/:process_model_id/:process_instance_id/progress" */}
+                  {/*   element={<ProcessInstanceProgressPage variant="all" />} */}
+                  {/* /> */}
+                  <Route path="/messages" element={<MessageListPage />} />
+                  <Route path="/data-stores/*" element={<DataStoreRoutes />} />
+                  <Route path="/data-store/new" element={<DataStoreNew />} />
+                  <Route
+                    path="/data-storelist"
+                    element={<DataStoreList />}
+                  />{' '}
+                  {/* Add route for DataStoreList */}
+                </Routes>
+              </Box>
             </Box>
           </Box>
         </Grid>

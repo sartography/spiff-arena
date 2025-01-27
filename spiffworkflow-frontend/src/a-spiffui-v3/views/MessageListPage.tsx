@@ -1,6 +1,6 @@
+import { Typography, Box } from '@mui/material';
 import MessageInstanceList from '../components/messages/MessageInstanceList';
 import { setPageTitle } from '../helpers';
-import { Typography, Box } from '@mui/material';
 
 export default function MessageListPage() {
   setPageTitle(['Messages']);
@@ -29,7 +29,9 @@ export default function MessageListPage() {
 
   return (
     <Box>
-      <Typography variant="h1">Messages</Typography>
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        Messages
+      </Typography>
       <MessageInstanceList />
     </Box>
   );
