@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import HttpService from '../../services/HttpService';
-import DateAndTimeService from '../../services/DateAndTimeService';
+import DateAndTimeService from '../services/DateAndTimeService';
 import { refreshAtInterval } from '../../helpers';
 import {
   PaginationObject,

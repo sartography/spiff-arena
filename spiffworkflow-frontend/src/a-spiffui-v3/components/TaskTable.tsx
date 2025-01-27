@@ -21,7 +21,7 @@ import SpiffTooltip from '../../components/SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 import UserService from '../../services/UserService';
 import { TimeAgo } from '../../helpers/timeago';
-import DateAndTimeService from '../../services/DateAndTimeService';
+import DateAndTimeService from '../services/DateAndTimeService';
 
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;

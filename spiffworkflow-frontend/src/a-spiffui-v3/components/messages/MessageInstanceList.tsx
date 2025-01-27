@@ -84,14 +84,18 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           onClose={handleCorrelationDisplayClose}
         >
           <DialogTitle>
-            Message {messageInstanceForModal.id} ({messageInstanceForModal.name}){' '}
-            {messageInstanceForModal.message_type} data:
+            Message {messageInstanceForModal.id} ({messageInstanceForModal.name}
+            ) {messageInstanceForModal.message_type} data:
           </DialogTitle>
           <DialogContent>
             {failureCausePre}
             <p>Correlations:</p>
             <pre>
-              {JSON.stringify(messageInstanceForModal.correlation_keys, null, 2)}
+              {JSON.stringify(
+                messageInstanceForModal.correlation_keys,
+                null,
+                2,
+              )}
             </pre>
           </DialogContent>
         </Dialog>
