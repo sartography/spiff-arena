@@ -22,7 +22,7 @@ import HttpService from '../services/HttpService';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { MigrationEvent, MigrationCheckResult } from '../interfaces';
-import CellRenderer from '../a-spiffui-v2/views/Dashboards/myProcesses/CellRenderer';
+import CellRenderer from '../a-spiffui-v3/components/CellRenderer';
 
 function DangerousMigrationButton({
   successCallback,
