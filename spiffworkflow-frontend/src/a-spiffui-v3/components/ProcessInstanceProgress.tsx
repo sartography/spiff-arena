@@ -15,7 +15,7 @@ import InstructionsForEndUser from './InstructionsForEndUser';
 import {
   errorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
-} from '../../components/ErrorDisplay';
+} from './ErrorDisplay';
 
 type OwnProps = {
   processInstanceId: number;
