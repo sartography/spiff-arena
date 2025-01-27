@@ -6,7 +6,6 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TablePagination,
   Paper,
   MenuItem,
   Select,
@@ -127,13 +126,17 @@ export default function DataStoreListTable() {
   return (
     <>
       <FormControl fullWidth>
-        <InputLabel id="data-store-dropdown-label">Select Data Store</InputLabel>
+        <InputLabel id="data-store-dropdown-label">
+          Select Data Store
+        </InputLabel>
         <Select
           labelId="data-store-dropdown-label"
           id="data-store-dropdown"
           value={dataStore ? dataStore.id : ''}
           onChange={(event) => {
-            const selectedDataStore = dataStores.find(ds => ds.id === event.target.value);
+            const selectedDataStore = dataStores.find(
+              (ds) => ds.id === event.target.value,
+            );
             if (selectedDataStore) {
               setDataStore(selectedDataStore);
               searchParams.set('datastore_page', '1');

@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { TablePagination } from '@mui/material';
+import { ChangeEvent, MouseEvent } from 'react';
 import { PaginationObject } from '../interfaces';
 
 type OwnProps = {
@@ -30,16 +31,14 @@ export default function PaginationForTable({
     : '';
 
   const updateRows = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
+    event: MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
     searchParams.set(`${paginationQueryParamPrefixToUse}page`, newPage + 1);
     setSearchParams(searchParams);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     const newPerPage = parseInt(event.target.value, 10);
     searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, newPerPage);
     setSearchParams(searchParams);

@@ -59,6 +59,7 @@ export function Notification({
       open
       autoHideDuration={timeout}
       onClose={onClose}
+      // eslint-disable-next-line react/jsx-props-no-spreading
       {...additionalProps}
     >
       <Alert

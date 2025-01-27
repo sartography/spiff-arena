@@ -12,19 +12,13 @@ type HomepageProps = {
   viewMode: 'table' | 'tile';
   setViewMode: React.Dispatch<React.SetStateAction<'table' | 'tile'>>;
   isMobile: boolean;
-  isLongFadeIn?: boolean;
 };
 
 type GroupedItems = {
   [key: string]: ProcessInstanceTask[];
 };
 
-function Homepage({
-  viewMode,
-  setViewMode,
-  isMobile,
-  isLongFadeIn,
-}: HomepageProps) {
+function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
   const [lastProcessInstanceId, setLastProcessInstanceId] = useState<
     number | null
   >(null);

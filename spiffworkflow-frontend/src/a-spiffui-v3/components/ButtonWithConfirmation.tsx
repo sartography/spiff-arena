@@ -14,9 +14,9 @@ type OwnProps = {
   title?: string;
   confirmButtonLabel?: string;
   kind?: 'text' | 'outlined' | 'contained';
-  renderIcon?: JSX.Element;
+  renderIcon?: Element;
   iconDescription?: string | null;
-  hasIconOnly?: boolean;
+  // hasIconOnly?: boolean;
   classNameForModal?: string;
 };
 
@@ -30,7 +30,7 @@ export default function ButtonWithConfirmation({
   kind = 'contained',
   renderIcon,
   iconDescription = null,
-  hasIconOnly = false,
+  // hasIconOnly = false,
   classNameForModal,
 }: OwnProps) {
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);

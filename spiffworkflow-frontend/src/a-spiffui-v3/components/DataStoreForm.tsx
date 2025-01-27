@@ -188,7 +188,7 @@ export default function DataStoreForm({
         data-qa="data-store-name-input"
         name="name"
         error={nameInvalid}
-        helperText={nameInvalid ? "Name is required." : ""}
+        helperText={nameInvalid ? 'Name is required.' : ''}
         label="Name*"
         value={dataStore.name}
         onChange={(event: any) => onNameChanged(event.target.value)}
@@ -203,7 +203,11 @@ export default function DataStoreForm({
           readOnly: mode === 'edit',
         }}
         error={identifierInvalid}
-        helperText={identifierInvalid ? "Identifier is required and must be all lowercase characters and hyphens." : ""}
+        helperText={
+          identifierInvalid
+            ? 'Identifier is required and must be all lowercase characters and hyphens.'
+            : ''
+        }
         label="Identifier*"
         value={dataStore.id}
         onChange={(event: any) => {
@@ -245,7 +249,7 @@ export default function DataStoreForm({
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl>,
       );
     }
 
@@ -254,7 +258,9 @@ export default function DataStoreForm({
         id="data-store-schema"
         name="schema"
         error={schemaInvalid}
-        helperText={schemaInvalid ? "Schema is required and must be valid JSON." : ""}
+        helperText={
+          schemaInvalid ? 'Schema is required and must be valid JSON.' : ''
+        }
         label="Schema*"
         multiline
         minRows={3}
@@ -280,7 +286,11 @@ export default function DataStoreForm({
   };
 
   const formButtons = () => {
-    return <Button type="submit" variant="contained">Submit</Button>;
+    return (
+      <Button type="submit" variant="contained">
+        Submit
+      </Button>
+    );
   };
 
   return (

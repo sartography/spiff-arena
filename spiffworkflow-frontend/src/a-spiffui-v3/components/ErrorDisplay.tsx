@@ -163,7 +163,13 @@ export function errorDisplayStateless(
     <Alert
       severity="error"
       onClose={onClose}
-      action={hideCloseButton ? null : <button onClick={onClose}>Close</button>}
+      action={
+        hideCloseButton ? null : (
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
+        )
+      }
     >
       <AlertTitle>{title}</AlertTitle>
       {childrenForErrorObject(errorObject)}

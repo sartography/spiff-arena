@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import HttpService from '../services/HttpService';
 // Import MUI components
-import { Box, Typography } from '@mui/material';
 
 // Define the props type
 type OwnProps = {
