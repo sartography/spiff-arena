@@ -213,8 +213,6 @@ export default function ProcessModelShow() {
         >
           <>
             <ProcessInstanceRun processModel={processModel} />
-            <br />
-            <br />
           </>
         </Can>
       </Stack>
@@ -302,6 +300,7 @@ export default function ProcessModelShow() {
           onDeleteFile={onDeleteFile}
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}
+          style={{ marginTop: '1rem' }}  /* Add margin here */
         />
         <ProcessModelReadmeArea
           readmeFile={readmeFile}
