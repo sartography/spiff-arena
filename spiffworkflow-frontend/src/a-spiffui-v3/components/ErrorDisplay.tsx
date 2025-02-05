@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import { Alert, AlertTitle } from '@mui/material';
 import useAPIError from '../hooks/UseApiError';
 import {
@@ -154,7 +154,7 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
 
 export function errorDisplayStateless(
   errorObject: ErrorForDisplay,
-  onClose?: Function,
+  onClose?: (event: SyntheticEvent) => void,
 ) {
   const title = 'Error:';
   const hideCloseButton = !onClose;
