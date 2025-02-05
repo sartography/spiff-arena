@@ -14,6 +14,7 @@ import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { Ability } from '@casl/ability';
 import { ProcessFile } from '../interfaces';
+import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
