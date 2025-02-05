@@ -120,7 +120,7 @@ export default function ProcessModelFileUploadModal({
 
 ProcessModelFileUploadModal.propTypes = {
   showFileUploadModal: PropTypes.bool.isRequired,
-  processModel: PropTypes.any,
+  processModel: PropTypes.object,
   handleFileUploadCancel: PropTypes.func.isRequired,
   checkDuplicateFile: PropTypes.func.isRequired,
 };

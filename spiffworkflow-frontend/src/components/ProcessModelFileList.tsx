@@ -228,7 +228,7 @@ ProcessModelFileList.propTypes = {
     primary_file_name: PropTypes.string,
   }),
   ability: PropTypes.instanceOf(Ability).isRequired,
-  targetUris: PropTypes.any,
+  targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
   modifiedProcessModelId: PropTypes.string.isRequired,
   onDeleteFile: PropTypes.func.isRequired,
   onSetPrimaryFile: PropTypes.func.isRequired,

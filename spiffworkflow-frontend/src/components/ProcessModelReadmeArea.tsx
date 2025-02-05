@@ -73,6 +73,6 @@ ProcessModelReadmeArea.propTypes = {
     name: PropTypes.string.isRequired,
   }),
   ability: PropTypes.instanceOf(Ability).isRequired,
-  targetUris: PropTypes.any,
+  targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
   modifiedProcessModelId: PropTypes.string.isRequired,
 };
