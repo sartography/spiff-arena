@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, Edit, TrashCan } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
@@ -56,7 +56,7 @@ export default function ProcessModelShow() {
   let hasTestCaseFiles: boolean = false;
 
   const isTestCaseFile = (processModelFile: ProcessFile) => {
-    return processModelFile.name.match(/^test_.*\.json$/);
+    return !!processModelFile.name.match(/^test_.*\.json$/);
   };
 
   if (processModel) {
@@ -212,9 +212,7 @@ export default function ProcessModelShow() {
           a={targetUris.processInstanceCreatePath}
           ability={ability}
         >
-          <>
-            <ProcessInstanceRun processModel={processModel} />
-          </>
+          <ProcessInstanceRun processModel={processModel} />
         </Can>
       </Stack>
     );
@@ -223,9 +221,10 @@ export default function ProcessModelShow() {
         <ProcessModelFileUploadModal
           showFileUploadModal={showFileUploadModal}
           processModel={processModel}
-          onFileUpload={doFileUpload}
+          doFileUpload={doFileUpload}
           handleFileUploadCancel={handleFileUploadCancel}
           checkDuplicateFile={checkDuplicateFile}
+          setShowFileUploadModal={setShowFileUploadModal}
         />
         <ProcessBreadcrumb
           hotCrumbs={[
@@ -305,6 +304,7 @@ export default function ProcessModelShow() {
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}
           readmeFile={readmeFile}
+          setShowFileUploadModal={setShowFileUploadModal}
         />
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />

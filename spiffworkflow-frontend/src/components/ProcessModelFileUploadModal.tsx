@@ -1,67 +1,61 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FileUploader, Modal } from '@carbon/react';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
   processModel: any;
-  onFileUpload: (event: any) => void;
   handleFileUploadCancel: () => void;
-  checkDuplicateFile: (event: any) => void;
-}
-interface FileUploadState {
-  filesToUpload: File[] | null;
+  checkDuplicateFile: (files: File[], forceOverwrite?: boolean) => void;
+  doFileUpload: Function;
+  setShowFileUploadModal: Function;
 }
 
-const ProcessModelFileUploadModal: React.FC<
-  ProcessModelFileUploadModalProps
-> = ({
+export default function ProcessModelFileUploadModal({
   showFileUploadModal,
   processModel,
-  onFileUpload,
   handleFileUploadCancel,
   checkDuplicateFile,
-}) => {
+  doFileUpload,
+  setShowFileUploadModal,
+}: ProcessModelFileUploadModalProps) {
   const [filesToUpload, setFilesToUpload] = useState<File[] | null>(null);
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
     useState(false);
-  const [fileUploadEvent, setFileUploadEvent] = useState(null);
 
   const handleOverwriteFileConfirm = () => {
     setShowOverwriteConfirmationPrompt(false);
-    if (fileUploadEvent) {
-      checkDuplicateFile(fileUploadEvent, true); // Force overwrite
-    }
+    doFileUpload(filesToUpload);
   };
 
   const handleOverwriteFileCancel = () => {
+    setShowFileUploadModal(true);
     setShowOverwriteConfirmationPrompt(false);
-    setFilesToUpload(null);
   };
 
   const displayOverwriteConfirmation = (filename: string) => {
     setDuplicateFilename(filename);
+    setShowFileUploadModal(false);
     setShowOverwriteConfirmationPrompt(true);
   };
 
-  const handleLocalFileUpload = (event: any) => {
-    const newFiles: File[] = Array.from(event.target.files);
-    setFilesToUpload(newFiles);
-
+  const handleLocalFileUpload = () => {
+    if (!filesToUpload) {
+      return;
+    }
     if (processModel) {
       let foundExistingFile = false;
-      if (processModel.files.length > 0) {
+      if (processModel.files && processModel.files.length > 0) {
         processModel.files.forEach((file: { name: string }) => {
-          if (file.name === newFiles[0].name) {
+          if (file.name === filesToUpload[0].name) {
             foundExistingFile = true;
           }
         });
       }
       if (foundExistingFile) {
-        displayOverwriteConfirmation(newFiles[0].name);
-        setFileUploadEvent(event);
+        displayOverwriteConfirmation(filesToUpload[0].name);
       } else {
-        checkDuplicateFile(event);
+        checkDuplicateFile(filesToUpload);
         setShowOverwriteConfirmationPrompt(false);
       }
     }
@@ -96,12 +90,7 @@ const ProcessModelFileUploadModal: React.FC<
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileUploadCancel}
         onRequestClose={handleFileUploadCancel}
-        onRequestSubmit={() => {
-          if (filesToUpload) {
-            checkDuplicateFile(filesToUpload);
-          }
-          setShowOverwriteConfirmationPrompt(false);
-        }}
+        onRequestSubmit={handleLocalFileUpload}
       >
         <FileUploader
           labelTitle="Upload files"
@@ -117,11 +106,9 @@ const ProcessModelFileUploadModal: React.FC<
           name=""
           multiple={false}
           onDelete={() => setFilesToUpload(null)}
-          onChange={handleLocalFileUpload}
+          onChange={(event: any) => setFilesToUpload(event.target.files)}
         />
       </Modal>
     </>
   );
-};
-
-export default ProcessModelFileUploadModal;
+}

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Column,
   Dropdown,
@@ -10,7 +11,7 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
@@ -18,7 +19,7 @@ import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   selectedTabIndex: number;
@@ -27,9 +28,10 @@ interface ProcessModelTabsProps {
   onSetPrimaryFile: (fileName: string) => void;
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
   readmeFile: ProcessFile | null;
+  setShowFileUploadModal: Function;
 }
 
-const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
+export default function ProcessModelTabs({
   processModel,
   ability,
   targetUris,
@@ -40,7 +42,8 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
-}) => {
+  setShowFileUploadModal,
+}: ProcessModelTabsProps) {
   const navigate = useNavigate();
 
   if (!processModel) {
@@ -88,7 +91,7 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
             // Handled by parent component via prop
             updateSelectedTab({ selectedIndex: 1 }); // Switch to Files tab
             // Open file upload modal (handled by parent)
-            // setShowFileUploadModal(true);
+            setShowFileUploadModal(true);
           } else if (a.selectedItem.text === 'New DMN File') {
             navigate(
               `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
@@ -181,6 +184,4 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
       </TabPanels>
     </Tabs>
   );
-};
-
-export default ProcessModelTabs;
+}

@@ -1,23 +1,24 @@
+import React from 'react';
 import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelReadmeAreaProps {
   readmeFile: ProcessFile | null;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
 }
 
-const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
+export default function ProcessModelReadmeArea({
   readmeFile,
   ability,
   targetUris,
   modifiedProcessModelId,
-}) => {
+}: ProcessModelReadmeAreaProps) {
   if (readmeFile) {
     return (
       <div className="readme-container">
@@ -64,6 +65,4 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
       </Can>
     </>
   );
-};
-
-export default ProcessModelReadmeArea;
+}

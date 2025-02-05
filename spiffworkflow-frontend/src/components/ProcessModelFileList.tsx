@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Edit, Favorite, TrashCan, View } from '@carbon/icons-react';
 import {
@@ -10,14 +11,14 @@ import {
   TableRow,
 } from '@carbon/react';
 import { Can } from '@casl/react';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelFileListProps {
   processModel: any;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   onDeleteFile: (fileName: string) => void;
@@ -25,7 +26,7 @@ interface ProcessModelFileListProps {
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
 }
 
-const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
+export default function ProcessModelFileList({
   processModel,
   ability,
   targetUris,
@@ -33,7 +34,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
   onDeleteFile,
   onSetPrimaryFile,
   isTestCaseFile,
-}) => {
+}: ProcessModelFileListProps) {
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
@@ -214,6 +215,4 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
       <TableBody>{tags}</TableBody>
     </Table>
   );
-};
-
-export default ProcessModelFileList;
+}
