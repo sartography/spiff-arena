@@ -1,14 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Upload,
-  Edit,
-  TrashCan,
-} from '@carbon/icons-react';
-import {
-  Button,
-  Stack,
-} from '@carbon/react';
+import { Upload, Edit, TrashCan } from '@carbon/icons-react';
+import { Button, Stack } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
@@ -324,4 +317,3 @@ export default function ProcessModelShow() {
   }
   return null;
 }
-
