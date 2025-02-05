@@ -221,7 +221,6 @@ export default function SpiffUIV3() {
                         viewMode={viewMode}
                         setViewMode={setViewMode}
                         isMobile={isMobile}
-                        isLongFadeIn={isLongFadeIn}
                       />
                     }
                   />
