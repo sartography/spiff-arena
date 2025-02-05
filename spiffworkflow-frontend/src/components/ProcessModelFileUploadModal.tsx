@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-  FileUploader,
-  Modal,
-} from '@carbon/react';
+import { FileUploader, Modal } from '@carbon/react';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -15,17 +12,19 @@ interface FileUploadState {
   filesToUpload: File[] | null;
 }
 
-const ProcessModelFileUploadModal: React.FC<ProcessModelFileUploadModalProps> = ({
+const ProcessModelFileUploadModal: React.FC<
+  ProcessModelFileUploadModalProps
+> = ({
   showFileUploadModal,
   processModel,
   onFileUpload,
   handleFileUploadCancel,
-  checkDuplicateFile
+  checkDuplicateFile,
 }) => {
-
   const [filesToUpload, setFilesToUpload] = useState<File[] | null>(null);
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
-  const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] = useState(false);
+  const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
+    useState(false);
   const [fileUploadEvent, setFileUploadEvent] = useState(null);
 
   const handleOverwriteFileConfirm = () => {
@@ -126,4 +125,3 @@ const ProcessModelFileUploadModal: React.FC<ProcessModelFileUploadModalProps> = 
 };
 
 export default ProcessModelFileUploadModal;
-

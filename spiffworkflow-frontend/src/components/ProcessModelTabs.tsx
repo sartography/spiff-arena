@@ -8,11 +8,11 @@ import {
   TabPanels,
   Tabs,
 } from '@carbon/react';
-import { Can } from '@casl/react';  // Corrected import
+import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
+import { Ability } from '@casl/ability';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
-import { Ability } from '@casl/ability';
 import { ProcessFile } from '../interfaces';
 import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 

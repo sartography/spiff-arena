@@ -1,12 +1,8 @@
-import {
-  Button,
-  Column,
-  Grid,
-} from '@carbon/react';
+import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
-import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { Ability } from '@casl/ability';
+import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelReadmeAreaProps {
@@ -20,7 +16,7 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
   readmeFile,
   ability,
   targetUris,
-  modifiedProcessModelId
+  modifiedProcessModelId,
 }) => {
   if (readmeFile) {
     return (

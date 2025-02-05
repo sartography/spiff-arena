@@ -1,11 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  Download,
-  Edit,
-  Favorite,
-  TrashCan,
-  View,
-} from '@carbon/icons-react';
+import { Download, Edit, Favorite, TrashCan, View } from '@carbon/icons-react';
 import {
   Button,
   Table,
@@ -16,10 +10,10 @@ import {
   TableRow,
 } from '@carbon/react';
 import { Can } from '@casl/react';
+import { Ability } from '@casl/ability';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
-import { Ability } from '@casl/ability';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -54,7 +48,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
 
   const renderButtonElements = (
     processModelFile: ProcessFile,
-    isPrimaryBpmnFile: boolean
+    isPrimaryBpmnFile: boolean,
   ) => {
     const elements = [];
 
@@ -75,7 +69,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
           data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
           href={profileModelFileEditUrl(processModelFile)}
         />
-      </Can>
+      </Can>,
     );
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
@@ -88,11 +82,11 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
           onClick={() =>
             window.open(
               `/${targetUris.processModelFilePath}/${processModelFile.name}`,
-              '_blank'
+              '_blank',
             )
           }
         />
-      </Can>
+      </Can>,
     );
 
     if (!isPrimaryBpmnFile) {
@@ -114,7 +108,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
             confirmButtonLabel="Delete"
             classNameForModal="modal-within-table-cell"
           />
-        </Can>
+        </Can>,
       );
     }
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
@@ -128,7 +122,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
             size="lg"
             onClick={() => onSetPrimaryFile(processModelFile.name)}
           />
-        </Can>
+        </Can>,
       );
     }
     if (isTestCaseFile(processModelFile)) {
@@ -139,7 +133,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
             titleText="Run BPMN unit tests defined in this file"
             classNameForModal="modal-within-table-cell"
           />
-        </Can>
+        </Can>,
       );
     }
     return elements;
@@ -157,7 +151,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
       const isPrimaryBpmnFile =
         processModelFile.name === processModel.primary_file_name;
 
-      let actionsTableCell = (
+      const actionsTableCell = (
         <TableCell key={`${processModelFile.name}-action`} align="right">
           {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
         </TableCell>
@@ -223,4 +217,3 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
 };
 
 export default ProcessModelFileList;
-
