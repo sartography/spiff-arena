@@ -2,24 +2,24 @@ import React from 'react';
 import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import PropTypes from 'prop-types';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelReadmeAreaProps {
   readmeFile: ProcessFile | null;
-  ability: Ability;
-  targetUris: any;
+  ability: PureAbility;
+  targetUris: PropTypes.any;
   modifiedProcessModelId: string;
 }
 
-const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
+function ProcessModelReadmeArea({
   readmeFile,
   ability,
   targetUris,
   modifiedProcessModelId,
-}) => {
+}: ProcessModelReadmeAreaProps): React.ReactNode {
   if (readmeFile) {
     return (
       <div className="readme-container">
@@ -66,13 +66,13 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
       </Can>
     </>
   );
-};
+}
 
 ProcessModelReadmeArea.propTypes = {
   readmeFile: PropTypes.shape({
     name: PropTypes.string.isRequired,
   }),
-  ability: PropTypes.instanceOf(Ability).isRequired,
+  ability: PropTypes.instanceOf(PureAbility).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
 };

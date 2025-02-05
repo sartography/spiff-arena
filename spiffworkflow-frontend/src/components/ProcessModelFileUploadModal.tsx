@@ -4,19 +4,17 @@ import PropTypes from 'prop-types';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
-  processModel: any;
+  processModel: PropTypes.any;
   handleFileUploadCancel: () => void;
   checkDuplicateFile: (files: File[], forceOverwrite?: boolean) => void;
 }
 
-const ProcessModelFileUploadModal: React.FC<
-  ProcessModelFileUploadModalProps
-> = ({
+function ProcessModelFileUploadModal({
   showFileUploadModal,
   processModel,
   handleFileUploadCancel,
   checkDuplicateFile,
-}) => {
+}: ProcessModelFileUploadModalProps): React.ReactNode {
   const [filesToUpload, setFilesToUpload] = useState<File[] | null>(null);
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
@@ -118,7 +116,7 @@ const ProcessModelFileUploadModal: React.FC<
       </Modal>
     </>
   );
-};
+}
 
 ProcessModelFileUploadModal.propTypes = {
   showFileUploadModal: PropTypes.bool.isRequired,

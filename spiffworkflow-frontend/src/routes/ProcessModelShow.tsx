@@ -21,9 +21,8 @@ import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
-import PropTypes from 'prop-types';
 
-export default function ProcessModelShow() {
+function ProcessModelShow() {
   const params = useParams();
   const { addError, removeError } = useAPIError();
   const navigate = useNavigate();
@@ -213,9 +212,7 @@ export default function ProcessModelShow() {
           a={targetUris.processInstanceCreatePath}
           ability={ability}
         >
-          <>
-            <ProcessInstanceRun processModel={processModel} />
-          </>
+          <ProcessInstanceRun processModel={processModel} />
         </Can>
       </Stack>
     );
@@ -319,3 +316,5 @@ export default function ProcessModelShow() {
 ProcessModelShow.propTypes = {
   // Add prop types here if needed.  This component doesn't seem to have any props passed to it.
 };
+
+export default ProcessModelShow;

@@ -11,16 +11,17 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
+import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
-  processModel: any;
-  ability: Ability;
-  targetUris: any;
+  processModel: PropTypes.any;
+  ability: PureAbility;
+  targetUris: PropTypes.any;
   modifiedProcessModelId: string;
   selectedTabIndex: number;
   updateSelectedTab: (newTabIndex: any) => void;
@@ -30,7 +31,7 @@ interface ProcessModelTabsProps {
   readmeFile: ProcessFile | null;
 }
 
-const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
+function ProcessModelTabs({
   processModel,
   ability,
   targetUris,
@@ -41,7 +42,7 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
-}) => {
+}: ProcessModelTabsProps): React.ReactNode {
   const navigate = useNavigate();
 
   if (!processModel) {
@@ -182,17 +183,19 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
       </TabPanels>
     </Tabs>
   );
-};
+}
 
 ProcessModelTabs.propTypes = {
   processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-    })),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }),
+    ),
     bpmn_version_control_identifier: PropTypes.string,
-    id: PropTypes.number,
+    id: PropTypes.string,
   }),
-  ability: PropTypes.instanceOf(Ability).isRequired,
+  ability: PropTypes.instanceOf(PureAbility).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
   selectedTabIndex: PropTypes.number.isRequired,
