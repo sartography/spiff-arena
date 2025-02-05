@@ -25,6 +25,7 @@ interface ProcessModelTabsProps {
   onDeleteFile: (fileName: string) => void;
   onSetPrimaryFile: (fileName: string) => void;
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
+  readmeFile: ProcessFile | null;
 }
 
 const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
@@ -114,7 +115,14 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
         <Tab data-qa="process-instance-list-link">My process instances</Tab>
       </TabList>
       <TabPanels>
-        <TabPanel>{/*  Placeholder, content provided by parent */}</TabPanel>
+        <TabPanel>
+          <ProcessModelReadmeArea
+            readmeFile={readmeFile}
+            ability={ability}
+            targetUris={targetUris}
+            modifiedProcessModelId={modifiedProcessModelId}
+          />
+        </TabPanel>
         <TabPanel>
           <Grid condensed fullWidth className="megacondensed">
             <Column md={6} lg={12} sm={4}>
