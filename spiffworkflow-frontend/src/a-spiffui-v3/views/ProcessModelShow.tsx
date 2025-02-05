@@ -1,34 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  Download as DownloadIcon,
-  Edit as EditIcon,
-  Favorite as FavoriteIcon,
-  Delete as DeleteIcon,
-  Upload as UploadIcon,
-  Visibility as VisibilityIcon,
-} from '@mui/icons-material';
-import {
-  Button,
-  Grid,
-  Stack,
-  Table,
-  Modal,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tab,
-  Box,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Upload, Edit, Delete } from '@mui/icons-material';
+import { Stack, IconButton, Typography } from '@mui/material';
 import { Can } from '@casl/react';
+// Example icon
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
@@ -45,8 +20,8 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
-import MarkdownDisplayForFile from '../components/MarkdownDisplayForFile';
-// import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import ProcessModelTabs from '../components/ProcessModelTabs';
+import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -55,12 +30,11 @@ export default function ProcessModelShow() {
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [reloadModel, setReloadModel] = useState<boolean>(false);
-  const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
   const [processModelPublished, setProcessModelPublished] = useState<any>(null);
   const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
-  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(1);
   const [readmeFile, setReadmeFile] = useState<ProcessFile | null>(null);
 
   const { targetUris } = useUriListForPermissions();
@@ -83,7 +57,7 @@ export default function ProcessModelShow() {
   let hasTestCaseFiles: boolean = false;
 
   const isTestCaseFile = (processModelFile: ProcessFile) => {
-    return processModelFile.name.match(/^test_.*\.json$/);
+    return !!processModelFile.name.match(/^test_.*\.json$/);
   };
 
   if (processModel) {
@@ -99,12 +73,14 @@ export default function ProcessModelShow() {
       setPageTitle([result.display_name]);
 
       let newTabIndex = 1;
+      let foundReadme = null;
       result.files.forEach((file: ProcessFile) => {
         if (file.name === 'README.md') {
-          setReadmeFile(file);
+          foundReadme = file;
           newTabIndex = 0;
         }
       });
+      setReadmeFile(foundReadme);
       setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
@@ -116,11 +92,11 @@ export default function ProcessModelShow() {
   const onUploadedCallback = () => {
     setReloadModel(true);
   };
+
   const reloadModelOhYeah = (_httpResult: any) => {
     setReloadModel(!reloadModel);
   };
 
-  // Remove this code from
   const onDeleteFile = (fileName: string) => {
     const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
     const httpMethod = 'DELETE';
@@ -144,51 +120,6 @@ export default function ProcessModelShow() {
       httpMethod,
       postBody: processModelToPass,
     });
-  };
-  const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
-    if (
-      !('file_contents' in processModelFile) ||
-      processModelFile.file_contents === undefined
-    ) {
-      addError({
-        message: `Could not file file contents for file: ${processModelFile.name}`,
-      });
-      return;
-    }
-    let contentType = 'application/xml';
-    if (processModelFile.type === 'json') {
-      contentType = 'application/json';
-    }
-    const element = document.createElement('a');
-    const file = new Blob([processModelFile.file_contents], {
-      type: contentType,
-    });
-    const downloadFileName = processModelFile.name;
-    element.href = URL.createObjectURL(file);
-    element.download = downloadFileName;
-    document.body.appendChild(element);
-    element.click();
-  };
-
-  const downloadFile = (fileName: string) => {
-    removeError();
-    const processModelPath = `process-models/${modifiedProcessModelId}`;
-    HttpService.makeCallToBackend({
-      path: `/${processModelPath}/files/${fileName}`,
-      successCallback: handleProcessModelFileResult,
-    });
-  };
-
-  const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
-    if (processModel) {
-      if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        return `/editor/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
-      }
-      if (processModelFile.name.match(/\.(json|md)$/)) {
-        return `/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
-      }
-    }
-    return null;
   };
 
   const navigateToProcessModels = (_result: any) => {
@@ -220,187 +151,17 @@ export default function ProcessModelShow() {
     });
   };
 
-  const navigateToFileEdit = (processModelFile: ProcessFile) => {
-    const url = profileModelFileEditUrl(processModelFile);
-    if (url) {
-      navigate(url);
+  const doFileUpload = (filesToUpload: File[], forceOverwrite = false) => {
+    if (!filesToUpload || filesToUpload.length === 0) {
+      return; // No files to upload
     }
-  };
-
-  const renderButtonElements = (
-    processModelFile: ProcessFile,
-    isPrimaryBpmnFile: boolean,
-  ) => {
-    const elements = [];
-
-    // So there is a bug in here. Since we use a react context for error messages, and since
-    // its provider wraps the entire app, child components will re-render when there is an
-    // error displayed. This is normally fine, but it interacts badly with the casl ability.can
-    // functionality. We have observed that permissionsLoaded is never set to false. So when
-    // you run a process and it fails, for example, process model show will re-render, the ability
-    // will be cleared out and it will start fetching permissions from the server, but this
-    // component still thinks permissionsLoaded is telling the truth (it says true, but it's actually false).
-    // The only bad effect that we know of is that the Edit icon becomes an eye icon even for admins.
-    let icon = VisibilityIcon;
-    let actionWord = 'View';
-    if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
-      icon = EditIcon;
-      actionWord = 'Edit';
-    }
-    elements.push(
-      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <IconButton
-          aria-label={`${actionWord} File`}
-          size="large"
-          data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
-          onClick={() => navigateToFileEdit(processModelFile)}
-        >
-          <icon />
-        </IconButton>
-      </Can>,
-    );
-    elements.push(
-      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <IconButton
-          aria-label="Download File"
-          size="large"
-          onClick={() => downloadFile(processModelFile.name)}
-        >
-          <DownloadIcon />
-        </IconButton>
-      </Can>,
-    );
-
-    if (!isPrimaryBpmnFile) {
-      elements.push(
-        <Can
-          I="DELETE"
-          a={targetUris.processModelFileCreatePath}
-          ability={ability}
-        >
-          <ButtonWithConfirmation
-            aria-label="Delete File"
-            description={`Delete file: ${processModelFile.name}`}
-            onConfirmation={() => {
-              onDeleteFile(processModelFile.name);
-            }}
-            confirmButtonLabel="Delete"
-            classNameForModal="modal-within-table-cell"
-            icon={<DeleteIcon />}
-          />
-        </Can>,
-      );
-    }
-    if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
-      elements.push(
-        <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-          <IconButton
-            aria-label="Set As Primary File"
-            size="large"
-            onClick={() => onSetPrimaryFile(processModelFile.name)}
-          >
-            <FavoriteIcon />
-          </IconButton>
-        </Can>,
-      );
-    }
-    if (isTestCaseFile(processModelFile)) {
-      elements.push(
-        <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
-          <ProcessModelTestRun
-            processModelFile={processModelFile}
-            titleText="Run BPMN unit tests defined in this file"
-            classNameForModal="modal-within-table-cell"
-          />
-        </Can>,
-      );
-    }
-    return elements;
-  };
-
-  const processModelFileList = () => {
-    if (!processModel || !permissionsLoaded) {
-      return null;
-    }
-    let constructedTag;
-    const tags = processModel.files
-      .map((processModelFile: ProcessFile) => {
-        if (!processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
-          return undefined;
-        }
-        const isPrimaryBpmnFile =
-          processModelFile.name === processModel.primary_file_name;
-
-        let actionsTableCell = null;
-        if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
-          actionsTableCell = (
-            <TableCell key={`${processModelFile.name}-action`} align="right">
-              {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
-            </TableCell>
-          );
-        }
-
-        let primarySuffix = null;
-        if (isPrimaryBpmnFile) {
-          primarySuffix = (
-            <span>
-              &nbsp;-{' '}
-              <span className="primary-file-text-suffix">Primary File</span>
-            </span>
-          );
-        }
-        let fileLink = null;
-        const fileUrl = profileModelFileEditUrl(processModelFile);
-        if (fileUrl) {
-          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-        }
-        constructedTag = (
-          <TableRow key={processModelFile.name}>
-            <TableCell
-              key={`${processModelFile.name}-cell`}
-              className="process-model-file-table-filename"
-              title={processModelFile.name}
-            >
-              {fileLink}
-              {primarySuffix}
-            </TableCell>
-            {actionsTableCell}
-          </TableRow>
-        );
-        return constructedTag;
-      })
-      .filter((element: any) => element !== undefined);
-
-    if (tags.length > 0) {
-      return (
-        <Table size="medium" aria-label="Process Model Files">
-          <TableHead>
-            <TableRow>
-              <TableCell key="Name">Name</TableCell>
-              <TableCell key="Actions" align="right">
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>{tags}</TableBody>
-        </Table>
-      );
-    }
-    return null;
-  };
-
-  const [fileUploadEvent, setFileUploadEvent] = useState(null);
-  const [duplicateFilename, setDuplicateFilename] = useState<string>('');
-  const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
-    useState(false);
-
-  const doFileUpload = (event: any) => {
-    event.preventDefault();
     removeError();
     const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', filesToUpload[0]);
     formData.append('fileName', filesToUpload[0].name);
+    formData.append('overwrite', forceOverwrite.toString()); // Add overwrite parameter
+
     HttpService.makeCallToBackend({
       path: url,
       successCallback: onUploadedCallback,
@@ -408,324 +169,23 @@ export default function ProcessModelShow() {
       postBody: formData,
       failureCallback: addError,
     });
-    setFilesToUpload(null);
   };
 
   const handleFileUploadCancel = () => {
     setShowFileUploadModal(false);
-    setFilesToUpload(null);
-  };
-  const handleOverwriteFileConfirm = () => {
-    setShowOverwriteConfirmationPrompt(false);
-    doFileUpload(fileUploadEvent);
-  };
-  const handleOverwriteFileCancel = () => {
-    setShowOverwriteConfirmationPrompt(false);
-    setFilesToUpload(null);
   };
 
-  const confirmOverwriteFileDialog = () => {
-    return (
-      <Modal
-        open={showOverwriteConfirmationPrompt}
-        onClose={handleOverwriteFileCancel}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          border: '2px solid #000',
-          boxShadow: 24,
-          p: 4,}}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Overwrite the file: {duplicateFilename}
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Are you sure you want to overwrite this file?
-          </Typography>
-          <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{mt: 2}}>
-            <Button onClick={handleOverwriteFileCancel} variant="outlined">Cancel</Button>
-            <Button onClick={handleOverwriteFileConfirm} variant="contained" color="error">Yes</Button>
-          </Stack>
-        </Box>
-      </Modal>
-    );
-  };
-  const displayOverwriteConfirmation = (filename: string) => {
-    setDuplicateFilename(filename);
-    setShowOverwriteConfirmationPrompt(true);
-  };
-
-  const checkDuplicateFile = (event: any) => {
-    if (processModel) {
-      let foundExistingFile = false;
-      if (processModel.files.length > 0) {
-        processModel.files.forEach((file) => {
-          if (file.name === filesToUpload[0].name) {
-            foundExistingFile = true;
-          }
-        });
-      }
-      if (foundExistingFile) {
-        displayOverwriteConfirmation(filesToUpload[0].name);
-        setFileUploadEvent(event);
-      } else {
-        doFileUpload(event);
-      }
+  const checkDuplicateFile = (files: File[], forceOverwrite = false) => {
+    if (forceOverwrite) {
+      doFileUpload(files, true);
+    } else {
+      doFileUpload(files);
     }
-    return null;
-  };
-
-  const handleFileUpload = (event: any) => {
-    checkDuplicateFile(event);
     setShowFileUploadModal(false);
   };
 
-  const fileUploadModal = () => {
-    return (
-      <Modal
-        data-qa="modal-upload-file-dialog"
-        open={showFileUploadModal}
-        modalHeading="Upload File"
-        primaryButtonText="Upload"
-        primaryButtonDisabled={filesToUpload === null}
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleFileUploadCancel}
-        onRequestClose={handleFileUploadCancel}
-        onRequestSubmit={handleFileUpload}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body1">Upload files</Typography>
-          <Typography variant="body2" color="textSecondary">
-            Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
-            supported.
-          </Typography>
-          <input
-            type="file"
-            accept=".bpmn,.dmn,.json,.md"
-            style={{ display: 'none' }}
-            id="file-upload-input"
-            onChange={(event: any) => setFilesToUpload(event.target.files)}
-          />
-          <label htmlFor="file-upload-input">
-            <Button variant="contained" component="span">
-              Add file
-            </Button>
-          </label>
-          {filesToUpload && (
-            <Typography variant="body2">
-              Selected file: {filesToUpload[0].name}
-            </Typography>
-          )}
-          <Button
-            variant="outlined"
-            onClick={() => setFilesToUpload(null)}
-            disabled={!filesToUpload}
-          >
-            Clear file
-          </Button>
-        </Box>
-      </Modal>
-    );
-  };
-
-  const items = [
-    'Upload File',
-    'New BPMN File',
-    'New DMN File',
-    'New JSON File',
-    'New Markdown File',
-  ].map((item) => ({
-    text: item,
-  }));
-
-  const addFileComponent = () => {
-    return (
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id="add-file-dropdown-label">Add File</InputLabel>
-        <Select
-          labelId="add-file-dropdown-label"
-          id="add-file-dropdown"
-          label="Add File"
-          data-qa="process-model-add-file"
-          onChange={(event: any) => {
-            const selectedValue = event.target.value;
-            if (selectedValue === 'New BPMN File') {
-              navigate(
-                `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
-              );
-            } else if (selectedValue === 'Upload File') {
-              setShowFileUploadModal(true);
-            } else if (selectedValue === 'New DMN File') {
-              navigate(
-                `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
-              );
-            } else if (selectedValue === 'New JSON File') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
-              );
-            } else if (selectedValue === 'New Markdown File') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
-              );
-            }
-          }}
-        >
-          {items.map((item) => (
-            <MenuItem key={item.text} value={item.text}>
-              {item.text}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  };
-
-  const readmeFileArea = () => {
-    if (readmeFile) {
-      return (
-        <div className="readme-container">
-          <Grid condensed fullWidth className="megacondensed">
-            <Grid container alignItems="center">
-              <Grid item xs>
-                <Typography variant="h6" className="with-icons">
-                  {readmeFile.name}
-                </Typography>
-              </Grid>
-              <Grid item>
-                <Can
-                  I="PUT"
-                  a={targetUris.processModelFileCreatePath}
-                  ability={ability}
-                >
-                  <IconButton
-                    data-qa="process-model-readme-file-edit"
-                    aria-label="Edit README.md"
-                    href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Can>
-              </Grid>
-            </Grid>
-            <hr />
-            <MarkdownDisplayForFile
-              apiPath={`/process-models/${modifiedProcessModelId}/files/${readmeFile.name}`}
-            />
-          </Grid>
-        </div>
-      );
-    }
-    return (
-      <Box>
-        <Typography>No README file found</Typography>
-        <Can
-          I="POST"
-          a={targetUris.processModelFileCreatePath}
-          ability={ability}
-        >
-          <Button
-            className="with-top-margin"
-            data-qa="process-model-readme-file-create"
-            href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
-            size="medium"
-            variant="contained"
-          >
-            Add README.md
-          </Button>
-        </Can>
-      </Box>
-    );
-  };
-
   const updateSelectedTab = (newTabIndex: any) => {
-    setSelectedTabIndex(newTabIndex.selectedIndex);
-  };
-
-  const tabArea = () => {
-    if (!processModel) {
-      return null;
-    }
-
-    let helpText = null;
-    if (processModel.files.length === 0) {
-      helpText = (
-        <p className="no-results-message with-bottom-margin">
-          <strong>
-            **This process model does not have any files associated with it. Try
-            creating a bpmn file by selecting &quot;New BPMN File&quot; in the
-            dropdown below.**
-          </strong>
-        </p>
-      );
-    }
-
-    return (
-      <Box sx={{ width: '100%' }}>
-        <Tabs
-          value={selectedTabIndex}
-          onChange={updateSelectedTab}
-          aria-label="Process Model Tabs"
-        >
-          <Tab label="About" />
-          <Tab label="Files" data-qa="process-model-files" />
-          <Tab
-            label="My process instances"
-            data-qa="process-instance-list-link"
-          />
-        </Tabs>
-        <Box sx={{ padding: 2 }}>
-          {selectedTabIndex === 0 && readmeFileArea()}
-          {selectedTabIndex === 1 && (
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Can
-                  I="POST"
-                  a={targetUris.processModelFileCreatePath}
-                  ability={ability}
-                >
-                  {helpText}
-                  <Box className="with-bottom-margin">
-                    <Typography variant="h6">
-                      Files
-                      {processModel &&
-                        processModel.bpmn_version_control_identifier &&
-                        ` (revision ${processModel.bpmn_version_control_identifier})`}
-                    </Typography>
-                  </Box>
-                  {addFileComponent()}
-                  <br />
-                </Can>
-                {processModelFileList()}
-              </Grid>
-            </Grid>
-          )}
-          {selectedTabIndex === 2 && (
-            <Can
-              I="POST"
-              a={targetUris.processInstanceListForMePath}
-              ability={ability}
-            >
-              {/* <ProcessInstanceListTable */}
-              {/*   additionalReportFilters={[ */}
-              {/*     { */}
-              {/*       field_name: 'process_model_identifier', */}
-              {/*       field_value: processModel.id, */}
-              {/*     }, */}
-              {/*   ]} */}
-              {/*   perPageOptions={[2, 5, 25]} */}
-              {/*   showLinkToReport */}
-              {/*   variant="for-me" */}
-              {/* /> */}
-            </Can>
-          )}
-        </Box>
-      </Box>
-    );
+    setSelectedTabIndex(newTabIndex);
   };
 
   const processModelPublishMessage = () => {
@@ -747,24 +207,26 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     const processStartButton = (
-      <Stack orientation="horizontal" gap={3}>
+      <Stack direction="row" spacing={2}>
         <Can
           I="POST"
           a={targetUris.processInstanceCreatePath}
           ability={ability}
         >
-          <>
-            <ProcessInstanceRun processModel={processModel} />
-            <br />
-            <br />
-          </>
+          <ProcessInstanceRun processModel={processModel} />
         </Can>
       </Stack>
     );
     return (
       <>
-        {fileUploadModal()}
-        {confirmOverwriteFileDialog()}
+        <ProcessModelFileUploadModal
+          showFileUploadModal={showFileUploadModal}
+          processModel={processModel}
+          doFileUpload={doFileUpload}
+          handleFileUploadCancel={handleFileUploadCancel}
+          checkDuplicateFile={checkDuplicateFile}
+          setShowFileUploadModal={setShowFileUploadModal}
+        />
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/process-groups'],
@@ -775,27 +237,30 @@ export default function ProcessModelShow() {
           ]}
         />
         {processModelPublishMessage()}
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="h4" className="with-icons">
+        <Stack direction="row" spacing={1}>
+          <Typography variant="h4" component="h1">
             Process Model: {processModel.display_name}
           </Typography>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <IconButton
+              color="primary"
               data-qa="edit-process-model-button"
-              aria-label="Edit Process Model"
+              component="a"
               href={`/process-models/${modifiedProcessModelId}/edit`}
             >
-              <EditIcon />
+              <Edit />
             </IconButton>
           </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
+              color="primary"
               data-qa="delete-process-model-button"
-              aria-label="Delete Process Model"
+              renderIcon={<Delete />}
+              iconDescription="Delete Process Model"
+              hasIconOnly
               description={`Delete process model: ${processModel.display_name}`}
               onConfirmation={deleteProcessModel}
               confirmButtonLabel="Delete"
-              icon={<DeleteIcon />}
             />
           </Can>
           {!processModel.actions || processModel.actions.publish ? (
@@ -805,12 +270,12 @@ export default function ProcessModelShow() {
               ability={ability}
             >
               <IconButton
+                color="primary"
                 data-qa="publish-process-model-button"
-                aria-label="Publish Changes"
                 onClick={publishProcessModel}
                 disabled={publishDisabled}
               >
-                <UploadIcon />
+                <Upload />
               </IconButton>
             </Can>
           ) : null}
@@ -826,7 +291,23 @@ export default function ProcessModelShow() {
         {processModel.primary_file_name && processModel.is_executable
           ? processStartButton
           : null}
-        <Box className="with-top-margin">{tabArea()}</Box>
+
+        <br />
+        <br />
+
+        <ProcessModelTabs
+          processModel={processModel}
+          ability={ability}
+          targetUris={targetUris}
+          modifiedProcessModelId={modifiedProcessModelId}
+          selectedTabIndex={selectedTabIndex}
+          updateSelectedTab={updateSelectedTab}
+          onDeleteFile={onDeleteFile}
+          onSetPrimaryFile={onSetPrimaryFile}
+          isTestCaseFile={isTestCaseFile}
+          readmeFile={readmeFile}
+          setShowFileUploadModal={setShowFileUploadModal}
+        />
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />
         ) : null}

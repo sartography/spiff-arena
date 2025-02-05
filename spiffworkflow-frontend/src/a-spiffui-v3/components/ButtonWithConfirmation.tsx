@@ -5,6 +5,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { IconButton } from '@mui/material';
 
 type OwnProps = {
   'data-qa'?: string;
@@ -14,9 +15,9 @@ type OwnProps = {
   title?: string;
   confirmButtonLabel?: string;
   kind?: 'text' | 'outlined' | 'contained';
-  renderIcon?: Element;
+  renderIcon?: any;
   iconDescription?: string | null;
-  // hasIconOnly?: boolean;
+  hasIconOnly?: boolean;
   classNameForModal?: string;
 };
 
@@ -30,7 +31,7 @@ export default function ButtonWithConfirmation({
   kind = 'contained',
   renderIcon,
   iconDescription = null,
-  // hasIconOnly = false,
+  hasIconOnly = false,
   classNameForModal,
 }: OwnProps) {
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
@@ -74,6 +75,21 @@ export default function ButtonWithConfirmation({
     );
   };
 
+  if (hasIconOnly) {
+    return (
+      <>
+        <IconButton
+          data-qa={dataQa}
+          onClick={handleShowConfirmationPrompt}
+          variant={kind}
+          aria-label={iconDescription}
+        >
+          {renderIcon}
+        </IconButton>
+        {confirmationDialog()}
+      </>
+    );
+  }
   return (
     <>
       <Button
