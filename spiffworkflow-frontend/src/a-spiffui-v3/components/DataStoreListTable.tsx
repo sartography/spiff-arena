@@ -143,7 +143,7 @@ export default function DataStoreListTable() {
               searchParams.set('datastore_per_page', '10');
               searchParams.set('type', selectedDataStore.type);
               searchParams.set('identifier', selectedDataStore.id);
-              searchParams.set('location', selectedDataStore.location);
+              searchParams.set('location', selectedDataStore.location ?? '');
               setSearchParams(searchParams);
             }
           }}

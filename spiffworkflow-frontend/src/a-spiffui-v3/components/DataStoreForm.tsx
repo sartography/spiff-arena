@@ -275,7 +275,7 @@ export default function DataStoreForm({
         name="description"
         aria-label="Description"
         placeholder="Description"
-        value={dataStore.description}
+        value={dataStore.description ?? ''}
         onChange={(event: any) =>
           updateDataStore({ description: event.target.value })
         }
