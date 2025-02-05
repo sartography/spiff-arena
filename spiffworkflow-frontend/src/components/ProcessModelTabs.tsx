@@ -42,7 +42,7 @@ export default function ProcessModelTabs({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
-}: ProcessModelTabsProps): React.ReactNode {
+}: ProcessModelTabsProps) {
   const navigate = useNavigate();
 
   if (!processModel) {

@@ -56,7 +56,7 @@ export default function ProcessModelShow() {
   let hasTestCaseFiles: boolean = false;
 
   const isTestCaseFile = (processModelFile: ProcessFile) => {
-    return processModelFile.name.match(/^test_.*\.json$/);
+    return !!processModelFile.name.match(/^test_.*\.json$/);
   };
 
   if (processModel) {
@@ -221,7 +221,7 @@ export default function ProcessModelShow() {
         <ProcessModelFileUploadModal
           showFileUploadModal={showFileUploadModal}
           processModel={processModel}
-          onFileUpload={doFileUpload}
+          doFileUpload={doFileUpload}
           handleFileUploadCancel={handleFileUploadCancel}
           checkDuplicateFile={checkDuplicateFile}
         />

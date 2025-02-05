@@ -35,7 +35,7 @@ export default function ProcessModelFileList({
   onDeleteFile,
   onSetPrimaryFile,
   isTestCaseFile,
-}: ProcessModelFileListProps): React.ReactNode {
+}: ProcessModelFileListProps) {
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {

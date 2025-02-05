@@ -19,7 +19,7 @@ export default function ProcessModelReadmeArea({
   ability,
   targetUris,
   modifiedProcessModelId,
-}: ProcessModelReadmeAreaProps): React.ReactNode {
+}: ProcessModelReadmeAreaProps) {
   if (readmeFile) {
     return (
       <div className="readme-container">

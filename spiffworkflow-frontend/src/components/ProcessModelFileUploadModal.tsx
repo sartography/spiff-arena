@@ -7,6 +7,7 @@ interface ProcessModelFileUploadModalProps {
   processModel: any;
   handleFileUploadCancel: () => void;
   checkDuplicateFile: (files: File[], forceOverwrite?: boolean) => void;
+  doFileUpload: Function;
 }
 
 export default function ProcessModelFileUploadModal({
@@ -14,7 +15,8 @@ export default function ProcessModelFileUploadModal({
   processModel,
   handleFileUploadCancel,
   checkDuplicateFile,
-}: ProcessModelFileUploadModalProps): React.ReactNode {
+  doFileUpload,
+}: ProcessModelFileUploadModalProps) {
   const [filesToUpload, setFilesToUpload] = useState<File[] | null>(null);
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
@@ -23,9 +25,7 @@ export default function ProcessModelFileUploadModal({
 
   const handleOverwriteFileConfirm = () => {
     setShowOverwriteConfirmationPrompt(false);
-    if (fileUploadEvent) {
-      checkDuplicateFile(Array.from(fileUploadEvent.target.files), true); // Force overwrite
-    }
+    doFileUpload(fileUploadEvent);
   };
 
   const handleOverwriteFileCancel = () => {
