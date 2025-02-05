@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
 import { setPageTitle } from '../helpers';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 export default function DataStoreNew() {
   const [searchParams] = useSearchParams();
@@ -33,17 +32,7 @@ export default function DataStoreNew() {
 
   return (
     <>
-      <Breadcrumbs aria-label="breadcrumb">
-        {hotCrumbs.map((crumb, index) => (
-          <Link
-            key={index}
-            color="inherit"
-            href={typeof crumb === 'string' ? crumb[1] : ''}
-          >
-            {typeof crumb === 'string' ? crumb[0] : crumb.entityToExplode}
-          </Link>
-        ))}
-      </Breadcrumbs>
+      <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
       <Typography variant="h4" component="h1" gutterBottom>
         Add Data Store
       </Typography>
