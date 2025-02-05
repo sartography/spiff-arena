@@ -16,7 +16,6 @@ import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
-import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
@@ -186,7 +185,13 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
 };
 
 ProcessModelTabs.propTypes = {
-  processModel: PropTypes.any,
+  processModel: PropTypes.shape({
+    files: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    })),
+    bpmn_version_control_identifier: PropTypes.string,
+    id: PropTypes.number,
+  }),
   ability: PropTypes.instanceOf(Ability).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
@@ -195,7 +200,9 @@ ProcessModelTabs.propTypes = {
   onDeleteFile: PropTypes.func.isRequired,
   onSetPrimaryFile: PropTypes.func.isRequired,
   isTestCaseFile: PropTypes.func.isRequired,
-  readmeFile: PropTypes.any,
+  readmeFile: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }),
 };
 
 export default ProcessModelTabs;

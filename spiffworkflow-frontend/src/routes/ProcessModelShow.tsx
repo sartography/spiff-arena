@@ -21,6 +21,7 @@ import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
+import PropTypes from 'prop-types';
 
 export default function ProcessModelShow() {
   const params = useParams();

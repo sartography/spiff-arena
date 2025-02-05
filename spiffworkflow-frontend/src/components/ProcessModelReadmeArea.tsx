@@ -69,7 +69,9 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
 };
 
 ProcessModelReadmeArea.propTypes = {
-  readmeFile: PropTypes.any,
+  readmeFile: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }),
   ability: PropTypes.instanceOf(Ability).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,

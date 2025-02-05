@@ -219,7 +219,12 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
 };
 
 ProcessModelFileList.propTypes = {
-  processModel: PropTypes.any,
+  processModel: PropTypes.shape({
+    files: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    })),
+    primary_file_name: PropTypes.string,
+  }),
   ability: PropTypes.instanceOf(Ability).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
