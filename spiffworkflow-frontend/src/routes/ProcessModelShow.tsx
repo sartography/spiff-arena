@@ -19,7 +19,6 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
-import ProcessModelReadmeArea from '../components/ProcessModelReadmeArea';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
 
@@ -292,6 +291,9 @@ export default function ProcessModelShow() {
           ? processStartButton
           : null}
 
+        <br />
+        <br />
+
         <ProcessModelTabs
           processModel={processModel}
           ability={ability}
@@ -303,7 +305,6 @@ export default function ProcessModelShow() {
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}
           readmeFile={readmeFile}
-          style={{ marginTop: '1rem' }}  /* Add margin here */
         />
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />
