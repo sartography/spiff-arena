@@ -2,14 +2,14 @@ import React from 'react';
 import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import PropTypes from 'prop-types';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelReadmeAreaProps {
   readmeFile: ProcessFile | null;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
 }
@@ -72,7 +72,7 @@ ProcessModelReadmeArea.propTypes = {
   readmeFile: PropTypes.shape({
     name: PropTypes.string.isRequired,
   }),
-  ability: PropTypes.instanceOf(Ability).isRequired,
+  ability: PropTypes.instanceOf(PureAbility).isRequired,
   targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
   modifiedProcessModelId: PropTypes.string.isRequired,
 };

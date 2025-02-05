@@ -11,7 +11,7 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
@@ -20,7 +20,7 @@ import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   selectedTabIndex: number;
@@ -193,9 +193,9 @@ ProcessModelTabs.propTypes = {
       }),
     ),
     bpmn_version_control_identifier: PropTypes.string,
-    id: PropTypes.number,
+    id: PropTypes.string,
   }),
-  ability: PropTypes.instanceOf(Ability).isRequired,
+  ability: PropTypes.instanceOf(PureAbility).isRequired,
   targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
   modifiedProcessModelId: PropTypes.string.isRequired,
   selectedTabIndex: PropTypes.number.isRequired,

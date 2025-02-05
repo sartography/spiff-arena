@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@carbon/react';
 import { Can } from '@casl/react';
-import { Ability } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import PropTypes from 'prop-types';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
@@ -19,7 +19,7 @@ import { ProcessFile } from '../interfaces';
 
 interface ProcessModelFileListProps {
   processModel: any;
-  ability: Ability;
+  ability: PureAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   onDeleteFile: (fileName: string) => void;
@@ -227,7 +227,7 @@ ProcessModelFileList.propTypes = {
     ),
     primary_file_name: PropTypes.string,
   }),
-  ability: PropTypes.instanceOf(Ability).isRequired,
+  ability: PropTypes.instanceOf(PureAbility).isRequired,
   targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
   modifiedProcessModelId: PropTypes.string.isRequired,
   onDeleteFile: PropTypes.func.isRequired,
