@@ -9,24 +9,30 @@ This guide outlines the steps to configure Keycloak for a client, including **gr
 To allow user management in a specific **Keycloak realm**, follow these steps:
 
 ### **Step 1: Select the Realm in the Keycloak Admin Console**  
-1. Log in to the **Keycloak Admin Console**.  
-2. From the left sidebar, click **Realm Settings**.  
-3. Select the realm you wish to allow access to.
+Log in to the **Keycloak Admin Console**. Select the realm you wish to allow access to.
+
+![Image](/images/Keycloak_Setup1.png)
 
 ### **Step 2: Enable `security-admin-console` for the Realm**  
-1. Navigate to **Clients**.  
-2. Search for **security-admin-console**.  
-3. Ensure that it is **enabled** for the selected realm.
+
+Navigate to **Clients**.  Search for **security-admin-console**.  Ensure that it is **enabled** for the realm.
+
+![Image](/images/Keycloak_Setup2.png)
 
 ### **Step 3: Assign Admin Roles to a User**  
 To grant a user admin access for adding/managing users:  
-1. Navigate to **Users** in the left sidebar.  
-2. Find or create the user who needs admin privileges.  
-3. Open the user’s profile and go to the **Role Mapping** tab.  
-4. Add the following roles:  
+- Navigate to **Users** in the left sidebar. Find or create the user who needs admin privileges.  
+
+![Image](/images/Keycloak_Setup3.png)
+
+- Open the user’s profile and go to the **Role Mapping** tab.Add the following roles:  
    - `view-users`  
    - `manage-users`  
-5. If you want to grant **full admin access**, search for **realm-management** and grant **all permissions** within realm management.
+   
+![Image](/images/Keycloak_Setup4.png)
+- If you want to grant **full admin access**, search for **realm-management** and grant **all permissions** within realm management.
+
+![Image](/images/Keycloak_Setup5.png)
 
 ### **Step 4: Provide the Admin URL**  
 After assigning roles, provide the user with the following URL to access the **Admin Console**:
@@ -79,7 +85,8 @@ https://keycloak-civitos.spiff.works/admin/spiffworkflow/console/#/spiffworkflow
 ### **Step 4: Test Login**  
 - Navigate to the client’s login page and verify that **Google Login** is now an option.  
 - Ensure that users from the domain can successfully authenticate using Google.
-## **Conclusion**  
+
+
 By following these steps, you can successfully:  
 ✔ Grant **admin access** to a user for managing the realm.  
 ✔ Enable **Google-based authentication** for all users in a client’s domain.  
