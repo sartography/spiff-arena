@@ -212,9 +212,7 @@ export default function ProcessModelShow() {
           a={targetUris.processInstanceCreatePath}
           ability={ability}
         >
-          <>
-            <ProcessInstanceRun processModel={processModel} />
-          </>
+          <ProcessInstanceRun processModel={processModel} />
         </Can>
       </Stack>
     );
