@@ -300,13 +300,8 @@ export default function ProcessModelShow() {
           onDeleteFile={onDeleteFile}
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}
-          style={{ marginTop: '1rem' }}  /* Add margin here */
-        />
-        <ProcessModelReadmeArea
           readmeFile={readmeFile}
-          ability={ability}
-          targetUris={targetUris}
-          modifiedProcessModelId={modifiedProcessModelId}
+          style={{ marginTop: '1rem' }}  /* Add margin here */
         />
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />
