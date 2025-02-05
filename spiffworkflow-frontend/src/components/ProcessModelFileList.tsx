@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Edit, Favorite, TrashCan, View } from '@carbon/icons-react';
 import {
@@ -14,6 +15,7 @@ import { Ability } from '@casl/ability';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
+import PropTypes from 'prop-types';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -214,6 +216,16 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
       <TableBody>{tags}</TableBody>
     </Table>
   );
+};
+
+ProcessModelFileList.propTypes = {
+  processModel: PropTypes.any,
+  ability: PropTypes.instanceOf(Ability).isRequired,
+  targetUris: PropTypes.any,
+  modifiedProcessModelId: PropTypes.string.isRequired,
+  onDeleteFile: PropTypes.func.isRequired,
+  onSetPrimaryFile: PropTypes.func.isRequired,
+  isTestCaseFile: PropTypes.func.isRequired,
 };
 
 export default ProcessModelFileList;

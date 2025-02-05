@@ -1,15 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FileUploader, Modal } from '@carbon/react';
+import PropTypes from 'prop-types';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
   processModel: any;
-  onFileUpload: (event: any) => void;
   handleFileUploadCancel: () => void;
-  checkDuplicateFile: (event: any) => void;
-}
-interface FileUploadState {
-  filesToUpload: File[] | null;
+  checkDuplicateFile: (files: File[], forceOverwrite?: boolean) => void;
 }
 
 const ProcessModelFileUploadModal: React.FC<
@@ -17,7 +14,6 @@ const ProcessModelFileUploadModal: React.FC<
 > = ({
   showFileUploadModal,
   processModel,
-  onFileUpload,
   handleFileUploadCancel,
   checkDuplicateFile,
 }) => {
@@ -25,12 +21,12 @@ const ProcessModelFileUploadModal: React.FC<
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
     useState(false);
-  const [fileUploadEvent, setFileUploadEvent] = useState(null);
+  const [fileUploadEvent, setFileUploadEvent] = useState<any>(null);
 
   const handleOverwriteFileConfirm = () => {
     setShowOverwriteConfirmationPrompt(false);
     if (fileUploadEvent) {
-      checkDuplicateFile(fileUploadEvent, true); // Force overwrite
+      checkDuplicateFile(Array.from(fileUploadEvent.target.files), true); // Force overwrite
     }
   };
 
@@ -50,7 +46,7 @@ const ProcessModelFileUploadModal: React.FC<
 
     if (processModel) {
       let foundExistingFile = false;
-      if (processModel.files.length > 0) {
+      if (processModel.files && processModel.files.length > 0) {
         processModel.files.forEach((file: { name: string }) => {
           if (file.name === newFiles[0].name) {
             foundExistingFile = true;
@@ -61,7 +57,7 @@ const ProcessModelFileUploadModal: React.FC<
         displayOverwriteConfirmation(newFiles[0].name);
         setFileUploadEvent(event);
       } else {
-        checkDuplicateFile(event);
+        checkDuplicateFile(newFiles);
         setShowOverwriteConfirmationPrompt(false);
       }
     }
@@ -122,6 +118,13 @@ const ProcessModelFileUploadModal: React.FC<
       </Modal>
     </>
   );
+};
+
+ProcessModelFileUploadModal.propTypes = {
+  showFileUploadModal: PropTypes.bool.isRequired,
+  processModel: PropTypes.any,
+  handleFileUploadCancel: PropTypes.func.isRequired,
+  checkDuplicateFile: PropTypes.func.isRequired,
 };
 
 export default ProcessModelFileUploadModal;

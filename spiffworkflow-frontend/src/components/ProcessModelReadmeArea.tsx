@@ -1,9 +1,11 @@
+import React from 'react';
 import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
 import { Ability } from '@casl/ability';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
+import PropTypes from 'prop-types';
 
 interface ProcessModelReadmeAreaProps {
   readmeFile: ProcessFile | null;
@@ -64,6 +66,13 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
       </Can>
     </>
   );
+};
+
+ProcessModelReadmeArea.propTypes = {
+  readmeFile: PropTypes.any,
+  ability: PropTypes.instanceOf(Ability).isRequired,
+  targetUris: PropTypes.any,
+  modifiedProcessModelId: PropTypes.string.isRequired,
 };
 
 export default ProcessModelReadmeArea;

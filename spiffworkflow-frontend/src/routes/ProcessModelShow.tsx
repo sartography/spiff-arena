@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, Edit, TrashCan } from '@carbon/icons-react';
 import { Button, Stack } from '@carbon/react';
@@ -21,6 +21,7 @@ import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
+import PropTypes from 'prop-types';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -314,3 +315,7 @@ export default function ProcessModelShow() {
   }
   return null;
 }
+
+ProcessModelShow.propTypes = {
+  // Add prop types here if needed.  This component doesn't seem to have any props passed to it.
+};

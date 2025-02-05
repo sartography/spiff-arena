@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Column,
   Dropdown,
@@ -15,6 +16,7 @@ import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
 import ProcessModelReadmeArea from './ProcessModelReadmeArea';
+import PropTypes from 'prop-types';
 
 interface ProcessModelTabsProps {
   processModel: any;
@@ -181,6 +183,19 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
       </TabPanels>
     </Tabs>
   );
+};
+
+ProcessModelTabs.propTypes = {
+  processModel: PropTypes.any,
+  ability: PropTypes.instanceOf(Ability).isRequired,
+  targetUris: PropTypes.any,
+  modifiedProcessModelId: PropTypes.string.isRequired,
+  selectedTabIndex: PropTypes.number.isRequired,
+  updateSelectedTab: PropTypes.func.isRequired,
+  onDeleteFile: PropTypes.func.isRequired,
+  onSetPrimaryFile: PropTypes.func.isRequired,
+  isTestCaseFile: PropTypes.func.isRequired,
+  readmeFile: PropTypes.any,
 };
 
 export default ProcessModelTabs;
