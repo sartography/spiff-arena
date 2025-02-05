@@ -11,23 +11,23 @@ import {
   TableRow,
 } from '@carbon/react';
 import { Can } from '@casl/react';
-import { PureAbility } from '@casl/ability';
+import { Ability } from '@casl/ability';
 import PropTypes from 'prop-types';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelFileListProps {
-  processModel: PropTypes.any;
-  ability: PureAbility;
-  targetUris: PropTypes.any;
+  processModel: any;
+  ability: Ability;
+  targetUris: any;
   modifiedProcessModelId: string;
   onDeleteFile: (fileName: string) => void;
   onSetPrimaryFile: (fileName: string) => void;
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
 }
 
-function ProcessModelFileList({
+const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
   processModel,
   ability,
   targetUris,
@@ -35,7 +35,7 @@ function ProcessModelFileList({
   onDeleteFile,
   onSetPrimaryFile,
   isTestCaseFile,
-}: ProcessModelFileListProps): React.ReactNode {
+}) => {
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
@@ -216,18 +216,16 @@ function ProcessModelFileList({
       <TableBody>{tags}</TableBody>
     </Table>
   );
-}
+};
 
 ProcessModelFileList.propTypes = {
   processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }),
-    ),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    })),
     primary_file_name: PropTypes.string,
   }),
-  ability: PropTypes.instanceOf(PureAbility).isRequired,
+  ability: PropTypes.instanceOf(Ability).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
   onDeleteFile: PropTypes.func.isRequired,

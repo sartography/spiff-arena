@@ -11,17 +11,16 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
-import { PureAbility } from '@casl/ability';
+import { Ability } from '@casl/ability';
 import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
-import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
-  processModel: PropTypes.any;
-  ability: PureAbility;
-  targetUris: PropTypes.any;
+  processModel: any;
+  ability: Ability;
+  targetUris: any;
   modifiedProcessModelId: string;
   selectedTabIndex: number;
   updateSelectedTab: (newTabIndex: any) => void;
@@ -31,7 +30,7 @@ interface ProcessModelTabsProps {
   readmeFile: ProcessFile | null;
 }
 
-function ProcessModelTabs({
+const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
   processModel,
   ability,
   targetUris,
@@ -42,7 +41,7 @@ function ProcessModelTabs({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
-}: ProcessModelTabsProps): React.ReactNode {
+}) => {
   const navigate = useNavigate();
 
   if (!processModel) {
@@ -183,19 +182,17 @@ function ProcessModelTabs({
       </TabPanels>
     </Tabs>
   );
-}
+};
 
 ProcessModelTabs.propTypes = {
   processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }),
-    ),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    })),
     bpmn_version_control_identifier: PropTypes.string,
-    id: PropTypes.string,
+    id: PropTypes.number,
   }),
-  ability: PropTypes.instanceOf(PureAbility).isRequired,
+  ability: PropTypes.instanceOf(Ability).isRequired,
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
   selectedTabIndex: PropTypes.number.isRequired,
