@@ -81,8 +81,7 @@ export default function ButtonWithConfirmation({
         <IconButton
           data-qa={dataQa}
           onClick={handleShowConfirmationPrompt}
-          variant={kind}
-          aria-label={iconDescription}
+          aria-label={iconDescription || ''}
         >
           {renderIcon}
         </IconButton>
@@ -97,7 +96,7 @@ export default function ButtonWithConfirmation({
         onClick={handleShowConfirmationPrompt}
         variant={kind}
         startIcon={renderIcon}
-        aria-label={iconDescription}
+        aria-label={iconDescription || ''}
       >
         {buttonLabel}
       </Button>
