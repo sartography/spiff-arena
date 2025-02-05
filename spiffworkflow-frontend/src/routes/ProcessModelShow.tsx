@@ -224,6 +224,7 @@ export default function ProcessModelShow() {
           doFileUpload={doFileUpload}
           handleFileUploadCancel={handleFileUploadCancel}
           checkDuplicateFile={checkDuplicateFile}
+          setShowFileUploadModal={setShowFileUploadModal}
         />
         <ProcessBreadcrumb
           hotCrumbs={[
@@ -303,6 +304,7 @@ export default function ProcessModelShow() {
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}
           readmeFile={readmeFile}
+          setShowFileUploadModal={setShowFileUploadModal}
         />
         {permissionsLoaded ? (
           <span data-qa="process-model-show-permissions-loaded" />
@@ -312,7 +314,3 @@ export default function ProcessModelShow() {
   }
   return null;
 }
-
-ProcessModelShow.propTypes = {
-  // Add prop types here if needed.  This component doesn't seem to have any props passed to it.
-};

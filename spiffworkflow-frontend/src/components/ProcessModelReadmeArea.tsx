@@ -3,7 +3,6 @@ import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
 import { PureAbility } from '@casl/ability';
-import PropTypes from 'prop-types';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
@@ -67,12 +66,3 @@ export default function ProcessModelReadmeArea({
     </>
   );
 }
-
-ProcessModelReadmeArea.propTypes = {
-  readmeFile: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-  }),
-  ability: PropTypes.instanceOf(PureAbility).isRequired,
-  targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
-  modifiedProcessModelId: PropTypes.string.isRequired,
-};

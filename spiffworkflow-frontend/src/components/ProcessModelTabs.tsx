@@ -12,7 +12,6 @@ import {
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
 import { PureAbility } from '@casl/ability';
-import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
@@ -29,6 +28,7 @@ interface ProcessModelTabsProps {
   onSetPrimaryFile: (fileName: string) => void;
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
   readmeFile: ProcessFile | null;
+  setShowFileUploadModal: Function;
 }
 
 export default function ProcessModelTabs({
@@ -42,6 +42,7 @@ export default function ProcessModelTabs({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
+  setShowFileUploadModal,
 }: ProcessModelTabsProps) {
   const navigate = useNavigate();
 
@@ -90,7 +91,7 @@ export default function ProcessModelTabs({
             // Handled by parent component via prop
             updateSelectedTab({ selectedIndex: 1 }); // Switch to Files tab
             // Open file upload modal (handled by parent)
-            // setShowFileUploadModal(true);
+            setShowFileUploadModal(true);
           } else if (a.selectedItem.text === 'New DMN File') {
             navigate(
               `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
@@ -184,26 +185,3 @@ export default function ProcessModelTabs({
     </Tabs>
   );
 }
-
-ProcessModelTabs.propTypes = {
-  processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }),
-    ),
-    bpmn_version_control_identifier: PropTypes.string,
-    id: PropTypes.string,
-  }),
-  ability: PropTypes.instanceOf(PureAbility).isRequired,
-  targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
-  modifiedProcessModelId: PropTypes.string.isRequired,
-  selectedTabIndex: PropTypes.number.isRequired,
-  updateSelectedTab: PropTypes.func.isRequired,
-  onDeleteFile: PropTypes.func.isRequired,
-  onSetPrimaryFile: PropTypes.func.isRequired,
-  isTestCaseFile: PropTypes.func.isRequired,
-  readmeFile: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-  }),
-};

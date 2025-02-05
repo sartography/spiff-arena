@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FileUploader, Modal } from '@carbon/react';
-import PropTypes from 'prop-types';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -8,6 +7,7 @@ interface ProcessModelFileUploadModalProps {
   handleFileUploadCancel: () => void;
   checkDuplicateFile: (files: File[], forceOverwrite?: boolean) => void;
   doFileUpload: Function;
+  setShowFileUploadModal: Function;
 }
 
 export default function ProcessModelFileUploadModal({
@@ -16,46 +16,46 @@ export default function ProcessModelFileUploadModal({
   handleFileUploadCancel,
   checkDuplicateFile,
   doFileUpload,
+  setShowFileUploadModal,
 }: ProcessModelFileUploadModalProps) {
   const [filesToUpload, setFilesToUpload] = useState<File[] | null>(null);
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
     useState(false);
-  const [fileUploadEvent, setFileUploadEvent] = useState<any>(null);
 
   const handleOverwriteFileConfirm = () => {
     setShowOverwriteConfirmationPrompt(false);
-    doFileUpload(fileUploadEvent);
+    doFileUpload(filesToUpload);
   };
 
   const handleOverwriteFileCancel = () => {
+    setShowFileUploadModal(true);
     setShowOverwriteConfirmationPrompt(false);
-    setFilesToUpload(null);
   };
 
   const displayOverwriteConfirmation = (filename: string) => {
     setDuplicateFilename(filename);
+    setShowFileUploadModal(false);
     setShowOverwriteConfirmationPrompt(true);
   };
 
-  const handleLocalFileUpload = (event: any) => {
-    const newFiles: File[] = Array.from(event.target.files);
-    setFilesToUpload(newFiles);
-
+  const handleLocalFileUpload = () => {
+    if (!filesToUpload) {
+      return;
+    }
     if (processModel) {
       let foundExistingFile = false;
       if (processModel.files && processModel.files.length > 0) {
         processModel.files.forEach((file: { name: string }) => {
-          if (file.name === newFiles[0].name) {
+          if (file.name === filesToUpload[0].name) {
             foundExistingFile = true;
           }
         });
       }
       if (foundExistingFile) {
-        displayOverwriteConfirmation(newFiles[0].name);
-        setFileUploadEvent(event);
+        displayOverwriteConfirmation(filesToUpload[0].name);
       } else {
-        checkDuplicateFile(newFiles);
+        checkDuplicateFile(filesToUpload);
         setShowOverwriteConfirmationPrompt(false);
       }
     }
@@ -90,12 +90,7 @@ export default function ProcessModelFileUploadModal({
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileUploadCancel}
         onRequestClose={handleFileUploadCancel}
-        onRequestSubmit={() => {
-          if (filesToUpload) {
-            checkDuplicateFile(filesToUpload);
-          }
-          setShowOverwriteConfirmationPrompt(false);
-        }}
+        onRequestSubmit={handleLocalFileUpload}
       >
         <FileUploader
           labelTitle="Upload files"
@@ -111,22 +106,9 @@ export default function ProcessModelFileUploadModal({
           name=""
           multiple={false}
           onDelete={() => setFilesToUpload(null)}
-          onChange={handleLocalFileUpload}
+          onChange={(event: any) => setFilesToUpload(event.target.files)}
         />
       </Modal>
     </>
   );
 }
-
-ProcessModelFileUploadModal.propTypes = {
-  showFileUploadModal: PropTypes.bool.isRequired,
-  processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired, // Add any other required properties here
-      }),
-    ),
-  }),
-  handleFileUploadCancel: PropTypes.func.isRequired,
-  checkDuplicateFile: PropTypes.func.isRequired,
-};

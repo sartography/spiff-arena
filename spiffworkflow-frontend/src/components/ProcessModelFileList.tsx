@@ -12,7 +12,6 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react';
 import { PureAbility } from '@casl/ability';
-import PropTypes from 'prop-types';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
@@ -217,20 +216,3 @@ export default function ProcessModelFileList({
     </Table>
   );
 }
-
-ProcessModelFileList.propTypes = {
-  processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }),
-    ),
-    primary_file_name: PropTypes.string,
-  }),
-  ability: PropTypes.instanceOf(PureAbility).isRequired,
-  targetUris: PropTypes.objectOf(PropTypes.string).isRequired,
-  modifiedProcessModelId: PropTypes.string.isRequired,
-  onDeleteFile: PropTypes.func.isRequired,
-  onSetPrimaryFile: PropTypes.func.isRequired,
-  isTestCaseFile: PropTypes.func.isRequired,
-};
