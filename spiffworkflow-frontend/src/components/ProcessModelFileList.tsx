@@ -27,7 +27,7 @@ interface ProcessModelFileListProps {
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
 }
 
-const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
+export default function ProcessModelFileList({
   processModel,
   ability,
   targetUris,
@@ -35,7 +35,7 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
   onDeleteFile,
   onSetPrimaryFile,
   isTestCaseFile,
-}) => {
+}: ProcessModelFileListProps): React.ReactNode {
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
@@ -216,13 +216,15 @@ const ProcessModelFileList: React.FC<ProcessModelFileListProps> = ({
       <TableBody>{tags}</TableBody>
     </Table>
   );
-};
+}
 
 ProcessModelFileList.propTypes = {
   processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-    })),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }),
+    ),
     primary_file_name: PropTypes.string,
   }),
   ability: PropTypes.instanceOf(Ability).isRequired,
@@ -232,5 +234,3 @@ ProcessModelFileList.propTypes = {
   onSetPrimaryFile: PropTypes.func.isRequired,
   isTestCaseFile: PropTypes.func.isRequired,
 };
-
-export default ProcessModelFileList;

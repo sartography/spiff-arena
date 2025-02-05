@@ -14,12 +14,12 @@ interface ProcessModelReadmeAreaProps {
   modifiedProcessModelId: string;
 }
 
-const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
+export default function ProcessModelReadmeArea({
   readmeFile,
   ability,
   targetUris,
   modifiedProcessModelId,
-}) => {
+}: ProcessModelReadmeAreaProps): React.ReactNode {
   if (readmeFile) {
     return (
       <div className="readme-container">
@@ -66,7 +66,7 @@ const ProcessModelReadmeArea: React.FC<ProcessModelReadmeAreaProps> = ({
       </Can>
     </>
   );
-};
+}
 
 ProcessModelReadmeArea.propTypes = {
   readmeFile: PropTypes.shape({
@@ -76,5 +76,3 @@ ProcessModelReadmeArea.propTypes = {
   targetUris: PropTypes.any,
   modifiedProcessModelId: PropTypes.string.isRequired,
 };
-
-export default ProcessModelReadmeArea;

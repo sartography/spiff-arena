@@ -16,6 +16,7 @@ import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
+import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
@@ -30,7 +31,7 @@ interface ProcessModelTabsProps {
   readmeFile: ProcessFile | null;
 }
 
-const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
+export default function ProcessModelTabs({
   processModel,
   ability,
   targetUris,
@@ -41,7 +42,7 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
   onSetPrimaryFile,
   isTestCaseFile,
   readmeFile,
-}) => {
+}: ProcessModelTabsProps): React.ReactNode {
   const navigate = useNavigate();
 
   if (!processModel) {
@@ -182,13 +183,15 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
       </TabPanels>
     </Tabs>
   );
-};
+}
 
 ProcessModelTabs.propTypes = {
   processModel: PropTypes.shape({
-    files: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-    })),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }),
+    ),
     bpmn_version_control_identifier: PropTypes.string,
     id: PropTypes.number,
   }),
@@ -204,5 +207,3 @@ ProcessModelTabs.propTypes = {
     name: PropTypes.string.isRequired,
   }),
 };
-
-export default ProcessModelTabs;
