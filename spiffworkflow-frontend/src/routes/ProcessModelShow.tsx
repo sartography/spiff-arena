@@ -73,12 +73,14 @@ export default function ProcessModelShow() {
       setPageTitle([result.display_name]);
 
       let newTabIndex = 1;
+      let foundReadme = null;
       result.files.forEach((file: ProcessFile) => {
         if (file.name === 'README.md') {
-          setReadmeFile(file);
+          foundReadme = file;
           newTabIndex = 0;
         }
       });
+      setReadmeFile(foundReadme);
       setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
