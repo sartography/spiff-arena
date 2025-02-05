@@ -38,7 +38,8 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
   updateSelectedTab,
   onDeleteFile,
   onSetPrimaryFile,
-  isTestCaseFile
+  isTestCaseFile,
+  readmeFile,
 }) => {
   const navigate = useNavigate();
 
@@ -117,12 +118,14 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
       </TabList>
       <TabPanels>
         <TabPanel>
-          <ProcessModelReadmeArea
-            readmeFile={readmeFile}
-            ability={ability}
-            targetUris={targetUris}
-            modifiedProcessModelId={modifiedProcessModelId}
-          />
+          {readmeFile && (
+            <ProcessModelReadmeArea
+              readmeFile={readmeFile}
+              ability={ability}
+              targetUris={targetUris}
+              modifiedProcessModelId={modifiedProcessModelId}
+            />
+          )}
         </TabPanel>
         <TabPanel>
           <Grid condensed fullWidth className="megacondensed">
@@ -181,4 +184,3 @@ const ProcessModelTabs: React.FC<ProcessModelTabsProps> = ({
 };
 
 export default ProcessModelTabs;
-
