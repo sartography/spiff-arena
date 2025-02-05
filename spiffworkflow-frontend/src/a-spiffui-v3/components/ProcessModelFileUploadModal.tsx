@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+} from '@mui/material';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -76,7 +83,11 @@ export default function ProcessModelFileUploadModal({
           <Button onClick={handleOverwriteFileCancel} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleOverwriteFileConfirm} color="primary" autoFocus>
+          <Button
+            onClick={handleOverwriteFileConfirm}
+            color="primary"
+            autoFocus
+          >
             Yes
           </Button>
         </DialogActions>
@@ -94,18 +105,29 @@ export default function ProcessModelFileUploadModal({
       >
         <DialogTitle id="upload-dialog-title">Upload File</DialogTitle>
         <DialogContent>
-          <Typography>Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are supported.</Typography>
+          <Typography>
+            Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
+            supported.
+          </Typography>
           <input
             type="file"
             accept=".bpmn,.dmn,.json,.md"
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFilesToUpload(event.target.files ? Array.from(event.target.files) : null)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setFilesToUpload(
+                event.target.files ? Array.from(event.target.files) : null,
+              )
+            }
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFileUploadCancel} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleLocalFileUpload} color="primary" disabled={filesToUpload === null}>
+          <Button
+            onClick={handleLocalFileUpload}
+            color="primary"
+            disabled={filesToUpload === null}
+          >
             Upload
           </Button>
         </DialogActions>

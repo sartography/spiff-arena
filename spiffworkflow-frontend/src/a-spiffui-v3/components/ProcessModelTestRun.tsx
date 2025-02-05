@@ -1,5 +1,12 @@
 import { Rule, CheckCircle, Cancel } from '@mui/icons-material';
-import { Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+} from '@mui/material';
 import { useState } from 'react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import HttpService from '../services/HttpService';
@@ -142,9 +149,7 @@ export default function ProcessModelTestRun({
         className={classNameForModal}
       >
         <DialogTitle>{modalHeading}</DialogTitle>
-        <DialogContent>
-          {testCaseFormattedResultTag()}
-        </DialogContent>
+        <DialogContent>{testCaseFormattedResultTag()}</DialogContent>
         <DialogActions>
           <Button onClick={() => setShowTestCaseResultsModal(false)}>OK</Button>
         </DialogActions>
