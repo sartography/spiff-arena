@@ -12,11 +12,11 @@ import {
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
 import { Ability } from '@casl/ability';
+import PropTypes from 'prop-types';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
 import ProcessModelReadmeArea from './ProcessModelReadmeArea';
-import PropTypes from 'prop-types';
 
 interface ProcessModelTabsProps {
   processModel: any;

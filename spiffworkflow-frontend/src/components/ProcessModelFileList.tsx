@@ -12,10 +12,10 @@ import {
 } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Ability } from '@casl/ability';
+import PropTypes from 'prop-types';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
-import PropTypes from 'prop-types';
 
 interface ProcessModelFileListProps {
   processModel: any;
