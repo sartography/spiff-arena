@@ -17,22 +17,22 @@ Log in to the **Keycloak Admin Console**. Select the realm you wish to allow acc
 
 Navigate to **Clients**.  Search for **security-admin-console**.  Ensure that it is **enabled** for the realm.
 
-![Image](/images/Keycloak_Setup2.png)
+![Image](/images/Keycloak_setup2.png)
 
 ### **Step 3: Assign Admin Roles to a User**  
 To grant a user admin access for adding/managing users:  
 - Navigate to **Users** in the left sidebar. Find or create the user who needs admin privileges.  
 
-![Image](/images/Keycloak_Setup3.png)
+![Image](/images/Keycloak_setup3.png)
 
 - Open the user’s profile and go to the **Role Mapping** tab.Add the following roles:  
    - `view-users`  
    - `manage-users`  
    
-![Image](/images/Keycloak_Setup4.png)
+![Image](/images/Keycloak_setup4.png)
 - If you want to grant **full admin access**, search for **realm-management** and grant **all permissions** within realm management.
 
-![Image](/images/Keycloak_Setup5.png)
+![Image](/images/Keycloak_setup5.png)
 
 ### **Step 4: Provide the Admin URL**  
 After assigning roles, provide the user with the following URL to access the **Admin Console**:
