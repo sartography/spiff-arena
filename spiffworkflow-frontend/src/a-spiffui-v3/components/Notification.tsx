@@ -49,9 +49,7 @@ export function Notification({
 
   if (timeout && onClose) {
     setTimeout(() => {
-      if (onClose) {
-        onClose(new Event('timeout'), 'timeout');
-      }
+      onClose(new Event('timeout'), 'timeout');
     }, timeout);
   }
 
