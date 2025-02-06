@@ -160,7 +160,7 @@ class MessageService:
                 processor_receive.save()
             else:
                 db.session.commit()
-            exception.add_note("The process encountered and error and failed after starting.")
+            exception.add_note("The process instance encountered an error and failed after starting.")
             raise exception
 
     @classmethod
