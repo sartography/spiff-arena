@@ -148,7 +148,7 @@ class MessageService:
                 return None
 
         except Exception as exception:
-            db.session.rollback()
+            # db.session.rollback() # don't try to roll this back.  The message failed, and we need to know why.
             message_instance_send.status = "failed"
             message_instance_send.failure_cause = str(exception)
             db.session.add(message_instance_send)
@@ -160,6 +160,7 @@ class MessageService:
                 processor_receive.save()
             else:
                 db.session.commit()
+            exception.add_note("The process encountered and error and failed after starting.")
             raise exception
 
     @classmethod
@@ -318,7 +319,7 @@ class MessageService:
         try:
             receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
         except Exception as e:
-            db.session.delete(message_instance)
+            db.session.delete(message_instance)   # Here is the source of the problem
             db.session.commit()
             raise e
         if not receiver_message:

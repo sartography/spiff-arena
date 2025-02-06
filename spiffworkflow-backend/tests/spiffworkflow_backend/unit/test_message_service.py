@@ -1,7 +1,9 @@
 import time
 
 from flask import Flask
+from flask import g
 from flask.testing import FlaskClient
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
@@ -12,6 +14,7 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -93,6 +96,48 @@ class TestMessageService(BaseTest):
         assert len(message_instances) == 4
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+
+    def test_start_process_with_message_when_failure(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Assure we get a valid error when trying to start a process, and that process fails for some reason.
+        """
+        payload = {
+            "customer_id": "Sartography",
+            "po_number": 1001,
+            "description": "We built a new feature for messages!",
+            "amount": "100.00",
+        }
+
+        # Load up the definition for the receiving process
+        # It has a message start event that should cause it to fire when a unique message comes through
+        # Fire up the first process
+        load_test_spec(
+            "test_group/message-start-with-error",
+            process_model_source_directory="message-start-with-error",
+            bpmn_file_name="message-start-with-error.bpmn",
+        )
+
+        # Now send in the message
+        user = self.find_or_create_user()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(message_name="test_bad_process").first()
+        assert message_triggerable_process_model is not None
+
+        message_instance = MessageInstanceModel(
+            message_type="send",
+            name="test_bad_process",
+            payload={},
+            user_id=user.id,
+        )
+        g.user = user
+        try:
+            MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
+        except WorkflowExecutionServiceError as e:
+            assert "The process encountered and error and failed after starting." in e.notes
+
 
     def test_can_send_message_to_multiple_process_models(
         self,
