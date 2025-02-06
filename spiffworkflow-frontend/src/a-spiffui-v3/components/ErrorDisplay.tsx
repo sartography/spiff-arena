@@ -179,7 +179,7 @@ export function errorDisplayStateless(
 
 export default function ErrorDisplay() {
   const { error: errorObject, removeError } = useAPIError();
-  const handleRemoveError = (event: SyntheticEvent) => {
+  const handleRemoveError = (_event: SyntheticEvent) => {
     removeError();
   };
   let errorTag = null;
