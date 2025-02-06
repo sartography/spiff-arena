@@ -4,8 +4,7 @@ const { port, hostname } = window.location;
 let protocol = 'https';
 
 declare global {
-  interface SpiffworkflowFrontendJsenvObject {
-  }
+  interface SpiffworkflowFrontendJsenvObject {}
   interface Window {
     spiffworkflowFrontendJsenv: SpiffworkflowFrontendJsenvObject;
   }

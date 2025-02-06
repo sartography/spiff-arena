@@ -34,13 +34,19 @@ export default function PaginationForTable({
     event: MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
-    searchParams.set(`${paginationQueryParamPrefixToUse}page`, String(newPage + 1));
+    searchParams.set(
+      `${paginationQueryParamPrefixToUse}page`,
+      String(newPage + 1),
+    );
     setSearchParams(searchParams);
   };
 
   const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     const newPerPage = parseInt(event.target.value, 10);
-    searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, String(newPerPage));
+    searchParams.set(
+      `${paginationQueryParamPrefixToUse}per_page`,
+      String(newPerPage),
+    );
     setSearchParams(searchParams);
   };
 

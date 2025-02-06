@@ -7,13 +7,16 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { ObjectWithStringKeysAndValues } from '../interfaces';
 import { SnackbarCloseReason } from '@mui/material';
+import { ObjectWithStringKeysAndValues } from '../interfaces';
 
 type OwnProps = {
   title: string;
   children?: React.ReactNode;
-  onClose?: (event: Event | React.SyntheticEvent<any, Event>, reason: SnackbarCloseReason) => void;
+  onClose?: (
+    event: Event | React.SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason,
+  ) => void;
   type?: 'success' | 'error' | 'warning';
   hideCloseButton?: boolean;
   allowTogglingFullMessage?: boolean;
