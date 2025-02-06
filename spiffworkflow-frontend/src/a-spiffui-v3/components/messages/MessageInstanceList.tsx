@@ -144,7 +144,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             <Button
               variant="outlined"
               onClick={() => setMessageInstanceForModal(row)}
-              title={errorTitle}
+              title={errorTitle || undefined}
             >
               View
               {errorIcon}
