@@ -5,7 +5,6 @@ let protocol = 'https';
 
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
-    [key: string]: string;
   }
   interface Window {
     spiffworkflowFrontendJsenv: SpiffworkflowFrontendJsenvObject;
