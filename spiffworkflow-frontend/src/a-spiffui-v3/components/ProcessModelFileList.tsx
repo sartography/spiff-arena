@@ -65,17 +65,24 @@ export default function ProcessModelFileList({
       icon = <Edit />;
       actionWord = 'Edit';
     }
-    elements.push(
-      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <IconButton
-          aria-label={`${actionWord} File`}
-          data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
-          href={profileModelFileEditUrl(processModelFile)}
+    const editUrl = profileModelFileEditUrl(processModelFile);
+    if (editUrl) {
+      elements.push(
+        <Can
+          I="GET"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
         >
-          {icon}
-        </IconButton>
-      </Can>,
-    );
+          <IconButton
+            aria-label={`${actionWord} File`}
+            data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
+            href={editUrl}
+          >
+            {icon}
+          </IconButton>
+        </Can>,
+      );
+    }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
         <IconButton
