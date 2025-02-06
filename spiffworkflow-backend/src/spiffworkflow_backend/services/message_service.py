@@ -5,6 +5,7 @@ from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
@@ -160,7 +161,8 @@ class MessageService:
                 processor_receive.save()
             else:
                 db.session.commit()
-            exception.add_note("The process encountered and error and failed after starting.")
+            if isinstance(exception, SpiffWorkflowException):
+                exception.add_note("The process encountered an error and failed after starting.")
             raise exception
 
     @classmethod
