@@ -42,10 +42,10 @@ export enum UiSchemaPersistenceLevel {
  * The arguments that can be passed in will generally match the "OwnProps" type defined within each file.
  */
 export enum UiSchemaPageComponentList {
-  CreateNewInstance = 'CreateNewInstance',
+  // CreateNewInstance = 'CreateNewInstance',
   CustomForm = 'CustomForm',
   MarkdownRenderer = 'MarkdownRenderer',
-  ProcessInstanceListTable = 'ProcessInstanceListTable',
+  // ProcessInstanceListTable = 'ProcessInstanceListTable',
   ProcessInstanceRun = 'ProcessInstanceRun',
   SpiffTabs = 'SpiffTabs',
 }
