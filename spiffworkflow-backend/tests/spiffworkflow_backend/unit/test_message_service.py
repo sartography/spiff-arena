@@ -103,14 +103,7 @@ class TestMessageService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Assure we get a valid error when trying to start a process, and that process fails for some reason.
-        """
-        payload = {
-            "customer_id": "Sartography",
-            "po_number": 1001,
-            "description": "We built a new feature for messages!",
-            "amount": "100.00",
-        }
+        """Assure we get a valid error when trying to start a process, and that process fails for some reason."""
 
         # Load up the definition for the receiving process
         # It has a message start event that should cause it to fire when a unique message comes through
@@ -123,10 +116,12 @@ class TestMessageService(BaseTest):
 
         # Now send in the message
         user = self.find_or_create_user()
-        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(message_name="test_bad_process").first()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="test_bad_process"
+        ).first()
         assert message_triggerable_process_model is not None
 
-        message_instance = MessageInstanceModel(
+        MessageInstanceModel(
             message_type="send",
             name="test_bad_process",
             payload={},
@@ -137,7 +132,6 @@ class TestMessageService(BaseTest):
             MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
         except WorkflowExecutionServiceError as e:
             assert "The process encountered and error and failed after starting." in e.notes
-
 
     def test_can_send_message_to_multiple_process_models(
         self,
