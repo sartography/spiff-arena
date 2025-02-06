@@ -34,7 +34,7 @@ export default function PaginationForTable({
     event: MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
-    searchParams.set(`${paginationQueryParamPrefixToUse}page`, newPage + 1);
+    searchParams.set(`${paginationQueryParamPrefixToUse}page`, String(newPage + 1));
     setSearchParams(searchParams);
   };
 
