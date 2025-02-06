@@ -84,7 +84,11 @@ export function Notification({
                 size="small"
                 aria-label="close"
                 color="inherit"
-                onClick={onClose}
+                onClick={(event) => {
+                  if (onClose) {
+                    onClose(event, 'escapeKeyDown');
+                  }
+                }}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
