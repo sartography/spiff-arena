@@ -40,7 +40,7 @@ export default function PaginationForTable({
 
   const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     const newPerPage = parseInt(event.target.value, 10);
-    searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, newPerPage);
+    searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, String(newPerPage));
     setSearchParams(searchParams);
   };
 
