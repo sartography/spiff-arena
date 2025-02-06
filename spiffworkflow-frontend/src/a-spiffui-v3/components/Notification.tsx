@@ -8,11 +8,12 @@ import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
+import { SnackbarCloseReason } from '@mui/material';
 
 type OwnProps = {
   title: string;
   children?: React.ReactNode;
-  onClose?: Function;
+  onClose?: (event: Event | React.SyntheticEvent<any, Event>, reason: SnackbarCloseReason) => void;
   type?: 'success' | 'error' | 'warning';
   hideCloseButton?: boolean;
   allowTogglingFullMessage?: boolean;
@@ -45,7 +46,9 @@ export function Notification({
 
   if (timeout && onClose) {
     setTimeout(() => {
-      onClose();
+      if (onClose) {
+        onClose(new Event('timeout'), 'timeout');
+      }
     }, timeout);
   }
 
