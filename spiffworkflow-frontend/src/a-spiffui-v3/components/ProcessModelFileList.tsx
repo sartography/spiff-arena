@@ -107,7 +107,8 @@ export default function ProcessModelFileList({
           ability={ability}
         >
           <ButtonWithConfirmation
-            renderIcon={Delete}
+            renderIcon={<Delete />}
+            hasIconOnly
             iconDescription="Delete File"
             description={`Delete file: ${processModelFile.name}`}
             onConfirmation={() => {

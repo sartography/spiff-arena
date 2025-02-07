@@ -7,6 +7,8 @@ import {
   MenuItem,
   Select,
   Typography,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
@@ -95,42 +97,46 @@ export default function ProcessModelTabs({
 
   const addFileComponent = () => {
     return (
-      <Select
-        label="Add File"
-        onChange={(event) => {
-          const selectedItem = event.target.value;
-          if (selectedItem === 'New BPMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
-            );
-          } else if (selectedItem === 'Upload File') {
-            // Handled by parent component via prop
-            updateSelectedTab(1); // Switch to Files tab
-            // Open file upload modal (handled by parent)
-            setShowFileUploadModal(true);
-          } else if (selectedItem === 'New DMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
-            );
-          } else if (selectedItem === 'New JSON File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
-            );
-          } else if (selectedItem === 'New Markdown File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
-            );
-          }
-        }}
-        value=""
-        displayEmpty
-      >
-        {items.map((item) => (
-          <MenuItem key={item} value={item}>
-            {item}
-          </MenuItem>
-        ))}
-      </Select>
+      <FormControl fullWidth>
+        <InputLabel id="add-file-select-label">Add File</InputLabel>
+        <Select
+          labelId="add-file-select-label"
+          label="Add File"
+          onChange={(event) => {
+            const selectedItem = event.target.value;
+            if (selectedItem === 'New BPMN File') {
+              navigate(
+                `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
+              );
+            } else if (selectedItem === 'Upload File') {
+              // Handled by parent component via prop
+              updateSelectedTab(1); // Switch to Files tab
+              // Open file upload modal (handled by parent)
+              setShowFileUploadModal(true);
+            } else if (selectedItem === 'New DMN File') {
+              navigate(
+                `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
+              );
+            } else if (selectedItem === 'New JSON File') {
+              navigate(
+                `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
+              );
+            } else if (selectedItem === 'New Markdown File') {
+              navigate(
+                `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
+              );
+            }
+          }}
+          value=""
+          displayEmpty
+        >
+          {items.map((item) => (
+            <MenuItem key={item} value={item}>
+              {item}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     );
   };
 

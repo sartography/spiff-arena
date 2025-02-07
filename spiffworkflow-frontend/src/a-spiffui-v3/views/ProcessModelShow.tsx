@@ -238,12 +238,11 @@ export default function ProcessModelShow() {
         />
         {processModelPublishMessage()}
         <Stack direction="row" spacing={1}>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h2" component="h1">
             Process Model: {processModel.display_name}
           </Typography>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <IconButton
-              color="primary"
               data-qa="edit-process-model-button"
               component="a"
               href={`/process-models/${modifiedProcessModelId}/edit`}
