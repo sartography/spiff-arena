@@ -22,6 +22,7 @@ import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
+import SpiffTooltip from '../components/SpiffTooltip';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -242,13 +243,15 @@ export default function ProcessModelShow() {
             Process Model: {processModel.display_name}
           </Typography>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <IconButton
-              data-qa="edit-process-model-button"
-              component="a"
-              href={`/process-models/${modifiedProcessModelId}/edit`}
-            >
-              <Edit />
-            </IconButton>
+            <SpiffTooltip title="Edit Process Model" placement="top">
+              <IconButton
+                data-qa="edit-process-model-button"
+                component="a"
+                href={`/process-models/${modifiedProcessModelId}/edit`}
+              >
+                <Edit />
+              </IconButton>
+            </SpiffTooltip>
           </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation

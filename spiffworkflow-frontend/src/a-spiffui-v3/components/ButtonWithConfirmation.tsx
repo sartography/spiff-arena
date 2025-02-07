@@ -6,6 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { IconButton } from '@mui/material';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   'data-qa'?: string;
@@ -78,13 +79,15 @@ export default function ButtonWithConfirmation({
   if (hasIconOnly) {
     return (
       <>
-        <IconButton
-          data-qa={dataQa}
-          onClick={handleShowConfirmationPrompt}
-          aria-label={iconDescription || ''}
-        >
-          {renderIcon}
-        </IconButton>
+        <SpiffTooltip title={iconDescription || ''} placement="top">
+          <IconButton
+            data-qa={dataQa}
+            onClick={handleShowConfirmationPrompt}
+            aria-label={iconDescription || ''}
+          >
+            {renderIcon}
+          </IconButton>
+        </SpiffTooltip>
         {confirmationDialog()}
       </>
     );

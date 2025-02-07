@@ -15,6 +15,7 @@ import {
   childrenForErrorObject,
   errorForDisplayFromTestCaseErrorDetails,
 } from './ErrorDisplay';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   processModelFile?: ProcessFile;
@@ -41,23 +42,27 @@ export default function ProcessModelTestRun({
     if (testCaseResults) {
       if (testCaseResults.all_passed) {
         return (
-          <IconButton
-            color="success"
-            aria-label="All BPMN unit tests passed"
-            onClick={() => setShowTestCaseResultsModal(true)}
-          >
-            <CheckCircle />
-          </IconButton>
+          <SpiffTooltip title="All BPMN unit tests passed" placement="top">
+            <IconButton
+              color="success"
+              aria-label="All BPMN unit tests passed"
+              onClick={() => setShowTestCaseResultsModal(true)}
+            >
+              <CheckCircle />
+            </IconButton>
+          </SpiffTooltip>
         );
       }
       return (
-        <IconButton
-          color="error"
-          aria-label="BPMN unit tests failed"
-          onClick={() => setShowTestCaseResultsModal(true)}
-        >
-          <Cancel />
-        </IconButton>
+        <SpiffTooltip title="BPMN unit tests failed" placement="top">
+          <IconButton
+            color="error"
+            aria-label="BPMN unit tests failed"
+            onClick={() => setShowTestCaseResultsModal(true)}
+          >
+            <Cancel />
+          </IconButton>
+        </SpiffTooltip>
       );
     }
     return null;
@@ -159,13 +164,15 @@ export default function ProcessModelTestRun({
 
   const buttonElement = () => {
     return (
-      <IconButton
-        color="primary"
-        aria-label={titleText}
-        onClick={() => onProcessModelTestRun()}
-      >
-        <Rule />
-      </IconButton>
+      <SpiffTooltip title={titleText} placement="top">
+        <IconButton
+          color="primary"
+          aria-label={titleText}
+          onClick={() => onProcessModelTestRun()}
+        >
+          <Rule />
+        </IconButton>
+      </SpiffTooltip>
     );
   };
 

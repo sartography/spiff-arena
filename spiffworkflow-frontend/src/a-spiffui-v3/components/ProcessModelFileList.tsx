@@ -21,6 +21,7 @@ import { PureAbility } from '@casl/ability';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
+import SpiffTooltip from './SpiffTooltip';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -73,29 +74,33 @@ export default function ProcessModelFileList({
           a={targetUris.processModelFileCreatePath}
           ability={ability}
         >
-          <IconButton
-            aria-label={`${actionWord} File`}
-            data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
-            href={editUrl}
-          >
-            {icon}
-          </IconButton>
+          <SpiffTooltip title={`${actionWord} File`} placement="top">
+            <IconButton
+              aria-label={`${actionWord} File`}
+              data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
+              href={editUrl}
+            >
+              {icon}
+            </IconButton>
+          </SpiffTooltip>
         </Can>,
       );
     }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <IconButton
-          aria-label="Download File"
-          onClick={() =>
-            window.open(
-              `/${targetUris.processModelFilePath}/${processModelFile.name}`,
-              '_blank',
-            )
-          }
-        >
-          <GetApp />
-        </IconButton>
+        <SpiffTooltip title="Download File" placement="top">
+          <IconButton
+            aria-label="Download File"
+            onClick={() =>
+              window.open(
+                `/${targetUris.processModelFilePath}/${processModelFile.name}`,
+                '_blank',
+              )
+            }
+          >
+            <GetApp />
+          </IconButton>
+        </SpiffTooltip>
       </Can>,
     );
 
@@ -123,12 +128,14 @@ export default function ProcessModelFileList({
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-          <IconButton
-            aria-label="Set As Primary File"
-            onClick={() => onSetPrimaryFile(processModelFile.name)}
-          >
-            <Favorite />
-          </IconButton>
+          <SpiffTooltip title="Set As Primary File" placement="top">
+            <IconButton
+              aria-label="Set As Primary File"
+              onClick={() => onSetPrimaryFile(processModelFile.name)}
+            >
+              <Favorite />
+            </IconButton>
+          </SpiffTooltip>
         </Can>,
       );
     }
