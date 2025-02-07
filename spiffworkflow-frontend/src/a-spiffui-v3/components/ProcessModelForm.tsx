@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   Button,
   TextField,
-  Grid,
   Select,
   MenuItem,
   IconButton,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { Add as AddAlt, Delete as TrashCan } from '@mui/icons-material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
@@ -105,7 +105,7 @@ export default function ProcessModelForm({
   ) => {
     return (
       <Grid container spacing={2}>
-        <Grid item md={3} lg={7} sm={1}>
+        <Grid size={{ md: 3, lg: 7, sm: 1 }}>
           <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
             label="Extraction Key"
@@ -121,7 +121,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item md={4} lg={8} sm={2}>
+        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
           <TextField
             id={`process-model-metadata-extraction-path-${index}`}
             label="Extraction Path"
@@ -137,7 +137,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item md={1} lg={1} sm={1}>
+        <Grid size={{ md: 1, lg: 1, sm: 1 }}>
           <IconButton
             aria-label="Remove Key"
             onClick={() => {
@@ -178,7 +178,7 @@ export default function ProcessModelForm({
   ) => {
     return (
       <Grid container spacing={2}>
-        <Grid item md={3} lg={7} sm={1}>
+        <Grid size={{ md: 3, lg: 7, sm: 1 }}>
           <TextField
             id={`process-model-notification-address-key-${index}`}
             label="Address"
@@ -194,7 +194,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item md={1} lg={1} sm={1}>
+        <Grid size={{ md: 1, lg: 1, sm: 1 }}>
           <IconButton
             aria-label="Remove Address"
             onClick={() => {
@@ -322,11 +322,11 @@ export default function ProcessModelForm({
       </Select>,
     );
     textInputs.push(
-      <Typography variant="h6">Notification Addresses</Typography>,
+      <Typography variant="h3">Notification Addresses</Typography>,
     );
     textInputs.push(
       <Grid container spacing={2}>
-        <Grid item md={8} lg={16} sm={4}>
+        <Grid size={{ md: 8, lg: 16, sm: 4 }}>
           <Typography variant="body2">
             You can provide one or more addresses to notify if this model fails.
           </Typography>
@@ -336,7 +336,7 @@ export default function ProcessModelForm({
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
       <Grid container spacing={2}>
-        <Grid item md={4} lg={8} sm={2}>
+        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
           <Button
             data-qa="add-notification-address-button"
             startIcon={<AddAlt />}
@@ -352,10 +352,10 @@ export default function ProcessModelForm({
       </Grid>,
     );
 
-    textInputs.push(<Typography variant="h6">Metadata Extractions</Typography>);
+    textInputs.push(<Typography variant="h3">Metadata Extractions</Typography>);
     textInputs.push(
       <Grid container spacing={2}>
-        <Grid item md={8} lg={16} sm={4}>
+        <Grid size={{ md: 8, lg: 16, sm: 4 }}>
           <Typography variant="body2">
             You can provide one or more metadata extractions to pull data from
             your process instances to provide quick access in searches and
@@ -367,7 +367,7 @@ export default function ProcessModelForm({
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
       <Grid container spacing={2}>
-        <Grid item md={4} lg={8} sm={2}>
+        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
           <Button
             data-qa="add-metadata-extraction-path-button"
             startIcon={<AddAlt />}

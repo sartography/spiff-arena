@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
 import HttpService from '../services/HttpService';
-// Import MUI components
+import MarkdownRenderer from './MarkdownRenderer';
 
 // Define the props type
 type OwnProps = {
@@ -27,13 +26,11 @@ export default function MarkdownDisplayForFile({ apiPath }: OwnProps) {
 
   if (markdownContents) {
     return (
-      <Box className="with-bottom-margin">
-        {/* Use MUI Typography to render markdown content */}
-        <Typography component="div">
-          {/* Assuming MarkdownRenderer is a custom component, replace it with MUI's Box and Typography */}
-          {markdownContents}
-        </Typography>
-      </Box>
+      <MarkdownRenderer
+        linkTarget="_blank"
+        source={markdownContents}
+        wrapperClassName="with-bottom-margin"
+      />
     );
   }
 

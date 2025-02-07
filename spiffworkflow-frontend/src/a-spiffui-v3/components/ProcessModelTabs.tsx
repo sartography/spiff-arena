@@ -155,14 +155,12 @@ export default function ProcessModelTabs({
       </Tabs>
       <Box>
         <TabPanel value={selectedTabIndex} index={0}>
-          {readmeFile && (
-            <ProcessModelReadmeArea
-              readmeFile={readmeFile}
-              ability={ability}
-              targetUris={targetUris}
-              modifiedProcessModelId={modifiedProcessModelId}
-            />
-          )}
+          <ProcessModelReadmeArea
+            readmeFile={readmeFile}
+            ability={ability}
+            targetUris={targetUris}
+            modifiedProcessModelId={modifiedProcessModelId}
+          />
         </TabPanel>
         <TabPanel value={selectedTabIndex} index={1}>
           <Grid container spacing={2}>

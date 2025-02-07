@@ -131,7 +131,7 @@ export default function ProcessModelShow() {
 
   const deleteProcessModel = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}`,
+      path: `/newui/process-models/${modifiedProcessModelId}`,
       successCallback: navigateToProcessModels,
       httpMethod: 'DELETE',
     });
@@ -185,10 +185,6 @@ export default function ProcessModelShow() {
     setShowFileUploadModal(false);
   };
 
-  const updateSelectedTab = (newTabIndex: any) => {
-    setSelectedTabIndex(newTabIndex);
-  };
-
   const processModelPublishMessage = () => {
     if (processModelPublished) {
       const prUrl: string = processModelPublished.pr_url;
@@ -230,7 +226,7 @@ export default function ProcessModelShow() {
         />
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            ['Process Groups', '/newui/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -247,7 +243,7 @@ export default function ProcessModelShow() {
               <IconButton
                 data-qa="edit-process-model-button"
                 component="a"
-                href={`/process-models/${modifiedProcessModelId}/edit`}
+                href={`/newui/process-models/${modifiedProcessModelId}/edit`}
               >
                 <Edit />
               </IconButton>
@@ -302,7 +298,7 @@ export default function ProcessModelShow() {
           targetUris={targetUris}
           modifiedProcessModelId={modifiedProcessModelId}
           selectedTabIndex={selectedTabIndex}
-          updateSelectedTab={updateSelectedTab}
+          updateSelectedTab={setSelectedTabIndex}
           onDeleteFile={onDeleteFile}
           onSetPrimaryFile={onSetPrimaryFile}
           isTestCaseFile={isTestCaseFile}

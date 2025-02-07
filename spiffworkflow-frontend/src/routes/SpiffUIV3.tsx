@@ -290,11 +290,11 @@ export default function SpiffUIV3() {
                     element={<SecretShow />}
                   />
                   <Route
-                    path="/process-model/new"
+                    path="/process-models/new"
                     element={<ProcessModelNew />}
                   />
                   <Route
-                    path="/process-model/edit/:process_model_id"
+                    path="/process-models/:process_model_id/edit"
                     element={<ProcessModelEdit />}
                   />{' '}
                   {/* Add edit route */}

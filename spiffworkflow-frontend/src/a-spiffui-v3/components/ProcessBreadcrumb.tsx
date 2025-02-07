@@ -92,7 +92,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
           ) {
             const breadcrumbs = processEntity.parent_groups.map(
               (parentGroup: ProcessGroupLite) => {
-                const fullUrl = `/process-groups/${modifyProcessIdentifierForPathParam(
+                const fullUrl = `/newui/process-groups/${modifyProcessIdentifierForPathParam(
                   parentGroup.id,
                 )}`;
                 return (
@@ -106,10 +106,10 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             );
 
             if (crumb.linkLastItem) {
-              let apiBase = '/process-groups';
+              let apiBase = '/newui/process-groups';
               let dataQaTag = '';
               if (crumb.entityType.startsWith('process-model')) {
-                apiBase = '/process-models';
+                apiBase = '/newui/process-models';
                 dataQaTag = 'process-model-breadcrumb-link';
               }
               const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
