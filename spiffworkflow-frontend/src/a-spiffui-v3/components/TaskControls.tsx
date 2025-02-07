@@ -8,7 +8,7 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
-import SpiffTooltip from '../../components/SpiffTooltip';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   onGroupBySelect?: Function;

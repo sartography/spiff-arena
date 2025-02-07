@@ -33,7 +33,7 @@ import appVersionInfo from '../../helpers/appVersionInfo';
 import { DOCUMENTATION_URL } from '../../config';
 import UserService from '../../services/UserService';
 import SpiffLogo from './SpiffLogo';
-import SpiffTooltip from '../../components/SpiffTooltip';
+import SpiffTooltip from './SpiffTooltip';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;

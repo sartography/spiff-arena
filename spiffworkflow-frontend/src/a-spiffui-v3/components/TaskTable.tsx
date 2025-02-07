@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
-import SpiffTooltip from '../../components/SpiffTooltip';
+import SpiffTooltip from './SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
 import UserService from '../../services/UserService';
 import { TimeAgo } from '../../helpers/timeago';
