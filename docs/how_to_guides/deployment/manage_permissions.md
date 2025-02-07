@@ -34,12 +34,11 @@ This is just for documentation purposes and isn't used by the system.
 In this example, we are describing permissions for an "admin-type-user."
 
 There are three keys allowed under each permission:
-
-- groups: lists the groups to which the permission applies (admin in this case)
-- actions: lists the specific actions that are permitted for the group
-  - actions can be negated by prepending with "DENY:"
-- uri: defines the target resource for these permissions
-  - /\* indicates that the permissions apply to all resources within the system
+| Key | Description |
+|------|------------|
+| **groups** | Lists the groups to which the permission applies (`admin` in this case). |
+| **actions** | Lists specific allowed actions. Actions can be negated using `"DENY:"`. |
+| **uri** | Defines the target resource. `"/*"` applies permissions to all system resources. |
 
 **Permissions allowed:**
 
@@ -66,6 +65,71 @@ To allow reading and DISALLOW updating, it would look like this:
 ```
 ["read", "DENY:update"]
 ```
+## Default Permissions and User Groups**  
+
+### The "Everyone" Group  
+By default, **every user** who logs into the system is automatically part of the **"everyone"** group.  
+
+- Any **permissions assigned to this group apply to all users** unless explicitly overridden by other settings.  
+- The default group can be changed using the **environment variable**:  
+
+  ```sh
+  SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP
+  ```
+
+  **Example Usage:**  
+  If you want all new users to be assigned to a **custom group** instead of "everyone," set:  
+
+  ```sh
+  export SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP="custom-default-group"
+  ```
+
+## Permission Levels
+
+SpiffWorkflow has **three primary permission levels** that determine what users can do.  
+
+### BASIC Permissions 
+**BASIC** permissions allow users to interact with their own information and tasks.  
+
+Users with this permission can:  
+  ✅ View details about their account and actions.  
+  ✅ Access **all process instances they have created**.  
+  ✅ Navigate the basic features of the platform.  
+  ✅ View tasks assigned to them.  
+  ❌ **Cannot modify or interact with other users' instances.**  
+
+**Use Case**: Assigned to regular users who only interact with their own processes.  
+
+### ELEVATED Permissions
+**ELEVATED** permissions allow users to configure authentication and secrets for external integrations.  
+
+Users with this permission can:  
+  ✅ Define and manage **secrets** (API keys, credentials).  
+  ✅ Set up authentication for external services.  
+  ✅ Enable **SpiffWorkflow service tasks** to securely connect to external systems.  
+
+**Use Case**: Typically assigned to **technical administrators** or **developers** managing system integrations.  
+
+### SUPPORT Permissions  
+**SUPPORT** permissions provide advanced control over process instances.  
+
+Users with this permission can:  
+  ✅ **Pause** a running process.  
+  ✅ **Move** a process back to an earlier point.  
+  ✅ **Migrate** a process to a **new model version**.  
+  ✅ **Modify process data manually**.  
+  ✅ View **detailed execution logs** for debugging.  
+
+This permission is typically **restricted to administrators or support engineers**, as it allows modification of **live workflows**.  
+
+**Use Case**: Assigned to **support teams** responsible for troubleshooting process instances.  
+
+| **Permission Level** | **Capabilities** |
+|----------------------|------------------|
+| **BASIC** | Users can view and interact with their own processes and assigned tasks. |
+| **ELEVATED** | Users can define secrets, configure authentication, and manage external integrations. |
+| **SUPPORT** | Users can **pause, modify, migrate, and debug** any process instance. |
+
 
 ## Site Administration
 
