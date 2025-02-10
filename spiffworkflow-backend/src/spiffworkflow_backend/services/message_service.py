@@ -5,6 +5,7 @@ from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
@@ -148,7 +149,7 @@ class MessageService:
                 return None
 
         except Exception as exception:
-            db.session.rollback()
+            # db.session.rollback() # don't try to roll this back.  The message failed, and we need to know why.
             message_instance_send.status = "failed"
             message_instance_send.failure_cause = str(exception)
             db.session.add(message_instance_send)
@@ -160,6 +161,8 @@ class MessageService:
                 processor_receive.save()
             else:
                 db.session.commit()
+            if isinstance(exception, SpiffWorkflowException):
+                exception.add_note("The process instance encountered an error and failed after starting.")
             raise exception
 
     @classmethod
