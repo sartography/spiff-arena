@@ -1,4 +1,5 @@
 import { Paper, Stack, Typography } from '@mui/material';
+import { useNavigate } from 'react-router';
 import { Subject } from 'rxjs';
 
 /**
@@ -11,10 +12,13 @@ import { Subject } from 'rxjs';
 export default function ProcessGroupCard({
   group,
   stream,
+  navigateToPage = false,
 }: {
   group: Record<string, any>;
   stream?: Subject<Record<string, any>>;
+  navigateToPage?: boolean;
 }) {
+  const navigate = useNavigate();
   const captionColor = 'text.secondary';
 
   return (
@@ -30,7 +34,14 @@ export default function ProcessGroupCard({
           backgroundColor: 'background.bluegreylight',
         },
       }}
-      onClick={() => stream && stream.next(group)}
+      onClick={() => {
+        if (stream) {
+          stream.next(group);
+        }
+        if (navigateToPage) {
+          navigate(`/newui/processes/${group.id.replaceAll('/', ':')}`);
+        }
+      }}
     >
       <Stack>
         <Typography variant="body1" sx={{ fontWeight: 700 }}>

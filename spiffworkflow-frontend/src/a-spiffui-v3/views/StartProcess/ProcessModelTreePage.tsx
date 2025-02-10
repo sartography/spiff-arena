@@ -12,6 +12,7 @@ import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import { useDebouncedCallback } from 'use-debounce';
+import { useParams } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
 import SearchBar from './SearchBar';
@@ -28,10 +29,12 @@ import {
   ProcessGroupLite,
   ProcessModelAction,
 } from '../../interfaces';
+import { unModifyProcessIdentifierForPathParam } from '../../helpers';
 
 type OwnProps = {
   setNavElementCallback?: Function;
   processModelAction: ProcessModelAction;
+  navigateToPage?: boolean;
 };
 /**
  * Top level layout and control container for this view,
@@ -40,7 +43,9 @@ type OwnProps = {
 export default function ProcessModelTreePage({
   setNavElementCallback,
   processModelAction,
+  navigateToPage = false,
 }: OwnProps) {
+  const params = useParams();
   const { processGroups } = useProcessGroups({
     processInfo: {},
     getRunnableProcessModels:
@@ -70,7 +75,10 @@ export default function ProcessModelTreePage({
     gridGap: 20,
   };
 
-  const processCrumbs = (item: Record<string, any>): Crumb[] => {
+  const processCrumbs = (
+    item: Record<string, any>,
+    flattened: Record<string, any>,
+  ): Crumb[] => {
     /**
      * Create the paths for the crumbs.
      * This logic is repeated from TreePanel.
@@ -84,13 +92,13 @@ export default function ProcessModelTreePage({
 
     // Look up the display names in the flattened items and return.
     return pathIds.map((id) => {
-      const found = flatItems.find((flatItem: any) => flatItem.id === id);
+      const found = flattened.find((flatItem: any) => flatItem.id === id);
       return { id, displayName: found?.display_name || id };
     });
   };
 
   const handleClickStream = (item: Record<string, any>) => {
-    setCrumbs(processCrumbs(item));
+    setCrumbs(processCrumbs(item, flatItems));
     setLastSelected(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
@@ -234,6 +242,35 @@ export default function ProcessModelTreePage({
     return flat;
   };
 
+  function findProcessGroupByPath(
+    groupsToProcess: ProcessGroup[] | ProcessGroupLite[],
+    path: string,
+  ): ProcessGroupLite | undefined {
+    const levels = path.split('/');
+    let currentGroup: ProcessGroupLite | undefined;
+
+    let assembledGroups = '';
+    levels.forEach((level: string) => {
+      if (assembledGroups === '') {
+        assembledGroups = level;
+      } else {
+        assembledGroups = `${assembledGroups}/${level}`;
+      }
+      currentGroup = (
+        (currentGroup ? currentGroup.process_groups : groupsToProcess) || []
+      ).find(
+        (processGroup: ProcessGroup | ProcessGroupLite) =>
+          processGroup.id === assembledGroups,
+      );
+      if (!currentGroup) {
+        return undefined;
+      }
+      return currentGroup;
+    });
+
+    return currentGroup;
+  }
+
   useEffect(() => {
     // If no favorites, proceed with the normal process groups.
     if (processGroups) {
@@ -255,9 +292,21 @@ export default function ProcessModelTreePage({
         setCrumbs([favoriteCrumb]);
         return;
       }
-      setGroups(processGroups);
+      const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
+        `${params.process_group_id}`,
+      );
+      const foundProcessGroup = findProcessGroupByPath(
+        processGroups || [],
+        unModifiedProcessGroupId,
+      );
+      if (foundProcessGroup) {
+        setGroups(foundProcessGroup.process_groups || null);
+        setCrumbs(processCrumbs(foundProcessGroup, flattened));
+      } else {
+        setGroups(processGroups);
+        setCrumbs([]);
+      }
       setGroupsExpanded(!!processGroups.length);
-      setCrumbs([]);
       if (setNavElementCallback) {
         setNavElementCallback(
           <TreePanel
@@ -405,6 +454,7 @@ export default function ProcessModelTreePage({
                       key={group.id}
                       group={group}
                       stream={clickStream}
+                      navigateToPage={navigateToPage}
                     />
                   ))}
                 </Box>

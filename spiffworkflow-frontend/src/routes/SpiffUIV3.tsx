@@ -232,6 +232,10 @@ export default function SpiffUIV3() {
                   />
                   <Route path="/processes" element={<Processes />} />
                   <Route
+                    path="/processes/:process_group_id"
+                    element={<Processes />}
+                  />
+                  <Route
                     path="/process-models/:process_model_id"
                     element={<ProcessModelShow />}
                   />
