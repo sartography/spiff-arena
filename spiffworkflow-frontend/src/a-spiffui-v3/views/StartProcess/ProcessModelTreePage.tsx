@@ -324,9 +324,8 @@ export default function ProcessModelTreePage({
       const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
         `${params.process_group_id}`,
       );
-      const processGroupsLite: ProcessGroupLite[] = processGroups.map(
-        processGroupToLite,
-      );
+      const processGroupsLite: ProcessGroupLite[] =
+        processGroups.map(processGroupToLite);
       const foundProcessGroup = findProcessGroupByPath(
         processGroupsLite,
         unModifiedProcessGroupId,
