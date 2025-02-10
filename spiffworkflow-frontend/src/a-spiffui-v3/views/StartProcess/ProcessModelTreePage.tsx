@@ -36,6 +36,22 @@ type OwnProps = {
   processModelAction: ProcessModelAction;
   navigateToPage?: boolean;
 };
+
+/**
+ * Converts a ProcessGroup to a ProcessGroupLite.
+ */
+const processGroupToLite = (group: ProcessGroup): ProcessGroupLite => {
+  return {
+    id: group.id,
+    display_name: group.display_name,
+    description: group.description || '', // Ensure description is not undefined
+    process_models: group.process_models,
+    process_groups: group.process_groups
+      ? group.process_groups.map(processGroupToLite)
+      : undefined,
+  };
+};
+
 /**
  * Top level layout and control container for this view,
  * feeds various streams, data and callbacks to children.
@@ -243,7 +259,7 @@ export default function ProcessModelTreePage({
   };
 
   function findProcessGroupByPath(
-    groupsToProcess: ProcessGroup[] | ProcessGroupLite[] | null,
+    groupsToProcess: ProcessGroupLite[] | null,
     path: string,
   ): ProcessGroupLite | undefined {
     const levels = path.split('/');
@@ -257,23 +273,12 @@ export default function ProcessModelTreePage({
         assembledGroups = `${assembledGroups}/${level}`;
       }
 
-      // let newGroups = currentGroup
-      //   ? currentGroup.process_groups
-      //   : groupsToProcess;
-
-      // works
-      // let newGroups = currentGroup ? currentGroup.process_groups : [];
-
-      let newGroups: ProcessGroupLite[] | ProcessGroup[] = [];
+      let newGroups: ProcessGroupLite[] = [];
       if (currentGroup && currentGroup.process_groups !== undefined) {
         newGroups = currentGroup.process_groups;
       } else if (groupsToProcess) {
         newGroups = groupsToProcess;
       }
-
-      // currentGroup
-      //   ? currentGroup.process_groups
-      //   : groupsToProcess;
 
       if (!newGroups) {
         newGroups = [];
@@ -319,18 +324,21 @@ export default function ProcessModelTreePage({
       const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
         `${params.process_group_id}`,
       );
+      const processGroupsLite: ProcessGroupLite[] = processGroups.map(
+        processGroupToLite,
+      );
       const foundProcessGroup = findProcessGroupByPath(
-        processGroups || [],
+        processGroupsLite,
         unModifiedProcessGroupId,
       );
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
         setCrumbs(processCrumbs(foundProcessGroup, flattened));
       } else {
-        setGroups(processGroups);
+        setGroups(processGroupsLite);
         setCrumbs([]);
       }
-      setGroupsExpanded(!!processGroups.length);
+      setGroupsExpanded(!!processGroupsLite.length);
       if (setNavElementCallback) {
         setNavElementCallback(
           <TreePanel
