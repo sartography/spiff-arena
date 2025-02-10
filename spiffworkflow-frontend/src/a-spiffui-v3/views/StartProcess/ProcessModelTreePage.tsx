@@ -243,7 +243,7 @@ export default function ProcessModelTreePage({
   };
 
   function findProcessGroupByPath(
-    groupsToProcess: ProcessGroup[] | ProcessGroupLite[],
+    groupsToProcess: ProcessGroup[] | ProcessGroupLite[] | null,
     path: string,
   ): ProcessGroupLite | undefined {
     const levels = path.split('/');
@@ -256,12 +256,36 @@ export default function ProcessModelTreePage({
       } else {
         assembledGroups = `${assembledGroups}/${level}`;
       }
-      currentGroup = (
-        (currentGroup ? currentGroup.process_groups : groupsToProcess) || []
-      ).find(
-        (processGroup: ProcessGroup | ProcessGroupLite) =>
-          processGroup.id === assembledGroups,
-      );
+
+      // let newGroups = currentGroup
+      //   ? currentGroup.process_groups
+      //   : groupsToProcess;
+
+      // works
+      // let newGroups = currentGroup ? currentGroup.process_groups : [];
+
+      let newGroups: ProcessGroupLite[] | ProcessGroup[] = [];
+      if (currentGroup && currentGroup.process_groups !== undefined) {
+        newGroups = currentGroup.process_groups;
+      } else if (groupsToProcess) {
+        newGroups = groupsToProcess;
+      }
+
+      // currentGroup
+      //   ? currentGroup.process_groups
+      //   : groupsToProcess;
+
+      if (!newGroups) {
+        newGroups = [];
+      }
+      if (newGroups === null) {
+        newGroups = [];
+      }
+      if (newGroups && Array.isArray(newGroups)) {
+        currentGroup = newGroups.find(
+          (processGroup: any) => processGroup.id === assembledGroups,
+        );
+      }
       if (!currentGroup) {
         return undefined;
       }
