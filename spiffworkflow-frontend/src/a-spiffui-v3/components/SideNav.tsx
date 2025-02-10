@@ -176,7 +176,7 @@ function SideNav({
             { text: 'CONFIGURATION' },
           ].map((item, index) => (
             <ListItem
-              button
+              component="button"
               key={item.text}
               onClick={() => {
                 setAdditionalNavElement(null);
