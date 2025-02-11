@@ -62,6 +62,7 @@ export default function UserSearch({
       getOptionLabel={(option: User) => option.username || ''}
       renderInput={(params) => (
         <TextField
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
           label={label}
           placeholder="Start typing username"
