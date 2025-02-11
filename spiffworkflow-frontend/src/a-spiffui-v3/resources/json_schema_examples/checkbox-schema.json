@@ -1,0 +1,11 @@
+{
+  "title": "Checkbox",
+  "description": "A super simple checkbox",
+  "properties": {
+    "done": {
+      "type": "boolean",
+      "title": "Done?",
+      "default": false
+    }
+  }
+}

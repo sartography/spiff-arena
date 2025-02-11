@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Button,
-} from '@mui/material';
+// @ts-ignore
+import { ErrorOutline } from '@carbon/icons-react';
+// @ts-ignore
+import { Table, Modal, Button } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
 import ProcessBreadcrumb from '../ProcessBreadcrumb';
@@ -79,26 +69,19 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         );
       }
       return (
-        <Dialog
+        <Modal
           open={!!messageInstanceForModal}
-          onClose={handleCorrelationDisplayClose}
+          passiveModal
+          onRequestClose={handleCorrelationDisplayClose}
+          modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.name}) ${messageInstanceForModal.message_type} data:`}
+          modalLabel="Details"
         >
-          <DialogTitle>
-            Message {messageInstanceForModal.id} ({messageInstanceForModal.name}
-            ) {messageInstanceForModal.message_type} data:
-          </DialogTitle>
-          <DialogContent>
-            {failureCausePre}
-            <p>Correlations:</p>
-            <pre>
-              {JSON.stringify(
-                messageInstanceForModal.correlation_keys,
-                null,
-                2,
-              )}
-            </pre>
-          </DialogContent>
-        </Dialog>
+          {failureCausePre}
+          <p>Correlations:</p>
+          <pre>
+            {JSON.stringify(messageInstanceForModal.correlation_keys, null, 2)}
+          </pre>
+        </Modal>
       );
     }
     return null;
@@ -113,7 +96,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         errorIcon = (
           <>
             &nbsp;
-            <ErrorOutlineIcon className="red-icon" />
+            <ErrorOutline className="red-icon" />
           </>
         );
       }
@@ -133,51 +116,50 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         );
       }
       return (
-        <TableRow key={row.id}>
-          <TableCell>{row.id}</TableCell>
-          <TableCell>{processLink}</TableCell>
-          <TableCell>{instanceLink}</TableCell>
-          <TableCell>{row.name}</TableCell>
-          <TableCell>{row.message_type}</TableCell>
-          <TableCell>{row.counterpart_id}</TableCell>
-          <TableCell>
+        <tr key={row.id}>
+          <td>{row.id}</td>
+          <td>{processLink}</td>
+          <td>{instanceLink}</td>
+          <td>{row.name}</td>
+          <td>{row.message_type}</td>
+          <td>{row.counterpart_id}</td>
+          <td>
             <Button
-              variant="outlined"
+              kind="ghost"
+              className="button-link"
               onClick={() => setMessageInstanceForModal(row)}
-              title={errorTitle || undefined}
+              title={errorTitle}
             >
               View
               {errorIcon}
             </Button>
-          </TableCell>
-          <TableCell>{row.status}</TableCell>
-          <TableCell>
+          </td>
+          <td>{row.status}</td>
+          <td>
             {DateAndTimeService.convertSecondsToFormattedDateTime(
               row.created_at_in_seconds,
             )}
-          </TableCell>
-        </TableRow>
+          </td>
+        </tr>
       );
     });
     return (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>Process</TableCell>
-              <TableCell>Process instance</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Corresponding Message Instance</TableCell>
-              <TableCell>Details</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Created at</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>{rows}</TableBody>
-        </Table>
-      </TableContainer>
+      <Table striped bordered>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Process</th>
+            <th>Process instance</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Corresponding Message Instance</th>
+            <th>Details</th>
+            <th>Status</th>
+            <th>Created at</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </Table>
     );
   };
 

@@ -41,6 +41,7 @@ import SecretShow from '../a-spiffui-v3/views/SecretShow';
 import ProcessModelShow from '../a-spiffui-v3/views/ProcessModelShow';
 import ProcessModelNew from '../a-spiffui-v3/views/ProcessModelNew';
 import ProcessModelEdit from '../a-spiffui-v3/views/ProcessModelEdit'; // Import the edited component
+import ProcessModelEditDiagram from '../a-spiffui-v3/views/ProcessModelEditDiagram';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -311,6 +312,10 @@ export default function SpiffUIV3() {
                   <Route
                     path="/process-models/:process_model_id/edit"
                     element={<ProcessModelEdit />}
+                  />{' '}
+                  <Route
+                    path="/process-models/:process_model_id/files/:file_name"
+                    element={<ProcessModelEditDiagram />}
                   />{' '}
                   {/* Add edit route */}
                 </Routes>

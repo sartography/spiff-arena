@@ -45,10 +45,10 @@ export default function ProcessModelFileList({
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        return `/editor/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
+        return `/newui/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
       if (processModelFile.name.match(/\.(json|md)$/)) {
-        return `/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
+        return `/newui/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
       }
     }
     return null;
