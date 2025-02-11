@@ -42,6 +42,7 @@ import ProcessModelShow from '../a-spiffui-v3/views/ProcessModelShow';
 import ProcessModelNew from '../a-spiffui-v3/views/ProcessModelNew';
 import ProcessModelEdit from '../a-spiffui-v3/views/ProcessModelEdit'; // Import the edited component
 import ProcessModelEditDiagram from '../a-spiffui-v3/views/ProcessModelEditDiagram';
+import ReactFormEditor from '../a-spiffui-v3/views/ReactFormEditor'; // Import the new component
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -290,15 +291,12 @@ export default function SpiffUIV3() {
                   <Route path="/messages" element={<MessageListPage />} />
                   <Route path="/data-stores/*" element={<DataStoreRoutes />} />
                   <Route path="/data-store/new" element={<DataStoreNew />} />
-                  <Route
-                    path="/data-storelist"
-                    element={<DataStoreList />}
-                  />{' '}
-                  <Route path="/configuration/*" element={<Configuration />} />{' '}
+                  <Route path="/data-storelist" element={<DataStoreList />} />
+                  <Route path="/configuration/*" element={<Configuration />} />
                   <Route
                     path="/authentication-list"
                     element={<AuthenticationList />}
-                  />{' '}
+                  />
                   <Route path="/secrets" element={<SecretList />} />{' '}
                   <Route path="/secrets/new" element={<SecretNew />} />
                   <Route
@@ -312,12 +310,15 @@ export default function SpiffUIV3() {
                   <Route
                     path="/process-models/:process_model_id/edit"
                     element={<ProcessModelEdit />}
-                  />{' '}
+                  />
                   <Route
                     path="/process-models/:process_model_id/files/:file_name"
                     element={<ProcessModelEditDiagram />}
-                  />{' '}
-                  {/* Add edit route */}
+                  />
+                  <Route
+                    path="/process-models/:process_model_id/form/:file_name"
+                    element={<ReactFormEditor />}
+                  />
                 </Routes>
               </Box>
             </Box>
