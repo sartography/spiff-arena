@@ -157,67 +157,65 @@ export default function ProcessModelTabs({
           data-qa="process-instance-list-link"
         />
       </Tabs>
-      <Box>
-        <TabPanel value={selectedTabIndex} index={0}>
-          <ProcessModelReadmeArea
-            readmeFile={readmeFile}
-            ability={ability}
-            targetUris={targetUris}
-            modifiedProcessModelId={modifiedProcessModelId}
-          />
-        </TabPanel>
-        <TabPanel value={selectedTabIndex} index={1}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Can
-                I="POST"
-                a={targetUris.processModelFileCreatePath}
-                ability={ability}
-              >
-                {helpText}
-                <div className="with-bottom-margin">
-                  Files
-                  {processModel &&
-                    processModel.bpmn_version_control_identifier &&
-                    ` (revision ${processModel.bpmn_version_control_identifier})`}
-                </div>
-                {addFileComponent()}
-                <br />
-              </Can>
-              <ProcessModelFileList
-                processModel={processModel}
-                ability={ability}
-                targetUris={targetUris}
-                modifiedProcessModelId={modifiedProcessModelId}
-                onDeleteFile={onDeleteFile}
-                onSetPrimaryFile={onSetPrimaryFile}
-                isTestCaseFile={isTestCaseFile}
-              />
-            </Grid>
-          </Grid>
-        </TabPanel>
-        {selectedTabIndex === 2 && (
-          <TabPanel value={selectedTabIndex} index={2}>
+      <TabPanel value={selectedTabIndex} index={0}>
+        <ProcessModelReadmeArea
+          readmeFile={readmeFile}
+          ability={ability}
+          targetUris={targetUris}
+          modifiedProcessModelId={modifiedProcessModelId}
+        />
+      </TabPanel>
+      <TabPanel value={selectedTabIndex} index={1}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
             <Can
               I="POST"
-              a={targetUris.processInstanceListForMePath}
+              a={targetUris.processModelFileCreatePath}
               ability={ability}
             >
-              <ProcessInstanceListTable
-                additionalReportFilters={[
-                  {
-                    field_name: 'process_model_identifier',
-                    field_value: processModel.id,
-                  },
-                ]}
-                perPageOptions={[2, 5, 25]}
-                showLinkToReport
-                variant="for-me"
-              />
+              {helpText}
+              <div className="with-bottom-margin">
+                Files
+                {processModel &&
+                  processModel.bpmn_version_control_identifier &&
+                  ` (revision ${processModel.bpmn_version_control_identifier})`}
+              </div>
+              {addFileComponent()}
+              <br />
             </Can>
-          </TabPanel>
-        )}
-      </Box>
+            <ProcessModelFileList
+              processModel={processModel}
+              ability={ability}
+              targetUris={targetUris}
+              modifiedProcessModelId={modifiedProcessModelId}
+              onDeleteFile={onDeleteFile}
+              onSetPrimaryFile={onSetPrimaryFile}
+              isTestCaseFile={isTestCaseFile}
+            />
+          </Grid>
+        </Grid>
+      </TabPanel>
+      {selectedTabIndex === 2 && (
+        <TabPanel value={selectedTabIndex} index={2}>
+          <Can
+            I="POST"
+            a={targetUris.processInstanceListForMePath}
+            ability={ability}
+          >
+            <ProcessInstanceListTable
+              additionalReportFilters={[
+                {
+                  field_name: 'process_model_identifier',
+                  field_value: processModel.id,
+                },
+              ]}
+              perPageOptions={[2, 5, 25]}
+              showLinkToReport
+              variant="for-me"
+            />
+          </Can>
+        </TabPanel>
+      )}
     </>
   );
 }

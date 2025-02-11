@@ -941,6 +941,10 @@ hr {
   max-width: 640px;
 }
 
+div[role='tabpanel'] p {
+  max-width: unset;
+}
+
 .cds--white h1,
 .cds--white h2,
 .cds--white h3,
