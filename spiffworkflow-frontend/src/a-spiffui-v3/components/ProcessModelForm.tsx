@@ -104,8 +104,8 @@ export default function ProcessModelForm({
     metadataExtractionPath: MetadataExtractionPath,
   ) => {
     return (
-      <Grid container spacing={2}>
-        <Grid size={{ md: 3, lg: 7, sm: 1 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={3}>
           <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
             label="Extraction Key"
@@ -121,7 +121,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
+        <Grid item xs={6}>
           <TextField
             id={`process-model-metadata-extraction-path-${index}`}
             label="Extraction Path"
@@ -137,7 +137,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid size={{ md: 1, lg: 1, sm: 1 }}>
+        <Grid item xs={1}>
           <IconButton
             aria-label="Remove Key"
             onClick={() => {
