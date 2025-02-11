@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { Button, Table, Modal, Stack } from '@mui/material';
+import { Button, Table, TableHead, TableBody, TableRow, TableCell, Modal, Stack } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
@@ -218,7 +218,7 @@ export default function TaskListTable({
       processInstanceTask.process_model_identifier,
     );
     return (
-      <td>
+      <TableCell>
         <Link
           data-qa="process-instance-show-link-id"
           to={`/newui/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
@@ -226,7 +226,7 @@ export default function TaskListTable({
         >
           {processInstanceTask.process_instance_id}
         </Link>
-      </td>
+      </TableCell>
     );
   };
 
@@ -243,7 +243,7 @@ export default function TaskListTable({
           processInstanceTask.process_model_identifier,
         );
       rowElements.push(
-        <td>
+        <TableCell>
           <Link
             data-qa="process-model-show-link"
             to={`/newui/process-models/${modifiedProcessModelIdentifier}`}
@@ -251,7 +251,7 @@ export default function TaskListTable({
           >
             {processInstanceTask.process_model_display_name}
           </Link>
-        </td>,
+        </TableCell>,
       );
     }
   };
@@ -305,34 +305,34 @@ export default function TaskListTable({
     dealWithProcessCells(rowElements, processInstanceTask);
 
     rowElements.push(
-      <td
+      <TableCell
         title={`task id: ${processInstanceTask.name}, spiffworkflow task guid: ${processInstanceTask.id}`}
       >
         {processInstanceTask.task_title
           ? processInstanceTask.task_title
           : processInstanceTask.task_name}
-      </td>,
+      </TableCell>,
     );
     if (showStartedBy) {
       rowElements.push(
-        <td>{processInstanceTask.process_initiator_username}</td>,
+        <TableCell>{processInstanceTask.process_initiator_username}</TableCell>,
       );
     }
     if (showWaitingOn) {
       rowElements.push(
-        <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>,
+        <TableCell>{getWaitingForTableCellComponent(processInstanceTask)}</TableCell>,
       );
     }
     if (showCompletedBy) {
-      rowElements.push(<td>{processInstanceTask.completed_by_username}</td>);
+      rowElements.push(<TableCell>{processInstanceTask.completed_by_username}</TableCell>);
     }
     if (showDateStarted) {
       rowElements.push(
-        <td>
+        <TableCell>
           {DateAndTimeService.convertSecondsToFormattedDateTime(
             processInstanceTask.created_at_in_seconds,
           ) || '-'}
-        </td>,
+        </TableCell>,
       );
     }
     if (showLastUpdated) {
@@ -343,9 +343,9 @@ export default function TaskListTable({
       );
     }
     if (showActionsColumn) {
-      rowElements.push(<td>{getActionButtons(processInstanceTask)}</td>);
+      rowElements.push(<TableCell>{getActionButtons(processInstanceTask)}</TableCell>);
     }
-    return <tr key={processInstanceTask.id}>{rowElements}</tr>;
+    return <TableRow key={processInstanceTask.id}>{rowElements}</TableRow>;
   };
 
   const getTableHeaders = () => {
@@ -388,14 +388,14 @@ export default function TaskListTable({
     });
     return (
       <Table>
-        <thead>
-          <tr>
+        <TableHead>
+          <TableRow>
             {tableHeaders.map((tableHeader: string) => {
-              return <th>{tableHeader}</th>;
+              return <TableCell>{tableHeader}</TableCell>;
             })}
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
+          </TableRow>
+        </TableHead>
+        <TableBody>{rows}</TableBody>
       </Table>
     );
   };
