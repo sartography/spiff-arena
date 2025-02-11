@@ -27,6 +27,11 @@ import {
   Brightness7,
   Brightness4,
   Close as CloseIcon,
+  Schema,
+  Timeline,
+  Storage,
+  Markunread,
+  SettingsApplicationsSharp,
 } from '@mui/icons-material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import appVersionInfo from '../../helpers/appVersionInfo';
@@ -172,11 +177,11 @@ function SideNav({
           {[
             { text: 'HOME', icon: <Home /> },
             { text: 'START NEW PROCESS', icon: <Add /> },
-            { text: 'PROCESSES' },
-            { text: 'PROCESS INSTANCES' },
-            { text: 'DATA STORES' },
-            { text: 'MESSAGES' },
-            { text: 'CONFIGURATION' },
+            { text: 'PROCESSES', icon: <Schema /> },
+            { text: 'PROCESS INSTANCES', icon: <Timeline /> },
+            { text: 'DATA STORES', icon: <Storage /> },
+            { text: 'MESSAGES', icon: <Markunread /> },
+            { text: 'CONFIGURATION', icon: <SettingsApplicationsSharp /> },
           ].map((item, index) => (
             <ListItem
               component="button"
