@@ -32,6 +32,7 @@ export default function ProcessModelCard({
   stream,
   lastSelected,
   onStartProcess,
+  onViewProcess,
   processModelAction,
 }: {
   model: Record<string, any>;
@@ -39,6 +40,7 @@ export default function ProcessModelCard({
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
+  onViewProcess?: () => void;
 }) {
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
@@ -64,6 +66,9 @@ export default function ProcessModelCard({
 
   const handleViewProcess = (e: PointerEvent) => {
     stopEventBubble(e);
+    if (onViewProcess) {
+      onViewProcess();
+    }
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );

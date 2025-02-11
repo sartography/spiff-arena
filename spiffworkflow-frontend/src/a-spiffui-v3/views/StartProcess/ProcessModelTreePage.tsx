@@ -450,6 +450,11 @@ export default function ProcessModelTreePage({
                           setNavElementCallback(null);
                         }
                       }}
+                      onViewProcess={() => {
+                        if (setNavElementCallback) {
+                          setNavElementCallback(null);
+                        }
+                      }}
                     />
                   ))}
                 </Box>
