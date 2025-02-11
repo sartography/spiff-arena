@@ -62,7 +62,6 @@ const routeIdentifiers = {
   DATA_STORES: 'dataStores',
   MESSAGES: 'messages',
   CONFIGURATION: 'configuration',
-  ABOUT: 'about', // Added about for completeness, though not in the main nav items.
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
