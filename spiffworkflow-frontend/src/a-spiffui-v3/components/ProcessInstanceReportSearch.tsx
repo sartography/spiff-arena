@@ -88,7 +88,7 @@ export default function ProcessInstanceReportSearch({
             }
             renderInput={(params) => (
               <TextField
-                {...params}
+                inputProps={params.inputProps}
                 placeholder="Choose a process instance perspective"
               />
             )}
