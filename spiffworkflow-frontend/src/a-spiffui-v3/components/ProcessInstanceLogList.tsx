@@ -408,9 +408,8 @@ export default function ProcessInstanceLogList({
     }
 
     const filterElements = [];
-    let taskNameFilterPlaceholder = 'Choose a milestone';
     if (isEventsView) {
-      taskNameFilterPlaceholder = 'Choose a task bpmn name';
+      // taskNameFilterPlaceholder = 'Choose a task bpmn name';
     }
     filterElements.push(
       <Grid item md={4}>
