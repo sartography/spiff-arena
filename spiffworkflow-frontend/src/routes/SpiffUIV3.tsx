@@ -319,6 +319,10 @@ export default function SpiffUIV3() {
                     path="/process-models/:process_model_id/form/:file_name"
                     element={<ReactFormEditor />}
                   />
+                  <Route
+                    path="/process-models/:process_model_id/form"
+                    element={<ReactFormEditor />}
+                  />
                 </Routes>
               </Box>
             </Box>

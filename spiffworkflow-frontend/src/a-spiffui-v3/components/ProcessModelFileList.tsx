@@ -22,6 +22,8 @@ import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
 import SpiffTooltip from './SpiffTooltip';
+import HttpService from '../services/HttpService';
+import useAPIError from '../hooks/UseApiError';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -42,6 +44,7 @@ export default function ProcessModelFileList({
   onSetPrimaryFile,
   isTestCaseFile,
 }: ProcessModelFileListProps) {
+  const { addError, removeError } = useAPIError();
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
@@ -52,6 +55,40 @@ export default function ProcessModelFileList({
       }
     }
     return null;
+  };
+
+  const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
+    if (
+      !('file_contents' in processModelFile) ||
+      processModelFile.file_contents === undefined
+    ) {
+      addError({
+        message: `Could not file file contents for file: ${processModelFile.name}`,
+      });
+      return;
+    }
+    let contentType = 'application/xml';
+    if (processModelFile.type === 'json') {
+      contentType = 'application/json';
+    }
+    const element = document.createElement('a');
+    const file = new Blob([processModelFile.file_contents], {
+      type: contentType,
+    });
+    const downloadFileName = processModelFile.name;
+    element.href = URL.createObjectURL(file);
+    element.download = downloadFileName;
+    document.body.appendChild(element);
+    element.click();
+  };
+
+  const downloadFile = (fileName: string) => {
+    removeError();
+    const processModelPath = `process-models/${modifiedProcessModelId}`;
+    HttpService.makeCallToBackend({
+      path: `/${processModelPath}/files/${fileName}`,
+      successCallback: handleProcessModelFileResult,
+    });
   };
 
   const renderButtonElements = (
@@ -91,12 +128,7 @@ export default function ProcessModelFileList({
         <SpiffTooltip title="Download File" placement="top">
           <IconButton
             aria-label="Download File"
-            onClick={() =>
-              window.open(
-                `/${targetUris.processModelFilePath}/${processModelFile.name}`,
-                '_blank',
-              )
-            }
+            onClick={() => downloadFile(processModelFile.name)}
           >
             <GetApp />
           </IconButton>

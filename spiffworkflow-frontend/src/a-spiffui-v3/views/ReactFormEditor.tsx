@@ -116,7 +116,7 @@ export default function ReactFormEditor() {
       const fileNameWithExtension =
         defaultFileName ?? `${newFileName}.${fileExtension}`;
       navigate(
-        `/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`,
+        `/newui/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`,
       );
     }
   };
@@ -165,7 +165,7 @@ export default function ReactFormEditor() {
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(`/process-models/${modifiedProcessModelId}`);
+      navigate(`/newui/process-models/${modifiedProcessModelId}`);
     };
 
     HttpService.makeCallToBackend({
@@ -327,7 +327,7 @@ export default function ReactFormEditor() {
               <Button
                 onClick={() =>
                   navigate(
-                    `/editor/process-models/${modifiedProcessModelId}/files/${params.file_name}`,
+                    `/newui/process-models/${modifiedProcessModelId}/files/${params.file_name}`,
                   )
                 }
                 variant="contained"
