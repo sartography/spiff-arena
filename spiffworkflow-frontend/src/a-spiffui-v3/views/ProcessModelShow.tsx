@@ -125,13 +125,13 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
+      `/newui/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
     );
   };
 
   const deleteProcessModel = () => {
     HttpService.makeCallToBackend({
-      path: `/newui/process-models/${modifiedProcessModelId}`,
+      path: `/process-models/${modifiedProcessModelId}`,
       successCallback: navigateToProcessModels,
       httpMethod: 'DELETE',
     });
