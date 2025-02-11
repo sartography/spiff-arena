@@ -231,7 +231,7 @@ export default function SpiffUIV3() {
                     }
                   />
                   <Route
-                    path="/processes"
+                    path="/process-groups"
                     element={
                       <Processes
                         setNavElementCallback={setAdditionalNavElement}
@@ -239,7 +239,7 @@ export default function SpiffUIV3() {
                     }
                   />
                   <Route
-                    path="/processes/:process_group_id"
+                    path="/process-groups/:process_group_id"
                     element={
                       <Processes
                         setNavElementCallback={setAdditionalNavElement}

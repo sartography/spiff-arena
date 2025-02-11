@@ -267,17 +267,22 @@ export default function ProcessModelTreePage({
 
     let newGroups: ProcessGroupLite[] = [];
     if (groupsToProcess) {
-        newGroups = groupsToProcess;
+      newGroups = groupsToProcess;
     }
 
-    for (const level of levels) {
-      const assembledPath = levels.slice(0, levels.indexOf(level) + 1).join('/');
-      currentGroup = newGroups.find((processGroup: any) => processGroup.id === assembledPath);
+    levels.forEach((level: string) => {
+      const assembledPath = levels
+        .slice(0, levels.indexOf(level) + 1)
+        .join('/');
+      currentGroup = newGroups.find(
+        (processGroup: any) => processGroup.id === assembledPath,
+      );
       if (!currentGroup) {
         return undefined;
       }
       newGroups = currentGroup.process_groups || [];
-    }
+      return currentGroup;
+    });
     return currentGroup;
   }
 
@@ -313,6 +318,7 @@ export default function ProcessModelTreePage({
       );
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
+        setModels(foundProcessGroup.process_models || []);
         setCrumbs(processCrumbs(foundProcessGroup, flattened));
       } else {
         setGroups(processGroupsLite);

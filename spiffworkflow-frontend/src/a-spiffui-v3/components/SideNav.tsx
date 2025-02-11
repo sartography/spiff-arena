@@ -65,10 +65,7 @@ function SideNav({
   let selectedTab = 0;
   if (location.pathname === '/newui/startprocess') {
     selectedTab = 1;
-  } else if (
-    location.pathname.startsWith('/newui/processes') ||
-    location.pathname.startsWith('/newui/process-')
-  ) {
+  } else if (location.pathname.startsWith('/newui/process-')) {
     selectedTab = 2;
   } else if (location.pathname === '/newui/data-stores') {
     selectedTab = 3;
@@ -188,7 +185,7 @@ function SideNav({
                 } else if (index === 1) {
                   navigate('/newui/startprocess');
                 } else if (item.text === 'PROCESSES') {
-                  navigate('/newui/processes');
+                  navigate('/newui/process-groups');
                 } else if (item.text === 'DATA STORES') {
                   navigate('/newui/data-stores');
                 } else if (item.text === 'MESSAGES') {
