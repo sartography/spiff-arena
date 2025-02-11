@@ -104,7 +104,7 @@ export default function ProcessModelForm({
     metadataExtractionPath: MetadataExtractionPath,
   ) => {
     return (
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
         <Grid size={{ xs: 3 }}>
           <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
@@ -177,7 +177,7 @@ export default function ProcessModelForm({
     notificationAddress: string,
   ) => {
     return (
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
         <Grid size={{ xs: 10 }}>
           <TextField
             id={`process-model-notification-address-key-${index}`}
