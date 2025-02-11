@@ -52,9 +52,10 @@ export default function ProcessSearch({
         }
         renderInput={(params) => (
           <TextField
-            {...params}
             label={titleText}
             placeholder="Choose a process"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ ...params.InputProps }}
           />
         )}
         value={selectedItem || null}
