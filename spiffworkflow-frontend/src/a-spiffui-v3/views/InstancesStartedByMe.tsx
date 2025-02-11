@@ -38,16 +38,7 @@ function InstancesStartedByMe({
   });
 
   return (
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        p: 3,
-        overflow: 'auto',
-        height: isMobile ? 'calc(100vh - 64px)' : '100vh',
-        mt: isMobile ? '64px' : 0,
-      }}
-    >
+    <>
       {isMobile ? (
         <Box
           sx={{
@@ -102,7 +93,7 @@ function InstancesStartedByMe({
         viewMode={viewMode}
         showNonActive={showNonActive}
       />
-    </Box>
+    </>
   );
 }
 
