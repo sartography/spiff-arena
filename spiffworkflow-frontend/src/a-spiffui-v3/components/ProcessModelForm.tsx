@@ -177,8 +177,8 @@ export default function ProcessModelForm({
     notificationAddress: string,
   ) => {
     return (
-      <Grid container spacing={2}>
-        <Grid size={{ md: 3, lg: 7, sm: 1 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={10}>
           <TextField
             id={`process-model-notification-address-key-${index}`}
             label="Address"
@@ -194,7 +194,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid size={{ md: 1, lg: 1, sm: 1 }}>
+        <Grid item xs={2}>
           <IconButton
             aria-label="Remove Address"
             onClick={() => {
