@@ -53,6 +53,18 @@ type OwnProps = {
   setAdditionalNavElement: Function;
 };
 
+// Define an object to map route paths to identifiers
+const routeIdentifiers = {
+  HOME: 'home',
+  START_NEW_PROCESS: 'startNewProcess',
+  PROCESSES: 'processes',
+  PROCESS_INSTANCES: 'processInstances',
+  DATA_STORES: 'dataStores',
+  MESSAGES: 'messages',
+  CONFIGURATION: 'configuration',
+  ABOUT: 'about', // Added about for completeness, though not in the main nav items.
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({
   isCollapsed,
@@ -67,19 +79,22 @@ function SideNav({
 
   const location = useLocation();
 
-  let selectedTab = 0;
-  if (location.pathname === '/newui/startprocess') {
-    selectedTab = 1;
+  // Determine the selected tab based on the current route
+  let selectedTab = null;
+  if (location.pathname === '/newui') {
+    selectedTab = routeIdentifiers.HOME;
+  } else if (location.pathname === '/newui/startprocess') {
+    selectedTab = routeIdentifiers.START_NEW_PROCESS;
   } else if (location.pathname.startsWith('/newui/process-instances')) {
-    selectedTab = 3;
+    selectedTab = routeIdentifiers.PROCESS_INSTANCES;
   } else if (location.pathname.startsWith('/newui/process-')) {
-    selectedTab = 2;
+    selectedTab = routeIdentifiers.PROCESSES; // This might need further refinement
   } else if (location.pathname === '/newui/data-stores') {
-    selectedTab = 5;
+    selectedTab = routeIdentifiers.DATA_STORES;
   } else if (location.pathname === '/newui/messages') {
-    selectedTab = 5;
+    selectedTab = routeIdentifiers.MESSAGES;
   } else if (location.pathname.startsWith('/newui/configuration')) {
-    selectedTab = 6;
+    selectedTab = routeIdentifiers.CONFIGURATION;
   }
 
   const versionInfo = appVersionInfo();
@@ -130,6 +145,51 @@ function SideNav({
 
   const collapseOrExpandIcon = isCollapsed ? <ChevronRight /> : <ChevronLeft />;
 
+  const navItems = [
+    {
+      text: 'HOME',
+      icon: <Home />,
+      route: '/newui',
+      id: routeIdentifiers.HOME,
+    },
+    {
+      text: 'START NEW PROCESS',
+      icon: <Add />,
+      route: '/newui/startprocess',
+      id: routeIdentifiers.START_NEW_PROCESS,
+    },
+    {
+      text: 'PROCESSES',
+      icon: <Schema />,
+      route: '/newui/process-groups',
+      id: routeIdentifiers.PROCESSES,
+    },
+    {
+      text: 'PROCESS INSTANCES',
+      icon: <Timeline />,
+      route: '/newui/process-instances',
+      id: routeIdentifiers.PROCESS_INSTANCES,
+    },
+    {
+      text: 'DATA STORES',
+      icon: <Storage />,
+      route: '/newui/data-stores',
+      id: routeIdentifiers.DATA_STORES,
+    },
+    {
+      text: 'MESSAGES',
+      icon: <Markunread />,
+      route: '/newui/messages',
+      id: routeIdentifiers.MESSAGES,
+    },
+    {
+      text: 'CONFIGURATION',
+      icon: <SettingsApplicationsSharp />,
+      route: '/newui/configuration',
+      id: routeIdentifiers.CONFIGURATION,
+    },
+  ];
+
   return (
     <>
       <Box
@@ -174,40 +234,19 @@ function SideNav({
           </IconButton>{' '}
         </Box>
         <List>
-          {[
-            { text: 'HOME', icon: <Home /> },
-            { text: 'START NEW PROCESS', icon: <Add /> },
-            { text: 'PROCESSES', icon: <Schema /> },
-            { text: 'PROCESS INSTANCES', icon: <Timeline /> },
-            { text: 'DATA STORES', icon: <Storage /> },
-            { text: 'MESSAGES', icon: <Markunread /> },
-            { text: 'CONFIGURATION', icon: <SettingsApplicationsSharp /> },
-          ].map((item, index) => (
+          {navItems.map((item) => (
             <ListItem
               component="button"
               key={item.text}
               onClick={() => {
                 setAdditionalNavElement(null);
-                if (index === 0) {
-                  navigate('/newui');
-                } else if (index === 1) {
-                  navigate('/newui/startprocess');
-                } else if (item.text === 'PROCESSES') {
-                  navigate('/newui/process-groups');
-                } else if (item.text === 'PROCESS INSTANCES') {
-                  navigate('/newui/process-instances');
-                } else if (item.text === 'DATA STORES') {
-                  navigate('/newui/data-stores');
-                } else if (item.text === 'MESSAGES') {
-                  navigate('/newui/messages');
-                } else if (item.text === 'CONFIGURATION') {
-                  navigate('/newui/configuration');
-                }
+                navigate(item.route);
               }}
               sx={{
-                bgcolor: selectedTab === index ? 'background.light' : 'inherit',
-                color: selectedTab === index ? mainBlue : 'inherit',
-                borderColor: selectedTab === index ? mainBlue : 'transparent',
+                bgcolor:
+                  selectedTab === item.id ? 'background.light' : 'inherit',
+                color: selectedTab === item.id ? mainBlue : 'inherit',
+                borderColor: selectedTab === item.id ? mainBlue : 'transparent',
                 borderLeftWidth: '4px',
                 borderStyle: 'solid',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -226,7 +265,7 @@ function SideNav({
                   data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
                   primaryTypographyProps={{
                     fontSize: '0.875rem',
-                    fontWeight: selectedTab === index ? 'bold' : 'normal',
+                    fontWeight: selectedTab === item.id ? 'bold' : 'normal',
                   }}
                 />
               )}
