@@ -59,7 +59,6 @@ type OwnProps = {
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
   showRefreshButton?: boolean;
-  tableHtmlId?: string;
   textToShowIfEmpty?: string;
   variant?: string;
 };
@@ -79,7 +78,6 @@ export default function ProcessInstanceListTable({
   showActionsColumn = false,
   showLinkToReport = false,
   showRefreshButton = false,
-  tableHtmlId,
   textToShowIfEmpty,
   variant = 'for-me',
 }: OwnProps) {
