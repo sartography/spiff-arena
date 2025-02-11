@@ -261,6 +261,7 @@ export default function ProcessModelForm({
           onDisplayNameChanged(event.target.value);
         }}
         fullWidth
+        sx={{ mb: 2 }}
       />,
     ];
 
@@ -287,6 +288,7 @@ export default function ProcessModelForm({
             setIdHasBeenUpdatedByUser(true);
           }}
           fullWidth
+          sx={{ mb: 2 }}
         />,
       );
     }
@@ -303,6 +305,7 @@ export default function ProcessModelForm({
         }
         multiline
         fullWidth
+        sx={{ mb: 2 }}
       />,
     );
 
@@ -316,16 +319,19 @@ export default function ProcessModelForm({
           onNotificationTypeChanged(event.target.value);
         }}
         fullWidth
+        sx={{ mb: 2 }}
       >
         <MenuItem value="fault">Fault</MenuItem>
         <MenuItem value="suspend">Suspend</MenuItem>
       </Select>,
     );
     textInputs.push(
-      <Typography variant="h3">Notification Addresses</Typography>,
+      <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
+        Notification Addresses
+      </Typography>,
     );
     textInputs.push(
-      <Typography variant="body2">
+      <Typography variant="body2" sx={{ mb: 2 }}>
         You can provide one or more addresses to notify if this model fails.
       </Typography>,
     );
@@ -339,14 +345,19 @@ export default function ProcessModelForm({
         onClick={() => {
           addBlankNotificationAddress();
         }}
+        sx={{ mt: 1, mb: 2 }}
       >
         Add Notification Address
       </Button>,
     );
 
-    textInputs.push(<Typography variant="h3">Metadata Extractions</Typography>);
     textInputs.push(
-      <Typography variant="body2">
+      <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
+        Metadata Extractions
+      </Typography>,
+    );
+    textInputs.push(
+      <Typography variant="body2" sx={{ mb: 2 }}>
         You can provide one or more metadata extractions to pull data from your
         process instances to provide quick access in searches and perspectives.
       </Typography>,
@@ -361,6 +372,7 @@ export default function ProcessModelForm({
         onClick={() => {
           addBlankMetadataExtractionPath();
         }}
+        sx={{ mt: 1, mb: 2 }}
       >
         Add Metadata Extraction Path
       </Button>,
