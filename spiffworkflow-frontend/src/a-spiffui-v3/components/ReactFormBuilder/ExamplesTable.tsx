@@ -92,7 +92,7 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
   // Render the form in another div
   const rows: object[] = examples.map((example, index) => {
     return (
-      <TableRow key={index}>
+      <TableRow key={example.schema.title || index}>
         <TableCell>{example.schema.title}</TableCell>
         <TableCell>{example.schema.description}</TableCell>
         <TableCell>
