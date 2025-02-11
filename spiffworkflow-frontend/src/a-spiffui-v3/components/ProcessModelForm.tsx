@@ -325,62 +325,45 @@ export default function ProcessModelForm({
       <Typography variant="h3">Notification Addresses</Typography>,
     );
     textInputs.push(
-      <Grid container spacing={2}>
-        <Grid size={{ md: 8, lg: 16, sm: 4 }}>
-          <Typography variant="body2">
-            You can provide one or more addresses to notify if this model fails.
-          </Typography>
-        </Grid>
-      </Grid>,
+      <Typography variant="body2">
+        You can provide one or more addresses to notify if this model fails.
+      </Typography>,
     );
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
-      <Grid container spacing={2}>
-        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
-          <Button
-            data-qa="add-notification-address-button"
-            startIcon={<AddAlt />}
-            variant="outlined"
-            size="small"
-            onClick={() => {
-              addBlankNotificationAddress();
-            }}
-          >
-            Add Notification Address
-          </Button>
-        </Grid>
-      </Grid>,
+      <Button
+        data-qa="add-notification-address-button"
+        startIcon={<AddAlt />}
+        variant="outlined"
+        size="small"
+        onClick={() => {
+          addBlankNotificationAddress();
+        }}
+      >
+        Add Notification Address
+      </Button>,
     );
 
     textInputs.push(<Typography variant="h3">Metadata Extractions</Typography>);
     textInputs.push(
-      <Grid container spacing={2}>
-        <Grid size={{ md: 8, lg: 16, sm: 4 }}>
-          <Typography variant="body2">
-            You can provide one or more metadata extractions to pull data from
-            your process instances to provide quick access in searches and
-            perspectives.
-          </Typography>
-        </Grid>
-      </Grid>,
+      <Typography variant="body2">
+        You can provide one or more metadata extractions to pull data from your
+        process instances to provide quick access in searches and perspectives.
+      </Typography>,
     );
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
-      <Grid container spacing={2}>
-        <Grid size={{ md: 4, lg: 8, sm: 2 }}>
-          <Button
-            data-qa="add-metadata-extraction-path-button"
-            startIcon={<AddAlt />}
-            variant="outlined"
-            size="small"
-            onClick={() => {
-              addBlankMetadataExtractionPath();
-            }}
-          >
-            Add Metadata Extraction Path
-          </Button>
-        </Grid>
-      </Grid>,
+      <Button
+        data-qa="add-metadata-extraction-path-button"
+        startIcon={<AddAlt />}
+        variant="outlined"
+        size="small"
+        onClick={() => {
+          addBlankMetadataExtractionPath();
+        }}
+      >
+        Add Metadata Extraction Path
+      </Button>,
     );
 
     return textInputs;
