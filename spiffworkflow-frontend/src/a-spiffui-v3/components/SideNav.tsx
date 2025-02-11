@@ -235,11 +235,11 @@ function SideNav({
         <List>
           {navItems.map((item) => (
             <ListItem
-              component="button"
+              component={Link} // Use Link component
+              to={item.route}   // Set the target route
               key={item.text}
               onClick={() => {
                 setAdditionalNavElement(null);
-                navigate(item.route);
               }}
               sx={{
                 bgcolor:
@@ -249,6 +249,9 @@ function SideNav({
                 borderLeftWidth: '4px',
                 borderStyle: 'solid',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
+                '&:hover': {
+                  cursor: 'pointer', // Add pointer cursor on hover
+                },
               }}
             >
               <Tooltip title={isCollapsed ? item.text : ''} placement="right">
