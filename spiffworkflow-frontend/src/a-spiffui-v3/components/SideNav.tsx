@@ -235,8 +235,8 @@ function SideNav({
         <List>
           {navItems.map((item) => (
             <ListItem
-              component={Link} // Use Link component
-              to={item.route}   // Set the target route
+              component={Link}
+              to={item.route}
               key={item.text}
               onClick={() => {
                 setAdditionalNavElement(null);
@@ -249,9 +249,6 @@ function SideNav({
                 borderLeftWidth: '4px',
                 borderStyle: 'solid',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
-                '&:hover': {
-                  cursor: 'pointer', // Add pointer cursor on hover
-                },
               }}
             >
               <Tooltip title={isCollapsed ? item.text : ''} placement="right">
