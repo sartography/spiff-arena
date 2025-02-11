@@ -402,15 +402,6 @@ export default function ProcessInstanceLogList({
     setClearAll(true);
   };
 
-  const shouldFilterStringItem = (options: any) => {
-    const stringItem = options.item;
-    let { inputValue } = options;
-    if (!inputValue) {
-      inputValue = '';
-    }
-    return stringItem.toLowerCase().includes(inputValue.toLowerCase());
-  };
-
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
