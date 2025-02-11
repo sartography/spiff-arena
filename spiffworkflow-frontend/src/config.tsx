@@ -31,6 +31,10 @@ if ('spiffworkflowFrontendJsenv' in window) {
   }
 }
 
+if (import.meta.env.VITE_BACKEND_BASE_URL) {
+  backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
+}
+
 if (!backendBaseUrl) {
   let hostAndPortAndPathPrefix;
   if (appRoutingStrategy === 'subdomain_based') {
