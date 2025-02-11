@@ -141,14 +141,16 @@ export default function ProcessInstanceListTable({
         reportMetadataToUse = reportMetadataArg;
       }
 
-      let { page, perPage } = getPageInfoFromSearchParams(
+      const { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
         undefined,
         undefined,
         paginationQueryParamPrefix,
       );
-      if (perPageOptions && !perPageOptions.includes(perPage)) {
-        perPage = perPageOptions[1];
+      let perPageToUse = perPage;
+      if (perPageOptions && !perPageOptions.includes(perPageToUse)) {
+        // eslint-disable-next-line prefer-destructuring
+        perPageToUse = perPageOptions[1];
       }
       if (additionalReportFilters) {
         additionalReportFilters.forEach((arf: ReportFilter) => {
@@ -158,7 +160,7 @@ export default function ProcessInstanceListTable({
         });
       }
 
-      const queryParamString = `per_page=${perPage}&page=${page}`;
+      const queryParamString = `per_page=${perPageToUse}&page=${page}`;
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
