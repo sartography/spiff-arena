@@ -83,9 +83,9 @@ export default function ProcessInstanceLogList({
     shouldDisplayClearButton = true;
   }
 
-  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${processModelId}`;
+  let processInstanceShowPageBaseUrl = `/newui/process-instances/for-me/${processModelId}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/process-instances/${processModelId}`;
+    processInstanceShowPageBaseUrl = `/newui/process-instances/${processModelId}`;
   }
   const taskNameHeader = isEventsView ? 'Task name' : 'Milestone';
   const tableType = isEventsView ? 'events' : 'milestones';
@@ -516,17 +516,11 @@ export default function ProcessInstanceLogList({
         </Grid>
         <Grid container spacing={2} className="with-bottom-margin">
           <Grid item sm={4} md={4} lg={8}>
-            <Button
-              variant="outlined"
-              onClick={resetFiltersAndRun}
-            >
+            <Button variant="outlined" onClick={resetFiltersAndRun}>
               Reset
             </Button>
             {shouldDisplayClearButton && (
-              <Button
-                variant="outlined"
-                onClick={clearFilters}
-              >
+              <Button variant="outlined" onClick={clearFilters}>
                 Clear
               </Button>
             )}

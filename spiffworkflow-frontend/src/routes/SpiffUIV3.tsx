@@ -44,6 +44,7 @@ import ProcessModelEdit from '../a-spiffui-v3/views/ProcessModelEdit'; // Import
 import ProcessModelEditDiagram from '../a-spiffui-v3/views/ProcessModelEditDiagram';
 import ReactFormEditor from '../a-spiffui-v3/views/ReactFormEditor'; // Import the new component
 import ProcessInstanceRoutes from '../a-spiffui-v3/views/ProcessInstanceRoutes';
+import ProcessInstanceShortLink from '../a-spiffui-v3/views/ProcessInstanceShortLink';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -331,6 +332,10 @@ export default function SpiffUIV3() {
                   <Route
                     path="process-instances/*"
                     element={<ProcessInstanceRoutes />}
+                  />
+                  <Route
+                    path="i/:process_instance_id"
+                    element={<ProcessInstanceShortLink />}
                   />
                 </Routes>
               </Box>

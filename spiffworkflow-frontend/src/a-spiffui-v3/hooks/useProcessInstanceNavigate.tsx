@@ -16,7 +16,7 @@ export default function useProcessInstanceNavigate() {
     suffix: string | undefined,
   ) => {
     const processInstanceResult: ProcessInstance = result.process_instance;
-    let path = '/process-instances';
+    let path = '/newui/process-instances';
     if (result.uri_type === 'for-me') {
       path += '/for-me';
     }

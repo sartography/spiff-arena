@@ -90,7 +90,7 @@ export default function TaskShow() {
         },
         [
           `Process Instance Id: ${result.process_instance_id}`,
-          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+          `/newui/process-instances/for-me/${modifyProcessIdentifierForPathParam(
             result.process_model_identifier,
           )}/${result.process_instance_id}`,
         ],
@@ -214,7 +214,7 @@ export default function TaskShow() {
     const dataToSubmit = formObject?.formData;
 
     if (!dataToSubmit) {
-      navigate(`/tasks`);
+      navigate(`/newui/tasks`);
       return;
     }
     const queryParams = '';
