@@ -1,5 +1,5 @@
 import { Filter as FilterIcon, Link as LinkIcon } from '@mui/icons-material';
-import { Button, Grid, IconButton, Snackbar } from '@mui/material';
+import { Grid, IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
 
 type OwnProps = {

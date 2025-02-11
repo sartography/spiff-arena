@@ -1,5 +1,14 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { Button, Table, TableHead, TableBody, TableRow, TableCell, Modal, Stack } from '@mui/material';
+import {
+  Button,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Modal,
+  Stack,
+} from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
@@ -320,11 +329,15 @@ export default function TaskListTable({
     }
     if (showWaitingOn) {
       rowElements.push(
-        <TableCell>{getWaitingForTableCellComponent(processInstanceTask)}</TableCell>,
+        <TableCell>
+          {getWaitingForTableCellComponent(processInstanceTask)}
+        </TableCell>,
       );
     }
     if (showCompletedBy) {
-      rowElements.push(<TableCell>{processInstanceTask.completed_by_username}</TableCell>);
+      rowElements.push(
+        <TableCell>{processInstanceTask.completed_by_username}</TableCell>,
+      );
     }
     if (showDateStarted) {
       rowElements.push(
@@ -343,7 +356,9 @@ export default function TaskListTable({
       );
     }
     if (showActionsColumn) {
-      rowElements.push(<TableCell>{getActionButtons(processInstanceTask)}</TableCell>);
+      rowElements.push(
+        <TableCell>{getActionButtons(processInstanceTask)}</TableCell>,
+      );
     }
     return <TableRow key={processInstanceTask.id}>{rowElements}</TableRow>;
   };

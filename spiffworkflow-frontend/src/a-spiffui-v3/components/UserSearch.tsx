@@ -61,7 +61,11 @@ export default function UserSearch({
       options={userList}
       getOptionLabel={(option: User) => option.username || ''}
       renderInput={(params) => (
-        <TextField {...params} label={label} placeholder="Start typing username" />
+        <TextField
+          {...params}
+          label={label}
+          placeholder="Start typing username"
+        />
       )}
       value={selectedUser}
     />

@@ -47,11 +47,15 @@ export default function ProcessSearch({
         }}
         filterOptions={(options, state) =>
           options.filter((option) =>
-            shouldFilter({ item: option, inputValue: state.inputValue })
+            shouldFilter({ item: option, inputValue: state.inputValue }),
           )
         }
         renderInput={(params) => (
-          <TextField {...params} label={titleText} placeholder="Choose a process" />
+          <TextField
+            {...params}
+            label={titleText}
+            placeholder="Choose a process"
+          />
         )}
         value={selectedItem || null}
       />

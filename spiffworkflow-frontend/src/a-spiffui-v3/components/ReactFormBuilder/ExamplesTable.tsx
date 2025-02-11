@@ -96,7 +96,11 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
         <TableCell>{example.schema.title}</TableCell>
         <TableCell>{example.schema.description}</TableCell>
         <TableCell>
-          <Button variant="contained" size="small" onClick={() => selectExample(index)}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => selectExample(index)}
+          >
             Load
           </Button>
         </TableCell>

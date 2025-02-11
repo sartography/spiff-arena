@@ -76,10 +76,19 @@ export default function ProcessModelSearch({
         return '';
       }}
       filterOptions={(options, state) =>
-        options.filter((option) => shouldFilterProcessModel({ item: option, inputValue: state.inputValue }))
+        options.filter((option) =>
+          shouldFilterProcessModel({
+            item: option,
+            inputValue: state.inputValue,
+          }),
+        )
       }
       renderInput={(params) => (
-        <TextField {...params} label={titleText} placeholder="Choose a process model" />
+        <TextField
+          {...params}
+          label={titleText}
+          placeholder="Choose a process model"
+        />
       )}
       value={selectedItem || null}
       className="process-model-search-combobox"

@@ -1,10 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  Autocomplete,
-  Grid,
-  FormLabel,
-  TextField,
-} from '@mui/material';
+import { Autocomplete, Grid, FormLabel, TextField } from '@mui/material';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -83,10 +78,20 @@ export default function ProcessInstanceReportSearch({
               }
               return '';
             }}
-            filterOptions={(options, state) => 
-              options.filter(option => shouldFilterProcessInstanceReport({ item: option, inputValue: state.inputValue }))
+            filterOptions={(options, state) =>
+              options.filter((option) =>
+                shouldFilterProcessInstanceReport({
+                  item: option,
+                  inputValue: state.inputValue,
+                }),
+              )
             }
-            renderInput={(params) => <TextField {...params} placeholder="Choose a process instance perspective" />}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Choose a process instance perspective"
+              />
+            )}
             value={selectedItem}
           />
         </Grid>

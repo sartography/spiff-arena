@@ -73,5 +73,9 @@ export default function ActiveUsers() {
       </Avatar>
     );
   });
-  return <Box display="flex" className="user-list">{au}</Box>; // MUI Box for layout
+  return (
+    <Box display="flex" className="user-list">
+      {au}
+    </Box>
+  ); // MUI Box for layout
 }
