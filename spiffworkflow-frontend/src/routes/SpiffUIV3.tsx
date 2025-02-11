@@ -305,7 +305,7 @@ export default function SpiffUIV3() {
                     element={<SecretShow />}
                   />
                   <Route
-                    path="/process-models/new"
+                    path="/process-models/:process_group_id/new"
                     element={<ProcessModelNew />}
                   />
                   <Route

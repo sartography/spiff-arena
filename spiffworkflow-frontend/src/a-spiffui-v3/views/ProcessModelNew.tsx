@@ -33,15 +33,17 @@ export default function ProcessModelNew() {
           },
         ]}
       />
-      <Typography variant="h1">Add Process Model</Typography>
-      <ProcessModelForm
-        mode="new"
-        processGroupId={unModifyProcessIdentifierForPathParam(
-          params.process_group_id || '',
-        )}
-        processModel={processModel}
-        setProcessModel={setProcessModel}
-      />
+      <Typography variant="h2">Add Process Model</Typography>
+      <Box mt={2}>
+        <ProcessModelForm
+          mode="new"
+          processGroupId={unModifyProcessIdentifierForPathParam(
+            params.process_group_id || '',
+          )}
+          processModel={processModel}
+          setProcessModel={setProcessModel}
+        />
+      </Box>
     </Box>
   );
 }

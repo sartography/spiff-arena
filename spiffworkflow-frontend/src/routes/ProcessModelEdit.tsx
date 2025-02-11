@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-// @ts-ignore
+import { Box, Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ProcessModelForm from '../components/ProcessModelForm';
@@ -22,7 +22,7 @@ export default function ProcessModelEdit() {
   if (processModel) {
     setPageTitle([`Editing ${processModel.display_name}`]);
     return (
-      <>
+      <Box>
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/process-groups'],
@@ -33,14 +33,18 @@ export default function ProcessModelEdit() {
             },
           ]}
         />
-        <h1>Edit Process Model: {(processModel as any).id}</h1>
-        <ProcessModelForm
-          mode="edit"
-          processGroupId={params.process_group_id}
-          processModel={processModel}
-          setProcessModel={setProcessModel}
-        />
-      </>
+        <Typography variant="h1">
+          Edit Process Model: {(processModel as any).id}
+        </Typography>
+        <Box mt={2}>
+          <ProcessModelForm
+            mode="edit"
+            processGroupId={params.process_group_id}
+            processModel={processModel}
+            setProcessModel={setProcessModel}
+          />
+        </Box>
+      </Box>
     );
   }
   return null;
