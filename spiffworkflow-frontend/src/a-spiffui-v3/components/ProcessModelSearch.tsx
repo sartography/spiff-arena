@@ -85,6 +85,7 @@ export default function ProcessModelSearch({
       }
       renderInput={(params) => (
         <TextField
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
           label={titleText}
           placeholder="Choose a process model"
