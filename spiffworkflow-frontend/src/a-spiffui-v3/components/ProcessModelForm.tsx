@@ -105,7 +105,7 @@ export default function ProcessModelForm({
   ) => {
     return (
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={3}>
+        <Grid size={{ xs: 3 }}>
           <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
             label="Extraction Key"
@@ -121,7 +121,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <TextField
             id={`process-model-metadata-extraction-path-${index}`}
             label="Extraction Path"
@@ -137,7 +137,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item xs={1}>
+        <Grid size={{ xs: 1 }}>
           <IconButton
             aria-label="Remove Key"
             onClick={() => {
@@ -178,7 +178,7 @@ export default function ProcessModelForm({
   ) => {
     return (
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={10}>
+        <Grid size={{ xs: 10 }}>
           <TextField
             id={`process-model-notification-address-key-${index}`}
             label="Address"
@@ -194,7 +194,7 @@ export default function ProcessModelForm({
             fullWidth
           />
         </Grid>
-        <Grid item xs={2}>
+        <Grid size={{ xs: 2 }}>
           <IconButton
             aria-label="Remove Address"
             onClick={() => {
@@ -383,11 +383,16 @@ export default function ProcessModelForm({
 
   const formButtons = () => {
     return (
-      <Button variant="contained" type="submit">
-        Submit
-      </Button>
+      <Grid container justifyContent="flex-start" sx={{ mt: 2 }}>
+        <Grid>
+          <Button variant="contained" type="submit">
+            Submit
+          </Button>
+        </Grid>
+      </Grid>
     );
   };
+
   return (
     <form onSubmit={handleFormSubmission}>
       {formElements()}
