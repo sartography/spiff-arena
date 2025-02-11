@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
-// import ProcessInstanceList from './ProcessInstanceList';
+import ProcessInstanceList from './ProcessInstanceList';
 import ProcessInstanceShow from './ProcessInstanceShow';
 // import ProcessInstanceReportList from './ProcessInstanceReportList';
 // import ProcessInstanceReportNew from './ProcessInstanceReportNew';
@@ -12,9 +12,9 @@ import ProcessInstanceMigratePage from './ProcessInstanceMigratePage';
 export default function ProcessInstanceRoutes() {
   return (
     <Routes>
-      {/* <Route path="/" element={<ProcessInstanceList variant="for-me" />} /> */}
-      {/* <Route path="for-me" element={<ProcessInstanceList variant="for-me" />} /> */}
-      {/* <Route path="all" element={<ProcessInstanceList variant="all" />} /> */}
+      <Route path="/" element={<ProcessInstanceList variant="for-me" />} />
+      <Route path="for-me" element={<ProcessInstanceList variant="for-me" />} />
+      <Route path="all" element={<ProcessInstanceList variant="all" />} />
       <Route
         path="for-me/:process_model_id/:process_instance_id"
         element={<ProcessInstanceShow variant="for-me" />}

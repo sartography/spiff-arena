@@ -33,7 +33,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           label="For Me"
           data-qa="process-instance-list-for-me"
           onClick={() => {
-            navigate('/process-instances/for-me');
+            navigate('/newui/process-instances/for-me');
           }}
         />
       </SpiffTooltip>
@@ -43,7 +43,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
             label="All"
             data-qa="process-instance-list-all"
             onClick={() => {
-              navigate('/process-instances/all');
+              navigate('/newui/process-instances/all');
             }}
           />
         </SpiffTooltip>
@@ -53,7 +53,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
           label="Find By Id"
           data-qa="process-instance-list-find-by-id"
           onClick={() => {
-            navigate('/process-instances/find-by-id');
+            navigate('/newui/process-instances/find-by-id');
           }}
         />
       </SpiffTooltip>
