@@ -607,8 +607,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       return (
         <ButtonWithConfirmation
-          kind="ghost"
-          renderIcon={StopOutline}
+          kind="outlined"
+          renderIcon={<StopOutline />}
           iconDescription="Terminate"
           hasIconOnly
           description={`Terminate Process Instance: ${processInstance.id}`}
