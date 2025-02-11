@@ -1,4 +1,4 @@
-import { ArrowRight, OpenInNew, Refresh } from '@mui/icons-material';
+import { ArrowRightAlt, OpenInNew, Refresh } from '@mui/icons-material';
 import {
   TableRow,
   Table,
@@ -42,6 +42,7 @@ import {
   childrenForErrorObject,
   errorForDisplayFromString,
 } from './ErrorDisplay';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -430,15 +431,17 @@ export default function ProcessInstanceListTable({
     let filterButtonLink = null;
     if (showLinkToReport && pagination && pagination.total) {
       filterButtonLink = (
-        <Grid style={{ textAlign: 'right' }}>
-          <IconButton
-            data-qa="process-instance-list-link"
-            onClick={() =>
-              navigate(`/newui/process-instances?report_hash=${reportHash}`)
-            }
-          >
-            <ArrowRight />
-          </IconButton>
+        <Grid style={{ textAlign: 'right' }} offset="auto">
+          <SpiffTooltip title="View Filterable List" placement="top">
+            <IconButton
+              data-qa="process-instance-list-link"
+              onClick={() =>
+                navigate(`/newui/process-instances?report_hash=${reportHash}`)
+              }
+            >
+              <ArrowRightAlt />
+            </IconButton>
+          </SpiffTooltip>
         </Grid>
       );
     }
@@ -447,7 +450,7 @@ export default function ProcessInstanceListTable({
     }
     return (
       <Grid container alignItems="center" spacing={1}>
-        <Grid xs>{tableTitle()}</Grid>
+        <Grid>{tableTitle()}</Grid>
         {filterButtonLink}
       </Grid>
     );
@@ -626,7 +629,7 @@ export default function ProcessInstanceListTable({
   }
   return (
     <>
-      <Grid container>{tableTitleLine()}</Grid>
+      {tableTitleLine()}
       {filterComponent ? filterComponent() : null}
       <Grid container>
         <Grid size={{ xs: 12 }}>{tableElement}</Grid>
