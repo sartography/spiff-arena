@@ -378,10 +378,8 @@ export default function ProcessModelForm({
   };
   return (
     <form onSubmit={handleFormSubmission}>
-      <Grid container spacing={3}>
-        {formElements()}
-        {formButtons()}
-      </Grid>
+      {formElements()}
+      {formButtons()}
     </form>
   );
 }

@@ -65,7 +65,10 @@ function SideNav({
   let selectedTab = 0;
   if (location.pathname === '/newui/startprocess') {
     selectedTab = 1;
-  } else if (location.pathname.startsWith('/newui/processes')) {
+  } else if (
+    location.pathname.startsWith('/newui/processes') ||
+    location.pathname.startsWith('/newui/process-')
+  ) {
     selectedTab = 2;
   } else if (location.pathname === '/newui/data-stores') {
     selectedTab = 3;
