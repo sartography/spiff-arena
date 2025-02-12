@@ -4,13 +4,16 @@ import {
   AccordionSummary,
   Box,
   Container,
+  IconButton,
   Stack,
   Typography,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
+import { Can } from '@casl/react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
+import { Delete, Edit, Add } from '@mui/icons-material';
 import { useDebouncedCallback } from 'use-debounce';
 import { useParams, useNavigate } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
@@ -25,11 +28,16 @@ import {
 import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import {
+  PermissionsToCheck,
   ProcessGroup,
   ProcessGroupLite,
   ProcessModelAction,
 } from '../../interfaces';
 import { unModifyProcessIdentifierForPathParam } from '../../helpers';
+import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../../hooks/PermissionService';
+import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
+import HttpService from '../../services/HttpService';
 
 type OwnProps = {
   setNavElementCallback?: Function;
@@ -76,7 +84,10 @@ export default function ProcessModelTreePage({
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
-  const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
+  const [currentProcessGroup, setCurrentProcessGroup] = useState<Record<
+    string,
+    any
+  > | null>(null);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   // const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [treeCollapsed] = useState(false);
@@ -91,6 +102,15 @@ export default function ProcessModelTreePage({
     justifyContent: 'center',
     gridGap: 20,
   };
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['POST'],
+    [targetUris.processGroupListPath]: ['POST'],
+    [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
+    [targetUris.processModelCreatePath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   const processCrumbs = (
     item: Record<string, any>,
@@ -116,7 +136,7 @@ export default function ProcessModelTreePage({
 
   const handleClickStream = (item: Record<string, any>) => {
     setCrumbs(processCrumbs(item, flatItems));
-    setLastSelected(item);
+    setCurrentProcessGroup(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
     // If  model, we want its parent group, which can be found in the id.
@@ -233,6 +253,7 @@ export default function ProcessModelTreePage({
       setModelsExpanded(false);
       setGroupsExpanded(true);
       setCrumbs([]);
+      setCurrentProcessGroup(null);
       treeRef.current?.clearExpanded();
       navigate('/newui/process-groups');
       return;
@@ -242,6 +263,7 @@ export default function ProcessModelTreePage({
     if (found) {
       clickStream.next(found);
       const processEntityId = modifyProcessIdentifierForPathParam(crumb.id);
+      setCurrentProcessGroup(null);
       navigate(`/newui/process-groups/${processEntityId}`);
     }
   };
@@ -324,6 +346,7 @@ export default function ProcessModelTreePage({
         setGroups(foundProcessGroup.process_groups || null);
         setModels(foundProcessGroup.process_models || []);
         setCrumbs(processCrumbs(foundProcessGroup, flattened));
+        setCurrentProcessGroup(foundProcessGroup);
       } else {
         setGroups(processGroupsLite);
         setCrumbs([]);
@@ -350,6 +373,29 @@ export default function ProcessModelTreePage({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clickStream]);
+
+  const deleteProcessGroup = () => {
+    if (currentProcessGroup) {
+      const modifiedGroupId = modifyProcessIdentifierForPathParam(
+        currentProcessGroup.id,
+      );
+      let parendGroupId = modifiedGroupId.replace(/:[^:]+$/, '');
+      // this means it was a root group
+      if (parendGroupId === modifiedGroupId) {
+        parendGroupId = SPIFF_ID;
+      }
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${modifiedGroupId}`,
+        successCallback: () => {
+          handleCrumbClick({
+            id: parendGroupId.replaceAll(':', '/'),
+            displayName: 'NOT_USED',
+          });
+        },
+        httpMethod: 'DELETE',
+      });
+    }
+  };
 
   return (
     <>
@@ -429,6 +475,57 @@ export default function ProcessModelTreePage({
               )}
               <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} />
             </Stack>
+            {currentProcessGroup ? (
+              <Stack
+                direction="row"
+                sx={{
+                  width: '100%',
+                  paddingBottom: 2,
+                }}
+              >
+                <Typography variant="h3" className="with-icons">
+                  Process Group: {currentProcessGroup.display_name}
+                </Typography>
+                <Can
+                  I="PUT"
+                  a={targetUris.processGroupShowPath}
+                  ability={ability}
+                >
+                  <IconButton
+                    data-qa="edit-process-group-button"
+                    href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+                  >
+                    <Edit />
+                  </IconButton>
+                </Can>
+                <Can
+                  I="DELETE"
+                  a={targetUris.processGroupShowPath}
+                  ability={ability}
+                >
+                  <ButtonWithConfirmation
+                    data-qa="delete-process-group-button"
+                    renderIcon={<Delete />}
+                    iconDescription="Delete Process Group"
+                    hasIconOnly
+                    description={`Delete process group: ${currentProcessGroup.display_name}`}
+                    onConfirmation={deleteProcessGroup}
+                    confirmButtonLabel="Delete"
+                  />
+                </Can>
+              </Stack>
+            ) : null}
+            {currentProcessGroup ? (
+              <Stack
+                direction="row"
+                sx={{
+                  width: '100%',
+                  paddingBottom: 2,
+                }}
+              >
+                {currentProcessGroup.description}
+              </Stack>
+            ) : null}
             <Accordion
               expanded={modelsExpanded}
               onChange={() => setModelsExpanded((prev) => !prev)}
@@ -438,6 +535,12 @@ export default function ProcessModelTreePage({
                 aria-controls="Process Models Accordion"
               >
                 ({models.length}) Process Models
+                <IconButton
+                  data-qa="add-process-model-button"
+                  href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                >
+                  <Add />
+                </IconButton>
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={gridProps}>
@@ -446,7 +549,7 @@ export default function ProcessModelTreePage({
                       key={model.id}
                       model={model}
                       stream={clickStream}
-                      lastSelected={lastSelected}
+                      lastSelected={currentProcessGroup || {}}
                       processModelAction={processModelAction}
                       onStartProcess={() => {
                         if (setNavElementCallback) {
@@ -473,6 +576,12 @@ export default function ProcessModelTreePage({
                 aria-controls="Process Groups Accordion"
               >
                 ({groups?.length}) Process Groups
+                <IconButton
+                  data-qa="add-process-group-button"
+                  href={`/newui/process-groups/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                >
+                  <Add />
+                </IconButton>
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={gridProps}>

@@ -33,6 +33,8 @@ import ProcessInstanceList from './ProcessInstanceList'; // Import the new compo
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { extensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
 import Extension from './Extension';
+import ProcessGroupNew from './ProcessGroupNew';
+import ProcessGroupEdit from './ProcessGroupEdit';
 
 type OwnProps = {
   setAdditionalNavElement: Function;
@@ -180,6 +182,11 @@ export default function BaseRoutes({
         <Route
           path="/process-instances"
           element={<ProcessInstanceList variant="all" />}
+        />
+        <Route path="/process-groups/new" element={<ProcessGroupNew />} />
+        <Route
+          path="/process-groups/:process_group_id/edit"
+          element={<ProcessGroupEdit />}
         />
       </Routes>
     </Box>

@@ -267,7 +267,7 @@ function SideNav({
             sx={{ ml: isCollapsed ? 'auto' : 0 }}
           >
             {isMobile ? <CloseIcon /> : collapseOrExpandIcon}
-          </IconButton>{' '}
+          </IconButton>
         </Box>
         <List>
           {navItems.map((item) => (
