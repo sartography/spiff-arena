@@ -2,7 +2,6 @@ import { Route, Routes } from 'react-router-dom';
 import ProcessInstanceList from './ProcessInstanceList';
 import ProcessInstanceShow from './ProcessInstanceShow';
 import ProcessInstanceReportList from './ProcessInstanceReportList';
-import ProcessInstanceReportNew from './ProcessInstanceReportNew';
 import ProcessInstanceReportEdit from './ProcessInstanceReportEdit';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './ProcessInterstitialPage';
@@ -52,7 +51,6 @@ export default function ProcessInstanceRoutes() {
         element={<ProcessInstanceShow variant="all" />}
       />
       <Route path="reports" element={<ProcessInstanceReportList />} />
-      <Route path="reports/new" element={<ProcessInstanceReportNew />} />
       <Route
         path="reports/:report_identifier/edit"
         element={<ProcessInstanceReportEdit />}
