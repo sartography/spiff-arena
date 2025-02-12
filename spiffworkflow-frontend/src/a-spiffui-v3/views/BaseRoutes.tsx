@@ -20,7 +20,6 @@ import Processes from './StartProcess/Processes';
 import StartProcessInstance from './StartProcess/StartProcessInstance';
 import SideNav from '../components/SideNav';
 import LoginHandler from '../components/LoginHandler';
-import Login from './Login';
 import InstancesStartedByMe from './InstancesStartedByMe';
 import TaskShow from './TaskShow/TaskShow';
 import ProcessInterstitialPage from './TaskShow/ProcessInterstitialPage';
@@ -46,12 +45,16 @@ import ReactFormEditor from './ReactFormEditor'; // Import the new component
 import ProcessInstanceRoutes from './ProcessInstanceRoutes';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import ProcessInstanceList from './ProcessInstanceList'; // Import the new component
-// Import the new component
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
 
-export default function SpiffUIV3() {
+type OwnProps = {
+  extensionUxElements?: UiSchemaUxElement[] | null;
+};
+
+export default function BaseRoutes({ extensionUxElements }: OwnProps) {
   const storedTheme: PaletteMode = (localStorage.getItem('theme') ||
     'light') as PaletteMode;
   const [globalTheme, setGlobalTheme] = useState(
@@ -260,7 +263,6 @@ export default function SpiffUIV3() {
                     path="/:modifiedProcessModelId/start"
                     element={<StartProcessInstance />}
                   />
-                  <Route path="login" element={<Login />} />
                   <Route path="/create-custom-tab" element={<ComingSoon />} />
                   <Route
                     path="/tasks/:process_instance_id/:task_guid"

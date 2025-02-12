@@ -22,8 +22,7 @@ import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 import SpiffTabs from '../components/SpiffTabs';
-// import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-// import CreateNewInstance from './CreateNewInstance';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 
 type OwnProps = {
   pageIdentifier?: string;
@@ -63,10 +62,9 @@ export default function Extension({
   const { addError, removeError } = useAPIError();
 
   const supportedComponents: SupportedComponentList = {
-    // CreateNewInstance,
     CustomForm,
     MarkdownRenderer,
-    // ProcessInstanceListTable,
+    ProcessInstanceListTable,
     ProcessInstanceRun,
     SpiffTabs,
   };

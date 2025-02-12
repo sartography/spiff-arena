@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AbilityContext } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
+import ContainerForExtensionsV3 from './a-spiffui-v3/ContainerForExtensions';
 import PublicRoutes from './a-spiffui-v3/views/PublicRoutes';
-import SpiffUIV3 from './a-spiffui-v3/views/SpiffUIV3';
 
 const queryClient = new QueryClient();
 
@@ -18,7 +18,7 @@ export default function App() {
       { path: 'public/*', element: <PublicRoutes /> },
       {
         path: 'newui/*',
-        element: <SpiffUIV3 />,
+        element: <ContainerForExtensionsV3 />,
       },
       {
         path: '*',
