@@ -35,6 +35,7 @@ import { extensionUxElementMap } from '../components/ExtensionUxElementForDispla
 import Extension from './Extension';
 import ProcessGroupNew from './ProcessGroupNew';
 import ProcessGroupEdit from './ProcessGroupEdit';
+import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 
 type OwnProps = {
   setAdditionalNavElement: Function;
@@ -150,6 +151,10 @@ export default function BaseRoutes({
         <Route path="/secrets" element={<SecretList />} />{' '}
         <Route path="/secrets/new" element={<SecretNew />} />
         <Route path="/secrets/:secret_identifier" element={<SecretShow />} />
+        <Route
+          path=":process_group_id/new-e"
+          element={<ProcessModelNewExperimental />}
+        />
         <Route
           path="/process-models/:process_group_id/new"
           element={<ProcessModelNew />}
