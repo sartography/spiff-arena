@@ -53,11 +53,7 @@ export default function Login() {
 
   const getLoadingIcon = () => {
     const style = { margin: '50px 0 50px 50px' };
-    return (
-      <CircularProgress
-        style={style}
-      />
-    );
+    return <CircularProgress style={style} />;
   };
 
   const loginComponents = () => {
