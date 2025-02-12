@@ -1,9 +1,21 @@
-import { Container } from '@mui/material';
+import {
+  Box,
+  Container,
+  CssBaseline,
+  IconButton,
+  Grid,
+  ThemeProvider,
+  PaletteMode,
+  createTheme,
+  useMediaQuery,
+} from '@mui/material';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import MenuIcon from '@mui/icons-material/Menu';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
+import SideNav from './components/SideNav';
 
-import ScrollToTop from './components/ScrollToTop';
 import Extension from './views/Extension';
 import { useUriListForPermissions } from './hooks/UriListForPermissions';
 import { PermissionsToCheck, ProcessFile, ProcessModel } from './interfaces';
@@ -13,11 +25,15 @@ import {
   UiSchemaUxElement,
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
-import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
 import BaseRoutes from './views/BaseRoutes';
 import BackendIsDown from './views/BackendIsDown';
 import Login from './views/Login';
 import useAPIError from './hooks/UseApiError';
+import ScrollToTop from './components/ScrollToTop';
+import { createSpiffTheme } from './assets/theme/SpiffTheme';
+
+const fadeIn = 'fadeIn';
+const fadeOutImmediate = 'fadeOutImmediate';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
@@ -25,10 +41,6 @@ export default function ContainerForExtensions() {
     UiSchemaUxElement[] | null
   >(null);
 
-  let contentClassName = 'main-site-body-centered';
-  if (window.location.pathname.startsWith('/editor/')) {
-    contentClassName = 'no-center-stuff';
-  }
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.extensionListPath]: ['GET'],
@@ -40,6 +52,85 @@ export default function ContainerForExtensions() {
   const { removeError } = useAPIError();
 
   const location = useLocation();
+
+  const storedTheme: PaletteMode = (localStorage.getItem('theme') ||
+    'light') as PaletteMode;
+  const [globalTheme, setGlobalTheme] = useState(
+    createTheme(createSpiffTheme(storedTheme)),
+  );
+  const isDark = globalTheme.palette.mode === 'dark';
+
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionStage, setTransitionStage] = useState('fadeIn');
+  const [additionalNavElement, setAdditionalNavElement] =
+    useState<ReactElement | null>(null);
+
+  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+
+  const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
+  const [isSideNavVisible, setIsSideNavVisible] = useState<boolean>(!isMobile);
+
+  const toggleNavCollapse = () => {
+    if (isMobile) {
+      setIsSideNavVisible(!isSideNavVisible);
+    } else {
+      setIsNavCollapsed(!isNavCollapsed);
+    }
+    if (isMobile) {
+      setIsSideNavVisible(!isSideNavVisible);
+    } else {
+      setIsNavCollapsed(!isNavCollapsed);
+    }
+  };
+
+  const toggleDarkMode = () => {
+    const desiredTheme: PaletteMode = isDark ? 'light' : 'dark';
+    setGlobalTheme(createTheme(createSpiffTheme(desiredTheme)));
+    localStorage.setItem('theme', desiredTheme);
+  };
+
+  useEffect(() => {
+    /**
+     * The housing app has an element with a white background
+     * and a very high z-index. This is a hack to remove it.
+     */
+    const element = document.querySelector('.cds--white');
+    if (element) {
+      element.classList.remove('cds--white');
+    }
+  }, []);
+  // never carry an error message across to a different path
+  useEffect(() => {
+    removeError();
+    // if we include the removeError function to the dependency array of this useEffect, it causes
+    // an infinite loop where the page with the error adds the error,
+    // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  /** Respond to transition events, this softens screen changes (UX) */
+  useEffect(() => {
+    if (location !== displayLocation) {
+      // const isComingFromInterstitialOrProgress = /\/interstitial$|\/progress$/.test(displayLocation.pathname);
+      // setIsLongFadeIn(
+      //   isComingFromInterstitialOrProgress && location.pathname === '/newui',
+      // );
+      setTransitionStage(fadeOutImmediate);
+    }
+    if (transitionStage === fadeOutImmediate) {
+      setDisplayLocation(location);
+      setTransitionStage(fadeIn);
+    }
+  }, [location, displayLocation, transitionStage]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setIsSideNavVisible(false);
+    } else {
+      setIsSideNavVisible(true);
+      setIsNavCollapsed(false);
+    }
+  }, [isMobile]);
 
   // never carry an error message across to a different path
   useEffect(() => {
@@ -117,7 +208,13 @@ export default function ContainerForExtensions() {
       <Routes>
         <Route
           path="*"
-          element={<BaseRoutes extensionUxElements={extensionUxElements} />}
+          element={
+            <BaseRoutes
+              extensionUxElements={extensionUxElements}
+              setAdditionalNavElement={setAdditionalNavElement}
+              isMobile={isMobile}
+            />
+          }
         />
         <Route path="extensions/:page_identifier" element={<Extension />} />
         <Route path="login" element={<Login />} />
@@ -140,11 +237,87 @@ export default function ContainerForExtensions() {
   };
 
   return (
-    <Container className={contentClassName}>
+    <ThemeProvider theme={globalTheme}>
+      <CssBaseline />
       <ScrollToTop />
       <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-        {innerComponents()}
+        <Container
+          maxWidth={false}
+          sx={{
+            // Hack to position the internal view over the "old" base components
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            alignItems: 'center',
+            height: '100vh',
+            zIndex: 1000,
+            padding: '0px !important',
+          }}
+        >
+          <Grid
+            container
+            sx={{
+              height: '100%',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                width: '100%',
+                height: '100vh',
+                overflow: 'hidden',
+              }}
+            >
+              {isSideNavVisible && (
+                <SideNav
+                  isCollapsed={isNavCollapsed}
+                  onToggleCollapse={toggleNavCollapse}
+                  onToggleDarkMode={toggleDarkMode}
+                  isDark={isDark}
+                  additionalNavElement={additionalNavElement}
+                  setAdditionalNavElement={setAdditionalNavElement}
+                />
+              )}
+              {isMobile && !isSideNavVisible && (
+                <IconButton
+                  onClick={() => {
+                    setIsSideNavVisible(true);
+                    setIsNavCollapsed(false);
+                  }}
+                  sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    zIndex: 1300,
+                  }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
+              <Box
+                className={`${transitionStage}`}
+                sx={{
+                  bgcolor: 'background.default',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                  overflow: 'auto',
+                }}
+                onAnimationEnd={(e) => {
+                  if (e.animationName === fadeOutImmediate) {
+                    setDisplayLocation(location);
+                    setTransitionStage(fadeIn);
+                  }
+                }}
+              >
+                {innerComponents()}
+              </Box>
+            </Box>
+          </Grid>
+        </Container>
       </ErrorBoundary>
-    </Container>
+    </ThemeProvider>
   );
 }
