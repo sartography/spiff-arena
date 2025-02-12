@@ -7,7 +7,7 @@ import { AbilityContext } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './routes/PublicRoutes';
-import SpiffUIV3 from './routes/SpiffUIV3';
+import SpiffUIV3 from './a-spiffui-v3/views/SpiffUIV3';
 
 const queryClient = new QueryClient();
 

@@ -12,40 +12,40 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Route, Routes, useLocation } from 'react-router';
-import { createSpiffTheme } from '../a-spiffui-v3/assets/theme/SpiffTheme';
-import Homepage from '../a-spiffui-v3/views/Homepage';
-import '../a-spiffui-v3/assets/styles/transitions.css';
-import StartProcess from '../a-spiffui-v3/views/StartProcess/StartProcess';
-import Processes from '../a-spiffui-v3/views/StartProcess/Processes';
-import StartProcessInstance from '../a-spiffui-v3/views/StartProcess/StartProcessInstance';
-import SideNav from '../a-spiffui-v3/components/SideNav';
+import { createSpiffTheme } from '../assets/theme/SpiffTheme';
+import Homepage from './Homepage';
+import '../assets/styles/transitions.css';
+import StartProcess from './StartProcess/StartProcess';
+import Processes from './StartProcess/Processes';
+import StartProcessInstance from './StartProcess/StartProcessInstance';
+import SideNav from '../components/SideNav';
 import LoginHandler from '../components/LoginHandler';
 import Login from './Login';
-import InstancesStartedByMe from '../a-spiffui-v3/views/InstancesStartedByMe';
-import TaskShow from '../a-spiffui-v3/views/TaskShow/TaskShow';
-import ProcessInterstitialPage from '../a-spiffui-v3/views/TaskShow/ProcessInterstitialPage';
-import ProcessInstanceProgressPage from '../a-spiffui-v3/views/TaskShow/ProcessInstanceProgressPage';
+import InstancesStartedByMe from './InstancesStartedByMe';
+import TaskShow from './TaskShow/TaskShow';
+import ProcessInterstitialPage from './TaskShow/ProcessInterstitialPage';
+import ProcessInstanceProgressPage from './TaskShow/ProcessInstanceProgressPage';
 import ErrorDisplay from '../components/ErrorDisplay';
-import About from '../a-spiffui-v3/views/About';
+import About from './About';
 import useAPIError from '../hooks/UseApiError';
 import ComingSoon from '../components/ComingSoon';
-import MessageListPage from '../a-spiffui-v3/views/MessageListPage';
-import DataStoreRoutes from '../a-spiffui-v3/views/DataStoreRoutes';
-import DataStoreNew from '../a-spiffui-v3/views/DataStoreNew';
-import DataStoreList from '../a-spiffui-v3/views/DataStoreList';
-import Configuration from '../a-spiffui-v3/views/Configuration';
-import AuthenticationList from '../a-spiffui-v3/views/AuthenticationList';
-import SecretList from '../a-spiffui-v3/views/SecretList';
-import SecretNew from '../a-spiffui-v3/views/SecretNew';
-import SecretShow from '../a-spiffui-v3/views/SecretShow';
-import ProcessModelShow from '../a-spiffui-v3/views/ProcessModelShow';
-import ProcessModelNew from '../a-spiffui-v3/views/ProcessModelNew';
-import ProcessModelEdit from '../a-spiffui-v3/views/ProcessModelEdit'; // Import the edited component
-import ProcessModelEditDiagram from '../a-spiffui-v3/views/ProcessModelEditDiagram';
-import ReactFormEditor from '../a-spiffui-v3/views/ReactFormEditor'; // Import the new component
-import ProcessInstanceRoutes from '../a-spiffui-v3/views/ProcessInstanceRoutes';
-import ProcessInstanceShortLink from '../a-spiffui-v3/views/ProcessInstanceShortLink';
-import ProcessInstanceList from '../a-spiffui-v3/views/ProcessInstanceList'; // Import the new component
+import MessageListPage from './MessageListPage';
+import DataStoreRoutes from './DataStoreRoutes';
+import DataStoreNew from './DataStoreNew';
+import DataStoreList from './DataStoreList';
+import Configuration from './Configuration';
+import AuthenticationList from './AuthenticationList';
+import SecretList from './SecretList';
+import SecretNew from './SecretNew';
+import SecretShow from './SecretShow';
+import ProcessModelShow from './ProcessModelShow';
+import ProcessModelNew from './ProcessModelNew';
+import ProcessModelEdit from './ProcessModelEdit'; // Import the edited component
+import ProcessModelEditDiagram from './ProcessModelEditDiagram';
+import ReactFormEditor from './ReactFormEditor'; // Import the new component
+import ProcessInstanceRoutes from './ProcessInstanceRoutes';
+import ProcessInstanceShortLink from './ProcessInstanceShortLink';
+import ProcessInstanceList from './ProcessInstanceList'; // Import the new component
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
