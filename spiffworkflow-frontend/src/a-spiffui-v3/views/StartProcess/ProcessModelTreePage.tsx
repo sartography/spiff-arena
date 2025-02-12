@@ -32,12 +32,14 @@ import {
   ProcessGroup,
   ProcessGroupLite,
   ProcessModelAction,
+  DataStore,
 } from '../../interfaces';
 import { unModifyProcessIdentifierForPathParam } from '../../helpers';
 import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
 import HttpService from '../../services/HttpService';
+import DataStoreCard from '../../components/DataStoreCard';
 
 type OwnProps = {
   setNavElementCallback?: Function;
@@ -80,9 +82,11 @@ export default function ProcessModelTreePage({
     ProcessGroup[] | ProcessGroupLite[] | null
   >(null);
   const [models, setModels] = useState<Record<string, any>[]>([]);
+  const [dataStores, setDataStores] = useState<DataStore[]>([]);
   const [flatItems, setFlatItems] = useState<Record<string, any>>([]);
   // On load, there are always groups and never models, expand accordingly.
   const [groupsExpanded, setGroupsExpanded] = useState(true);
+  const [dataStoreExpanded, setDataStoreExpanded] = useState(true);
   const [modelsExpanded, setModelsExpanded] = useState(false);
   const [currentProcessGroup, setCurrentProcessGroup] = useState<Record<
     string,
@@ -312,6 +316,14 @@ export default function ProcessModelTreePage({
     return currentGroup;
   }
 
+  const dataStoresForProcessGroup = dataStores.filter(
+    (dataStore: DataStore) => {
+      return (
+        currentProcessGroup && dataStore.location === currentProcessGroup.id
+      );
+    },
+  );
+
   useEffect(() => {
     // If no favorites, proceed with the normal process groups.
     if (processGroups) {
@@ -352,6 +364,12 @@ export default function ProcessModelTreePage({
         setCrumbs([]);
       }
       setGroupsExpanded(!!processGroupsLite.length);
+      HttpService.makeCallToBackend({
+        path: '/data-stores',
+        successCallback: (results: DataStore[]) => {
+          setDataStores(results);
+        },
+      });
       if (setNavElementCallback) {
         setNavElementCallback(
           <TreePanel
@@ -592,6 +610,30 @@ export default function ProcessModelTreePage({
                       stream={clickStream}
                       navigateToPage={navigateToPage}
                     />
+                  ))}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+            <Accordion
+              expanded={dataStoreExpanded}
+              onChange={() => setDataStoreExpanded((prev) => !prev)}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="Data Store Accordion"
+              >
+                ({dataStoresForProcessGroup?.length}) Data Stores
+                <IconButton
+                  data-qa="add-process-group-button"
+                  href={`/newui/data-stores/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                >
+                  <Add />
+                </IconButton>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={gridProps}>
+                  {dataStoresForProcessGroup?.map((dataStore: DataStore) => (
+                    <DataStoreCard dataStore={dataStore} />
                   ))}
                 </Box>
               </AccordionDetails>

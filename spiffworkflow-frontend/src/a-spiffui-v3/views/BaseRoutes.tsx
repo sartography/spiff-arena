@@ -15,8 +15,6 @@ import About from './About';
 import ComingSoon from '../components/ComingSoon';
 import MessageListPage from './MessageListPage';
 import DataStoreRoutes from './DataStoreRoutes';
-import DataStoreNew from './DataStoreNew';
-import DataStoreList from './DataStoreList';
 import Configuration from './Configuration';
 import AuthenticationList from './AuthenticationList';
 import SecretList from './SecretList';
@@ -141,8 +139,6 @@ export default function BaseRoutes({
         />
         <Route path="/messages" element={<MessageListPage />} />
         <Route path="/data-stores/*" element={<DataStoreRoutes />} />
-        <Route path="/data-store/new" element={<DataStoreNew />} />
-        <Route path="/data-storelist" element={<DataStoreList />} />
         <Route
           path="/configuration/*"
           element={<Configuration extensionUxElements={extensionUxElements} />}

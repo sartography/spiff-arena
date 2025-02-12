@@ -72,7 +72,6 @@ export default function ProcessModelCard({
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );
-    // navigate(`/newui/process-models/${modifiedProcessModelId}`);
     navigate(`/newui/process-models/${modifiedProcessModelId}`);
   };
 
@@ -153,20 +152,6 @@ export default function ProcessModelCard({
       onClick={() => stream?.next(model)}
       id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
-      {/* <Box */}
-      {/*   sx={{ position: 'absolute', right: 8, top: 8 }} */}
-      {/*   onClick={(e) => handleFavoriteClick(e as unknown as PointerEvent)} */}
-      {/* > */}
-      {/*   {isFavorite ? ( */}
-      {/*     <StarRateIcon */}
-      {/*       sx={{ */}
-      {/*         color: 'spotColors.goldStar', */}
-      {/*       }} */}
-      {/*     /> */}
-      {/*   ) : ( */}
-      {/*     <StarBorderOutlinedIcon /> */}
-      {/*   )} */}
-      {/* </Box> */}
       <Stack gap={1} sx={{ height: '100%' }}>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {model.display_name}
