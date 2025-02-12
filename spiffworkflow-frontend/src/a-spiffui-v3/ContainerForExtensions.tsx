@@ -276,6 +276,7 @@ export default function ContainerForExtensions() {
                   isDark={isDark}
                   additionalNavElement={additionalNavElement}
                   setAdditionalNavElement={setAdditionalNavElement}
+                  extensionUxElements={extensionUxElements}
                 />
               )}
               {isMobile && !isSideNavVisible && (

@@ -14,8 +14,11 @@ export enum UiSchemaDisplayLocation {
   // Will appear as a tab under the "Configuration" top nav item.
   configuration_tab_item = 'configuration_tab_item',
 
-  // Will appear in the top nav bar
+  // Will appear in the primary nav bar - DEPRECATED
   header_menu_item = 'header_menu_item',
+
+  // Will appear in the primary nav bar
+  primary_nav_item = 'primary_nav_item',
 
   /**
    * The page will be used as a route.

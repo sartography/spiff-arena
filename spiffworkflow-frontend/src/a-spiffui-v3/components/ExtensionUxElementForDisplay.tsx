@@ -17,7 +17,6 @@ export function extensionUxElementMap({
   if (!extensionUxElements) {
     return null;
   }
-
   const mainElement = () => {
     const elementsForDisplayLocation = extensionUxElements.filter(
       (uxElement: UiSchemaUxElement) => {

@@ -31,10 +31,12 @@ import ProcessInstanceRoutes from './ProcessInstanceRoutes';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
 import ProcessInstanceList from './ProcessInstanceList'; // Import the new component
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
+import { extensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
+import Extension from './Extension';
 
 type OwnProps = {
+  setAdditionalNavElement: Function;
   extensionUxElements?: UiSchemaUxElement[] | null;
-  setAdditionalNavElement?: Function;
   isMobile?: boolean;
 };
 
@@ -46,6 +48,20 @@ export default function BaseRoutes({
   const [viewMode, setViewMode] = useState<'table' | 'tile'>(
     isMobile ? 'tile' : 'table',
   );
+  const elementCallback = (uxElement: UiSchemaUxElement) => {
+    return (
+      <Route
+        path={uxElement.page}
+        key={uxElement.page}
+        element={<Extension pageIdentifier={uxElement.page} />}
+      />
+    );
+  };
+  const extensionRoutes = extensionUxElementMap({
+    displayLocation: 'routes',
+    elementCallback,
+    extensionUxElements,
+  });
 
   return (
     <Box
@@ -59,6 +75,7 @@ export default function BaseRoutes({
     >
       <ErrorDisplay />
       <Routes>
+        {extensionRoutes}
         <Route path="/about" element={<About />} />
         <Route
           path="/"
@@ -123,7 +140,10 @@ export default function BaseRoutes({
         <Route path="/data-stores/*" element={<DataStoreRoutes />} />
         <Route path="/data-store/new" element={<DataStoreNew />} />
         <Route path="/data-storelist" element={<DataStoreList />} />
-        <Route path="/configuration/*" element={<Configuration />} />
+        <Route
+          path="/configuration/*"
+          element={<Configuration extensionUxElements={extensionUxElements} />}
+        />
         <Route path="/authentication-list" element={<AuthenticationList />} />
         <Route path="/secrets" element={<SecretList />} />{' '}
         <Route path="/secrets/new" element={<SecretNew />} />

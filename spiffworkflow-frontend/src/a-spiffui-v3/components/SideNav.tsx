@@ -32,6 +32,7 @@ import {
   Storage,
   Markunread,
   SettingsApplicationsSharp,
+  Extension,
 } from '@mui/icons-material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import appVersionInfo from '../../helpers/appVersionInfo';
@@ -39,6 +40,8 @@ import { DOCUMENTATION_URL } from '../../config';
 import UserService from '../../services/UserService';
 import SpiffLogo from './SpiffLogo';
 import SpiffTooltip from './SpiffTooltip';
+import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
+import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -51,6 +54,7 @@ type OwnProps = {
   isDark: boolean;
   additionalNavElement?: ReactElement | null;
   setAdditionalNavElement: Function;
+  extensionUxElements?: UiSchemaUxElement[] | null;
 };
 
 // Define an object to map route paths to identifiers
@@ -72,6 +76,7 @@ function SideNav({
   isDark,
   additionalNavElement,
   setAdditionalNavElement,
+  extensionUxElements,
 }: OwnProps) {
   const navigate = useNavigate();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
@@ -188,6 +193,38 @@ function SideNav({
       id: routeIdentifiers.CONFIGURATION,
     },
   ];
+
+  const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    navItems.push({
+      text: uxElement.label,
+      icon: <Extension />,
+      route: navItemPage,
+      id: uxElement.page,
+    });
+  };
+  ExtensionUxElementForDisplay({
+    displayLocation: 'header_menu_item',
+    elementCallback: extensionHeaderMenuItemElement,
+    extensionUxElements,
+  });
+  ExtensionUxElementForDisplay({
+    displayLocation: 'primary_nav_item',
+    elementCallback: extensionHeaderMenuItemElement,
+    extensionUxElements,
+  });
+
+  const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
+    const navItemPage = `/extensions${uxElement.page}`;
+    return (
+      <>
+        <br />
+        <MuiLink component={Link} to={navItemPage}>
+          {uxElement.label}
+        </MuiLink>
+      </>
+    );
+  };
 
   return (
     <>
@@ -353,6 +390,11 @@ function SideNav({
           >
             Documentation
           </MuiLink>
+          <ExtensionUxElementForDisplay
+            displayLocation="user_profile_item"
+            elementCallback={extensionUserProfileElement}
+            extensionUxElements={extensionUxElements}
+          />
           {!UserService.authenticationDisabled() && (
             <>
               <hr />
