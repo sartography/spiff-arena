@@ -12,7 +12,7 @@ import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import { useDebouncedCallback } from 'use-debounce';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
 import SearchBar from './SearchBar';
@@ -62,6 +62,7 @@ export default function ProcessModelTreePage({
   navigateToPage = false,
 }: OwnProps) {
   const params = useParams();
+  const navigate = useNavigate();
   const { processGroups } = useProcessGroups({
     processInfo: {},
     getRunnableProcessModels:
@@ -233,12 +234,15 @@ export default function ProcessModelTreePage({
       setGroupsExpanded(true);
       setCrumbs([]);
       treeRef.current?.clearExpanded();
+      navigate('/newui/process-groups');
       return;
     }
     // Otherwise, find the item in the flatItems list and feed it to the clickstream.
     const found = flatItems.find((item: any) => item.id === crumb.id);
     if (found) {
       clickStream.next(found);
+      const processEntityId = modifyProcessIdentifierForPathParam(crumb.id);
+      navigate(`/newui/process-groups/${processEntityId}`);
     }
   };
 
