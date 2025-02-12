@@ -7,6 +7,7 @@ import HttpService from '../../services/HttpService';
 import { ProcessInstanceTask } from '../../interfaces';
 import HeaderTabs from '../components/HeaderTabs';
 import TaskTable from '../components/TaskTable';
+import OnboardingView from './OnboardingView';
 
 type HomepageProps = {
   viewMode: 'table' | 'tile';
@@ -220,6 +221,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
           selectedGroupBy={selectedGroupBy}
         />
       </Box>
+      <OnboardingView />
       {taskTableElement()}
     </>
   );
