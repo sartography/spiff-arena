@@ -177,6 +177,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
           Home
         </Typography>
       )}
+      <OnboardingView />
       {lastProcessInstanceId && !isMobile && (
         <Box
           className="fadeIn"
@@ -221,7 +222,6 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
           selectedGroupBy={selectedGroupBy}
         />
       </Box>
-      <OnboardingView />
       {taskTableElement()}
     </>
   );
