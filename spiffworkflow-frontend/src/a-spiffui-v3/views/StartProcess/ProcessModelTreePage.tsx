@@ -614,30 +614,32 @@ export default function ProcessModelTreePage({
                 </Box>
               </AccordionDetails>
             </Accordion>
-            <Accordion
-              expanded={dataStoreExpanded}
-              onChange={() => setDataStoreExpanded((prev) => !prev)}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="Data Store Accordion"
+            {processModelAction === ProcessModelAction.Open ? (
+              <Accordion
+                expanded={dataStoreExpanded}
+                onChange={() => setDataStoreExpanded((prev) => !prev)}
               >
-                ({dataStoresForProcessGroup?.length}) Data Stores
-                <IconButton
-                  data-qa="add-process-group-button"
-                  href={`/newui/data-stores/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="Data Store Accordion"
                 >
-                  <Add />
-                </IconButton>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={gridProps}>
-                  {dataStoresForProcessGroup?.map((dataStore: DataStore) => (
-                    <DataStoreCard dataStore={dataStore} />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+                  ({dataStoresForProcessGroup?.length}) Data Stores
+                  <IconButton
+                    data-qa="add-process-group-button"
+                    href={`/newui/data-stores/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                  >
+                    <Add />
+                  </IconButton>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Box sx={gridProps}>
+                    {dataStoresForProcessGroup?.map((dataStore: DataStore) => (
+                      <DataStoreCard dataStore={dataStore} />
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            ) : null}
           </Stack>
         </Stack>
       </Container>
