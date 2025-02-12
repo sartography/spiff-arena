@@ -1,0 +1,25 @@
+// @use '@carbon/react/scss/themes';
+// @use '@carbon/react/scss/theme' with ($theme: themes.$g100);
+
+// @use '@carbon/react/scss/theme' with
+//   (
+//     $theme: (
+//   cds-link-primary: #525252
+//     )
+//   );
+
+@use '@carbon/react' with (
+  $font-path: '@ibm/plex'
+);
+@use '@carbon/styles';
+// @include grid.flex-grid();
+
+@use '@carbon/colors';
+// @use '@carbon/react/scss/colors';
+@use '@carbon/react/scss/themes';
+
+// Not certain the best location for this, but here are some global
+// tweaks the markdown styles.
+
+main {
+}

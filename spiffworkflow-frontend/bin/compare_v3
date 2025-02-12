@@ -25,6 +25,7 @@ src_files=$(find "$src_dir" -mindepth 1 -maxdepth 10 -type f ! -path "$ignored_d
 missing_files=()
 for file in $src_files; do
   relative_path="${file#$src_dir/}"
+  relative_path="$(sed -E 's/routes/views/' <<<"$relative_path")"
   if [[ ! -f "$spiffui_dir/$relative_path" ]]; then
     missing_files+=("$file")
   fi

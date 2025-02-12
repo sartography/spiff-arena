@@ -1,0 +1,146 @@
+.rjsf .header {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+}
+
+.rjsf .field-description {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+  margin-bottom: 0em;
+}
+
+.rjsf .field-description .wmde-markdown {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+
+.rjsf .field-description .wmde-markdown p {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+
+/* for some reason it wraps the entire form using FieldTemplate.jsx, which is where we added the rjsf-field thing (which is only intended for fields, not entire forms. hence the double rjsf-field reference, only for rjsf-fields inside rjsf-fields, so we don't get double margin after the last field */
+.rjsf .rjsf-field .rjsf-field {
+  margin-bottom: 2rem;
+}
+
+/* only the outter rjsf-field gets the margin from the rule above but not its contents like the array-item so mention it explicitly */
+.rjsf .array-item .rjsf-field .rjsf-field {
+  margin-bottom: 2rem;
+}
+
+.rjsf .text-input {
+  padding-top: 8px;
+}
+
+.rjsf .date-input {
+  padding-top: 8px;
+}
+
+.rjsf .file-upload {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 14px;
+}
+
+/* position the remove button to align with the file description */
+.rjsf .file-info span div {
+  position: relative;
+  bottom: 6px;
+  left: 5px;
+}
+
+.rjsf .rjsf-field label {
+  font-weight: bolder;
+}
+
+.rjsf .rjsf-field .required {
+  color: #660000;
+}
+
+.rjsf #root #root__description {
+  margin-bottom: 0.5em;
+}
+
+.rjsf .array-item {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  /* background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem; */
+  background: rgb(109 107 107 / 10%);
+  border-radius: 0.30rem;
+}
+
+.rjsf .array-item legend {
+  display: none;
+}
+
+.rjsf .array-item .rjsf-field {
+  margin-bottom: 0;
+}
+
+.rjsf .markdown-field-desc-text .field-description {
+  font-size: 0.8rem;
+}
+
+.rjsf .numeric--range-field-wrapper input {
+  width: auto;
+}
+
+.rjsf .numeric--range-field-inputs {
+  margin: 0.33rem 0 0 0;
+  display: flex;
+  align-items: center;
+}
+
+.rjsf .numeric--range-field-help-text {
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
+  z-index: 0;
+  color: var(--cds-text-secondary, #525252);
+  inline-size: 100%;
+  margin-block-start: 0.25rem;
+  opacity: 1;
+}
+
+.rjsf .error-message {
+  color: var(--cds-text-error);
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
+}
+
+.rjsf .side-by-side-column:not(:last-child) {
+  padding-right: 1rem;
+}
+
+.rjsf .array-field-container {
+  display: flex;
+}
+
+.rjsf .array-field-contents {
+  flex: 8;
+  margin-left: calc(3%);
+}
+
+.rjsf .array-field-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: center; */
+  align-items: center;
+}
+
+.rjsf .radio-button-group {
+  padding-top: 0.5rem;
+}
