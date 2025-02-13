@@ -71,7 +71,7 @@ export default function ProcessInstanceReportSearch({
             onChange={onChange}
             id="process-instance-report-select"
             data-qa="process-instance-report-selection"
-            options={processInstanceReports}
+            options={processInstanceReports || []}
             getOptionLabel={(processInstanceReport: ProcessInstanceReport) => {
               if (processInstanceReport) {
                 return reportSelectionString(processInstanceReport);

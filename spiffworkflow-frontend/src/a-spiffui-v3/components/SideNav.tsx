@@ -84,7 +84,7 @@ function SideNav({
   const location = useLocation();
 
   // Determine the selected tab based on the current route
-  let selectedTab = null;
+  let selectedTab: string | null = null;
   if (location.pathname === '/newui') {
     selectedTab = routeIdentifiers.HOME;
   } else if (location.pathname === '/newui/startprocess') {

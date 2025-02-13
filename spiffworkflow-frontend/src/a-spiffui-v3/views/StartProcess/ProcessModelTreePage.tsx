@@ -415,6 +415,12 @@ export default function ProcessModelTreePage({
     }
   };
 
+  const currentParentGroupIdSearchParam = () => {
+    return currentProcessGroup
+      ? `?parentGroupId=${currentProcessGroup.id}`
+      : '';
+  };
+
   return (
     <>
       <Typography variant="h1" sx={{ mb: 2 }}>
@@ -596,7 +602,7 @@ export default function ProcessModelTreePage({
                 ({groups?.length}) Process Groups
                 <IconButton
                   data-qa="add-process-group-button"
-                  href={`/newui/process-groups/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                  href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
                 >
                   <Add />
                 </IconButton>
@@ -626,7 +632,7 @@ export default function ProcessModelTreePage({
                   ({dataStoresForProcessGroup?.length}) Data Stores
                   <IconButton
                     data-qa="add-process-group-button"
-                    href={`/newui/data-stores/new${currentProcessGroup ? `?parentGroupId=${currentProcessGroup.id}` : ''}`}
+                    href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
                   >
                     <Add />
                   </IconButton>

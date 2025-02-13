@@ -695,7 +695,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
-          kind="ghost"
+          kind="outlined"
           renderIcon={TrashCan}
           iconDescription="Delete"
           hasIconOnly

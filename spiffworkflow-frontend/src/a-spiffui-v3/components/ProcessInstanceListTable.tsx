@@ -59,6 +59,7 @@ type OwnProps = {
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
   showRefreshButton?: boolean;
+  tableHtmlId?: string;
   textToShowIfEmpty?: string;
   variant?: string;
 };
@@ -78,6 +79,7 @@ export default function ProcessInstanceListTable({
   showActionsColumn = false,
   showLinkToReport = false,
   showRefreshButton = false,
+  tableHtmlId,
   textToShowIfEmpty,
   variant = 'for-me',
 }: OwnProps) {
@@ -546,15 +548,23 @@ export default function ProcessInstanceListTable({
       );
     });
 
+    let tableProps: any = { size: 'lg' };
+    if (tableHtmlId) {
+      tableProps = { ...tableProps, id: tableHtmlId };
+    }
+
     return (
       <TableContainer>
-        <Table size="medium" className="process-instance-list">
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>
               {headers.map((tableRowHeader: any) => (
                 <TableCell
                   key={tableRowHeader}
-                  title={tableRowHeader === 'Id' ? 'Process Instance Id' : null}
+                  title={
+                    tableRowHeader === 'Id' ? 'Process Instance Id' : undefined
+                  }
                 >
                   <TableSortLabel>{tableRowHeader}</TableSortLabel>
                 </TableCell>
