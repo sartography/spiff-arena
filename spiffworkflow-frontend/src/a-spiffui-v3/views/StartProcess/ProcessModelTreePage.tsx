@@ -7,13 +7,15 @@ import {
   IconButton,
   Stack,
   Typography,
+  Breadcrumbs,
+  Link,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
-import { Delete, Edit, Add } from '@mui/icons-material';
+import { Delete, Edit, Add, Home } from '@mui/icons-material';
 import { useDebouncedCallback } from 'use-debounce';
 import { useParams, useNavigate } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
@@ -422,12 +424,41 @@ export default function ProcessModelTreePage({
   };
 
   return (
-    <>
-      <Typography variant="h1" sx={{ mb: 2 }}>
+    <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 3 }}>
+      <Typography variant="h4" sx={{ mb: 4 }}>
         {processModelAction === ProcessModelAction.StartProcess
           ? 'Start new process'
           : 'Process Groups'}
       </Typography>
+      <Breadcrumbs sx={{ mb: 3 }}>
+        <Link
+          underline="hover"
+          sx={{ display: 'flex', alignItems: 'center' }}
+          color="inherit"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            handleCrumbClick({ id: SPIFF_ID, displayName: 'Home' });
+          }}
+        >
+          <Home sx={{ mr: 0.5 }} fontSize="inherit" />
+          Root
+        </Link>
+        {crumbs.map((crumb) => (
+          <Link
+            key={crumb.id}
+            underline="hover"
+            color="inherit"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              handleCrumbClick(crumb);
+            }}
+          >
+            {crumb.displayName}
+          </Link>
+        ))}
+      </Breadcrumbs>
       <Container
         maxWidth={false}
         sx={{
@@ -497,7 +528,7 @@ export default function ProcessModelTreePage({
                   <Typography variant="caption">Favorites</Typography>
                 </Stack>
               )}
-              <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} />
+              {/* <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} /> */}
             </Stack>
             {currentProcessGroup ? (
               <Stack
@@ -507,9 +538,8 @@ export default function ProcessModelTreePage({
                   paddingBottom: 2,
                 }}
               >
-                <Typography variant="h3" className="with-icons">
+                <Typography variant="h5" className="with-icons">
                   Process Group: {currentProcessGroup.display_name}
-                </Typography>
                 <Can
                   I="PUT"
                   a={targetUris.processGroupShowPath}
@@ -537,6 +567,7 @@ export default function ProcessModelTreePage({
                     confirmButtonLabel="Delete"
                   />
                 </Can>
+                </Typography>
               </Stack>
             ) : null}
             {currentProcessGroup ? (
@@ -558,13 +589,25 @@ export default function ProcessModelTreePage({
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="Process Models Accordion"
               >
-                ({models.length}) Process Models
-                <IconButton
-                  data-qa="add-process-model-button"
-                  href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    pr: 2,
+                  }}
                 >
-                  <Add />
-                </IconButton>
+                <Typography>Process Models ({models.length})</Typography>
+                <IconButton
+                    size="small"
+                    onClick={(e) => e.stopPropagation()}
+                    data-qa="add-process-model-button"
+                    href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={gridProps}>
@@ -599,13 +642,25 @@ export default function ProcessModelTreePage({
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="Process Groups Accordion"
               >
-                ({groups?.length}) Process Groups
-                <IconButton
-                  data-qa="add-process-group-button"
-                  href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    pr: 2,
+                  }}
                 >
-                  <Add />
-                </IconButton>
+                  <Typography>Process Groups ({groups?.length})</Typography>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => e.stopPropagation()}
+                    data-qa="add-process-group-button"
+                    href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={gridProps}>
@@ -629,13 +684,25 @@ export default function ProcessModelTreePage({
                   expandIcon={<ExpandMoreIcon />}
                   aria-controls="Data Store Accordion"
                 >
-                  ({dataStoresForProcessGroup?.length}) Data Stores
-                  <IconButton
-                    data-qa="add-process-group-button"
-                    href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      pr: 2,
+                    }}
                   >
-                    <Add />
-                  </IconButton>
+                    <Typography>Data Stores ({dataStoresForProcessGroup?.length})</Typography>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => e.stopPropagation()}
+                      data-qa="add-process-group-button"
+                      href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Box sx={gridProps}>
@@ -649,6 +716,6 @@ export default function ProcessModelTreePage({
           </Stack>
         </Stack>
       </Container>
-    </>
+    </Box>
   );
 }
