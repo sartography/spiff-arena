@@ -147,7 +147,15 @@ function SideNav({
   // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
   const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
 
-  const collapseOrExpandIcon = isCollapsed ? <ChevronRight /> : <ChevronLeft />;
+  const collapseOrExpandIcon = isCollapsed ? (
+    <SpiffTooltip title="Expand navigation" placement="right">
+      <ChevronRight data-testid="expand-primary-nav" />
+    </SpiffTooltip>
+  ) : (
+    <SpiffTooltip title="Collapse navigation" placement="bottom">
+      <ChevronLeft data-testid="collapse-primary-nav" />
+    </SpiffTooltip>
+  );
 
   const navItems = [
     {
