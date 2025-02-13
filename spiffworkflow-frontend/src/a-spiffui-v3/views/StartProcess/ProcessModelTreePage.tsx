@@ -27,7 +27,7 @@ import {
   SPIFF_FAVORITES,
   getStorageValue,
 } from '../../services/LocalStorageService';
-import SpiffBreadCrumbs, { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
+import { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 import {
   PermissionsToCheck,
@@ -424,7 +424,7 @@ export default function ProcessModelTreePage({
   };
 
   return (
-    <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 3 }}>
+    <Box sx={{ margin: '0 auto', p: 3 }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
         {processModelAction === ProcessModelAction.StartProcess
           ? 'Start new process'
@@ -540,33 +540,33 @@ export default function ProcessModelTreePage({
               >
                 <Typography variant="h5" className="with-icons">
                   Process Group: {currentProcessGroup.display_name}
-                <Can
-                  I="PUT"
-                  a={targetUris.processGroupShowPath}
-                  ability={ability}
-                >
-                  <IconButton
-                    data-qa="edit-process-group-button"
-                    href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+                  <Can
+                    I="PUT"
+                    a={targetUris.processGroupShowPath}
+                    ability={ability}
                   >
-                    <Edit />
-                  </IconButton>
-                </Can>
-                <Can
-                  I="DELETE"
-                  a={targetUris.processGroupShowPath}
-                  ability={ability}
-                >
-                  <ButtonWithConfirmation
-                    data-qa="delete-process-group-button"
-                    renderIcon={<Delete />}
-                    iconDescription="Delete Process Group"
-                    hasIconOnly
-                    description={`Delete process group: ${currentProcessGroup.display_name}`}
-                    onConfirmation={deleteProcessGroup}
-                    confirmButtonLabel="Delete"
-                  />
-                </Can>
+                    <IconButton
+                      data-qa="edit-process-group-button"
+                      href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+                    >
+                      <Edit />
+                    </IconButton>
+                  </Can>
+                  <Can
+                    I="DELETE"
+                    a={targetUris.processGroupShowPath}
+                    ability={ability}
+                  >
+                    <ButtonWithConfirmation
+                      data-qa="delete-process-group-button"
+                      renderIcon={<Delete />}
+                      iconDescription="Delete Process Group"
+                      hasIconOnly
+                      description={`Delete process group: ${currentProcessGroup.display_name}`}
+                      onConfirmation={deleteProcessGroup}
+                      confirmButtonLabel="Delete"
+                    />
+                  </Can>
                 </Typography>
               </Stack>
             ) : null}
@@ -598,8 +598,8 @@ export default function ProcessModelTreePage({
                     pr: 2,
                   }}
                 >
-                <Typography>Process Models ({models.length})</Typography>
-                <IconButton
+                  <Typography>Process Models ({models.length})</Typography>
+                  <IconButton
                     size="small"
                     onClick={(e) => e.stopPropagation()}
                     data-qa="add-process-model-button"
@@ -693,7 +693,9 @@ export default function ProcessModelTreePage({
                       pr: 2,
                     }}
                   >
-                    <Typography>Data Stores ({dataStoresForProcessGroup?.length})</Typography>
+                    <Typography>
+                      Data Stores ({dataStoresForProcessGroup?.length})
+                    </Typography>
                     <IconButton
                       size="small"
                       onClick={(e) => e.stopPropagation()}
