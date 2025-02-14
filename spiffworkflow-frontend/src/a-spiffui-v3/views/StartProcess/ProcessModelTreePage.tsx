@@ -9,6 +9,8 @@ import {
   Typography,
   Breadcrumbs,
   Link,
+  Card,
+  CardContent,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
@@ -330,10 +332,10 @@ export default function ProcessModelTreePage({
     // If no favorites, proceed with the normal process groups.
     if (processGroups) {
       /**
-       * Do this now and put it in state.
-       * You do not want to do this on every change to the search filter.
-       * The flattened map makes searching globally simple.
-       */
+        * Do this now and put it in state.
+        * You do not want to do this on every change to the search filter.
+        * The flattened map makes searching globally simple.
+        */
       const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
@@ -378,7 +380,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
@@ -423,6 +425,38 @@ export default function ProcessModelTreePage({
       : '';
   };
 
+  const breadcrumbLinks = (
+    <Breadcrumbs sx={{ mb: 3 }}>
+      <Link
+        underline="hover"
+        sx={{ display: 'flex', alignItems: 'center' }}
+        color="inherit"
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          handleCrumbClick({ id: SPIFF_ID, displayName: 'Home' });
+        }}
+      >
+        <Home sx={{ mr: 0.5 }} fontSize="inherit" />
+        Root
+      </Link>
+      {crumbs.map((crumb) => (
+        <Link
+          key={crumb.id}
+          underline="hover"
+          color="inherit"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            handleCrumbClick(crumb);
+          }}
+        >
+          {crumb.displayName}
+        </Link>
+      ))}
+    </Breadcrumbs>
+  );
+
   return (
     <Box sx={{ margin: '0 auto', p: 3 }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
@@ -430,35 +464,7 @@ export default function ProcessModelTreePage({
           ? 'Start new process'
           : 'Process Groups'}
       </Typography>
-      <Breadcrumbs sx={{ mb: 3 }}>
-        <Link
-          underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}
-          color="inherit"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            handleCrumbClick({ id: SPIFF_ID, displayName: 'Home' });
-          }}
-        >
-          <Home sx={{ mr: 0.5 }} fontSize="inherit" />
-          Root
-        </Link>
-        {crumbs.map((crumb) => (
-          <Link
-            key={crumb.id}
-            underline="hover"
-            color="inherit"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              handleCrumbClick(crumb);
-            }}
-          >
-            {crumb.displayName}
-          </Link>
-        ))}
-      </Breadcrumbs>
+      {breadcrumbLinks}
       <Container
         maxWidth={false}
         sx={{
@@ -530,191 +536,211 @@ export default function ProcessModelTreePage({
               )}
               {/* <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} /> */}
             </Stack>
-            {currentProcessGroup ? (
-              <Stack
-                direction="row"
-                sx={{
-                  width: '100%',
-                  paddingBottom: 2,
-                }}
-              >
-                <Typography variant="h5" className="with-icons">
-                  Process Group: {currentProcessGroup.display_name}
-                  <Can
-                    I="PUT"
-                    a={targetUris.processGroupShowPath}
-                    ability={ability}
-                  >
-                    <IconButton
-                      data-qa="edit-process-group-button"
-                      href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
-                    >
-                      <Edit />
-                    </IconButton>
-                  </Can>
-                  <Can
-                    I="DELETE"
-                    a={targetUris.processGroupShowPath}
-                    ability={ability}
-                  >
-                    <ButtonWithConfirmation
-                      data-qa="delete-process-group-button"
-                      renderIcon={<Delete />}
-                      iconDescription="Delete Process Group"
-                      hasIconOnly
-                      description={`Delete process group: ${currentProcessGroup.display_name}`}
-                      onConfirmation={deleteProcessGroup}
-                      confirmButtonLabel="Delete"
-                    />
-                  </Can>
-                </Typography>
-              </Stack>
-            ) : null}
-            {currentProcessGroup ? (
-              <Stack
-                direction="row"
-                sx={{
-                  width: '100%',
-                  paddingBottom: 2,
-                }}
-              >
-                {currentProcessGroup.description}
-              </Stack>
-            ) : null}
-            <Accordion
-              expanded={modelsExpanded}
-              onChange={() => setModelsExpanded((prev) => !prev)}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="Process Models Accordion"
-              >
+            <Card>
+              <CardContent>
                 <Box
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
                     justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3,
                     width: '100%',
-                    pr: 2,
                   }}
                 >
-                  <Typography>Process Models ({models.length})</Typography>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => e.stopPropagation()}
-                    data-qa="add-process-model-button"
-                    href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
-                  >
-                    <Add />
-                  </IconButton>
+                  {currentProcessGroup ? (
+                    <>
+                      {breadcrumbLinks}
+                      <Box>
+                        <Can
+                          I="PUT"
+                          a={targetUris.processGroupShowPath}
+                          ability={ability}
+                        >
+                          <IconButton
+                            data-qa="edit-process-group-button"
+                            href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+                          >
+                            <Edit />
+                          </IconButton>
+                        </Can>
+                        <Can
+                          I="DELETE"
+                          a={targetUris.processGroupShowPath}
+                          ability={ability}
+                        >
+                          <ButtonWithConfirmation
+                            data-qa="delete-process-group-button"
+                            renderIcon={<Delete />}
+                            iconDescription="Delete Process Group"
+                            hasIconOnly
+                            description={`Delete process group: ${currentProcessGroup.display_name}`}
+                            onConfirmation={deleteProcessGroup}
+                            confirmButtonLabel="Delete"
+                          />
+                        </Can>
+                      </Box>
+                    </>
+                  ) : (
+                    <Typography variant="h5">
+                      {processModelAction === ProcessModelAction.StartProcess
+                        ? 'Start new process'
+                        : 'Process Groups'}
+                    </Typography>
+                  )}
                 </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={gridProps}>
-                  {models.map((model: Record<string, any>) => (
-                    <ProcessModelCard
-                      key={model.id}
-                      model={model}
-                      stream={clickStream}
-                      lastSelected={currentProcessGroup || {}}
-                      processModelAction={processModelAction}
-                      onStartProcess={() => {
-                        if (setNavElementCallback) {
-                          // remove the TreePanel from the SideNav when starting a process
-                          setNavElementCallback(null);
-                        }
-                      }}
-                      onViewProcess={() => {
-                        if (setNavElementCallback) {
-                          setNavElementCallback(null);
-                        }
-                      }}
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion
-              expanded={groupsExpanded}
-              onChange={() => setGroupsExpanded((prev) => !prev)}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="Process Groups Accordion"
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    pr: 2,
-                  }}
-                >
-                  <Typography>Process Groups ({groups?.length})</Typography>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => e.stopPropagation()}
-                    data-qa="add-process-group-button"
-                    href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
-                  >
-                    <Add />
-                  </IconButton>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={gridProps}>
-                  {groups?.map((group: Record<string, any>) => (
-                    <ProcessGroupCard
-                      key={group.id}
-                      group={group}
-                      stream={clickStream}
-                      navigateToPage={navigateToPage}
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-            {processModelAction === ProcessModelAction.Open ? (
-              <Accordion
-                expanded={dataStoreExpanded}
-                onChange={() => setDataStoreExpanded((prev) => !prev)}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="Data Store Accordion"
-                >
-                  <Box
+                {currentProcessGroup && (
+                  <Stack
+                    direction="row"
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
                       width: '100%',
-                      pr: 2,
+                      paddingBottom: 2,
                     }}
                   >
-                    <Typography>
-                      Data Stores ({dataStoresForProcessGroup?.length})
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => e.stopPropagation()}
-                      data-qa="add-process-group-button"
-                      href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
+                    {currentProcessGroup.description}
+                  </Stack>
+                )}
+                <Accordion
+                  expanded={modelsExpanded}
+                  onChange={() => setModelsExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Process Models Accordion"
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        pr: 2,
+                      }}
                     >
-                      <Add />
-                    </IconButton>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box sx={gridProps}>
-                    {dataStoresForProcessGroup?.map((dataStore: DataStore) => (
-                      <DataStoreCard dataStore={dataStore} />
-                    ))}
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            ) : null}
+                      <Typography>
+                        Process Models ({models.length})
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                        data-qa="add-process-model-button"
+                        href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {models.map((model: Record<string, any>) => (
+                        <ProcessModelCard
+                          key={model.id}
+                          model={model}
+                          stream={clickStream}
+                          lastSelected={currentProcessGroup || {}}
+                          processModelAction={processModelAction}
+                          onStartProcess={() => {
+                            if (setNavElementCallback) {
+                              // remove the TreePanel from the SideNav when starting a process
+                              setNavElementCallback(null);
+                            }
+                          }}
+                          onViewProcess={() => {
+                            if (setNavElementCallback) {
+                              setNavElementCallback(null);
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+                <Accordion
+                  expanded={groupsExpanded}
+                  onChange={() => setGroupsExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Process Groups Accordion"
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        pr: 2,
+                      }}
+                    >
+                      <Typography>
+                        Process Groups ({groups?.length})
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                        data-qa="add-process-group-button"
+                        href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
+                      >
+                        <Add />
+                      </IconButton>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {groups?.map((group: Record<string, any>) => (
+                        <ProcessGroupCard
+                          key={group.id}
+                          group={group}
+                          stream={clickStream}
+                          navigateToPage={navigateToPage}
+                        />
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+                {processModelAction === ProcessModelAction.Open ? (
+                  <Accordion
+                    expanded={dataStoreExpanded}
+                    onChange={() => setDataStoreExpanded((prev) => !prev)}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls="Data Store Accordion"
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          pr: 2,
+                        }}
+                      >
+                        <Typography>
+                          Data Stores ({dataStoresForProcessGroup?.length})
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          data-qa="add-process-group-button"
+                          href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
+                        >
+                          <Add />
+                        </IconButton>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={gridProps}>
+                        {dataStoresForProcessGroup?.map(
+                          (dataStore: DataStore) => (
+                            <DataStoreCard dataStore={dataStore} />
+                          ),
+                        )}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ) : null}
+              </CardContent>
+            </Card>
           </Stack>
         </Stack>
       </Container>
