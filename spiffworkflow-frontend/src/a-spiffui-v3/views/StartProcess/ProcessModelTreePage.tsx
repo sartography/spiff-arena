@@ -427,7 +427,7 @@ export default function ProcessModelTreePage({
 
   return (
     <Box sx={{ margin: '0 auto', p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
+      <Typography variant="h1" sx={{ mb: 2 }}>
         {processModelAction === ProcessModelAction.StartProcess
           ? 'Start new process'
           : 'Process Groups'}
