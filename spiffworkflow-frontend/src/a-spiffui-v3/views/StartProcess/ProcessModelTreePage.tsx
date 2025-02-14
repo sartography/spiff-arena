@@ -332,10 +332,10 @@ export default function ProcessModelTreePage({
     // If no favorites, proceed with the normal process groups.
     if (processGroups) {
       /**
-        * Do this now and put it in state.
-        * You do not want to do this on every change to the search filter.
-        * The flattened map makes searching globally simple.
-        */
+       * Do this now and put it in state.
+       * You do not want to do this on every change to the search filter.
+       * The flattened map makes searching globally simple.
+       */
       const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
@@ -380,7 +380,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
@@ -425,38 +425,6 @@ export default function ProcessModelTreePage({
       : '';
   };
 
-  const breadcrumbLinks = (
-    <Breadcrumbs sx={{ mb: 3 }}>
-      <Link
-        underline="hover"
-        sx={{ display: 'flex', alignItems: 'center' }}
-        color="inherit"
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          handleCrumbClick({ id: SPIFF_ID, displayName: 'Home' });
-        }}
-      >
-        <Home sx={{ mr: 0.5 }} fontSize="inherit" />
-        Root
-      </Link>
-      {crumbs.map((crumb) => (
-        <Link
-          key={crumb.id}
-          underline="hover"
-          color="inherit"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            handleCrumbClick(crumb);
-          }}
-        >
-          {crumb.displayName}
-        </Link>
-      ))}
-    </Breadcrumbs>
-  );
-
   return (
     <Box sx={{ margin: '0 auto', p: 3 }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
@@ -464,7 +432,6 @@ export default function ProcessModelTreePage({
           ? 'Start new process'
           : 'Process Groups'}
       </Typography>
-      {breadcrumbLinks}
       <Container
         maxWidth={false}
         sx={{
@@ -549,7 +516,38 @@ export default function ProcessModelTreePage({
                 >
                   {currentProcessGroup ? (
                     <>
-                      {breadcrumbLinks}
+                      <Breadcrumbs sx={{ mb: 3 }}>
+                        <Link
+                          underline="hover"
+                          sx={{ display: 'flex', alignItems: 'center' }}
+                          color="inherit"
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleCrumbClick({
+                              id: SPIFF_ID,
+                              displayName: 'Home',
+                            });
+                          }}
+                        >
+                          <Home sx={{ mr: 0.5 }} fontSize="inherit" />
+                          Root
+                        </Link>
+                        {crumbs.map((crumb) => (
+                          <Link
+                            key={crumb.id}
+                            underline="hover"
+                            color="inherit"
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleCrumbClick(crumb);
+                            }}
+                          >
+                            {crumb.displayName}
+                          </Link>
+                        ))}
+                      </Breadcrumbs>
                       <Box>
                         <Can
                           I="PUT"
@@ -581,11 +579,24 @@ export default function ProcessModelTreePage({
                       </Box>
                     </>
                   ) : (
-                    <Typography variant="h5">
-                      {processModelAction === ProcessModelAction.StartProcess
-                        ? 'Start new process'
-                        : 'Process Groups'}
-                    </Typography>
+                    <Breadcrumbs sx={{ mb: 3 }}>
+                      <Link
+                        underline="hover"
+                        sx={{ display: 'flex', alignItems: 'center' }}
+                        color="inherit"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleCrumbClick({
+                            id: SPIFF_ID,
+                            displayName: 'Home',
+                          });
+                        }}
+                      >
+                        <Home sx={{ mr: 0.5 }} fontSize="inherit" />
+                        Root
+                      </Link>
+                    </Breadcrumbs>
                   )}
                 </Box>
                 {currentProcessGroup && (
@@ -616,9 +627,7 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>
-                        Process Models ({models.length})
-                      </Typography>
+                      <Typography>Process Models ({models.length})</Typography>
                       <IconButton
                         size="small"
                         onClick={(e) => e.stopPropagation()}
@@ -671,9 +680,7 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>
-                        Process Groups ({groups?.length})
-                      </Typography>
+                      <Typography>Process Groups ({groups?.length})</Typography>
                       <IconButton
                         size="small"
                         onClick={(e) => e.stopPropagation()}
