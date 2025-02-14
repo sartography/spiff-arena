@@ -7,6 +7,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Typography,
 } from '@mui/material';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -100,6 +101,7 @@ export default function AuthenticationList() {
   if (authenticationList) {
     return (
       <>
+        <Typography variant="h1">Authentications</Typography>
         {buildTable()}
         <AuthenticationConfiguration />
       </>

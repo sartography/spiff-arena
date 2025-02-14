@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Typography,
 } from '@mui/material';
 import { MdDelete } from 'react-icons/md';
 import PaginationForTable from '../components/PaginationForTable';
@@ -133,7 +134,7 @@ export default function SecretList() {
   if (pagination) {
     return (
       <div>
-        <h1>Secrets</h1>
+        <Typography variant="h1">Secrets</Typography>
         {SecretsDisplayArea()}
         <Button variant="contained" href="/newui/configuration/secrets/new">
           Add a secret
