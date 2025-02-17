@@ -264,6 +264,33 @@ Workflow processes often require the enforcement of minimum and maximum date con
 
 This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
+#### Handling Deserialized datetime Objects
+When working with datetime values in SpiffWorkflow, it's important to ensure that scripts correctly handle deserialized objects. 
+
+For example, here the `current_time` variable **appears** in Task Data as a dictionary:  
+  ```json
+  {
+    "current_time": {
+      "value": "2025-02-13T18:54:08.261744-06:00",
+      "typename": "datetime"
+    }
+  }
+  ```
+  
+However, during script execution, `current_time` is deserialized into a object rather than remaining a dictionary.  
+
+As a result, attempting to access `current_time["value"]` will cause an error.
+
+The incorrect usage would be attempting to access `current_time["value"]` as if it were a dictionary:  
+```python
+cdt_datetime = current_time["value"].strftime('%Y-%m-%dT%H:%M:%S%z')
+
+```
+Therefore, use `strftime()` directly on the `datetime` object:  
+```python
+cdt_datetime = current_time.strftime('%Y-%m-%dT%H:%M:%S%z')
+```
+
 #### JSON Schema Configuration:
 
 The "test-maximum-date-schema.json" process model outlines a form structure that includes fields for `end_date`, `delivery_date`, and `delivery_date_range`, each with constraints on the earliest and latest dates that can be selected.
