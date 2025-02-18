@@ -1,7 +1,9 @@
 # Message Events
 
 A Message Event acts as a channel for the exchange of information between different process participants or external systems.
+
 While it might be tempting to associate "message events" with emails, their scope extends beyond digital correspondence.
+
 They signify the transmission of information between various process components, whether within the same process or across different processes.
 
 ![message_relationship](/images/relationship_message.png)
@@ -45,7 +47,9 @@ Similarly, upon receiving a purchase order from the customer, the sales departme
 
 An Intermediate Catch Event is used to wait for and capture a specific message from another source.
 Once activated upon receiving the designated message, it allows the process flow to continue from that point onward.
+
 It's crucial to understand that the process instance remains in a waiting state until triggered by another source or process.
+
 This fundamental distinction sets Intermediate Catch Events apart from Intermediate Throw Events, as Catch Events exclusively await external triggers, while Throw Events initiate those triggers.
 
 ![message_event_example_5](/images/msg_event_example_5.png)
@@ -59,6 +63,7 @@ The process outlined in the previous section can be split into two distinct BPMN
 
 In the given example, there are two Intermediate Catch Events.
 One waits for confirmation from the customer, and the other depends on the shipping department's verification of dispatch before producing the invoice.
+
 Without feedback from both the customer and the shipping department at this stage, the process instance won't move to the subsequent step.
 
 ```{admonition} Note
@@ -70,12 +75,15 @@ Without feedback from both the customer and the shipping department at this stag
 ![end_message_event](/images/end_msg_event.png)
 
 This type of event signifies the completion of a process and indicates that a message is sent to an external recipient to notify them of the process's conclusion.
+
 It serves as the endpoint of the process and sends a message when the process reaches this event.
 
 ![message_event_example_4](/images/msg_event_example_4.png)
 
 Please note that the End Event, when using pools, signifies the conclusion of the process within that specific pool, but it does not necessarily indicate the end of the entire process.
+
 In the provided example, the final step involves sending the customer an invoice.
+
 Prior to this, the last step for the shipping department was to send a confirmation.
 
 ```{admonition} Note
@@ -85,7 +93,9 @@ Prior to this, the last step for the shipping department was to send a confirmat
 ## Correlation
 
 A singular Throw Message Event corresponds exclusively to a single active Catch Message Event.
+
 This correlation is one-to-one, unlike Signal Events that could be sent to multiple active Signal Catch Events.
+
 It is important to configure the correlation of the Catch and Throw Events.
 
 ## Message Event Configuration
@@ -134,12 +144,13 @@ The connected catch event is configured in precisely the same manner as the thro
 | ![conditions](/images/payload_msg.png) | **Variable Name:** order_amount | The Variable Name can include a variable, holding unique information specific to the instance, or in this scenario, the order. |
 | ![conditions](/images/event_correlation_msg.png) | **Correlation:** invoice_number | Select the correlation that can identify the distinct property distinguishing one process instance from another. |
 
-Check out this example on Message Event.
+Learn more about configuring Message Events and the differences between Message Events and Message Tasks.
+
 ```{toctree}
 :maxdepth: 1
-:caption: Message Event Example
 configuring_messages_and_correlation_properties
-```
+message_events_vs_tasks
+``` 
 
 ```{tags} how_to_guide, building_diagrams
 ```

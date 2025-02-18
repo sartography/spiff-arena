@@ -11,4 +11,5 @@ work_with_redis_celery_broker
 deploy_a_connector_proxy_as_an_aws_lambda_function
 configure_a_connector_proxy
 manage_process_models
+keycloak_setup
 ```
