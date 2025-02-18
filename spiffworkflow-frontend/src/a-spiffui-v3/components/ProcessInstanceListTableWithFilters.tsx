@@ -57,7 +57,11 @@ import {
   FilterDisplayTypeMapping,
   SpiffTableHeader,
 } from '../interfaces';
-import ProcessModelSearch from './ProcessModelSearch';
+
+// MUI
+// import ProcessModelSearch from './ProcessModelSearch';
+
+import ProcessModelSearch from '../../components/ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
