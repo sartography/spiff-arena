@@ -7,6 +7,7 @@ import {
   Button,
   Typography,
 } from '@mui/material';
+import SpiffTooltip from './SpiffTooltip';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -109,15 +110,17 @@ export default function ProcessModelFileUploadModal({
             Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
             supported.
           </Typography>
-          <input
-            type="file"
-            accept=".bpmn,.dmn,.json,.md"
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setFilesToUpload(
-                event.target.files ? Array.from(event.target.files) : null,
-              )
-            }
-          />
+          <SpiffTooltip title="Delete file">
+            <input
+              type="file"
+              accept=".bpmn,.dmn,.json,.md"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setFilesToUpload(
+                  event.target.files ? Array.from(event.target.files) : null,
+                )
+              }
+            />
+          </SpiffTooltip>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFileUploadCancel} color="primary">
