@@ -13,7 +13,7 @@ import {
   CardContent,
   Button,
 } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -536,7 +536,9 @@ export default function ProcessModelTreePage({
                             key={crumb.id}
                             color="inherit"
                             href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
-                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            onClick={(
+                              e: React.MouseEvent<HTMLAnchorElement>,
+                            ) => {
                               e.preventDefault();
                               handleCrumbClick(crumb);
                             }}
