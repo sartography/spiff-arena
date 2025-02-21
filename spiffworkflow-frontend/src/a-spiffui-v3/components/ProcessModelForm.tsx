@@ -198,19 +198,21 @@ export default function ProcessModelForm({
           />
         </Grid>
         <Grid size={{ xs: 2 }}>
-          <IconButton
-            aria-label="Remove Address"
-            onClick={() => {
-              const notificationAddresses: string[] =
-                processModel.exception_notification_addresses || [];
-              notificationAddresses.splice(index, 1);
-              updateProcessModel({
-                exception_notification_addresses: notificationAddresses,
-              });
-            }}
-          >
-            <TrashCan />
-          </IconButton>
+          <SpiffTooltip title="Remove Address">
+            <IconButton
+              aria-label="Remove Address"
+              onClick={() => {
+                const notificationAddresses: string[] =
+                  processModel.exception_notification_addresses || [];
+                notificationAddresses.splice(index, 1);
+                updateProcessModel({
+                  exception_notification_addresses: notificationAddresses,
+                });
+              }}
+            >
+              <TrashCan />
+            </IconButton>
+          </SpiffTooltip>
         </Grid>
       </Grid>
     );
