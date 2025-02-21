@@ -519,9 +519,8 @@ export default function ProcessModelTreePage({
                     <>
                       <Breadcrumbs sx={{ mb: 3 }}>
                         <Button
-                          underline="hover"
                           sx={{ display: 'flex', alignItems: 'center' }}
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.preventDefault();
                             handleCrumbClick({
                               id: SPIFF_ID,
@@ -535,11 +534,9 @@ export default function ProcessModelTreePage({
                         {crumbs.map((crumb) => (
                           <Link
                             key={crumb.id}
-                            underline="hover"
                             color="inherit"
                             href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
-                            passHref
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                               e.preventDefault();
                               handleCrumbClick(crumb);
                             }}
@@ -581,9 +578,8 @@ export default function ProcessModelTreePage({
                   ) : (
                     <Breadcrumbs sx={{ mb: 3 }}>
                       <Button
-                        underline="hover"
                         sx={{ display: 'flex', alignItems: 'center' }}
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.preventDefault();
                           handleCrumbClick({
                             id: SPIFF_ID,
