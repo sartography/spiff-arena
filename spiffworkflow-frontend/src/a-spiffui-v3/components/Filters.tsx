@@ -1,6 +1,10 @@
-import { Filter as FilterIcon, Link as LinkIcon } from '@mui/icons-material';
+import {
+  FilterAlt as FilterAltIcon,
+  Link as LinkIcon,
+} from '@mui/icons-material';
 import { Grid, IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
+import SpiffTooltip from '../../components/SpiffTooltip';
 
 type OwnProps = {
   showFilterOptions: boolean;
@@ -48,14 +52,16 @@ export default function Filters({
       );
     }
     elements.push(
-      <IconButton
-        data-qa="filter-section-expand-toggle"
-        color="primary"
-        aria-label="Filter Options"
-        onClick={toggleShowFilterOptions}
-      >
-        <FilterIcon />
-      </IconButton>,
+      <SpiffTooltip title="Filter Options">
+        <IconButton
+          data-qa="filter-section-expand-toggle"
+          color="primary"
+          aria-label="Filter Options"
+          onClick={toggleShowFilterOptions}
+        >
+          <FilterAltIcon />
+        </IconButton>
+      </SpiffTooltip>,
     );
     if (copiedReportLinkToClipboard) {
       elements.push(
