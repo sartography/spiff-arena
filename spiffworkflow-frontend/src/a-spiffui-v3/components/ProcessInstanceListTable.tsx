@@ -411,12 +411,14 @@ export default function ProcessInstanceListTable({
           </Grid>
           {showRefreshButton ? (
             <Grid>
-              <IconButton
-                data-qa="refresh-process-instance-table"
-                onClick={() => getProcessInstances()}
-              >
-                <Refresh />
-              </IconButton>
+              <SpiffTooltip title="Refresh data in the table">
+                <IconButton
+                  data-qa="refresh-process-instance-table"
+                  onClick={() => getProcessInstances()}
+                >
+                  <Refresh />
+                </IconButton>
+              </SpiffTooltip>
             </Grid>
           ) : null}
         </Grid>
