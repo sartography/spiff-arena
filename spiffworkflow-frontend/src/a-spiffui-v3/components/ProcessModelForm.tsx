@@ -13,6 +13,7 @@ import { Add as AddAlt, Delete as TrashCan } from '@mui/icons-material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { MetadataExtractionPath, ProcessModel } from '../interfaces';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   mode: string;
@@ -138,17 +139,19 @@ export default function ProcessModelForm({
           />
         </Grid>
         <Grid size={{ xs: 1 }}>
-          <IconButton
-            aria-label="Remove Key"
-            onClick={() => {
-              const cep: MetadataExtractionPath[] =
-                processModel.metadata_extraction_paths || [];
-              cep.splice(index, 1);
-              updateProcessModel({ metadata_extraction_paths: cep });
-            }}
-          >
-            <TrashCan />
-          </IconButton>
+          <SpiffTooltip title="Remove Key">
+            <IconButton
+              aria-label="Remove Key"
+              onClick={() => {
+                const cep: MetadataExtractionPath[] =
+                  processModel.metadata_extraction_paths || [];
+                cep.splice(index, 1);
+                updateProcessModel({ metadata_extraction_paths: cep });
+              }}
+            >
+              <TrashCan />
+            </IconButton>
+          </SpiffTooltip>
         </Grid>
       </Grid>
     );
