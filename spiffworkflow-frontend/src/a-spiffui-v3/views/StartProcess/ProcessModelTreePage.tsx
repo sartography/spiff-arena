@@ -11,6 +11,7 @@ import {
   Link,
   Card,
   CardContent,
+  Button,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
@@ -517,11 +518,9 @@ export default function ProcessModelTreePage({
                   {currentProcessGroup ? (
                     <>
                       <Breadcrumbs sx={{ mb: 3 }}>
-                        <Link
+                        <Button
                           underline="hover"
                           sx={{ display: 'flex', alignItems: 'center' }}
-                          color="inherit"
-                          href="#"
                           onClick={(e) => {
                             e.preventDefault();
                             handleCrumbClick({
@@ -532,7 +531,7 @@ export default function ProcessModelTreePage({
                         >
                           <Home sx={{ mr: 0.5 }} fontSize="inherit" />
                           Root
-                        </Link>
+                        </Button>
                         {crumbs.map((crumb) => (
                           <Link
                             key={crumb.id}
@@ -580,11 +579,9 @@ export default function ProcessModelTreePage({
                     </>
                   ) : (
                     <Breadcrumbs sx={{ mb: 3 }}>
-                      <Link
+                      <Button
                         underline="hover"
                         sx={{ display: 'flex', alignItems: 'center' }}
-                        color="inherit"
-                        href="#"
                         onClick={(e) => {
                           e.preventDefault();
                           handleCrumbClick({
@@ -595,7 +592,7 @@ export default function ProcessModelTreePage({
                       >
                         <Home sx={{ mr: 0.5 }} fontSize="inherit" />
                         Root
-                      </Link>
+                      </Button>
                     </Breadcrumbs>
                   )}
                 </Box>
