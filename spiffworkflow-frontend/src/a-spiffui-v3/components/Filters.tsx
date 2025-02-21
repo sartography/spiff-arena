@@ -42,13 +42,15 @@ export default function Filters({
     const elements = [];
     if (reportHash && showFilterOptions) {
       elements.push(
-        <IconButton
-          onClick={copyReportLink}
-          color="primary"
-          aria-label="Copy shareable link"
-        >
-          <LinkIcon />
-        </IconButton>,
+        <SpiffTooltip title="Copy shareable link">
+          <IconButton
+            onClick={copyReportLink}
+            color="primary"
+            aria-label="Copy shareable link"
+          >
+            <LinkIcon />
+          </IconButton>
+        </SpiffTooltip>,
       );
     }
     elements.push(
