@@ -243,6 +243,7 @@ export default function ContainerForExtensions() {
       <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
         <Container
           maxWidth={false}
+          data-theme={globalTheme.palette.mode}
           sx={{
             // Hack to position the internal view over the "old" base components
             position: 'absolute',

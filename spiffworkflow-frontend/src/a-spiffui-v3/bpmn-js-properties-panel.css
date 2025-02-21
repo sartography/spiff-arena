@@ -104,9 +104,9 @@ a:link {
 }
 
 /* dark mode experiment */
-div#diagram-container {
+[data-theme='dark'] div#diagram-container {
   filter: invert(1) hue-rotate(180deg);
 }
-div.bjs-container > div.djs-container > svg {
+[data-theme='dark'] div.bjs-container > div.djs-container > svg {
   background-color: #fff !important;
 }
