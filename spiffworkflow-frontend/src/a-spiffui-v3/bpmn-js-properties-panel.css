@@ -103,8 +103,13 @@ a:link {
   width: 96px !important;
 }
 
-/* dark mode experiment */
+/* https://dev.to/akhilarjun/one-line-dark-mode-using-css-24li */
+/* dark mode handling for diagram, which doesn't fully natively support dark mode, so do it with css */
 [data-theme='dark'] div#diagram-container {
+  filter: invert(1) hue-rotate(180deg);
+}
+/* double-invert images, so they do not actually change */
+[data-theme='dark'] img {
   filter: invert(1) hue-rotate(180deg);
 }
 [data-theme='dark'] div.bjs-container > div.djs-container > svg {
