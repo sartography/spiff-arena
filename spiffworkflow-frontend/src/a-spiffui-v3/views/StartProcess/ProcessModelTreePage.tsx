@@ -537,7 +537,8 @@ export default function ProcessModelTreePage({
                             key={crumb.id}
                             underline="hover"
                             color="inherit"
-                            href="#"
+                            href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
+                            passHref
                             onClick={(e) => {
                               e.preventDefault();
                               handleCrumbClick(crumb);
