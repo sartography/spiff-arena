@@ -155,22 +155,22 @@ const baseTheme = (mode: PaletteMode) => {
       textTransform: undefined,
     },
     h1: {
-      fontSize: '3rem', // Slightly smaller than default 6rem
+      fontSize: '2rem', // 32px, down from 6rem default, since even 3rem felt big
     },
     h2: {
-      fontSize: '1.875rem', // Slightly smaller than default 3.75rem
+      fontSize: '1.875rem', // 30px, unchanged
     },
     h3: {
-      fontSize: '1.5rem', // Slightly smaller than default 3rem
+      fontSize: '1.5rem', // 24px, unchanged
     },
     h4: {
-      fontSize: '1.0625rem', // Slightly smaller than default 2.125rem
+      fontSize: '1.0625rem', // 17px, unchanged
     },
     h5: {
-      fontSize: '0.75rem', // Slightly smaller than default 1.5rem
+      fontSize: '0.75rem', // 12px, unchanged
     },
     h6: {
-      fontSize: '0.625rem', // Slightly smaller than default 1.25rem
+      fontSize: '0.625rem', // 10px, unchanged
     },
   };
 
