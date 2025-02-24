@@ -31,7 +31,7 @@ if ('spiffworkflowFrontendJsenv' in window) {
   }
 }
 
-if (import.meta.env.VITE_BACKEND_BASE_URL) {
+if (import.meta.env && import.meta.env.VITE_BACKEND_BASE_URL) {
   backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
 }
 
