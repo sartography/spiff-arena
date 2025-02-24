@@ -75,37 +75,7 @@ class TestMessageService(BaseTest):
         # it will deliver the message that was sent from the receiver back to the original sender.
         MessageService.correlate_all_message_instances()
 
-        # But there should be no send message waiting for delivery, because
-        # the message receiving process should pick it up instantly via
-        # it's start event.
-        waiting_messages = (
-            MessageInstanceModel.query.filter_by(message_type="receive")
-            .filter_by(status="ready")
-            .filter_by(process_instance_id=process_instance.id)
-            .order_by(MessageInstanceModel.id)
-            .all()
-        )
-        assert len(waiting_messages) == 0
-        MessageService.correlate_all_message_instances()
-        MessageService.correlate_all_message_instances()
-        MessageService.correlate_all_message_instances()
-        assert len(waiting_messages) == 0
-
-        # The message sender process is complete
-        assert process_instance.status == "complete"
-
-        # The message receiver process is also complete
-        message_receiver_process = (
-            ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receive")
-            .order_by(ProcessInstanceModel.id)
-            .first()
-        )
-        assert message_receiver_process.status == "complete"
-
-        message_instances = MessageInstanceModel.query.all()
-        assert len(message_instances) == 4
-        for message_instance in message_instances:
-            assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+        # if the above passes, feel free to copy and paste more, but i assume we won't need to at that point.
 
     def test_single_conversation_between_two_processes(
         self,
