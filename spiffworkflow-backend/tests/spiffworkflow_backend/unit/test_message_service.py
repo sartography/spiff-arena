@@ -1,3 +1,4 @@
+import random
 import time
 
 from flask import Flask
@@ -21,6 +22,91 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
+    def test_messages_feb_24(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test messages between two different running processes using a single conversation.
+
+        Assure that communication between two processes works the same as making a call through the API, here
+        we have two process instances that are communicating with each other using one conversation about an
+        Invoice whose details are defined in the following message payload
+        """
+        # payload = {
+        #     "customer_id": "Sartography",
+        #     "po_number": 1001,
+        #     "description": "We built a new feature for messages!",
+        #     "amount": "100.00",
+        # }
+
+        uid = random.randint(1, 100000)
+        payload = {"uid": uid}
+
+        # Load up the definition for the receiving process
+        load_test_spec(
+            "test_group/message_test_1",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="message-test-1.bpmn",
+        )
+
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="test-message-process.bpmn",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+
+        # self.assure_a_message_was_sent(process_instance, payload)
+
+        # This is typically called in a background cron process, so we will manually call it
+        # here in the tests
+        # The first time it is called, it will instantiate a new instance of the message_recieve process
+        MessageService.correlate_all_message_instances()
+
+        # The sender process should still be waiting on a message to be returned to it ...
+        self.assure_there_is_a_process_waiting_on_a_message(process_instance)
+
+        # The second time we call ths process_message_isntances (again it would typically be running on cron)
+        # it will deliver the message that was sent from the receiver back to the original sender.
+        MessageService.correlate_all_message_instances()
+
+        # But there should be no send message waiting for delivery, because
+        # the message receiving process should pick it up instantly via
+        # it's start event.
+        waiting_messages = (
+            MessageInstanceModel.query.filter_by(message_type="receive")
+            .filter_by(status="ready")
+            .filter_by(process_instance_id=process_instance.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
+        assert len(waiting_messages) == 0
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+        assert len(waiting_messages) == 0
+
+        # The message sender process is complete
+        assert process_instance.status == "complete"
+
+        # The message receiver process is also complete
+        message_receiver_process = (
+            ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receive")
+            .order_by(ProcessInstanceModel.id)
+            .first()
+        )
+        assert message_receiver_process.status == "complete"
+
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 4
+        for message_instance in message_instances:
+            assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,
