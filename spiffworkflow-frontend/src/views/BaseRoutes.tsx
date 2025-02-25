@@ -70,8 +70,8 @@ export default function BaseRoutes({
       sx={{
         flexGrow: 1,
         p: 3,
-        overflow: 'hidden',
-        height: '100vh',
+        overflow: 'auto',
+        height: 'unset',
       }}
     >
       <ErrorDisplay />

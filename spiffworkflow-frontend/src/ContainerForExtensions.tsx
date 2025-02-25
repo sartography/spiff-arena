@@ -250,7 +250,6 @@ export default function ContainerForExtensions() {
             top: 0,
             left: 0,
             alignItems: 'center',
-            height: '100vh',
             zIndex: 1000,
             padding: '0px !important',
           }}
@@ -266,7 +265,7 @@ export default function ContainerForExtensions() {
                 display: 'flex',
                 width: '100%',
                 height: '100vh',
-                overflow: 'hidden',
+                overflow: 'hidden', // Consider removing this if the child's overflow: auto is sufficient
               }}
             >
               {isSideNavVisible && (
@@ -305,7 +304,7 @@ export default function ContainerForExtensions() {
                   display: 'flex',
                   flexDirection: 'column',
                   flexGrow: 1,
-                  overflow: 'auto',
+                  overflow: 'auto', // allow scrolling
                 }}
                 onAnimationEnd={(e) => {
                   if (e.animationName === fadeOutImmediate) {
