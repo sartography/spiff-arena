@@ -255,34 +255,14 @@ export default function ReactFormBuilder({
   const updateStrSchema = (value: string) => {
     updateStrFileDebounce(value);
     setStrSchema(value);
-    // if (schemaEditorRef && schemaEditorRef.current) {
-    //   // @ts-ignore
-    //   schemaEditorRef.current.setValue(value);
-    // }
   };
 
   const updateStrUi = (value: string) => {
-    // if (uiEditorRef && uiEditorRef.current) {
-    //   // @ts-ignore
-    //   uiEditorRef.current.setValue(value);
-    // }
     updateStrUIFileDebounce(value);
     setStrUI(value);
   };
 
   const updateStrData = (value: string) => {
-    // // Only update the data if it is different from what is already there, this prevents
-    // // cursor from jumping to the top each time you type a letter.
-    // if (
-    //   dataEditorRef &&
-    //   dataEditorRef.current &&
-    //   // @ts-ignore
-    //   value !== dataEditorRef.current.getValue()
-    // ) {
-    //   setStrFormData(value);
-    //   // @ts-ignore
-    //   dataEditorRef.current.setValue(value);
-    // }
     updateFormDataFileDebounce(value);
     setStrFormData(value);
   };
@@ -445,7 +425,7 @@ export default function ReactFormBuilder({
   }
   return (
     <Grid container spacing={3}>
-      <Grid item xs={6}>
+      <Grid item xs={12} md={6}>
         <Tabs value={selectedIndex} onChange={handleTabChange}>
           <Tab label="Json Schema" />
           <Tab label="UI Settings" />
@@ -543,7 +523,7 @@ export default function ReactFormBuilder({
           )}
         </Box>
       </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={12} md={6}>
         <Typography variant="h4">Form Preview</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
