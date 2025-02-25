@@ -15,6 +15,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Box,
 } from '@mui/material';
 import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
@@ -43,6 +44,19 @@ type OwnProps = {
   isEventsView: boolean;
   processModelId: string;
   processInstanceId: number;
+};
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%', // Increased width
+  maxWidth: 'md', // Added max width for responsiveness
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
 };
 
 export default function ProcessInstanceLogList({
@@ -196,11 +210,11 @@ export default function ProcessInstanceLogList({
           aria-labelledby="modal-heading"
           aria-describedby="modal-description"
         >
-          <div>
+          <Box sx={style}>
             <h2 id="modal-heading">{modalHeading}</h2>
             <p id="modal-description">Error Details</p>
             {errorMessageTag}
-          </div>
+          </Box>
         </Modal>
       );
     }
