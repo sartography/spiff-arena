@@ -55,7 +55,7 @@ payload = {"uid": uid}</spiffworkflow:preScript>
     </bpmn:sendTask>
     <bpmn:sendTask id="Activity_1j5ojcj" name="Send C" messageRef="C">
       <bpmn:extensionElements>
-        <spiffworkflow:messagePayload>{}</spiffworkflow:messagePayload>
+        <spiffworkflow:messagePayload>{"uid": payload['uid']}</spiffworkflow:messagePayload>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_149xjw0</bpmn:incoming>
       <bpmn:outgoing>Flow_1akek91</bpmn:outgoing>
