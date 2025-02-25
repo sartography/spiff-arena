@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
 import useProcessInstances from '../hooks/useProcessInstances';
 import HeaderTabs from '../components/HeaderTabs';
-import { ReportFilter } from '../../interfaces';
+import { ReportFilter } from '../interfaces';
 import TaskTable from '../components/TaskTable';
 
 type InstancesStartedByMeProps = {

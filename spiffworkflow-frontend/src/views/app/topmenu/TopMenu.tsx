@@ -15,7 +15,7 @@ import { grey } from '@mui/material/colors';
 import { Subject } from 'rxjs';
 import SpiffLogo from '../../../components/SpiffLogo';
 import MenuItem, { MenuItemData } from './MenuItem';
-import UserService from '../../../../services/UserService';
+import UserService from '../../../services/UserService';
 
 /**
  * MenuBar running along top of app.

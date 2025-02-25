@@ -1,5 +1,5 @@
 import { Typography, Card, CardActionArea, CardContent } from '@mui/material';
-import { DataStore } from './interfaces';
+import { DataStore } from '../interfaces';
 
 const defaultStyle = {
   borderRadius: 2,

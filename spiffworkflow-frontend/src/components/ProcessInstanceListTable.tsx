@@ -99,9 +99,7 @@ export default function ProcessInstanceListTable({
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
-    variant === 'all'
-      ? '/process-instances'
-      : '/process-instances/for-me';
+    variant === 'all' ? '/process-instances' : '/process-instances/for-me';
 
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {

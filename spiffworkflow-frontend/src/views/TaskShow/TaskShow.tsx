@@ -175,7 +175,7 @@ export default function TaskShow() {
   const processSubmitResult = (result: any) => {
     removeError();
     if (result.ok) {
-      navigate("/");
+      navigate('/');
     } else if (result.process_instance_id) {
       if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
@@ -255,7 +255,7 @@ export default function TaskShow() {
   const handleCloseButton = () => {
     setAutosaveOnFormChanges(false);
     setFormButtonsDisabled(true);
-    const successCallback = () => navigate("/");
+    const successCallback = () => navigate('/');
     sendAutosaveEvent({ successCallback });
   };
 

@@ -31,7 +31,6 @@ import {
   getStorageValue,
 } from '../../services/LocalStorageService';
 import { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
-import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import {
   PermissionsToCheck,
   ProcessGroup,
@@ -39,7 +38,10 @@ import {
   ProcessModelAction,
   DataStore,
 } from '../../interfaces';
-import { unModifyProcessIdentifierForPathParam } from '../../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
+} from '../../helpers';
 import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';

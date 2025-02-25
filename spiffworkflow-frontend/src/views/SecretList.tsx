@@ -136,7 +136,11 @@ export default function SecretList() {
       <div>
         <Typography variant="h1">Secrets</Typography>
         {SecretsDisplayArea()}
-        <Button variant="contained" href="/configuration/secrets/new">
+        <Button
+          component={Link}
+          variant="contained"
+          to="/configuration/secrets/new"
+        >
           Add a secret
         </Button>
       </div>

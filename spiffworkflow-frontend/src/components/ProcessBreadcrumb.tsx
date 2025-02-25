@@ -39,7 +39,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
-            onUnauthorized: () => { },
+            onUnauthorized: () => {},
             failureCallback: (error: any) =>
               console.error(
                 `Failed to load process model for breadcrumb. Error was: ${error.message}`,
@@ -51,7 +51,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
-            onUnauthorized: () => { },
+            onUnauthorized: () => {},
             failureCallback: (error: any) =>
               console.error(
                 `Failed to load process group for breadcrumb. Error was: ${error.message}`,
