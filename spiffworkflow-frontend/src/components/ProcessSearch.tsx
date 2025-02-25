@@ -1,7 +1,7 @@
 import React from 'react';
 import { Autocomplete, TextField } from '@mui/material';
-import { truncateString } from '../helpers';
 import { ProcessReference } from '../interfaces';
+import { truncateString } from '../helpers';
 
 type OwnProps = {
   onChange: (..._args: any[]) => any;
@@ -29,37 +29,43 @@ export default function ProcessSearch({
     );
   };
 
-  return (
-    <div style={{ width: '100%', height }}>
-      <Autocomplete
-        onChange={(_, value) => onChange(value)}
-        id="process-model-select"
-        data-qa="process-model-selection"
-        options={processes}
-        getOptionLabel={(process: ProcessReference) => {
-          if (process) {
-            return `${process.display_name} (${truncateString(
-              process.identifier,
-              75,
-            )})`;
+  if (processes) {
+    return (
+      <div style={{ width: '100%', height }}>
+        <Autocomplete
+          id="process-model-select"
+          data-qa="process-model-selection"
+          options={processes}
+          value={selectedItem || null}
+          onChange={(_, value) => onChange(value)}
+          renderInput={(params) => (
+            <TextField
+              label={titleText}
+              placeholder="Choose a process"
+              variant="outlined"
+              slotProps={{
+                htmlInput: params.inputProps,
+                inputLabel: { shrink: true },
+              }}
+            />
+          )}
+          getOptionLabel={(process: ProcessReference) => {
+            if (process) {
+              return `${process.display_name} (${truncateString(
+                process.identifier,
+                75,
+              )})`;
+            }
+            return '';
+          }}
+          filterOptions={(options, state) =>
+            options.filter((option) =>
+              shouldFilter({ item: option, inputValue: state.inputValue }),
+            )
           }
-          return '';
-        }}
-        filterOptions={(options, state) =>
-          options.filter((option) =>
-            shouldFilter({ item: option, inputValue: state.inputValue }),
-          )
-        }
-        renderInput={(params) => (
-          <TextField
-            label={titleText}
-            placeholder="Choose a process"
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ ...params.InputProps }}
-          />
-        )}
-        value={selectedItem || null}
-      />
-    </div>
-  );
+        />
+      </div>
+    );
+  }
+  return null;
 }
