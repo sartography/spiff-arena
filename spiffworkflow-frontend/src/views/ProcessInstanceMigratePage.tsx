@@ -354,7 +354,7 @@ export default function ProcessInstanceMigratePage() {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/newui/process-groups'],
+          ['Process Groups', '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',
@@ -362,7 +362,7 @@ export default function ProcessInstanceMigratePage() {
           },
           [
             `Process Instance: ${params.process_instance_id}`,
-            `/newui/i/${params.process_instance_id}`,
+            `/i/${params.process_instance_id}`,
           ],
           ['Migrate'],
         ]}

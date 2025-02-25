@@ -230,7 +230,7 @@ export default function TaskListTable({
       <TableCell>
         <Link
           data-qa="process-instance-show-link-id"
-          to={`/newui/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
+          to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
           title={`View process instance ${processInstanceTask.process_instance_id}`}
         >
           {processInstanceTask.process_instance_id}
@@ -255,7 +255,7 @@ export default function TaskListTable({
         <TableCell>
           <Link
             data-qa="process-model-show-link"
-            to={`/newui/process-models/${modifiedProcessModelIdentifier}`}
+            to={`/process-models/${modifiedProcessModelIdentifier}`}
             title={processInstanceTask.process_model_identifier}
           >
             {processInstanceTask.process_model_display_name}
@@ -266,7 +266,7 @@ export default function TaskListTable({
   };
 
   const getActionButtons = (processInstanceTask: ProcessInstanceTask) => {
-    const taskUrl = `/newui/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
     const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
     let hasAccessToCompleteTask = false;
     if (

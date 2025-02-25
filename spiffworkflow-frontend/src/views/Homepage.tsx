@@ -201,7 +201,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         value={0}
         onChange={(_event, newValue) => {
           if (newValue === 1) {
-            navigate('/newui/started-by-me');
+            navigate('/started-by-me');
           }
         }}
       />

@@ -13,10 +13,10 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
   const params = useParams();
 
   // TODO: the next version we should support the pi show page in the new ui
-  // let processInstanceShowPageUrl = `/newui/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  let processInstanceShowPageUrl = '/newui';
+  // let processInstanceShowPageUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceShowPageUrl = '/';
   if (variant === 'all') {
-    processInstanceShowPageUrl = `/newui/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    processInstanceShowPageUrl = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   return (
@@ -46,7 +46,6 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
       <ProcessInterstitial
         processInstanceId={Number(params.process_instance_id)}
         processInstanceShowPageUrl={processInstanceShowPageUrl}
-        isNewUi
         allowRedirect
       />
     </Box>

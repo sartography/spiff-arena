@@ -17,7 +17,7 @@ function ComingSoon() {
         Coming Soon
       </Typography>
       <Typography variant="h6">This feature will be available soon.</Typography>
-      <MuiLink component={Link} to="/newui" variant="h6" sx={{ mt: 2 }}>
+      <MuiLink component={Link} to="/" variant="h6" sx={{ mt: 2 }}>
         Go back home
       </MuiLink>
     </Box>

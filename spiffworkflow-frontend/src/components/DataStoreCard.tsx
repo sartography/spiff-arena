@@ -19,7 +19,7 @@ export default function DataStoreCard({ dataStore }: { dataStore: DataStore }) {
   return (
     <Card sx={defaultStyle}>
       <CardActionArea
-        href={`/newui/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`}
+        href={`/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`}
       >
         <CardContent>
           <Typography variant="body2" sx={{ fontWeight: 700 }}>

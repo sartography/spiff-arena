@@ -100,8 +100,8 @@ export default function ProcessInstanceListTable({
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
     variant === 'all'
-      ? '/newui/process-instances'
-      : '/newui/process-instances/for-me';
+      ? '/process-instances'
+      : '/process-instances/for-me';
 
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -440,7 +440,7 @@ export default function ProcessInstanceListTable({
             <IconButton
               data-qa="process-instance-list-link"
               onClick={() =>
-                navigate(`/newui/process-instances?report_hash=${reportHash}`)
+                navigate(`/process-instances?report_hash=${reportHash}`)
               }
             >
               <ArrowRightAlt />

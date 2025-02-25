@@ -26,7 +26,7 @@ export default function ProcessGroupForm({
   const handleProcessGroupUpdateResponse = (_result: any) => {
     if (newProcessGroupId) {
       navigate(
-        `/newui/process-groups/${modifyProcessIdentifierForPathParam(
+        `/process-groups/${modifyProcessIdentifierForPathParam(
           newProcessGroupId,
         )}`,
       );

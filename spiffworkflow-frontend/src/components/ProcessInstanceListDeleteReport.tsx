@@ -13,7 +13,7 @@ export default function ProcessInstanceListDeleteReport({
 }: OwnProps) {
   const deleteProcessInstanceReport = () => {
     HttpService.makeCallToBackend({
-      path: `/newui/process-instances/reports/${processInstanceReportSelection.id}`,
+      path: `/process-instances/reports/${processInstanceReportSelection.id}`,
       successCallback: onSuccess,
       httpMethod: 'DELETE',
     });

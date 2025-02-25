@@ -106,7 +106,7 @@ export default function ProcessModelTabs({
             const selectedItem = event.target.value;
             if (selectedItem === 'New BPMN File') {
               navigate(
-                `/newui/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
+                `/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
               );
             } else if (selectedItem === 'Upload File') {
               // Handled by parent component via prop
@@ -115,15 +115,15 @@ export default function ProcessModelTabs({
               setShowFileUploadModal(true);
             } else if (selectedItem === 'New DMN File') {
               navigate(
-                `/newui/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
+                `/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
               );
             } else if (selectedItem === 'New JSON File') {
               navigate(
-                `/newui/process-models/${modifiedProcessModelId}/form?file_ext=json`,
+                `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
               );
             } else if (selectedItem === 'New Markdown File') {
               navigate(
-                `/newui/process-models/${modifiedProcessModelId}/form?file_ext=md`,
+                `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
               );
             }
           }}

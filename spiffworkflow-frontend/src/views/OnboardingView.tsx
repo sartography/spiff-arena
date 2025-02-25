@@ -32,7 +32,7 @@ export default function OnboardingView() {
       onboarding.task_id
     ) {
       navigate(
-        `/newui/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`,
+        `/tasks/${onboarding.process_instance_id}/${onboarding.task_id}`,
       );
     } else if (
       onboarding &&

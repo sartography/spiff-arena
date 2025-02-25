@@ -36,11 +36,11 @@ export default function TopMenu({
   const navMenuItemData: MenuItemData[] = [
     {
       text: 'Dashboard',
-      path: '/newui/dashboard',
+      path: '/dashboard',
     },
     {
       text: 'Start a Process',
-      path: '/newui/startprocess',
+      path: '/startprocess',
     },
   ];
 

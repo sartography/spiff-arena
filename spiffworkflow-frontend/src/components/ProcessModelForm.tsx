@@ -38,7 +38,7 @@ export default function ProcessModelForm({
     if ('id' in result) {
       const modifiedProcessModelPathFromResult =
         modifyProcessIdentifierForPathParam(result.id);
-      navigate(`/newui/process-models/${modifiedProcessModelPathFromResult}`);
+      navigate(`/process-models/${modifiedProcessModelPathFromResult}`);
     }
   };
 

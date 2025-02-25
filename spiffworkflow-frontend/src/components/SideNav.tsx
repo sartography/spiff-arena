@@ -85,19 +85,19 @@ function SideNav({
 
   // Determine the selected tab based on the current route
   let selectedTab: string | null = null;
-  if (location.pathname === '/newui') {
+  if (location.pathname === '/') {
     selectedTab = routeIdentifiers.HOME;
-  } else if (location.pathname === '/newui/startprocess') {
+  } else if (location.pathname === '/startprocess') {
     selectedTab = routeIdentifiers.START_NEW_PROCESS;
-  } else if (location.pathname.startsWith('/newui/process-instances')) {
+  } else if (location.pathname.startsWith('/process-instances')) {
     selectedTab = routeIdentifiers.PROCESS_INSTANCES;
-  } else if (location.pathname.startsWith('/newui/process-')) {
+  } else if (location.pathname.startsWith('/process-')) {
     selectedTab = routeIdentifiers.PROCESSES; // This might need further refinement
-  } else if (location.pathname === '/newui/data-stores') {
+  } else if (location.pathname === '/data-stores') {
     selectedTab = routeIdentifiers.DATA_STORES;
-  } else if (location.pathname === '/newui/messages') {
+  } else if (location.pathname === '/messages') {
     selectedTab = routeIdentifiers.MESSAGES;
-  } else if (location.pathname.startsWith('/newui/configuration')) {
+  } else if (location.pathname.startsWith('/configuration')) {
     selectedTab = routeIdentifiers.CONFIGURATION;
   }
 
@@ -105,7 +105,7 @@ function SideNav({
   let aboutLinkElement = null;
   if (Object.keys(versionInfo).length) {
     aboutLinkElement = (
-      <MuiLink component={Link} to="/newui/about">
+      <MuiLink component={Link} to="/about">
         About
       </MuiLink>
     );
@@ -161,43 +161,43 @@ function SideNav({
     {
       text: 'HOME',
       icon: <Home />,
-      route: '/newui',
+      route: '/',
       id: routeIdentifiers.HOME,
     },
     {
       text: 'START NEW PROCESS',
       icon: <Add />,
-      route: '/newui/startprocess',
+      route: '/startprocess',
       id: routeIdentifiers.START_NEW_PROCESS,
     },
     {
       text: 'PROCESSES',
       icon: <Schema />,
-      route: '/newui/process-groups',
+      route: '/process-groups',
       id: routeIdentifiers.PROCESSES,
     },
     {
       text: 'PROCESS INSTANCES',
       icon: <Timeline />,
-      route: '/newui/process-instances',
+      route: '/process-instances',
       id: routeIdentifiers.PROCESS_INSTANCES,
     },
     {
       text: 'DATA STORES',
       icon: <Storage />,
-      route: '/newui/data-stores',
+      route: '/data-stores',
       id: routeIdentifiers.DATA_STORES,
     },
     {
       text: 'MESSAGES',
       icon: <Markunread />,
-      route: '/newui/messages',
+      route: '/messages',
       id: routeIdentifiers.MESSAGES,
     },
     {
       text: 'CONFIGURATION',
       icon: <SettingsApplicationsSharp />,
-      route: '/newui/configuration',
+      route: '/configuration',
       id: routeIdentifiers.CONFIGURATION,
     },
   ];
@@ -263,7 +263,7 @@ function SideNav({
               color={mainBlue}
               sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
             >
-              <MuiLink component={Link} to="/newui">
+              <MuiLink component={Link} to="/">
                 <SpiffLogo />
               </MuiLink>
             </Typography>

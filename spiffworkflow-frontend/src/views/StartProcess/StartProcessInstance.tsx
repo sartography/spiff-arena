@@ -21,11 +21,11 @@ export default function StartProcessInstance() {
     const processInstanceId = processInstance.id;
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
-        `/newui/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/progress`,
+        `/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/progress`,
       );
     } else {
       navigate(
-        `/newui/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/interstitial`,
+        `/process-instances/for-me/${modifiedProcessModelIdParam}/${processInstanceId}/interstitial`,
       );
     }
   };

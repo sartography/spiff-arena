@@ -125,7 +125,7 @@ export default function ProcessModelShow() {
 
   const navigateToProcessModels = (_result: any) => {
     navigate(
-      `/newui/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
+      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
     );
   };
 
@@ -226,7 +226,7 @@ export default function ProcessModelShow() {
         />
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/newui/process-groups'],
+            ['Process Groups', '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -243,7 +243,7 @@ export default function ProcessModelShow() {
               <IconButton
                 data-qa="edit-process-model-button"
                 component="a"
-                href={`/newui/process-models/${modifiedProcessModelId}/edit`}
+                href={`/process-models/${modifiedProcessModelId}/edit`}
               >
                 <Edit />
               </IconButton>

@@ -47,7 +47,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     uxElement: UiSchemaUxElement,
     uxElementIndex: number,
   ) => {
-    const navItemPage = `/newui/configuration/extension${uxElement.page}`;
+    const navItemPage = `/configuration/extension${uxElement.page}`;
 
     let pagesToCheck = [uxElement.page];
     if (
@@ -58,7 +58,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     }
 
     pagesToCheck.forEach((pageToCheck: string) => {
-      const pageToCheckNavItem = `/newui/configuration/extension${pageToCheck}`;
+      const pageToCheckNavItem = `/configuration/extension${pageToCheck}`;
       if (pageToCheckNavItem === location.pathname) {
         setSelectedTabIndex(uxElementIndex + 2);
       }
@@ -84,13 +84,13 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
         <Can I="GET" a={targetUris.secretListPath} ability={ability}>
           <Tab
             label="Secrets"
-            onClick={() => navigate('/newui/configuration/secrets')}
+            onClick={() => navigate('/configuration/secrets')}
           />
         </Can>
         <Can I="GET" a={targetUris.authenticationListPath} ability={ability}>
           <Tab
             label="Authentications"
-            onClick={() => navigate('/newui/configuration/authentications')}
+            onClick={() => navigate('/configuration/authentications')}
           />
         </Can>
         <ExtensionUxElementForDisplay

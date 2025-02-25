@@ -61,7 +61,7 @@ export default function ProcessModelCard({
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );
-    navigate(`/newui/${modifiedProcessModelId}/start`);
+    navigate(`/${modifiedProcessModelId}/start`);
   };
 
   const handleViewProcess = (e: PointerEvent) => {
@@ -72,7 +72,7 @@ export default function ProcessModelCard({
     const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
       model.id,
     );
-    navigate(`/newui/process-models/${modifiedProcessModelId}`);
+    navigate(`/process-models/${modifiedProcessModelId}`);
   };
 
   const handleClickStream = (item: Record<string, any>) => {

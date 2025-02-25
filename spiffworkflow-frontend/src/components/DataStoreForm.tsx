@@ -68,10 +68,10 @@ export default function DataStoreForm({
     const location = dataStoreLocation();
     if (location !== '/') {
       navigate(
-        `/newui/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
+        `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
       );
     } else {
-      navigate(`/newui/process-groups`);
+      navigate(`/process-groups`);
     }
   };
 

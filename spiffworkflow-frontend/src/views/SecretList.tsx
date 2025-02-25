@@ -45,7 +45,7 @@ export default function SecretList() {
         !ability.can('GET', targetUris.secretListPath) &&
         ability.can('GET', targetUris.authenticationListPath)
       ) {
-        navigate('/newui/configuration/authentications');
+        navigate('/configuration/authentications');
       } else {
         const { page, perPage } = getPageInfoFromSearchParams(searchParams);
         HttpService.makeCallToBackend({
@@ -80,12 +80,12 @@ export default function SecretList() {
       return (
         <TableRow key={(row as any).key}>
           <TableCell>
-            <Link to={`/newui/configuration/secrets/${(row as any).key}`}>
+            <Link to={`/configuration/secrets/${(row as any).key}`}>
               {(row as any).id}
             </Link>
           </TableCell>
           <TableCell>
-            <Link to={`/newui/configuration/secrets/${(row as any).key}`}>
+            <Link to={`/configuration/secrets/${(row as any).key}`}>
               {(row as any).key}
             </Link>
           </TableCell>
@@ -136,7 +136,7 @@ export default function SecretList() {
       <div>
         <Typography variant="h1">Secrets</Typography>
         {SecretsDisplayArea()}
-        <Button variant="contained" href="/newui/configuration/secrets/new">
+        <Button variant="contained" href="/configuration/secrets/new">
           Add a secret
         </Button>
       </div>

@@ -264,7 +264,7 @@ export default function ProcessModelTreePage({
       setCrumbs([]);
       setCurrentProcessGroup(null);
       treeRef.current?.clearExpanded();
-      navigate('/newui/process-groups');
+      navigate('/process-groups');
       return;
     }
     // Otherwise, find the item in the flatItems list and feed it to the clickstream.
@@ -273,7 +273,7 @@ export default function ProcessModelTreePage({
       clickStream.next(found);
       const processEntityId = modifyProcessIdentifierForPathParam(crumb.id);
       setCurrentProcessGroup(null);
-      navigate(`/newui/process-groups/${processEntityId}`);
+      navigate(`/process-groups/${processEntityId}`);
     }
   };
 
@@ -535,7 +535,7 @@ export default function ProcessModelTreePage({
                           <Link
                             key={crumb.id}
                             color="inherit"
-                            href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
+                            href={`/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
                             onClick={(
                               e: React.MouseEvent<HTMLAnchorElement>,
                             ) => {
@@ -555,7 +555,7 @@ export default function ProcessModelTreePage({
                         >
                           <IconButton
                             data-qa="edit-process-group-button"
-                            href={`/newui/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+                            href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
                           >
                             <Edit />
                           </IconButton>
@@ -628,7 +628,7 @@ export default function ProcessModelTreePage({
                         size="small"
                         onClick={(e) => e.stopPropagation()}
                         data-qa="add-process-model-button"
-                        href={`/newui/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                        href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
                       >
                         <Add />
                       </IconButton>
@@ -681,7 +681,7 @@ export default function ProcessModelTreePage({
                         size="small"
                         onClick={(e) => e.stopPropagation()}
                         data-qa="add-process-group-button"
-                        href={`/newui/process-groups/new${currentParentGroupIdSearchParam()}`}
+                        href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                       >
                         <Add />
                       </IconButton>
@@ -725,7 +725,7 @@ export default function ProcessModelTreePage({
                           size="small"
                           onClick={(e) => e.stopPropagation()}
                           data-qa="add-process-group-button"
-                          href={`/newui/data-stores/new${currentParentGroupIdSearchParam()}`}
+                          href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />
                         </IconButton>

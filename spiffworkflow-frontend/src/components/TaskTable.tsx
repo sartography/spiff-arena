@@ -49,7 +49,7 @@ export default function TaskTable({
   };
 
   const handleRunTask = (entry: ProcessInstanceTask | ProcessInstance) => {
-    const taskUrl = `/newui/tasks/${getProcessInstanceId(entry)}/${entry.task_id}`;
+    const taskUrl = `/tasks/${getProcessInstanceId(entry)}/${entry.task_id}`;
     navigate(taskUrl);
   };
 

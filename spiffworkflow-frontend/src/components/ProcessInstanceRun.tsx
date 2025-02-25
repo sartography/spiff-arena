@@ -98,11 +98,11 @@ export default function ProcessInstanceRun({
     const processInstanceId = processInstance.id;
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
-        `/newui/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
       );
     } else {
       navigate(
-        `/newui/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
+        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
       );
     }
   };

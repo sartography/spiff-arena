@@ -113,7 +113,7 @@ export default function ContainerForExtensions() {
     if (location !== displayLocation) {
       // const isComingFromInterstitialOrProgress = /\/interstitial$|\/progress$/.test(displayLocation.pathname);
       // setIsLongFadeIn(
-      //   isComingFromInterstitialOrProgress && location.pathname === '/newui',
+      //   isComingFromInterstitialOrProgress && location.pathname === '/',
       // );
       setTransitionStage(fadeOutImmediate);
     }

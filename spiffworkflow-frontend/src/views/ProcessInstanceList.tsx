@@ -30,7 +30,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     return (
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/newui/process-groups'],
+          ['Process Groups', '/process-groups'],
           {
             entityToExplode: processModelFullIdentifier,
             entityType: 'process-model-id',

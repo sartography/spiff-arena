@@ -11,11 +11,11 @@ export default function SecretNew() {
   const navigate = useNavigate();
 
   const navigateToSecret = (_result: any) => {
-    navigate(`/newui/configuration/secrets/${key}`);
+    navigate(`/configuration/secrets/${key}`);
   };
 
   const navigateToSecrets = () => {
-    navigate(`/newui/configuration/secrets`);
+    navigate(`/configuration/secrets`);
   };
 
   const addSecret = (event: any) => {

@@ -39,7 +39,7 @@ export default function ProcessGroupCard({
           stream.next(group);
         }
         if (navigateToPage) {
-          navigate(`/newui/process-groups/${group.id.replaceAll('/', ':')}`);
+          navigate(`/process-groups/${group.id.replaceAll('/', ':')}`);
         }
       }}
     >

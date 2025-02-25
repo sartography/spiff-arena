@@ -887,7 +887,7 @@ export default function ReactDiagramEditor({
               <Button
                 onClick={() => {
                   navigate(
-                    `/newui/process-models/${processModelId}/form/${fileName}`,
+                    `/process-models/${processModelId}/form/${fileName}`,
                   );
                 }}
               >

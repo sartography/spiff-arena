@@ -68,7 +68,7 @@ function InstancesStartedByMe({
         value={1}
         onChange={(_event, newValue) => {
           if (newValue === 0) {
-            navigate('/newui');
+            navigate('/');
           }
         }}
       />

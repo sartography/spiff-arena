@@ -173,7 +173,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/newui/process-instances?process_model_identifier=${unModifiedProcessModelId}`,
+      `/process-instances?process_model_identifier=${unModifiedProcessModelId}`,
     );
   };
 
@@ -214,7 +214,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           return;
         }
         navigate(
-          `/newui/process-models/${modifiedProcessModelId}/files/${primaryFileName}`,
+          `/process-models/${modifiedProcessModelId}/files/${primaryFileName}`,
         );
       };
       HttpService.makeCallToBackend({
@@ -236,8 +236,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
 
-  let processInstanceShowPageBaseUrl = `/newui/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  const processInstanceShowPageBaseUrlAllVariant = `/newui/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  const processInstanceShowPageBaseUrlAllVariant = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = processInstanceShowPageBaseUrlAllVariant;
   }
@@ -596,7 +596,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const navigateToProcessInstanceMigratePage = () => {
     navigate(
-      `/newui/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
+      `/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
     );
   };
 
