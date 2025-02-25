@@ -1,14 +1,15 @@
 import React from 'react';
 import {
-  Column,
-  Dropdown,
+  Box,
   Grid,
   Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
   Tabs,
-} from '@carbon/react';
+  MenuItem,
+  Select,
+  Typography,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
 import { PureAbility } from '@casl/ability';
@@ -29,6 +30,29 @@ interface ProcessModelTabsProps {
   isTestCaseFile: (processModelFile: ProcessFile) => boolean;
   readmeFile: ProcessFile | null;
   setShowFileUploadModal: Function;
+}
+
+interface ProcessModelTabPanelProps {
+  children?: any;
+  value: number;
+  index: number;
+}
+
+function TabPanel({ children, value, index }: ProcessModelTabPanelProps) {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
 }
 
 export default function ProcessModelTabs({
@@ -69,119 +93,129 @@ export default function ProcessModelTabs({
     'New DMN File',
     'New JSON File',
     'New Markdown File',
-  ].map((item) => ({
-    text: item,
-  }));
+  ];
 
   const addFileComponent = () => {
     return (
-      <Dropdown
-        id="inline"
-        titleText=""
-        size="lg"
-        label="Add File"
-        type="default"
-        data-qa="process-model-add-file"
-        onChange={(a: any) => {
-          if (a.selectedItem.text === 'New BPMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
-            );
-          } else if (a.selectedItem.text === 'Upload File') {
-            // Handled by parent component via prop
-            updateSelectedTab({ selectedIndex: 1 }); // Switch to Files tab
-            // Open file upload modal (handled by parent)
-            setShowFileUploadModal(true);
-          } else if (a.selectedItem.text === 'New DMN File') {
-            navigate(
-              `/editor/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
-            );
-          } else if (a.selectedItem.text === 'New JSON File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
-            );
-          } else if (a.selectedItem.text === 'New Markdown File') {
-            navigate(
-              `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
-            );
-          }
-        }}
-        items={items}
-        itemToString={(item: any) => (item ? item.text : '')}
-      />
+      <FormControl fullWidth>
+        <InputLabel id="add-file-select-label">Add File</InputLabel>
+        <Select
+          labelId="add-file-select-label"
+          label="Add File"
+          onChange={(event) => {
+            const selectedItem = event.target.value;
+            if (selectedItem === 'New BPMN File') {
+              navigate(
+                `/newui/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
+              );
+            } else if (selectedItem === 'Upload File') {
+              // Handled by parent component via prop
+              updateSelectedTab(1); // Switch to Files tab
+              // Open file upload modal (handled by parent)
+              setShowFileUploadModal(true);
+            } else if (selectedItem === 'New DMN File') {
+              navigate(
+                `/newui/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
+              );
+            } else if (selectedItem === 'New JSON File') {
+              navigate(
+                `/newui/process-models/${modifiedProcessModelId}/form?file_ext=json`,
+              );
+            } else if (selectedItem === 'New Markdown File') {
+              navigate(
+                `/newui/process-models/${modifiedProcessModelId}/form?file_ext=md`,
+              );
+            }
+          }}
+          value=""
+          displayEmpty
+        >
+          {items.map((item) => (
+            <MenuItem key={item} value={item}>
+              {item}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     );
   };
 
   return (
-    <Tabs selectedIndex={selectedTabIndex} onChange={updateSelectedTab}>
-      <TabList aria-label="List of tabs">
-        <Tab>About</Tab>
-        <Tab data-qa="process-model-files">Files</Tab>
-        <Tab data-qa="process-instance-list-link">My process instances</Tab>
-      </TabList>
-      <TabPanels>
-        <TabPanel>
-          {readmeFile && (
-            <ProcessModelReadmeArea
-              readmeFile={readmeFile}
+    <>
+      <Tabs
+        value={selectedTabIndex}
+        onChange={(event, newValue) => {
+          updateSelectedTab(newValue);
+        }}
+        aria-label="List of tabs"
+      >
+        <Tab value={0} label="About" />
+        <Tab value={1} label="Files" data-qa="process-model-files" />
+        <Tab
+          value={2}
+          label="My process instances"
+          data-qa="process-instance-list-link"
+        />
+      </Tabs>
+      <TabPanel value={selectedTabIndex} index={0}>
+        <ProcessModelReadmeArea
+          readmeFile={readmeFile}
+          ability={ability}
+          targetUris={targetUris}
+          modifiedProcessModelId={modifiedProcessModelId}
+        />
+      </TabPanel>
+      <TabPanel value={selectedTabIndex} index={1}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Can
+              I="POST"
+              a={targetUris.processModelFileCreatePath}
+              ability={ability}
+            >
+              {helpText}
+              <div className="with-bottom-margin">
+                Files
+                {processModel &&
+                  processModel.bpmn_version_control_identifier &&
+                  ` (revision ${processModel.bpmn_version_control_identifier})`}
+              </div>
+              {addFileComponent()}
+              <br />
+            </Can>
+            <ProcessModelFileList
+              processModel={processModel}
               ability={ability}
               targetUris={targetUris}
               modifiedProcessModelId={modifiedProcessModelId}
+              onDeleteFile={onDeleteFile}
+              onSetPrimaryFile={onSetPrimaryFile}
+              isTestCaseFile={isTestCaseFile}
             />
-          )}
-        </TabPanel>
-        <TabPanel>
-          <Grid condensed fullWidth className="megacondensed">
-            <Column md={6} lg={12} sm={4}>
-              <Can
-                I="POST"
-                a={targetUris.processModelFileCreatePath}
-                ability={ability}
-              >
-                {helpText}
-                <div className="with-bottom-margin">
-                  Files
-                  {processModel &&
-                    processModel.bpmn_version_control_identifier &&
-                    ` (revision ${processModel.bpmn_version_control_identifier})`}
-                </div>
-                {addFileComponent()}
-                <br />
-              </Can>
-              <ProcessModelFileList
-                processModel={processModel}
-                ability={ability}
-                targetUris={targetUris}
-                modifiedProcessModelId={modifiedProcessModelId}
-                onDeleteFile={onDeleteFile}
-                onSetPrimaryFile={onSetPrimaryFile}
-                isTestCaseFile={isTestCaseFile}
-              />
-            </Column>
           </Grid>
+        </Grid>
+      </TabPanel>
+      {selectedTabIndex === 2 && (
+        <TabPanel value={selectedTabIndex} index={2}>
+          <Can
+            I="POST"
+            a={targetUris.processInstanceListForMePath}
+            ability={ability}
+          >
+            <ProcessInstanceListTable
+              additionalReportFilters={[
+                {
+                  field_name: 'process_model_identifier',
+                  field_value: processModel.id,
+                },
+              ]}
+              perPageOptions={[2, 5, 25]}
+              showLinkToReport
+              variant="for-me"
+            />
+          </Can>
         </TabPanel>
-        <TabPanel>
-          {selectedTabIndex !== 2 ? null : (
-            <Can
-              I="POST"
-              a={targetUris.processInstanceListForMePath}
-              ability={ability}
-            >
-              <ProcessInstanceListTable
-                additionalReportFilters={[
-                  {
-                    field_name: 'process_model_identifier',
-                    field_value: processModel.id,
-                  },
-                ]}
-                perPageOptions={[2, 5, 25]}
-                showLinkToReport
-                variant="for-me"
-              />
-            </Can>
-          )}
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
+      )}
+    </>
   );
 }

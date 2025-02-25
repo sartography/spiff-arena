@@ -1,9 +1,8 @@
 import validator from '@rjsf/validator-ajv8';
 import { ComponentType, ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
-import { Button } from '@carbon/react';
+import { Button } from '@mui/material';
 import { Form as MuiForm } from '@rjsf/mui';
-import { Form as CarbonForm } from '../rjsf/carbon_theme';
 import { DATE_RANGE_DELIMITER } from '../config';
 import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
@@ -59,19 +58,16 @@ export default function CustomForm({
   noValidate = false,
   restrictedWidth = false,
   submitButtonText,
-  reactJsonSchemaForm = 'carbon',
+  reactJsonSchemaForm = 'mui',
   hideSubmitButton = false,
   bpmnEvent,
 }: OwnProps) {
-  let reactJsonSchemaFormTheme = reactJsonSchemaForm;
+  const reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
-    if (uiSchema['ui:theme'] === 'mui') {
-      reactJsonSchemaFormTheme = 'mui';
-    } else {
+    if (uiSchema['ui:theme'] !== 'mui') {
       console.error(
         `Unsupported theme: ${uiSchema['ui:theme']}. Defaulting to mui`,
       );
-      reactJsonSchemaFormTheme = 'mui';
     }
   }
 
@@ -92,7 +88,7 @@ export default function CustomForm({
   };
 
   const rjsfTemplates: any = {};
-  if (restrictedWidth && reactJsonSchemaFormTheme === 'carbon') {
+  if (restrictedWidth && reactJsonSchemaFormTheme === 'mui') {
     rjsfTemplates.ObjectFieldTemplate = ObjectFieldRestrictedGridTemplate;
   }
 
@@ -565,16 +561,7 @@ export default function CustomForm({
     templates: rjsfTemplates,
     omitExtraData: true,
   };
-  if (reactJsonSchemaFormTheme === 'carbon') {
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    return <CarbonForm {...formProps}>{childrenToUse}</CarbonForm>;
-  }
 
-  if (reactJsonSchemaFormTheme === 'mui') {
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
-  }
-
-  console.error(`Unsupported form type: ${reactJsonSchemaFormTheme}`);
-  return null;
+  // eslint-disable-next-line react/jsx-props-no-spreading
+  return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
 }

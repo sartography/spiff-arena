@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { FileUploader, Modal } from '@carbon/react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+} from '@mui/material';
+import SpiffTooltip from './SpiffTooltip';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -63,52 +71,70 @@ export default function ProcessModelFileUploadModal({
 
   const confirmOverwriteFileDialog = () => {
     return (
-      <Modal
-        danger
+      <Dialog
         open={showOverwriteConfirmationPrompt}
-        data-qa="file-overwrite-modal-confirmation-dialog"
-        modalHeading={`Overwrite the file: ${duplicateFilename}`}
-        modalLabel="Overwrite file?"
-        primaryButtonText="Yes"
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleOverwriteFileCancel}
-        onRequestSubmit={handleOverwriteFileConfirm}
-        onRequestClose={handleOverwriteFileCancel}
-      />
+        onClose={handleOverwriteFileCancel}
+        aria-labelledby="overwrite-dialog-title"
+      >
+        <DialogTitle id="overwrite-dialog-title">Overwrite file?</DialogTitle>
+        <DialogContent>
+          <Typography>Overwrite the file: {duplicateFilename}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleOverwriteFileCancel} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleOverwriteFileConfirm}
+            color="primary"
+            autoFocus
+          >
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   };
 
   return (
     <>
       {confirmOverwriteFileDialog()}
-      <Modal
-        data-qa="modal-upload-file-dialog"
+      <Dialog
         open={showFileUploadModal}
-        modalHeading="Upload File"
-        primaryButtonText="Upload"
-        primaryButtonDisabled={filesToUpload === null}
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleFileUploadCancel}
-        onRequestClose={handleFileUploadCancel}
-        onRequestSubmit={handleLocalFileUpload}
+        onClose={handleFileUploadCancel}
+        aria-labelledby="upload-dialog-title"
       >
-        <FileUploader
-          labelTitle="Upload files"
-          labelDescription="Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are supported."
-          buttonLabel="Add file"
-          buttonKind="primary"
-          size="md"
-          filenameStatus="edit"
-          role="button"
-          accept={['.bpmn', '.dmn', '.json', '.md']}
-          disabled={false}
-          iconDescription="Delete file"
-          name=""
-          multiple={false}
-          onDelete={() => setFilesToUpload(null)}
-          onChange={(event: any) => setFilesToUpload(event.target.files)}
-        />
-      </Modal>
+        <DialogTitle id="upload-dialog-title">Upload File</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
+            supported.
+          </Typography>
+          <SpiffTooltip title="Delete file">
+            <input
+              type="file"
+              accept=".bpmn,.dmn,.json,.md"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setFilesToUpload(
+                  event.target.files ? Array.from(event.target.files) : null,
+                )
+              }
+            />
+          </SpiffTooltip>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFileUploadCancel} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleLocalFileUpload}
+            color="primary"
+            disabled={filesToUpload === null}
+          >
+            Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

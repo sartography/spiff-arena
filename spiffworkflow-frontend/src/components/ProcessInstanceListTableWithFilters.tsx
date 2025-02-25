@@ -57,6 +57,10 @@ import {
   FilterDisplayTypeMapping,
   SpiffTableHeader,
 } from '../interfaces';
+
+// MUI
+// import ProcessModelSearch from './ProcessModelSearch';
+
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
@@ -564,11 +568,10 @@ export default function ProcessInstanceListTableWithFilters({
           title={`Perspective: ${titleOperation}`}
           onClose={() => setProcessInstanceReportJustSaved(null)}
         >
-          <span>{`'${
-            processInstanceReportSelection
+          <span>{`'${processInstanceReportSelection
               ? processInstanceReportSelection.identifier
               : ''
-          }'`}</span>
+            }'`}</span>
         </Notification>
       );
     }
@@ -1105,9 +1108,8 @@ export default function ProcessInstanceListTableWithFilters({
     const modalHeading =
       reportColumnFormMode === 'new'
         ? 'Add Column'
-        : `Edit ${
-            reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
-          } column`;
+        : `Edit ${reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
+        } column`;
     return (
       <Modal
         open={showReportColumnForm}

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// @ts-ignore
 import {
   Button,
-  ComboBox,
-  Form,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  TextareaAutosize,
   Stack,
-  TextInput,
-  TextArea,
-} from '@carbon/react';
+} from '@mui/material';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreType } from '../interfaces';
 import {
@@ -67,10 +68,10 @@ export default function DataStoreForm({
     const location = dataStoreLocation();
     if (location !== '/') {
       navigate(
-        `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
+        `/newui/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
       );
     } else {
-      navigate(`/process-groups`);
+      navigate(`/newui/process-groups`);
     }
   };
 
@@ -152,15 +153,11 @@ export default function DataStoreForm({
     updateDataStore(updateDict);
   };
 
-  const onTypeChanged = (newType: any) => {
+  const onTypeChanged = (event: any) => {
     setTypeInvalid(false);
-    const newTypeSelection = newType.selectedItem;
-    if (
-      newTypeSelection &&
-      typeof newTypeSelection === 'object' &&
-      'type' in newTypeSelection
-    ) {
-      const updateDict = { type: newTypeSelection.type };
+    const newTypeSelection = event.target.value;
+    if (newTypeSelection) {
+      const updateDict = { type: newTypeSelection };
       updateDataStore(updateDict);
     }
     setSelectedDataStoreType(newTypeSelection);
@@ -186,30 +183,35 @@ export default function DataStoreForm({
 
   const formElements = () => {
     const textInputs = [
-      <TextInput
+      <TextField
         id="data-store-name"
         data-qa="data-store-name-input"
         name="name"
-        invalidText="Name is required."
-        invalid={nameInvalid}
-        labelText="Name*"
+        error={nameInvalid}
+        helperText={nameInvalid ? 'Name is required.' : ''}
+        label="Name*"
         value={dataStore.name}
         onChange={(event: any) => onNameChanged(event.target.value)}
       />,
     ];
 
     textInputs.push(
-      <TextInput
+      <TextField
         id="data-store-identifier"
         name="id"
-        readonly={mode === 'edit'}
-        invalidText="Identifier is required and must be all lowercase characters and hyphens."
-        invalid={identifierInvalid}
-        labelText="Identifier*"
+        InputProps={{
+          readOnly: mode === 'edit',
+        }}
+        error={identifierInvalid}
+        helperText={
+          identifierInvalid
+            ? 'Identifier is required and must be all lowercase characters and hyphens.'
+            : ''
+        }
+        label="Identifier*"
         value={dataStore.id}
         onChange={(event: any) => {
           updateDataStore({ id: event.target.value });
-          // was invalid, and now valid
           if (identifierInvalid && hasValidIdentifier(event.target.value)) {
             setIdentifierInvalid(false);
           }
@@ -220,49 +222,60 @@ export default function DataStoreForm({
 
     if (mode === 'edit') {
       textInputs.push(
-        <TextInput
+        <TextField
           id="data-store-type"
           name="data-store-type"
-          readonly
-          labelText="Type*"
+          InputProps={{
+            readOnly: true,
+          }}
+          label="Type*"
           value={dataStoreTypeDisplayString(selectedDataStoreType)}
         />,
       );
     } else {
       textInputs.push(
-        <ComboBox
-          onChange={onTypeChanged}
-          id="data-store-type-select"
-          data-qa="data-store-type-selection"
-          items={dataStoreTypes}
-          itemToString={dataStoreTypeDisplayString}
-          titleText="Type*"
-          invalidText="Type is required."
-          invalid={typeInvalid}
-          placeholder="Choose the data store type"
-          selectedItem={selectedDataStoreType}
-        />,
+        <FormControl fullWidth error={typeInvalid}>
+          <InputLabel id="data-store-type-select-label">Type*</InputLabel>
+          <Select
+            labelId="data-store-type-select-label"
+            id="data-store-type-select"
+            value={selectedDataStoreType ? selectedDataStoreType.type : ''}
+            onChange={onTypeChanged}
+            label="Type*"
+          >
+            {dataStoreTypes.map((type) => (
+              <MenuItem key={type.type} value={type.type}>
+                {dataStoreTypeDisplayString(type)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>,
       );
     }
 
     textInputs.push(
-      <TextArea
+      <TextField
         id="data-store-schema"
         name="schema"
-        invalidText="Schema is required and must be valid JSON."
-        invalid={schemaInvalid}
-        labelText="Schema*"
+        error={schemaInvalid}
+        helperText={
+          schemaInvalid ? 'Schema is required and must be valid JSON.' : ''
+        }
+        label="Schema*"
+        multiline
+        minRows={3}
         value={dataStore.schema}
         onChange={(event: any) => onSchemaChanged(event.target.value)}
       />,
     );
 
     textInputs.push(
-      <TextArea
+      <TextareaAutosize
         id="data-store-description"
         name="description"
-        labelText="Description"
-        value={dataStore.description}
+        aria-label="Description"
+        placeholder="Description"
+        value={dataStore.description ?? ''}
         onChange={(event: any) =>
           updateDataStore({ description: event.target.value })
         }
@@ -273,15 +286,19 @@ export default function DataStoreForm({
   };
 
   const formButtons = () => {
-    return <Button type="submit">Submit</Button>;
+    return (
+      <Button type="submit" variant="contained">
+        Submit
+      </Button>
+    );
   };
 
   return (
-    <Form onSubmit={handleFormSubmission}>
-      <Stack gap={5}>
+    <form onSubmit={handleFormSubmission}>
+      <Stack spacing={2}>
         {formElements()}
         {formButtons()}
       </Stack>
-    </Form>
+    </form>
   );
 }

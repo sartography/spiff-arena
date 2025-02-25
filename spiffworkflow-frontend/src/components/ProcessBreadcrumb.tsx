@@ -3,7 +3,7 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import {
   HotCrumbItem,
   HotCrumbItemArray,
@@ -11,8 +11,8 @@ import {
   ProcessGroup,
   ProcessGroupLite,
   ProcessModel,
-} from '../interfaces';
-import HttpService from '../services/HttpService';
+} from '../../interfaces';
+import HttpService from '../../services/HttpService';
 
 // it is recommend to use a state for hotCrumbs so ProcessBreadCrumb does not attmept
 // to re-render. This is because javascript cannot tell if an array or object has changed
@@ -92,22 +92,24 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
           ) {
             const breadcrumbs = processEntity.parent_groups.map(
               (parentGroup: ProcessGroupLite) => {
-                const fullUrl = `/process-groups/${modifyProcessIdentifierForPathParam(
+                const fullUrl = `/newui/process-groups/${modifyProcessIdentifierForPathParam(
                   parentGroup.id,
                 )}`;
                 return (
                   <Link key={parentGroup.id} to={fullUrl}>
-                    {parentGroup.display_name}
+                    <Typography color="primary.main">
+                      {parentGroup.display_name}
+                    </Typography>
                   </Link>
                 );
               },
             );
 
             if (crumb.linkLastItem) {
-              let apiBase = '/process-groups';
+              let apiBase = '/newui/process-groups';
               let dataQaTag = '';
               if (crumb.entityType.startsWith('process-model')) {
-                apiBase = '/process-models';
+                apiBase = '/newui/process-models';
                 dataQaTag = 'process-model-breadcrumb-link';
               }
               const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
@@ -115,7 +117,9 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               )}`;
               breadcrumbs.push(
                 <Link key={processEntity.id} to={fullUrl} data-qa={dataQaTag}>
-                  {processEntity.display_name}
+                  <Typography color="primary.main">
+                    {processEntity.display_name}
+                  </Typography>
                 </Link>,
               );
             } else {
@@ -140,7 +144,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             if (url && valueLabel) {
               return (
                 <Link key={valueLabel} to={url}>
-                  {valueLabel}
+                  <Typography color="primary.main">{valueLabel}</Typography>
                 </Link>
               );
             }

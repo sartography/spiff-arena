@@ -1,7 +1,5 @@
-import {
-  ComboBox,
-  // @ts-ignore
-} from '@carbon/react';
+import React from 'react';
+import { Autocomplete, TextField } from '@mui/material';
 import { truncateString } from '../helpers';
 import { ProcessReference } from '../interfaces';
 
@@ -30,26 +28,37 @@ export default function ProcessSearch({
         .includes(inputValue.toLowerCase())
     );
   };
+
   return (
     <div style={{ width: '100%', height }}>
-      <ComboBox
-        onChange={onChange}
+      <Autocomplete
+        onChange={(_, value) => onChange(value)}
         id="process-model-select"
         data-qa="process-model-selection"
-        items={processes}
-        itemToString={(process: ProcessReference) => {
+        options={processes}
+        getOptionLabel={(process: ProcessReference) => {
           if (process) {
             return `${process.display_name} (${truncateString(
               process.identifier,
               75,
             )})`;
           }
-          return null;
+          return '';
         }}
-        shouldFilterItem={shouldFilter}
-        placeholder="Choose a process"
-        titleText={titleText}
-        selectedItem={selectedItem}
+        filterOptions={(options, state) =>
+          options.filter((option) =>
+            shouldFilter({ item: option, inputValue: state.inputValue }),
+          )
+        }
+        renderInput={(params) => (
+          <TextField
+            label={titleText}
+            placeholder="Choose a process"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ ...params.InputProps }}
+          />
+        )}
+        value={selectedItem || null}
       />
     </div>
   );

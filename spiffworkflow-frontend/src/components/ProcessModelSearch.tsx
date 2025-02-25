@@ -1,7 +1,6 @@
-import {
-  ComboBox,
-  // @ts-ignore
-} from '@carbon/react';
+import React from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import { ProcessGroupLite, ProcessModel } from '../interfaces';
 
 type OwnProps = {
@@ -63,22 +62,36 @@ export default function ProcessModelSearch({
       return processModelLowerCase.includes((i || '').toLowerCase());
     });
   };
+
   return (
-    <ComboBox
-      onChange={onChange}
+    <Autocomplete
+      onChange={(_, value) => onChange(value)}
       id="process-model-select"
       data-qa="process-model-selection"
-      items={processModels}
-      itemToString={(processModel: ProcessModel) => {
+      options={processModels}
+      getOptionLabel={(processModel: ProcessModel) => {
         if (processModel) {
           return getProcessModelLabelForDisplay(processModel);
         }
-        return null;
+        return '';
       }}
-      shouldFilterItem={shouldFilterProcessModel}
-      placeholder="Choose a process model"
-      titleText={titleText}
-      selectedItem={selectedItem}
+      filterOptions={(options, state) =>
+        options.filter((option) =>
+          shouldFilterProcessModel({
+            item: option,
+            inputValue: state.inputValue,
+          }),
+        )
+      }
+      renderInput={(params) => (
+        <TextField
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...params}
+          label={titleText}
+          placeholder="Choose a process model"
+        />
+      )}
+      value={selectedItem || null}
       className="process-model-search-combobox"
     />
   );

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@carbon/react';
+import Button from '@mui/material/Button'; // Updated import for MUI Button
 import { Can } from '@casl/react';
 import { useState } from 'react';
 import {
@@ -98,11 +98,11 @@ export default function ProcessInstanceRun({
     const processInstanceId = processInstance.id;
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
+        `/newui/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/progress`,
       );
     } else {
       navigate(
-        `/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
+        `/newui/process-instances/for-me/${modifiedProcessModelId}/${processInstanceId}/interstitial`,
       );
     }
   };
@@ -145,7 +145,8 @@ export default function ProcessInstanceRun({
         onClick={processInstanceCreateAndRun}
         className={className}
         disabled={disableStartButton}
-        size="md"
+        variant="contained" // MUI specific prop
+        size="medium" // MUI specific prop
       >
         {buttonText}
       </Button>
