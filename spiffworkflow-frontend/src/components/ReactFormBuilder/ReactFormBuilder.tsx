@@ -253,32 +253,38 @@ export default function ReactFormBuilder({
   };
 
   const updateStrSchema = (value: string) => {
-    if (schemaEditorRef && schemaEditorRef.current) {
-      // @ts-ignore
-      schemaEditorRef.current.setValue(value);
-    }
+    updateStrFileDebounce(value);
+    setStrSchema(value);
+    // if (schemaEditorRef && schemaEditorRef.current) {
+    //   // @ts-ignore
+    //   schemaEditorRef.current.setValue(value);
+    // }
   };
 
   const updateStrUi = (value: string) => {
-    if (uiEditorRef && uiEditorRef.current) {
-      // @ts-ignore
-      uiEditorRef.current.setValue(value);
-    }
+    // if (uiEditorRef && uiEditorRef.current) {
+    //   // @ts-ignore
+    //   uiEditorRef.current.setValue(value);
+    // }
+    updateStrUIFileDebounce(value);
+    setStrUI(value);
   };
 
   const updateStrData = (value: string) => {
-    // Only update the data if it is different from what is already there, this prevents
-    // cursor from jumping to the top each time you type a letter.
-    if (
-      dataEditorRef &&
-      dataEditorRef.current &&
-      // @ts-ignore
-      value !== dataEditorRef.current.getValue()
-    ) {
-      setStrFormData(value);
-      // @ts-ignore
-      dataEditorRef.current.setValue(value);
-    }
+    // // Only update the data if it is different from what is already there, this prevents
+    // // cursor from jumping to the top each time you type a letter.
+    // if (
+    //   dataEditorRef &&
+    //   dataEditorRef.current &&
+    //   // @ts-ignore
+    //   value !== dataEditorRef.current.getValue()
+    // ) {
+    //   setStrFormData(value);
+    //   // @ts-ignore
+    //   dataEditorRef.current.setValue(value);
+    // }
+    updateFormDataFileDebounce(value);
+    setStrFormData(value);
   };
 
   function updateData(newData: object) {
