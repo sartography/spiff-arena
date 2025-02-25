@@ -8,6 +8,7 @@ import {
   TableCell,
   Modal,
   Stack,
+  Box,
 } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import { TimeAgo } from '../helpers/timeago';
@@ -178,8 +179,23 @@ export default function TaskListTable({
           onClose={() => setFormSubmissionTask(null)}
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <div className="completed-task-modal">
+          <Box
+            sx={{
+              width: '80%',
+              maxWidth: 800,
+              bgcolor: 'background.paper',
+              border: '2px solid #000',
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
             <h2 id="modal-title">{formSubmissionTask.name_for_display}</h2>
             <div className="indented-content explanatory-message">
               ✅ You completed this task{' '}
@@ -205,7 +221,7 @@ export default function TaskListTable({
               {/* this hides the submit button */}
               {true}
             </CustomForm>
-          </div>
+          </Box>
         </Modal>
       );
     }

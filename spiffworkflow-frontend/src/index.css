@@ -1025,24 +1025,6 @@ div.onboarding {
   margin-bottom: 2rem;
 }
 
-/* makde the completed user form modal more readable */
-.completed-task-modal .cds--modal-container {
-  background-color: #ffffff;
-}
-
-.completed-task-modal .cds--text-input:disabled,
-.completed-task-modal .cds--text-area:disabled,
-.completed-task-modal .cds--date-picker__input:disabled,
-.completed-task-modal .cds--select-input:disabled,
-.completed-task-modal .cds--select-input:hover:disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
-  background-color: var(--cds-field);
-}
-
-.completed-task-modal .cds--form__helper-text--disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
-}
-
 .process-model-file-table {
   width: 100%;
   table-layout: fixed;
