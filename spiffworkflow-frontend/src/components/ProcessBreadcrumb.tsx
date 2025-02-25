@@ -3,7 +3,7 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { modifyProcessIdentifierForPathParam } from '../../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   HotCrumbItem,
   HotCrumbItemArray,
@@ -11,8 +11,8 @@ import {
   ProcessGroup,
   ProcessGroupLite,
   ProcessModel,
-} from '../../interfaces';
-import HttpService from '../../services/HttpService';
+} from '../interfaces';
+import HttpService from '../services/HttpService';
 
 // it is recommend to use a state for hotCrumbs so ProcessBreadCrumb does not attmept
 // to re-render. This is because javascript cannot tell if an array or object has changed
@@ -39,7 +39,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
-            onUnauthorized: () => {},
+            onUnauthorized: () => { },
             failureCallback: (error: any) =>
               console.error(
                 `Failed to load process model for breadcrumb. Error was: ${error.message}`,
@@ -51,7 +51,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               entityToExplode as string,
             )}`,
             successCallback: setProcessEntity,
-            onUnauthorized: () => {},
+            onUnauthorized: () => { },
             failureCallback: (error: any) =>
               console.error(
                 `Failed to load process group for breadcrumb. Error was: ${error.message}`,

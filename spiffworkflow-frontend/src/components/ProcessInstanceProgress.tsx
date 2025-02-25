@@ -7,9 +7,9 @@ import {
   ProcessInstanceProgressResponse,
   ProcessInstanceTask,
   TaskInstructionForEndUser,
-} from '../../interfaces';
-import { HUMAN_TASK_TYPES, refreshAtInterval } from '../../helpers';
-import HttpService from '../../services/HttpService';
+} from '../interfaces';
+import { HUMAN_TASK_TYPES, refreshAtInterval } from '../helpers';
+import HttpService from '../services/HttpService';
 import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {

@@ -2,7 +2,7 @@ import { Button, Paper, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
-import { modifyProcessIdentifierForPathParam } from '../../../helpers';
+import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { getStorageValue } from '../../services/LocalStorageService';
 import { ProcessModelAction } from '../../interfaces';
 

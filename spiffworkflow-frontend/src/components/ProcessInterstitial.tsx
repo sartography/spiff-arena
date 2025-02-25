@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Alert, Box, CircularProgress } from '@mui/material';
-import { BACKEND_BASE_URL } from '../../config';
-import { getBasicHeaders } from '../../services/HttpService';
+import { BACKEND_BASE_URL } from '../config';
+import { getBasicHeaders } from '../services/HttpService';
 
 import InstructionsForEndUser from './InstructionsForEndUser';
-import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
-import useAPIError from '../../hooks/UseApiError';
-import { HUMAN_TASK_TYPES } from '../../helpers';
+import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
+import useAPIError from '../hooks/UseApiError';
+import { HUMAN_TASK_TYPES } from '../helpers';
 
 type OwnProps = {
   processInstanceId: number;

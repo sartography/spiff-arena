@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ProcessGroup, ProcessGroupLite } from '../../interfaces';
-import HttpService from '../../services/HttpService';
+import { ProcessGroup, ProcessGroupLite } from '../interfaces';
+import HttpService from '../services/HttpService';
 
 /**
  * Grab Process Groups using HttpService from the Spiff API.

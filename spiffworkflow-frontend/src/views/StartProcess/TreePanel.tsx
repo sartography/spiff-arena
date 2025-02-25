@@ -3,7 +3,7 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { ProcessGroup } from '../../../interfaces';
+import { ProcessGroup } from '../../interfaces';
 
 export const SHOW_FAVORITES = 'SHOW_FAVORITES';
 

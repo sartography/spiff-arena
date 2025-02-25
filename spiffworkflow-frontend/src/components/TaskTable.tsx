@@ -18,9 +18,9 @@ import {
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
 import SpiffTooltip from './SpiffTooltip';
-import { ProcessInstance, ProcessInstanceTask } from '../../interfaces';
-import UserService from '../../services/UserService';
-import { TimeAgo } from '../../helpers/timeago';
+import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
+import UserService from '../services/UserService';
+import { TimeAgo } from '../helpers/timeago';
 import DateAndTimeService from '../services/DateAndTimeService';
 
 type TaskTableProps = {

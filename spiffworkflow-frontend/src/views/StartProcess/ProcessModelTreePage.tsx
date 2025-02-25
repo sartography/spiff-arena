@@ -31,7 +31,7 @@ import {
   getStorageValue,
 } from '../../services/LocalStorageService';
 import { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
-import { modifyProcessIdentifierForPathParam } from '../../../helpers';
+import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import {
   PermissionsToCheck,
   ProcessGroup,
