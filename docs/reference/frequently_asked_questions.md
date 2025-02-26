@@ -561,5 +561,32 @@ Users need to change task data or adjust token positions in running processes. T
 - Modifying data objects directly is not supported.
 - BPMN diagram changes cannot be made during runtime.
 
+### **49: Running SpiffWorkflow on a Custom Hostname in Docker**
+**Q:** How do I change "localhost" to a custom hostname in SpiffWorkflow's Docker setup?
+
+**A:**   
+By default, the **Docker Compose** setup for SpiffWorkflow (as described in [this guide](https://www.spiffworkflow.org/posts/articles/get_started_docker/)) runs on `localhost`. If you want to access the environment from another machine on the same network, you need to change `localhost` to a custom hostname (e.g., `mycomputer1`).  
+
+When attempting to modify `docker-compose.yml` by replacing `localhost` with `mycomputer1`, the setup fails with the following error after running `docker compose down && docker compose up --build`:  
+
+```
+Server error
+We are sorry, but our service is temporarily unavailable due to technical difficulties. Please bear with us while we work to resolve the issue. If the problem persists, please contact the site administrator.
+```
+
+To successfully change the hostname from `localhost` to a custom name:  
+
+1. **Clone the Arena Compose Repository:**  
+   ```sh
+   git clone https://github.com/sartography/arena-compose-postgres
+   ```
+
+2. **Run Docker Compose with the updated hostname:**  
+   ```sh
+   SPIFFWORKFLOW_PROTOCOL=http SPIFFWORKFLOW_HOST=mycomputer1 SPIFFWORKFLOW_PORT=3006 docker compose up
+   ```
+
+This allows SpiffWorkflow to run on `mycomputer1` instead of `localhost`, making it accessible from other machines on the network.
+
 ```{tags} how_to_guide
 ```
