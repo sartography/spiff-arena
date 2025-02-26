@@ -35,7 +35,7 @@ import {
   SettingsApplicationsSharp,
   Extension,
 } from '@mui/icons-material';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import appVersionInfo from '../helpers/appVersionInfo';
 import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
 import UserService from '../services/UserService';
@@ -79,7 +79,6 @@ function SideNav({
   setAdditionalNavElement,
   extensionUxElements,
 }: OwnProps) {
-  const navigate = useNavigate();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
 
   const location = useLocation();
