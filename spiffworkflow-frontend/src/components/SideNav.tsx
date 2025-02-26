@@ -16,6 +16,7 @@ import {
   Paper,
   Link as MuiLink,
   useMediaQuery,
+  Chip,
 } from '@mui/material';
 import {
   Home,
@@ -234,6 +235,9 @@ function SideNav({
     );
   };
 
+  // Determine the environment (for demonstration purposes, this is hardcoded)
+  const environment = 'Production'; // This could be dynamically set based on your environment
+
   return (
     <>
       <Box
@@ -358,6 +362,11 @@ function SideNav({
               {isDark ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
           </SpiffTooltip>
+          <Chip
+            label={`Environment: ${environment}`}
+            color="primary"
+            sx={{ mt: isCollapsed ? 1 : 0 }}
+          />
           <SpiffTooltip
             title="Switch to Classic UI"
             placement={isCollapsed ? 'right' : 'top'}
