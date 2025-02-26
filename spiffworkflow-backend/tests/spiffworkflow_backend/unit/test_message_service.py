@@ -1,4 +1,3 @@
-import random
 import time
 
 from flask import Flask
@@ -19,6 +18,7 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+import secrets
 
 
 class TestMessageService(BaseTest):
@@ -41,7 +41,7 @@ class TestMessageService(BaseTest):
         #     "amount": "100.00",
         # }
 
-        uid = random.randint(1, 100000)
+        uid = secrets.SystemRandom().randint(1, 100000)
         payload = {"uid": uid}
 
         # Load up the definition for the receiving process
