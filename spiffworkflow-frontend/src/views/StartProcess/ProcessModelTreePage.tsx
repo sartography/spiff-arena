@@ -435,14 +435,13 @@ export default function ProcessModelTreePage({
       <Typography variant="h1" sx={{ mb: 2 }}>
         {processModelAction === ProcessModelAction.StartProcess
           ? 'Start new process'
-          : 'Process Groups'}
+          : 'Processes'}
       </Typography>
       <Container
         maxWidth={false}
         sx={{
           padding: '0px !important',
-          overflow: 'hidden',
-          height: '100vh',
+          height: '100%',
         }}
         id="list-container"
       >
@@ -450,7 +449,7 @@ export default function ProcessModelTreePage({
           gap={2}
           sx={{
             width: '100%',
-            height: '100vh',
+            height: '100%',
             display: 'flex',
             alignItems: 'center',
           }}
@@ -608,27 +607,25 @@ export default function ProcessModelTreePage({
                     {currentProcessGroup.description}
                   </Stack>
                 )}
-                {currentProcessGroup && (
-                  <Accordion
-                    expanded={modelsExpanded}
-                    onChange={() => setModelsExpanded((prev) => !prev)}
+                <Accordion
+                  expanded={modelsExpanded}
+                  onChange={() => setModelsExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Process Models Accordion"
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      aria-controls="Process Models Accordion"
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        pr: 2,
+                      }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          width: '100%',
-                          pr: 2,
-                        }}
-                      >
-                        <Typography>
-                          Process Models ({models.length})
-                        </Typography>
+                      <Typography>Process Models ({models.length})</Typography>
+                      {currentProcessGroup && (
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
@@ -637,34 +634,34 @@ export default function ProcessModelTreePage({
                         >
                           <Add />
                         </IconButton>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={gridProps}>
-                        {models.map((model: Record<string, any>) => (
-                          <ProcessModelCard
-                            key={model.id}
-                            model={model}
-                            stream={clickStream}
-                            lastSelected={currentProcessGroup || {}}
-                            processModelAction={processModelAction}
-                            onStartProcess={() => {
-                              if (setNavElementCallback) {
-                                // remove the TreePanel from the SideNav when starting a process
-                                setNavElementCallback(null);
-                              }
-                            }}
-                            onViewProcess={() => {
-                              if (setNavElementCallback) {
-                                setNavElementCallback(null);
-                              }
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
+                      )}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {models.map((model: Record<string, any>) => (
+                        <ProcessModelCard
+                          key={model.id}
+                          model={model}
+                          stream={clickStream}
+                          lastSelected={currentProcessGroup || {}}
+                          processModelAction={processModelAction}
+                          onStartProcess={() => {
+                            if (setNavElementCallback) {
+                              // remove the TreePanel from the SideNav when starting a process
+                              setNavElementCallback(null);
+                            }
+                          }}
+                          onViewProcess={() => {
+                            if (setNavElementCallback) {
+                              setNavElementCallback(null);
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
                 <Accordion
                   expanded={groupsExpanded}
                   onChange={() => setGroupsExpanded((prev) => !prev)}

@@ -85,7 +85,7 @@ function SideNav({
 
   // Determine the selected tab based on the current route
   let selectedTab: string | null = null;
-  if (location.pathname === '/') {
+  if (location.pathname === '/' || location.pathname === '/started-by-me') {
     selectedTab = routeIdentifiers.HOME;
   } else if (location.pathname === '/startprocess') {
     selectedTab = routeIdentifiers.START_NEW_PROCESS;
@@ -358,22 +358,24 @@ function SideNav({
               {isDark ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
           </SpiffTooltip>
-          <SpiffTooltip
-            title="Environment"
-            placement={isCollapsed ? 'right' : 'top'}
-          >
-            {/* Use a Box to wrap the Chip and vertically align it */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Chip
-                label={SPIFF_ENVIRONMENT}
-                color="primary"
-                size="small"
-                sx={{
-                  cursor: 'default',
-                }}
-              />
-            </Box>
-          </SpiffTooltip>
+          {SPIFF_ENVIRONMENT && (
+            <SpiffTooltip
+              title="Environment"
+              placement={isCollapsed ? 'right' : 'top'}
+            >
+              {/* Use a Box to wrap the Chip and vertically align it */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Chip
+                  label={SPIFF_ENVIRONMENT}
+                  color="primary"
+                  size="small"
+                  sx={{
+                    cursor: 'default',
+                  }}
+                />
+              </Box>
+            </SpiffTooltip>
+          )}
         </Box>
       </Box>
       {showUserProfile && (

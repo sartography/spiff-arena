@@ -27,6 +27,7 @@ function InstancesStartedByMe({
       {
         field_name: 'with_oldest_open_task',
         field_value: true,
+        operator: 'equals',
       },
     ];
   }, []);

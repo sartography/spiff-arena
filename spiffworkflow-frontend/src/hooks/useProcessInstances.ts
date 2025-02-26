@@ -7,6 +7,7 @@ import {
   ProcessInstance,
   ReportMetadata,
   ReportFilter,
+  ProcessInstanceReport,
 } from '../interfaces';
 
 type OwnProps = {
@@ -44,37 +45,50 @@ const useProcessInstances = ({
     setReportMetadata(result.report_metadata);
   }, []);
 
-  const getProcessInstances = useCallback(() => {
-    const reportMetadataToUse: ReportMetadata = {
-      columns: [],
-      filter_by: [],
-      order_by: [],
-    };
+  const getProcessInstances = useCallback(
+    (currentReportMetadata: ReportMetadata | null | undefined = null) => {
+      let reportMetadataToUse = currentReportMetadata;
+      if (!reportMetadataToUse) {
+        reportMetadataToUse = {
+          columns: [],
+          filter_by: [],
+          order_by: [],
+        };
+      }
 
-    if (additionalReportFilters) {
-      additionalReportFilters.forEach((arf: ReportFilter) => {
-        if (!reportMetadataToUse.filter_by.includes(arf)) {
-          reportMetadataToUse.filter_by.push(arf);
-        }
+      if (additionalReportFilters) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          const existingFilterIndex = reportMetadataToUse.filter_by.findIndex(
+            (existing) => existing.field_name === arf.field_name,
+          );
+          if (existingFilterIndex === -1) {
+            reportMetadataToUse.filter_by.push(arf);
+          } else {
+            reportMetadataToUse.filter_by[existingFilterIndex] = arf;
+          }
+        });
+      }
+
+      const queryParamString = `per_page=1000&page=1`;
+      HttpService.makeCallToBackend({
+        path: `/process-instances?${queryParamString}`,
+        successCallback: setProcessInstancesFromResult,
+        httpMethod: 'POST',
+        failureCallback: stopRefreshing,
+        onUnauthorized: stopRefreshing,
+        postBody: {
+          report_metadata: reportMetadataToUse,
+        },
       });
-    }
-
-    const queryParamString = `per_page=1000&page=1`;
-    HttpService.makeCallToBackend({
-      path: `/process-instances?${queryParamString}`,
-      successCallback: setProcessInstancesFromResult,
-      httpMethod: 'POST',
-      failureCallback: stopRefreshing,
-      onUnauthorized: stopRefreshing,
-      postBody: {
-        report_metadata: reportMetadataToUse,
-      },
-    });
-  }, [additionalReportFilters, setProcessInstancesFromResult, stopRefreshing]);
+    },
+    [additionalReportFilters, setProcessInstancesFromResult, stopRefreshing],
+  );
 
   useEffect(() => {
-    const setReportMetadataFromReport = (_processInstanceReport: any) => {
-      getProcessInstances();
+    const setReportMetadataFromReport = (
+      processInstanceReport: ProcessInstanceReport,
+    ) => {
+      getProcessInstances(processInstanceReport.report_metadata);
     };
 
     const checkForReportAndRun = () => {
