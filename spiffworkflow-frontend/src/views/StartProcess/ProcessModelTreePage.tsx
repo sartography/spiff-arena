@@ -30,7 +30,6 @@ import {
   SPIFF_FAVORITES,
   getStorageValue,
 } from '../../services/LocalStorageService';
-import { Crumb, SPIFF_ID } from './SpiffBreadCrumbs';
 import {
   PermissionsToCheck,
   ProcessGroup,
@@ -47,6 +46,9 @@ import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
 import HttpService from '../../services/HttpService';
 import DataStoreCard from '../../components/DataStoreCard';
+
+const SPIFF_ID = 'spifftop';
+type Crumb = { id: string; displayName: string };
 
 type OwnProps = {
   setNavElementCallback?: Function;
@@ -504,7 +506,6 @@ export default function ProcessModelTreePage({
                   <Typography variant="caption">Favorites</Typography>
                 </Stack>
               )}
-              {/* <SpiffBreadCrumbs crumbs={crumbs} callback={handleCrumbClick} /> */}
             </Stack>
             <Card>
               <CardContent>
