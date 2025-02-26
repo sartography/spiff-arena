@@ -608,59 +608,63 @@ export default function ProcessModelTreePage({
                     {currentProcessGroup.description}
                   </Stack>
                 )}
-                <Accordion
-                  expanded={modelsExpanded}
-                  onChange={() => setModelsExpanded((prev) => !prev)}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="Process Models Accordion"
+                {currentProcessGroup && (
+                  <Accordion
+                    expanded={modelsExpanded}
+                    onChange={() => setModelsExpanded((prev) => !prev)}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        pr: 2,
-                      }}
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls="Process Models Accordion"
                     >
-                      <Typography>Process Models ({models.length})</Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => e.stopPropagation()}
-                        data-qa="add-process-model-button"
-                        href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup ? currentProcessGroup.id : '')}/new`}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          pr: 2,
+                        }}
                       >
-                        <Add />
-                      </IconButton>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={gridProps}>
-                      {models.map((model: Record<string, any>) => (
-                        <ProcessModelCard
-                          key={model.id}
-                          model={model}
-                          stream={clickStream}
-                          lastSelected={currentProcessGroup || {}}
-                          processModelAction={processModelAction}
-                          onStartProcess={() => {
-                            if (setNavElementCallback) {
-                              // remove the TreePanel from the SideNav when starting a process
-                              setNavElementCallback(null);
-                            }
-                          }}
-                          onViewProcess={() => {
-                            if (setNavElementCallback) {
-                              setNavElementCallback(null);
-                            }
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
+                        <Typography>
+                          Process Models ({models.length})
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          data-qa="add-process-model-button"
+                          href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                        >
+                          <Add />
+                        </IconButton>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={gridProps}>
+                        {models.map((model: Record<string, any>) => (
+                          <ProcessModelCard
+                            key={model.id}
+                            model={model}
+                            stream={clickStream}
+                            lastSelected={currentProcessGroup || {}}
+                            processModelAction={processModelAction}
+                            onStartProcess={() => {
+                              if (setNavElementCallback) {
+                                // remove the TreePanel from the SideNav when starting a process
+                                setNavElementCallback(null);
+                              }
+                            }}
+                            onViewProcess={() => {
+                              if (setNavElementCallback) {
+                                setNavElementCallback(null);
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                )}
                 <Accordion
                   expanded={groupsExpanded}
                   onChange={() => setGroupsExpanded((prev) => !prev)}

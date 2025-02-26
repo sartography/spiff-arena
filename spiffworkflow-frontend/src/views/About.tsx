@@ -47,7 +47,7 @@ function About() {
           </TableRow>
         ));
       return (
-        <Box>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="h2" gutterBottom>
             {title}
           </Typography>

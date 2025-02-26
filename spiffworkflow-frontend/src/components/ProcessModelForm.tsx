@@ -7,6 +7,8 @@ import {
   MenuItem,
   IconButton,
   Typography,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { Add as AddAlt, Delete as TrashCan } from '@mui/icons-material';
@@ -315,20 +317,27 @@ export default function ProcessModelForm({
     );
 
     textInputs.push(
-      <Select
-        id="notification-type"
-        key="notification-type"
-        value={processModel.fault_or_suspend_on_exception}
-        label="Notification Type"
-        onChange={(event: any) => {
-          onNotificationTypeChanged(event.target.value);
-        }}
-        fullWidth
-        sx={{ mb: 2 }}
-      >
-        <MenuItem value="fault">Fault</MenuItem>
-        <MenuItem value="suspend">Suspend</MenuItem>
-      </Select>,
+      <FormControl fullWidth>
+        {/* we need to set labels in both places apparently so it displays when no option is selected */}
+        <InputLabel id="notification-type-select-label">
+          Notification Type
+        </InputLabel>
+        <Select
+          id="notification-type"
+          key="notification-type"
+          value={processModel.fault_or_suspend_on_exception}
+          labelId="notification-type-select-label"
+          label="Notification Type"
+          onChange={(event: any) => {
+            onNotificationTypeChanged(event.target.value);
+          }}
+          fullWidth
+          sx={{ mb: 2 }}
+        >
+          <MenuItem value="fault">Fault</MenuItem>
+          <MenuItem value="suspend">Suspend</MenuItem>
+        </Select>
+      </FormControl>,
     );
     textInputs.push(
       <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
