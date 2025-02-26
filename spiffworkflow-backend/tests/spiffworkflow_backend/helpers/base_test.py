@@ -528,7 +528,7 @@ class BaseTest:
         )
         assert len(waiting_messages) == 1
         waiting_message = waiting_messages[0]
-        # self.assure_correlation_properties_are_right(waiting_message)
+        self.assure_correlation_properties_are_right(waiting_message)
 
     def assure_correlation_properties_are_right(self, message: MessageInstanceModel) -> None:
         # Correlation Properties should match up

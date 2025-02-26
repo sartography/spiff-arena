@@ -161,9 +161,9 @@ class MessageService:
                 # We may not be able to save here, this can raise a new exception.
                 try:
                     processor_receive.save()
-                except Exception:
+                except Exception as save_exception:
                     db.session.commit()
-                    raise exception
+                    raise exception from save_exception
             else:
                 db.session.commit()
             if isinstance(exception, SpiffWorkflowException):

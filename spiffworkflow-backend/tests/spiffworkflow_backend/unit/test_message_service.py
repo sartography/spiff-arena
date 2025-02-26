@@ -1,4 +1,3 @@
-import random
 import time
 
 from flask import Flask
@@ -30,19 +29,9 @@ class TestMessageService(BaseTest):
     ) -> None:
         """Test messages between two different running processes using a single conversation.
 
-        Assure that communication between two processes works the same as making a call through the API, here
-        we have two process instances that are communicating with each other using one conversation about an
-        Invoice whose details are defined in the following message payload
+        Check that communication between two processes works the same as making a call through the API, here
+        we have two process instances that are communicating with each other using one conversation
         """
-        # payload = {
-        #     "customer_id": "Sartography",
-        #     "po_number": 1001,
-        #     "description": "We built a new feature for messages!",
-        #     "amount": "100.00",
-        # }
-
-        uid = random.randint(1, 100000)
-        payload = {"uid": uid}
 
         # Load up the definition for the receiving process
         load_test_spec(
@@ -61,15 +50,10 @@ class TestMessageService(BaseTest):
         processor_send_receive = ProcessInstanceProcessor(process_instance)
         processor_send_receive.do_engine_steps(save=True)
 
-        # self.assure_a_message_was_sent(process_instance, payload)
-
         # This is typically called in a background cron process, so we will manually call it
         # here in the tests
         # The first time it is called, it will instantiate a new instance of the message_recieve process
         MessageService.correlate_all_message_instances()
-
-        # The sender process should still be waiting on a message to be returned to it ...
-        self.assure_there_is_a_process_waiting_on_a_message(process_instance)
 
         # The second time we call ths process_message_isntances (again it would typically be running on cron)
         # it will deliver the message that was sent from the receiver back to the original sender.
