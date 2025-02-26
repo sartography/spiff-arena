@@ -16,6 +16,7 @@ import {
   Paper,
   Link as MuiLink,
   useMediaQuery,
+  Chip,
 } from '@mui/material';
 import {
   Home,
@@ -332,7 +333,7 @@ function SideNav({
             bottom: 16,
             left: isCollapsed ? '50%' : 16,
             transform: isCollapsed ? 'translateX(-50%)' : 'none',
-            alignItems: isCollapsed ? 'center' : 'flex-start',
+            alignItems: 'center', // Vertically center items
             display: 'flex',
             flexDirection: isCollapsed ? 'column' : 'row',
             gap: isCollapsed ? 0 : 1,
@@ -359,12 +360,20 @@ function SideNav({
             </IconButton>
           </SpiffTooltip>
           <SpiffTooltip
-            title="Switch to Classic UI"
+            title="Environment"
             placement={isCollapsed ? 'right' : 'top'}
           >
-            <IconButton aria-label="Switch Site" onClick={() => navigate('/')}>
-              <Home />
-            </IconButton>
+            {/* Use a Box to wrap the Chip and vertically align it */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Chip
+                label="prod"
+                color="primary"
+                size="small"
+                sx={{
+                  cursor: 'default',
+                }}
+              />
+            </Box>
           </SpiffTooltip>
         </Box>
       </Box>
