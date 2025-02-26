@@ -19,8 +19,7 @@ export default function ProcessSearch({
   height = '50px',
 }: OwnProps) {
   const shouldFilter = (options: any) => {
-    const process: ProcessReference = options.item;
-    const { inputValue } = options;
+    const { process, inputValue } = options;
     return (
       inputValue === null ||
       `${process.display_name} (${process.identifier})`
@@ -36,19 +35,24 @@ export default function ProcessSearch({
           id="process-model-select"
           data-qa="process-model-selection"
           options={processes}
+          disablePortal
           value={selectedItem || null}
           onChange={(_, value) => onChange(value)}
-          renderInput={(params) => (
-            <TextField
-              label={titleText}
-              placeholder="Choose a process"
-              variant="outlined"
-              slotProps={{
-                htmlInput: params.inputProps,
-                inputLabel: { shrink: true },
-              }}
-            />
-          )}
+          renderInput={(params) => {
+            return (
+              <TextField
+                label={titleText}
+                placeholder="Choose a process"
+                variant="outlined"
+                fullWidth
+                slotProps={{
+                  input: params.InputProps,
+                  htmlInput: params.inputProps,
+                  inputLabel: { shrink: true },
+                }}
+              />
+            );
+          }}
           getOptionLabel={(process: ProcessReference) => {
             if (process) {
               return `${process.display_name} (${truncateString(
@@ -58,11 +62,12 @@ export default function ProcessSearch({
             }
             return '';
           }}
-          filterOptions={(options, state) =>
-            options.filter((option) =>
-              shouldFilter({ item: option, inputValue: state.inputValue }),
-            )
-          }
+          filterOptions={(options, state) => {
+            const result = options.filter((option) =>
+              shouldFilter({ process: option, inputValue: state.inputValue }),
+            );
+            return result;
+          }}
         />
       </div>
     );

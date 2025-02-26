@@ -46,7 +46,6 @@ import {
   setPageTitle,
 } from '../helpers';
 import {
-  CarbonComboBoxProcessSelection,
   CorrelationProperties,
   PermissionsToCheck,
   ProcessFile,
@@ -267,7 +266,7 @@ export default function ProcessModelEditDiagram() {
         'file_type',
       )}`;
       navigate(
-        `/editor/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`,
+        `/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`,
       );
     }
   };
@@ -1132,12 +1131,11 @@ export default function ProcessModelEditDiagram() {
     },
     [],
   );
-  const processSearchOnClose = (selection: CarbonComboBoxProcessSelection) => {
-    const selectedProcessModel = selection.selectedItem;
-    if (selectedProcessModel) {
+  const processSearchOnClose = (selection: ProcessReference) => {
+    if (selection) {
       processSearchEventBus.fire('spiff.callactivity.update', {
         element: processSearchElement,
-        value: selectedProcessModel.identifier,
+        value: selection.identifier,
       });
     }
     setShowProcessSearch(false);
@@ -1189,7 +1187,7 @@ export default function ProcessModelEditDiagram() {
         processReference: ProcessReference,
       ) => {
         const path = generatePath(
-          '/editor/process-models/:process_model_path/files/:file_name',
+          '/process-models/:process_model_path/files/:file_name',
           {
             process_model_path: modifyProcessIdentifierForPathParam(
               processReference.relative_location,
@@ -1319,7 +1317,7 @@ export default function ProcessModelEditDiagram() {
       let path = '';
       if (file) {
         path = generatePath(
-          '/editor/process-models/:process_model_id/files/:file_name',
+          '/process-models/:process_model_id/files/:file_name',
           {
             process_model_id: params.process_model_id || null,
             file_name: file.name,
@@ -1328,7 +1326,7 @@ export default function ProcessModelEditDiagram() {
         window.open(path);
       } else {
         path = generatePath(
-          '/editor/process-models/:process_model_id/files?file_type=dmn',
+          '/process-models/:process_model_id/files?file_type=dmn',
           {
             process_model_id: params.process_model_id || null,
           },
