@@ -204,6 +204,9 @@ function SideNav({
 
   const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
+    if (location.pathname === navItemPage) {
+      selectedTab = uxElement.page;
+    }
     navItems.push({
       text: uxElement.label,
       icon: <Extension />,
