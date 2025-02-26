@@ -276,7 +276,7 @@ export default function ProcessModelTreePage({
     if (found) {
       clickStream.next(found);
       const processEntityId = modifyProcessIdentifierForPathParam(crumb.id);
-      setCurrentProcessGroup(null);
+      setCurrentProcessGroup(found);
       navigate(`/process-groups/${processEntityId}`);
     }
   };
@@ -537,7 +537,6 @@ export default function ProcessModelTreePage({
                         {crumbs.map((crumb) => (
                           <Link
                             key={crumb.id}
-                            color="inherit"
                             href={`/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
                             onClick={(
                               e: React.MouseEvent<HTMLAnchorElement>,
