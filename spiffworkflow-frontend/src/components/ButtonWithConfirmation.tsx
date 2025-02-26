@@ -98,6 +98,7 @@ export default function ButtonWithConfirmation({
         data-qa={dataQa}
         onClick={handleShowConfirmationPrompt}
         variant={kind}
+        color="error"
         startIcon={renderIcon}
         aria-label={iconDescription || ''}
       >
