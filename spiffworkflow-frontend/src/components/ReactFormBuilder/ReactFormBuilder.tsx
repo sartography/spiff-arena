@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+// @ts-ignore
 // eslint-disable-next-line import/no-extraneous-dependencies
 import merge from 'lodash/merge';
 
