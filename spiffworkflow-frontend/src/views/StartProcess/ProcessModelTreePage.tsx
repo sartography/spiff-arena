@@ -119,6 +119,22 @@ export default function ProcessModelTreePage({
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
+  /** Recursively flatten the entire hierarchy of process groups and models */
+  const flattenAllItems = (items: ProcessGroup[], flat: ProcessGroup[]) => {
+    items.forEach((item) => {
+      flat.push(item);
+      // Duck type to see if it's a group, and if so, recurse.
+      if (item.process_groups) {
+        flattenAllItems(
+          [...item.process_groups, ...(item.process_models || [])],
+          flat,
+        );
+      }
+    });
+
+    return flat;
+  };
+
   const processCrumbs = (
     item: Record<string, any>,
     flattened: Record<string, any>,
@@ -142,7 +158,9 @@ export default function ProcessModelTreePage({
   };
 
   const handleClickStream = (item: Record<string, any>) => {
-    setCrumbs(processCrumbs(item, flatItems));
+    // Flatten the *current* processGroups.
+    const flattened = flattenAllItems(processGroups || [], []);
+    setCrumbs(processCrumbs(item, flattened)); // Use the newly flattened items.
     setCurrentProcessGroup(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
@@ -273,22 +291,6 @@ export default function ProcessModelTreePage({
       setCurrentProcessGroup(found);
       navigate(`/process-groups/${processEntityId}`);
     }
-  };
-
-  /** Recursively flatten the entire hierarchy of process groups and models */
-  const flattenAllItems = (items: ProcessGroup[], flat: ProcessGroup[]) => {
-    items.forEach((item) => {
-      flat.push(item);
-      // Duck type to see if it's a group, and if so, recurse.
-      if (item.process_groups) {
-        flattenAllItems(
-          [...item.process_groups, ...(item.process_models || [])],
-          flat,
-        );
-      }
-    });
-
-    return flat;
   };
 
   function findProcessGroupByPath(
