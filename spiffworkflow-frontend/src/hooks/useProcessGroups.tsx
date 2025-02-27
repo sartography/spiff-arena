@@ -25,10 +25,10 @@ export default function useProcessGroups({
     setLoading(false);
   };
 
-  let path = '/process-groups';
+  let path =
+    '/process-models?recursive=true&group_by_process_group=True&per_page=2000';
   if (getRunnableProcessModels) {
-    path =
-      '/process-models?filter_runnable_by_user=true&recursive=true&group_by_process_group=True&per_page=2000';
+    path = `${path}&filter_runnable_by_user=true`;
   }
   const getProcessGroups = async () => {
     setLoading(true);
