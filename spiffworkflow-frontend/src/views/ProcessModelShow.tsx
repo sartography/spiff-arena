@@ -204,15 +204,11 @@ export default function ProcessModelShow() {
 
   if (processModel) {
     const processStartButton = (
-      <Stack direction="row" spacing={2}>
-        <Can
-          I="POST"
-          a={targetUris.processInstanceCreatePath}
-          ability={ability}
-        >
+      <Can I="POST" a={targetUris.processInstanceCreatePath} ability={ability}>
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           <ProcessInstanceRun processModel={processModel} />
-        </Can>
-      </Stack>
+        </Stack>
+      </Can>
     );
     return (
       <>
