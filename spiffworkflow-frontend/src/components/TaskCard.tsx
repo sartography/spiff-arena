@@ -15,12 +15,16 @@ type TaskCardProps = {
   entry: ProcessInstanceTask | ProcessInstance;
   waitingFor: ReactElement | null;
   hasAccessToCompleteTask: boolean;
+  handleRunTask: Function;
+  getProcessInstanceSummary: Function;
 };
 
 export default function TaskCard({
   entry,
   waitingFor,
   hasAccessToCompleteTask,
+  handleRunTask,
+  getProcessInstanceSummary,
 }: TaskCardProps) {
   return (
     <Grid item key={entry.id} xs={12} sm={6} md={4}>
@@ -69,14 +73,19 @@ export default function TaskCard({
           }}
         >
           <Typography variant="body2">
+            <strong>Process Instance Id</strong>:{' '}
+            {'process_instance_id' in entry
+              ? entry.process_instance_id
+              : entry.id}
+          </Typography>
+          <Typography variant="body2">
             <strong>Created by</strong>: {entry.process_initiator_username}
           </Typography>
           <Typography
             variant="body2"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <strong>Last milestone</strong>:{' '}
-            {entry.last_milestone_bpmn_name}
+            <strong>Last milestone</strong>: {entry.last_milestone_bpmn_name}
           </Typography>
           {waitingFor ? (
             <Typography variant="body2">
@@ -87,41 +96,4 @@ export default function TaskCard({
       </Card>
     </Grid>
   );
-
-  function getProcessInstanceSummary(
-    entry: ProcessInstanceTask | ProcessInstance
-  ) {
-    let summary = null;
-    if ('summary' in entry) {
-      summary = entry.summary;
-    }
-    if ('process_instance_summary' in entry) {
-      summary = entry.process_instance_summary;
-    }
-    if (!summary) {
-      return null;
-    }
-    return (
-      <Typography variant="body2" color="primary.main">
-        {summary}
-      </Typography>
-    );
-  }
-
-  function handleRunTask(entry: ProcessInstanceTask | ProcessInstance) {
-    const taskUrl = `/tasks/${getProcessInstanceId(entry)}/${entry.task_id}`;
-    navigate(taskUrl);
-  };
-
-  function getProcessInstanceId(
-    entry: ProcessInstanceTask | ProcessInstance,
-  ) {
-    if ('process_instance_id' in entry) {
-      return entry.process_instance_id;
-    }
-    if ('id' in entry) {
-      return entry.id;
-    }
-    return null;
-  };
 }

@@ -248,6 +248,8 @@ export default function TaskTable({
         entry={entry}
         waitingFor={waitingFor}
         hasAccessToCompleteTask={hasAccessToCompleteTask}
+        handleRunTask={handleRunTask}
+        getProcessInstanceSummary={getProcessInstanceSummary}
         key={entry.id}
       />
     );
