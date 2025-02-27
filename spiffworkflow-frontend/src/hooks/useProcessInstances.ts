@@ -47,14 +47,11 @@ const useProcessInstances = ({
 
   const getProcessInstances = useCallback(
     (currentReportMetadata: ReportMetadata | null | undefined = null) => {
-      let reportMetadataToUse = currentReportMetadata;
-      if (!reportMetadataToUse) {
-        reportMetadataToUse = {
-          columns: [],
-          filter_by: [],
-          order_by: [],
-        };
-      }
+      const reportMetadataToUse = currentReportMetadata || {
+        columns: [],
+        filter_by: [],
+        order_by: [],
+      };
 
       if (additionalReportFilters) {
         additionalReportFilters.forEach((arf: ReportFilter) => {

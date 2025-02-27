@@ -14,16 +14,12 @@ import {
   PauseOutline,
   UserFollow,
   Play,
-  PlayOutline,
   Reset,
   RuleDraft,
   SkipForward,
   StopOutline,
-  TrashCan,
   Warning,
-  Link as LinkIcon,
   View,
-  Migrate,
 } from '@carbon/icons-react';
 import {
   Accordion,
@@ -42,6 +38,15 @@ import {
   TabPanels,
   TabPanel,
 } from '@carbon/react';
+import {
+  DeleteOutlined,
+  LinkOutlined,
+  PauseOutlined,
+  PlayArrow,
+  StopCircleOutlined,
+  SyncAltOutlined,
+} from '@mui/icons-material';
+import { IconButton, Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -86,6 +91,7 @@ import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
+import SpiffTooltip from '../components/SpiffTooltip';
 
 type OwnProps = {
   variant: string;
@@ -607,8 +613,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       return (
         <ButtonWithConfirmation
-          kind="outlined"
-          renderIcon={<StopOutline />}
+          renderIcon={<StopCircleOutlined />}
           iconDescription="Terminate"
           hasIconOnly
           description={`Terminate Process Instance: ${processInstance.id}`}
@@ -630,14 +635,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         .includes(processInstance.status)
     ) {
       return (
-        <Button
-          onClick={suspendProcessInstance}
-          kind="ghost"
-          renderIcon={PauseOutline}
-          iconDescription="Suspend"
-          hasIconOnly
-          size="lg"
-        />
+        <SpiffTooltip title="Suspend" placement="top">
+          <IconButton onClick={suspendProcessInstance} aria-label="Suspend">
+            <PauseOutlined />
+          </IconButton>
+        </SpiffTooltip>
       );
     }
     return <div />;
@@ -645,14 +647,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const migrateButton = () => {
     if (processInstance && processInstance.status === 'suspended') {
       return (
-        <Button
-          onClick={navigateToProcessInstanceMigratePage}
-          kind="ghost"
-          renderIcon={Migrate}
-          iconDescription="Migrate"
-          hasIconOnly
-          size="lg"
-        />
+        <SpiffTooltip title="Migrate" placement="top">
+          <IconButton
+            onClick={navigateToProcessInstanceMigratePage}
+            aria-label="Migrate"
+          >
+            <SyncAltOutlined />
+          </IconButton>
+        </SpiffTooltip>
       );
     }
     return <div />;
@@ -660,28 +662,25 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const copyProcessInstanceShortLinkButton = () => {
     return (
-      <Button
-        onClick={copyProcessInstanceShortLink}
-        kind="ghost"
-        renderIcon={LinkIcon}
-        iconDescription="Copy shareable short link"
-        hasIconOnly
-        size="lg"
-      />
+      <SpiffTooltip title="Copy shareable short link" placement="top">
+        <IconButton
+          onClick={copyProcessInstanceShortLink}
+          aria-label="Copy shareable short link"
+        >
+          <LinkOutlined />
+        </IconButton>
+      </SpiffTooltip>
     );
   };
 
   const resumeButton = () => {
     if (processInstance && processInstance.status === 'suspended') {
       return (
-        <Button
-          onClick={resumeProcessInstance}
-          kind="ghost"
-          renderIcon={PlayOutline}
-          iconDescription="Resume"
-          hasIconOnly
-          size="lg"
-        />
+        <SpiffTooltip title="Resume" placement="top">
+          <IconButton onClick={resumeProcessInstance} aria-label="Resume">
+            <PlayArrow />
+          </IconButton>
+        </SpiffTooltip>
       );
     }
     return <div />;
@@ -695,8 +694,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
-          kind="outlined"
-          renderIcon={<TrashCan />}
+          renderIcon={<DeleteOutlined />}
           iconDescription="Delete"
           hasIconOnly
           description={`Delete Process Instance: ${processInstance.id}`}
@@ -1936,9 +1934,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {processDataDisplayArea()}
         {viewMostRecentStateComponent()}
         <Stack orientation="horizontal" gap={1}>
-          <h1 className="with-icons">
+          <Typography
+            variant="h1"
+            sx={{
+              mr: '1rem',
+            }}
+          >
             Process Instance Id: {processInstance.id}
-          </h1>
+          </Typography>
           {buttonIcons()}
         </Stack>
         {getInfoTag()}
