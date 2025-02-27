@@ -159,9 +159,6 @@ export default function ProcessModelTreePage({
 
   const handleClickStream = (item: Record<string, any>) => {
     // Flatten the *current* processGroups.
-    const flattened = flattenAllItems(processGroups || [], []);
-    setCrumbs(processCrumbs(item, flattened)); // Use the newly flattened items.
-    setCurrentProcessGroup(item);
     let itemToUse: any = { ...item };
     // Duck type to find out if this is a model ore a group.
     // If  model, we want its parent group, which can be found in the id.
@@ -212,6 +209,16 @@ export default function ProcessModelTreePage({
           behavior: 'smooth',
         });
       }, 100); // Slight delay before scrolling to ensure rendering
+    }
+
+    setCurrentProcessGroup(item);
+
+    if (!('primary_file_name' in item)) {
+      const flattened = flattenAllItems(processGroups || [], []);
+      setCrumbs(processCrumbs(item, flattened)); // Use the newly flattened items.
+
+      const processEntityId = modifyProcessIdentifierForPathParam(item.id);
+      navigate(`/process-groups/${processEntityId}`);
     }
   };
 
