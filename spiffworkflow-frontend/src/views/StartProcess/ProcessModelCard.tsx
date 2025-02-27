@@ -4,7 +4,7 @@ import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { getStorageValue } from '../../services/LocalStorageService';
-import { ProcessModelAction } from '../../interfaces';
+import { ProcessModel } from '../../interfaces';
 
 const defaultStyle = {
   borderRadius: 2,
@@ -33,10 +33,8 @@ export default function ProcessModelCard({
   lastSelected,
   onStartProcess,
   onViewProcess,
-  processModelAction,
 }: {
-  model: Record<string, any>;
-  processModelAction: ProcessModelAction;
+  model: ProcessModel;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
@@ -149,7 +147,7 @@ export default function ProcessModelCard({
     <Paper
       elevation={0}
       sx={selectedStyle}
-      onClick={() => stream?.next(model)}
+      onClick={(e) => handleViewProcess(e as unknown as PointerEvent)}
       id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
       <Stack gap={1} sx={{ height: '100%' }}>
@@ -171,25 +169,14 @@ export default function ProcessModelCard({
             justifyContent: 'flex-end',
           }}
         >
-          {processModelAction === ProcessModelAction.StartProcess ? (
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
-            >
-              Start this process
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={(e) => handleViewProcess(e as unknown as PointerEvent)}
-            >
-              View process
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
+          >
+            Start this process
+          </Button>
         </Stack>
       </Stack>
     </Paper>

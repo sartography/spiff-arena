@@ -34,8 +34,8 @@ import {
   PermissionsToCheck,
   ProcessGroup,
   ProcessGroupLite,
-  ProcessModelAction,
   DataStore,
+  ProcessModel,
 } from '../../interfaces';
 import {
   modifyProcessIdentifierForPathParam,
@@ -52,7 +52,6 @@ type Crumb = { id: string; displayName: string };
 
 type OwnProps = {
   setNavElementCallback?: Function;
-  processModelAction: ProcessModelAction;
   navigateToPage?: boolean;
 };
 
@@ -77,20 +76,15 @@ const processGroupToLite = (group: ProcessGroup): ProcessGroupLite => {
  */
 export default function ProcessModelTreePage({
   setNavElementCallback,
-  processModelAction,
   navigateToPage = false,
 }: OwnProps) {
   const params = useParams();
   const navigate = useNavigate();
-  const { processGroups } = useProcessGroups({
-    processInfo: {},
-    getRunnableProcessModels:
-      processModelAction === ProcessModelAction.StartProcess,
-  });
+  const { processGroups } = useProcessGroups({ processInfo: {} });
   const [groups, setGroups] = useState<
     ProcessGroup[] | ProcessGroupLite[] | null
   >(null);
-  const [models, setModels] = useState<Record<string, any>[]>([]);
+  const [models, setModels] = useState<ProcessModel[]>([]);
   const [dataStores, setDataStores] = useState<DataStore[]>([]);
   const [flatItems, setFlatItems] = useState<Record<string, any>>([]);
   // On load, there are always groups and never models, expand accordingly.
@@ -347,7 +341,8 @@ export default function ProcessModelTreePage({
       // If there are favorites, that's all we want to display, return.
       const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
       if (favorites.length) {
-        setModels(flattened.filter((item) => favorites.includes(item.id)));
+        // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
+        // setModels(flattened.filter((item) => favorites.includes(item.id)));
         setGroups([]);
         setModelsExpanded(true);
         setGroupsExpanded(false);
@@ -433,9 +428,7 @@ export default function ProcessModelTreePage({
   return (
     <Box sx={{ margin: '0 auto', p: 3 }}>
       <Typography variant="h1" sx={{ mb: 2 }}>
-        {processModelAction === ProcessModelAction.StartProcess
-          ? 'Start new process'
-          : 'Processes'}
+        Processes
       </Typography>
       <Container
         maxWidth={false}
@@ -639,13 +632,12 @@ export default function ProcessModelTreePage({
                   </AccordionSummary>
                   <AccordionDetails>
                     <Box sx={gridProps}>
-                      {models.map((model: Record<string, any>) => (
+                      {models.map((model: ProcessModel) => (
                         <ProcessModelCard
                           key={model.id}
                           model={model}
                           stream={clickStream}
                           lastSelected={currentProcessGroup || {}}
-                          processModelAction={processModelAction}
                           onStartProcess={() => {
                             if (setNavElementCallback) {
                               // remove the TreePanel from the SideNav when starting a process
@@ -703,48 +695,46 @@ export default function ProcessModelTreePage({
                     </Box>
                   </AccordionDetails>
                 </Accordion>
-                {processModelAction === ProcessModelAction.Open ? (
-                  <Accordion
-                    expanded={dataStoreExpanded}
-                    onChange={() => setDataStoreExpanded((prev) => !prev)}
+                <Accordion
+                  expanded={dataStoreExpanded}
+                  onChange={() => setDataStoreExpanded((prev) => !prev)}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="Data Store Accordion"
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      aria-controls="Data Store Accordion"
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        pr: 2,
+                      }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          width: '100%',
-                          pr: 2,
-                        }}
+                      <Typography>
+                        Data Stores ({dataStoresForProcessGroup?.length})
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                        data-qa="add-process-group-button"
+                        href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                       >
-                        <Typography>
-                          Data Stores ({dataStoresForProcessGroup?.length})
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-group-button"
-                          href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
-                        >
-                          <Add />
-                        </IconButton>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={gridProps}>
-                        {dataStoresForProcessGroup?.map(
-                          (dataStore: DataStore) => (
-                            <DataStoreCard dataStore={dataStore} />
-                          ),
-                        )}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ) : null}
+                        <Add />
+                      </IconButton>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={gridProps}>
+                      {dataStoresForProcessGroup?.map(
+                        (dataStore: DataStore) => (
+                          <DataStoreCard dataStore={dataStore} />
+                        ),
+                      )}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
               </CardContent>
             </Card>
           </Stack>

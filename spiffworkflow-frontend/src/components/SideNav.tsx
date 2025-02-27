@@ -20,7 +20,6 @@ import {
 } from '@mui/material';
 import {
   Home,
-  Add,
   ChevronLeft,
   ChevronRight,
   Logout,
@@ -61,7 +60,6 @@ type OwnProps = {
 // Define an object to map route paths to identifiers
 const routeIdentifiers = {
   HOME: 'home',
-  START_NEW_PROCESS: 'startNewProcess',
   PROCESSES: 'processes',
   PROCESS_INSTANCES: 'processInstances',
   DATA_STORES: 'dataStores',
@@ -87,8 +85,6 @@ function SideNav({
   let selectedTab: string | null = null;
   if (location.pathname === '/' || location.pathname === '/started-by-me') {
     selectedTab = routeIdentifiers.HOME;
-  } else if (location.pathname === '/startprocess') {
-    selectedTab = routeIdentifiers.START_NEW_PROCESS;
   } else if (location.pathname.startsWith('/process-instances')) {
     selectedTab = routeIdentifiers.PROCESS_INSTANCES;
   } else if (location.pathname.startsWith('/process-')) {
@@ -144,9 +140,6 @@ function SideNav({
     };
   }, []);
 
-  // 45 * number of nav items like "HOME" and "START NEW PROCESS" plus 140
-  const pixelsToRemoveFromAdditionalElement = 45 * 2 + 140;
-
   const collapseOrExpandIcon = isCollapsed ? (
     <SpiffTooltip title="Expand navigation" placement="right">
       <ChevronRight data-testid="expand-primary-nav" />
@@ -163,12 +156,6 @@ function SideNav({
       icon: <Home />,
       route: '/',
       id: routeIdentifiers.HOME,
-    },
-    {
-      text: 'START NEW PROCESS',
-      icon: <Add />,
-      route: '/startprocess',
-      id: routeIdentifiers.START_NEW_PROCESS,
     },
     {
       text: 'PROCESSES',
@@ -224,6 +211,9 @@ function SideNav({
     elementCallback: extensionHeaderMenuItemElement,
     extensionUxElements,
   });
+
+  // 45 * number of nav items like "HOME" and "PROCESS INSTANCES" plus 140
+  const pixelsToRemoveFromAdditionalElement = 45 * navItems.length + 140;
 
   const extensionUserProfileElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;

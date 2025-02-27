@@ -3,7 +3,6 @@ import { Box } from '@mui/material';
 import { Route, Routes } from 'react-router';
 import Homepage from './Homepage';
 import '../assets/styles/transitions.css';
-import StartProcess from './StartProcess/StartProcess';
 import Processes from './StartProcess/Processes';
 import StartProcessInstance from './StartProcess/StartProcessInstance';
 import InstancesStartedByMe from './InstancesStartedByMe';
@@ -86,12 +85,6 @@ export default function BaseRoutes({
               setViewMode={setViewMode}
               isMobile={isMobile}
             />
-          }
-        />
-        <Route
-          path="/startprocess"
-          element={
-            <StartProcess setNavElementCallback={setAdditionalNavElement} />
           }
         />
         <Route

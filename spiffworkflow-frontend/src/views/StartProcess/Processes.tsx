@@ -1,5 +1,4 @@
 import ProcessModelTreePage from './ProcessModelTreePage';
-import { ProcessModelAction } from '../../interfaces';
 
 export default function Processes({
   setNavElementCallback,
@@ -9,7 +8,6 @@ export default function Processes({
   return (
     <ProcessModelTreePage
       setNavElementCallback={setNavElementCallback}
-      processModelAction={ProcessModelAction.Open}
       navigateToPage
     />
   );
