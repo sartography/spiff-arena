@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarRateIcon from '@mui/icons-material/StarRate';
 import { Delete, Edit, Add, Home } from '@mui/icons-material';
@@ -164,6 +164,38 @@ export default function ProcessModelTreePage({
     null,
   );
 
+  const handleClickStream = (item: Record<string, any>) => {
+    setClickedItem(item);
+  };
+
+  function findProcessGroupByPath(
+    groupsToProcess: ProcessGroupLite[] | null,
+    path: string,
+  ): ProcessGroupLite | undefined {
+    const levels = path.split('/');
+    let currentGroup: ProcessGroupLite | undefined;
+
+    let newGroups: ProcessGroupLite[] = [];
+    if (groupsToProcess) {
+      newGroups = groupsToProcess;
+    }
+
+    levels.forEach((level: string) => {
+      const assembledPath = levels
+        .slice(0, levels.indexOf(level) + 1)
+        .join('/');
+      currentGroup = newGroups.find(
+        (processGroup: any) => processGroup.id === assembledPath,
+      );
+      if (!currentGroup) {
+        return undefined;
+      }
+      newGroups = currentGroup.process_groups || [];
+      return currentGroup;
+    });
+    return currentGroup;
+  }
+
   useEffect(() => {
     if (!clickedItem || !processGroups) {
       return;
@@ -235,9 +267,73 @@ export default function ProcessModelTreePage({
     setClickedItem(null);
   }, [clickedItem, processGroups, navigate, flattenAllItems]);
 
-  const handleClickStream = (item: Record<string, any>) => {
-    setClickedItem(item);
-  };
+  useEffect(() => {
+    // If no favorites, proceed with the normal process groups.
+    if (processGroups) {
+      /**
+       * Do this now and put it in state.
+       * You do not want to do this on every change to the search filter.
+       * The flattened map makes searching globally simple.
+       */
+      const flattened = flattenAllItems(processGroups || [], []);
+      setFlatItems(flattened);
+
+      // If there are favorites, that's all we want to display, return.
+      const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
+      if (favorites.length) {
+        // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
+        // setModels(flattened.filter((item) => favorites.includes(item.id)));
+        setGroups([]);
+        setModelsExpanded(true);
+        setGroupsExpanded(false);
+        setCrumbs([favoriteCrumb]);
+        return;
+      }
+      const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
+        `${params.process_group_id}`,
+      );
+      const processGroupsLite: ProcessGroupLite[] =
+        processGroups.map(processGroupToLite);
+      const foundProcessGroup = findProcessGroupByPath(
+        processGroupsLite,
+        unModifiedProcessGroupId,
+      );
+      if (foundProcessGroup) {
+        setGroups(foundProcessGroup.process_groups || null);
+        setModels(foundProcessGroup.process_models || []);
+        setCrumbs(processCrumbs(foundProcessGroup, flattened));
+        setCurrentProcessGroup(foundProcessGroup);
+      } else {
+        setGroups(processGroupsLite);
+        setCrumbs([]);
+      }
+      setGroupsExpanded(!!processGroupsLite.length);
+      HttpService.makeCallToBackend({
+        path: '/data-stores',
+        successCallback: (results: DataStore[]) => {
+          setDataStores(results);
+        },
+      });
+      if (setNavElementCallback) {
+        setNavElementCallback(
+          <TreePanel
+            ref={treeRef}
+            processGroups={processGroups}
+            stream={clickStream}
+            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+          />,
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processGroups]);
+
+  useEffect(() => {
+    if (clickStream) {
+      clickStream.subscribe(handleClickStream);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clickStream]);
 
   /** Tree calls back here so we can imperatively rework groups etc. */
   const handleFavorites = ({ text }: { text: string }) => {
@@ -317,34 +413,6 @@ export default function ProcessModelTreePage({
     }
   };
 
-  function findProcessGroupByPath(
-    groupsToProcess: ProcessGroupLite[] | null,
-    path: string,
-  ): ProcessGroupLite | undefined {
-    const levels = path.split('/');
-    let currentGroup: ProcessGroupLite | undefined;
-
-    let newGroups: ProcessGroupLite[] = [];
-    if (groupsToProcess) {
-      newGroups = groupsToProcess;
-    }
-
-    levels.forEach((level: string) => {
-      const assembledPath = levels
-        .slice(0, levels.indexOf(level) + 1)
-        .join('/');
-      currentGroup = newGroups.find(
-        (processGroup: any) => processGroup.id === assembledPath,
-      );
-      if (!currentGroup) {
-        return undefined;
-      }
-      newGroups = currentGroup.process_groups || [];
-      return currentGroup;
-    });
-    return currentGroup;
-  }
-
   const dataStoresForProcessGroup = dataStores.filter(
     (dataStore: DataStore) => {
       return (
@@ -352,75 +420,6 @@ export default function ProcessModelTreePage({
       );
     },
   );
-
-  useEffect(() => {
-    // If no favorites, proceed with the normal process groups.
-    if (processGroups) {
-      /**
-       * Do this now and put it in state.
-       * You do not want to do this on every change to the search filter.
-       * The flattened map makes searching globally simple.
-       */
-      const flattened = flattenAllItems(processGroups || [], []);
-      setFlatItems(flattened);
-
-      // If there are favorites, that's all we want to display, return.
-      const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
-      if (favorites.length) {
-        // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
-        // setModels(flattened.filter((item) => favorites.includes(item.id)));
-        setGroups([]);
-        setModelsExpanded(true);
-        setGroupsExpanded(false);
-        setCrumbs([favoriteCrumb]);
-        return;
-      }
-      const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
-        `${params.process_group_id}`,
-      );
-      const processGroupsLite: ProcessGroupLite[] =
-        processGroups.map(processGroupToLite);
-      const foundProcessGroup = findProcessGroupByPath(
-        processGroupsLite,
-        unModifiedProcessGroupId,
-      );
-      if (foundProcessGroup) {
-        setGroups(foundProcessGroup.process_groups || null);
-        setModels(foundProcessGroup.process_models || []);
-        setCrumbs(processCrumbs(foundProcessGroup, flattened));
-        setCurrentProcessGroup(foundProcessGroup);
-      } else {
-        setGroups(processGroupsLite);
-        setCrumbs([]);
-      }
-      setGroupsExpanded(!!processGroupsLite.length);
-      HttpService.makeCallToBackend({
-        path: '/data-stores',
-        successCallback: (results: DataStore[]) => {
-          setDataStores(results);
-        },
-      });
-      if (setNavElementCallback) {
-        setNavElementCallback(
-          <TreePanel
-            ref={treeRef}
-            processGroups={processGroups}
-            stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
-          />,
-        );
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processGroups]);
-
-  let cardStreamSub: Subscription;
-  useEffect(() => {
-    if (!cardStreamSub && clickStream) {
-      clickStream.subscribe(handleClickStream);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clickStream]);
 
   const deleteProcessGroup = () => {
     if (currentProcessGroup) {
