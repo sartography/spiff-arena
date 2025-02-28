@@ -157,69 +157,65 @@ export default function ProcessModelTreePage({
     });
   };
 
-  const handleClickStream = (item: Record<string, any>) => {
-    // Flatten the *current* processGroups.
-    let itemToUse: any = { ...item };
-    // Duck type to find out if this is a model ore a group.
-    // If  model, we want its parent group, which can be found in the id.
-    if (!('process_groups' in item)) {
-      // recursively find the parent group.
-      const findParent = (
-        searchGroups: Record<string, any>[],
-        id: string,
-      ): Record<string, any> | undefined => {
-        return searchGroups.find((group) => {
-          if (group.id === id) {
-            itemToUse = group;
-            return group;
-          }
-          if (group.process_groups) {
-            return findParent(group.process_groups, id);
-          }
+  const [clickedItem, setClickedItem] = useState<Record<string, any> | null>(null);
 
-          return false;
+  useEffect(() => {
+    if (!clickedItem || !processGroups) return;
+
+    let itemToUse: any = { ...clickedItem };
+    
+    // Handle process model parent group lookup
+    if (!('process_groups' in clickedItem)) {
+      const parentId = clickedItem.id.split('/').slice(0, -1).join('/');
+      const findParent = (searchGroups: ProcessGroupLite[]): ProcessGroupLite | undefined => {
+        return searchGroups.find((group) => {
+          if (group.id === parentId) {
+            itemToUse = group;
+            return true;
+          }
+          return group.process_groups?.some(findParent);
         });
       };
-      // Remove the last part of the id, which is not and expandable entity.
-      const parentId = item.id.split('/').slice(0, -1).join('/');
-      findParent(processGroups || [], parentId);
+      findParent(processGroups);
     }
 
+    // Update models and groups state
     if (itemToUse?.process_models) {
-      // If a user clicks a group, and it has models, expand them for the user.
-      if (itemToUse.process_models.length) {
-        setModelsExpanded(true);
-      }
+      setModelsExpanded(!!itemToUse.process_models.length);
       setModels(itemToUse.process_models);
     }
-
-    // If there are groups in this group, set them into state for display
     if (itemToUse?.process_groups) {
       setGroups(itemToUse.process_groups);
     }
 
+    // Scroll handling
     const container = document.getElementById('scrollable-process-card-area');
     const cardElement = document.getElementById(
-      `card-${modifyProcessIdentifierForPathParam(item.id)}`,
+      `card-${modifyProcessIdentifierForPathParam(clickedItem.id)}`,
     );
     if (container && cardElement) {
       setTimeout(() => {
         container.scrollTo({
           top: cardElement.offsetTop - container.offsetTop,
-          behavior: 'smooth',
+          behavior: 'smooth'
         });
-      }, 100); // Slight delay before scrolling to ensure rendering
+      }, 100);
     }
 
-    setCurrentProcessGroup(item);
-
-    if (!('primary_file_name' in item)) {
-      const flattened = flattenAllItems(processGroups || [], []);
-      setCrumbs(processCrumbs(item, flattened)); // Use the newly flattened items.
-
-      const processEntityId = modifyProcessIdentifierForPathParam(item.id);
-      navigate(`/process-groups/${processEntityId}`);
+    // Update current group and crumbs
+    setCurrentProcessGroup(itemToUse);
+    if (!('primary_file_name' in itemToUse)) {
+      const flattened = flattenAllItems(processGroups, []);
+      setCrumbs(processCrumbs(itemToUse, flattened));
+      navigate(`/process-groups/${modifyProcessIdentifierForPathParam(itemToUse.id)}`);
     }
+
+    // Reset clicked item
+    setClickedItem(null);
+  }, [clickedItem, processGroups, navigate]);
+
+  const handleClickStream = (item: Record<string, any>) => {
+    setClickedItem(item);
   };
 
   /** Tree calls back here so we can imperatively rework groups etc. */
