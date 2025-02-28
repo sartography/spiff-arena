@@ -1,4 +1,4 @@
-import { Button, Paper, Stack, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -144,7 +144,7 @@ export default function ProcessModelCard({
     };
   }, [stream, selectedStyle]);
   return (
-    <Paper
+    <Card
       elevation={0}
       sx={selectedStyle}
       onClick={(e) => handleViewProcess(e as unknown as PointerEvent)}
@@ -179,6 +179,6 @@ export default function ProcessModelCard({
           </Button>
         </Stack>
       </Stack>
-    </Paper>
+    </Card>
   );
 }

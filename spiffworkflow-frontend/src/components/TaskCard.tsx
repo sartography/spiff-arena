@@ -27,7 +27,7 @@ export default function TaskCard({
   getProcessInstanceSummary,
 }: TaskCardProps) {
   return (
-    <Grid item key={entry.id} xs={12} sm={6} md={4}>
+    <Grid id="task-card-grid" item key={entry.id} xs={12} sm={6} md={4}>
       <Card
         onClick={() => hasAccessToCompleteTask && handleRunTask(entry)}
         sx={{

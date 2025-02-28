@@ -451,7 +451,7 @@ export default function ProcessModelTreePage({
   };
 
   return (
-    <Box id="process-model-tree-box" sx={{ margin: '0 auto', p: 3 }}>
+    <Box id="process-model-tree-box" sx={{ margin: '0 auto', p: 0 }}>
       <Typography variant="h1" sx={{ mb: 2 }}>
         Processes
       </Typography>
@@ -478,8 +478,6 @@ export default function ProcessModelTreePage({
             sx={{
               width: '100%',
               paddingTop: 2,
-              paddingLeft: 2,
-              paddingRight: 2,
               justifyContent: 'center',
             }}
           >
@@ -491,8 +489,6 @@ export default function ProcessModelTreePage({
               width: '100%',
               overflowY: 'auto',
               overflowX: 'hidden',
-              paddingLeft: 2,
-              paddingRight: 2,
             }}
             id="scrollable-process-card-area"
           >
