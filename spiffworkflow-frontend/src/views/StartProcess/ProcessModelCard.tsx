@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from '@mui/material';
+import { Card, Button, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
