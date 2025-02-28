@@ -157,26 +157,38 @@ export default function ProcessModelTreePage({
     });
   };
 
-  const [clickedItem, setClickedItem] = useState<Record<string, any> | null>(null);
+  const [clickedItem, setClickedItem] = useState<Record<string, any> | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (!clickedItem || !processGroups) return;
+    if (!clickedItem || !processGroups) {
+      return;
+    }
 
     let itemToUse: any = { ...clickedItem };
-    
+
     // Handle process model parent group lookup
     if (!('process_groups' in clickedItem)) {
-      const parentId = clickedItem.id.split('/').slice(0, -1).join('/');
-      const findParent = (searchGroups: ProcessGroupLite[]): ProcessGroupLite | undefined => {
+      const findParent = (
+        searchGroups: Record<string, any>[],
+        id: string,
+      ): Record<string, any> | undefined => {
         return searchGroups.find((group) => {
-          if (group.id === parentId) {
+          if (group.id === id) {
             itemToUse = group;
-            return true;
+            return group;
           }
-          return group.process_groups?.some(findParent);
+          if (group.process_groups) {
+            return findParent(group.process_groups, id);
+          }
+
+          return false;
         });
       };
-      findParent(processGroups);
+
+      const parentId = clickedItem.id.split('/').slice(0, -1).join('/');
+      findParent(processGroups || [], parentId);
     }
 
     // Update models and groups state
@@ -197,7 +209,7 @@ export default function ProcessModelTreePage({
       setTimeout(() => {
         container.scrollTo({
           top: cardElement.offsetTop - container.offsetTop,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }, 100);
     }
@@ -207,7 +219,9 @@ export default function ProcessModelTreePage({
     if (!('primary_file_name' in itemToUse)) {
       const flattened = flattenAllItems(processGroups, []);
       setCrumbs(processCrumbs(itemToUse, flattened));
-      navigate(`/process-groups/${modifyProcessIdentifierForPathParam(itemToUse.id)}`);
+      navigate(
+        `/process-groups/${modifyProcessIdentifierForPathParam(itemToUse.id)}`,
+      );
     }
 
     // Reset clicked item

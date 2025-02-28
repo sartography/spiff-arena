@@ -277,7 +277,11 @@ function SideNav({
               to={item.route}
               key={item.text}
               onClick={() => {
-                setAdditionalNavElement(null);
+                // additionalNavElement is the TreePanel in this case so do not
+                // remove it when you are navigating to the processes page from the processes page
+                if (item.id !== routeIdentifiers.PROCESSES) {
+                  setAdditionalNavElement(null);
+                }
               }}
               sx={{
                 bgcolor:
