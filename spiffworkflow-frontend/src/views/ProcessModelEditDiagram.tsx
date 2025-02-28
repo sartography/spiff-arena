@@ -1104,7 +1104,6 @@ export default function ProcessModelEditDiagram() {
         secondaryButtonText="Close (this does not save)"
         onRequestSubmit={handleMessageEditorSave}
         onRequestClose={handleMessageEditorClose}
-        size="lg"
         preventCloseOnClickOutside
         primaryButtonKind="primary"
       >
