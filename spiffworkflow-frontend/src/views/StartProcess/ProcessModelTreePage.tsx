@@ -99,8 +99,8 @@ export default function ProcessModelTreePage({
   // const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [treeCollapsed] = useState(false);
   const treeRef = useRef<TreeRef>(null);
-  // Pass to anything that wants to broadcast to all subscribers
-  const clickStream = new Subject<Record<string, any>>();
+  // Use useRef to maintain a stable stream instance across re-renders
+  const clickStream = useRef(new Subject<Record<string, any>>()).current;
   const favoriteCrumb: Crumb = { id: 'favorites', displayName: 'Favorites' };
   const gridProps = {
     width: '100%',
