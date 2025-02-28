@@ -13,7 +13,7 @@ import {
   CardContent,
   Button,
 } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
 import { Subject, Subscription } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -120,20 +120,23 @@ export default function ProcessModelTreePage({
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   /** Recursively flatten the entire hierarchy of process groups and models */
-  const flattenAllItems = (items: ProcessGroup[], flat: ProcessGroup[]) => {
-    items.forEach((item) => {
-      flat.push(item);
-      // Duck type to see if it's a group, and if so, recurse.
-      if (item.process_groups) {
-        flattenAllItems(
-          [...item.process_groups, ...(item.process_models || [])],
-          flat,
-        );
-      }
-    });
+  const flattenAllItems = useCallback(
+    (items: ProcessGroup[], flat: ProcessGroup[]) => {
+      items.forEach((item) => {
+        flat.push(item);
+        // Duck type to see if it's a group, and if so, recurse.
+        if (item.process_groups) {
+          flattenAllItems(
+            [...item.process_groups, ...(item.process_models || [])],
+            flat,
+          );
+        }
+      });
 
-    return flat;
-  };
+      return flat;
+    },
+    [],
+  );
 
   const processCrumbs = (
     item: Record<string, any>,
@@ -166,8 +169,33 @@ export default function ProcessModelTreePage({
       return;
     }
 
-    const isProcessGroup = 'process_groups' in clickedItem;
+    const handleScrollTo = () => {
+      const container = document.getElementById('scrollable-process-card-area');
+      const cardElement = document.getElementById(
+        `card-${modifyProcessIdentifierForPathParam(clickedItem.id)}`,
+      );
+      if (container && cardElement) {
+        setTimeout(() => {
+          container.scrollTo({
+            top: cardElement.offsetTop - container.offsetTop,
+            behavior: 'smooth',
+          });
+        }, 100);
+      }
+    };
 
+    const setProcessGroupItems = (itemToUse: ProcessGroupLite) => {
+      if (itemToUse?.process_models) {
+        setModelsExpanded(!!itemToUse.process_models.length);
+        setModels(itemToUse.process_models);
+      }
+      if (itemToUse?.process_groups) {
+        setGroups(itemToUse.process_groups);
+      }
+      setCurrentProcessGroup(itemToUse);
+    };
+
+    const isProcessGroup = 'process_groups' in clickedItem;
     let itemToUse: any = { ...clickedItem };
 
     // Handle process model parent group lookup
@@ -193,31 +221,9 @@ export default function ProcessModelTreePage({
       findParent(processGroups || [], parentId);
     }
 
-    // Update models and groups state
-    if (itemToUse?.process_models) {
-      setModelsExpanded(!!itemToUse.process_models.length);
-      setModels(itemToUse.process_models);
-    }
-    if (itemToUse?.process_groups) {
-      setGroups(itemToUse.process_groups);
-    }
+    setProcessGroupItems(itemToUse);
+    handleScrollTo();
 
-    // Scroll handling
-    const container = document.getElementById('scrollable-process-card-area');
-    const cardElement = document.getElementById(
-      `card-${modifyProcessIdentifierForPathParam(clickedItem.id)}`,
-    );
-    if (container && cardElement) {
-      setTimeout(() => {
-        container.scrollTo({
-          top: cardElement.offsetTop - container.offsetTop,
-          behavior: 'smooth',
-        });
-      }, 100);
-    }
-
-    // Update current group and crumbs
-    setCurrentProcessGroup(itemToUse);
     if (isProcessGroup) {
       const flattened = flattenAllItems(processGroups, []);
       setCrumbs(processCrumbs(itemToUse, flattened));
@@ -226,7 +232,6 @@ export default function ProcessModelTreePage({
       );
     }
 
-    // Reset clicked item
     setClickedItem(null);
   }, [clickedItem, processGroups, navigate, flattenAllItems]);
 
