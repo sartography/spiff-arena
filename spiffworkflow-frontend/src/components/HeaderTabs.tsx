@@ -1,9 +1,5 @@
 import React from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
-import { Add } from '@mui/icons-material';
-import { useNavigate } from 'react-router';
-
-const mainBlue = 'primary.main';
 
 type HeaderTabsProps = {
   value: number;
@@ -11,8 +7,6 @@ type HeaderTabsProps = {
 };
 
 export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
-  const navigate = useNavigate();
-
   return (
     <Box
       sx={{
@@ -35,31 +29,6 @@ export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
       >
         <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
         <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
-        <Tab
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <span>Create custom tab</span>
-              <Add sx={{ ml: 1 }} />
-            </Box>
-          }
-          sx={{
-            ml: 'auto',
-            textTransform: 'none',
-            color: mainBlue,
-            '& .MuiBox-root': {
-              display: 'flex',
-              alignItems: 'center',
-              '& .MuiSvgIcon-root': {
-                ml: 1,
-                bgcolor: mainBlue,
-                color: 'white',
-                borderRadius: '50%',
-                padding: '2px',
-              },
-            },
-          }}
-          onClick={() => navigate('/create-custom-tab')}
-        />
       </Tabs>
     </Box>
   );

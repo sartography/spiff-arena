@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
-import SearchBar from '../components/SearchBar';
 import TaskControls from '../components/TaskControls';
 import HttpService from '../services/HttpService';
 import { ProcessInstanceTask } from '../interfaces';
@@ -208,12 +207,11 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'right',
           alignItems: 'center',
           mb: 2,
         }}
       >
-        <SearchBar />
         <TaskControls
           viewMode={viewMode}
           setViewMode={setViewMode}

@@ -11,7 +11,6 @@ import ProcessInterstitialPage from './TaskShow/ProcessInterstitialPage';
 import ProcessInstanceProgressPage from './TaskShow/ProcessInstanceProgressPage';
 import ErrorDisplay from '../components/ErrorDisplay';
 import About from './About';
-import ComingSoon from '../components/ComingSoon';
 import MessageListPage from './MessageListPage';
 import DataStoreRoutes from './DataStoreRoutes';
 import Configuration from './Configuration';
@@ -107,7 +106,6 @@ export default function BaseRoutes({
           path="/:modifiedProcessModelId/start"
           element={<StartProcessInstance />}
         />
-        <Route path="/create-custom-tab" element={<ComingSoon />} />
         <Route
           path="/tasks/:process_instance_id/:task_guid"
           element={<TaskShow />}
