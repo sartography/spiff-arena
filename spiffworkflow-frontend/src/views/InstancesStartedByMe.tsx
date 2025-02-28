@@ -71,22 +71,15 @@ function InstancesStartedByMe({
             navigate('/');
           }
         }}
+        taskControlElement={
+          <TaskControls
+            showNonActive={showNonActive}
+            setShowNonActive={setShowNonActive}
+            setViewMode={setViewMode}
+            viewMode={viewMode}
+          />
+        }
       />
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'right',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <TaskControls
-          showNonActive={showNonActive}
-          setShowNonActive={setShowNonActive}
-          setViewMode={setViewMode}
-          viewMode={viewMode}
-        />
-      </Box>
       <TaskTable
         entries={processInstances}
         viewMode={viewMode}

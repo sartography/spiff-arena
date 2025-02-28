@@ -4,9 +4,14 @@ import { Box, Tabs, Tab } from '@mui/material';
 type HeaderTabsProps = {
   value: number;
   onChange: (event: React.SyntheticEvent, newValue: number) => void;
+  taskControlElement: any;
 };
 
-export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
+export default function HeaderTabs({
+  value,
+  onChange,
+  taskControlElement,
+}: HeaderTabsProps) {
   return (
     <Box
       sx={{
@@ -30,6 +35,16 @@ export default function HeaderTabs({ value, onChange }: HeaderTabsProps) {
         <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
         <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
       </Tabs>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'right',
+          alignItems: 'center',
+          verticalAlign: 'center',
+        }}
+      >
+        {taskControlElement}
+      </Box>
     </Box>
   );
 }

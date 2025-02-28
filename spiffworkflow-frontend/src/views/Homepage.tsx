@@ -203,23 +203,16 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
             navigate('/started-by-me');
           }
         }}
+        taskControlElement={
+          <TaskControls
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            groupByOptions={groupByOptions}
+            onGroupBySelect={onGroupBySelect}
+            selectedGroupBy={selectedGroupBy}
+          />
+        }
       />
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'right',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <TaskControls
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          groupByOptions={groupByOptions}
-          onGroupBySelect={onGroupBySelect}
-          selectedGroupBy={selectedGroupBy}
-        />
-      </Box>
       {taskTableElement()}
     </>
   );
