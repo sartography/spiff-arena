@@ -320,7 +320,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
@@ -451,7 +451,7 @@ export default function ProcessModelTreePage({
   };
 
   return (
-    <Box sx={{ margin: '0 auto', p: 3 }}>
+    <Box id="process-model-tree-box" sx={{ margin: '0 auto', p: 3 }}>
       <Typography variant="h1" sx={{ mb: 2 }}>
         Processes
       </Typography>
@@ -464,6 +464,7 @@ export default function ProcessModelTreePage({
         id="list-container"
       >
         <Stack
+          id="process-model-tree-stack"
           gap={2}
           sx={{
             width: '100%',

@@ -242,6 +242,7 @@ export default function ContainerForExtensions() {
       <ScrollToTop />
       <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
         <Container
+          id="container-for-extensions-container"
           maxWidth={false}
           data-theme={globalTheme.palette.mode}
           sx={{
@@ -255,12 +256,14 @@ export default function ContainerForExtensions() {
           }}
         >
           <Grid
+            id="container-for-extensions-grid"
             container
             sx={{
               height: '100%',
             }}
           >
             <Box
+              id="container-for-extensions-box"
               sx={{
                 display: 'flex',
                 width: '100%',
@@ -296,6 +299,7 @@ export default function ContainerForExtensions() {
                 </IconButton>
               )}
               <Box
+                id="container-for-extensions-box-2"
                 className={`${transitionStage}`}
                 sx={{
                   bgcolor: 'background.default',
