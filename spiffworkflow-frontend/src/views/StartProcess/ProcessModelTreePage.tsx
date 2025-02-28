@@ -166,10 +166,12 @@ export default function ProcessModelTreePage({
       return;
     }
 
+    const isProcessGroup = 'process_groups' in clickedItem;
+
     let itemToUse: any = { ...clickedItem };
 
     // Handle process model parent group lookup
-    if (!('process_groups' in clickedItem)) {
+    if (!isProcessGroup) {
       const findParent = (
         searchGroups: Record<string, any>[],
         id: string,
@@ -216,7 +218,7 @@ export default function ProcessModelTreePage({
 
     // Update current group and crumbs
     setCurrentProcessGroup(itemToUse);
-    if (!('primary_file_name' in itemToUse)) {
+    if (isProcessGroup) {
       const flattened = flattenAllItems(processGroups, []);
       setCrumbs(processCrumbs(itemToUse, flattened));
       navigate(
@@ -226,7 +228,7 @@ export default function ProcessModelTreePage({
 
     // Reset clicked item
     setClickedItem(null);
-  }, [clickedItem, processGroups, navigate]);
+  }, [clickedItem, processGroups, navigate, flattenAllItems]);
 
   const handleClickStream = (item: Record<string, any>) => {
     setClickedItem(item);
