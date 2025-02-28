@@ -36,7 +36,11 @@ import {
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import appVersionInfo from '../helpers/appVersionInfo';
-import { DOCUMENTATION_URL, SPIFF_ENVIRONMENT } from '../config';
+import {
+  DARK_MODE_ENABLED,
+  DOCUMENTATION_URL,
+  SPIFF_ENVIRONMENT,
+} from '../config';
 import UserService from '../services/UserService';
 import SpiffLogo from './SpiffLogo';
 import SpiffTooltip from './SpiffTooltip';
@@ -347,14 +351,16 @@ function SideNav({
               <Person />
             </IconButton>
           </SpiffTooltip>
-          <SpiffTooltip
-            title="Toggle dark mode"
-            placement={isCollapsed ? 'right' : 'top'}
-          >
-            <IconButton onClick={onToggleDarkMode}>
-              {isDark ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-          </SpiffTooltip>
+          {DARK_MODE_ENABLED ? (
+            <SpiffTooltip
+              title="Toggle dark mode"
+              placement={isCollapsed ? 'right' : 'top'}
+            >
+              <IconButton onClick={onToggleDarkMode}>
+                {isDark ? <Brightness7 /> : <Brightness4 />}
+              </IconButton>
+            </SpiffTooltip>
+          ) : null}
           {SPIFF_ENVIRONMENT && (
             <SpiffTooltip
               title="Environment"

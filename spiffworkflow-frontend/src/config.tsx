@@ -3,6 +3,9 @@ declare const window: Window & typeof globalThis;
 const { port, hostname } = window.location;
 let protocol = 'https';
 
+// so we can turn this feature on and off as we work on it
+const DARK_MODE_ENABLED = false;
+
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
     [key: string]: string;
@@ -131,14 +134,15 @@ const DATE_RANGE_DELIMITER = ':::';
 
 const SPIFF_ENVIRONMENT = spiffEnvironment;
 export {
-  DATE_TIME_FORMAT,
-  TIME_FORMAT_HOURS_MINUTES,
+  BACKEND_BASE_URL,
+  DARK_MODE_ENABLED,
   DATE_FORMAT,
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
-  BACKEND_BASE_URL,
+  DATE_TIME_FORMAT,
   DOCUMENTATION_URL,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
+  TIME_FORMAT_HOURS_MINUTES,
 };
