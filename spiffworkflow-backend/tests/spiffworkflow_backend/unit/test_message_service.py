@@ -21,6 +21,46 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
+    def test_messages_feb_24(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test messages between two different running processes using a single conversation.
+
+        Check that communication between two processes works the same as making a call through the API, here
+        we have two process instances that are communicating with each other using one conversation
+        """
+
+        # Load up the definition for the receiving process
+        load_test_spec(
+            "test_group/message_test_1",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="message-test-1.bpmn",
+        )
+
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="test-message-process.bpmn",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+
+        # This is typically called in a background cron process, so we will manually call it
+        # here in the tests
+        # The first time it is called, it will instantiate a new instance of the message_recieve process
+        MessageService.correlate_all_message_instances()
+
+        # The second time we call ths process_message_isntances (again it would typically be running on cron)
+        # it will deliver the message that was sent from the receiver back to the original sender.
+        MessageService.correlate_all_message_instances()
+
+        # if the above passes, feel free to copy and paste more, but i assume we won't need to at that point.
+
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,

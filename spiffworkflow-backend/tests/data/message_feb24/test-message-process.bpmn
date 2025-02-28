@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:correlationProperty id="uid" name="uid">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="B">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="C">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="D">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:collaboration id="Collaboration_0zmuoio">
+    <bpmn:participant id="Participant_07px7y2" processRef="Process_test_message_process_krtqelr" />
+    <bpmn:correlationKey id="CorrelationKey_13jop5v" name="MainCorrelationKey">
+      <bpmn:correlationPropertyRef>uid</bpmn:correlationPropertyRef>
+    </bpmn:correlationKey>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_test_message_process_krtqelr" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_17db3yp</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_1n1hp10</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:receiveTask id="Activity_1l42c2s" name="Listen for B" messageRef="B" spiffworkflow:isMatchingCorrelation="true">
+      <bpmn:extensionElements>
+        <spiffworkflow:messageVariable>b_response</spiffworkflow:messageVariable>
+        <spiffworkflow:processVariableCorrelation>
+          <spiffworkflow:propertyId>uid</spiffworkflow:propertyId>
+          <spiffworkflow:expression>uid</spiffworkflow:expression>
+        </spiffworkflow:processVariableCorrelation>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_165jywh</bpmn:incoming>
+      <bpmn:outgoing>Flow_149xjw0</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sendTask id="Activity_1re9jdj" name="Send Message A" messageRef="A">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="url" />
+            <spiffworkflow:parameter id="headers" type="any" value="headers" />
+            <spiffworkflow:parameter id="data" type="any" value="data" />
+            <spiffworkflow:parameter id="basic_auth_username" type="str" />
+            <spiffworkflow:parameter id="basic_auth_password" type="str" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:preScript>uid = random.randint(1,100000)
+payload = {"uid": uid}</spiffworkflow:preScript>
+        <spiffworkflow:messagePayload>payload</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
+      <bpmn:outgoing>Flow_165jywh</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="Activity_1j5ojcj" name="Send C" messageRef="C">
+      <bpmn:extensionElements>
+        <spiffworkflow:messagePayload>{"uid": payload['uid']}</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_149xjw0</bpmn:incoming>
+      <bpmn:outgoing>Flow_1akek91</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Activity_02mfgif" name="Accept D" messageRef="D" spiffworkflow:isMatchingCorrelation="true">
+      <bpmn:extensionElements>
+        <spiffworkflow:processVariableCorrelation>
+          <spiffworkflow:propertyId>uid</spiffworkflow:propertyId>
+          <spiffworkflow:expression>uid</spiffworkflow:expression>
+        </spiffworkflow:processVariableCorrelation>
+        <spiffworkflow:messageVariable>d_response</spiffworkflow:messageVariable>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1akek91</bpmn:incoming>
+      <bpmn:outgoing>Flow_1n1hp10</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="StartEvent_1" targetRef="Activity_1re9jdj" />
+    <bpmn:sequenceFlow id="Flow_1n1hp10" sourceRef="Activity_02mfgif" targetRef="EndEvent_1" />
+    <bpmn:sequenceFlow id="Flow_165jywh" sourceRef="Activity_1re9jdj" targetRef="Activity_1l42c2s" />
+    <bpmn:sequenceFlow id="Flow_149xjw0" sourceRef="Activity_1l42c2s" targetRef="Activity_1j5ojcj" />
+    <bpmn:sequenceFlow id="Flow_1akek91" sourceRef="Activity_1j5ojcj" targetRef="Activity_02mfgif" />
+  </bpmn:process>
+  <bpmn:message id="A" name="A" />
+  <bpmn:message id="B" name="B" />
+  <bpmn:message id="C" name="C" />
+  <bpmn:message id="D" name="D" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0zmuoio">
+      <bpmndi:BPMNShape id="Participant_07px7y2_di" bpmnElement="Participant_07px7y2" isHorizontal="true">
+        <dc:Bounds x="0" y="40" width="880" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="52" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14za570_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="822" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0lxmnc0_di" bpmnElement="Activity_1l42c2s">
+        <dc:Bounds x="320" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0pz9rga_di" bpmnElement="Activity_1re9jdj">
+        <dc:Bounds x="150" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ojttj7_di" bpmnElement="Activity_1j5ojcj">
+        <dc:Bounds x="490" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1qsppfi_di" bpmnElement="Activity_02mfgif">
+        <dc:Bounds x="660" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_17db3yp_di" bpmnElement="Flow_17db3yp">
+        <di:waypoint x="88" y="177" />
+        <di:waypoint x="150" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n1hp10_di" bpmnElement="Flow_1n1hp10">
+        <di:waypoint x="760" y="177" />
+        <di:waypoint x="822" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_165jywh_di" bpmnElement="Flow_165jywh">
+        <di:waypoint x="250" y="177" />
+        <di:waypoint x="320" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_149xjw0_di" bpmnElement="Flow_149xjw0">
+        <di:waypoint x="420" y="177" />
+        <di:waypoint x="490" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1akek91_di" bpmnElement="Flow_1akek91">
+        <di:waypoint x="590" y="177" />
+        <di:waypoint x="660" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

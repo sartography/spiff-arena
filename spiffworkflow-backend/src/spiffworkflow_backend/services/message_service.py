@@ -158,7 +158,12 @@ class MessageService:
                 message_instance_receive.failure_cause = str(exception)
                 db.session.add(message_instance_receive)
             if processor_receive is not None:
-                processor_receive.save()
+                # We may not be able to save here, this can raise a new exception.
+                try:
+                    processor_receive.save()
+                except Exception as save_exception:
+                    db.session.commit()
+                    raise exception from save_exception
             else:
                 db.session.commit()
             if isinstance(exception, SpiffWorkflowException):
@@ -234,10 +239,13 @@ class MessageService:
             name=message_instance_send.name,
             correlation_properties=correlation_properties,
         )
+        correlations = bpmn_message.calculate_correlations(
+            CustomBpmnScriptEngine(), bpmn_message.correlation_properties, message_instance_send.payload
+        )
         bpmn_event = BpmnEvent(
             event_definition=bpmn_message,
             payload=message_instance_send.payload,
-            correlations=message_instance_send.correlation_keys,
+            correlations=correlations,
         )
         processor_receive_to_use = processor_receive
         save_engine_steps = False

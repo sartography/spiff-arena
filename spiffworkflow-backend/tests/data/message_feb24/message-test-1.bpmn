@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:correlationProperty id="uid" name="uid">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="B">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="C">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="D">
+      <bpmn:formalExpression>uid</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:message id="A" name="A" />
+  <bpmn:collaboration id="Collaboration_0lzmsx7">
+    <bpmn:participant id="Participant_0ffbicc" processRef="Process_message_test_1_q6vcnex" />
+    <bpmn:correlationKey id="CorrelationKey_0eo92fp" name="MainCorrelationKey">
+      <bpmn:correlationPropertyRef>uid</bpmn:correlationPropertyRef>
+    </bpmn:correlationKey>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_message_test_1_q6vcnex" isExecutable="true">
+    <bpmn:startEvent id="Event_0gat35z" name="A (in)" spiffworkflow:isMatchingCorrelation="true">
+      <bpmn:outgoing>Flow_1fk32px</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1fmkbrx" messageRef="A">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>start_data</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0i8ken0">
+      <bpmn:incoming>Flow_0shhkvu</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="Activity_1oish34" name="B (out)" messageRef="B">
+      <bpmn:extensionElements>
+        <spiffworkflow:messagePayload>{"uid": start_data['uid']}</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1fk32px</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ii13ff</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Activity_1b4h94h" name="C(in)" messageRef="C" spiffworkflow:isMatchingCorrelation="true">
+      <bpmn:extensionElements>
+        <spiffworkflow:messageVariable>c_input</spiffworkflow:messageVariable>
+        <spiffworkflow:processVariableCorrelation>
+          <spiffworkflow:propertyId>uid</spiffworkflow:propertyId>
+          <spiffworkflow:expression>start_data['uid']</spiffworkflow:expression>
+        </spiffworkflow:processVariableCorrelation>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ii13ff</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c1cfsw</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sendTask id="Activity_1vzk4y9" name="D(out)" messageRef="D">
+      <bpmn:extensionElements>
+        <spiffworkflow:messagePayload>{"uid": start_data['uid']}</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1c1cfsw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0shhkvu</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_1fk32px" sourceRef="Event_0gat35z" targetRef="Activity_1oish34" />
+    <bpmn:sequenceFlow id="Flow_0shhkvu" sourceRef="Activity_1vzk4y9" targetRef="Event_0i8ken0" />
+    <bpmn:sequenceFlow id="Flow_0ii13ff" sourceRef="Activity_1oish34" targetRef="Activity_1b4h94h" />
+    <bpmn:sequenceFlow id="Flow_1c1cfsw" sourceRef="Activity_1b4h94h" targetRef="Activity_1vzk4y9" />
+  </bpmn:process>
+  <bpmn:message id="B" name="B" />
+  <bpmn:message id="C" name="C" />
+  <bpmn:message id="D" name="D" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0lzmsx7">
+      <bpmndi:BPMNShape id="Participant_0ffbicc_di" bpmnElement="Participant_0ffbicc" isHorizontal="true">
+        <dc:Bounds x="-160" y="-15" width="630" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16b6fc7_di" bpmnElement="Event_0gat35z">
+        <dc:Bounds x="-108" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="-103" y="135" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0i8ken0_di" bpmnElement="Event_0i8ken0">
+        <dc:Bounds x="412" y="92" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0864cot_di" bpmnElement="Activity_1oish34">
+        <dc:Bounds x="-20" y="70" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dkacho_di" bpmnElement="Activity_1b4h94h">
+        <dc:Bounds x="120" y="70" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06cgq0t_di" bpmnElement="Activity_1vzk4y9">
+        <dc:Bounds x="260" y="70" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1fk32px_di" bpmnElement="Flow_1fk32px">
+        <di:waypoint x="-72" y="110" />
+        <di:waypoint x="-20" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0shhkvu_di" bpmnElement="Flow_0shhkvu">
+        <di:waypoint x="360" y="110" />
+        <di:waypoint x="412" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ii13ff_di" bpmnElement="Flow_0ii13ff">
+        <di:waypoint x="80" y="110" />
+        <di:waypoint x="120" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c1cfsw_di" bpmnElement="Flow_1c1cfsw">
+        <di:waypoint x="220" y="110" />
+        <di:waypoint x="260" y="110" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
