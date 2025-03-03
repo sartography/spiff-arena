@@ -4,7 +4,14 @@ const { port, hostname } = window.location;
 let protocol = 'https';
 
 // so we can turn this feature on and off as we work on it
-const DARK_MODE_ENABLED = false;
+let darkModeEnabled = null;
+
+if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
+  darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
+}
+
+const DARK_MODE_ENABLED =
+  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true' ? true : false;
 
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
