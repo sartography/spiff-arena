@@ -7,17 +7,17 @@ import { getStorageValue } from '../../services/LocalStorageService';
 import { ProcessModel } from '../../interfaces';
 
 const defaultStyle = {
-  borderRadius: 2,
-  padding: 2,
-  margin: 2,
-  borderWidth: 1,
-  borderStyle: 'solid',
-  borderColor: 'borders.primary',
-  minWidth: 320,
-  position: 'relative',
   ':hover': {
     backgroundColor: 'background.bluegreylight',
   },
+  padding: 2,
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  position: 'relative',
+  border: '1px solid',
+  borderColor: 'borders.primary',
+  borderRadius: 2,
 };
 
 /**

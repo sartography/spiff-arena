@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from '@mui/material';
+import { Card, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { Subject } from 'rxjs';
 
@@ -22,14 +22,17 @@ export default function ProcessGroupCard({
   const captionColor = 'text.secondary';
 
   return (
-    <Paper
+    <Card
       elevation={0}
       sx={{
-        borderRadius: 2,
         padding: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        position: 'relative',
         border: '1px solid',
         borderColor: 'borders.primary',
-        minWidth: 320,
+        borderRadius: 2,
         ':hover': {
           backgroundColor: 'background.bluegreylight',
         },
@@ -62,6 +65,6 @@ export default function ProcessGroupCard({
           Models: {group.process_models.length}
         </Typography>
       </Stack>
-    </Paper>
+    </Card>
   );
 }

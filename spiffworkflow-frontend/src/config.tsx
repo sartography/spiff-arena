@@ -10,8 +10,9 @@ if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
   darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
 }
 
-const DARK_MODE_ENABLED =
-  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true' ? true : false;
+const DARK_MODE_ENABLED = !!(
+  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
+);
 
 declare global {
   interface SpiffworkflowFrontendJsenvObject {

@@ -103,11 +103,14 @@ export default function ProcessModelTreePage({
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
   const favoriteCrumb: Crumb = { id: 'favorites', displayName: 'Favorites' };
   const gridProps = {
-    width: '100%',
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, 400px)',
-    justifyContent: 'center',
-    gridGap: 20,
+    gridGap: 20, // Spacing between cards
+    gridTemplateColumns: {
+      xs: '1fr', // Full width cards on extra-small screens
+      sm: 'repeat(auto-fill, minmax(300px, 1fr))', // Smaller cards, responsive from 300px
+      md: 'repeat(auto-fill, 400px)', // 400px wide cards on medium+ screens
+    },
+    justifyContent: 'center', // Center when there’s extra space
   };
 
   const { targetUris } = useUriListForPermissions();
@@ -320,7 +323,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
