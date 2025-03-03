@@ -1,4 +1,11 @@
-import { Card, Button, Stack, Typography } from '@mui/material';
+import {
+  Card,
+  Button,
+  Stack,
+  Typography,
+  CardActionArea,
+  CardContent,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -150,35 +157,41 @@ export default function ProcessModelCard({
       onClick={(e) => handleViewProcess(e as unknown as PointerEvent)}
       id={`card-${modifyProcessIdentifierForPathParam(model.id)}`}
     >
-      <Stack gap={1} sx={{ height: '100%' }}>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {model.display_name}
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 700, color: 'text.secondary' }}
-        >
-          {model.description || '--'}
-        </Typography>
+      <CardActionArea>
+        <CardContent>
+          <Stack gap={1} sx={{ height: '100%' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {model.display_name}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, color: 'text.secondary' }}
+            >
+              {model.description || '--'}
+            </Typography>
 
-        <Stack
-          sx={{
-            paddingTop: 2,
-            width: 150,
-            height: '100%',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
-          >
-            Start this process
-          </Button>
-        </Stack>
-      </Stack>
+            <Stack
+              sx={{
+                paddingTop: 2,
+                width: 150,
+                height: '100%',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={(e) =>
+                  handleStartProcess(e as unknown as PointerEvent)
+                }
+              >
+                Start this process
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }

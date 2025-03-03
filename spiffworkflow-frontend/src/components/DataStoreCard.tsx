@@ -1,4 +1,10 @@
-import { Typography, Card, CardActionArea, CardContent } from '@mui/material';
+import {
+  Typography,
+  Card,
+  CardActionArea,
+  CardContent,
+  Stack,
+} from '@mui/material';
 import { DataStore } from '../interfaces';
 
 const defaultStyle = {
@@ -17,20 +23,22 @@ const defaultStyle = {
 
 export default function DataStoreCard({ dataStore }: { dataStore: DataStore }) {
   return (
-    <Card sx={defaultStyle}>
+    <Card elevation={0} sx={defaultStyle}>
       <CardActionArea
         href={`/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`}
       >
         <CardContent>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            {dataStore.name}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, color: 'text.secondary' }}
-          >
-            {dataStore.description || '--'}
-          </Typography>
+          <Stack>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {dataStore.name}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, color: 'text.secondary' }}
+            >
+              {dataStore.description || '--'}
+            </Typography>
+          </Stack>
         </CardContent>
       </CardActionArea>
     </Card>

@@ -1,4 +1,10 @@
-import { Card, Stack, Typography } from '@mui/material';
+import {
+  Card,
+  CardActionArea,
+  CardContent,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useNavigate } from 'react-router';
 import { Subject } from 'rxjs';
 
@@ -46,25 +52,29 @@ export default function ProcessGroupCard({
         }
       }}
     >
-      <Stack>
-        <Typography variant="body1" sx={{ fontWeight: 700 }}>
-          {group.display_name}
-        </Typography>
+      <CardActionArea>
+        <CardContent>
+          <Stack>
+            <Typography variant="body1" sx={{ fontWeight: 700 }}>
+              {group.display_name}
+            </Typography>
 
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 700, color: 'text.secondary' }}
-        >
-          {group.description || '--'}
-        </Typography>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, color: 'text.secondary' }}
+            >
+              {group.description || '--'}
+            </Typography>
 
-        <Typography variant="caption" sx={{ color: captionColor }}>
-          Groups: {group.process_groups.length}
-        </Typography>
-        <Typography variant="caption" sx={{ color: captionColor }}>
-          Models: {group.process_models.length}
-        </Typography>
-      </Stack>
+            <Typography variant="caption" sx={{ color: captionColor }}>
+              Groups: {group.process_groups.length}
+            </Typography>
+            <Typography variant="caption" sx={{ color: captionColor }}>
+              Models: {group.process_models.length}
+            </Typography>
+          </Stack>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }
