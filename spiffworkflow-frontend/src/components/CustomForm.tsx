@@ -1,4 +1,4 @@
-import { customizeValidator } from '@rjsf/validator-ajv8';
+import validator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
@@ -14,7 +14,6 @@ import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericR
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
 
-const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
 enum DateCheckType {
