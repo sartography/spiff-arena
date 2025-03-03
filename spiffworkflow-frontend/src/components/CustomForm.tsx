@@ -1,4 +1,7 @@
-import validator from '@rjsf/validator-ajv8';
+import { customizeValidator } from '@rjsf/validator-ajv8';
+
+import ajvErrors from 'ajv-errors';
+
 import { ComponentType, ReactNode, useEffect, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@mui/material';
@@ -10,6 +13,9 @@ import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/Mark
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
+
+const validator = customizeValidator();
+ajvErrors(validator.ajv);
 
 enum DateCheckType {
   minimum = 'minimum',

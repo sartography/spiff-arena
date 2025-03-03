@@ -29,6 +29,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.1",
     "@uiw/react-md-editor": "^3.20.2",
+    "ajv-errors": "^3.0.0",
     "bpmn-js": "^17.9.1",
     "bpmn-js-cli": "^2.4.0",
     "bpmn-js-properties-panel": "^5.19.0",
