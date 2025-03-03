@@ -128,7 +128,6 @@ export default function ProcessModelTabs({
             }
           }}
           value=""
-          displayEmpty
         >
           {items.map((item) => (
             <MenuItem key={item} value={item}>
