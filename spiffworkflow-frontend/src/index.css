@@ -1,8 +1,6 @@
 /* site is mainly using white theme. */
 /* header is mainly using g100 */
 /* mockup wanted white, not grey, text */
-@import 'slick-carousel/slick/slick.css';
-@import 'slick-carousel/slick/slick-theme.css';
 
 body {
   /* This prevents the annoying MUI select box layout shift */
@@ -941,6 +939,10 @@ hr {
   max-width: 640px;
 }
 
+div[role='tabpanel'] p {
+  max-width: unset;
+}
+
 .cds--white h1,
 .cds--white h2,
 .cds--white h3,
@@ -1019,24 +1021,6 @@ div.cds--tag svg {
 
 div.onboarding {
   margin-bottom: 2rem;
-}
-
-/* makde the completed user form modal more readable */
-.completed-task-modal .cds--modal-container {
-  background-color: #ffffff;
-}
-
-.completed-task-modal .cds--text-input:disabled,
-.completed-task-modal .cds--text-area:disabled,
-.completed-task-modal .cds--date-picker__input:disabled,
-.completed-task-modal .cds--select-input:disabled,
-.completed-task-modal .cds--select-input:hover:disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
-  background-color: var(--cds-field);
-}
-
-.completed-task-modal .cds--form__helper-text--disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
 }
 
 .process-model-file-table {

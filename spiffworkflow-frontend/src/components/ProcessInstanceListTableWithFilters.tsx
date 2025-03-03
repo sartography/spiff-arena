@@ -57,7 +57,10 @@ import {
   FilterDisplayTypeMapping,
   SpiffTableHeader,
 } from '../interfaces';
-import ProcessModelSearch from './ProcessModelSearch';
+
+// MUI
+import ProcessModelSearchCarbon from './ProcessModelSearchCarbon';
+
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
@@ -1332,7 +1335,7 @@ export default function ProcessInstanceListTableWithFilters({
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
-            <ProcessModelSearch
+            <ProcessModelSearchCarbon
               onChange={(selection: any) => {
                 const pmSelectionId = selection.selectedItem
                   ? selection.selectedItem.id

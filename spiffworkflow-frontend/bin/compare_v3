@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# Define directories
+src_dir="src"
+spiffui_dir="src/a-spiffui-v3"
+ignored_dir="src/a-spiffui-v2"
+
+# Ensure both directories exist
+if [[ ! -d "$src_dir" || ! -d "$spiffui_dir" ]]; then
+  echo "Both '$src_dir' and '$spiffui_dir' directories must exist."
+  exit 1
+fi
+
+# List files in src (up to max depth 10), excluding src/a-spiffui-v2 and src/a-spiffui-v3
+src_files=$(find "$src_dir" -mindepth 1 -maxdepth 10 -type f ! -path "$ignored_dir/*" ! -path "$spiffui_dir/*")
+
+# Find files in src that are not in src/a-spiffui-v3
+missing_files=()
+for file in $src_files; do
+  relative_path="${file#$src_dir/}"
+  relative_path="$(sed -E 's/routes/views/' <<<"$relative_path")"
+  if [[ ! -f "$spiffui_dir/$relative_path" ]]; then
+    missing_files+=("$file")
+  fi
+done
+
+# Output the result
+found_count=$(echo "$src_files" | wc -l)
+missing_count=${#missing_files[@]}
+
+if [[ $missing_count -eq 0 ]]; then
+  echo "All files in '$src_dir' are present in '$spiffui_dir'."
+else
+  echo "Files in '$src_dir' but not in '$spiffui_dir':"
+  for file in "${missing_files[@]}"; do
+    echo "$file"
+  done
+fi
+
+# Summary
+echo "Total files checked: $found_count"
+echo "Total missing files: $missing_count"

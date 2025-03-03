@@ -18,12 +18,11 @@ import {
 } from 'dmn-js-properties-panel';
 
 import React, { useEffect, useState, useCallback } from 'react';
-// @ts-ignore
-import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
+import { Button, Modal, UnorderedList, Link } from '@carbon/react';
+import MuiButton from '@mui/material/Button';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-// import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
 import '../bpmn-js-properties-panel.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 
@@ -46,14 +45,11 @@ import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
-// removed in v17
-// https://forum.bpmn.io/t/since-mobile-touch-implementation-was-stripped-out-in-v17-is-there-a-wip-re-implementation-as-an-extension-in-the-wild-yet/11149
-// import TouchModule from 'diagram-js/lib/navigation/touch';
-
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
 import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
+import { Stack } from '@mui/material';
 import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
 import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
@@ -828,7 +824,12 @@ export default function ReactDiagramEditor({
         buttonText += 's';
       }
       return (
-        <Button onClick={() => setShowingReferences(true)}>{buttonText}</Button>
+        <MuiButton
+          variant="contained"
+          onClick={() => setShowingReferences(true)}
+        >
+          {buttonText}
+        </MuiButton>
       );
     }
     return null;
@@ -837,19 +838,20 @@ export default function ReactDiagramEditor({
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
-        <ButtonSet>
+        <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
           <Can
             I="PUT"
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button
+            <MuiButton
               onClick={handleSave}
+              variant="contained"
               disabled={disableSaveButton}
               data-qa="process-model-file-save-button"
             >
               Save
-            </Button>
+            </MuiButton>
           </Can>
           <Can
             I="DELETE"
@@ -866,9 +868,9 @@ export default function ReactDiagramEditor({
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             {onSetPrimaryFile && (
-              <Button onClick={handleSetPrimaryFile}>
+              <MuiButton onClick={handleSetPrimaryFile} variant="contained">
                 Set as primary file
-              </Button>
+              </MuiButton>
             )}
           </Can>
           <Can
@@ -876,7 +878,9 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={downloadXmlFile}>Download</Button>
+            <MuiButton variant="contained" onClick={downloadXmlFile}>
+              Download
+            </MuiButton>
           </Can>
           <Can
             I="GET"
@@ -884,7 +888,8 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             {canViewXml && (
-              <Button
+              <MuiButton
+                variant="contained"
                 onClick={() => {
                   navigate(
                     `/process-models/${processModelId}/form/${fileName}`,
@@ -892,7 +897,7 @@ export default function ReactDiagramEditor({
                 }}
               >
                 View XML
-              </Button>
+              </MuiButton>
             )}
           </Can>
           {getReferencesButton()}
@@ -904,7 +909,7 @@ export default function ReactDiagramEditor({
           >
             {activeUserElement || null}
           </Can>
-        </ButtonSet>
+        </Stack>
       );
     }
     return null;

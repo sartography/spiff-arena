@@ -3,10 +3,10 @@ import {
   Table,
   TableHead,
   TableRow,
-  TableHeader,
+  TableCell,
   TableBody,
   Button,
-} from '@carbon/react';
+} from '@mui/material';
 import { JsonSchemaExample } from '../../interfaces';
 import textSchema from '../../resources/json_schema_examples/text-schema.json';
 import textUiSchema from '../../resources/json_schema_examples/text-uischema.json';
@@ -90,33 +90,31 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
   }
 
   // Render the form in another div
-  const rows: object[] = examples.map((example, index) => {
+  const rows = examples.map((example, index) => {
     return (
-      <tr>
-        <td>{example.schema.title}</td>
-        <td>{example.schema.description}</td>
-        <td>
-          <Button kind="primary" size="sm" onClick={() => selectExample(index)}>
+      <TableRow key={example.schema.title || index}>
+        <TableCell>{example.schema.title}</TableCell>
+        <TableCell>{example.schema.description}</TableCell>
+        <TableCell>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => selectExample(index)}
+          >
             Load
           </Button>
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     );
   });
 
   return (
-    <Table size="lg">
+    <Table size="medium">
       <TableHead>
         <TableRow>
-          <TableHeader key="name" title="Name">
-            Name
-          </TableHeader>
-          <TableHeader key="desc" title="Description">
-            Description
-          </TableHeader>
-          <TableHeader key="load" title="Load">
-            Insert
-          </TableHeader>
+          <TableCell>Name</TableCell>
+          <TableCell>Description</TableCell>
+          <TableCell>Insert</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>{rows}</TableBody>

@@ -1,4 +1,6 @@
-import { ReactElement } from 'react';
+import React, { ReactElement } from 'react';
+// Import MUI components if needed
+// import { Button, Typography } from '@mui/material';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 
 type OwnProps = {
@@ -15,7 +17,6 @@ export function extensionUxElementMap({
   if (!extensionUxElements) {
     return null;
   }
-
   const mainElement = () => {
     const elementsForDisplayLocation = extensionUxElements.filter(
       (uxElement: UiSchemaUxElement) => {

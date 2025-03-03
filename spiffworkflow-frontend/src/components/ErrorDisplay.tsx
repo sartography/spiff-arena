@@ -1,4 +1,5 @@
-import { Notification } from './Notification';
+import React, { SyntheticEvent } from 'react';
+import { Alert, AlertTitle } from '@mui/material';
 import useAPIError from '../hooks/UseApiError';
 import {
   ErrorForDisplay,
@@ -153,30 +154,38 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
 
 export function errorDisplayStateless(
   errorObject: ErrorForDisplay,
-  onClose?: Function,
+  onClose?: (event: SyntheticEvent) => void,
 ) {
   const title = 'Error:';
   const hideCloseButton = !onClose;
 
   return (
-    <Notification
-      title={title}
+    <Alert
+      severity="error"
       onClose={onClose}
-      hideCloseButton={hideCloseButton}
-      type="error"
+      action={
+        hideCloseButton ? null : (
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
+        )
+      }
     >
-      <>{childrenForErrorObject(errorObject)}</>
-    </Notification>
+      <AlertTitle>{title}</AlertTitle>
+      {childrenForErrorObject(errorObject)}
+    </Alert>
   );
 }
 
 export default function ErrorDisplay() {
-  const errorObject = useAPIError().error;
-  const { removeError } = useAPIError();
+  const { error: errorObject, removeError } = useAPIError();
+  const handleRemoveError = (_event: SyntheticEvent) => {
+    removeError();
+  };
   let errorTag = null;
 
   if (errorObject) {
-    errorTag = errorDisplayStateless(errorObject, removeError);
+    errorTag = errorDisplayStateless(errorObject, handleRemoveError);
   }
   return errorTag;
 }

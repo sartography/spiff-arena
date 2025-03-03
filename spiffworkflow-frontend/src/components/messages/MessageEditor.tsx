@@ -248,19 +248,11 @@ export function MessageEditor({
       'ui:rows': 5,
       'ui:options': { validateJson: true },
     },
-    'ui:layout': [
-      {
-        processGroupIdentifier: { sm: 2, md: 4, lg: 8 },
-        messageId: { sm: 2, md: 4, lg: 8 },
-        schema: { sm: 4, md: 4, lg: 8 },
-        correlation_properties: {
-          sm: 4,
-          md: 4,
-          lg: 8,
-          id: { sm: 2, md: 4, lg: 8 },
-          extractionExpression: { sm: 2, md: 4, lg: 8 },
-        },
-      },
+    'ui:order': [
+      'processGroupIdentifier',
+      'messageId',
+      'schema',
+      'correlation_properties',
     ],
   };
 
