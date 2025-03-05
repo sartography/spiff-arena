@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Tabs, TabList, Tab } from '@carbon/react';
+import { Tabs, Tab } from '@mui/material'; // Importing MUI components
 import { SpiffTab } from '../interfaces';
 
 type OwnProps = {
@@ -22,17 +22,21 @@ export default function SpiffTabs({ tabs }: OwnProps) {
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, tabs]);
 
-  const tabComponents = tabs.map((spiffTab: SpiffTab) => {
-    return (
-      <Tab onClick={() => navigate(spiffTab.path)}>{spiffTab.display_name}</Tab>
-    );
-  });
+  const handleTabChange = (event: ChangeEvent<{}>, newValue: number) => {
+    navigate(tabs[newValue].path);
+  };
 
-  if (selectedTabIndex !== null && tabComponents.length > selectedTabIndex) {
+  if (selectedTabIndex !== null && tabs.length > selectedTabIndex) {
     return (
       <>
-        <Tabs selectedIndex={selectedTabIndex}>
-          <TabList aria-label="List of tabs">{tabComponents}</TabList>
+        <Tabs
+          value={selectedTabIndex}
+          onChange={handleTabChange}
+          aria-label="List of tabs"
+        >
+          {tabs.map((spiffTab: SpiffTab) => (
+            <Tab key={spiffTab.display_name} label={spiffTab.display_name} />
+          ))}
         </Tabs>
         <br />
       </>

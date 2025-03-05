@@ -1,8 +1,8 @@
-import { Button } from '@carbon/react';
 import React from 'react';
 import { useErrorBoundary } from 'react-error-boundary';
-
-import { Notification } from './components/Notification';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 
 type ErrorProps = {
   error: Error;
@@ -16,17 +16,20 @@ export function ErrorBoundaryFallback({ error }: ErrorProps) {
   console.error(error);
 
   return (
-    <Notification
-      title="Something Went Wrong."
-      onClose={() => resetBoundary()}
-      type="error"
+    <Alert
+      severity="error"
+      action={
+        <Button color="inherit" size="small" onClick={resetBoundary}>
+          Try again
+        </Button>
+      }
     >
+      <AlertTitle>Something Went Wrong.</AlertTitle>
       <p>
         We encountered an unexpected error. Please try again. If the problem
         persists, please contact your administrator.
       </p>
       <p>{error.message}</p>
-      <Button onClick={resetBoundary}>Try again</Button>
-    </Notification>
+    </Alert>
   );
 }

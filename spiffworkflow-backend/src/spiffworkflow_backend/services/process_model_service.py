@@ -449,20 +449,23 @@ class ProcessModelService(FileSystemService):
             else:
                 add_to_group_hierarchy(group_hierarchy[current_group_id]["process_groups_dict"], group_path[1:], process_model)
 
-        group_hierarchy: dict[str, ProcessGroupLite] = {}
-        for process_model in process_models:
-            if process_model.parent_groups:
-                add_to_group_hierarchy(group_hierarchy, process_model.parent_groups, process_model)
-
         def convert_to_list(group_hierarchy: dict) -> list[ProcessGroupLite]:
-            result = []
+            top_level_process_group_list = []
             for _group_id, group_data in group_hierarchy.items():
                 group_data_copy = copy.deepcopy(group_data)
                 process_group_list = convert_to_list(group_data["process_groups_dict"])
                 del group_data_copy["process_groups_dict"]
                 group_data_copy["process_groups"] = process_group_list
-                result.append(group_data_copy)
-            return result
+                top_level_process_group_list.append(group_data_copy)
+            return sort_by_display_name(top_level_process_group_list)
+
+        def sort_by_display_name(process_group_list: list[ProcessGroupLite]) -> list[ProcessGroupLite]:
+            return sorted(process_group_list, key=lambda x: x["display_name"])
+
+        group_hierarchy: dict[str, ProcessGroupLite] = {}
+        for process_model in process_models:
+            if process_model.parent_groups:
+                add_to_group_hierarchy(group_hierarchy, process_model.parent_groups, process_model)
 
         return convert_to_list(group_hierarchy)
 

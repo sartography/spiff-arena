@@ -97,7 +97,9 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
                 )}`;
                 return (
                   <Link key={parentGroup.id} to={fullUrl}>
-                    {parentGroup.display_name}
+                    <Typography color="primary.main">
+                      {parentGroup.display_name}
+                    </Typography>
                   </Link>
                 );
               },
@@ -115,7 +117,9 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
               )}`;
               breadcrumbs.push(
                 <Link key={processEntity.id} to={fullUrl} data-qa={dataQaTag}>
-                  {processEntity.display_name}
+                  <Typography color="primary.main">
+                    {processEntity.display_name}
+                  </Typography>
                 </Link>,
               );
             } else {
@@ -140,7 +144,7 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
             if (url && valueLabel) {
               return (
                 <Link key={valueLabel} to={url}>
-                  {valueLabel}
+                  <Typography color="primary.main">{valueLabel}</Typography>
                 </Link>
               );
             }

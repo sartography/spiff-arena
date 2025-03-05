@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@carbon/react';
+import Button from '@mui/material/Button'; // Updated import for MUI Button
 import { Can } from '@casl/react';
 import { useState } from 'react';
 import {
@@ -145,7 +145,8 @@ export default function ProcessInstanceRun({
         onClick={processInstanceCreateAndRun}
         className={className}
         disabled={disableStartButton}
-        size="md"
+        variant="contained" // MUI specific prop
+        size="medium" // MUI specific prop
       >
         {buttonText}
       </Button>

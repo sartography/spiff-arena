@@ -1,7 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
-
-// @ts-ignore
-import { Pagination } from '@carbon/react';
+import { TablePagination } from '@mui/material';
+import { ChangeEvent, MouseEvent } from 'react';
 import { PaginationObject } from '../interfaces';
 
 type OwnProps = {
@@ -31,44 +30,48 @@ export default function PaginationForTable({
     ? `${paginationQueryParamPrefix}_`
     : '';
 
-  const updateRows = (args: any) => {
-    const newPage = args.page;
-    const { pageSize } = args;
+  const updateRows = (
+    event: MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => {
+    searchParams.set(
+      `${paginationQueryParamPrefixToUse}page`,
+      String(newPage + 1),
+    );
+    setSearchParams(searchParams);
+  };
 
-    searchParams.set(`${paginationQueryParamPrefixToUse}page`, newPage);
-    searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, pageSize);
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
+    const newPerPage = parseInt(event.target.value, 10);
+    searchParams.set(
+      `${paginationQueryParamPrefixToUse}per_page`,
+      String(newPerPage),
+    );
     setSearchParams(searchParams);
   };
 
   if (pagination) {
     const maxPages = 1000;
-    const pagesUnknown = pagination.pages > maxPages;
     const totalItems =
       pagination.pages < maxPages ? pagination.total : maxPages * perPage;
-    const itemText = () => {
-      const start = (page - 1) * perPage + 1;
-      return `Items ${start} to ${start + pagination.count} of ${
-        pagination.total
-      }`;
-    };
 
     return (
       <>
         {tableToDisplay}
-        <Pagination
+        <TablePagination
           className={paginationClassName}
           data-qa={paginationDataQATag}
-          backwardText="Previous page"
-          forwardText="Next page"
-          itemsPerPageText="Items per page:"
-          page={page}
-          pageNumberText="Page Number"
-          itemText={itemText}
-          pageSize={perPage}
-          pageSizes={perPageOptions || PER_PAGE_OPTIONS}
-          totalItems={totalItems}
-          onChange={updateRows}
-          pagesUnknown={pagesUnknown}
+          component="div"
+          count={totalItems}
+          page={page - 1}
+          onPageChange={updateRows}
+          rowsPerPage={perPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={perPageOptions || PER_PAGE_OPTIONS}
+          labelRowsPerPage="Items per page:"
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to} of ${count}`
+          }
         />
       </>
     );

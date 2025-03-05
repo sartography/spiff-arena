@@ -37,3 +37,4 @@ cypress/downloads
 .idea
 
 /cypress.env
+/screenshot*.png

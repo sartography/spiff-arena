@@ -1,7 +1,7 @@
-import { ComboBox } from '@carbon/react';
+import { Autocomplete, TextField } from '@mui/material';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { CarbonComboBoxSelection, User } from '../interfaces';
+import { User } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
@@ -48,25 +48,27 @@ export default function UserSearch({
     // delay in ms
     250,
   );
+
   return (
-    <ComboBox
-      onInputChange={addDebouncedSearchUser}
+    <Autocomplete
+      onInputChange={(event, value) => addDebouncedSearchUser(value)}
       className={className}
-      onChange={(selection: CarbonComboBoxSelection) => {
-        onSelectedUser(selection.selectedItem);
+      onChange={(event, value) => {
+        onSelectedUser(value);
       }}
       id="user-search"
       data-qa="user-search"
-      items={userList}
-      itemToString={(processInstanceInitatorOption: User) => {
-        if (processInstanceInitatorOption) {
-          return processInstanceInitatorOption.username;
-        }
-        return null;
-      }}
-      placeholder="Start typing username"
-      titleText={label}
-      selectedItem={selectedUser}
+      options={userList}
+      getOptionLabel={(option: User) => option.username || ''}
+      renderInput={(params) => (
+        <TextField
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...params}
+          label={label}
+          placeholder="Start typing username"
+        />
+      )}
+      value={selectedUser}
     />
   );
 }

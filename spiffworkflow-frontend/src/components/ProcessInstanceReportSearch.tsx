@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  ComboBox,
-  Grid,
-  Column,
-  FormLabel,
-  // @ts-ignore
-} from '@carbon/react';
+import { Autocomplete, Grid, FormLabel, TextField } from '@mui/material';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -68,27 +62,39 @@ export default function ProcessInstanceReportSearch({
 
   if (reportsAvailable()) {
     return (
-      <Grid fullWidth condensed>
-        <Column sm={2} md={3} lg={3}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
           <FormLabel className="with-top-margin">{titleText}</FormLabel>
-        </Column>
-        <Column sm={2} md={5} lg={13}>
-          <ComboBox
+        </Grid>
+        <Grid item xs={12} sm={6} md={9}>
+          <Autocomplete
             onChange={onChange}
             id="process-instance-report-select"
             data-qa="process-instance-report-selection"
-            items={processInstanceReports}
-            itemToString={(processInstanceReport: ProcessInstanceReport) => {
+            options={processInstanceReports || []}
+            getOptionLabel={(processInstanceReport: ProcessInstanceReport) => {
               if (processInstanceReport) {
                 return reportSelectionString(processInstanceReport);
               }
-              return null;
+              return '';
             }}
-            shouldFilterItem={shouldFilterProcessInstanceReport}
-            placeholder="Choose a process instance perspective"
-            selectedItem={selectedItem}
+            filterOptions={(options, state) =>
+              options.filter((option) =>
+                shouldFilterProcessInstanceReport({
+                  item: option,
+                  inputValue: state.inputValue,
+                }),
+              )
+            }
+            renderInput={(params) => (
+              <TextField
+                inputProps={params.inputProps}
+                placeholder="Choose a process instance perspective"
+              />
+            )}
+            value={selectedItem}
           />
-        </Column>
+        </Grid>
       </Grid>
     );
   }
