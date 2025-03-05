@@ -1093,8 +1093,8 @@ div.retrievalExpressionsForm {
 }
 
 .task-instance-modal-row-item {
-  height: 48px;
-  line-height: 48px;
+  padding-top: .5rem;
+  font-size: 14px;
 }
 
 /* Utility classes to create horizontally centered stacks (to align icons etc) */

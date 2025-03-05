@@ -1797,12 +1797,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return (
-      <Tabs
-        value={selectedTaskTabSubTab}
-        onChange={(_, newValue) => updateSelectedTaskTabSubTab(newValue)}
-      >
-        <Tab label="Completed by me" />
-        <Tab label="All completed" />
+      <>
+        <Tabs
+          value={selectedTaskTabSubTab}
+          onChange={(_, newValue) => updateSelectedTaskTabSubTab(newValue)}
+        >
+          <Tab label="Completed by me" />
+          <Tab label="All completed" />
+        </Tabs>
         <Box>
           {selectedTaskTabSubTab === 0 ? (
             <TaskListTable
@@ -1840,7 +1842,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             />
           ) : null}
         </Box>
-      </Tabs>
+      </>
     );
   };
 

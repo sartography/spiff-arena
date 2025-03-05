@@ -21,7 +21,6 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
-import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
@@ -366,9 +365,15 @@ export default function TaskListTable({
     }
     if (showLastUpdated) {
       rowElements.push(
-        <TableCellWithTimeAgoInWords
-          timeInSeconds={processInstanceTask.updated_at_in_seconds}
-        />,
+        <TableCell
+          title={
+            DateAndTimeService.convertSecondsToFormattedDateTime(
+              processInstanceTask.updated_at_in_seconds,
+            ) || '-'
+          }
+        >
+          {TimeAgo.inWords(processInstanceTask.updated_at_in_seconds)}
+        </TableCell>,
       );
     }
     if (showActionsColumn) {
