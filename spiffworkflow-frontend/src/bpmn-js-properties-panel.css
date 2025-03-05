@@ -122,3 +122,6 @@ a:link {
 [data-theme='dark'] .bpmn-js-container .djs-popup .selected {
   background-color: grey;
 }
+[data-theme='dark'] .bpmn-js-container .bjs-breadcrumbs {
+  color: grey;
+}
