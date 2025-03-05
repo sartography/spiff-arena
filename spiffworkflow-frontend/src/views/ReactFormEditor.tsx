@@ -10,6 +10,7 @@ import {
   Box,
   Typography,
   TextField,
+  Stack,
 } from '@mui/material';
 import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
@@ -289,7 +290,7 @@ export default function ReactFormEditor() {
         {newFileNameBox()}
         {saveFileMessage()}
 
-        <ButtonGroup>
+        <Stack sx={{ mt: 2, mb: 2 }} direction="row" spacing={2}>
           <Can
             I="PUT"
             a={targetUris.processModelFileShowPath}
@@ -345,7 +346,7 @@ export default function ReactFormEditor() {
           >
             <ActiveUsers />
           </Can>
-        </ButtonGroup>
+        </Stack>
         {editorArea()}
       </main>
     );

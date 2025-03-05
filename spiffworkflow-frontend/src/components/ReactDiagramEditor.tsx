@@ -18,8 +18,8 @@ import {
 } from 'dmn-js-properties-panel';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Modal, UnorderedList, Link } from '@carbon/react';
-import MuiButton from '@mui/material/Button';
+import { Modal, UnorderedList, Link } from '@carbon/react';
+import { Button, IconButton, Stack } from '@mui/material';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -48,8 +48,11 @@ import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
-import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
-import { Stack } from '@mui/material';
+import {
+  ZoomIn,
+  ZoomOut,
+  CenterFocusStrongOutlined,
+} from '@mui/icons-material';
 import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
 import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
@@ -64,6 +67,7 @@ import {
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   processModelId: string;
@@ -824,12 +828,9 @@ export default function ReactDiagramEditor({
         buttonText += 's';
       }
       return (
-        <MuiButton
-          variant="contained"
-          onClick={() => setShowingReferences(true)}
-        >
+        <Button variant="contained" onClick={() => setShowingReferences(true)}>
           {buttonText}
-        </MuiButton>
+        </Button>
       );
     }
     return null;
@@ -844,14 +845,14 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <MuiButton
+            <Button
               onClick={handleSave}
               variant="contained"
               disabled={disableSaveButton}
               data-qa="process-model-file-save-button"
             >
               Save
-            </MuiButton>
+            </Button>
           </Can>
           <Can
             I="DELETE"
@@ -868,9 +869,9 @@ export default function ReactDiagramEditor({
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             {onSetPrimaryFile && (
-              <MuiButton onClick={handleSetPrimaryFile} variant="contained">
+              <Button onClick={handleSetPrimaryFile} variant="contained">
                 Set as primary file
-              </MuiButton>
+              </Button>
             )}
           </Can>
           <Can
@@ -878,9 +879,9 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <MuiButton variant="contained" onClick={downloadXmlFile}>
+            <Button variant="contained" onClick={downloadXmlFile}>
               Download
-            </MuiButton>
+            </Button>
           </Can>
           <Can
             I="GET"
@@ -888,7 +889,7 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             {canViewXml && (
-              <MuiButton
+              <Button
                 variant="contained"
                 onClick={() => {
                   navigate(
@@ -897,7 +898,7 @@ export default function ReactDiagramEditor({
                 }}
               >
                 View XML
-              </MuiButton>
+              </Button>
             )}
           </Can>
           {getReferencesButton()}
@@ -916,40 +917,25 @@ export default function ReactDiagramEditor({
   };
 
   const diagramControlButtons = () => {
-    // align the iconDescription to the bottom so it doesn't cover up the Save button
+    // align the title to the bottom so it doesn't cover up the Save button
     // when mousing through them
     return (
       <div className="diagram-control-buttons">
-        <Button
-          kind="ghost"
-          renderIcon={ZoomIn}
-          align="bottom-left"
-          iconDescription="Zoom in"
-          hasIconOnly
-          onClick={() => {
-            zoom(1);
-          }}
-        />
-        <Button
-          kind="ghost"
-          renderIcon={ZoomOut}
-          align="bottom-left"
-          iconDescription="Zoom out"
-          hasIconOnly
-          onClick={() => {
-            zoom(-1);
-          }}
-        />
-        <Button
-          kind="ghost"
-          renderIcon={ZoomFit}
-          align="bottom-left"
-          iconDescription="Zoom fit"
-          hasIconOnly
-          onClick={() => {
-            zoom(0);
-          }}
-        />
+        <SpiffTooltip title="Zoom in" placement="bottom">
+          <IconButton aria-label="Zoom in" onClick={() => zoom(1)}>
+            <ZoomIn />
+          </IconButton>
+        </SpiffTooltip>
+        <SpiffTooltip title="Zoom out" placement="bottom">
+          <IconButton aria-label="Zoom out" onClick={() => zoom(-1)}>
+            <ZoomOut />
+          </IconButton>
+        </SpiffTooltip>
+        <SpiffTooltip title="Zoom fit" placement="bottom">
+          <IconButton aria-label="Zoom fit" onClick={() => zoom(0)}>
+            <CenterFocusStrongOutlined />
+          </IconButton>
+        </SpiffTooltip>
       </div>
     );
   };
