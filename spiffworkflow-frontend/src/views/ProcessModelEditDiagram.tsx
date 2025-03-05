@@ -1286,6 +1286,7 @@ export default function ProcessModelEditDiagram() {
     }
     return (
       <Modal
+        id="edit-json-schmea-modal"
         open={showJsonSchemaEditor}
         modalHeading="Edit JSON Schema"
         primaryButtonText="Close"
