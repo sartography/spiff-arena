@@ -7,29 +7,27 @@ import {
 } from 'react-router-dom';
 import {
   Button,
-  ButtonSet,
-  Modal,
+  ButtonGroup,
+  Dialog,
   Tabs,
-  TabList,
   Tab,
-  TabPanels,
-  TabPanel,
-  TextInput,
+  TextField,
   Grid,
-  Column,
+  Box,
   Stack,
-  TextArea,
-  InlineLoading,
-} from '@carbon/react';
+  TextareaAutosize,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import {
-  SkipForward,
-  SkipBack,
-  PlayOutline,
+  SkipNext,
+  SkipPrevious,
+  PlayArrow,
   Close,
-  Checkmark,
-  Information,
-} from '@carbon/icons-react';
-import { gray } from '@carbon/colors';
+  Check,
+  Info,
+} from '@mui/icons-material';
 
 import { Can } from '@casl/react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
@@ -57,7 +55,6 @@ import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
-import SpiffTooltip from '../components/SpiffTooltip';
 import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -363,42 +360,38 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <Modal
+      <Dialog
         open={showFileNameEditor}
-        modalHeading="Process Model File Name"
-        primaryButtonText="Save Changes"
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleFileNameCancel}
-        onRequestSubmit={handleFileNameSave}
-        onRequestClose={handleFileNameCancel}
+        onClose={handleFileNameCancel}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <Grid
-          condensed
-          fullWidth
-          className="megacondensed process-model-files-section"
-        >
-          <Column md={4} lg={8} sm={4}>
-            <TextInput
-              id="process_model_file_name"
-              labelText="File Name:"
-              value={newFileName}
-              onChange={(e: any) => setNewFileName(e.target.value)}
-              invalidText={processModelFileInvalidText}
-              invalid={!!processModelFileInvalidText}
-              size="sm"
-              autoFocus
-            />
-          </Column>
-          <Column
-            md={4}
-            lg={8}
-            sm={4}
-            className="with-top-margin-for-label-next-to-text-input"
-          >
-            {fileExtension}
-          </Column>
-        </Grid>
-      </Modal>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Process Model File Name</h2>
+          <Grid container spacing={2}>
+            <Grid item xs={8}>
+              <TextField
+                id="process_model_file_name"
+                label="File Name:"
+                value={newFileName}
+                onChange={(e: any) => setNewFileName(e.target.value)}
+                error={!!processModelFileInvalidText}
+                helperText={processModelFileInvalidText}
+                size="small"
+                autoFocus
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={4}>
+              {fileExtension}
+            </Grid>
+          </Grid>
+          <ButtonGroup>
+            <Button onClick={handleFileNameSave}>Save Changes</Button>
+            <Button onClick={handleFileNameCancel}>Cancel</Button>
+          </ButtonGroup>
+        </Box>
+      </Dialog>
     );
   };
 
@@ -770,24 +763,14 @@ export default function ProcessModelEditDiagram() {
         scriptUnitTestResultBoolElement = (
           <>
             {scriptUnitTestResult.result === true && (
-              <Button
-                kind="ghost"
-                className="green-icon"
-                renderIcon={Checkmark}
-                iconDescription="Unit tests passed"
-                hasIconOnly
-                size="lg"
-              />
+              <IconButton color="success">
+                <Check />
+              </IconButton>
             )}
             {scriptUnitTestResult.result === false && (
-              <Button
-                kind="ghost"
-                className="red-icon"
-                renderIcon={Close}
-                iconDescription="Unit tests failed"
-                hasIconOnly
-                size="lg"
-              />
+              <IconButton color="error">
+                <Close />
+              </IconButton>
             )}
           </>
         );
@@ -811,54 +794,40 @@ export default function ProcessModelEditDiagram() {
 
       return (
         <main>
-          <Grid condensed fullWidth>
-            <Column md={4} lg={8} sm={2}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
               <p className="with-top-margin-for-unit-test-name">
                 Unit Test: {currentScriptUnitTest.id}
               </p>
-            </Column>
-            <Column md={4} lg={8} sm={2}>
-              <ButtonSet>
-                <Button
-                  kind="ghost"
-                  data-qa="unit-test-previous-button"
-                  renderIcon={SkipBack}
-                  iconDescription="Previous Unit Test"
-                  hasIconOnly
-                  size="lg"
-                  disabled={previousButtonDisable}
+            </Grid>
+            <Grid item xs={6}>
+              <ButtonGroup>
+                <IconButton
                   onClick={setPreviousScriptUnitTest}
-                />
-                <Button
-                  kind="ghost"
-                  data-qa="unit-test-next-button"
-                  renderIcon={SkipForward}
-                  iconDescription="Next Unit Test"
-                  hasIconOnly
-                  size="lg"
-                  disabled={nextButtonDisable}
+                  disabled={previousButtonDisable}
+                >
+                  <SkipPrevious />
+                </IconButton>
+                <IconButton
                   onClick={setNextScriptUnitTest}
-                />
-                <Button
-                  kind="ghost"
-                  data-qa="unit-test-run"
-                  renderIcon={PlayOutline}
-                  iconDescription="Run Unit Test"
-                  hasIconOnly
-                  size="lg"
-                  onClick={runCurrentUnitTest}
-                />
+                  disabled={nextButtonDisable}
+                >
+                  <SkipNext />
+                </IconButton>
+                <IconButton onClick={runCurrentUnitTest}>
+                  <PlayArrow />
+                </IconButton>
                 {scriptUnitTestResultBoolElement}
-              </ButtonSet>
-            </Column>
+              </ButtonGroup>
+            </Grid>
           </Grid>
-          <Grid condensed fullWidth>
-            <Column md={8} lg={16} sm={4}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
               {unitTestFailureElement()}
-            </Column>
+            </Grid>
           </Grid>
-          <Grid condensed fullWidth>
-            <Column md={4} lg={8} sm={2}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
               <div>Input Json:</div>
               <div>
                 <Editor
@@ -870,8 +839,8 @@ export default function ProcessModelEditDiagram() {
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
-            </Column>
-            <Column md={4} lg={8} sm={2}>
+            </Grid>
+            <Grid item xs={6}>
               <div>Expected Output Json:</div>
               <div>
                 <Editor
@@ -883,7 +852,7 @@ export default function ProcessModelEditDiagram() {
                   onChange={handleEditorScriptTestUnitOutputChange}
                 />
               </div>
-            </Column>
+            </Grid>
           </Grid>
         </main>
       );
@@ -928,30 +897,25 @@ export default function ProcessModelEditDiagram() {
   const scriptAssistWindow = () => {
     return (
       <>
-        <TextArea
+        <TextareaAutosize
           placeholder="Ask Spiff AI"
-          rows={20}
+          minRows={20}
           value={scriptAssistValue}
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
+          style={{ width: '100%' }}
         />
         <Stack
-          className="flex-justify-end flex-align-horizontal-center"
-          orientation="horizontal"
-          gap={5}
+          direction="row"
+          justifyContent="flex-end"
+          alignItems="center"
+          spacing={2}
         >
           {scriptAssistError && (
-            <div className="error-text-red">{scriptAssistError}</div>
+            <div style={{ color: 'red' }}>{scriptAssistError}</div>
           )}
-          {scriptAssistLoading && (
-            <InlineLoading
-              status="active"
-              iconDescription="Loading"
-              description="Fetching script..."
-            />
-          )}
+          {scriptAssistLoading && <CircularProgress />}
           <Button
-            className="m-top-10"
-            kind="primary"
+            variant="contained"
             onClick={() => handleProcessScriptAssist()}
             disabled={scriptAssistLoading}
           >
@@ -964,38 +928,29 @@ export default function ProcessModelEditDiagram() {
 
   const scriptEditor = () => {
     return (
-      <Grid fullwidth>
-        <Column lg={16} md={8} sm={4}>
+      <Grid container>
+        <Grid item xs={12}>
           {editorWindow()}
-        </Column>
+        </Grid>
       </Grid>
     );
   };
 
   const scriptEditorWithAssist = () => {
     return (
-      <Grid fullwidth>
-        <Column lg={10} md={4} sm={2}>
+      <Grid container>
+        <Grid item xs={7}>
           {editorWindow()}
-        </Column>
-        <Column lg={6} md={4} sm={2}>
-          <Stack
-            gap={3}
-            orientation="horizontal"
-            className="stack-align-content-horizontal p-bottom-10"
-            color={gray[50]}
-          >
-            <SpiffTooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
-              <Stack className="gray-text flex-align-horizontal-center">
-                <Information size={14} />
-                <Stack className="p-left-10 not-editable">
-                  Create a python script that...
-                </Stack>
-              </Stack>
-            </SpiffTooltip>
-          </Stack>
+        </Grid>
+        <Grid item xs={5}>
+          <Tooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Info fontSize="small" />
+              <span>Create a python script that...</span>
+            </Stack>
+          </Tooltip>
           {scriptAssistWindow()}
-        </Column>
+        </Grid>
       </Grid>
     );
   };
@@ -1009,29 +964,36 @@ export default function ProcessModelEditDiagram() {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
     return (
-      <Modal
+      <Dialog
+        className="wide-dialog"
         open={showScriptEditor}
-        modalHeading={`Editing Script: ${scriptName}`}
-        primaryButtonText="Close"
-        onRequestSubmit={handleScriptEditorClose}
-        size="lg"
-        onRequestClose={handleScriptEditorClose}
+        onClose={handleScriptEditorClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <Tabs>
-          <TabList aria-label="List of tabs" activation="manual">
-            <Tab>Script Editor</Tab>
-            {scriptAssistEnabled && <Tab>Script Assist</Tab>}
-            <Tab>Unit Tests</Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel>{scriptEditor()}</TabPanel>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Editing Script: {scriptName}</h2>
+          <Tabs value={0}>
+            <Tab label="Script Editor" />
+            {scriptAssistEnabled && <Tab label="Script Assist" />}
+            <Tab label="Unit Tests" />
+          </Tabs>
+          <Box>
+            <TabPanel value={0} index={0}>
+              {scriptEditor()}
+            </TabPanel>
             {scriptAssistEnabled && (
-              <TabPanel>{scriptEditorWithAssist()}</TabPanel>
+              <TabPanel value={0} index={1}>
+                {scriptEditorWithAssist()}
+              </TabPanel>
             )}
-            <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
-          </TabPanels>
-        </Tabs>
-      </Modal>
+            <TabPanel value={0} index={2}>
+              {scriptUnitTestEditorElement()}
+            </TabPanel>
+          </Box>
+          <Button onClick={handleScriptEditorClose}>Close</Button>
+        </Box>
+      </Dialog>
     );
   };
 
@@ -1053,23 +1015,26 @@ export default function ProcessModelEditDiagram() {
 
   const markdownEditor = () => {
     return (
-      <Modal
+      <Dialog
+        className="wide-dialog"
         open={showMarkdownEditor}
-        modalHeading="Edit Markdown"
-        primaryButtonText="Close"
-        onRequestSubmit={handleMarkdownEditorClose}
-        onRequestClose={handleMarkdownEditorClose}
-        size="lg"
+        onClose={handleMarkdownEditorClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <div data-color-mode="light">
-          <MDEditor
-            height={500}
-            highlightEnable={false}
-            value={markdownText}
-            onChange={setMarkdownText}
-          />
-        </div>
-      </Modal>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Edit Markdown</h2>
+          <div data-color-mode="light">
+            <MDEditor
+              height={500}
+              highlightEnable={false}
+              value={markdownText}
+              onChange={setMarkdownText}
+            />
+          </div>
+          <Button onClick={handleMarkdownEditorClose}>Close</Button>
+        </Box>
+      </Dialog>
     );
   };
 
@@ -1096,29 +1061,33 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Modal
+      <Dialog
+        className="wide-dialog"
         open={showMessageEditor}
-        modalHeading="Message Editor"
-        modalLabel="Create or edit a message and manage its correlation properties"
-        primaryButtonText="Save"
-        secondaryButtonText="Close (this does not save)"
-        onRequestSubmit={handleMessageEditorSave}
-        onRequestClose={handleMessageEditorClose}
-        preventCloseOnClickOutside
-        primaryButtonKind="primary"
+        onClose={handleMessageEditorClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <div data-color-mode="light">
-          <MessageEditor
-            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-              modifiedProcessModelId,
-            )}
-            messageId={messageId}
-            correlationProperties={correlationProperties}
-            messageEvent={messageEvent}
-            elementId={elementId}
-          />
-        </div>
-      </Modal>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Message Editor</h2>
+          <p>Create or edit a message and manage its correlation properties</p>
+          <div data-color-mode="light">
+            <MessageEditor
+              modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
+                modifiedProcessModelId,
+              )}
+              messageId={messageId}
+              correlationProperties={correlationProperties}
+              messageEvent={messageEvent}
+              elementId={elementId}
+            />
+          </div>
+          <Button onClick={handleMessageEditorSave}>Save</Button>
+          <Button onClick={handleMessageEditorClose}>
+            Close (this does not save)
+          </Button>
+        </Box>
+      </Dialog>
     );
   };
 
@@ -1142,21 +1111,23 @@ export default function ProcessModelEditDiagram() {
 
   const processModelSelector = () => {
     return (
-      <Modal
+      <Dialog
         open={showProcessSearch}
-        modalHeading="Select Process Model"
-        primaryButtonText="Close"
-        onRequestClose={processSearchOnClose}
-        onRequestSubmit={processSearchOnClose}
-        size="lg"
+        onClose={processSearchOnClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <ProcessSearch
-          height="500px"
-          onChange={processSearchOnClose}
-          processes={processes}
-          titleText="Process model search"
-        />
-      </Modal>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Select Process Model</h2>
+          <ProcessSearch
+            height="500px"
+            onChange={processSearchOnClose}
+            processes={processes}
+            titleText="Process model search"
+          />
+          <Button onClick={processSearchOnClose}>Close</Button>
+        </Box>
+      </Dialog>
     );
   };
 
@@ -1285,29 +1256,31 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Modal
-        id="edit-json-schmea-modal"
+      <Dialog
+        className="wide-dialog"
         open={showJsonSchemaEditor}
-        modalHeading="Edit JSON Schema"
-        primaryButtonText="Close"
-        onRequestSubmit={handleJsonSchemaEditorClose}
-        onRequestClose={handleJsonSchemaEditorClose}
-        size="lg"
+        onClose={handleJsonSchemaEditorClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <ReactFormBuilder
-          processModelId={params.process_model_id || ''}
-          fileName={jsonSchemaFileName}
-          onFileNameSet={setJsonSchemaFileName}
-          canUpdateFiles={ability.can(
-            'POST',
-            targetUris.processModelFileCreatePath,
-          )}
-          canCreateFiles={ability.can(
-            'PUT',
-            targetUris.processModelFileCreatePath,
-          )}
-        />
-      </Modal>
+        <Box sx={{ p: 4 }}>
+          <h2 id="modal-modal-title">Edit JSON Schema</h2>
+          <ReactFormBuilder
+            processModelId={params.process_model_id || ''}
+            fileName={jsonSchemaFileName}
+            onFileNameSet={setJsonSchemaFileName}
+            canUpdateFiles={ability.can(
+              'POST',
+              targetUris.processModelFileCreatePath,
+            )}
+            canCreateFiles={ability.can(
+              'PUT',
+              targetUris.processModelFileCreatePath,
+            )}
+          />
+          <Button onClick={handleJsonSchemaEditorClose}>Close</Button>
+        </Box>
+      </Dialog>
     );
   };
 
