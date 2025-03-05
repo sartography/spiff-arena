@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ReactNode,
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   generatePath,
   useNavigate,
@@ -59,6 +66,27 @@ import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
+function TabPanel(props: {
+  children?: ReactNode;
+  index: number;
+  value: number;
+}) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
@@ -93,6 +121,7 @@ export default function ProcessModelEditDiagram() {
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
+  const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
   const [messageEvent, setMessageEvent] = useState<any>(null);
 
@@ -956,6 +985,10 @@ export default function ProcessModelEditDiagram() {
   };
 
   const scriptEditorAndTests = () => {
+    const handleTabChange = (event: SyntheticEvent, newValue: number) => {
+      setScriptEditorTabValue(newValue);
+    };
+
     if (!showScriptEditor) {
       return null;
     }
@@ -973,21 +1006,21 @@ export default function ProcessModelEditDiagram() {
       >
         <Box sx={{ p: 4 }}>
           <h2 id="modal-modal-title">Editing Script: {scriptName}</h2>
-          <Tabs value={0}>
+          <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
             <Tab label="Script Editor" />
             {scriptAssistEnabled && <Tab label="Script Assist" />}
             <Tab label="Unit Tests" />
           </Tabs>
           <Box>
-            <TabPanel value={0} index={0}>
+            <TabPanel value={scriptEditorTabValue} index={0}>
               {scriptEditor()}
             </TabPanel>
             {scriptAssistEnabled && (
-              <TabPanel value={0} index={1}>
+              <TabPanel value={scriptEditorTabValue} index={1}>
                 {scriptEditorWithAssist()}
               </TabPanel>
             )}
-            <TabPanel value={0} index={2}>
+            <TabPanel value={scriptEditorTabValue} index={2}>
               {scriptUnitTestEditorElement()}
             </TabPanel>
           </Box>
@@ -1112,6 +1145,7 @@ export default function ProcessModelEditDiagram() {
   const processModelSelector = () => {
     return (
       <Dialog
+        className="wide-dialog"
         open={showProcessSearch}
         onClose={processSearchOnClose}
         aria-labelledby="modal-modal-title"
