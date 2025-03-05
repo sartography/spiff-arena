@@ -21,35 +21,35 @@ import {
   Warning,
   View,
 } from '@carbon/icons-react';
-import { Grid, Column } from '@carbon/react';
 import {
-  DeleteOutlined,
-  LinkOutlined,
-  PauseOutlined,
-  PlayArrow,
-  StopCircleOutlined,
-  SyncAltOutlined,
-} from '@mui/icons-material';
-import {
-  IconButton,
+  Grid,
+  Box,
   Typography,
-  Accordion as MuiAccordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button as MuiButton,
+  IconButton,
+  Button,
   Chip,
+  CircularProgress,
+  Tabs,
+  Tab,
+  MenuItem,
+  Select,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Box,
-  MenuItem,
-  Select,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  DeleteOutlineOutlined,
+  LinkOutlined,
+  PauseOutlined,
+  PlayArrow,
+  SyncAltOutlined,
+  StopCircleOutlined,
+} from '@mui/icons-material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -498,17 +498,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
 
     let statusIcon = <InProgress />;
-    let statusColor = 'default';
+    // let statusColor = 'default';
     if (processInstance.status === 'suspended') {
       statusIcon = <PauseOutline />;
     } else if (processInstance.status === 'complete') {
       statusIcon = <Checkmark />;
-      statusColor = 'success';
+      // statusColor = 'success';
     } else if (processInstance.status === 'terminated') {
       statusIcon = <StopOutline />;
     } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
-      statusColor = 'error';
+      // statusColor = 'error';
     }
 
     const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
@@ -519,14 +519,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Grid container spacing={2}>
-        <Column item xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <dl>
             <dt>Status:</dt>
             <dd>
               <Chip
                 label={`${processInstance.status}`}
                 icon={statusIcon}
-                color={statusColor}
+                // color={statusColor}
                 size="small"
               />
             </dd>
@@ -572,8 +572,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               {processInstance.bpmn_version_control_type})
             </dd>
           </dl>
-        </Column>
-        <Column item xs={12} sm={6}>
+        </Grid>
+        <Grid item xs={12} sm={6}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl className="metadata-display">
@@ -589,7 +589,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               </dl>
             ),
           )}
-        </Column>
+        </Grid>
       </Grid>
     );
   };
@@ -696,7 +696,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
-          renderIcon={<DeleteOutlined />}
+          renderIcon={<DeleteOutlineOutlined />}
           iconDescription="Delete"
           hasIconOnly
           description={`Delete Process Instance: ${processInstance.id}`}
@@ -785,6 +785,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
       return (
         <Dialog
+          className="wide-dialog"
           open={!!processDataToDisplay}
           onClose={handleProcessDataDisplayClose}
         >
@@ -1167,14 +1168,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ability.can('PUT', targetUris.processModelShowPath)
     ) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<RuleDraft />}
           data-qa="create-script-unit-test-button"
           onClick={createScriptUnitTest}
         >
           Create Script Unit Test
-        </MuiButton>,
+        </Button>,
       );
     }
 
@@ -1183,7 +1184,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
     ) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           className="button-link indented-content"
           onAuxClick={(event: any) => {
@@ -1195,25 +1196,25 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           }}
         >
           View Call Activity Diagram
-        </MuiButton>,
+        </Button>,
       );
     }
 
     if (canEditTaskData(task)) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<Edit />}
           data-qa="edit-task-data-button"
           onClick={() => setEditingTaskData(true)}
         >
           Edit Task Data
-        </MuiButton>,
+        </Button>,
       );
     }
     if (canAddPotentialOwners(task)) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<UserFollow />}
           title="Allow an additional user to complete this task"
@@ -1221,41 +1222,41 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClick={() => setAddingPotentialOwners(true)}
         >
           Assign user
-        </MuiButton>,
+        </Button>,
       );
     }
     if (canCompleteTask(task)) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<Play />}
           data-qa="execute-task-complete-button"
           onClick={() => completeTask(true)}
         >
           Execute Task
-        </MuiButton>,
+        </Button>,
       );
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<SkipForward />}
           data-qa="mark-task-complete-button"
           onClick={() => completeTask(false)}
         >
           Skip Task
-        </MuiButton>,
+        </Button>,
       );
     }
     if (canSendEvent(task)) {
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<Send />}
           data-qa="select-event-button"
           onClick={() => setSelectingEvent(true)}
         >
           Send Event
-        </MuiButton>,
+        </Button>,
       );
     }
     if (canResetProcess(task)) {
@@ -1265,7 +1266,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       titleText +=
         'And no, you cannot change your mind after using this feature.';
       buttons.push(
-        <MuiButton
+        <Button
           variant="outlined"
           startIcon={<Reset />}
           title={titleText}
@@ -1273,7 +1274,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClick={() => resetProcessInstance()}
         >
           Reset Process Here
-        </MuiButton>,
+        </Button>,
       );
     }
     return buttons;
@@ -1446,25 +1447,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           const buttonClass =
             task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
           return (
-            <Grid container spacing={2} className={buttonClass}>
-              <Column item xs={1}>
-                <IconButton
-                  onClick={() =>
-                    switchToTask(task.guid, taskInstancesToDisplay)
-                  }
-                >
-                  <View />
-                </IconButton>
-              </Column>
-              <Column item xs={11}>
-                <div className="task-instance-modal-row-item">
+            <Grid container spacing={2}>
+              <Grid item xs={1}>
+                <SpiffTooltip title="View">
+                  <IconButton
+                    onClick={() =>
+                      switchToTask(task.guid, taskInstancesToDisplay)
+                    }
+                  >
+                    <View />
+                  </IconButton>
+                </SpiffTooltip>
+              </Grid>
+              <Grid item xs={11}>
+                <div className={`task-instance-modal-row-item ${buttonClass}`}>
                   {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
                     task.properties_json.last_state_change,
                   )}{' '}
                   {' - '} {task.state}
                 </div>
-              </Column>
+              </Grid>
             </Grid>
           );
         })}
@@ -1481,7 +1484,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return instances.map((v: any) => {
       return (
-        <MuiButton
+        <Button
           variant="outlined"
           key={`btn-switch-instance-${infoType}-${v}`}
           onClick={() =>
@@ -1489,7 +1492,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           }
         >
           {v + 1}
-        </MuiButton>
+        </Button>
       );
     });
   };
@@ -1506,14 +1509,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       taskInstancesToDisplay.length > 0
     ) {
       accordionItems.push(
-        <MuiAccordion key="mi-task-instances">
+        <Accordion key="mi-task-instances">
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             Task instances ({taskInstancesToDisplay.length})
           </AccordionSummary>
           <AccordionDetails>
             {createButtonSetForTaskInstances()}
           </AccordionDetails>
-        </MuiAccordion>,
+        </Accordion>,
       );
     }
 
@@ -1523,13 +1526,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         const infoArray = taskToDisplay.runtime_info[infoType];
         taskInstances = createButtonsForMultiTasks(infoArray, infoType);
         accordionItems.push(
-          <MuiAccordion key={`mi-instance-${titleizeString(infoType)}`}>
+          <Accordion key={`mi-instance-${titleizeString(infoType)}`}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               {`${titleizeString(infoType)} instances for MI task (${taskInstances.length
                 })`}
             </AccordionSummary>
             <AccordionDetails>{taskInstances}</AccordionDetails>
-          </MuiAccordion>,
+          </Accordion>,
         );
       });
     }
@@ -1550,7 +1553,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
       }
       accordionItems.push(
-        <MuiAccordion key="mi-loop-iterations">
+        <Accordion key="mi-loop-iterations">
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             Loop iterations ({buttons.length})
           </AccordionSummary>
@@ -1558,7 +1561,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <div>{text}</div>
             <div>{buttons}</div>
           </AccordionDetails>
-        </MuiAccordion>,
+        </Accordion>,
       );
     }
     if (accordionItems.length > 0) {
@@ -1614,7 +1617,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return (
-      <Dialog open={!!taskToUse} onClose={handleTaskDataDisplayClose}>
+      <Dialog
+        open={!!taskToUse}
+        onClose={handleTaskDataDisplayClose}
+        className="wide-dialog"
+      >
         <DialogTitle>{`${taskToUse.bpmn_identifier} (${taskToUse.typename}): ${taskToUse.state}`}</DialogTitle>
         <DialogContent>
           <div className="indented-content explanatory-message">
@@ -1650,13 +1657,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </DialogContent>
         <DialogActions>
           {secondaryButtonText && (
-            <MuiButton onClick={onSecondarySubmit} color="primary">
+            <Button onClick={onSecondarySubmit} color="primary">
               {secondaryButtonText}
-            </MuiButton>
+            </Button>
           )}
-          <MuiButton onClick={onRequestSubmit} color="primary" autoFocus>
+          <Button onClick={onRequestSubmit} color="primary" autoFocus>
             {primaryButtonText}
-          </MuiButton>
+          </Button>
         </DialogActions>
       </Dialog>
     );
@@ -1708,7 +1715,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         <Grid container spacing={2}>
-          <Column item xs={12}>
+          <Grid item xs={12}>
             <p>
               Viewing process instance at the time when{' '}
               <span title={title}>
@@ -1726,7 +1733,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 View current process instance state.
               </Link>
             </p>
-          </Column>
+          </Grid>
         </Grid>
         <br />
       </>
