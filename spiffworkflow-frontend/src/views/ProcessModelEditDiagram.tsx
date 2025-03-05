@@ -1159,7 +1159,6 @@ export default function ProcessModelEditDiagram() {
             processes={processes}
             titleText="Process model search"
           />
-          <Button onClick={processSearchOnClose}>Close</Button>
         </Box>
       </Dialog>
     );

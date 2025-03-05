@@ -103,6 +103,12 @@ a:link {
   width: 96px !important;
 }
 
+/* .wide-dialog .css-1b5j1yj-MuiPaper-root-MuiDialog-paper { */
+.wide-dialog .MuiPaper-root {
+  max-width: 100%;
+  min-width: 70%;
+}
+
 [data-theme='dark'] .bpmn-js-container {
   filter: invert(1) hue-rotate(180deg);
 }
@@ -115,8 +121,4 @@ a:link {
 }
 [data-theme='dark'] .bpmn-js-container .djs-popup .selected {
   background-color: grey;
-}
-.wide-dialog .css-1b5j1yj-MuiPaper-root-MuiDialog-paper {
-  max-width: 100%;
-  min-width: 70%;
 }
