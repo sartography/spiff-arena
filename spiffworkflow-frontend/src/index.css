@@ -358,7 +358,6 @@ dl dt {
   display: inline-block;
   font-weight: 600;
   min-width: 6rem;
-  color: #161616;
 }
 
 dl.metadata-display dt {
@@ -369,7 +368,6 @@ dl.metadata-display dt {
 dl dd {
   display: inline-block;
   padding-left: 1rem;
-  color: #525252;
 }
 
 .smaller-text {

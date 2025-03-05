@@ -488,12 +488,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const lastUpdatedTimeTag = (
       <dl>
-        <dt>{lastUpdatedTimeLabel}:</dt>
-        <dd>
+        <Typography component="dt" variant="subtitle2">
+          {lastUpdatedTimeLabel}:
+        </Typography>
+        <Typography component="dd" variant="body2">
           {DateAndTimeService.convertSecondsToFormattedDateTime(
             lastUpdatedTime || 0,
           ) || 'N/A'}
-        </dd>
+        </Typography>
       </dl>
     );
 
@@ -521,24 +523,33 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <dl>
-            <dt>Status:</dt>
-            <dd>
+            <Typography component="dt" variant="subtitle2">
+              Status:
+            </Typography>
+            <Typography component="dd" variant="body2">
               <Chip
                 label={`${processInstance.status}`}
                 icon={statusIcon}
                 // color={statusColor}
                 size="small"
               />
-            </dd>
+            </Typography>
           </dl>
           <dl>
-            <dt>Started by:</dt>
-            <dd> {processInstance.process_initiator_username}</dd>
+            <Typography component="dt" variant="subtitle2">
+              Started by:
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {' '}
+              {processInstance.process_initiator_username}
+            </Typography>
           </dl>
           {processInstance.process_model_with_diagram_identifier ? (
             <dl>
-              <dt>Current diagram: </dt>
-              <dd>
+              <Typography component="dt" variant="subtitle2">
+                Current diagram:{' '}
+              </Typography>
+              <Typography component="dd" variant="body2">
                 <Link
                   data-qa="go-to-current-diagram-process-model"
                   to={`/process-models/${modifyProcessIdentifierForPathParam(
@@ -547,45 +558,63 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 >
                   {processInstance.process_model_with_diagram_identifier}
                 </Link>
-              </dd>
+              </Typography>
             </dl>
           ) : null}
           <dl>
-            <dt>Started:</dt>
-            <dd>
+            <Typography component="dt" variant="subtitle2">
+              Started:
+            </Typography>
+            <Typography component="dd" variant="body2">
               {DateAndTimeService.convertSecondsToFormattedDateTime(
                 processInstance.start_in_seconds || 0,
               )}
-            </dd>
+            </Typography>
           </dl>
           {lastUpdatedTimeTag}
           <dl>
-            <dt>Last milestone:</dt>
-            <dd title={lastMilestoneFullValue}>
+            <Typography component="dt" variant="subtitle2">
+              Last milestone:
+            </Typography>
+            <Typography
+              component="dd"
+              variant="body2"
+              title={lastMilestoneFullValue}
+            >
               {lastMilestoneTruncatedValue}
-            </dd>
+            </Typography>
           </dl>
           <dl>
-            <dt>Revision:</dt>
-            <dd>
+            <Typography component="dt" variant="subtitle2">
+              Revision:
+            </Typography>
+            <Typography component="dd" variant="body2">
               {processInstance.bpmn_version_control_identifier} (
               {processInstance.bpmn_version_control_type})
-            </dd>
+            </Typography>
           </dl>
         </Grid>
         <Grid item xs={12} sm={6}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl className="metadata-display">
-                <dt title={processInstanceMetadata.key}>
+                <Typography
+                  component="dt"
+                  variant="subtitle2"
+                  title={processInstanceMetadata.key}
+                >
                   {truncateString(processInstanceMetadata.key, 50)}:
-                </dt>
-                <dd data-qa={`metadata-value-${processInstanceMetadata.key}`}>
+                </Typography>
+                <Typography
+                  component="dd"
+                  variant="body2"
+                  data-qa={`metadata-value-${processInstanceMetadata.key}`}
+                >
                   {formatMetadataValue(
                     processInstanceMetadata.key,
                     processInstanceMetadata.value,
                   )}
-                </dd>
+                </Typography>
               </dl>
             ),
           )}
