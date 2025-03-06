@@ -26,7 +26,18 @@ import {
   Checkbox,
 } from '@carbon/react';
 
-import { Button as MuiButton } from '@mui/material';
+import {
+  Button as MuiButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox as MuiCheckbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import {
   PROCESS_STATUSES,
@@ -1210,100 +1221,98 @@ export default function ProcessInstanceListTableWithFilters({
     if (!showAdvancedOptions || !reportMetadata) {
       return null;
     }
-    const formElements = (
-      <>
-        <Grid fullWidth>
-          <Column md={4} lg={8} sm={2}>
-            <Dropdown
-              id="system-report-dropdown"
-              titleText="System report"
-              label="System report"
-              items={['', ...systemReportOptions]}
-              itemToString={(item: any) => titleizeString(item)}
-              selectedItem={systemReport}
-              onChange={(value: any) => {
+    return (
+      <Dialog
+        open={showAdvancedOptions}
+        onClose={handleAdvancedOptionsClose}
+        aria-labelledby="advanced-filter-options-title"
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle id="advanced-filter-options-title">
+          Advanced filter options
+        </DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="system-report-label">System report</InputLabel>
+            <Select
+              labelId="system-report-label"
+              value={systemReport || ''}
+              onChange={(event) => {
+                const value = event.target.value;
                 systemReportOptions.forEach((systemReportOption: string) => {
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
                     systemReportOption,
-                    value.selectedItem === systemReportOption,
+                    value === systemReportOption,
                   );
-                  setSystemReport(value.selectedItem);
+                  setSystemReport(value);
                 });
               }}
-            />
-          </Column>
-          <Column md={4} lg={8} sm={2}>
-            <Dropdown
-              id="user-group-dropdown"
-              titleText="Assigned user group"
-              label="Assigned user group"
-              items={['', ...userGroups]}
-              itemToString={(item: any) => item}
-              selectedItem={selectedUserGroup}
-              onChange={(value: any) => {
+            >
+              {['', ...systemReportOptions].map((option) => (
+                <MenuItem key={option} value={option}>
+                  {titleizeString(option)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="user-group-label">Assigned user group</InputLabel>
+            <Select
+              labelId="user-group-label"
+              value={selectedUserGroup || ''}
+              onChange={(event) => {
+                const value = event.target.value;
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'user_group_identifier',
-                  value.selectedItem,
+                  value,
                 );
-                setSelectedUserGroup(value.selectedItem);
+                setSelectedUserGroup(value);
               }}
-            />
-          </Column>
-        </Grid>
-        <br />
-        <Grid fullWidth>
-          <Column md={4} lg={8} sm={2}>
-            <Checkbox
-              labelText="Include oldest open task information"
-              id="with-oldest-open-task-checkbox"
-              checked={withOldestOpenTask}
-              disabled={showActionsColumn}
-              onChange={(value: any) => {
+            >
+              {['', ...userGroups].map((group) => (
+                <MenuItem key={group} value={group}>
+                  {group}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <MuiCheckbox
+            checked={withOldestOpenTask}
+            disabled={showActionsColumn}
+            onChange={(event) => {
+              insertOrUpdateFieldInReportMetadata(
+                reportMetadata,
+                'with_oldest_open_task',
+                event.target.checked,
+              );
+              setWithOldestOpenTask(event.target.checked);
+            }}
+            label="Include oldest open task information"
+          />
+          {variant === 'all' && (
+            <MuiCheckbox
+              checked={withRelationToMe}
+              onChange={(event) => {
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
-                  'with_oldest_open_task',
-                  value.target.checked,
+                  'with_relation_to_me',
+                  event.target.checked,
                 );
-                setWithOldestOpenTask(value.target.checked);
+                setWithRelationToMe(event.target.checked);
               }}
+              label="Include tasks for me"
             />
-          </Column>
-          {variant === 'all' ? (
-            <Column md={4} lg={8} sm={2}>
-              <Checkbox
-                labelText="Include tasks for me"
-                id="with-relation-to-me"
-                checked={withRelationToMe}
-                onChange={(value: any) => {
-                  insertOrUpdateFieldInReportMetadata(
-                    reportMetadata,
-                    'with_relation_to_me',
-                    value.target.checked,
-                  );
-                  setWithRelationToMe(value.target.checked);
-                }}
-              />
-            </Column>
-          ) : null}
-        </Grid>
-        <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
-      </>
-    );
-    return (
-      <Modal
-        open={showAdvancedOptions}
-        modalHeading="Advanced filter options"
-        primaryButtonText="Close"
-        onRequestSubmit={handleAdvancedOptionsClose}
-        onRequestClose={handleAdvancedOptionsClose}
-        hasScrollingContent
-        aria-label="advanced filter options"
-        size="lg"
-      >
-        {formElements}
-      </Modal>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleAdvancedOptionsClose} color="primary">
+            Close
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     );
   };
 
