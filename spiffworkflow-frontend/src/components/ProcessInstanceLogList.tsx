@@ -431,6 +431,7 @@ export default function ProcessInstanceLogList({
           <InputLabel id="task-name-filter-label">{taskNameHeader}</InputLabel>
           <Select
             labelId="task-name-filter-label"
+            label={taskNameHeader}
             id="task-name-filter"
             value={searchParams.get('bpmn_name') || ''}
             onChange={(event) => {
@@ -457,6 +458,7 @@ export default function ProcessInstanceLogList({
               </InputLabel>
               <Select
                 labelId="task-identifier-filter-label"
+                label="Task identifier"
                 id="task-identifier-filter"
                 value={searchParams.get('bpmn_identifier') || ''}
                 onChange={(event) => {
@@ -476,6 +478,7 @@ export default function ProcessInstanceLogList({
               <InputLabel id="task-type-select-label">Task type</InputLabel>
               <Select
                 labelId="task-type-select-label"
+                label="Task type"
                 id="task-type-select"
                 value={searchParams.get('task_type') || ''}
                 onChange={(event) => {
@@ -495,6 +498,7 @@ export default function ProcessInstanceLogList({
               <InputLabel id="event-type-select-label">Event type</InputLabel>
               <Select
                 labelId="event-type-select-label"
+                label="Event type"
                 id="event-type-select"
                 value={searchParams.get('event_type') || ''}
                 onChange={(event) => {

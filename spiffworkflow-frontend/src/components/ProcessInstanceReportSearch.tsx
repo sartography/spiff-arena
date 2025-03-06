@@ -62,11 +62,9 @@ export default function ProcessInstanceReportSearch({
 
   if (reportsAvailable()) {
     return (
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
-          <FormLabel className="with-top-margin">{titleText}</FormLabel>
-        </Grid>
-        <Grid item xs={12} sm={6} md={9}>
+      <Grid container spacing={2} style={{ paddingTop: '0px' }}>
+        <Grid item xs={12} sm={6} md={12}>
+          <FormLabel>{titleText}</FormLabel>
           <Autocomplete
             onChange={onChange}
             id="process-instance-report-select"
@@ -88,8 +86,14 @@ export default function ProcessInstanceReportSearch({
             }
             renderInput={(params) => (
               <TextField
+                fullWidth
                 inputProps={params.inputProps}
                 placeholder="Choose a process instance perspective"
+                slotProps={{
+                  input: params.InputProps,
+                  htmlInput: params.inputProps,
+                  inputLabel: { shrink: true },
+                }}
               />
             )}
             value={selectedItem}

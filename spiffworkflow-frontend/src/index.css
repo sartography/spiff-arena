@@ -642,7 +642,6 @@ th.table-header-right-align .cds--table-header-label {
 
 .filter-icon {
   text-align: right;
-  padding-bottom: 10px;
   margin-right: 0px;
 }
 
@@ -1167,4 +1166,8 @@ div.retrievalExpressionsForm {
 .diagram-control-buttons {
   margin-bottom: .5rem;
   margin-top: .5rem;
+}
+
+.reports-search-text-field {
+  min-width: 100%;
 }
