@@ -4,7 +4,7 @@ const { port, hostname } = window.location;
 let protocol = 'https';
 
 // so we can turn this feature on and off as we work on it
-let darkModeEnabled = null;
+let darkModeEnabled = 'true';
 
 if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
   darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
