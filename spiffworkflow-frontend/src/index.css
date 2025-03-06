@@ -786,10 +786,6 @@ svg.notification-icon {
   font-size: 8rem;
 }
 
-.float-right {
-  float: right;
-}
-
 .user-list {
   display: flex;
   align-items: center;

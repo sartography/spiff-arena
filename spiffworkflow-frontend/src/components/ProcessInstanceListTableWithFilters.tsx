@@ -1237,6 +1237,7 @@ export default function ProcessInstanceListTableWithFilters({
             <InputLabel id="system-report-label">System report</InputLabel>
             <Select
               labelId="system-report-label"
+              label="System report"
               value={systemReport || ''}
               onChange={(event) => {
                 const { value } = event.target;
@@ -1260,6 +1261,7 @@ export default function ProcessInstanceListTableWithFilters({
           <FormControl fullWidth margin="normal">
             <InputLabel id="user-group-label">Assigned user group</InputLabel>
             <Select
+              label="Assigned user group"
               labelId="user-group-label"
               value={selectedUserGroup || ''}
               onChange={(event) => {
@@ -1507,7 +1509,7 @@ export default function ProcessInstanceListTableWithFilters({
               kind="ghost"
               onClick={() => setShowAdvancedOptions(true)}
               data-qa="advanced-options-filters"
-              className="narrow-button button-link float-right"
+              className="narrow-button button-link"
             >
               Advanced
             </Button>
