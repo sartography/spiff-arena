@@ -2,7 +2,7 @@ import { Tooltip } from '@mui/material';
 import { ReactElement } from 'react';
 
 interface OwnProps {
-  title?: string;
+  title?: string | null;
   placement?: 'top' | 'bottom' | 'left' | 'right';
   children: ReactElement;
 }
