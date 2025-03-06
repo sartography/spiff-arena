@@ -66,7 +66,7 @@ export default function ProcessInstanceReportSearch({
         <Grid item xs={12} sm={6} md={12}>
           <FormLabel>{titleText}</FormLabel>
           <Autocomplete
-            onChange={onChange}
+            onChange={(_, value) => onChange(value)}
             id="process-instance-report-select"
             data-qa="process-instance-report-selection"
             options={processInstanceReports || []}

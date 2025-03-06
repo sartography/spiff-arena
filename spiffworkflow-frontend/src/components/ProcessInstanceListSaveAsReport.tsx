@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Typography,
 } from '@mui/material';
 import { ProcessInstanceReport, ReportMetadata } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -100,7 +101,9 @@ export default function ProcessInstanceListSaveAsReport({
       >
         <DialogTitle id="save-perspective-dialog">Save Perspective</DialogTitle>
         <DialogContent>
-          <p className="data-table-description">{descriptionText}</p>
+          <Typography variant="body2" style={{ marginBottom: '1rem' }}>
+            {descriptionText}
+          </Typography>
           {textInputComponent}
         </DialogContent>
         <DialogActions>

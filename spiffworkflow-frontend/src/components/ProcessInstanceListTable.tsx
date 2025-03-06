@@ -581,13 +581,13 @@ export default function ProcessInstanceListTable({
   if (additionalReportFilters && reportMetadata) {
     errors.push(
       'Both reportMetadata and additionalReportFilters were provided. ' +
-      'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.',
+        'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.',
     );
   }
   if (reportIdentifier && reportMetadata) {
     errors.push(
       'Both reportIdentifier and reportMetadata were provided. ' +
-      'You must use one or the other.',
+        'You must use one or the other.',
     );
   }
   if (errors.length > 0) {

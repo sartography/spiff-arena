@@ -1557,8 +1557,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         accordionItems.push(
           <Accordion key={`mi-instance-${titleizeString(infoType)}`}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              {`${titleizeString(infoType)} instances for MI task (${taskInstances.length
-                })`}
+              {`${titleizeString(infoType)} instances for MI task (${
+                taskInstances.length
+              })`}
             </AccordionSummary>
             <AccordionDetails>{taskInstances}</AccordionDetails>
           </Accordion>,
@@ -1576,7 +1577,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       let text = '';
       if (
         typeof taskToDisplay.runtime_info.iterations_remaining !==
-        'undefined' &&
+          'undefined' &&
         taskToDisplay.state !== 'COMPLETED'
       ) {
         text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
