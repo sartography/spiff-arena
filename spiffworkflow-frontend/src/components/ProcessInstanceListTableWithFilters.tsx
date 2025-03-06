@@ -23,7 +23,6 @@ import {
   ComboBox,
   TextInput,
   FormLabel,
-  Checkbox,
 } from '@carbon/react';
 
 import {
@@ -34,6 +33,7 @@ import {
   DialogActions,
   Checkbox as MuiCheckbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
   Select,
   MenuItem,
@@ -1239,7 +1239,7 @@ export default function ProcessInstanceListTableWithFilters({
               labelId="system-report-label"
               value={systemReport || ''}
               onChange={(event) => {
-                const value = event.target.value;
+                const { value } = event.target;
                 systemReportOptions.forEach((systemReportOption: string) => {
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
@@ -1263,7 +1263,7 @@ export default function ProcessInstanceListTableWithFilters({
               labelId="user-group-label"
               value={selectedUserGroup || ''}
               onChange={(event) => {
-                const value = event.target.value;
+                const { value } = event.target;
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'user_group_identifier',
@@ -1279,30 +1279,38 @@ export default function ProcessInstanceListTableWithFilters({
               ))}
             </Select>
           </FormControl>
-          <MuiCheckbox
-            checked={withOldestOpenTask}
-            disabled={showActionsColumn}
-            onChange={(event) => {
-              insertOrUpdateFieldInReportMetadata(
-                reportMetadata,
-                'with_oldest_open_task',
-                event.target.checked,
-              );
-              setWithOldestOpenTask(event.target.checked);
-            }}
+          <FormControlLabel
+            control={
+              <MuiCheckbox
+                checked={withOldestOpenTask}
+                disabled={showActionsColumn}
+                onChange={(event) => {
+                  insertOrUpdateFieldInReportMetadata(
+                    reportMetadata,
+                    'with_oldest_open_task',
+                    event.target.checked,
+                  );
+                  setWithOldestOpenTask(event.target.checked);
+                }}
+              />
+            }
             label="Include oldest open task information"
           />
           {variant === 'all' && (
-            <MuiCheckbox
-              checked={withRelationToMe}
-              onChange={(event) => {
-                insertOrUpdateFieldInReportMetadata(
-                  reportMetadata,
-                  'with_relation_to_me',
-                  event.target.checked,
-                );
-                setWithRelationToMe(event.target.checked);
-              }}
+            <FormControlLabel
+              control={
+                <MuiCheckbox
+                  checked={withRelationToMe}
+                  onChange={(event) => {
+                    insertOrUpdateFieldInReportMetadata(
+                      reportMetadata,
+                      'with_relation_to_me',
+                      event.target.checked,
+                    );
+                    setWithRelationToMe(event.target.checked);
+                  }}
+                />
+              }
               label="Include tasks for me"
             />
           )}
