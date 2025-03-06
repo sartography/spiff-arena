@@ -1,6 +1,9 @@
 import json
 
 import redis
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
+
 from flask import current_app
 from flask import jsonify
 from flask import make_response
@@ -35,12 +38,8 @@ def url_info() -> Response:
     )
 
 
-def celery_backend_results(
-    process_instance_id: int,
-    include_all_failures: bool = True,
-) -> Response:
-    redis_client = redis.StrictRedis.from_url(current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"])
-    results: list = redis_client.keys("celery-task-meta-*")  # type: ignore
+def get_redis_results(redis_client):
+    results = redis_client.keys("celery-task-meta-*")
     if len(results) > 1000:
         raise ApiError(
             error_code="too_many_entries",
@@ -48,7 +47,62 @@ def celery_backend_results(
             status_code=400,
         )
 
-    result_values = redis_client.mget(results)  # type: ignore
+    return redis_client.mget(results)
+
+
+def get_s3_results(s3_client, bucket_name):
+    try:
+        # This defaults to retrieving a maximum of 1000 items, if it
+        # does return 1000 items, maybe it should also raise an exception
+        # the way the redis backend code does.
+        objects = s3_client.list_objects_v2(
+            Bucket=bucket_name, Prefix="celery-task-meta-"
+        )
+        if "Contents" not in objects:
+            return []
+
+        result_values = []
+        for obj in objects["Contents"]:
+            response = s3_client.get_object(Bucket=bucket_name, Key=obj["Key"])
+            result_values.append(response["Body"].read())
+
+        return result_values
+    except (BotoCoreError, ClientError) as e:
+        raise ApiError(
+            error_code="s3_error",
+            message=str(e),
+            status_code=500,
+        ) from e
+
+
+def celery_backend_results(
+    process_instance_id: int,
+    include_all_failures: bool = True,
+) -> Response:
+    backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"]
+
+    if backend_url:
+        if backend_url.startswith("redis://"):
+            redis_client = redis.StrictRedis.from_url(backend_url)
+            result_values = get_redis_results(redis_client)
+        elif backend_url.startswith("s3://"):
+            s3_client = boto3.client("s3")
+            bucket_name = current_app.config[
+                "SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"
+            ]
+            result_values = get_s3_results(s3_client, bucket_name)
+        else:
+            raise ApiError(
+                error_code="unsupported_backend",
+                message="The specified backend is not supported.",
+                status_code=500,
+            )
+    else:
+        raise ApiError(
+            error_code="no_results_backend",
+            message="No Celery results backend configured.",
+            status_code=500,
+        )
 
     return_body = []
     for value in result_values:
