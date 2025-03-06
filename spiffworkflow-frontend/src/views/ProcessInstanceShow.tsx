@@ -653,7 +653,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />
       );
     }
-    return <div />;
+    return null;
   };
 
   // you cannot suspend an instance that is done. except if it has status error, since
@@ -673,7 +673,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </SpiffTooltip>
       );
     }
-    return <div />;
+    return null;
   };
   const migrateButton = () => {
     if (processInstance && processInstance.status === 'suspended') {
@@ -688,7 +688,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </SpiffTooltip>
       );
     }
-    return <div />;
+    return null;
   };
 
   const copyProcessInstanceShortLinkButton = () => {
@@ -714,7 +714,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </SpiffTooltip>
       );
     }
-    return <div />;
+    return null;
   };
 
   const deleteButton = () => {
@@ -734,7 +734,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />
       );
     }
-    return <div />;
+    return null;
   };
 
   const initializeTaskInstancesToDisplay = useCallback(
@@ -1704,16 +1704,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const elements = [];
     elements.push(copyProcessInstanceShortLinkButton());
-    if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
+    if (ability.can('POST', targetUris.processInstanceTerminatePath)) {
       elements.push(terminateButton());
     }
-    if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
+    if (ability.can('POST', targetUris.processInstanceSuspendPath)) {
       elements.push(suspendButton());
     }
-    if (ability.can('POST', `${targetUris.processInstanceMigratePath}`)) {
+    if (ability.can('POST', targetUris.processInstanceMigratePath)) {
       elements.push(migrateButton());
     }
-    if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
+    if (ability.can('POST', targetUris.processInstanceResumePath)) {
       elements.push(resumeButton());
     }
     if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
