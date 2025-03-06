@@ -89,7 +89,12 @@ export default function Filters({
     }
     return (
       <>
-        <Grid container spacing={2} style={{ paddingBottom: '1rem' }} justifyContent="flex-end">
+        <Grid
+          container
+          spacing={2}
+          style={{ paddingBottom: '1rem' }}
+          justifyContent="flex-end"
+        >
           {reportSearchSection}
           <Grid item xs={12} sm={6} md={4} className="filter-icon">
             {buttonElements()}
