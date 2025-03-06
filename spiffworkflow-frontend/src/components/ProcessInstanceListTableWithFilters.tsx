@@ -25,6 +25,8 @@ import {
   FormLabel,
   Checkbox,
 } from '@carbon/react';
+
+import { Button as MuiButton } from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import {
   PROCESS_STATUSES,
@@ -764,9 +766,11 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
-  const processInstanceReportDidChange = (selection: any, mode?: string) => {
+  const processInstanceReportDidChange = (
+    selectedReport: any,
+    mode?: string,
+  ) => {
     clearFilters();
-    const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
     removeError();
     setProcessInstanceReportJustSaved(mode || null);
@@ -810,7 +814,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const onDeleteReportSuccess = () => {
-    processInstanceReportDidChange({ selectedItem: null });
+    processInstanceReportDidChange(undefined);
   };
 
   const deleteReportComponent = () => {
@@ -1470,18 +1474,16 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid fullWidth className="with-bottom-margin">
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
-              <Button
-                kind="tertiary"
-                className="narrow-button"
-                onClick={clearFilters}
-              >
+              <MuiButton variant="outlined" onClick={clearFilters}>
                 Clear
-              </Button>
+              </MuiButton>
             </ButtonSet>
           </Column>
-          <Column sm={3} md={3} lg={7}>
-            {saveAsReportComponent()}
-            {deleteReportComponent()}
+          <Column sm={3} md={3} lg={4}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {saveAsReportComponent()}
+              {deleteReportComponent()}
+            </div>
           </Column>
           <Column sm={1} md={1} lg={1}>
             <Button
