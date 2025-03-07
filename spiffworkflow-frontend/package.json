@@ -7,7 +7,7 @@
     "@babel/core": "^7.24.6",
     "@carbon/colors": "^11.23.1",
     "@carbon/icons-react": "^11.47.1",
-    "@carbon/react": "^1.33.0",
+    "@carbon/react": "^1.77.0",
     "@casl/ability": "^6.7.1",
     "@casl/react": "^4.0.0",
     "@microsoft/fetch-event-source": "^2.0.1",
