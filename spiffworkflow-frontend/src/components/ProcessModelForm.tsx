@@ -2,21 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
-  Form,
-  Stack,
-  TextInput,
-  TextArea,
-  Grid,
-  Column,
+  TextField,
   Select,
-  SelectItem,
-  // @ts-ignore
-} from '@carbon/react';
-// @ts-ignore
-import { AddAlt, TrashCan } from '@carbon/icons-react';
+  MenuItem,
+  IconButton,
+  Typography,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import { Add as AddAlt, Delete as TrashCan } from '@mui/icons-material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { MetadataExtractionPath, ProcessModel } from '../interfaces';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   mode: string;
@@ -108,11 +107,11 @@ export default function ProcessModelForm({
     metadataExtractionPath: MetadataExtractionPath,
   ) => {
     return (
-      <Grid>
-        <Column md={3} lg={7} sm={1}>
-          <TextInput
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+        <Grid size={{ xs: 3 }}>
+          <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
-            labelText="Extraction Key"
+            label="Extraction Key"
             value={metadataExtractionPath.key}
             onChange={(event: any) => {
               const cep: MetadataExtractionPath[] =
@@ -122,12 +121,13 @@ export default function ProcessModelForm({
               cep[index] = newMeta;
               updateProcessModel({ metadata_extraction_paths: cep });
             }}
+            fullWidth
           />
-        </Column>
-        <Column md={4} lg={8} sm={2}>
-          <TextInput
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField
             id={`process-model-metadata-extraction-path-${index}`}
-            labelText="Extraction Path"
+            label="Extraction Path"
             value={metadataExtractionPath.path}
             onChange={(event: any) => {
               const cep: MetadataExtractionPath[] =
@@ -137,24 +137,24 @@ export default function ProcessModelForm({
               cep[index] = newMeta;
               updateProcessModel({ metadata_extraction_paths: cep });
             }}
+            fullWidth
           />
-        </Column>
-        <Column md={1} lg={1} sm={1}>
-          <Button
-            kind="ghost"
-            renderIcon={TrashCan}
-            iconDescription="Remove Key"
-            hasIconOnly
-            size="lg"
-            className="with-extra-top-margin"
-            onClick={() => {
-              const cep: MetadataExtractionPath[] =
-                processModel.metadata_extraction_paths || [];
-              cep.splice(index, 1);
-              updateProcessModel({ metadata_extraction_paths: cep });
-            }}
-          />
-        </Column>
+        </Grid>
+        <Grid size={{ xs: 1 }}>
+          <SpiffTooltip title="Remove Key">
+            <IconButton
+              aria-label="Remove Key"
+              onClick={() => {
+                const cep: MetadataExtractionPath[] =
+                  processModel.metadata_extraction_paths || [];
+                cep.splice(index, 1);
+                updateProcessModel({ metadata_extraction_paths: cep });
+              }}
+            >
+              <TrashCan />
+            </IconButton>
+          </SpiffTooltip>
+        </Grid>
       </Grid>
     );
   };
@@ -182,11 +182,11 @@ export default function ProcessModelForm({
     notificationAddress: string,
   ) => {
     return (
-      <Grid>
-        <Column md={3} lg={7} sm={1}>
-          <TextInput
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+        <Grid size={{ xs: 10 }}>
+          <TextField
             id={`process-model-notification-address-key-${index}`}
-            labelText="Address"
+            label="Address"
             value={notificationAddress}
             onChange={(event: any) => {
               const notificationAddresses: string[] =
@@ -196,26 +196,26 @@ export default function ProcessModelForm({
                 exception_notification_addresses: notificationAddresses,
               });
             }}
+            fullWidth
           />
-        </Column>
-        <Column md={1} lg={1} sm={1}>
-          <Button
-            kind="ghost"
-            renderIcon={TrashCan}
-            iconDescription="Remove Address"
-            hasIconOnly
-            size="lg"
-            className="with-extra-top-margin"
-            onClick={() => {
-              const notificationAddresses: string[] =
-                processModel.exception_notification_addresses || [];
-              notificationAddresses.splice(index, 1);
-              updateProcessModel({
-                exception_notification_addresses: notificationAddresses,
-              });
-            }}
-          />
-        </Column>
+        </Grid>
+        <Grid size={{ xs: 2 }}>
+          <SpiffTooltip title="Remove Address">
+            <IconButton
+              aria-label="Remove Address"
+              onClick={() => {
+                const notificationAddresses: string[] =
+                  processModel.exception_notification_addresses || [];
+                notificationAddresses.splice(index, 1);
+                updateProcessModel({
+                  exception_notification_addresses: notificationAddresses,
+                });
+              }}
+            >
+              <TrashCan />
+            </IconButton>
+          </SpiffTooltip>
+        </Grid>
       </Grid>
     );
   };
@@ -256,29 +256,35 @@ export default function ProcessModelForm({
 
   const formElements = () => {
     const textInputs = [
-      <TextInput
+      <TextField
         id="process-model-display-name"
         key="process-model-display-name"
         name="display_name"
-        invalidText="Display Name is required."
-        invalid={displayNameInvalid}
-        labelText="Display Name*"
+        error={displayNameInvalid}
+        helperText={displayNameInvalid ? 'Display Name is required.' : ''}
+        label="Display Name*"
         value={processModel.display_name}
         onChange={(event: any) => {
           onDisplayNameChanged(event.target.value);
         }}
+        fullWidth
+        sx={{ mb: 2 }}
       />,
     ];
 
     if (mode === 'new') {
       textInputs.push(
-        <TextInput
+        <TextField
           id="process-model-identifier"
           key="process-model-identifier"
           name="id"
-          invalidText="Identifier is required and must be all lowercase characters and hyphens."
-          invalid={identifierInvalid}
-          labelText="Identifier*"
+          error={identifierInvalid}
+          helperText={
+            identifierInvalid
+              ? 'Identifier is required and must be all lowercase characters and hyphens.'
+              : ''
+          }
+          label="Identifier*"
           value={processModel.id}
           onChange={(event: any) => {
             updateProcessModel({ id: event.target.value });
@@ -288,95 +294,102 @@ export default function ProcessModelForm({
             }
             setIdHasBeenUpdatedByUser(true);
           }}
+          fullWidth
+          sx={{ mb: 2 }}
         />,
       );
     }
 
     textInputs.push(
-      <TextArea
+      <TextField
         id="process-model-description"
         key="process-model-description"
         name="description"
-        labelText="Description"
+        label="Description"
         value={processModel.description}
         onChange={(event: any) =>
           updateProcessModel({ description: event.target.value })
         }
+        multiline
+        fullWidth
+        sx={{ mb: 2 }}
       />,
     );
 
     textInputs.push(
-      <Select
-        id="notification-type"
-        key="notification-type"
-        defaultValue={processModel.fault_or_suspend_on_exception}
-        labelText="Notification Type"
-        onChange={(event: any) => {
-          onNotificationTypeChanged(event.target.value);
-        }}
-      >
-        <SelectItem value="fault" text="Fault" />
-        <SelectItem value="suspend" text="Suspend" />
-      </Select>,
+      <FormControl fullWidth>
+        {/* we need to set labels in both places apparently so it displays when no option is selected */}
+        <InputLabel id="notification-type-select-label">
+          Notification Type
+        </InputLabel>
+        <Select
+          id="notification-type"
+          key="notification-type"
+          value={processModel.fault_or_suspend_on_exception}
+          labelId="notification-type-select-label"
+          label="Notification Type"
+          onChange={(event: any) => {
+            onNotificationTypeChanged(event.target.value);
+          }}
+          fullWidth
+          sx={{ mb: 2 }}
+        >
+          <MenuItem value="fault">Fault</MenuItem>
+          <MenuItem value="suspend">Suspend</MenuItem>
+        </Select>
+      </FormControl>,
     );
-    textInputs.push(<h2>Notification Addresses</h2>);
     textInputs.push(
-      <Grid>
-        <Column md={8} lg={16} sm={4}>
-          <p className="data-table-description">
-            You can provide one or more addresses to notify if this model fails.
-          </p>
-        </Column>
-      </Grid>,
+      <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
+        Notification Addresses
+      </Typography>,
+    );
+    textInputs.push(
+      <Typography variant="body2" sx={{ mb: 2 }}>
+        You can provide one or more addresses to notify if this model fails.
+      </Typography>,
     );
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
-      <Grid>
-        <Column md={4} lg={8} sm={2}>
-          <Button
-            data-qa="add-notification-address-button"
-            renderIcon={AddAlt}
-            kind="tertiary"
-            size="sm"
-            onClick={() => {
-              addBlankNotificationAddress();
-            }}
-          >
-            Add Notification Address
-          </Button>
-        </Column>
-      </Grid>,
+      <Button
+        data-qa="add-notification-address-button"
+        startIcon={<AddAlt />}
+        variant="outlined"
+        size="small"
+        onClick={() => {
+          addBlankNotificationAddress();
+        }}
+        sx={{ mt: 1, mb: 2 }}
+      >
+        Add Notification Address
+      </Button>,
     );
 
-    textInputs.push(<h2>Metadata Extractions</h2>);
     textInputs.push(
-      <Grid>
-        <Column md={8} lg={16} sm={4}>
-          <p className="data-table-description">
-            You can provide one or more metadata extractions to pull data from
-            your process instances to provide quick access in searches and
-            perspectives.
-          </p>
-        </Column>
-      </Grid>,
+      <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
+        Metadata Extractions
+      </Typography>,
+    );
+    textInputs.push(
+      <Typography variant="body2" sx={{ mb: 2 }}>
+        You can provide one or more metadata extractions to pull data from your
+        process instances to provide quick access in searches and perspectives.
+      </Typography>,
     );
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
-      <Grid>
-        <Column md={4} lg={8} sm={2}>
-          <Button
-            data-qa="add-metadata-extraction-path-button"
-            renderIcon={AddAlt}
-            kind="tertiary"
-            size="sm"
-            onClick={() => {
-              addBlankMetadataExtractionPath();
-            }}
-          >
-            Add Metadata Extraction Path
-          </Button>
-        </Column>
-      </Grid>,
+      <Button
+        data-qa="add-metadata-extraction-path-button"
+        startIcon={<AddAlt />}
+        variant="outlined"
+        size="small"
+        onClick={() => {
+          addBlankMetadataExtractionPath();
+        }}
+        sx={{ mt: 1, mb: 2 }}
+      >
+        Add Metadata Extraction Path
+      </Button>,
     );
 
     return textInputs;
@@ -384,17 +397,20 @@ export default function ProcessModelForm({
 
   const formButtons = () => {
     return (
-      <Button kind="primary" type="submit">
-        Submit
-      </Button>
+      <Grid container justifyContent="flex-start" sx={{ mt: 2 }}>
+        <Grid>
+          <Button variant="contained" type="submit">
+            Submit
+          </Button>
+        </Grid>
+      </Grid>
     );
   };
+
   return (
-    <Form onSubmit={handleFormSubmission}>
-      <Stack gap={5}>
-        {formElements()}
-        {formButtons()}
-      </Stack>
-    </Form>
+    <form onSubmit={handleFormSubmission}>
+      {formElements()}
+      {formButtons()}
+    </form>
   );
 }

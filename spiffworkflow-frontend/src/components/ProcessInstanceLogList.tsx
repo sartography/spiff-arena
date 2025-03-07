@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
-import { ErrorOutline } from '@carbon/icons-react';
+import { ErrorOutline } from '@mui/icons-material';
 import {
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Grid,
-  Column,
-  ButtonSet,
   Button,
-  ComboBox,
   Modal,
-  Loading,
-  // @ts-ignore
-} from '@carbon/react';
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+} from '@mui/material';
 import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
 import {
@@ -38,6 +44,19 @@ type OwnProps = {
   isEventsView: boolean;
   processModelId: string;
   processInstanceId: number;
+};
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%', // Increased width
+  maxWidth: 'md', // Added max width for responsiveness
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
 };
 
 export default function ProcessInstanceLogList({
@@ -173,7 +192,7 @@ export default function ProcessInstanceLogList({
     if (eventForModal) {
       const modalHeading = 'Event Error Details';
       let errorMessageTag = (
-        <Loading className="some-class" withOverlay={false} small />
+        <CircularProgress className="some-class" size={20} />
       );
       if (eventErrorDetails) {
         const errorForDisplay = errorForDisplayFromProcessInstanceErrorDetail(
@@ -187,12 +206,15 @@ export default function ProcessInstanceLogList({
       return (
         <Modal
           open={!!eventForModal}
-          passiveModal
-          onRequestClose={handleErrorEventModalClose}
-          modalHeading={modalHeading}
-          modalLabel="Error Details"
+          onClose={handleErrorEventModalClose}
+          aria-labelledby="modal-heading"
+          aria-describedby="modal-description"
         >
-          {errorMessageTag}
+          <Box sx={style}>
+            <h2 id="modal-heading">{modalHeading}</h2>
+            <p id="modal-description">Error Details</p>
+            {errorMessageTag}
+          </Box>
         </Modal>
       );
     }
@@ -244,8 +266,7 @@ export default function ProcessInstanceLogList({
       );
       return (
         <Button
-          kind="ghost"
-          className="button-link"
+          variant="text"
           onClick={() => getErrorDetailsForEvent(logEntry)}
           title={errorTitle}
         >
@@ -267,17 +288,17 @@ export default function ProcessInstanceLogList({
         taskName = 'Completed';
       }
     }
-    const taskNameCell = <td>{taskName}</td>;
+    const taskNameCell = <TableCell>{taskName}</TableCell>;
     const bpmnProcessCell = (
-      <td>
+      <TableCell>
         {logEntry.bpmn_process_definition_name ||
           logEntry.bpmn_process_definition_identifier}
-      </td>
+      </TableCell>
     );
     if (isEventsView) {
       tableRow.push(
         <>
-          <td data-qa="paginated-entity-id">{logEntry.id}</td>
+          <TableCell data-qa="paginated-entity-id">{logEntry.id}</TableCell>
           {bpmnProcessCell}
           {taskNameCell}
         </>,
@@ -293,28 +314,28 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       tableRow.push(
         <>
-          <td>{logEntry.task_definition_identifier}</td>
-          <td>{logEntry.bpmn_task_type}</td>
-          <td>{eventTypeCell(logEntry)}</td>
-          <td>
+          <TableCell>{logEntry.task_definition_identifier}</TableCell>
+          <TableCell>{logEntry.bpmn_task_type}</TableCell>
+          <TableCell>{eventTypeCell(logEntry)}</TableCell>
+          <TableCell>
             {logEntry.username || (
               <span className="system-user-log-entry">system</span>
             )}
-          </td>
+          </TableCell>
         </>,
       );
     }
 
     let timestampComponent = (
-      <td>
+      <TableCell>
         {DateAndTimeService.convertSecondsToFormattedDateTime(
           logEntry.timestamp,
         )}
-      </td>
+      </TableCell>
     );
     if (logEntry.spiff_task_guid && logEntry.event_type !== 'task_cancelled') {
       timestampComponent = (
-        <td>
+        <TableCell>
           <Link
             reloadDocument
             data-qa="process-instance-show-link"
@@ -325,12 +346,12 @@ export default function ProcessInstanceLogList({
               logEntry.timestamp,
             )}
           </Link>
-        </td>
+        </TableCell>
       );
     }
     tableRow.push(timestampComponent);
 
-    return <tr key={logEntry.id}>{tableRow}</tr>;
+    return <TableRow key={logEntry.id}>{tableRow}</TableRow>;
   };
 
   const buildTable = () => {
@@ -344,37 +365,39 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       tableHeaders.push(
         <>
-          <th>Id</th>
-          <th>Bpmn process</th>
-          <th>{taskNameHeader}</th>
+          <TableCell>Id</TableCell>
+          <TableCell>Bpmn process</TableCell>
+          <TableCell>{taskNameHeader}</TableCell>
         </>,
       );
     } else {
       tableHeaders.push(
         <>
-          <th>{taskNameHeader}</th>
-          <th>Bpmn process</th>
+          <TableCell>{taskNameHeader}</TableCell>
+          <TableCell>Bpmn process</TableCell>
         </>,
       );
     }
     if (isEventsView) {
       tableHeaders.push(
         <>
-          <th>Task identifier</th>
-          <th>Task type</th>
-          <th>Event type</th>
-          <th>User</th>
+          <TableCell>Task identifier</TableCell>
+          <TableCell>Task type</TableCell>
+          <TableCell>Event type</TableCell>
+          <TableCell>User</TableCell>
         </>,
       );
     }
-    tableHeaders.push(<th>Timestamp</th>);
+    tableHeaders.push(<TableCell>Timestamp</TableCell>);
     return (
-      <Table size="lg">
-        <thead>
-          <tr>{tableHeaders}</tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
+      <TableContainer>
+        <Table size="medium">
+          <TableHead>
+            <TableRow>{tableHeaders}</TableRow>
+          </TableHead>
+          <TableBody>{rows}</TableBody>
+        </Table>
+      </TableContainer>
     );
   };
 
@@ -393,129 +416,123 @@ export default function ProcessInstanceLogList({
     setClearAll(true);
   };
 
-  const shouldFilterStringItem = (options: any) => {
-    const stringItem = options.item;
-    let { inputValue } = options;
-    if (!inputValue) {
-      inputValue = '';
-    }
-    return stringItem.toLowerCase().includes(inputValue.toLowerCase());
-  };
-
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
 
     const filterElements = [];
-    let taskNameFilterPlaceholder = 'Choose a milestone';
     if (isEventsView) {
-      taskNameFilterPlaceholder = 'Choose a task bpmn name';
+      // taskNameFilterPlaceholder = 'Choose a task bpmn name';
     }
     filterElements.push(
-      <Column md={4}>
-        <ComboBox
-          onChange={(value: any) => {
-            updateFilterValue(value.selectedItem, 'bpmn_name');
-          }}
-          id="task-name-filter"
-          data-qa="task-type-select"
-          items={taskBpmnNames}
-          itemToString={(value: string) => {
-            return value;
-          }}
-          shouldFilterItem={shouldFilterStringItem}
-          placeholder={taskNameFilterPlaceholder}
-          titleText={taskNameHeader}
-          selectedItem={searchParams.get('bpmn_name')}
-        />
-      </Column>,
+      <Grid item md={4}>
+        <FormControl fullWidth>
+          <InputLabel id="task-name-filter-label">{taskNameHeader}</InputLabel>
+          <Select
+            labelId="task-name-filter-label"
+            label={taskNameHeader}
+            id="task-name-filter"
+            value={searchParams.get('bpmn_name') || ''}
+            onChange={(event) => {
+              updateFilterValue(event.target.value, 'bpmn_name');
+            }}
+          >
+            {taskBpmnNames.map((name) => (
+              <MenuItem key={name} value={name}>
+                {name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Grid>,
     );
 
     if (isEventsView) {
       filterElements.push(
         <>
-          <Column md={4}>
-            <ComboBox
-              onChange={(value: any) => {
-                updateFilterValue(value.selectedItem, 'bpmn_identifier');
-              }}
-              id="task-identifier-filter"
-              data-qa="task-type-select"
-              items={taskBpmnIdentifiers}
-              itemToString={(value: string) => {
-                return value;
-              }}
-              shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose a task bpmn identifier"
-              titleText="Task identifier"
-              selectedItem={searchParams.get('bpmn_identifier')}
-            />
-          </Column>
-          <Column md={4}>
-            <ComboBox
-              onChange={(value: any) => {
-                updateFilterValue(value.selectedItem, 'task_type');
-              }}
-              id="task-type-select"
-              data-qa="task-type-select"
-              items={taskTypes}
-              itemToString={(value: string) => {
-                return value;
-              }}
-              shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose a task type"
-              titleText="Task type"
-              selectedItem={searchParams.get('task_type')}
-            />
-          </Column>
-          <Column md={4}>
-            <ComboBox
-              onChange={(value: any) => {
-                updateFilterValue(value.selectedItem, 'event_type');
-              }}
-              id="event-type-select"
-              data-qa="event-type-select"
-              items={eventTypes}
-              itemToString={(value: string) => {
-                return value;
-              }}
-              shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose an event type"
-              titleText="Event type"
-              selectedItem={searchParams.get('event_type')}
-            />
-          </Column>
+          <Grid item md={4}>
+            <FormControl fullWidth>
+              <InputLabel id="task-identifier-filter-label">
+                Task identifier
+              </InputLabel>
+              <Select
+                labelId="task-identifier-filter-label"
+                label="Task identifier"
+                id="task-identifier-filter"
+                value={searchParams.get('bpmn_identifier') || ''}
+                onChange={(event) => {
+                  updateFilterValue(event.target.value, 'bpmn_identifier');
+                }}
+              >
+                {taskBpmnIdentifiers.map((identifier) => (
+                  <MenuItem key={identifier} value={identifier}>
+                    {identifier}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item md={4}>
+            <FormControl fullWidth>
+              <InputLabel id="task-type-select-label">Task type</InputLabel>
+              <Select
+                labelId="task-type-select-label"
+                label="Task type"
+                id="task-type-select"
+                value={searchParams.get('task_type') || ''}
+                onChange={(event) => {
+                  updateFilterValue(event.target.value, 'task_type');
+                }}
+              >
+                {taskTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item md={4}>
+            <FormControl fullWidth>
+              <InputLabel id="event-type-select-label">Event type</InputLabel>
+              <Select
+                labelId="event-type-select-label"
+                label="Event type"
+                id="event-type-select"
+                value={searchParams.get('event_type') || ''}
+                onChange={(event) => {
+                  updateFilterValue(event.target.value, 'event_type');
+                }}
+              >
+                {eventTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
         </>,
       );
     }
 
     return (
       <>
-        <Grid fullWidth className="with-bottom-margin">
+        <Grid container spacing={2} className="with-bottom-margin">
           {filterElements}
         </Grid>
-        <Grid fullWidth className="with-bottom-margin">
-          <Column sm={4} md={4} lg={8}>
-            <ButtonSet>
-              <Button
-                kind="tertiary"
-                className="narrow-button"
-                onClick={resetFiltersAndRun}
-              >
-                Reset
+        <Grid container spacing={2} className="with-bottom-margin">
+          <Grid item sm={4} md={4} lg={8}>
+            <Button variant="outlined" onClick={resetFiltersAndRun}>
+              Reset
+            </Button>
+            {shouldDisplayClearButton && (
+              <Button variant="outlined" onClick={clearFilters}>
+                Clear
               </Button>
-              {shouldDisplayClearButton && (
-                <Button
-                  kind="tertiary"
-                  className="narrow-button"
-                  onClick={clearFilters}
-                >
-                  Clear
-                </Button>
-              )}
-            </ButtonSet>
-          </Column>
+            )}
+          </Grid>
         </Grid>
       </>
     );
