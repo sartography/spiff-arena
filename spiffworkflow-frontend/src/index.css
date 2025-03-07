@@ -1,8 +1,6 @@
 /* site is mainly using white theme. */
 /* header is mainly using g100 */
 /* mockup wanted white, not grey, text */
-@import 'slick-carousel/slick/slick.css';
-@import 'slick-carousel/slick/slick-theme.css';
 
 body {
   /* This prevents the annoying MUI select box layout shift */
@@ -360,7 +358,6 @@ dl dt {
   display: inline-block;
   font-weight: 600;
   min-width: 6rem;
-  color: #161616;
 }
 
 dl.metadata-display dt {
@@ -371,7 +368,6 @@ dl.metadata-display dt {
 dl dd {
   display: inline-block;
   padding-left: 1rem;
-  color: #525252;
 }
 
 .smaller-text {
@@ -646,7 +642,6 @@ th.table-header-right-align .cds--table-header-label {
 
 .filter-icon {
   text-align: right;
-  padding-bottom: 10px;
   margin-right: 0px;
 }
 
@@ -789,10 +784,6 @@ svg.notification-icon {
 .user_instructions_4 {
   filter: opacity(10%);
   font-size: 8rem;
-}
-
-.float-right {
-  float: right;
 }
 
 .user-list {
@@ -941,6 +932,10 @@ hr {
   max-width: 640px;
 }
 
+div[role='tabpanel'] p {
+  max-width: unset;
+}
+
 .cds--white h1,
 .cds--white h2,
 .cds--white h3,
@@ -1021,24 +1016,6 @@ div.onboarding {
   margin-bottom: 2rem;
 }
 
-/* makde the completed user form modal more readable */
-.completed-task-modal .cds--modal-container {
-  background-color: #ffffff;
-}
-
-.completed-task-modal .cds--text-input:disabled,
-.completed-task-modal .cds--text-area:disabled,
-.completed-task-modal .cds--date-picker__input:disabled,
-.completed-task-modal .cds--select-input:disabled,
-.completed-task-modal .cds--select-input:hover:disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
-  background-color: var(--cds-field);
-}
-
-.completed-task-modal .cds--form__helper-text--disabled {
-  --cds-text-disabled: rgba(22, 22, 22, 0.5);
-}
-
 .process-model-file-table {
   width: 100%;
   table-layout: fixed;
@@ -1109,8 +1086,8 @@ div.retrievalExpressionsForm {
 }
 
 .task-instance-modal-row-item {
-  height: 48px;
-  line-height: 48px;
+  padding-top: .5rem;
+  font-size: 14px;
 }
 
 /* Utility classes to create horizontally centered stacks (to align icons etc) */
@@ -1180,4 +1157,13 @@ div.retrievalExpressionsForm {
 .pi-show-new-tab-button {
   position: relative;
   left: 6px;
+}
+
+.diagram-control-buttons {
+  margin-bottom: .5rem;
+  margin-top: .5rem;
+}
+
+.reports-search-text-field {
+  min-width: 100%;
 }

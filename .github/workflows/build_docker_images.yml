@@ -32,6 +32,7 @@ on:
       - main
       - keycloak-realm-with-groups
       - fail-fast-off
+      - newui-all-in
     tags: [v*]
 
 jobs:

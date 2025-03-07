@@ -18,12 +18,11 @@ import {
 } from 'dmn-js-properties-panel';
 
 import React, { useEffect, useState, useCallback } from 'react';
-// @ts-ignore
-import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
+import { Modal, UnorderedList, Link } from '@carbon/react';
+import { Button, IconButton, Stack } from '@mui/material';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-// import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
 import '../bpmn-js-properties-panel.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 
@@ -46,14 +45,14 @@ import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
 import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
-// removed in v17
-// https://forum.bpmn.io/t/since-mobile-touch-implementation-was-stripped-out-in-v17-is-there-a-wip-re-implementation-as-an-extension-in-the-wild-yet/11149
-// import TouchModule from 'diagram-js/lib/navigation/touch';
-
 import { useNavigate } from 'react-router-dom';
 
 import { Can } from '@casl/react';
-import { ZoomIn, ZoomOut, ZoomFit } from '@carbon/icons-react';
+import {
+  ZoomIn,
+  ZoomOut,
+  CenterFocusStrongOutlined,
+} from '@mui/icons-material';
 import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
 import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
@@ -68,6 +67,7 @@ import {
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   processModelId: string;
@@ -217,7 +217,7 @@ export default function ReactDiagramEditor({
         ? 'hidden-properties-panel'
         : 'js-properties-panel';
     temp.innerHTML = `
-      <div class="content with-diagram" id="js-drop-zone">
+      <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
         <div class="canvas ${canvasClass}" id="canvas"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
@@ -828,7 +828,9 @@ export default function ReactDiagramEditor({
         buttonText += 's';
       }
       return (
-        <Button onClick={() => setShowingReferences(true)}>{buttonText}</Button>
+        <Button variant="contained" onClick={() => setShowingReferences(true)}>
+          {buttonText}
+        </Button>
       );
     }
     return null;
@@ -837,7 +839,7 @@ export default function ReactDiagramEditor({
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
-        <ButtonSet>
+        <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
           <Can
             I="PUT"
             a={targetUris.processModelFileShowPath}
@@ -845,6 +847,7 @@ export default function ReactDiagramEditor({
           >
             <Button
               onClick={handleSave}
+              variant="contained"
               disabled={disableSaveButton}
               data-qa="process-model-file-save-button"
             >
@@ -866,7 +869,7 @@ export default function ReactDiagramEditor({
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             {onSetPrimaryFile && (
-              <Button onClick={handleSetPrimaryFile}>
+              <Button onClick={handleSetPrimaryFile} variant="contained">
                 Set as primary file
               </Button>
             )}
@@ -876,7 +879,9 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={downloadXmlFile}>Download</Button>
+            <Button variant="contained" onClick={downloadXmlFile}>
+              Download
+            </Button>
           </Can>
           <Can
             I="GET"
@@ -885,6 +890,7 @@ export default function ReactDiagramEditor({
           >
             {canViewXml && (
               <Button
+                variant="contained"
                 onClick={() => {
                   navigate(
                     `/process-models/${processModelId}/form/${fileName}`,
@@ -904,47 +910,32 @@ export default function ReactDiagramEditor({
           >
             {activeUserElement || null}
           </Can>
-        </ButtonSet>
+        </Stack>
       );
     }
     return null;
   };
 
   const diagramControlButtons = () => {
-    // align the iconDescription to the bottom so it doesn't cover up the Save button
+    // align the title to the bottom so it doesn't cover up the Save button
     // when mousing through them
     return (
       <div className="diagram-control-buttons">
-        <Button
-          kind="ghost"
-          renderIcon={ZoomIn}
-          align="bottom-left"
-          iconDescription="Zoom in"
-          hasIconOnly
-          onClick={() => {
-            zoom(1);
-          }}
-        />
-        <Button
-          kind="ghost"
-          renderIcon={ZoomOut}
-          align="bottom-left"
-          iconDescription="Zoom out"
-          hasIconOnly
-          onClick={() => {
-            zoom(-1);
-          }}
-        />
-        <Button
-          kind="ghost"
-          renderIcon={ZoomFit}
-          align="bottom-left"
-          iconDescription="Zoom fit"
-          hasIconOnly
-          onClick={() => {
-            zoom(0);
-          }}
-        />
+        <SpiffTooltip title="Zoom in" placement="bottom">
+          <IconButton aria-label="Zoom in" onClick={() => zoom(1)}>
+            <ZoomIn />
+          </IconButton>
+        </SpiffTooltip>
+        <SpiffTooltip title="Zoom out" placement="bottom">
+          <IconButton aria-label="Zoom out" onClick={() => zoom(-1)}>
+            <ZoomOut />
+          </IconButton>
+        </SpiffTooltip>
+        <SpiffTooltip title="Zoom fit" placement="bottom">
+          <IconButton aria-label="Zoom fit" onClick={() => zoom(0)}>
+            <CenterFocusStrongOutlined />
+          </IconButton>
+        </SpiffTooltip>
       </div>
     );
   };

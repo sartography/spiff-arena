@@ -1,6 +1,12 @@
 import { useState } from 'react';
-// @ts-ignore
-import { Button, Modal } from '@carbon/react';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import { IconButton } from '@mui/material';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   'data-qa'?: string;
@@ -9,8 +15,8 @@ type OwnProps = {
   onConfirmation: (..._args: any[]) => any;
   title?: string;
   confirmButtonLabel?: string;
-  kind?: string;
-  renderIcon?: Element;
+  kind?: 'text' | 'outlined' | 'contained';
+  renderIcon?: any;
   iconDescription?: string | null;
   hasIconOnly?: boolean;
   classNameForModal?: string;
@@ -23,7 +29,7 @@ export default function ButtonWithConfirmation({
   'data-qa': dataQa,
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
-  kind = 'danger',
+  kind = 'contained',
   renderIcon,
   iconDescription = null,
   hasIconOnly = false,
@@ -45,31 +51,56 @@ export default function ButtonWithConfirmation({
 
   const confirmationDialog = () => {
     return (
-      <Modal
+      <Dialog
         open={showConfirmationPrompt}
-        danger
-        data-qa={`${dataQa}-modal-confirmation-dialog`}
-        modalHeading={description}
-        modalLabel={title}
-        primaryButtonText={confirmButtonLabel}
-        secondaryButtonText="Cancel"
-        onSecondarySubmit={handleConfirmationPromptCancel}
-        onRequestSubmit={handleConfirmation}
-        onRequestClose={handleConfirmationPromptCancel}
+        onClose={handleConfirmationPromptCancel}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
         className={classNameForModal}
-      />
+      >
+        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {description}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmationPromptCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmation} color="primary" autoFocus>
+            {confirmButtonLabel}
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   };
 
+  if (hasIconOnly) {
+    return (
+      <>
+        <SpiffTooltip title={iconDescription || ''} placement="top">
+          <IconButton
+            data-qa={dataQa}
+            onClick={handleShowConfirmationPrompt}
+            aria-label={iconDescription || ''}
+          >
+            {renderIcon}
+          </IconButton>
+        </SpiffTooltip>
+        {confirmationDialog()}
+      </>
+    );
+  }
   return (
     <>
       <Button
         data-qa={dataQa}
         onClick={handleShowConfirmationPrompt}
-        kind={kind}
-        renderIcon={renderIcon}
-        iconDescription={iconDescription}
-        hasIconOnly={hasIconOnly}
+        variant={kind}
+        color="error"
+        startIcon={renderIcon}
+        aria-label={iconDescription || ''}
       >
         {buttonLabel}
       </Button>
