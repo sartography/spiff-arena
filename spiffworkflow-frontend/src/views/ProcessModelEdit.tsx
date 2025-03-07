@@ -33,7 +33,7 @@ export default function ProcessModelEdit() {
             },
           ]}
         />
-        <Typography variant="h2">
+        <Typography variant="h1">
           Edit Process Model: {(processModel as any).id}
         </Typography>
         <Box mt={2}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 // @ts-ignore
+import { Box, Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ProcessGroupForm from '../components/ProcessGroupForm';
@@ -36,12 +37,16 @@ export default function ProcessGroupEdit() {
             },
           ]}
         />
-        <h1>Edit Process Group: {(processGroup as any).id}</h1>
-        <ProcessGroupForm
-          mode="edit"
-          processGroup={processGroup}
-          setProcessGroup={setProcessGroup}
-        />
+        <Typography variant="h1">
+          Edit Process Group: {(processGroup as any).id}
+        </Typography>
+        <Box mt={2}>
+          <ProcessGroupForm
+            mode="edit"
+            processGroup={processGroup}
+            setProcessGroup={setProcessGroup}
+          />
+        </Box>
       </>
     );
   }

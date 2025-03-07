@@ -169,7 +169,7 @@ export default function ProcessGroupForm({
 
   return (
     <form onSubmit={handleFormSubmission}>
-      <Stack spacing={2}>
+      <Stack spacing={2} alignItems="flex-start">
         {formElements()}
         {formButtons()}
       </Stack>
