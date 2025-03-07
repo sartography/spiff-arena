@@ -1,9 +1,7 @@
 import json
+from typing import Any
 
 import redis
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
-
 from flask import current_app
 from flask import jsonify
 from flask import make_response
@@ -38,7 +36,51 @@ def url_info() -> Response:
     )
 
 
-def get_redis_results(redis_client):
+def celery_backend_results(
+    process_instance_id: int,
+    include_all_failures: bool = True,
+) -> Response:
+    backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"]
+
+    if backend_url:
+        if backend_url.startswith("redis://"):
+            redis_client = redis.StrictRedis.from_url(backend_url)
+            result_values = _get_redis_results(redis_client)
+        elif backend_url.startswith("s3://"):
+            import boto3  # type: ignore
+
+            s3_client = boto3.client("s3")
+            bucket_name = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"]
+            result_values = _get_s3_results(s3_client, bucket_name)
+        else:
+            raise ApiError(
+                error_code="unsupported_backend",
+                message="The specified backend is not supported.",
+                status_code=500,
+            )
+    else:
+        raise ApiError(
+            error_code="no_results_backend",
+            message="No Celery results backend configured.",
+            status_code=500,
+        )
+
+    return_body = []
+    for value in result_values or []:
+        if value is None:
+            continue
+        value_dict = json.loads(value.decode("utf-8"))
+        if (
+            value_dict["result"]
+            and "process_instance_id" in value_dict["result"]
+            and value_dict["result"]["process_instance_id"] == process_instance_id
+        ) or (value_dict["status"] == "FAILURE" and include_all_failures is True):
+            return_body.append(value_dict)
+
+    return make_response(jsonify(return_body), 200)
+
+
+def _get_redis_results(redis_client: Any) -> Any:
     results = redis_client.keys("celery-task-meta-*")
     if len(results) > 1000:
         raise ApiError(
@@ -50,14 +92,15 @@ def get_redis_results(redis_client):
     return redis_client.mget(results)
 
 
-def get_s3_results(s3_client, bucket_name):
+def _get_s3_results(s3_client: Any, bucket_name: Any) -> list:
+    from botocore.exceptions import BotoCoreError  # type: ignore
+    from botocore.exceptions import ClientError
+
     try:
         # This defaults to retrieving a maximum of 1000 items, if it
         # does return 1000 items, maybe it should also raise an exception
         # the way the redis backend code does.
-        objects = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix="celery-task-meta-"
-        )
+        objects = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="celery-task-meta-")
         if "Contents" not in objects:
             return []
 
@@ -73,47 +116,3 @@ def get_s3_results(s3_client, bucket_name):
             message=str(e),
             status_code=500,
         ) from e
-
-
-def celery_backend_results(
-    process_instance_id: int,
-    include_all_failures: bool = True,
-) -> Response:
-    backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"]
-
-    if backend_url:
-        if backend_url.startswith("redis://"):
-            redis_client = redis.StrictRedis.from_url(backend_url)
-            result_values = get_redis_results(redis_client)
-        elif backend_url.startswith("s3://"):
-            s3_client = boto3.client("s3")
-            bucket_name = current_app.config[
-                "SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"
-            ]
-            result_values = get_s3_results(s3_client, bucket_name)
-        else:
-            raise ApiError(
-                error_code="unsupported_backend",
-                message="The specified backend is not supported.",
-                status_code=500,
-            )
-    else:
-        raise ApiError(
-            error_code="no_results_backend",
-            message="No Celery results backend configured.",
-            status_code=500,
-        )
-
-    return_body = []
-    for value in result_values:
-        if value is None:
-            continue
-        value_dict = json.loads(value.decode("utf-8"))
-        if (
-            value_dict["result"]
-            and "process_instance_id" in value_dict["result"]
-            and value_dict["result"]["process_instance_id"] == process_instance_id
-        ) or (value_dict["status"] == "FAILURE" and include_all_failures is True):
-            return_body.append(value_dict)
-
-    return make_response(jsonify(return_body), 200)
