@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextField, Stack } from '@mui/material';
+import {
+  Button,
+  TextField,
+  Stack,
+  TextareaAutosize,
+  InputLabel,
+} from '@mui/material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
@@ -145,12 +151,15 @@ export default function ProcessGroupForm({
     }
 
     textInputs.push(
-      <TextField
+      <InputLabel id="data-store-description-label">Description:</InputLabel>,
+    );
+    textInputs.push(
+      <TextareaAutosize
         id="process-group-description"
+        minRows={5}
         name="description"
-        label="Description"
-        multiline
-        value={processGroup.description}
+        placeholder="Description"
+        value={processGroup.description || ''}
         onChange={(event: any) =>
           updateProcessGroup({ description: event.target.value })
         }
@@ -169,7 +178,7 @@ export default function ProcessGroupForm({
 
   return (
     <form onSubmit={handleFormSubmission}>
-      <Stack spacing={2} alignItems="flex-start">
+      <Stack spacing={2}>
         {formElements()}
         {formButtons()}
       </Stack>

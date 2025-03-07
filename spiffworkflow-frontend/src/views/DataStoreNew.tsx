@@ -33,7 +33,7 @@ export default function DataStoreNew() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <Typography variant="h4" component="h1" gutterBottom>
+      <Typography variant="h1" gutterBottom>
         Add Data Store
       </Typography>
       <DataStoreForm

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import TaskControls from '../components/TaskControls';
@@ -19,7 +19,10 @@ function InstancesStartedByMe({
   isMobile,
 }: InstancesStartedByMeProps) {
   const navigate = useNavigate();
-  const [showNonActive, setShowNonActive] = useState(false);
+
+  // This feature doesn't work and is redundant since a user can use the process instances list page instead.
+  // https://github.com/sartography/spiff-arena/issues/2250
+  // const [showNonActive, setShowNonActive] = useState(false);
 
   const additionalReportFilters = useMemo<ReportFilter[]>(() => {
     return [
@@ -73,8 +76,8 @@ function InstancesStartedByMe({
         }}
         taskControlElement={
           <TaskControls
-            showNonActive={showNonActive}
-            setShowNonActive={setShowNonActive}
+            // showNonActive={showNonActive}
+            // setShowNonActive={setShowNonActive}
             setViewMode={setViewMode}
             viewMode={viewMode}
           />
@@ -83,7 +86,7 @@ function InstancesStartedByMe({
       <TaskTable
         entries={processInstances}
         viewMode={viewMode}
-        showNonActive={showNonActive}
+        // showNonActive={showNonActive}
       />
     </>
   );

@@ -131,6 +131,7 @@ export default function DataStoreListTable() {
         </InputLabel>
         <Select
           labelId="data-store-dropdown-label"
+          label="Select Data Store"
           id="data-store-dropdown"
           value={dataStore ? dataStore.id : ''}
           onChange={(event) => {

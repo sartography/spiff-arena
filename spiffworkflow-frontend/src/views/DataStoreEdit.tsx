@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
@@ -48,7 +49,9 @@ export default function DataStoreEdit() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h1>Edit Data Store</h1>
+      <Typography variant="h1" gutterBottom>
+        Edit Data Store
+      </Typography>
       <DataStoreForm
         mode="edit"
         dataStore={dataStore}

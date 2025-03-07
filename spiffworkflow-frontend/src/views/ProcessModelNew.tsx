@@ -33,7 +33,7 @@ export default function ProcessModelNew() {
           },
         ]}
       />
-      <Typography variant="h2">Add Process Model</Typography>
+      <Typography variant="h1">Add Process Model</Typography>
       <Box mt={2}>
         <ProcessModelForm
           mode="new"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessGroupForm from '../components/ProcessGroupForm';
 import { ProcessGroup, HotCrumbItem } from '../interfaces';
@@ -26,7 +27,9 @@ export default function ProcessGroupNew() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h1>Add Process Group</h1>
+      <Typography variant="h1" gutterBottom>
+        Add Process Group
+      </Typography>
       <ProcessGroupForm
         mode="new"
         processGroup={processGroup}
