@@ -68,7 +68,7 @@ const useProcessInstances = ({
 
       const queryParamString = `per_page=1000&page=1`;
       HttpService.makeCallToBackend({
-        path: `/process-instances?${queryParamString}`,
+        path: `/process-instances/for-me?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
         httpMethod: 'POST',
         failureCallback: stopRefreshing,
