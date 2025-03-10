@@ -576,3 +576,11 @@ export interface MigrationCheckResult {
   current_git_revision: string;
   current_bpmn_process_hash: string;
 }
+
+export interface NavItem {
+  text: string;
+  icon: ReactElement;
+  route: string;
+  id: string;
+  permissionRoutes?: string[];
+}

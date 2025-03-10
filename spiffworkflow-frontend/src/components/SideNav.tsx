@@ -47,7 +47,7 @@ import SpiffTooltip from './SpiffTooltip';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
+import { PermissionsToCheck, NavItem } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 const drawerWidth = 350;
@@ -167,7 +167,7 @@ function SideNav({
     </SpiffTooltip>
   );
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       text: 'HOME',
       icon: <Home />,
@@ -249,11 +249,18 @@ function SideNav({
     );
   };
 
-  const checkUserHasAccessToNavItem = (item: object) => {
+  const checkUserHasAccessToNavItem = (item: NavItem) => {
     if (!('permissionRoutes' in item)) {
       return true;
     }
-    return false;
+
+    let hasPermission = false;
+    item.permissionRoutes?.forEach((targetUri: string) => {
+      if (ability.can('GET', targetUri)) {
+        hasPermission = true;
+      }
+    });
+    return hasPermission;
   };
 
   if (permissionsLoaded) {
