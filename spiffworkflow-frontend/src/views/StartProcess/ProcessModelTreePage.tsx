@@ -115,12 +115,14 @@ export default function ProcessModelTreePage({
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.dataStoreListPath]: ['POST'],
+    [targetUris.dataStoreListPath]: ['GET'],
     [targetUris.processGroupListPath]: ['POST'],
     [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData,
+  );
 
   /** Recursively flatten the entire hierarchy of process groups and models */
   const flattenAllItems = useCallback(
@@ -272,7 +274,7 @@ export default function ProcessModelTreePage({
 
   useEffect(() => {
     // If no favorites, proceed with the normal process groups.
-    if (processGroups) {
+    if (processGroups && permissionsLoaded) {
       /**
        * Do this now and put it in state.
        * You do not want to do this on every change to the search filter.
@@ -311,25 +313,27 @@ export default function ProcessModelTreePage({
         setCrumbs([]);
       }
       setGroupsExpanded(!!processGroupsLite.length);
-      HttpService.makeCallToBackend({
-        path: '/data-stores',
-        successCallback: (results: DataStore[]) => {
-          setDataStores(results);
-        },
-      });
+      if (ability.can('GET', targetUris.dataStoreListPath)) {
+        HttpService.makeCallToBackend({
+          path: '/data-stores',
+          successCallback: (results: DataStore[]) => {
+            setDataStores(results);
+          },
+        });
+      }
       if (setNavElementCallback) {
         setNavElementCallback(
           <TreePanel
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processGroups]);
+  }, [processGroups, permissionsLoaded, ability]);
 
   useEffect(() => {
     if (clickStream) {
@@ -644,14 +648,20 @@ export default function ProcessModelTreePage({
                     >
                       <Typography>Process Models ({models.length})</Typography>
                       {currentProcessGroup && (
-                        <IconButton
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-model-button"
-                          href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                        <Can
+                          I="POST"
+                          a={targetUris.processModelCreatePath}
+                          ability={ability}
                         >
-                          <Add />
-                        </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => e.stopPropagation()}
+                            data-qa="add-process-model-button"
+                            href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                          >
+                            <Add />
+                          </IconButton>
+                        </Can>
                       )}
                     </Box>
                   </AccordionSummary>
@@ -697,14 +707,20 @@ export default function ProcessModelTreePage({
                       }}
                     >
                       <Typography>Process Groups ({groups?.length})</Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => e.stopPropagation()}
-                        data-qa="add-process-group-button"
-                        href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
+                      <Can
+                        I="POST"
+                        a={targetUris.processGroupListPath}
+                        ability={ability}
                       >
-                        <Add />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          data-qa="add-process-group-button"
+                          href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
+                        >
+                          <Add />
+                        </IconButton>
+                      </Can>
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -720,46 +736,48 @@ export default function ProcessModelTreePage({
                     </Box>
                   </AccordionDetails>
                 </Accordion>
-                <Accordion
-                  expanded={dataStoreExpanded}
-                  onChange={() => setDataStoreExpanded((prev) => !prev)}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="Data Store Accordion"
+                <Can I="GET" a={targetUris.dataStoreListPath} ability={ability}>
+                  <Accordion
+                    expanded={dataStoreExpanded}
+                    onChange={() => setDataStoreExpanded((prev) => !prev)}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        pr: 2,
-                      }}
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls="Data Store Accordion"
                     >
-                      <Typography>
-                        Data Stores ({dataStoresForProcessGroup?.length})
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => e.stopPropagation()}
-                        data-qa="add-process-group-button"
-                        href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          pr: 2,
+                        }}
                       >
-                        <Add />
-                      </IconButton>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={gridProps}>
-                      {dataStoresForProcessGroup?.map(
-                        (dataStore: DataStore) => (
-                          <DataStoreCard dataStore={dataStore} />
-                        ),
-                      )}
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
+                        <Typography>
+                          Data Stores ({dataStoresForProcessGroup?.length})
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          data-qa="add-process-group-button"
+                          href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
+                        >
+                          <Add />
+                        </IconButton>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={gridProps}>
+                        {dataStoresForProcessGroup?.map(
+                          (dataStore: DataStore) => (
+                            <DataStoreCard dataStore={dataStore} />
+                          ),
+                        )}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                </Can>
               </CardContent>
             </Card>
           </Stack>

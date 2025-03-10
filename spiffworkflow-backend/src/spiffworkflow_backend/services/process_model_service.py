@@ -489,31 +489,9 @@ class ProcessModelService(FileSystemService):
         return process_groups
 
     @classmethod
-    def get_process_groups_for_api(
-        cls,
-        process_group_id: str | None = None,
-        user: UserModel | None = None,
+    def get_process_groups_user_has_permissions_to(
+        cls, process_groups: list[ProcessGroup], permission_assignments: list, permission_to_check: str, permission_base_uri: str
     ) -> list[ProcessGroup]:
-        process_groups = cls.get_process_groups(process_group_id)
-
-        permission_to_check = "read"
-        permission_base_uri = "/process-groups"
-
-        if user is None:
-            user = UserService.current_user()
-
-        # if user has access to uri/* with that permission then there's no reason to check each one individually
-        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
-        has_permission = AuthorizationService.user_has_permission(
-            user=user,
-            permission=permission_to_check,
-            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
-        )
-        if has_permission:
-            return process_groups
-
-        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
-
         new_process_group_list = []
         denied_parent_ids: set[str] = set()
         for process_group in process_groups:
@@ -553,6 +531,49 @@ class ProcessModelService(FileSystemService):
                     has_denied_permission = True
             if not has_denied_permission:
                 permitted_process_groups.append(process_group)
+                permitted_subgroups = cls.get_process_groups_user_has_permissions_to(
+                    process_groups=process_group.process_groups,
+                    permission_assignments=permission_assignments,
+                    permission_to_check=permission_to_check,
+                    permission_base_uri=permission_base_uri,
+                )
+                process_group.process_groups = permitted_subgroups
+
+        return permitted_process_groups
+
+    @classmethod
+    def get_process_groups_for_api(
+        cls,
+        process_group_id: str | None = None,
+        user: UserModel | None = None,
+    ) -> list[ProcessGroup]:
+        process_groups = cls.get_process_groups(process_group_id)
+
+        permission_to_check = "read"
+        permission_base_uri = "/process-groups"
+
+        if user is None:
+            user = UserService.current_user()
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
+        has_permission = False
+        has_permission = AuthorizationService.user_has_permission(
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
+        )
+        if has_permission:
+            return process_groups
+
+        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
+
+        permitted_process_groups = cls.get_process_groups_user_has_permissions_to(
+            process_groups=process_groups,
+            permission_assignments=permission_assignments,
+            permission_to_check=permission_to_check,
+            permission_base_uri=permission_base_uri,
+        )
 
         return permitted_process_groups
 
