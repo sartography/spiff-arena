@@ -433,7 +433,7 @@ export interface ProcessModelCaller {
   process_model_id: string;
 }
 
-export interface UserGroup {}
+export interface UserGroup { }
 
 type InterstitialPageResponseType =
   | 'task_update'
@@ -575,4 +575,12 @@ export interface MigrationCheckResult {
   process_instance_id: number;
   current_git_revision: string;
   current_bpmn_process_hash: string;
+}
+
+export interface NavItem {
+  text: string;
+  icon: ReactElement;
+  route: string;
+  id: string;
+  permissionRoutes?: string[];
 }

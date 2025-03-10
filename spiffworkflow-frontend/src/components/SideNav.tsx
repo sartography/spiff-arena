@@ -46,6 +46,9 @@ import SpiffLogo from './SpiffLogo';
 import SpiffTooltip from './SpiffTooltip';
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck, NavItem } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -84,6 +87,16 @@ function SideNav({
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
 
   const location = useLocation();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.dataStoreListPath]: ['GET'],
+    [targetUris.secretListPath]: ['GET'],
+    [targetUris.authenticationListPath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData,
+  );
 
   // Determine the selected tab based on the current route
   let selectedTab: string | null = null;
@@ -154,7 +167,7 @@ function SideNav({
     </SpiffTooltip>
   );
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       text: 'HOME',
       icon: <Home />,
@@ -178,6 +191,7 @@ function SideNav({
       icon: <Storage />,
       route: '/data-stores',
       id: routeIdentifiers.DATA_STORES,
+      permissionRoutes: [targetUris.dataStoreListPath],
     },
     {
       text: 'MESSAGES',
@@ -190,6 +204,10 @@ function SideNav({
       icon: <SettingsApplicationsSharp />,
       route: '/configuration',
       id: routeIdentifiers.CONFIGURATION,
+      permissionRoutes: [
+        targetUris.secretListPath,
+        targetUris.authenticationListPath,
+      ],
     },
   ];
 
@@ -231,213 +249,249 @@ function SideNav({
     );
   };
 
-  return (
-    <>
-      <Box
-        sx={{
-          width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
-          flexShrink: 0,
-          borderRight: '1px solid #e0e0e0',
-          height: '100vh',
-          bgcolor: 'background.nav',
-          transition: 'width 0.3s',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
+  const checkUserHasAccessToNavItem = (item: NavItem) => {
+    if (!('permissionRoutes' in item)) {
+      return true;
+    }
+
+    let hasPermission = false;
+    item.permissionRoutes?.forEach((targetUri: string) => {
+      if (ability.can('GET', targetUri)) {
+        hasPermission = true;
+      }
+    });
+    return hasPermission;
+  };
+
+  if (permissionsLoaded) {
+    return (
+      <>
         <Box
           sx={{
-            p: 2,
-            height: 64,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
+            flexShrink: 0,
+            borderRight: '1px solid #e0e0e0',
+            height: '100vh',
+            bgcolor: 'background.nav',
+            transition: 'width 0.3s',
+            overflow: 'hidden',
+            position: 'relative',
           }}
         >
-          {!isCollapsed && (
-            <Typography
-              variant="h6"
-              color={mainBlue}
-              sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}
-            >
-              <MuiLink component={Link} to="/">
-                <SpiffLogo />
-              </MuiLink>
-            </Typography>
-          )}
-          <IconButton
-            onClick={(event) => {
-              onToggleCollapse(event);
-            }}
-            sx={{ ml: isCollapsed ? 'auto' : 0 }}
-          >
-            {isMobile ? <CloseIcon /> : collapseOrExpandIcon}
-          </IconButton>
-        </Box>
-        <List>
-          {navItems.map((item) => (
-            <ListItem
-              component={Link}
-              to={item.route}
-              key={item.text}
-              onClick={() => {
-                // additionalNavElement is the TreePanel in this case so do not
-                // remove it when you are navigating to the processes page from the processes page
-                if (item.id !== routeIdentifiers.PROCESSES) {
-                  setAdditionalNavElement(null);
-                }
-              }}
-              sx={{
-                bgcolor:
-                  selectedTab === item.id ? 'background.light' : 'inherit',
-                color: selectedTab === item.id ? mainBlue : 'inherit',
-                borderColor: selectedTab === item.id ? mainBlue : 'transparent',
-                borderLeftWidth: '4px',
-                borderStyle: 'solid',
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-              }}
-            >
-              <Tooltip title={isCollapsed ? item.text : ''} placement="right">
-                <ListItemIcon
-                  sx={{ color: 'inherit', minWidth: isCollapsed ? 24 : 40 }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-              </Tooltip>
-              {!isCollapsed && (
-                <ListItemText
-                  primary={item.text}
-                  data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: selectedTab === item.id ? 'bold' : 'normal',
-                  }}
-                />
-              )}
-            </ListItem>
-          ))}
-        </List>
-        {!isCollapsed && (
           <Box
             sx={{
-              width: '100%',
-              height: `calc(100vh - ${pixelsToRemoveFromAdditionalElement}px)`,
+              p: 2,
+              height: 64,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            {additionalNavElement}
-          </Box>
-        )}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 16,
-            left: isCollapsed ? '50%' : 16,
-            transform: isCollapsed ? 'translateX(-50%)' : 'none',
-            alignItems: 'center', // Vertically center items
-            display: 'flex',
-            flexDirection: isCollapsed ? 'column' : 'row',
-            gap: isCollapsed ? 0 : 1,
-          }}
-        >
-          <SpiffTooltip
-            title="User Actions"
-            placement={isCollapsed ? 'right' : 'top'}
-          >
-            <IconButton
-              aria-label="User Actions"
-              onClick={handlePersonIconClick}
-              className="person-icon"
-            >
-              <Person />
-            </IconButton>
-          </SpiffTooltip>
-          {DARK_MODE_ENABLED ? (
-            <SpiffTooltip
-              title="Toggle dark mode"
-              placement={isCollapsed ? 'right' : 'top'}
-            >
-              <IconButton onClick={onToggleDarkMode}>
-                {isDark ? <Brightness7 /> : <Brightness4 />}
-              </IconButton>
-            </SpiffTooltip>
-          ) : null}
-          {SPIFF_ENVIRONMENT && (
-            <SpiffTooltip
-              title="Environment"
-              placement={isCollapsed ? 'right' : 'top'}
-            >
-              {/* Use a Box to wrap the Chip and vertically align it */}
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Chip
-                  label={SPIFF_ENVIRONMENT}
-                  color="primary"
-                  size="small"
-                  sx={{
-                    cursor: 'default',
-                  }}
-                />
-              </Box>
-            </SpiffTooltip>
-          )}
-        </Box>
-      </Box>
-      {showUserProfile && (
-        <Paper
-          elevation={3}
-          className="user-profile"
-          sx={{
-            position: 'fixed',
-            bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
-            left: 64,
-            right: 'auto',
-            width: 256,
-            padding: 2,
-            zIndex: 1300,
-            bgcolor: 'background.paper',
-          }}
-        >
-          <Typography variant="subtitle1">{username}</Typography>
-          {username !== userEmail && (
-            <Typography variant="body2">{userEmail}</Typography>
-          )}
-          <hr />
-          {aboutLinkElement}
-          <br />
-          <MuiLink
-            component="a"
-            href={externalDocumentationUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Documentation
-          </MuiLink>
-          <ExtensionUxElementForDisplay
-            displayLocation="user_profile_item"
-            elementCallback={extensionUserProfileElement}
-            extensionUxElements={extensionUxElements}
-          />
-          {!UserService.authenticationDisabled() && (
-            <>
-              <hr />
-              <MuiLink
-                component="button"
-                onClick={() => UserService.doLogout()}
+            {!isCollapsed && (
+              <Typography
+                variant="h6"
+                color={mainBlue}
                 sx={{
+                  fontWeight: 'bold',
                   display: 'flex',
                   alignItems: 'center',
-                  textDecoration: 'none',
-                  color: 'inherit',
                 }}
               >
-                <Logout />
-                &nbsp;&nbsp;Sign out
-              </MuiLink>
-            </>
+                <MuiLink component={Link} to="/">
+                  <SpiffLogo />
+                </MuiLink>
+              </Typography>
+            )}
+            <IconButton
+              onClick={(event) => {
+                onToggleCollapse(event);
+              }}
+              sx={{ ml: isCollapsed ? 'auto' : 0 }}
+            >
+              {isMobile ? <CloseIcon /> : collapseOrExpandIcon}
+            </IconButton>
+          </Box>
+          <List>
+            {navItems.map((item) => {
+              if (checkUserHasAccessToNavItem(item)) {
+                return (
+                  <ListItem
+                    component={Link}
+                    to={item.route}
+                    key={item.text}
+                    onClick={() => {
+                      // additionalNavElement is the TreePanel in this case so do not
+                      // remove it when you are navigating to the processes page from the processes page
+                      if (item.id !== routeIdentifiers.PROCESSES) {
+                        setAdditionalNavElement(null);
+                      }
+                    }}
+                    sx={{
+                      bgcolor:
+                        selectedTab === item.id
+                          ? 'background.light'
+                          : 'inherit',
+                      color: selectedTab === item.id ? mainBlue : 'inherit',
+                      borderColor:
+                        selectedTab === item.id ? mainBlue : 'transparent',
+                      borderLeftWidth: '4px',
+                      borderStyle: 'solid',
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    }}
+                  >
+                    <Tooltip
+                      title={isCollapsed ? item.text : ''}
+                      placement="right"
+                    >
+                      <ListItemIcon
+                        sx={{
+                          color: 'inherit',
+                          minWidth: isCollapsed ? 24 : 40,
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                    </Tooltip>
+                    {!isCollapsed && (
+                      <ListItemText
+                        primary={item.text}
+                        data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
+                        primaryTypographyProps={{
+                          fontSize: '0.875rem',
+                          fontWeight:
+                            selectedTab === item.id ? 'bold' : 'normal',
+                        }}
+                      />
+                    )}
+                  </ListItem>
+                );
+              }
+              return null;
+            })}
+          </List>
+          {!isCollapsed && (
+            <Box
+              sx={{
+                width: '100%',
+                height: `calc(100vh - ${pixelsToRemoveFromAdditionalElement}px)`,
+              }}
+            >
+              {additionalNavElement}
+            </Box>
           )}
-        </Paper>
-      )}
-    </>
-  );
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 16,
+              left: isCollapsed ? '50%' : 16,
+              transform: isCollapsed ? 'translateX(-50%)' : 'none',
+              alignItems: 'center', // Vertically center items
+              display: 'flex',
+              flexDirection: isCollapsed ? 'column' : 'row',
+              gap: isCollapsed ? 0 : 1,
+            }}
+          >
+            <SpiffTooltip
+              title="User Actions"
+              placement={isCollapsed ? 'right' : 'top'}
+            >
+              <IconButton
+                aria-label="User Actions"
+                onClick={handlePersonIconClick}
+                className="person-icon"
+              >
+                <Person />
+              </IconButton>
+            </SpiffTooltip>
+            {DARK_MODE_ENABLED ? (
+              <SpiffTooltip
+                title="Toggle dark mode"
+                placement={isCollapsed ? 'right' : 'top'}
+              >
+                <IconButton onClick={onToggleDarkMode}>
+                  {isDark ? <Brightness7 /> : <Brightness4 />}
+                </IconButton>
+              </SpiffTooltip>
+            ) : null}
+            {SPIFF_ENVIRONMENT && (
+              <SpiffTooltip
+                title="Environment"
+                placement={isCollapsed ? 'right' : 'top'}
+              >
+                {/* Use a Box to wrap the Chip and vertically align it */}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Chip
+                    label={SPIFF_ENVIRONMENT}
+                    color="primary"
+                    size="small"
+                    sx={{
+                      cursor: 'default',
+                    }}
+                  />
+                </Box>
+              </SpiffTooltip>
+            )}
+          </Box>
+        </Box>
+        {showUserProfile && (
+          <Paper
+            elevation={3}
+            className="user-profile"
+            sx={{
+              position: 'fixed',
+              bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
+              left: 64,
+              right: 'auto',
+              width: 256,
+              padding: 2,
+              zIndex: 1300,
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Typography variant="subtitle1">{username}</Typography>
+            {username !== userEmail && (
+              <Typography variant="body2">{userEmail}</Typography>
+            )}
+            <hr />
+            {aboutLinkElement}
+            <br />
+            <MuiLink
+              component="a"
+              href={externalDocumentationUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Documentation
+            </MuiLink>
+            <ExtensionUxElementForDisplay
+              displayLocation="user_profile_item"
+              elementCallback={extensionUserProfileElement}
+              extensionUxElements={extensionUxElements}
+            />
+            {!UserService.authenticationDisabled() && (
+              <>
+                <hr />
+                <MuiLink
+                  component="button"
+                  onClick={() => UserService.doLogout()}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
+                >
+                  <Logout />
+                  &nbsp;&nbsp;Sign out
+                </MuiLink>
+              </>
+            )}
+          </Paper>
+        )}
+      </>
+    );
+  }
+  return null;
 }
 
 export default SideNav;

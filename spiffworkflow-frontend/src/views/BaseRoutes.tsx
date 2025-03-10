@@ -25,7 +25,7 @@ import ProcessModelEditDiagram from './ProcessModelEditDiagram';
 import ReactFormEditor from './ReactFormEditor'; // Import the new component
 import ProcessInstanceRoutes from './ProcessInstanceRoutes';
 import ProcessInstanceShortLink from './ProcessInstanceShortLink';
-import ProcessInstanceList from './ProcessInstanceList'; // Import the new component
+// Import the new component
 import { UiSchemaUxElement } from '../extension_ui_schema_interfaces';
 import { extensionUxElementMap } from '../components/ExtensionUxElementForDisplay';
 import Extension from './Extension';
@@ -170,10 +170,6 @@ export default function BaseRoutes({
         <Route
           path="i/:process_instance_id"
           element={<ProcessInstanceShortLink />}
-        />
-        <Route
-          path="/process-instances"
-          element={<ProcessInstanceList variant="all" />}
         />
         <Route path="/process-groups/new" element={<ProcessGroupNew />} />
         <Route
