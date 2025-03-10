@@ -5,6 +5,7 @@ import {
   Typography,
   CardActionArea,
   CardContent,
+  CardActions,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
@@ -170,28 +171,21 @@ export default function ProcessModelCard({
               {model.description || '--'}
             </Typography>
 
-            <Stack
-              sx={{
-                paddingTop: 2,
-                width: 150,
-                height: '100%',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={(e) =>
-                  handleStartProcess(e as unknown as PointerEvent)
-                }
-              >
-                Start this process
-              </Button>
-            </Stack>
           </Stack>
         </CardContent>
       </CardActionArea>
+      <CardActions sx={{ mt: 'auto', p: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={(e) =>
+            handleStartProcess(e as unknown as PointerEvent)
+          }
+        >
+          Start this process
+        </Button>
+      </CardActions>
     </Card>
   );
 }
