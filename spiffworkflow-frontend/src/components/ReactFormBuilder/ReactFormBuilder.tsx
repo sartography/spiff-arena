@@ -135,11 +135,7 @@ export default function ReactFormBuilder({
       return;
     }
 
-    if (!canCreateFiles) {
-      return;
-    }
     setErrorMessage('');
-
     HttpService.makeCallToBackend({
       path: url,
       successCallback: (response: any) => {
@@ -149,7 +145,7 @@ export default function ReactFormBuilder({
       },
       failureCallback: (error: any) => {
         setErrorMessage(error.message);
-      }, // fixme: handle errors
+      },
       httpMethod: 'POST',
       postBody: {
         form_schema: schema,
