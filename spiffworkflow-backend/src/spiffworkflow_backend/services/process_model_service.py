@@ -557,13 +557,13 @@ class ProcessModelService(FileSystemService):
 
         # if user has access to uri/* with that permission then there's no reason to check each one individually
         guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
-        has_permission = False
-        has_permission = AuthorizationService.user_has_permission(
+        has_permission_to_all_groups = False
+        has_permission_to_all_groups = AuthorizationService.user_has_permission(
             user=user,
             permission=permission_to_check,
             target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
         )
-        if has_permission:
+        if has_permission_to_all_groups:
             return process_groups
 
         permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
