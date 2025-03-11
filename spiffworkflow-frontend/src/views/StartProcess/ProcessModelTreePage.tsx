@@ -327,7 +327,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
