@@ -1063,6 +1063,9 @@ export default function ProcessModelEditDiagram() {
               highlightEnable={false}
               value={markdownText}
               onChange={setMarkdownText}
+              components={{
+                textarea: (props: any) => <TextareaAutosize {...props} />,
+              }}
             />
           </div>
           <Button onClick={handleMarkdownEditorClose}>Close</Button>
@@ -1424,8 +1427,8 @@ export default function ProcessModelEditDiagram() {
           <Notification
             title="Unsaved changes."
             type="error"
-            hideCloseButton
             data-qa="process-model-file-changed"
+            hideCloseButton
           >
             Please save to avoid losing your work.
           </Notification>

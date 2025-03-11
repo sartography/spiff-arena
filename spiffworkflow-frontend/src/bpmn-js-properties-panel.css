@@ -113,7 +113,8 @@ a:link {
   filter: invert(1) hue-rotate(180deg);
 }
 [data-theme='dark'] .bpmn-js-container .djs-context-pad.open>.group>.entry {
-  background-color: black;
+  background-color: #C5C5C5;
+  color: black;
 }
 [data-theme='dark'] .bpmn-js-container .djs-popup {
   background-color: white;
