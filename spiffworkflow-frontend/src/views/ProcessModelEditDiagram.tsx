@@ -108,7 +108,6 @@ export default function ProcessModelEditDiagram() {
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [plainText, setPlainText] = useState<string>('');
   const [showMessageEditor, setShowMessageEditor] = useState(false);
   const [messageId, setMessageId] = useState<string>('');
   const [elementId, setElementId] = useState<string>('');
@@ -1064,14 +1063,9 @@ export default function ProcessModelEditDiagram() {
               highlightEnable={false}
               value={markdownText}
               onChange={setMarkdownText}
-            />
-          </div>
-          <div style={{ margin: '16px 0' }}>
-            <label>Plain Text Editor:</label>
-            <TextareaAutosize
-              style={{ width: '100%', height: '100px' }}
-              value={plainText}
-              onChange={(e: any) => setPlainText(e.target.value)}
+              components={{
+                textarea: (props: any) => <TextareaAutosize {...props} />,
+              }}
             />
           </div>
           <Button onClick={handleMarkdownEditorClose}>Close</Button>
