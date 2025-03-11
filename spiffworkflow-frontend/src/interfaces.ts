@@ -433,7 +433,7 @@ export interface ProcessModelCaller {
   process_model_id: string;
 }
 
-export interface UserGroup { }
+export interface UserGroup {}
 
 type InterstitialPageResponseType =
   | 'task_update'
