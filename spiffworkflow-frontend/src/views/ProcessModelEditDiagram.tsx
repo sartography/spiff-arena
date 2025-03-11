@@ -1424,8 +1424,8 @@ export default function ProcessModelEditDiagram() {
           <Notification
             title="Unsaved changes."
             type="error"
-            hideCloseButton
             data-qa="process-model-file-changed"
+            hideCloseButton
           >
             Please save to avoid losing your work.
           </Notification>

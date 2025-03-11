@@ -37,8 +37,9 @@ export function MessageEditor({
   const [currentFormData, setCurrentFormData] = useState<any>(null);
   const [displaySaveMessageMessage, setDisplaySaveMessageMessage] =
     useState<boolean>(false);
+  const [displayNotSyncedMessage, setDisplayNotSyncedMessage] =
+    useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const [isSynced, setIsSynced] = useState<boolean>(true);
 
   const updateCorrelationPropertiesOnProcessGroup = useCallback(
     (currentMessagesForId: MessageDefinition, formData: any) => {
@@ -80,7 +81,7 @@ export function MessageEditor({
         correlation_properties: updatedMessagesForId.correlation_properties,
         elementId,
       });
-      setIsSynced(true);
+      setDisplayNotSyncedMessage(false);
     },
     [elementId, messageEvent.eventBus],
   );
@@ -174,7 +175,7 @@ export function MessageEditor({
         messageId,
         correlationProperties,
       );
-      setIsSynced(newIsSynced);
+      setDisplayNotSyncedMessage(!newIsSynced);
       setProcessGroup(result);
       setCurrentMessageId(messageId);
       setPageTitle([result.display_name]);
@@ -273,13 +274,13 @@ export function MessageEditor({
             Message has been saved
           </Notification>
         ) : null}
-        {!isSynced && !displaySaveMessageMessage ? (
+        {displayNotSyncedMessage && !displaySaveMessageMessage ? (
           <Notification
-            title="Please Save the current message configuration"
+            title="Please save the current message configuration"
             type="warning"
             hideCloseButton
             timeout={4000}
-            onClose={() => setDisplaySaveMessageMessage(false)}
+            onClose={() => setDisplayNotSyncedMessage(false)}
           >
             There is a difference between the message properties in this process
             model and the shared message data stored with the process group.

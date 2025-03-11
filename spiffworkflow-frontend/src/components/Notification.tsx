@@ -47,12 +47,6 @@ export function Notification({
     iconComponent = <WarningIcon />;
   }
 
-  if (timeout && onClose) {
-    setTimeout(() => {
-      onClose(new Event('timeout'), 'timeout');
-    }, timeout);
-  }
-
   const additionalProps: ObjectWithStringKeysAndValues = {};
   if (dataQa) {
     additionalProps['data-qa'] = dataQa;
@@ -61,6 +55,7 @@ export function Notification({
   return (
     <Snackbar
       open
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       autoHideDuration={timeout}
       onClose={onClose}
       // eslint-disable-next-line react/jsx-props-no-spreading
