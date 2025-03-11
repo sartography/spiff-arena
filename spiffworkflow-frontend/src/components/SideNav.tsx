@@ -262,7 +262,12 @@ function SideNav({
 
     let hasPermission = false;
     item.permissionRoutes?.forEach((targetUri: string) => {
-      if (ability.can('GET', targetUri)) {
+      let method = 'GET';
+      // if the uri is in the permissionRequestData then use the first action listed
+      if (targetUri in permissionRequestData) {
+        [method] = permissionRequestData[targetUri];
+      }
+      if (ability.can(method, targetUri)) {
         hasPermission = true;
       }
     });
