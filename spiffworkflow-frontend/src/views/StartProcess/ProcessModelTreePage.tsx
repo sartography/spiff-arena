@@ -360,6 +360,40 @@ export default function ProcessModelTreePage({
     return false;
   };
 
+  // taken from ProcessModelSearch
+  const getParentGroupsDisplayName = (
+    processItem: ProcessModel | ProcessGroup,
+  ) => {
+    if (processItem.parent_groups) {
+      return processItem.parent_groups
+        .map((parentGroup: ProcessGroupLite) => {
+          return parentGroup.display_name;
+        })
+        .join(' / ');
+    }
+    return '';
+  };
+  const getProcessModelLabelForSearch = (
+    processItem: ProcessModel | ProcessGroup,
+  ) => {
+    return `${processItem.display_name} ${
+      processItem.id
+    } ${getParentGroupsDisplayName(processItem)}`;
+  };
+  const shouldFilterProcessModel = (
+    processItem: ProcessModel,
+    inputValue: string,
+  ) => {
+    const inputValueArray = inputValue.split(' ');
+    const processModelLowerCase =
+      getProcessModelLabelForSearch(processItem).toLowerCase();
+
+    return inputValueArray.every((i: any) => {
+      return processModelLowerCase.includes((i || '').toLowerCase());
+    });
+  };
+  /// ////
+
   /**
    * For now, we're just pasting together some info fields that make sense.
    * This is simple and works and is easily expanded,
@@ -372,16 +406,11 @@ export default function ProcessModelTreePage({
     ]);
     // Search the flattened items for the search term.
     const foundGroups = flatItems.filter((item: any) => {
-      return (
-        item.id.toLowerCase().includes(search.toLowerCase()) &&
-        item?.process_groups
-      );
+      return shouldFilterProcessModel(item, search) && 'process_groups' in item;
     });
     const foundModels = flatItems.filter((item: any) => {
       return (
-        (item.id + item.display_name + item.description)
-          .toLowerCase()
-          .includes(search.toLowerCase()) && !item?.process_groups
+        shouldFilterProcessModel(item, search) && !('process_groups' in item)
       );
     });
 

@@ -27,7 +27,6 @@ export default function MarkdownDisplayForFile({ apiPath }: OwnProps) {
   if (markdownContents) {
     return (
       <MarkdownRenderer
-        linkTarget="_blank"
         source={markdownContents}
         wrapperClassName="with-bottom-margin"
       />
