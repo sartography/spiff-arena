@@ -1046,6 +1046,11 @@ export default function ProcessModelEditDiagram() {
     setShowMarkdownEditor(false);
   };
 
+  const markdownEditorTextArea = (props: any) => {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <TextareaAutosize {...props} />;
+  };
+
   const markdownEditor = () => {
     return (
       <Dialog
@@ -1064,7 +1069,7 @@ export default function ProcessModelEditDiagram() {
               value={markdownText}
               onChange={setMarkdownText}
               components={{
-                textarea: (props: any) => <TextareaAutosize {...props} />,
+                textarea: markdownEditorTextArea,
               }}
             />
           </div>
