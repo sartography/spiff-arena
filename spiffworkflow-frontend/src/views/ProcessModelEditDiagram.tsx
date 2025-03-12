@@ -1063,6 +1063,9 @@ export default function ProcessModelEditDiagram() {
               highlightEnable={false}
               value={markdownText}
               onChange={setMarkdownText}
+              components={{
+                textarea: (props: any) => <TextareaAutosize {...props} />,
+              }}
             />
           </div>
           <Button onClick={handleMarkdownEditorClose}>Close</Button>
