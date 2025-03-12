@@ -357,11 +357,6 @@ export default function Extension({
       markdownContentsToRender.push(markdownToRenderOnLoad);
     }
 
-    let mdEditorLinkTarget: string | undefined = '_blank';
-    if (uiSchemaPageDefinition.open_links_in_new_tab === false) {
-      mdEditorLinkTarget = undefined;
-    }
-
     if (markdownContentsToRender.length > 0) {
       componentsToDisplay.push(
         <MarkdownRenderer
