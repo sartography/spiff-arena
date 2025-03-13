@@ -127,7 +127,7 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, full_json_data)
 
     @classmethod
-    def extract_metadata(cls, process_model_identifier: str, current_data: dict) -> dict[str, Any]:
+    def extract_metadata(cls, process_model_identifier: str, current_data: dict[str, Any]) -> dict[str, Any]:
         # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
         # it would make sense to do that if the shell-out-to-git performance cost was not too high.
         # we also discussed caching this information in new database tables. something like:
@@ -156,12 +156,12 @@ class ProcessModelService(FileSystemService):
             key = metadata_extraction_path["key"]
             path = metadata_extraction_path["path"]
             path_segments = path.split(".")
-            data_for_key = current_data
+            data_for_key: dict[str, Any] | None = current_data
             for path_segment in path_segments:
-                if path_segment in data_for_key:
-                    data_for_key = data_for_key[path_segment]
+                if path_segment in (data_for_key or {}):
+                    data_for_key = (data_for_key or {})[path_segment]
                 else:
-                    data_for_key = None  # type: ignore
+                    data_for_key = None
                     break
             current_metadata[key] = data_for_key
         return current_metadata
@@ -404,7 +404,7 @@ class ProcessModelService(FileSystemService):
             if full_group_id_path is None:
                 full_group_id_path = process_group_id_segment
             else:
-                full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)  # type: ignore
+                full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)
             parent_group = process_group_cache.get(full_group_id_path, None)
             if parent_group is None:
                 try:
