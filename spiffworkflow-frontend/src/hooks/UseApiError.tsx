@@ -1,5 +1,7 @@
 // src/common/hooks/useAPIError/index.js
 import { useContext } from 'react';
+// Import MUI components if needed
+// import { SomeMUIComponent } from '@mui/material';
 import { APIErrorContext } from '../contexts/APIErrorContext';
 
 function useAPIError() {

@@ -24,6 +24,11 @@ users:
     email: dan@example.com
     password: dan
     preferred_username: dan
+  jon:
+    service: local_open_id
+    email: jon@example.com
+    password: jon
+    preferred_username: jon
 groups:
   admin:
     users: [admin@example.com, nelson@example.com]

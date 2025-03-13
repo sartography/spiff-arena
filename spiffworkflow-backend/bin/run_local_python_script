@@ -17,4 +17,4 @@ script_dir="$(
 
 export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
 
-exec poet run python "$script" "$@"
+exec poetry run python "$script" "$@"

@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react';
-// @ts-ignore
-import { ErrorOutline } from '@carbon/icons-react';
-// @ts-ignore
-import { Table, Modal, Button } from '@carbon/react';
+import { ErrorOutline } from '@mui/icons-material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  Typography,
+} from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
 import ProcessBreadcrumb from '../ProcessBreadcrumb';
@@ -14,6 +26,7 @@ import HttpService from '../../services/HttpService';
 import { FormatProcessModelDisplayName } from '../MiniComponents';
 import { MessageInstance } from '../../interfaces';
 import DateAndTimeService from '../../services/DateAndTimeService';
+import SpiffTooltip from '../SpiffTooltip';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -61,27 +74,36 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       if (messageInstanceForModal.failure_cause) {
         failureCausePre = (
           <>
-            <p className="failure-string">
+            <Typography variant="body1" className="failure-string">
               {messageInstanceForModal.failure_cause}
-            </p>
+            </Typography>
             <br />
           </>
         );
       }
       return (
-        <Modal
+        <Dialog
           open={!!messageInstanceForModal}
-          passiveModal
-          onRequestClose={handleCorrelationDisplayClose}
-          modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.name}) ${messageInstanceForModal.message_type} data:`}
-          modalLabel="Details"
+          onClose={handleCorrelationDisplayClose}
+          aria-labelledby="dialog-title"
+          aria-describedby="dialog-description"
         >
-          {failureCausePre}
-          <p>Correlations:</p>
-          <pre>
-            {JSON.stringify(messageInstanceForModal.correlation_keys, null, 2)}
-          </pre>
-        </Modal>
+          <DialogTitle id="dialog-title">
+            Message {messageInstanceForModal.id} ({messageInstanceForModal.name}
+            ) {messageInstanceForModal.message_type} data:
+          </DialogTitle>
+          <DialogContent>
+            {failureCausePre}
+            <DialogContentText>Correlations:</DialogContentText>
+            <pre>
+              {JSON.stringify(
+                messageInstanceForModal.correlation_keys,
+                null,
+                2,
+              )}
+            </pre>
+          </DialogContent>
+        </Dialog>
       );
     }
     return null;
@@ -96,7 +118,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         errorIcon = (
           <>
             &nbsp;
-            <ErrorOutline className="red-icon" />
+            <ErrorOutline style={{ fill: 'red' }} />
           </>
         );
       }
@@ -116,50 +138,52 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         );
       }
       return (
-        <tr key={row.id}>
-          <td>{row.id}</td>
-          <td>{processLink}</td>
-          <td>{instanceLink}</td>
-          <td>{row.name}</td>
-          <td>{row.message_type}</td>
-          <td>{row.counterpart_id}</td>
-          <td>
-            <Button
-              kind="ghost"
-              className="button-link"
-              onClick={() => setMessageInstanceForModal(row)}
-              title={errorTitle}
-            >
-              View
-              {errorIcon}
-            </Button>
-          </td>
-          <td>{row.status}</td>
-          <td>
+        <TableRow key={row.id}>
+          <TableCell>{row.id}</TableCell>
+          <TableCell>{processLink}</TableCell>
+          <TableCell>{instanceLink}</TableCell>
+          <TableCell>{row.name}</TableCell>
+          <TableCell>{row.message_type}</TableCell>
+          <TableCell>{row.counterpart_id}</TableCell>
+          <TableCell>
+            <SpiffTooltip title={errorTitle}>
+              <Button
+                variant="text"
+                onClick={() => setMessageInstanceForModal(row)}
+              >
+                View
+                {errorIcon}
+              </Button>
+            </SpiffTooltip>
+          </TableCell>
+          <TableCell>{row.status}</TableCell>
+          <TableCell>
             {DateAndTimeService.convertSecondsToFormattedDateTime(
               row.created_at_in_seconds,
             )}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
       );
     });
     return (
-      <Table striped bordered>
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Process</th>
-            <th>Process instance</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Corresponding Message Instance</th>
-            <th>Details</th>
-            <th>Status</th>
-            <th>Created at</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Id</TableCell>
+              <TableCell>Process</TableCell>
+              <TableCell>Process instance</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Corresponding Message Instance</TableCell>
+              <TableCell>Details</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Created at</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>{rows}</TableBody>
+        </Table>
+      </TableContainer>
     );
   };
 

@@ -5,6 +5,7 @@ from flask import g
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProperty  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
@@ -148,7 +149,7 @@ class MessageService:
                 return None
 
         except Exception as exception:
-            db.session.rollback()
+            # db.session.rollback() # don't try to roll this back.  The message failed, and we need to know why.
             message_instance_send.status = "failed"
             message_instance_send.failure_cause = str(exception)
             db.session.add(message_instance_send)
@@ -157,9 +158,16 @@ class MessageService:
                 message_instance_receive.failure_cause = str(exception)
                 db.session.add(message_instance_receive)
             if processor_receive is not None:
-                processor_receive.save()
+                # We may not be able to save here, this can raise a new exception.
+                try:
+                    processor_receive.save()
+                except Exception as save_exception:
+                    db.session.commit()
+                    raise exception from save_exception
             else:
                 db.session.commit()
+            if isinstance(exception, SpiffWorkflowException):
+                exception.add_note("The process instance encountered an error and failed after starting.")
             raise exception
 
     @classmethod
@@ -231,10 +239,13 @@ class MessageService:
             name=message_instance_send.name,
             correlation_properties=correlation_properties,
         )
+        correlations = bpmn_message.calculate_correlations(
+            CustomBpmnScriptEngine(), bpmn_message.correlation_properties, message_instance_send.payload
+        )
         bpmn_event = BpmnEvent(
             event_definition=bpmn_message,
             payload=message_instance_send.payload,
-            correlations=message_instance_send.correlation_keys,
+            correlations=correlations,
         )
         processor_receive_to_use = processor_receive
         save_engine_steps = False
