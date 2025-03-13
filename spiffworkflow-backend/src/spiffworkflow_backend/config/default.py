@@ -76,7 +76,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_
 ### background with celery
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://localhost")
-config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default="redis://localhost")
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET", default=None)
 
 # give a little overlap to ensure we do not miss items although the query will handle it either way
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS", default=301)

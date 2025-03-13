@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Avatar, Box } from '@mui/material'; // Import MUI components
 
 import HttpService from '../services/HttpService';
 import { User } from '../interfaces';
@@ -64,13 +65,17 @@ export default function ActiveUsers() {
 
   const au = activeUsers.map((activeUser: User) => {
     return (
-      <div
+      <Avatar
         title={`${activeUser.username} is also viewing this page`}
-        className="user-circle user-circle-for-list"
+        sx={{ bgcolor: 'primary.main', margin: 1 }} // MUI styling
       >
         {activeUser.username.charAt(0).toUpperCase()}
-      </div>
+      </Avatar>
     );
   });
-  return <div className="user-list">{au}</div>;
+  return (
+    <Box display="flex" className="user-list">
+      {au}
+    </Box>
+  ); // MUI Box for layout
 }

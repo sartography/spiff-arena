@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Form, Stack, TextInput, TextArea } from '@carbon/react';
+import {
+  Button,
+  TextField,
+  Stack,
+  TextareaAutosize,
+  InputLabel,
+} from '@mui/material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
-
-import useProcessGroupFetcher from '../hooks/useProcessGroupFetcher';
 
 type OwnProps = {
   mode: string;
@@ -25,11 +29,8 @@ export default function ProcessGroupForm({
   const navigate = useNavigate();
   let newProcessGroupId = processGroup.id;
 
-  const { updateProcessGroupCache } = useProcessGroupFetcher(processGroup.id);
-
   const handleProcessGroupUpdateResponse = (_result: any) => {
     if (newProcessGroupId) {
-      updateProcessGroupCache(processGroup);
       navigate(
         `/process-groups/${modifyProcessIdentifierForPathParam(
           newProcessGroupId,
@@ -112,13 +113,13 @@ export default function ProcessGroupForm({
 
   const formElements = () => {
     const textInputs = [
-      <TextInput
+      <TextField
         id="process-group-display-name"
         data-qa="process-group-display-name-input"
         name="display_name"
-        invalidText="Display Name is required."
-        invalid={displayNameInvalid}
-        labelText="Display Name*"
+        error={displayNameInvalid}
+        helperText={displayNameInvalid ? 'Display Name is required.' : ''}
+        label="Display Name*"
         value={processGroup.display_name}
         onChange={(event: any) => onDisplayNameChanged(event.target.value)}
       />,
@@ -126,12 +127,16 @@ export default function ProcessGroupForm({
 
     if (mode === 'new') {
       textInputs.push(
-        <TextInput
+        <TextField
           id="process-group-identifier"
           name="id"
-          invalidText="Identifier is required and must be all lowercase characters and hyphens."
-          invalid={identifierInvalid}
-          labelText="Identifier*"
+          error={identifierInvalid}
+          helperText={
+            identifierInvalid
+              ? 'Identifier is required and must be all lowercase characters and hyphens.'
+              : ''
+          }
+          label="Identifier*"
           value={processGroup.id}
           onChange={(event: any) => {
             updateProcessGroup({ id: event.target.value });
@@ -146,11 +151,15 @@ export default function ProcessGroupForm({
     }
 
     textInputs.push(
-      <TextArea
+      <InputLabel id="data-store-description-label">Description:</InputLabel>,
+    );
+    textInputs.push(
+      <TextareaAutosize
         id="process-group-description"
+        minRows={5}
         name="description"
-        labelText="Description"
-        value={processGroup.description}
+        placeholder="Description"
+        value={processGroup.description || ''}
         onChange={(event: any) =>
           updateProcessGroup({ description: event.target.value })
         }
@@ -160,15 +169,19 @@ export default function ProcessGroupForm({
   };
 
   const formButtons = () => {
-    return <Button type="submit">Submit</Button>;
+    return (
+      <Button type="submit" variant="contained">
+        Submit
+      </Button>
+    );
   };
 
   return (
-    <Form onSubmit={handleFormSubmission}>
-      <Stack gap={5}>
+    <form onSubmit={handleFormSubmission}>
+      <Stack spacing={2}>
         {formElements()}
         {formButtons()}
       </Stack>
-    </Form>
+    </form>
   );
 }

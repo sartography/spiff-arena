@@ -1,20 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Edit, Favorite, TrashCan, View } from '@carbon/icons-react';
 import {
-  Button,
+  Edit,
+  GetApp,
+  Delete,
+  Favorite,
+  Visibility,
+} from '@mui/icons-material';
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
-} from '@carbon/react';
+  TableContainer,
+  IconButton,
+} from '@mui/material';
 import { Can } from '@casl/react';
 import { PureAbility } from '@casl/ability';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
+import SpiffTooltip from './SpiffTooltip';
+import HttpService from '../services/HttpService';
+import useAPIError from '../hooks/UseApiError';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -35,10 +44,11 @@ export default function ProcessModelFileList({
   onSetPrimaryFile,
   isTestCaseFile,
 }: ProcessModelFileListProps) {
+  const { addError, removeError } = useAPIError();
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        return `/editor/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
+        return `/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
       if (processModelFile.name.match(/\.(json|md)$/)) {
         return `/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
@@ -47,46 +57,82 @@ export default function ProcessModelFileList({
     return null;
   };
 
+  const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
+    if (
+      !('file_contents' in processModelFile) ||
+      processModelFile.file_contents === undefined
+    ) {
+      addError({
+        message: `Could not file file contents for file: ${processModelFile.name}`,
+      });
+      return;
+    }
+    let contentType = 'application/xml';
+    if (processModelFile.type === 'json') {
+      contentType = 'application/json';
+    }
+    const element = document.createElement('a');
+    const file = new Blob([processModelFile.file_contents], {
+      type: contentType,
+    });
+    const downloadFileName = processModelFile.name;
+    element.href = URL.createObjectURL(file);
+    element.download = downloadFileName;
+    document.body.appendChild(element);
+    element.click();
+  };
+
+  const downloadFile = (fileName: string) => {
+    removeError();
+    const processModelPath = `process-models/${modifiedProcessModelId}`;
+    HttpService.makeCallToBackend({
+      path: `/${processModelPath}/files/${fileName}`,
+      successCallback: handleProcessModelFileResult,
+    });
+  };
+
   const renderButtonElements = (
     processModelFile: ProcessFile,
     isPrimaryBpmnFile: boolean,
   ) => {
     const elements = [];
 
-    let icon = View;
+    let icon = <Visibility />;
     let actionWord = 'View';
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
-      icon = Edit;
+      icon = <Edit />;
       actionWord = 'Edit';
+    }
+    const editUrl = profileModelFileEditUrl(processModelFile);
+    if (editUrl) {
+      elements.push(
+        <Can
+          I="GET"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
+          <SpiffTooltip title={`${actionWord} File`} placement="top">
+            <IconButton
+              aria-label={`${actionWord} File`}
+              data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
+              href={editUrl}
+            >
+              {icon}
+            </IconButton>
+          </SpiffTooltip>
+        </Can>,
+      );
     }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <Button
-          kind="ghost"
-          renderIcon={icon}
-          iconDescription={`${actionWord} File`}
-          hasIconOnly
-          size="lg"
-          data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
-          href={profileModelFileEditUrl(processModelFile)}
-        />
-      </Can>,
-    );
-    elements.push(
-      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <Button
-          kind="ghost"
-          renderIcon={Download}
-          iconDescription="Download File"
-          hasIconOnly
-          size="lg"
-          onClick={() =>
-            window.open(
-              `/${targetUris.processModelFilePath}/${processModelFile.name}`,
-              '_blank',
-            )
-          }
-        />
+        <SpiffTooltip title="Download File" placement="top">
+          <IconButton
+            aria-label="Download File"
+            onClick={() => downloadFile(processModelFile.name)}
+          >
+            <GetApp />
+          </IconButton>
+        </SpiffTooltip>
       </Can>,
     );
 
@@ -98,10 +144,9 @@ export default function ProcessModelFileList({
           ability={ability}
         >
           <ButtonWithConfirmation
-            kind="ghost"
-            renderIcon={TrashCan}
-            iconDescription="Delete File"
+            renderIcon={<Delete />}
             hasIconOnly
+            iconDescription="Delete File"
             description={`Delete file: ${processModelFile.name}`}
             onConfirmation={() => {
               onDeleteFile(processModelFile.name);
@@ -115,14 +160,14 @@ export default function ProcessModelFileList({
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-          <Button
-            kind="ghost"
-            renderIcon={Favorite}
-            iconDescription="Set As Primary File"
-            hasIconOnly
-            size="lg"
-            onClick={() => onSetPrimaryFile(processModelFile.name)}
-          />
+          <SpiffTooltip title="Set As Primary File" placement="top">
+            <IconButton
+              aria-label="Set As Primary File"
+              onClick={() => onSetPrimaryFile(processModelFile.name)}
+            >
+              <Favorite />
+            </IconButton>
+          </SpiffTooltip>
         </Can>,
       );
     }
@@ -193,26 +238,16 @@ export default function ProcessModelFileList({
   }
 
   return (
-    <Table
-      size="lg"
-      useZebraStyles={false}
-      className="process-model-file-table"
-    >
-      <TableHead>
-        <TableRow>
-          <TableHeader id="Name" key="Name">
-            Name
-          </TableHeader>
-          <TableHeader
-            id="Actions"
-            key="Actions"
-            className="table-header-right-align"
-          >
-            Actions
-          </TableHeader>
-        </TableRow>
-      </TableHead>
-      <TableBody>{tags}</TableBody>
-    </Table>
+    <TableContainer>
+      <Table size="medium" className="process-model-file-table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>{tags}</TableBody>
+      </Table>
+    </TableContainer>
   );
 }

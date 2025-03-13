@@ -1,7 +1,10 @@
-import { Filter, Link as LinkIcon } from '@carbon/icons-react';
-import { Button, Grid, Column } from '@carbon/react';
+import {
+  FilterAlt as FilterAltIcon,
+  Link as LinkIcon,
+} from '@mui/icons-material';
+import { Grid, IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
-import { Notification } from './Notification';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   showFilterOptions: boolean;
@@ -39,35 +42,36 @@ export default function Filters({
     const elements = [];
     if (reportHash && showFilterOptions) {
       elements.push(
-        <Button
-          onClick={copyReportLink}
-          kind="secondary"
-          renderIcon={LinkIcon}
-          iconDescription="Copy shareable link"
-          hasIconOnly
-          size="md"
-        />,
+        <SpiffTooltip title="Copy shareable link">
+          <IconButton
+            onClick={copyReportLink}
+            color="primary"
+            aria-label="Copy shareable link"
+          >
+            <LinkIcon />
+          </IconButton>
+        </SpiffTooltip>,
       );
     }
     elements.push(
-      <Button
-        data-qa="filter-section-expand-toggle"
-        renderIcon={Filter}
-        iconDescription="Filter Options"
-        hasIconOnly
-        size="md"
-        onClick={toggleShowFilterOptions}
-      />,
+      <SpiffTooltip title="Filter Options">
+        <IconButton
+          data-qa="filter-section-expand-toggle"
+          color="primary"
+          aria-label="Filter Options"
+          onClick={toggleShowFilterOptions}
+        >
+          <FilterAltIcon />
+        </IconButton>
+      </SpiffTooltip>,
     );
     if (copiedReportLinkToClipboard) {
       elements.push(
-        <Notification
+        <Snackbar
+          open={copiedReportLinkToClipboard}
+          autoHideDuration={2000}
           onClose={() => setCopiedReportLinkToClipboard(false)}
-          type="success"
-          title="Copied link to clipboard"
-          timeout={2000}
-          hideCloseButton
-          withBottomMargin={false}
+          message="Copied link to clipboard"
         />,
       );
     }
@@ -78,23 +82,23 @@ export default function Filters({
     let reportSearchSection = null;
     if (reportSearchComponent) {
       reportSearchSection = (
-        <Column sm={2} md={6} lg={14}>
+        <Grid item xs={12} sm={6} md={8}>
           {reportSearchComponent()}
-        </Column>
+        </Grid>
       );
     }
     return (
       <>
-        <Grid fullWidth>
+        <Grid
+          container
+          spacing={2}
+          style={{ paddingBottom: '1rem' }}
+          justifyContent="flex-end"
+        >
           {reportSearchSection}
-          <Column
-            className="filter-icon"
-            sm={{ span: 2, offset: 2 }}
-            md={{ span: 2, offset: 6 }}
-            lg={{ span: 2, offset: 14 }}
-          >
+          <Grid item xs={12} sm={6} md={4} className="filter-icon">
             {buttonElements()}
-          </Column>
+          </Grid>
         </Grid>
         {filterOptions()}
       </>

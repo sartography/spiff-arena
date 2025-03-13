@@ -3,7 +3,7 @@
 }
 body,
 html {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 12px;
   height: 100%;
   max-height: 100%;
@@ -40,13 +40,13 @@ a:link {
   font-size: 12px;
   margin: 20px auto;
   text-align: left;
-  color: #BD2828;
+  color: #bd2828;
 }
 .content > .message.error pre {
-  border: solid 1px #BD2828;
+  border: solid 1px #bd2828;
   background: #fefafa;
   padding: 10px;
-  color: #BD2828;
+  color: #bd2828;
 }
 .content:not(.with-error) .error,
 .content.with-error .intro,
@@ -77,7 +77,7 @@ a:link {
   margin-right: 10px;
 }
 .buttons > li > a {
-  background: #DDD;
+  background: #ddd;
   border: solid 1px #666;
   display: inline-block;
   padding: 5px;
@@ -101,4 +101,28 @@ a:link {
 }
 .djs-palette.two-column.open {
   width: 96px !important;
+}
+
+/* .wide-dialog .css-1b5j1yj-MuiPaper-root-MuiDialog-paper { */
+.wide-dialog .MuiPaper-root {
+  max-width: 100%;
+  min-width: 70%;
+}
+
+[data-theme='dark'] .bpmn-js-container {
+  filter: invert(1) hue-rotate(180deg);
+}
+[data-theme='dark'] .bpmn-js-container .djs-context-pad.open>.group>.entry {
+  background-color: #C5C5C5;
+  color: black;
+}
+[data-theme='dark'] .bpmn-js-container .djs-popup {
+  background-color: white;
+  color: black;
+}
+[data-theme='dark'] .bpmn-js-container .djs-popup .selected {
+  background-color: grey;
+}
+[data-theme='dark'] .bpmn-js-container .bjs-breadcrumbs {
+  color: grey;
 }

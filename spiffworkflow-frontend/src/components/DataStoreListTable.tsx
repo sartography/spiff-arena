@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
-  Dropdown,
   Table,
   TableHead,
-  TableHeader,
   TableRow,
-} from '@carbon/react';
-import { TableBody, TableCell } from '@mui/material';
+  TableBody,
+  TableCell,
+  TableContainer,
+  Paper,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+} from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreRecords, PaginationObject } from '../interfaces';
@@ -84,25 +89,27 @@ export default function DataStoreListTable() {
     const firstResult = results[0];
     const tableHeaders: any[] = [];
     const keys = Object.keys(firstResult);
-    keys.forEach((key) => tableHeaders.push(<TableHeader>{key}</TableHeader>));
+    keys.forEach((key) => tableHeaders.push(<TableCell>{key}</TableCell>));
 
     return (
-      <Table striped bordered>
-        <TableHead>
-          <TableRow>{tableHeaders}</TableRow>
-        </TableHead>
-        <TableBody>
-          {results.map((object) => {
-            return (
-              <TableRow>
-                {keys.map((key) => {
-                  return getCell(object[key]);
-                })}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>{tableHeaders}</TableRow>
+          </TableHead>
+          <TableBody>
+            {results.map((object) => {
+              return (
+                <TableRow>
+                  {keys.map((key) => {
+                    return getCell(object[key]);
+                  })}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
   };
 
@@ -118,26 +125,37 @@ export default function DataStoreListTable() {
   );
   return (
     <>
-      <Dropdown
-        id="data-store-dropdown"
-        titleText="Select Data Store"
-        helperText="Select the data store you wish to view"
-        label="Please select a data store"
-        items={dataStores}
-        selectedItem={dataStore}
-        itemToString={(ds: DataStore) =>
-          ds ? `${ds.name} (${ds.type}${locationDescription(ds)})` : ''
-        }
-        onChange={(event: any) => {
-          setDataStore(event.selectedItem);
-          searchParams.set('datastore_page', '1');
-          searchParams.set('datastore_per_page', '10');
-          searchParams.set('type', event.selectedItem.type);
-          searchParams.set('identifier', event.selectedItem.id);
-          searchParams.set('location', event.selectedItem.location);
-          setSearchParams(searchParams);
-        }}
-      />
+      <FormControl fullWidth>
+        <InputLabel id="data-store-dropdown-label">
+          Select Data Store
+        </InputLabel>
+        <Select
+          labelId="data-store-dropdown-label"
+          label="Select Data Store"
+          id="data-store-dropdown"
+          value={dataStore ? dataStore.id : ''}
+          onChange={(event) => {
+            const selectedDataStore = dataStores.find(
+              (ds) => ds.id === event.target.value,
+            );
+            if (selectedDataStore) {
+              setDataStore(selectedDataStore);
+              searchParams.set('datastore_page', '1');
+              searchParams.set('datastore_per_page', '10');
+              searchParams.set('type', selectedDataStore.type);
+              searchParams.set('identifier', selectedDataStore.id);
+              searchParams.set('location', selectedDataStore.location ?? '');
+              setSearchParams(searchParams);
+            }
+          }}
+        >
+          {dataStores.map((ds) => (
+            <MenuItem key={ds.id} value={ds.id}>
+              {`${ds.name} (${ds.type}${locationDescription(ds)})`}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <PaginationForTable
         page={page}
         perPage={perPage}

@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 import redis
 from flask import current_app
@@ -39,19 +40,33 @@ def celery_backend_results(
     process_instance_id: int,
     include_all_failures: bool = True,
 ) -> Response:
-    redis_client = redis.StrictRedis.from_url(current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"])
-    results: list = redis_client.keys("celery-task-meta-*")  # type: ignore
-    if len(results) > 1000:
+    backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"]
+
+    if backend_url:
+        if backend_url.startswith("redis://"):
+            redis_client = redis.StrictRedis.from_url(backend_url)
+            result_values = _get_redis_results(redis_client)
+        elif backend_url.startswith("s3://"):
+            import boto3  # type: ignore
+
+            s3_client = boto3.client("s3")
+            bucket_name = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"]
+            result_values = _get_s3_results(s3_client, bucket_name)
+        else:
+            raise ApiError(
+                error_code="unsupported_backend",
+                message="The specified backend is not supported.",
+                status_code=500,
+            )
+    else:
         raise ApiError(
-            error_code="too_many_entries",
-            message=f"There are too many redis entries. You probably shouldn't use this api method. count {len(results)}",
-            status_code=400,
+            error_code="no_results_backend",
+            message="No Celery results backend configured.",
+            status_code=500,
         )
 
-    result_values = redis_client.mget(results)  # type: ignore
-
     return_body = []
-    for value in result_values:
+    for value in result_values or []:
         if value is None:
             continue
         value_dict = json.loads(value.decode("utf-8"))
@@ -63,3 +78,41 @@ def celery_backend_results(
             return_body.append(value_dict)
 
     return make_response(jsonify(return_body), 200)
+
+
+def _get_redis_results(redis_client: Any) -> Any:
+    results = redis_client.keys("celery-task-meta-*")
+    if len(results) > 1000:
+        raise ApiError(
+            error_code="too_many_entries",
+            message=f"There are too many redis entries. You probably shouldn't use this api method. count {len(results)}",
+            status_code=400,
+        )
+
+    return redis_client.mget(results)
+
+
+def _get_s3_results(s3_client: Any, bucket_name: Any) -> list:
+    from botocore.exceptions import BotoCoreError  # type: ignore
+    from botocore.exceptions import ClientError
+
+    try:
+        # This defaults to retrieving a maximum of 1000 items, if it
+        # does return 1000 items, maybe it should also raise an exception
+        # the way the redis backend code does.
+        objects = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="celery-task-meta-")
+        if "Contents" not in objects:
+            return []
+
+        result_values = []
+        for obj in objects["Contents"]:
+            response = s3_client.get_object(Bucket=bucket_name, Key=obj["Key"])
+            result_values.append(response["Body"].read())
+
+        return result_values
+    except (BotoCoreError, ClientError) as e:
+        raise ApiError(
+            error_code="s3_error",
+            message=str(e),
+            status_code=500,
+        ) from e
