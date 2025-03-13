@@ -59,7 +59,37 @@ class TestMessageService(BaseTest):
         # it will deliver the message that was sent from the receiver back to the original sender.
         MessageService.correlate_all_message_instances()
 
-        # if the above passes, feel free to copy and paste more, but i assume we won't need to at that point.
+        # Assure that the messages all have correlation keys.
+        message_instances = MessageInstanceModel.query.filter_by(message_type="receive").all()
+        uid = message_instances[0].correlation_keys["MainCorrelationKey"]["uid"]
+        assert len(message_instances) == 4
+        for message_instance in message_instances:
+            assert message_instance.correlation_keys == {"MainCorrelationKey": {"uid": uid}}
+
+    def test_receive_message_will_have_correlation_keys(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message",
+            bpmn_file_name="message-receive.bpmn",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+
+        # This is typically called in a background cron process, so we will manually call it
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+
+        # Assure that we have one message receive waiting, and that it's correlations are properly set.
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 1
+        assert message_instances[0].correlation_keys == {"MainCorrelationKey": {"uid": 1}}
 
     def test_single_conversation_between_two_processes(
         self,

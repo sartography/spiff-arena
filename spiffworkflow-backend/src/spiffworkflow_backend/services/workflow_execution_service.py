@@ -683,7 +683,7 @@ class WorkflowExecutionService:
                 user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
                 name=event.name,
-                correlation_keys=self.bpmn_process_instance.correlations,
+                correlation_keys=event.correlations,
             )
             for correlation_property in event.value:
                 message_correlation = MessageInstanceCorrelationRuleModel(
