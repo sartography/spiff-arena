@@ -61,17 +61,16 @@ class TestMessageService(BaseTest):
 
         # Assure that the messages all have correlation keys.
         message_instances = MessageInstanceModel.query.filter_by(message_type="receive").all()
-        uid = message_instances[0].correlation_keys['MainCorrelationKey']['uid']
+        uid = message_instances[0].correlation_keys["MainCorrelationKey"]["uid"]
         assert len(message_instances) == 4
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"MainCorrelationKey": {"uid": uid}}
 
-
-    def test_receive_message_will_have_correlation_keys (
-            self,
-            app: Flask,
-            client: FlaskClient,
-            with_db_and_bpmn_file_cleanup: None,
+    def test_receive_message_will_have_correlation_keys(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
             "test_group/test_message_process",
@@ -92,13 +91,11 @@ class TestMessageService(BaseTest):
         assert len(message_instances) == 1
         assert message_instances[0].correlation_keys == {"MainCorrelationKey": {"uid": 1}}
 
-
-
     def test_single_conversation_between_two_processes(
-            self,
-            app: Flask,
-            client: FlaskClient,
-            with_db_and_bpmn_file_cleanup: None,
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test messages between two different running processes using a single conversation.
 
