@@ -13,12 +13,26 @@ services:
     ports:
       - "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}/tcp"
 
+  # Ensure that the RUN_AS user is able to write to the named volume where the sqlite DB will be
+  # Solution via https://stackoverflow.com/a/73255981
+  match-volume-ownership:
+    image: alpine
+    restart: "no"
+    # Use RUN_AS if set, otherwise default to root (0:0)
+    entrypoint: |
+      /bin/sh -c "chown ${RUN_AS:-0:0} /app/db_volume"
+    volumes:
+      - spiffworkflow_backend_db:/app/db_volume:rw
+
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
     image: ghcr.io/sartography/spiffworkflow-backend:latest
     # Enable setting the ownership of created files to match the local user:group. For example:
     #     RUN_AS="$(id -u):$(id -g)" docker compose up -d
     user: ${RUN_AS:-0:0}
+    depends_on:
+      match-volume-ownership:
+        condition: service_completed_successfully
     environment:
       SPIFFWORKFLOW_BACKEND_ENV: "local_docker"
       FLASK_DEBUG: "0"

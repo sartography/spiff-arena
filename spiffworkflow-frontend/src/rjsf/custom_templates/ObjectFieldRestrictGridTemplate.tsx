@@ -4,7 +4,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-import ObjectFieldTemplate from '../carbon_theme/ObjectFieldTemplate';
+import ObjectFieldTemplate from './ObjectFieldTemplate';
 
 /*
  * Returns the ObjectFieldTemplate but with restricted column count for the carbon grid.

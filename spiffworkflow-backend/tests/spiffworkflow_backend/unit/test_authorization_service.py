@@ -859,3 +859,14 @@ class TestAuthorizationService(BaseTest):
             )
             human_task_users = HumanTaskUserModel.query.filter_by(user_id=user_two.id).all()
             assert len(human_task_users) == 0
+
+    def test_fails_if_wildcard_used_in_pm_pg_macros(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(InvalidPermissionError):
+            AuthorizationService.explode_permissions("all", "PM:/some-process-group/*")
+        with pytest.raises(InvalidPermissionError):
+            AuthorizationService.explode_permissions("all", "PG:/some-process-group/*")

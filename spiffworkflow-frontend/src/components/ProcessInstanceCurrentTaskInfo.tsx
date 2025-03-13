@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { InlineNotification } from '@carbon/react';
+// Import Alert from MUI
+import Alert from '@mui/material/Alert';
 
 import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
@@ -31,16 +32,14 @@ export default function ProcessInstanceCurrentTaskInfo({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info',
+    severity: 'info' | 'warning' | 'error' = 'info',
   ) => {
     return (
       <div>
-        <InlineNotification
-          kind={kind}
-          subtitle={subtitle}
-          title={title}
-          lowContrast
-        />
+        {/* Use MUI Alert component */}
+        <Alert severity={severity}>
+          <strong>{title}</strong> {subtitle}
+        </Alert>
       </div>
     );
   };

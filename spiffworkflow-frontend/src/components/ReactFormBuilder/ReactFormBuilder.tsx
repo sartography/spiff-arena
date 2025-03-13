@@ -1,20 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+// @ts-ignore
 // eslint-disable-next-line import/no-extraneous-dependencies
 import merge from 'lodash/merge';
 
 import {
-  Column,
   Grid,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Tabs,
-  TextInput,
+  TextField,
   Button,
-  Loading,
-} from '@carbon/react';
+  CircularProgress,
+  Tabs,
+  Tab,
+  Box,
+  Typography,
+} from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
@@ -136,11 +135,7 @@ export default function ReactFormBuilder({
       return;
     }
 
-    if (!canCreateFiles) {
-      return;
-    }
     setErrorMessage('');
-
     HttpService.makeCallToBackend({
       path: url,
       successCallback: (response: any) => {
@@ -150,7 +145,7 @@ export default function ReactFormBuilder({
       },
       failureCallback: (error: any) => {
         setErrorMessage(error.message);
-      }, // fixme: handle errors
+      },
       httpMethod: 'POST',
       postBody: {
         form_schema: schema,
@@ -250,37 +245,23 @@ export default function ReactFormBuilder({
     500,
   );
 
-  const handleTabChange = (evt: any) => {
-    setSelectedIndex(evt.selectedIndex);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedIndex(newValue);
   };
 
   const updateStrSchema = (value: string) => {
-    if (schemaEditorRef && schemaEditorRef.current) {
-      // @ts-ignore
-      schemaEditorRef.current.setValue(value);
-    }
+    updateStrFileDebounce(value);
+    setStrSchema(value);
   };
 
   const updateStrUi = (value: string) => {
-    if (uiEditorRef && uiEditorRef.current) {
-      // @ts-ignore
-      uiEditorRef.current.setValue(value);
-    }
+    updateStrUIFileDebounce(value);
+    setStrUI(value);
   };
 
   const updateStrData = (value: string) => {
-    // Only update the data if it is different from what is already there, this prevents
-    // cursor from jumping to the top each time you type a letter.
-    if (
-      dataEditorRef &&
-      dataEditorRef.current &&
-      // @ts-ignore
-      value !== dataEditorRef.current.getValue()
-    ) {
-      setStrFormData(value);
-      // @ts-ignore
-      dataEditorRef.current.setValue(value);
-    }
+    updateFormDataFileDebounce(value);
+    setStrFormData(value);
   };
 
   function updateData(newData: object) {
@@ -380,30 +361,36 @@ export default function ReactFormBuilder({
       fetchSchema();
       return (
         <div style={{ height: 200 }}>
-          <Loading />
+          <CircularProgress />
         </div>
       );
     }
     return (
-      <Grid fullWidth>
-        <Column sm={4} md={5} lg={8}>
-          <h2>Schema Name</h2>
-          <p>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Typography variant="h4">Schema Name</Typography>
+          <Typography variant="body1">
             Please provide a name for the Schema/Web Form you are about to
             create...
-          </p>
-          <TextInput
+          </Typography>
+          <TextField
             id="file_name"
-            labelText="Name:"
-            invalidText="Name is required, must be at least three characters, and must be all lowercase characters and hyphens."
-            invalid={filenameBaseInvalid}
+            label="Name"
+            error={filenameBaseInvalid}
+            helperText={
+              filenameBaseInvalid
+                ? 'Name is required, must be at least three characters, and must be all lowercase characters and hyphens.'
+                : ''
+            }
             value={newFileName}
-            onChange={(event: any) => {
-              setNewFileName(event.srcElement.value);
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setNewFileName(event.target.value);
             }}
-            size="sm"
+            size="small"
           />
-          <p>The changes you make here will be automatically saved to:</p>
+          <Typography variant="body1">
+            The changes you make here will be automatically saved to:
+          </Typography>
           <ul>
             <li>
               {newFileName}
@@ -429,23 +416,23 @@ export default function ReactFormBuilder({
               Create Files
             </Button>
           ) : null}
-        </Column>
+        </Grid>
       </Grid>
     );
   }
   return (
-    <Grid fullWidth>
-      <Column sm={4} md={5} lg={8}>
-        <Tabs selectedIndex={selectedIndex} onChange={handleTabChange}>
-          <TabList aria-label="Editor Options">
-            <Tab>Json Schema</Tab>
-            <Tab>UI Settings</Tab>
-            <Tab>Data View</Tab>
-            {canUpdateFiles ? <Tab>Examples</Tab> : null}
-          </TabList>
-          <TabPanels>
-            <TabPanel>
-              <p>
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={6}>
+        <Tabs value={selectedIndex} onChange={handleTabChange}>
+          <Tab label="Json Schema" />
+          <Tab label="UI Settings" />
+          <Tab label="Data View" />
+          {canUpdateFiles ? <Tab label="Examples" /> : null}
+        </Tabs>
+        <Box>
+          {selectedIndex === 0 && (
+            <Box>
+              <Typography variant="body1">
                 The Json Schema describes the structure of the data you want to
                 collect, and what validation rules should be applied to each
                 field.{' '}
@@ -456,7 +443,7 @@ export default function ReactFormBuilder({
                   Read more
                 </a>
                 .
-              </p>
+              </Typography>
               <Editor
                 height={600}
                 width="auto"
@@ -469,9 +456,11 @@ export default function ReactFormBuilder({
                 onMount={handleSchemaEditorDidMount}
                 options={{ readOnly: !canUpdateFiles }}
               />
-            </TabPanel>
-            <TabPanel>
-              <p>
+            </Box>
+          )}
+          {selectedIndex === 1 && (
+            <Box>
+              <Typography variant="body1">
                 These UI Settings augment the Json Schema, specifying how the
                 web form should be displayed.{' '}
                 <a
@@ -481,7 +470,7 @@ export default function ReactFormBuilder({
                   Learn more
                 </a>
                 .
-              </p>
+              </Typography>
               <Editor
                 height={600}
                 width="auto"
@@ -494,15 +483,17 @@ export default function ReactFormBuilder({
                 onMount={handleUiEditorDidMount}
                 options={{ readOnly: !canUpdateFiles }}
               />
-            </TabPanel>
-            <TabPanel>
-              <p>
+            </Box>
+          )}
+          {selectedIndex === 2 && (
+            <Box>
+              <Typography variant="body1">
                 Data entered in the form to the right will appear below in the
                 same way it will be provided in the Task Data. In order to
                 initialize a form in the Workflow with preconfigured values or
                 set up options for dynamic Dropdown lists, this data must be
                 made available as Task Data variables.
-              </p>
+              </Typography>
               <Editor
                 height={600}
                 width="auto"
@@ -515,22 +506,22 @@ export default function ReactFormBuilder({
                 onMount={handleDataEditorDidMount}
                 options={{ readOnly: !canUpdateFiles }}
               />
-            </TabPanel>
-            {canUpdateFiles ? (
-              <TabPanel>
-                <p>
-                  If you are looking for a place to start, try adding these
-                  example fields to your form and changing them to meet your
-                  needs.
-                </p>
-                <ExamplesTable onSelect={insertFields} />
-              </TabPanel>
-            ) : null}
-          </TabPanels>
-        </Tabs>
-      </Column>
-      <Column sm={4} md={5} lg={8}>
-        <h2>Form Preview</h2>
+            </Box>
+          )}
+          {selectedIndex === 3 && canUpdateFiles && (
+            <Box>
+              <Typography variant="body1">
+                If you are looking for a place to start, try adding these
+                example fields to your form and changing them to meet your
+                needs.
+              </Typography>
+              <ExamplesTable onSelect={insertFields} />
+            </Box>
+          )}
+        </Box>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <Typography variant="h4">Form Preview</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
           <CustomForm
@@ -540,10 +531,9 @@ export default function ReactFormBuilder({
             onChange={(e: any) => updateData(e.formData)}
             schema={postJsonSchema}
             uiSchema={postJsonUI}
-            restrictedWidth
           />
         </ErrorBoundary>
-      </Column>
+      </Grid>
     </Grid>
   );
 }
