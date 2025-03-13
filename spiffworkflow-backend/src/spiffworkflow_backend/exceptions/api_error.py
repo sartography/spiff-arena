@@ -20,6 +20,8 @@ from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
+from werkzeug.exceptions import MethodNotAllowed
+
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.error import TokenInvalidError
 from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
@@ -27,7 +29,6 @@ from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
-from werkzeug.exceptions import MethodNotAllowed
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
@@ -62,7 +63,7 @@ class ApiError(Exception):
         if self.task_name:
             msg += f"Error in task '{self.task_name}' ({self.task_id}). "
         if self.line_number:
-            msg += "Error is on line %i. " % self.line_number
+            msg += f"Error is on line {self.line_number}. "
         if self.file_name:
             msg += f"In file {self.file_name}. "
         return msg

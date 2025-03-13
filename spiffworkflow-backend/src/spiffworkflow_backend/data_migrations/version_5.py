@@ -2,6 +2,7 @@ import copy
 
 from flask import current_app
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel

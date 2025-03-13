@@ -1,9 +1,9 @@
 from flask.app import Flask
 from flask.testing import FlaskClient
+
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
