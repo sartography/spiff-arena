@@ -170,7 +170,6 @@ export default function ProcessModelCard({
             >
               {model.description || '--'}
             </Typography>
-
           </Stack>
         </CardContent>
       </CardActionArea>
@@ -179,9 +178,7 @@ export default function ProcessModelCard({
           variant="contained"
           color="primary"
           size="small"
-          onClick={(e) =>
-            handleStartProcess(e as unknown as PointerEvent)
-          }
+          onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
         >
           Start this process
         </Button>

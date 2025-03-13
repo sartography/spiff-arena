@@ -42,7 +42,6 @@ export default function OnboardingView() {
       return (
         <MarkdownRenderer
           className="onboarding"
-          linkTarget="_blank"
           source={onboarding.instructions}
         />
       );

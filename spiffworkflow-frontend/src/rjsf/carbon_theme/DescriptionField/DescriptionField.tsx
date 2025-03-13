@@ -26,7 +26,7 @@ export default function DescriptionField<
       //  </span>
 
       <p id={id} className="field-description" data-color-mode="light">
-        <MDEditor.Markdown linkTarget="_blank" source={description} />
+        <MDEditor.Markdown source={description} />
       </p>
     );
   }

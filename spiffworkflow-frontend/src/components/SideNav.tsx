@@ -90,9 +90,12 @@ function SideNav({
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.dataStoreListPath]: ['GET'],
-    [targetUris.secretListPath]: ['GET'],
     [targetUris.authenticationListPath]: ['GET'],
+    [targetUris.dataStoreListPath]: ['GET'],
+    [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.processGroupListPath]: ['GET'],
+    [targetUris.processInstanceListForMePath]: ['POST'],
+    [targetUris.secretListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
@@ -179,12 +182,14 @@ function SideNav({
       icon: <Schema />,
       route: '/process-groups',
       id: routeIdentifiers.PROCESSES,
+      permissionRoutes: [targetUris.processGroupListPath],
     },
     {
       text: 'PROCESS INSTANCES',
       icon: <Timeline />,
       route: '/process-instances',
       id: routeIdentifiers.PROCESS_INSTANCES,
+      permissionRoutes: [targetUris.processInstanceListForMePath],
     },
     {
       text: 'DATA STORES',
@@ -198,6 +203,7 @@ function SideNav({
       icon: <Markunread />,
       route: '/messages',
       id: routeIdentifiers.MESSAGES,
+      permissionRoutes: [targetUris.messageInstanceListPath],
     },
     {
       text: 'CONFIGURATION',
@@ -256,7 +262,12 @@ function SideNav({
 
     let hasPermission = false;
     item.permissionRoutes?.forEach((targetUri: string) => {
-      if (ability.can('GET', targetUri)) {
+      let method = 'GET';
+      // if the uri is in the permissionRequestData then use the first action listed
+      if (targetUri in permissionRequestData) {
+        [method] = permissionRequestData[targetUri];
+      }
+      if (ability.can(method, targetUri)) {
         hasPermission = true;
       }
     });

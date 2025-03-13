@@ -121,9 +121,7 @@ export default function PublicForm() {
     }
 
     if (confirmationMessage) {
-      return (
-        <MarkdownRenderer linkTarget="_blank" source={confirmationMessage} />
-      );
+      return <MarkdownRenderer source={confirmationMessage} />;
     }
     if (publicTask) {
       let jsonSchema = publicTask.form.form_schema;

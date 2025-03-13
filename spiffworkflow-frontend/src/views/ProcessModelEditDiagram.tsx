@@ -1046,6 +1046,11 @@ export default function ProcessModelEditDiagram() {
     setShowMarkdownEditor(false);
   };
 
+  const markdownEditorTextArea = (props: any) => {
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    return <TextareaAutosize {...props} />;
+  };
+
   const markdownEditor = () => {
     return (
       <Dialog
@@ -1063,6 +1068,9 @@ export default function ProcessModelEditDiagram() {
               highlightEnable={false}
               value={markdownText}
               onChange={setMarkdownText}
+              components={{
+                textarea: markdownEditorTextArea,
+              }}
             />
           </div>
           <Button onClick={handleMarkdownEditorClose}>Close</Button>
@@ -1424,8 +1432,8 @@ export default function ProcessModelEditDiagram() {
           <Notification
             title="Unsaved changes."
             type="error"
-            hideCloseButton
             data-qa="process-model-file-changed"
+            hideCloseButton
           >
             Please save to avoid losing your work.
           </Notification>
