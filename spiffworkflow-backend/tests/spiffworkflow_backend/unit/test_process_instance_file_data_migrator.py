@@ -3,6 +3,7 @@ import json
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+
 from spiffworkflow_backend.data_migrations.process_instance_file_data_migrator import ProcessInstanceFileDataMigrator
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -10,7 +11,6 @@ from spiffworkflow_backend.models.process_instance_file_data import PROCESS_INST
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

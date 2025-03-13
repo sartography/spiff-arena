@@ -1,6 +1,7 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -11,7 +12,6 @@ from spiffworkflow_backend.services.authorization_service import GroupPermission
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

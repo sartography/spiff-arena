@@ -1,8 +1,9 @@
 import time
 
 import sqlalchemy
-from spiffworkflow_backend.models.db import db
 from sqlalchemy.sql import text
+
+from spiffworkflow_backend.models.db import db
 
 
 def try_to_connect(start_time: float) -> None:

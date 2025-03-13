@@ -3,6 +3,7 @@
 import time
 
 from apscheduler.schedulers.background import BlockingScheduler  # type: ignore
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler
 

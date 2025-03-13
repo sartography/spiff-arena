@@ -2,11 +2,11 @@ import json
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.service_account_service import ServiceAccountService
 from spiffworkflow_backend.services.user_service import UserService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

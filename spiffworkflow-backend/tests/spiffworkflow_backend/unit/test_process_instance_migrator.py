@@ -5,6 +5,8 @@ import os
 from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
+from sqlalchemy import or_
+
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
@@ -20,8 +22,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from sqlalchemy import or_
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

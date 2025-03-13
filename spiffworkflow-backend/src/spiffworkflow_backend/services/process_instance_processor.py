@@ -1123,9 +1123,9 @@ class ProcessInstanceProcessor:
 
         bpmn_dict_keys = BpmnProcessDefinitionModel.keys_for_full_process_model_hash()
         bpmn_spec_dict = {}
-        for bpmn_key in bpmn_process_dict.keys():
+        for bpmn_key, bpmn_value in bpmn_process_dict.items():
             if bpmn_key in bpmn_dict_keys:
-                bpmn_spec_dict[bpmn_key] = bpmn_process_dict[bpmn_key]
+                bpmn_spec_dict[bpmn_key] = bpmn_value
 
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not bpmn_definition_to_task_definitions_mappings

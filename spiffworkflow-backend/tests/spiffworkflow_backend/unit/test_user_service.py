@@ -2,8 +2,8 @@
 
 from flask.app import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.services.user_service import UserService
 
+from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

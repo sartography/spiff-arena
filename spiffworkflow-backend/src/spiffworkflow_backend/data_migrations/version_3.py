@@ -1,6 +1,7 @@
 import copy
 
 from flask import current_app
+
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db

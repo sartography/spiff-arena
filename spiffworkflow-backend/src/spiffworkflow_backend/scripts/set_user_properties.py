@@ -1,6 +1,7 @@
 from typing import Any
 
 from flask import g
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.user_property import UserPropertyModel

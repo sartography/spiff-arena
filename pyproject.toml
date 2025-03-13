@@ -18,7 +18,7 @@ python = ">=3.11,<3.13"
 [tool.poetry.dev-dependencies]
 pre-commit = "^3.7.1"
 pre-commit-hooks = "^4.6.0"
-ruff = "^0.5.5"
+ruff = "^0.8.2"
 
 [tool.poetry.group.dev.dependencies]
 tomli = "^2.0.1"

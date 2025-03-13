@@ -4,12 +4,12 @@ import shutil
 
 import pytest
 from flask.app import Flask
+
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 # We need to call this before importing spiffworkflow_backend

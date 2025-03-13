@@ -2,8 +2,8 @@ from collections.abc import Generator
 
 import pytest
 from flask.app import Flask
-from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 
+from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

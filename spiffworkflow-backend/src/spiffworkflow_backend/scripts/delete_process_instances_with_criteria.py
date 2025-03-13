@@ -1,11 +1,12 @@
 from time import time
 from typing import Any
 
+from sqlalchemy import or_
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
-from sqlalchemy import or_
 
 
 class DeleteProcessInstancesWithCriteria(Script):

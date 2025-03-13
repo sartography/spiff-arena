@@ -2,9 +2,9 @@ import os
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
