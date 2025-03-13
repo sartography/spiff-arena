@@ -150,6 +150,7 @@ Learn more about configuring Message Events and the differences between Message 
 :maxdepth: 1
 :caption: Message Event Example
 configuring_messages_and_correlation_properties.md
+message_events_vs_tasks.md
 message_as_an_API.md
 ```
 
