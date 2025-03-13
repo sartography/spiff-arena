@@ -16,8 +16,6 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
                 return self.run(*args, **kwargs)  # type: ignore
 
     celery_configs = {
-        "broker_url": app.config["SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL"],
-        "result_backend": app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND"],
         "task_ignore_result": True,
         "task_serializer": "json",
         "result_serializer": "json",
@@ -25,6 +23,31 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
         "enable_utc": True,
         "worker_redirect_stdouts_level": "DEBUG",
     }
+
+    broker_url = app.config["SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL"]
+
+    # Configure SQS broker
+    if broker_url.lower().startswith("sqs://"):
+        sqs_url = app.config.get("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL")
+        if sqs_url:
+            celery_configs["broker_transport_options"] = {"predefined_queues": {"celery": {"url": sqs_url}}}
+        else:
+            raise ValueError("CELERY_BROKER_URL is set to sqs:// but SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL is not set.")
+
+    celery_configs["broker_url"] = broker_url
+
+    result_backend = app.config.get("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND")
+    if result_backend:
+        if result_backend.startswith("s3://"):
+            s3_bucket = app.config.get("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET")
+            if s3_bucket:
+                celery_configs["s3_bucket"] = app.config.get("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET")
+            else:
+                raise ValueError(
+                    "CELERY_RESULT_BACKEND is set to s3:// but SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET is not set."
+                )
+
+        celery_configs["result_backend"] = result_backend
 
     celery_app = Celery(app.name)
     celery_app.Task = FlaskTask  # type: ignore

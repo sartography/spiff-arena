@@ -684,7 +684,13 @@ class AuthorizationService:
         return permissions_to_assign
 
     @classmethod
+    def check_target_is_compatible_with_macro(cls, macro: str, target: str) -> None:
+        if macro in ["PM", "PG"] and "*" in target:
+            raise InvalidPermissionError(f"Wildcards '*' are not allowed in PM and PG macros. '{target}' is invalid.")
+
+    @classmethod
     def set_process_group_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
+        cls.check_target_is_compatible_with_macro("PG", target)
         permissions_to_assign: list[PermissionToAssign] = []
         process_group_identifier = target.removeprefix("PG:").replace("/", ":").removeprefix(":")
         process_related_path_segment = f"{process_group_identifier}:*"
@@ -701,6 +707,7 @@ class AuthorizationService:
 
     @classmethod
     def set_process_model_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
+        cls.check_target_is_compatible_with_macro("PM", target)
         permissions_to_assign: list[PermissionToAssign] = []
         process_model_identifier = target.removeprefix("PM:").replace("/", ":").removeprefix(":")
         process_related_path_segment = f"{process_model_identifier}/*"

@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-// @ts-ignore
-import { Loading, InlineNotification } from '@carbon/react';
+import { Alert, Box, CircularProgress } from '@mui/material';
 import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
-// @ts-ignore
 import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
@@ -32,6 +30,7 @@ export default function ProcessInterstitial({
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
   const [state, setState] = useState<string>('RUNNING');
+  const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
 
@@ -96,23 +95,30 @@ export default function ProcessInterstitial({
     if (shouldRedirectToTask(lastTask)) {
       lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
-        navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
+        const taskUrl = `/tasks/${lastTask.process_instance_id}/${lastTask.id}`;
+        navigate(taskUrl);
       }, 500);
       return () => clearInterval(timerId);
     }
     if (shouldRedirectToProcessInstance()) {
-      // Navigate without pause as we will be showing the same information.
-      navigate(processInstanceShowPageUrl);
+      setIsFadingOut(true);
+      setTimeout(() => {
+        localStorage.setItem(
+          'lastProcessInstanceId',
+          processInstanceId.toString(),
+        );
+        navigate(processInstanceShowPageUrl);
+      }, 2000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
   }, [
     lastTask,
     navigate,
-    shouldRedirectToTask,
     processInstanceId,
     processInstanceShowPageUrl,
-    state,
     shouldRedirectToProcessInstance,
+    shouldRedirectToTask,
+    state,
   ]);
 
   const getLoadingIcon = () => {
@@ -121,14 +127,7 @@ export default function ProcessInterstitial({
       if (smallSpinner) {
         style = { margin: '2x 5px 2px 2px' };
       }
-      return (
-        <Loading
-          description="Active loading indicator"
-          withOverlay={false}
-          small={smallSpinner}
-          style={style}
-        />
-      );
+      return <CircularProgress style={style} />;
     }
     return null;
   };
@@ -136,16 +135,13 @@ export default function ProcessInterstitial({
   const inlineMessage = (
     title: string,
     subtitle: string,
-    kind: string = 'info',
+    kind: 'info' | 'warning' | 'error' = 'info',
   ) => {
     return (
       <div>
-        <InlineNotification
-          kind={kind}
-          subtitle={subtitle}
-          title={title}
-          lowContrast
-        />
+        <Alert severity={kind} title={title}>
+          {subtitle}
+        </Alert>
       </div>
     );
   };
@@ -241,7 +237,8 @@ export default function ProcessInterstitial({
     if (processInstance) {
       navigate(processInstanceShowPageUrl);
     } else {
-      navigate(`/tasks`);
+      const taskUrl = '/tasks';
+      navigate(taskUrl);
     }
   }
 
@@ -257,23 +254,38 @@ export default function ProcessInterstitial({
     return index < 4 ? `user_instructions_${index}` : `user_instructions_4`;
   };
 
-  if (lastTask) {
-    return (
-      <div>
-        {getLoadingIcon()}
-        {displayableData.map((d, index) => (
-          <div className={className(index)}>{userMessage(d)}</div>
-        ))}
-      </div>
-    );
-  }
-  if (processInstance) {
-    return (
-      <div>
-        {getLoadingIcon()}
-        {userMessageForProcessInstance(processInstance)}
-      </div>
-    );
-  }
-  return <div>{getLoadingIcon()}</div>;
+  const innerComponents = () => {
+    if (lastTask) {
+      return (
+        <>
+          {getLoadingIcon()}
+          {displayableData.map((d, index) => (
+            <div className={className(index)}>{userMessage(d)}</div>
+          ))}
+        </>
+      );
+    }
+    if (processInstance) {
+      return (
+        <>
+          {getLoadingIcon()}
+          {userMessageForProcessInstance(processInstance)}
+        </>
+      );
+    }
+    return getLoadingIcon();
+  };
+  return (
+    <Box
+      className={isFadingOut ? 'fade-out' : ''}
+      component="main"
+      sx={{
+        flexGrow: 1,
+        p: 3,
+        overflow: 'auto',
+      }}
+    >
+      {innerComponents()}
+    </Box>
+  );
 }

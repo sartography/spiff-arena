@@ -1,5 +1,12 @@
-import { Rule, Checkmark, Close } from '@carbon/icons-react';
-import { Button, Modal } from '@carbon/react';
+import { Rule, CheckCircle, Cancel } from '@mui/icons-material';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+} from '@mui/material';
 import { useState } from 'react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import HttpService from '../services/HttpService';
@@ -8,6 +15,7 @@ import {
   childrenForErrorObject,
   errorForDisplayFromTestCaseErrorDetails,
 } from './ErrorDisplay';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   processModelFile?: ProcessFile;
@@ -34,27 +42,27 @@ export default function ProcessModelTestRun({
     if (testCaseResults) {
       if (testCaseResults.all_passed) {
         return (
-          <Button
-            kind="ghost"
-            className="green-icon"
-            renderIcon={Checkmark}
-            iconDescription="All BPMN unit tests passed"
-            hasIconOnly
-            size="lg"
-            onClick={() => setShowTestCaseResultsModal(true)}
-          />
+          <SpiffTooltip title="All BPMN unit tests passed" placement="top">
+            <IconButton
+              color="success"
+              aria-label="All BPMN unit tests passed"
+              onClick={() => setShowTestCaseResultsModal(true)}
+            >
+              <CheckCircle />
+            </IconButton>
+          </SpiffTooltip>
         );
       }
       return (
-        <Button
-          kind="ghost"
-          className="red-icon"
-          renderIcon={Close}
-          iconDescription="BPMN unit tests failed"
-          hasIconOnly
-          size="lg"
-          onClick={() => setShowTestCaseResultsModal(true)}
-        />
+        <SpiffTooltip title="BPMN unit tests failed" placement="top">
+          <IconButton
+            color="error"
+            aria-label="BPMN unit tests failed"
+            onClick={() => setShowTestCaseResultsModal(true)}
+          >
+            <Cancel />
+          </IconButton>
+        </SpiffTooltip>
       );
     }
     return null;
@@ -140,31 +148,31 @@ export default function ProcessModelTestRun({
       modalHeading = 'Some Tests FAILED';
     }
     return (
-      <Modal
+      <Dialog
         open={showTestCaseResultsModal}
-        data-qa="test-case-results-modal"
-        modalHeading={modalHeading}
-        modalLabel="Test Case Results"
-        primaryButtonText="OK"
-        onRequestSubmit={() => setShowTestCaseResultsModal(false)}
-        onRequestClose={() => setShowTestCaseResultsModal(false)}
+        onClose={() => setShowTestCaseResultsModal(false)}
         className={classNameForModal}
       >
-        {testCaseFormattedResultTag()}
-      </Modal>
+        <DialogTitle>{modalHeading}</DialogTitle>
+        <DialogContent>{testCaseFormattedResultTag()}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowTestCaseResultsModal(false)}>OK</Button>
+        </DialogActions>
+      </Dialog>
     );
   };
 
   const buttonElement = () => {
     return (
-      <Button
-        kind="ghost"
-        renderIcon={Rule}
-        iconDescription={titleText}
-        hasIconOnly
-        size="lg"
-        onClick={() => onProcessModelTestRun()}
-      />
+      <SpiffTooltip title={titleText} placement="top">
+        <IconButton
+          color="primary"
+          aria-label={titleText}
+          onClick={() => onProcessModelTestRun()}
+        >
+          <Rule />
+        </IconButton>
+      </SpiffTooltip>
     );
   };
 
