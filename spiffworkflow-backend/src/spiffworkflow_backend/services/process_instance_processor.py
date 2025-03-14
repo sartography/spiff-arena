@@ -1866,7 +1866,7 @@ class ProcessInstanceProcessor:
         for task in self.get_all_ready_or_waiting_tasks():
             if most_recent_task is None:
                 most_recent_task = task
-            elif most_recent_task.last_state_change < task.last_state_change:  # type: ignore
+            elif most_recent_task.last_state_change < task.last_state_change:
                 most_recent_task = task
 
         if most_recent_task:
