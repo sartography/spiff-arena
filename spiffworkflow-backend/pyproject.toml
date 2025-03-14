@@ -113,7 +113,7 @@ bandit = "1.8.0"
 
 # flask-sqlalchemy-stubs = "^0.2"
 pre-commit-hooks = "^5.0.0"
-Pygments = "^2.18.0"
+Pygments = "^2.19.1"
 
 # type hinting stuff
 types-dateparser = "^1.2.0.20240420"
