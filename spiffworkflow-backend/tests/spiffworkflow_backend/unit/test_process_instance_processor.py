@@ -1136,6 +1136,31 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
+    def test_can_terminate_instance_with_subprocess(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/subprocess_with_manual_task",
+            process_model_source_directory="subprocess_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        processor.terminate()
+
     # # To test processing times with multiinstance subprocesses
     # def test_large_multiinstance(
     #     self,

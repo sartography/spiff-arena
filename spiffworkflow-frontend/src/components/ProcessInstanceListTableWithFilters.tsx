@@ -23,8 +23,21 @@ import {
   ComboBox,
   TextInput,
   FormLabel,
-  Checkbox,
 } from '@carbon/react';
+
+import {
+  Button as MuiButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox as MuiCheckbox,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import {
   PROCESS_STATUSES,
@@ -57,7 +70,10 @@ import {
   FilterDisplayTypeMapping,
   SpiffTableHeader,
 } from '../interfaces';
-import ProcessModelSearch from './ProcessModelSearch';
+
+// MUI
+import ProcessModelSearchCarbon from './ProcessModelSearchCarbon';
+
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
@@ -87,7 +103,7 @@ type OwnProps = {
   tableHtmlId?: string;
 };
 
-interface dateParameters {
+interface DateParameters {
   [key: string]: ((..._args: any[]) => any)[];
 }
 
@@ -195,7 +211,7 @@ export default function ProcessInstanceListTableWithFilters({
     useState<boolean>(false);
   const [withOldestOpenTask, setWithOldestOpenTask] =
     useState<boolean>(showActionsColumn);
-  const [withRelationToMe, setwithRelationToMe] =
+  const [withRelationToMe, setWithRelationToMe] =
     useState<boolean>(showActionsColumn);
   const [systemReport, setSystemReport] = useState<string | null>(null);
   const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
@@ -216,7 +232,7 @@ export default function ProcessInstanceListTableWithFilters({
 
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
-  const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
+  const dateParametersToAlwaysFilterBy: DateParameters = useMemo(() => {
     return {
       start_from: [setStartFromDate, setStartFromTime],
       start_to: [setStartToDate, setStartToTime],
@@ -253,7 +269,7 @@ export default function ProcessInstanceListTableWithFilters({
     setStartToTime('');
     setSystemReport(null);
     setWithOldestOpenTask(false);
-    setwithRelationToMe(false);
+    setWithRelationToMe(false);
     if (reportMetadata) {
       const reportMetadataCopy = { ...reportMetadata };
       reportMetadataCopy.filter_by = [];
@@ -318,7 +334,7 @@ export default function ProcessInstanceListTableWithFilters({
           } else if (reportFilter.field_name === 'with_oldest_open_task') {
             setWithOldestOpenTask(reportFilter.field_value);
           } else if (reportFilter.field_name === 'with_relation_to_me') {
-            setwithRelationToMe(reportFilter.field_value);
+            setWithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
@@ -653,6 +669,8 @@ export default function ProcessInstanceListTableWithFilters({
     onChangeTimeFunction: any,
     timeInvalid: boolean,
     setTimeInvalid: any,
+    // TODO: fix this to use an object instead and avoid max params issue
+    // eslint-disable-next-line sonarjs/sonar-max-params
   ) => {
     if (!reportMetadata) {
       return null;
@@ -759,9 +777,11 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
-  const processInstanceReportDidChange = (selection: any, mode?: string) => {
+  const processInstanceReportDidChange = (
+    selectedReport: any,
+    mode?: string,
+  ) => {
     clearFilters();
-    const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
     removeError();
     setProcessInstanceReportJustSaved(mode || null);
@@ -805,7 +825,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const onDeleteReportSuccess = () => {
-    processInstanceReportDidChange({ selectedItem: null });
+    processInstanceReportDidChange(undefined);
   };
 
   const deleteReportComponent = () => {
@@ -1201,100 +1221,108 @@ export default function ProcessInstanceListTableWithFilters({
     if (!showAdvancedOptions || !reportMetadata) {
       return null;
     }
-    const formElements = (
-      <>
-        <Grid fullWidth>
-          <Column md={4} lg={8} sm={2}>
-            <Dropdown
-              id="system-report-dropdown"
-              titleText="System report"
+    return (
+      <Dialog
+        open={showAdvancedOptions}
+        onClose={handleAdvancedOptionsClose}
+        aria-labelledby="advanced-filter-options-title"
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle id="advanced-filter-options-title">
+          Advanced filter options
+        </DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="system-report-label">System report</InputLabel>
+            <Select
+              labelId="system-report-label"
               label="System report"
-              items={['', ...systemReportOptions]}
-              itemToString={(item: any) => titleizeString(item)}
-              selectedItem={systemReport}
-              onChange={(value: any) => {
+              value={systemReport || ''}
+              onChange={(event) => {
+                const { value } = event.target;
                 systemReportOptions.forEach((systemReportOption: string) => {
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
                     systemReportOption,
-                    value.selectedItem === systemReportOption,
+                    value === systemReportOption,
                   );
-                  setSystemReport(value.selectedItem);
+                  setSystemReport(value);
                 });
               }}
-            />
-          </Column>
-          <Column md={4} lg={8} sm={2}>
-            <Dropdown
-              id="user-group-dropdown"
-              titleText="Assigned user group"
+            >
+              {['', ...systemReportOptions].map((option) => (
+                <MenuItem key={option} value={option}>
+                  {titleizeString(option)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="user-group-label">Assigned user group</InputLabel>
+            <Select
               label="Assigned user group"
-              items={['', ...userGroups]}
-              itemToString={(item: any) => item}
-              selectedItem={selectedUserGroup}
-              onChange={(value: any) => {
+              labelId="user-group-label"
+              value={selectedUserGroup || ''}
+              onChange={(event) => {
+                const { value } = event.target;
                 insertOrUpdateFieldInReportMetadata(
                   reportMetadata,
                   'user_group_identifier',
-                  value.selectedItem,
+                  value,
                 );
-                setSelectedUserGroup(value.selectedItem);
+                setSelectedUserGroup(value);
               }}
-            />
-          </Column>
-        </Grid>
-        <br />
-        <Grid fullWidth>
-          <Column md={4} lg={8} sm={2}>
-            <Checkbox
-              labelText="Include oldest open task information"
-              id="with-oldest-open-task-checkbox"
-              checked={withOldestOpenTask}
-              disabled={showActionsColumn}
-              onChange={(value: any) => {
-                insertOrUpdateFieldInReportMetadata(
-                  reportMetadata,
-                  'with_oldest_open_task',
-                  value.target.checked,
-                );
-                setWithOldestOpenTask(value.target.checked);
-              }}
-            />
-          </Column>
-          {variant === 'all' ? (
-            <Column md={4} lg={8} sm={2}>
-              <Checkbox
-                labelText="Include tasks for me"
-                id="with-relation-to-me"
-                checked={withRelationToMe}
-                onChange={(value: any) => {
+            >
+              {['', ...userGroups].map((group) => (
+                <MenuItem key={group} value={group}>
+                  {group}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            control={
+              <MuiCheckbox
+                checked={withOldestOpenTask}
+                disabled={showActionsColumn}
+                onChange={(event) => {
                   insertOrUpdateFieldInReportMetadata(
                     reportMetadata,
-                    'with_relation_to_me',
-                    value.target.checked,
+                    'with_oldest_open_task',
+                    event.target.checked,
                   );
-                  setwithRelationToMe(value.target.checked);
+                  setWithOldestOpenTask(event.target.checked);
                 }}
               />
-            </Column>
-          ) : null}
-        </Grid>
-        <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
-      </>
-    );
-    return (
-      <Modal
-        open={showAdvancedOptions}
-        modalHeading="Advanced filter options"
-        primaryButtonText="Close"
-        onRequestSubmit={handleAdvancedOptionsClose}
-        onRequestClose={handleAdvancedOptionsClose}
-        hasScrollingContent
-        aria-label="advanced filter options"
-        size="lg"
-      >
-        {formElements}
-      </Modal>
+            }
+            label="Include oldest open task information"
+          />
+          {variant === 'all' && (
+            <FormControlLabel
+              control={
+                <MuiCheckbox
+                  checked={withRelationToMe}
+                  onChange={(event) => {
+                    insertOrUpdateFieldInReportMetadata(
+                      reportMetadata,
+                      'with_relation_to_me',
+                      event.target.checked,
+                    );
+                    setWithRelationToMe(event.target.checked);
+                  }}
+                />
+              }
+              label="Include tasks for me"
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleAdvancedOptionsClose} color="primary">
+            Close
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     );
   };
 
@@ -1330,7 +1358,7 @@ export default function ProcessInstanceListTableWithFilters({
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
-            <ProcessModelSearch
+            <ProcessModelSearchCarbon
               onChange={(selection: any) => {
                 const pmSelectionId = selection.selectedItem
                   ? selection.selectedItem.id
@@ -1465,25 +1493,23 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid fullWidth className="with-bottom-margin">
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
-              <Button
-                kind="tertiary"
-                className="narrow-button"
-                onClick={clearFilters}
-              >
+              <MuiButton variant="outlined" onClick={clearFilters}>
                 Clear
-              </Button>
+              </MuiButton>
             </ButtonSet>
           </Column>
-          <Column sm={3} md={3} lg={7}>
-            {saveAsReportComponent()}
-            {deleteReportComponent()}
+          <Column sm={3} md={3} lg={4}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {saveAsReportComponent()}
+              {deleteReportComponent()}
+            </div>
           </Column>
           <Column sm={1} md={1} lg={1}>
             <Button
               kind="ghost"
               onClick={() => setShowAdvancedOptions(true)}
               data-qa="advanced-options-filters"
-              className="narrow-button button-link float-right"
+              className="narrow-button button-link"
             >
               Advanced
             </Button>

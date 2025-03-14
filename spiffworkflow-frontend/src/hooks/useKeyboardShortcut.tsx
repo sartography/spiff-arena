@@ -1,6 +1,8 @@
 // from https://raw.githubusercontent.com/arthurtyukayev/use-keyboard-shortcut/develop/lib/useKeyboardShortcut.js
 import { useEffect, useCallback, useRef, useState } from 'react';
-import { Modal } from '@carbon/react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
 import { KeyboardShortcuts } from '../interfaces';
 
 export const overrideSystemHandling = (e: KeyboardEvent) => {
@@ -61,25 +63,25 @@ const useKeyboardShortcut = (
     });
 
     return (
-      <Modal
+      <Dialog
         open={helpControlOpen}
-        passiveModal
-        onRequestClose={() => setHelpControlOpen(false)}
-        size="sm"
+        onClose={() => setHelpControlOpen(false)}
+        maxWidth="sm"
       >
-        <h2>Keyboard shortcuts</h2>
-        <br />
-        <p>
-          <div className="shortcut-description">
-            Open keyboard shortcut help control:
-          </div>
-          <div className="shortcut-key-group">
-            <span className="shortcut-key">Shift</span>
-            <span className="shortcut-key">?</span>
-          </div>
-        </p>
-        {keyboardShortcutList}
-      </Modal>
+        <DialogTitle>Keyboard shortcuts</DialogTitle>
+        <DialogContent>
+          <p>
+            <div className="shortcut-description">
+              Open keyboard shortcut help control:
+            </div>
+            <div className="shortcut-key-group">
+              <span className="shortcut-key">Shift</span>
+              <span className="shortcut-key">?</span>
+            </div>
+          </p>
+          {keyboardShortcutList}
+        </DialogContent>
+      </Dialog>
     );
   }, [keyboardShortcuts, helpControlOpen, shortcutKeys]);
 

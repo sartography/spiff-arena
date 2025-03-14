@@ -7,6 +7,8 @@ import { AbilityContext } from '../contexts/Can';
 import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
 
+// Import MUI components
+
 export const usePermissionFetcher = (
   permissionsToCheck: PermissionsToCheck,
 ) => {

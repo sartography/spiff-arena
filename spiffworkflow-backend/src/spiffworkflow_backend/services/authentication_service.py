@@ -279,42 +279,56 @@ class AuthenticationService:
         return redirect(request_url)
 
     @staticmethod
-    def generate_state(redirect_url: str, authentication_identifier: str) -> bytes:
+    def generate_state(authentication_identifier: str, final_url: str | None = None) -> bytes:
+        # The final_url is where we want to return the user to, within the application - in case they
+        # where headed to a specific page. This is different than the "redirect url" we specify to
+        # the open id server - we want the open id server to always send us back to the login_return
+        # endpoint, and we'll redirect again from there.
+        my_final_url = final_url
+        if final_url is None:
+            my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
         state = base64.b64encode(
-            bytes(str({"redirect_url": redirect_url, "authentication_identifier": authentication_identifier}), "UTF-8")
+            bytes(str({"final_url": my_final_url, "authentication_identifier": authentication_identifier}), "UTF-8")
         )
         return state
 
-    def get_login_redirect_url(self, state: str, authentication_identifier: str, redirect_url: str | None = None) -> str:
-        redirect_url_to_use = redirect_url
-        if redirect_url_to_use is None:
-            host_url = request.host_url.strip("/")
-            login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
-            redirect_url_to_use = f"{host_url}{login_return_path}"
+    def get_redirect_uri_for_login_to_server(self) -> str:
+        host_url = request.host_url.strip("/")
+        login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
+        redirect_url_to_use = f"{host_url}{login_return_path}"
+        current_app.logger.debug(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
+        return redirect_url_to_use
+
+    def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
+        redirect_url = self.get_redirect_uri_for_login_to_server()
+        state = self.generate_state(authentication_identifier, final_url).decode("UTF-8")
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
-            + f"scope={current_app.config['SPIFFWORKFLOW_BACKEND_OPENID_SCOPE']}&"
-            + f"redirect_uri={redirect_url_to_use}"
+            + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
+            + f"redirect_uri={redirect_url}"
         )
         return login_redirect_url
 
-    def get_auth_token_object(self, code: str, authentication_identifier: str, redirect_url: str = "/v1.0/login_return") -> dict:
+    def get_auth_token_object(self, code: str, authentication_identifier: str) -> dict:
         backend_basic_auth_string = (
             f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
         )
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        redirect_to_use = self.get_redirect_uri_for_login_to_server()
+
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
+
         data = {
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
+            "redirect_uri": redirect_to_use,
         }
 
         request_url = self.open_id_endpoint_for_name(
@@ -328,7 +342,7 @@ class AuthenticationService:
     @classmethod
     def is_valid_azp(cls, authentication_identifier: str, azp: str | None) -> bool:
         # not all open id token include an azp so only check if present
-        if azp is None:
+        if azp is None or not current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP"]:
             return True
 
         valid_client_ids = [cls.client_id(authentication_identifier)]
@@ -358,14 +372,26 @@ class AuthenticationService:
         iat = decoded_token["iat"]
 
         valid_audience_values = cls.valid_audiences(authentication_identifier)
-        audience_array_in_token = aud
-        if isinstance(aud, str):
-            audience_array_in_token = [aud]
-        overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
+        overlapping_aud_values = []
+        if aud is not None:
+            audience_array_in_token = aud
+            if isinstance(aud, str):
+                audience_array_in_token = [aud]
+            overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
-        if iss not in [cls.server_url(authentication_identifier), UserModel.spiff_generated_jwt_issuer()]:
+        internal_server_url = cls.server_url(authentication_identifier, internal=True)
+
+        trusted_issuer_urls = [
+            cls.server_url(authentication_identifier),
+            UserModel.spiff_generated_jwt_issuer(),
+        ]
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER"]:
+            trusted_issuer_urls.append(internal_server_url)
+
+        if iss not in trusted_issuer_urls:
             current_app.logger.error(
-                f"TOKEN INVALID because ISS '{iss}' does not match server url '{cls.server_url(authentication_identifier)}'"
+                f"TOKEN INVALID because ISS '{iss}' does not match any of the trusted issuer urls '{trusted_issuer_urls}'"
             )
             valid = False
         # aud could be an array or a string

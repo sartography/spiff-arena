@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import shutil
@@ -124,6 +125,46 @@ class ProcessModelService(FileSystemService):
                 existing_json = json.loads(f.read())
             full_json_data = {**existing_json, **json_data}
         cls.write_json_file(json_path, full_json_data)
+
+    @classmethod
+    def extract_metadata(cls, process_model_identifier: str, current_data: dict[str, Any]) -> dict[str, Any]:
+        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
+        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
+        # we also discussed caching this information in new database tables. something like:
+        #   process_model_version
+        #     id
+        #     process_model_identifier
+        #     git_hash
+        #     display_name
+        #     notification_type
+        #   metadata_extraction
+        #     id
+        #     extraction_key
+        #     extraction_path
+        #   metadata_extraction_process_model_version
+        #     process_model_version_id
+        #     metadata_extraction_id
+        process_model_info = cls.get_process_model(process_model_identifier)
+        metadata_extraction_paths = process_model_info.metadata_extraction_paths
+        if metadata_extraction_paths is None:
+            return {}
+        if len(metadata_extraction_paths) <= 0:
+            return {}
+
+        current_metadata = {}
+        for metadata_extraction_path in metadata_extraction_paths:
+            key = metadata_extraction_path["key"]
+            path = metadata_extraction_path["path"]
+            path_segments = path.split(".")
+            data_for_key: dict[str, Any] | None = current_data
+            for path_segment in path_segments:
+                if path_segment in (data_for_key or {}):
+                    data_for_key = (data_for_key or {})[path_segment]
+                else:
+                    data_for_key = None
+                    break
+            current_metadata[key] = data_for_key
+        return current_metadata
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
@@ -363,7 +404,7 @@ class ProcessModelService(FileSystemService):
             if full_group_id_path is None:
                 full_group_id_path = process_group_id_segment
             else:
-                full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)  # type: ignore
+                full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)
             parent_group = process_group_cache.get(full_group_id_path, None)
             if parent_group is None:
                 try:
@@ -375,8 +416,58 @@ class ProcessModelService(FileSystemService):
             if parent_group:
                 if full_group_id_path not in process_group_cache:
                     process_group_cache[full_group_id_path] = parent_group
-                parent_group_array.append({"id": parent_group.id, "display_name": parent_group.display_name})
+                parent_group_array.append(
+                    {
+                        "id": parent_group.id,
+                        "display_name": parent_group.display_name,
+                        "description": parent_group.description,
+                        "process_models": [],
+                        "process_groups": [],
+                    }
+                )
         return {"cache": process_group_cache, "process_groups": parent_group_array}
+
+    @classmethod
+    def group_process_models_by_process_groups(cls, process_models: list[ProcessModelInfo]) -> list[ProcessGroupLite]:
+        def add_to_group_hierarchy(
+            group_hierarchy: dict[str, ProcessGroupLite], group_path: list, process_model: ProcessModelInfo
+        ) -> None:
+            if not group_path:
+                return
+
+            current_group = group_path[0]
+            current_group_id = current_group["id"]
+            if "process_groups_dict" not in current_group:
+                current_group["process_groups_dict"] = {}
+            if current_group_id not in group_hierarchy:
+                group_hierarchy[current_group_id] = current_group
+
+            if len(group_path) == 1:
+                # null out parent groups since they are not needed in this context and it causes recursion errors with json
+                process_model.parent_groups = None
+                group_hierarchy[current_group_id]["process_models"].append(process_model)
+            else:
+                add_to_group_hierarchy(group_hierarchy[current_group_id]["process_groups_dict"], group_path[1:], process_model)
+
+        def convert_to_list(group_hierarchy: dict) -> list[ProcessGroupLite]:
+            top_level_process_group_list = []
+            for _group_id, group_data in group_hierarchy.items():
+                group_data_copy = copy.deepcopy(group_data)
+                process_group_list = convert_to_list(group_data["process_groups_dict"])
+                del group_data_copy["process_groups_dict"]
+                group_data_copy["process_groups"] = process_group_list
+                top_level_process_group_list.append(group_data_copy)
+            return sort_by_display_name(top_level_process_group_list)
+
+        def sort_by_display_name(process_group_list: list[ProcessGroupLite]) -> list[ProcessGroupLite]:
+            return sorted(process_group_list, key=lambda x: x["display_name"])
+
+        group_hierarchy: dict[str, ProcessGroupLite] = {}
+        for process_model in process_models:
+            if process_model.parent_groups:
+                add_to_group_hierarchy(group_hierarchy, process_model.parent_groups, process_model)
+
+        return convert_to_list(group_hierarchy)
 
     @classmethod
     def reference_for_primary_file(cls, references: list[Reference], primary_file: str) -> Reference | None:
@@ -398,31 +489,9 @@ class ProcessModelService(FileSystemService):
         return process_groups
 
     @classmethod
-    def get_process_groups_for_api(
-        cls,
-        process_group_id: str | None = None,
-        user: UserModel | None = None,
+    def get_process_groups_user_has_permissions_to(
+        cls, process_groups: list[ProcessGroup], permission_assignments: list, permission_to_check: str, permission_base_uri: str
     ) -> list[ProcessGroup]:
-        process_groups = cls.get_process_groups(process_group_id)
-
-        permission_to_check = "read"
-        permission_base_uri = "/process-groups"
-
-        if user is None:
-            user = UserService.current_user()
-
-        # if user has access to uri/* with that permission then there's no reason to check each one individually
-        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
-        has_permission = AuthorizationService.user_has_permission(
-            user=user,
-            permission=permission_to_check,
-            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
-        )
-        if has_permission:
-            return process_groups
-
-        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
-
         new_process_group_list = []
         denied_parent_ids: set[str] = set()
         for process_group in process_groups:
@@ -462,6 +531,49 @@ class ProcessModelService(FileSystemService):
                     has_denied_permission = True
             if not has_denied_permission:
                 permitted_process_groups.append(process_group)
+                permitted_subgroups = cls.get_process_groups_user_has_permissions_to(
+                    process_groups=process_group.process_groups,
+                    permission_assignments=permission_assignments,
+                    permission_to_check=permission_to_check,
+                    permission_base_uri=permission_base_uri,
+                )
+                process_group.process_groups = permitted_subgroups
+
+        return permitted_process_groups
+
+    @classmethod
+    def get_process_groups_for_api(
+        cls,
+        process_group_id: str | None = None,
+        user: UserModel | None = None,
+    ) -> list[ProcessGroup]:
+        process_groups = cls.get_process_groups(process_group_id)
+
+        permission_to_check = "read"
+        permission_base_uri = "/process-groups"
+
+        if user is None:
+            user = UserService.current_user()
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
+        has_permission_to_all_groups = False
+        has_permission_to_all_groups = AuthorizationService.user_has_permission(
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
+        )
+        if has_permission_to_all_groups:
+            return process_groups
+
+        permission_assignments = AuthorizationService.all_permission_assignments_for_user(user=user)
+
+        permitted_process_groups = cls.get_process_groups_user_has_permissions_to(
+            process_groups=process_groups,
+            permission_assignments=permission_assignments,
+            permission_to_check=permission_to_check,
+            permission_base_uri=permission_base_uri,
+        )
 
         return permitted_process_groups
 

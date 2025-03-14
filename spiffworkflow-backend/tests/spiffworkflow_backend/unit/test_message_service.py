@@ -1,7 +1,9 @@
 import time
 
 from flask import Flask
+from flask import g
 from flask.testing import FlaskClient
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
@@ -12,12 +14,83 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
+    def test_messages_feb_24(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test messages between two different running processes using a single conversation.
+
+        Check that communication between two processes works the same as making a call through the API, here
+        we have two process instances that are communicating with each other using one conversation
+        """
+
+        # Load up the definition for the receiving process
+        load_test_spec(
+            "test_group/message_test_1",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="message-test-1.bpmn",
+        )
+
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message_feb24",
+            bpmn_file_name="test-message-process.bpmn",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+
+        # This is typically called in a background cron process, so we will manually call it
+        # here in the tests
+        # The first time it is called, it will instantiate a new instance of the message_recieve process
+        MessageService.correlate_all_message_instances()
+
+        # The second time we call ths process_message_isntances (again it would typically be running on cron)
+        # it will deliver the message that was sent from the receiver back to the original sender.
+        MessageService.correlate_all_message_instances()
+
+        # Assure that the messages all have correlation keys.
+        message_instances = MessageInstanceModel.query.filter_by(message_type="receive").all()
+        uid = message_instances[0].correlation_keys["MainCorrelationKey"]["uid"]
+        assert len(message_instances) == 4
+        for message_instance in message_instances:
+            assert message_instance.correlation_keys == {"MainCorrelationKey": {"uid": uid}}
+
+    def test_receive_message_will_have_correlation_keys(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message",
+            bpmn_file_name="message-receive.bpmn",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+
+        # This is typically called in a background cron process, so we will manually call it
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+
+        # Assure that we have one message receive waiting, and that it's correlations are properly set.
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 1
+        assert message_instances[0].correlation_keys == {"MainCorrelationKey": {"uid": 1}}
+
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,
@@ -93,6 +166,42 @@ class TestMessageService(BaseTest):
         assert len(message_instances) == 4
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
+
+    def test_start_process_with_message_when_failure(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Assure we get a valid error when trying to start a process, and that process fails for some reason."""
+
+        # Load up the definition for the receiving process
+        # It has a message start event that should cause it to fire when a unique message comes through
+        # Fire up the first process
+        load_test_spec(
+            "test_group/message-start-with-error",
+            process_model_source_directory="message-start-with-error",
+            bpmn_file_name="message-start-with-error.bpmn",
+        )
+
+        # Now send in the message
+        user = self.find_or_create_user()
+        message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+            message_name="test_bad_process"
+        ).first()
+        assert message_triggerable_process_model is not None
+
+        MessageInstanceModel(
+            message_type="send",
+            name="test_bad_process",
+            payload={},
+            user_id=user.id,
+        )
+        g.user = user
+        try:
+            MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
+        except WorkflowExecutionServiceError as e:
+            assert "The process instance encountered an error and failed after starting." in e.notes
 
     def test_can_send_message_to_multiple_process_models(
         self,

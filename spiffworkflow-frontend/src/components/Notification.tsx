@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import {
-  Close,
-  Checkmark,
-  Error,
-  // @ts-ignore
-  WarningAlt,
-} from '@carbon/icons-react';
-// @ts-ignore
-import { Button } from '@carbon/react';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import WarningIcon from '@mui/icons-material/Warning';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import { SnackbarCloseReason } from '@mui/material';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
 
 type OwnProps = {
   title: string;
   children?: React.ReactNode;
-  onClose?: Function;
-  type?: string;
+  onClose?: (
+    event: Event | React.SyntheticEvent<any, Event>,
+    reason: SnackbarCloseReason,
+  ) => void;
+  type?: 'success' | 'error' | 'warning';
   hideCloseButton?: boolean;
   allowTogglingFullMessage?: boolean;
   timeout?: number;
@@ -36,22 +39,12 @@ export function Notification({
   const [showMessage, setShowMessage] = useState<boolean>(
     !allowTogglingFullMessage,
   );
-  let iconComponent = <Checkmark className="notification-icon" />;
+
+  let iconComponent = <CheckCircleIcon />;
   if (type === 'error') {
-    iconComponent = <Error className="notification-icon" />;
+    iconComponent = <ErrorIcon />;
   } else if (type === 'warning') {
-    iconComponent = <WarningAlt className="notification-icon" />;
-  }
-
-  if (timeout && onClose) {
-    setTimeout(() => {
-      onClose();
-    }, timeout);
-  }
-
-  let classes = `cds--inline-notification cds--inline-notification--low-contrast cds--inline-notification--${type}`;
-  if (withBottomMargin) {
-    classes = `${classes} with-bottom-margin`;
+    iconComponent = <WarningIcon />;
   }
 
   const additionalProps: ObjectWithStringKeysAndValues = {};
@@ -60,41 +53,49 @@ export function Notification({
   }
 
   return (
-    // we control the props added to the variable so we know it's fine
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <div role="status" className={classes} {...additionalProps}>
-      <div className="cds--inline-notification__details">
-        <div className="cds--inline-notification__text-wrapper">
-          {iconComponent}
-          <div className="cds--inline-notification__title">{title}</div>
-          {showMessage ? (
-            <div className="cds--inline-notification__subtitle">{children}</div>
-          ) : null}
-        </div>
-      </div>
-      {hideCloseButton ? null : (
-        <Button
-          data-qa="close-publish-notification"
-          renderIcon={Close}
-          iconDescription="Close Notification"
-          className="cds--inline-notification__close-button"
-          hasIconOnly
-          size="sm"
-          kind="ghost"
-          onClick={onClose}
-        />
-      )}
-      {allowTogglingFullMessage ? (
-        <Button
-          data-qa="close-publish-notification"
-          className="cds--inline-notification__close-button"
-          size="sm"
-          kind="ghost"
-          onClick={() => setShowMessage(!showMessage)}
-        >
-          {showMessage ? 'Hide' : 'Details'}&nbsp;
-        </Button>
-      ) : null}
-    </div>
+    <Snackbar
+      open
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      autoHideDuration={timeout}
+      onClose={onClose}
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...additionalProps}
+    >
+      <Alert
+        icon={iconComponent}
+        severity={type}
+        action={
+          <>
+            {allowTogglingFullMessage && (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => setShowMessage(!showMessage)}
+              >
+                {showMessage ? 'Hide' : 'Details'}
+              </Button>
+            )}
+            {!hideCloseButton && (
+              <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={(event) => {
+                  if (onClose) {
+                    onClose(event, 'escapeKeyDown');
+                  }
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
+          </>
+        }
+        sx={{ mb: withBottomMargin ? 2 : 0 }}
+      >
+        <strong>{title}</strong>
+        {showMessage && <div>{children}</div>}
+      </Alert>
+    </Snackbar>
   );
 }

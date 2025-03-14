@@ -3,6 +3,17 @@ declare const window: Window & typeof globalThis;
 const { port, hostname } = window.location;
 let protocol = 'https';
 
+// so we can turn this feature on and off as we work on it
+let darkModeEnabled = 'true';
+
+if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
+  darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
+}
+
+const DARK_MODE_ENABLED = !!(
+  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
+);
+
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
     [key: string]: string;
@@ -29,6 +40,10 @@ if ('spiffworkflowFrontendJsenv' in window) {
   if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
     documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
   }
+}
+
+if (import.meta.env && import.meta.env.VITE_BACKEND_BASE_URL) {
+  backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
 }
 
 if (!backendBaseUrl) {
@@ -127,14 +142,15 @@ const DATE_RANGE_DELIMITER = ':::';
 
 const SPIFF_ENVIRONMENT = spiffEnvironment;
 export {
-  DATE_TIME_FORMAT,
-  TIME_FORMAT_HOURS_MINUTES,
+  BACKEND_BASE_URL,
+  DARK_MODE_ENABLED,
   DATE_FORMAT,
   DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
-  BACKEND_BASE_URL,
+  DATE_TIME_FORMAT,
   DOCUMENTATION_URL,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
+  TIME_FORMAT_HOURS_MINUTES,
 };

@@ -1,7 +1,16 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { Button, Table, Modal, Stack } from '@carbon/react';
+import {
+  Button,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Modal,
+  Stack,
+  Box,
+} from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
-// @ts-ignore
 import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
@@ -12,7 +21,6 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
-import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
@@ -167,35 +175,52 @@ export default function TaskListTable({
       return (
         <Modal
           open={!!formSubmissionTask}
-          passiveModal
-          onRequestClose={() => setFormSubmissionTask(null)}
-          modalHeading={`${formSubmissionTask.name_for_display}`}
-          className="completed-task-modal"
+          onClose={() => setFormSubmissionTask(null)}
+          aria-labelledby="modal-title"
+          aria-describedby="modal-description"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <div className="indented-content explanatory-message">
-            ✅ You completed this task{' '}
-            {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
-            <div>
-              <Stack orientation="horizontal" gap={2}>
-                Guid: {formSubmissionTask.guid}
-              </Stack>
-            </div>
-          </div>
-          <hr />
-          <div className="with-bottom-margin">
-            <InstructionsForEndUser task={formSubmissionTask} allowCollapse />
-          </div>
-          <CustomForm
-            id={formSubmissionTask.guid}
-            key={formSubmissionTask.guid}
-            formData={formSubmissionTask.data}
-            schema={jsonSchema}
-            uiSchema={formUiSchema}
-            disabled
+          <Box
+            sx={{
+              width: '80%',
+              maxWidth: 800,
+              bgcolor: 'background.paper',
+              border: '2px solid #000',
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
           >
-            {/* this hides the submit button */}
-            {true}
-          </CustomForm>
+            <h2 id="modal-title">{formSubmissionTask.name_for_display}</h2>
+            <div className="indented-content explanatory-message">
+              ✅ You completed this task{' '}
+              {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
+              <div>
+                <Stack direction="row" spacing={2}>
+                  Guid: {formSubmissionTask.guid}
+                </Stack>
+              </div>
+            </div>
+            <hr />
+            <div className="with-bottom-margin">
+              <InstructionsForEndUser task={formSubmissionTask} allowCollapse />
+            </div>
+            <CustomForm
+              id={formSubmissionTask.guid}
+              key={formSubmissionTask.guid}
+              formData={formSubmissionTask.data}
+              schema={jsonSchema}
+              uiSchema={formUiSchema}
+              disabled
+            >
+              {/* this hides the submit button */}
+              {true}
+            </CustomForm>
+          </Box>
         </Modal>
       );
     }
@@ -217,7 +242,7 @@ export default function TaskListTable({
       processInstanceTask.process_model_identifier,
     );
     return (
-      <td>
+      <TableCell>
         <Link
           data-qa="process-instance-show-link-id"
           to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
@@ -225,7 +250,7 @@ export default function TaskListTable({
         >
           {processInstanceTask.process_instance_id}
         </Link>
-      </td>
+      </TableCell>
     );
   };
 
@@ -242,7 +267,7 @@ export default function TaskListTable({
           processInstanceTask.process_model_identifier,
         );
       rowElements.push(
-        <td>
+        <TableCell>
           <Link
             data-qa="process-model-show-link"
             to={`/process-models/${modifiedProcessModelIdentifier}`}
@@ -250,7 +275,7 @@ export default function TaskListTable({
           >
             {processInstanceTask.process_model_display_name}
           </Link>
-        </td>,
+        </TableCell>,
       );
     }
   };
@@ -276,10 +301,10 @@ export default function TaskListTable({
     ) {
       actions.push(
         <Button
-          variant="primary"
+          variant="contained"
           href={taskUrl}
           disabled={!hasAccessToCompleteTask}
-          size="sm"
+          size="small"
         >
           Go
         </Button>,
@@ -288,7 +313,7 @@ export default function TaskListTable({
     if (showViewFormDataButton) {
       actions.push(
         <Button
-          variant="primary"
+          variant="contained"
           onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
         >
           View task
@@ -304,47 +329,59 @@ export default function TaskListTable({
     dealWithProcessCells(rowElements, processInstanceTask);
 
     rowElements.push(
-      <td
+      <TableCell
         title={`task id: ${processInstanceTask.name}, spiffworkflow task guid: ${processInstanceTask.id}`}
       >
         {processInstanceTask.task_title
           ? processInstanceTask.task_title
           : processInstanceTask.task_name}
-      </td>,
+      </TableCell>,
     );
     if (showStartedBy) {
       rowElements.push(
-        <td>{processInstanceTask.process_initiator_username}</td>,
+        <TableCell>{processInstanceTask.process_initiator_username}</TableCell>,
       );
     }
     if (showWaitingOn) {
       rowElements.push(
-        <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>,
+        <TableCell>
+          {getWaitingForTableCellComponent(processInstanceTask)}
+        </TableCell>,
       );
     }
     if (showCompletedBy) {
-      rowElements.push(<td>{processInstanceTask.completed_by_username}</td>);
+      rowElements.push(
+        <TableCell>{processInstanceTask.completed_by_username}</TableCell>,
+      );
     }
     if (showDateStarted) {
       rowElements.push(
-        <td>
+        <TableCell>
           {DateAndTimeService.convertSecondsToFormattedDateTime(
             processInstanceTask.created_at_in_seconds,
           ) || '-'}
-        </td>,
+        </TableCell>,
       );
     }
     if (showLastUpdated) {
       rowElements.push(
-        <TableCellWithTimeAgoInWords
-          timeInSeconds={processInstanceTask.updated_at_in_seconds}
-        />,
+        <TableCell
+          title={
+            DateAndTimeService.convertSecondsToFormattedDateTime(
+              processInstanceTask.updated_at_in_seconds,
+            ) || '-'
+          }
+        >
+          {TimeAgo.inWords(processInstanceTask.updated_at_in_seconds)}
+        </TableCell>,
       );
     }
     if (showActionsColumn) {
-      rowElements.push(<td>{getActionButtons(processInstanceTask)}</td>);
+      rowElements.push(
+        <TableCell>{getActionButtons(processInstanceTask)}</TableCell>,
+      );
     }
-    return <tr key={processInstanceTask.id}>{rowElements}</tr>;
+    return <TableRow key={processInstanceTask.id}>{rowElements}</TableRow>;
   };
 
   const getTableHeaders = () => {
@@ -386,15 +423,15 @@ export default function TaskListTable({
       return getTableRow(processInstanceTask);
     });
     return (
-      <Table striped bordered>
-        <thead>
-          <tr>
+      <Table>
+        <TableHead>
+          <TableRow>
             {tableHeaders.map((tableHeader: string) => {
-              return <th>{tableHeader}</th>;
+              return <TableCell>{tableHeader}</TableCell>;
             })}
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
+          </TableRow>
+        </TableHead>
+        <TableBody>{rows}</TableBody>
       </Table>
     );
   };

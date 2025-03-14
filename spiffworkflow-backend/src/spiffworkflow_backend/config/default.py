@@ -76,7 +76,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_
 ### background with celery
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://localhost")
-config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default="redis://localhost")
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET", default=None)
 
 # give a little overlap to ensure we do not miss items although the query will handle it either way
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS", default=301)
@@ -120,7 +122,10 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", de
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_IAT", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_NBF", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
@@ -165,6 +170,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info")
 config_from_env("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
@@ -246,6 +252,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 # adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
 # to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default=False)
+
+# how many proxies are in front of this flask server (for use with ProxyFix)
+config_from_env("SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX", default=0)
 
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)

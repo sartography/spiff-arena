@@ -1,16 +1,17 @@
-import { ArrowRight, Renew, ArrowUpRight } from '@carbon/icons-react';
+import { ArrowRightAlt, OpenInNew, Refresh } from '@mui/icons-material';
 import {
-  Grid,
-  Column,
   TableRow,
   Table,
   TableHead,
   Button,
-  TableHeader,
-  Stack,
-  ButtonSet,
   TableCell,
-} from '@carbon/react';
+  TableBody,
+  TableContainer,
+  TableSortLabel,
+  Typography,
+  IconButton,
+} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -41,6 +42,7 @@ import {
   childrenForErrorObject,
   errorForDisplayFromString,
 } from './ErrorDisplay';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -90,26 +92,20 @@ export default function ProcessInstanceListTable({
   );
   const [
     reportMetadataFromProcessInstances,
-    setreportMetadataFromProcessInstances,
+    setReportMetadataFromProcessInstances,
   ] = useState<ReportMetadata | null>(null);
 
-  // this is used from pages like the home page that have multiple tables
-  // and cannot store the report hash in the query params.
-  // it can be used to create a link to the process instances list page to reconstruct the report.
   const [reportHash, setReportHash] = useState<string | null>(null);
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
     variant === 'all' ? '/process-instances' : '/process-instances/for-me';
 
-  // eslint-disable-next-line sonarjs/no-duplicate-string
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
     processInstanceApiSearchPath = '/process-instances';
   }
 
-  // Useful to stop refreshing if an api call gets an error
-  // since those errors can make the page unusable in any way
   const clearRefreshRef = useRef<any>(null);
   const stopRefreshing = useCallback((error: any) => {
     if (clearRefreshRef.current) {
@@ -125,7 +121,7 @@ export default function ProcessInstanceListTable({
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
       setPagination(result.pagination);
-      setreportMetadataFromProcessInstances(result.report_metadata);
+      setReportMetadataFromProcessInstances(result.report_metadata);
       setReportHash(result.report_hash);
       if (onProcessInstanceTableListUpdate) {
         onProcessInstanceTableListUpdate(result);
@@ -145,16 +141,16 @@ export default function ProcessInstanceListTable({
         reportMetadataToUse = reportMetadataArg;
       }
 
-      // eslint-disable-next-line prefer-const
-      let { page, perPage } = getPageInfoFromSearchParams(
+      const { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
         undefined,
         undefined,
         paginationQueryParamPrefix,
       );
-      if (perPageOptions && !perPageOptions.includes(perPage)) {
+      let perPageToUse = perPage;
+      if (perPageOptions && !perPageOptions.includes(perPageToUse)) {
         // eslint-disable-next-line prefer-destructuring
-        perPage = perPageOptions[1];
+        perPageToUse = perPageOptions[1];
       }
       if (additionalReportFilters) {
         additionalReportFilters.forEach((arf: ReportFilter) => {
@@ -164,7 +160,7 @@ export default function ProcessInstanceListTable({
         });
       }
 
-      const queryParamString = `per_page=${perPage}&page=${page}`;
+      const queryParamString = `per_page=${perPageToUse}&page=${page}`;
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -270,16 +266,6 @@ export default function ProcessInstanceListTable({
     id: number,
   ) => {
     return <span data-qa="paginated-entity-id">{id}</span>;
-    // when we get rid of clickable table rows, something like this will be better
-    // const modifiedModelId = modifyProcessIdentifierForPathParam(
-    //   processInstance.process_model_identifier
-    // );
-    // const piLink = `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`;
-    // return (
-    //   <span data-qa="paginated-entity-id">
-    //     <Link to={piLink}>{id}</Link>
-    //   </span>
-    // );
   };
   const formatProcessModelIdentifier = (
     processInstance: ProcessInstance,
@@ -348,14 +334,13 @@ export default function ProcessInstanceListTable({
 
     if (columnAccessor === 'status') {
       return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
+        <TableCell
           onClick={() => navigateToProcessInstance(processInstance)}
           onKeyDown={() => navigateToProcessInstance(processInstance)}
           data-qa={`process-instance-status-${value}`}
         >
           {formatter(processInstance, value)}
-        </td>
+        </TableCell>
       );
     }
     if (columnAccessor === 'updated_at_in_seconds') {
@@ -385,15 +370,14 @@ export default function ProcessInstanceListTable({
       cellContent = formatter(processInstance, value);
     }
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-      <td
+      <TableCell
         key={`td-${columnAccessor}-${processInstance.id}`}
         onClick={() => navigateToProcessInstance(processInstance)}
         onKeyDown={() => navigateToProcessInstance(processInstance)}
         data-qa={`process-instance-show-link-${columnAccessor}`}
       >
         {cellContent}
-      </td>
+      </TableCell>
     );
   };
 
@@ -401,7 +385,6 @@ export default function ProcessInstanceListTable({
     let headerTextElement = null;
     if (header) {
       headerTextElement = header.text;
-      // poor man's markdown, just so we can allow bolded words in headers
       if (header.text.includes('**')) {
         const parts = header.text.split('**');
         if (parts.length === 3) {
@@ -418,24 +401,25 @@ export default function ProcessInstanceListTable({
 
     if (header) {
       return (
-        <Stack orientation="horizontal" gap={1}>
-          <h2
-            title={header.tooltip_text}
-            className="process-instance-table-header with-icons"
-          >
-            {headerTextElement}
-          </h2>
+        <Grid container alignItems="center" spacing={1}>
+          <Grid>
+            <Typography variant="h3" title={header.tooltip_text}>
+              {headerTextElement}
+            </Typography>
+          </Grid>
           {showRefreshButton ? (
-            <Button
-              kind="ghost"
-              data-qa="refresh-process-instance-table"
-              renderIcon={Renew}
-              iconDescription="Refresh data in the table"
-              hasIconOnly
-              onClick={() => getProcessInstances()}
-            />
+            <Grid>
+              <SpiffTooltip title="Refresh data in the table">
+                <IconButton
+                  data-qa="refresh-process-instance-table"
+                  onClick={() => getProcessInstances()}
+                >
+                  <Refresh />
+                </IconButton>
+              </SpiffTooltip>
+            </Grid>
           ) : null}
-        </Stack>
+        </Grid>
       );
     }
     return null;
@@ -449,44 +433,31 @@ export default function ProcessInstanceListTable({
     let filterButtonLink = null;
     if (showLinkToReport && pagination && pagination.total) {
       filterButtonLink = (
-        <Column
-          sm={{ span: 1, offset: 3 }}
-          md={{ span: 1, offset: 7 }}
-          lg={{ span: 1, offset: 15 }}
-          style={{ textAlign: 'right' }}
-        >
-          <Button
-            data-qa="process-instance-list-link"
-            renderIcon={ArrowRight}
-            iconDescription="View Filterable List"
-            hasIconOnly
-            size="md"
-            onClick={() =>
-              navigate(`/process-instances?report_hash=${reportHash}`)
-            }
-          />
-        </Column>
+        <Grid style={{ textAlign: 'right' }} offset="auto">
+          <SpiffTooltip title="View Filterable List" placement="top">
+            <IconButton
+              data-qa="process-instance-list-link"
+              onClick={() =>
+                navigate(`/process-instances?report_hash=${reportHash}`)
+              }
+            >
+              <ArrowRightAlt />
+            </IconButton>
+          </SpiffTooltip>
+        </Grid>
       );
     }
     if (!header && !filterButtonLink) {
       return null;
     }
     return (
-      <>
-        <Column
-          sm={{ span: 3 }}
-          md={{ span: 7 }}
-          lg={{ span: 15 }}
-          style={{ height: '48px' }}
-        >
-          {tableTitle()}
-        </Column>
+      <Grid container alignItems="center" spacing={1}>
+        <Grid>{tableTitle()}</Grid>
         {filterButtonLink}
-      </>
+      </Grid>
     );
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const buildTable = () => {
     const headers = reportColumns().map((column: ReportColumn) => {
       return column.Header;
@@ -513,10 +484,10 @@ export default function ProcessInstanceListTable({
         if (hasAccessToCompleteTask && processInstance.task_id) {
           goButtonElement = (
             <Button
-              kind="primary"
+              variant="contained"
               href={taskShowUrl}
               style={{ width: '60px' }}
-              size="sm"
+              size="small"
             >
               Go
             </Button>
@@ -526,18 +497,14 @@ export default function ProcessInstanceListTable({
           processInstance.process_model_identifier,
         )}/${processInstance.id}`;
         const piShowButtonElement = (
-          <Button
-            kind="ghost"
-            className="pi-show-new-tab-button"
-            target="_blank"
+          <IconButton
             href={piLink}
+            target="_blank"
             style={{ width: '50px' }}
-            size="sm"
-            renderIcon={ArrowUpRight}
-            iconDescription="Open instance in new tab"
-            tooltipPosition="left"
-            hasIconOnly
-          />
+            size="small"
+          >
+            <OpenInNew />
+          </IconButton>
         );
 
         const statusesToExcludeTaskButton = [
@@ -548,14 +515,12 @@ export default function ProcessInstanceListTable({
         if (!(processInstance.status in statusesToExcludeTaskButton)) {
           currentRow.push(
             <TableCell align="right">
-              <ButtonSet>
-                {goButtonElement}
-                {piShowButtonElement}
-              </ButtonSet>
+              {goButtonElement}
+              {piShowButtonElement}
             </TableCell>,
           );
         } else {
-          currentRow.push(<td>{piShowButtonElement}</td>);
+          currentRow.push(<TableCell>{piShowButtonElement}</TableCell>);
         }
       }
 
@@ -573,14 +538,13 @@ export default function ProcessInstanceListTable({
       }
 
       return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <tr
+        <TableRow
           style={rowStyle}
           key={processInstance.id}
           className={`process-instance-list-row-variant-${variantFromMetadata}`}
         >
           {currentRow}
-        </tr>
+        </TableRow>
       );
     });
 
@@ -590,22 +554,26 @@ export default function ProcessInstanceListTable({
     }
 
     return (
-      // eslint-disable-next-line react/jsx-props-no-spreading
-      <Table {...tableProps} className="process-instance-list">
-        <TableHead>
-          <TableRow>
-            {headers.map((tableRowHeader: any) => (
-              <TableHeader
-                key={tableRowHeader}
-                title={tableRowHeader === 'Id' ? 'Process Instance Id' : null}
-              >
-                {tableRowHeader}
-              </TableHeader>
-            ))}
-          </TableRow>
-        </TableHead>
-        <tbody>{rows}</tbody>
-      </Table>
+      <TableContainer>
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <Table size="medium" {...tableProps} className="process-instance-list">
+          <TableHead>
+            <TableRow>
+              {headers.map((tableRowHeader: any) => (
+                <TableCell
+                  key={tableRowHeader}
+                  title={
+                    tableRowHeader === 'Id' ? 'Process Instance Id' : undefined
+                  }
+                >
+                  <TableSortLabel>{tableRowHeader}</TableSortLabel>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>{rows}</TableBody>
+        </Table>
+      </TableContainer>
     );
   };
 
@@ -624,34 +592,34 @@ export default function ProcessInstanceListTable({
   }
   if (errors.length > 0) {
     return (
-      <Grid fullWidth condensed className="megacondensed">
+      <Grid container>
         {tableTitleLine()}
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
+        <Grid size={{ xs: 12 }}>
           {childrenForErrorObject(
             errorForDisplayFromString(errors.join(' ::: ')),
           )}
-        </Column>
+        </Grid>
       </Grid>
     );
   }
 
   let tableElement = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
-    // eslint-disable-next-line prefer-const
-    let { page, perPage } = getPageInfoFromSearchParams(
+    const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
       undefined,
       paginationQueryParamPrefix,
     );
-    if (perPageOptions && !perPageOptions.includes(perPage)) {
+    let perPageToUse = perPage;
+    if (perPageOptions && !perPageOptions.includes(perPageToUse)) {
       // eslint-disable-next-line prefer-destructuring
-      perPage = perPageOptions[1];
+      perPageToUse = perPageOptions[1];
     }
     tableElement = (
       <PaginationForTable
         page={page}
-        perPage={perPage}
+        perPage={perPageToUse}
         pagination={pagination}
         tableToDisplay={buildTable()}
         paginationQueryParamPrefix={paginationQueryParamPrefix}
@@ -661,21 +629,21 @@ export default function ProcessInstanceListTable({
     );
   } else if (textToShowIfEmpty) {
     tableElement = (
-      <p className="no-results-message with-large-bottom-margin">
+      <Typography
+        variant="body1"
+        className="no-results-message with-large-bottom-margin"
+      >
         {textToShowIfEmpty}
-      </p>
+      </Typography>
     );
   }
   return (
     <>
-      <Grid fullWidth condensed className="megacondensed">
-        {tableTitleLine()}
-      </Grid>
+      {tableTitleLine()}
+      <br />
       {filterComponent ? filterComponent() : null}
-      <Grid fullWidth condensed className="megacondensed">
-        <Column sm={{ span: 4 }} md={{ span: 8 }} lg={{ span: 16 }}>
-          {tableElement}
-        </Column>
+      <Grid container>
+        <Grid size={{ xs: 12 }}>{tableElement}</Grid>
       </Grid>
     </>
   );

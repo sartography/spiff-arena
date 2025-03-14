@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-// @ts-ignore
-import { Toggle } from '@carbon/react';
+import { Switch, FormControlLabel } from '@mui/material';
 import FormattingService from '../services/FormattingService';
 import MarkdownRenderer from './MarkdownRenderer';
 import {
@@ -78,11 +77,16 @@ export default function InstructionsForEndUser({
   const showCollapseToggle = () => {
     if (collapsable) {
       return (
-        <Toggle
-          labelA="Show More"
-          labelB="Show Less"
-          onToggle={toggleCollapse}
-          id="toggle-collapse"
+        <FormControlLabel
+          control={
+            <Switch
+              checked={!collapsed}
+              onChange={toggleCollapse}
+              name="toggle-collapse"
+              color="primary"
+            />
+          }
+          label={collapsed ? 'Show More' : 'Show Less'}
         />
       );
     }
@@ -102,8 +106,7 @@ export default function InstructionsForEndUser({
           https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
-
-          <MarkdownRenderer linkTarget="_blank" source={instructions} />
+          <MarkdownRenderer source={instructions} />
         </div>
         {showCollapseToggle()}
       </div>

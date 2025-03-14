@@ -15,6 +15,8 @@ setup_traps
 
 set -o errtrace -o errexit -o nounset -o pipefail
 
+keycloak_version=26.0.7
+
 realm_name="${1:-}"
 if [[ -z "$realm_name" ]]; then
   realm_name="spiffworkflow-local"
@@ -37,8 +39,24 @@ if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
   docker rm $container_name
 fi
 
+function wait_for_keycloak_to_be_up() {
+  local max_attempts=600
+  echo "waiting for keycloak to come up..."
+  local attempts=0
+  local url="localhost:7009/health/ready"
+  while [[ "$(curl -s -o /dev/null -w '%{http_code}' "$url")" != "200" ]]; do
+    if [[ "$attempts" -gt "$max_attempts" ]]; then
+      echo >&2 "ERROR: $url not up after $max_attempts attempts. There is probably a problem"
+      return 1
+    fi
+    attempts=$((attempts + 1))
+    sleep 1
+  done
+}
+
 docker run \
   -p 7002:8080 \
+  -p 7009:9000 \
   -d \
   --network=spiffworkflow \
   --name keycloak \
@@ -46,7 +64,8 @@ docker run \
   -e ROOT_LOGLEVEL=ALL \
   -e KEYCLOAK_ADMIN=admin \
   -e KEYCLOAK_ADMIN_PASSWORD=admin \
-  quay.io/keycloak/keycloak:22.0.4 start-dev \
+  -e KC_HEALTH_ENABLED="true" \
+  quay.io/keycloak/keycloak:${keycloak_version} start-dev \
   -Dkeycloak.profile.feature.token_exchange=enabled \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled \
   -D--spi-theme-static-max-age=-1 \
@@ -57,23 +76,14 @@ script_dir="$(
   cd -- "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
-cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
+file_path=/tmp/${realm_name}-realm.json
+cp "${script_dir}/../realm_exports/${realm_name}-realm.json" "$file_path"
 spiff_subdomain="for-local-dev.spiffworkflow.org"
-perl -pi -e "s/replace-me-with-spiff-backend-host-and-path/${spiff_subdomain}/g" /tmp/${realm_name}-realm.json
-docker cp /tmp/${realm_name}-realm.json keycloak:/tmp
+perl -pi -e "s/replace-me-with-spiff-backend-host-and-path/${spiff_subdomain}/g" "$file_path"
 
-sleep 20
-remove_traps
-set +e
-import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/${realm_name}-realm.json 2>&1)
-setup_traps
-set -e
-# if ! grep -qE "Import finished successfully" <<<"$import_output"; then
-if ! grep -qE "Realm '${realm_name}' imported" <<<"$import_output"; then
-  echo -e "IMPORT FAILED: $import_output"
-  exit 1
-fi
-
+wait_for_keycloak_to_be_up
+token=$(curl --fail -s -X POST "http://localhost:7002/realms/master/protocol/openid-connect/token" -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=password&client_id=admin-cli&username=admin&password=admin' | jq -r .access_token)
+curl --fail -s -X POST "http://localhost:7002/admin/realms" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data "@$file_path" -v
 echo 'imported realms'
 
 if [ "${TURN_OFF_SSL:-}" == "true" ]; then

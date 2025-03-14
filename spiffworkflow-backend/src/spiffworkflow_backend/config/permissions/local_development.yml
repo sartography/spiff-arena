@@ -24,6 +24,11 @@ users:
     email: dan@example.com
     password: dan
     preferred_username: dan
+  jon:
+    service: local_open_id
+    email: jon@example.com
+    password: jon
+    preferred_username: jon
 groups:
   admin:
     users: [admin@example.com, nelson@example.com]
@@ -56,6 +61,11 @@ permissions:
     groups: [group3]
     actions: [read]
     uri: PM:site-administration:set-permissions
+
+  pm-start:
+    groups: [group2]
+    actions: [start]
+    uri: PM:misc:category_number_one:workflow_one
 
   public_access:
     groups: [spiff_public]

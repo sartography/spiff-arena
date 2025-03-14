@@ -14,6 +14,8 @@ RUN apt-get update \
   curl \
   procps \
   vim-tiny \
+  libkrb5support0 \
+  libexpat1 \
   && rm -rf /var/lib/apt/lists/*
 
 # this matches total memory on spiffworkflow-demo
@@ -26,12 +28,6 @@ ENV NODE_OPTIONS=--max_old_space_size=2048
 FROM base AS setup
 
 COPY . /app/
-
-RUN cp /app/package.json /app/package.json.bak
-ADD justservewebserver.package.json /app/package.json
-RUN npm ci --ignore-scripts
-RUN cp -r /app/node_modules /app/node_modules.justserve
-RUN cp /app/package.json.bak /app/package.json
 
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
@@ -46,6 +42,14 @@ RUN ./bin/build
 
 # Use nginx as the base image
 FROM nginx:1.25.4-bookworm
+
+RUN apt-get update \
+  && apt-get clean -y \
+  && apt-get install -y -q \
+  libkrb5support0 \
+  libexpat1 \
+  libaom3 \
+  && rm -rf /var/lib/apt/lists/*
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
