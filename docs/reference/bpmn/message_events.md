@@ -148,9 +148,11 @@ Learn more about configuring Message Events and the differences between Message 
 
 ```{toctree}
 :maxdepth: 1
-configuring_messages_and_correlation_properties
-message_events_vs_tasks
-``` 
+:caption: Message Event Example
+configuring_messages_and_correlation_properties.md
+message_events_vs_tasks.md
+message_as_an_API.md
+```
 
 ```{tags} how_to_guide, building_diagrams
 ```
