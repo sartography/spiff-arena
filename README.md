@@ -46,7 +46,7 @@ You can start it like this:
 
     ./keycloak/bin/start_keycloak
 
-It'll be running on port 7002
+It'll be running on port 7002.
 If you want to log in to the keycloak admin console, it can be found at http://localhost:7002, and the creds are admin/admin (also logs you in to the app if running the frontend)
 
 ## Frontend Setup, local
