@@ -63,7 +63,7 @@ gunicorn = "^23.0.0"
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.19.3"
-pytz = "^2024.2"
+pytz = "^2025.1"
 dateparser = "^1.2.0"
 cryptography = "^44.0"
 prometheus-flask-exporter = "^0.23.1"
