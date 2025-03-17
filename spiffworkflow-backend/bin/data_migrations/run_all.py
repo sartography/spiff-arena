@@ -1,6 +1,8 @@
 import time
 
 from flask import current_app
+from sqlalchemy import update
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.data_migrations.process_instance_file_data_migrator import ProcessInstanceFileDataMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
@@ -8,7 +10,6 @@ from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from sqlalchemy import update
 
 
 # simple decorator to time the func

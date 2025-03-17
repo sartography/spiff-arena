@@ -1,6 +1,7 @@
 from typing import Any
 
 from flask import current_app
+
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script

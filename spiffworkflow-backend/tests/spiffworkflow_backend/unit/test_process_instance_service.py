@@ -8,6 +8,7 @@ import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
+
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -18,7 +19,6 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

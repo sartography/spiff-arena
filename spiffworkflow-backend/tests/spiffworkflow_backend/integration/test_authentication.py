@@ -5,6 +5,7 @@ import re
 from flask.app import Flask
 from flask.testing import FlaskClient
 from pytest_mock.plugin import MockerFixture
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -12,7 +13,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.service_account_service import ServiceAccountService
 from spiffworkflow_backend.services.user_service import UserService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
