@@ -136,7 +136,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         const groupText = isMe ? 'me' : groupName;
         return (
           <Box key={groupName} sx={{ mb: 2 }}>
-            <Typography variant="h2" sx={{ fontWeight: 'normal' }}>
+            <Typography variant="h4" sx={{ mb: 1 }}>
               {headerText}
               <Box component="span" sx={{ color: 'text.accent' }}>
                 {groupText}
