@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+
+import Editor, { loader } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
+
 // @ts-ignore
 // eslint-disable-next-line import/no-extraneous-dependencies
 import merge from 'lodash/merge';
@@ -20,6 +23,8 @@ import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
 import CustomForm from '../CustomForm';
 import { Notification } from '../Notification';
+
+loader.config({ monaco });
 
 type ErrorProps = {
   error: Error;
