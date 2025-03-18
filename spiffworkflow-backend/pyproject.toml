@@ -116,7 +116,7 @@ pre-commit-hooks = "^5.0.0"
 Pygments = "^2.19.1"
 
 # type hinting stuff
-types-dateparser = "^1.2.0.20240420"
+types-dateparser = "^1.2.0.20250208"
 types-Werkzeug = "^1.0.9"
 types-PyYAML = "^6.0.12"
 types-Flask = "^1.1.6"
