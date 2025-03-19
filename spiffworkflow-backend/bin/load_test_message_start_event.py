@@ -11,7 +11,7 @@ def get_access_token(script_dir, username="admin", password="admin", realm_name=
     Get access token once
     """
     get_token_cmd = f"{script_dir}/get_token {username} {password} {realm_name}"
-    return subprocess.check_output(get_token_cmd, shell=True, text=True).strip()
+    return subprocess.check_output(get_token_cmd, shell=False, text=True).strip()
 
 
 def run_curl_command(message_identifier, access_token, backend_base_url):
@@ -23,11 +23,11 @@ def run_curl_command(message_identifier, access_token, backend_base_url):
     try:
         # Login command
         login_cmd = f"curl --silent -X POST '{backend_base_url}/v1.0/login_with_access_token?access_token={access_token}' -H 'Authorization: Bearer {access_token}' >/dev/null"
-        subprocess.run(login_cmd, shell=True, check=True)
+        subprocess.run(login_cmd, shell=False, check=True)
 
         # Message sending command
         message_cmd = f"curl --silent -X POST '{backend_base_url}/v1.0/messages/{message_identifier}?execution_mode=asynchronous' -H 'Authorization: Bearer {access_token}' -d '{{\"payload\": {{\"email\": \"HEY@example.com\"}}}}' -H 'Content-type: application/json'"
-        result = subprocess.check_output(message_cmd, shell=True, text=True)
+        result = subprocess.check_output(message_cmd, shell=False, text=True)
 
         # Check for errors
         try:
