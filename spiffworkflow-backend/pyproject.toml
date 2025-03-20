@@ -50,7 +50,7 @@ marshmallow-enum = "^1.5.1"
 PyJWT = "^2.10.1"
 APScheduler = "*"
 Jinja2 = "^3.1.5"
-RestrictedPython = "^7.4"
+RestrictedPython = "^8.0"
 Flask-SQLAlchemy = "^3"
 
 gunicorn = "^23.0.0"
