@@ -2679,14 +2679,14 @@ rsa = ["oauthlib[signedtoken] (>=2.1.0,<3.0.0)"]
 
 [[package]]
 name = "restrictedpython"
-version = "7.4"
+version = "8.0"
 description = "RestrictedPython is a defined subset of the Python language which allows to provide a program input into a trusted environment."
 optional = false
-python-versions = "<3.14,>=3.8"
+python-versions = "<3.14,>=3.9"
 groups = ["main"]
 files = [
-    {file = "RestrictedPython-7.4-py3-none-any.whl", hash = "sha256:f431c76f848f6f6d50ae21457cb503642db60889a273e4be439cf7ca4cbaf999"},
-    {file = "restrictedpython-7.4.tar.gz", hash = "sha256:81b62924713dbd280917fceaecaf210fef7a49dddf1a08c8c214a3613fbeb425"},
+    {file = "RestrictedPython-8.0-py3-none-any.whl", hash = "sha256:ed3d894efd7d6cac0a5f13f75583b8458378d400d7dd4c083b59233eba85fe69"},
+    {file = "restrictedpython-8.0.tar.gz", hash = "sha256:3af2312bc67e5fced887fb85b006c89861da72488128b155beea81eb6a0a9b24"},
 ]
 
 [package.extras]
@@ -3804,4 +3804,4 @@ boto3 = ["boto3"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "e33999f1796efb97f5662a83e0b1309fc71836754b6f4a79b8cd65af49c5eb92"
+content-hash = "d4faf83aed357ab5444dc2a756e9345e0783e0e6b8ef83778845780367a624a9"
