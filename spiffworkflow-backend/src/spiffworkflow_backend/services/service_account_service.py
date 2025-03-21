@@ -9,9 +9,15 @@ from spiffworkflow_backend.services.user_service import UserService
 
 class ServiceAccountService:
     @classmethod
-    def create_service_account(cls, name: str, service_account_creator: UserModel) -> ServiceAccountModel:
-        api_key = ServiceAccountModel.generate_api_key()
-        api_key_hash = ServiceAccountModel.hash_api_key(api_key)
+    def create_service_account(
+        cls, name: str, service_account_creator: UserModel, already_hashed_key: str | None = None
+    ) -> ServiceAccountModel:
+        if already_hashed_key:
+            api_key = already_hashed_key
+            api_key_hash = already_hashed_key
+        else:
+            api_key = ServiceAccountModel.generate_api_key()
+            api_key_hash = ServiceAccountModel.hash_api_key(api_key)
         username = ServiceAccountModel.generate_username_for_related_user(name, service_account_creator.id)
         service_account_user = UserModel(
             username=username,

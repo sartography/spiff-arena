@@ -93,3 +93,19 @@ class TestServiceAccounts(BaseTest):
         # It should be possible to delete the service account after starting a process.
         db.session.delete(service_account)
         db.session.commit()
+
+    def test_create_service_account_with_already_hashed_key(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        api_key_name = "test_hashed_key"
+        already_hashed = "already_hashed_secret"
+        service_account = ServiceAccountService.create_service_account(
+            api_key_name, with_super_admin_user, already_hashed_key=already_hashed
+        )
+        assert service_account is not None
+        assert service_account.api_key == already_hashed
+        assert service_account.api_key_hash == already_hashed
