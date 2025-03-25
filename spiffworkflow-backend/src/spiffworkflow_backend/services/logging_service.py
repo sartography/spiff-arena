@@ -61,6 +61,14 @@ class SpiffLogHandler(SocketHandler):
             return None, None
 
     def filter(self, record: Any) -> bool:
+        if (
+            record.name == "spiff.task"
+            and record.task_type
+            in ("SubWorkflowTask", "CallActivity", "StandardLoopTask", "ParallelMultiInstanceTask", "SequentialMultiInstanceTask")
+            and record.state == "READY"
+        ):
+            return False
+
         if record.name.startswith("spiff"):
             user_id, user_name = self.get_user_info()
             data = {
