@@ -19,8 +19,6 @@ Workflow Steps:
 ## Task Configuration Details
 
 ### 1. User Task: Example Manual Task
-![File Upload Process](/images/file_upload_process1.png)
-
 **Type**: User Task  
 **Purpose**: Collect a file upload from the user.  
 **UI Output**: Presents a file selection form with a "Submit" and "Save and Close" button.
@@ -69,8 +67,6 @@ The interface displays the uploaded filename, type, and size before submission.
 ![File Upload Process](/images/file_upload_process6.png)
 
 ### 2. Script Task: Generate Link to File
-![File Upload Process](/images/file_upload_process3.png)
-
 **Type**: Script Task  
 **Purpose**: Convert the uploaded file into a markdown-compatible download link.
 
@@ -90,8 +86,6 @@ link = markdown_file_download_link(file)
 - The output is stored in the process variable `link`.
 
 ### 3. Manual Task: Display Link to File
-![File Upload Process](/images/file_upload_process4png.png)
-
 **Type**: Manual Task  
 **Purpose**: Show a confirmation message to the user with a clickable link.
 
