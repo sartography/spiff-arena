@@ -94,7 +94,6 @@ from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
-from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.logging_service import LoggingService
@@ -114,6 +113,8 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskModelS
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.specs.start_event import StartEvent
 
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
@@ -414,7 +415,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task)
 
 
-IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
 SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
@@ -600,7 +600,7 @@ class ProcessInstanceProcessor:
                 )
             )
         spec_files = FileSystemService.get_files(process_model_info)
-        return cls.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
+        return WorkflowSpecService.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
 
     @classmethod
     def get_bpmn_process_instance_from_process_model(cls, process_model_identifier: str) -> BpmnWorkflow:
@@ -1384,11 +1384,6 @@ class ProcessInstanceProcessor:
         bpmn_process_instance_dict["subprocesses"] = new_subprocesses
 
     @staticmethod
-    def get_parser() -> MyCustomParser:
-        parser = MyCustomParser()
-        return parser
-
-    @staticmethod
     def backfill_missing_spec_reference_records(
         bpmn_process_identifier: str,
     ) -> str | None:
@@ -1461,56 +1456,6 @@ class ProcessInstanceProcessor:
         if new_bpmn_files:
             parser.add_bpmn_files(new_bpmn_files)
             ProcessInstanceProcessor.update_spiff_parser_with_all_process_dependency_files(parser, processed_identifiers)
-
-    @staticmethod
-    def get_spec(
-        files: list[File],
-        process_model_info: ProcessModelInfo,
-        process_id_to_run: str | None = None,
-    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
-        """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""
-        parser = ProcessInstanceProcessor.get_parser()
-
-        process_id = process_id_to_run or process_model_info.primary_process_id
-
-        for file in files:
-            data = SpecFileService.get_data(process_model_info, file.name)
-            try:
-                if file.type == FileType.bpmn.value:
-                    bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
-                    parser.add_bpmn_xml(bpmn, filename=file.name)
-                elif file.type == FileType.dmn.value:
-                    dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
-                    parser.add_dmn_xml(dmn, filename=file.name)
-            except XMLSyntaxError as xse:
-                raise ApiError(
-                    error_code="invalid_xml",
-                    message=f"'{file.name}' is not a valid xml file." + str(xse),
-                ) from xse
-        if process_id is None or process_id == "":
-            raise (
-                ApiError(
-                    error_code="no_primary_bpmn_error",
-                    message=f"There is no primary BPMN process id defined for process_model {process_model_info.id}",
-                )
-            )
-        ProcessInstanceProcessor.update_spiff_parser_with_all_process_dependency_files(parser)
-
-        try:
-            bpmn_process_spec = parser.get_spec(process_id)
-
-            # returns a dict of {process_id: bpmn_process_spec}, otherwise known as an IdToBpmnProcessSpecMapping
-            subprocesses = parser.get_subprocess_specs(process_id)
-        except ValidationException as ve:
-            raise ApiError(
-                error_code="process_instance_validation_error",
-                message="Failed to parse the Workflow Specification. " + f"Error is '{str(ve)}.'",
-                file_name=ve.file_name,
-                task_name=ve.name,
-                task_id=ve.id,
-                tag=ve.tag,
-            ) from ve
-        return (bpmn_process_spec, subprocesses)
 
     @staticmethod
     def status_of(bpmn_process_instance: BpmnWorkflow) -> ProcessInstanceStatus:
