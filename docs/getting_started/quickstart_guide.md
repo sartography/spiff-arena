@@ -74,7 +74,7 @@ This section is essential for users who want to explore what workflows are avail
 
 ---
 
-## Process Instances
+### Process Instances
 
 ![Process Instances](/images/Process_Instances.png)
 
@@ -198,6 +198,7 @@ You can create a process directly inside your playground’s **Process Models** 
 2. Click the **+ icon** to open the **Add Process Model** form.
 
 #### Fill in the required details:
+
 ![Process Model](/images/Add_Process_Model.png)
 
 - **Display Name**: Title displayed in the UI.
