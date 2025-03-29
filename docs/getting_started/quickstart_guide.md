@@ -558,8 +558,6 @@ To copy the short link:
 - **Access the Process Instance**: Open the process instance that you wish to share.
 - **Find the Short Link Icon**: Look for the link icon near the process instance heading and click on the link icon to copy the short link to your clipboard automatically. Please refer to the screenshot provided.
 
-![Short Link](/images/Short_Link.png)
-
 Now, you can paste the short link into your desired communication medium to share it with others.
 
 ---
