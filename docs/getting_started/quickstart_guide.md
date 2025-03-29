@@ -108,7 +108,7 @@ Each instance has its own set of data and state that is updated as the instance 
 
 ### Data Stores
 
-![Data Stores](/images/data_stores.png)
+![Data Stores](/images/Data_Stores.png)
 
 The **Data Stores** section enables interaction with datasets that can be used within workflows for dynamic data operations such as lookups, filtering, and decision-making.
 
