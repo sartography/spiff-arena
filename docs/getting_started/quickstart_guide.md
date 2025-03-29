@@ -198,6 +198,8 @@ You can create a process directly inside your playground’s **Process Models** 
 2. Click the **+ icon** to open the **Add Process Model** form.
 
 #### Fill in the required details:
+![new process model](/images/new_process_model.png)
+
 - **Display Name**: Title displayed in the UI.
 - **Identifier**: Unique name used for referencing the model programmatically.
 - **Description**: Optional details to describe the process purpose.
@@ -554,6 +556,8 @@ The short link feature provides a convenient way to share process instances with
 This feature is especially useful for quick sharing via email, messaging apps, or within documentation.
 
 To copy the short link:
+![shareable link](/images/shareable_link.png)
+
 
 - **Access the Process Instance**: Open the process instance that you wish to share.
 - **Find the Short Link Icon**: Look for the link icon near the process instance heading and click on the link icon to copy the short link to your clipboard automatically. Please refer to the screenshot provided.
