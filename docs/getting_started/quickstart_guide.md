@@ -198,9 +198,6 @@ You can create a process directly inside your playground’s **Process Models** 
 2. Click the **+ icon** to open the **Add Process Model** form.
 
 #### Fill in the required details:
-
-![Process Model](/images/Process_Model_Form.png)
-
 - **Display Name**: Title displayed in the UI.
 - **Identifier**: Unique name used for referencing the model programmatically.
 - **Description**: Optional details to describe the process purpose.
