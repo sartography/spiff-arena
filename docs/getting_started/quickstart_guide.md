@@ -199,7 +199,7 @@ You can create a process directly inside your playground’s **Process Models** 
 
 #### Fill in the required details:
 
-![Process Model](/images/Add_Process_Model.png)
+![Process Model](/images/Process_Model_Form.png)
 
 - **Display Name**: Title displayed in the UI.
 - **Identifier**: Unique name used for referencing the model programmatically.
