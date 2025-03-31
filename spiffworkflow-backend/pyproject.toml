@@ -62,7 +62,7 @@ gunicorn = "^23.0.0"
 # sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
-simplejson = "^3.19.3"
+simplejson = "^3.20.1"
 pytz = "^2025.1"
 dateparser = "^1.2.0"
 cryptography = "^44.0"
