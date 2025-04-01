@@ -608,7 +608,16 @@ def _create_or_update_process_model_file(
     if is_new_file and file.name.endswith(".bpmn"):
         DataSetupService.save_all_process_models()
 
+    return make_response(jsonify(file), http_status_to_return)
+
+
+def process_model_specs(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+
     files = ProcessModelService.get_process_model_files(process_model)
     WorkflowSpecService.get_spec(files, process_model)
+    
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
-    return make_response(jsonify(file), http_status_to_return)
