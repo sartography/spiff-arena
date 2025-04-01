@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_model_test_generator_service import 
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
 
 def process_model_create(
@@ -606,5 +607,7 @@ def _create_or_update_process_model_file(
 
     if is_new_file and file.name.endswith(".bpmn"):
         DataSetupService.save_all_process_models()
+
+    WorkflowSpecService.get_spec(process_model.files, process_model)
 
     return make_response(jsonify(file), http_status_to_return)
