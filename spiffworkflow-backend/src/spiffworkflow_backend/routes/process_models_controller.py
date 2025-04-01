@@ -608,6 +608,7 @@ def _create_or_update_process_model_file(
     if is_new_file and file.name.endswith(".bpmn"):
         DataSetupService.save_all_process_models()
 
-    WorkflowSpecService.get_spec(process_model.files, process_model)
+    files = ProcessModelService.get_process_model_files(process_model)
+    WorkflowSpecService.get_spec(files, process_model)
 
     return make_response(jsonify(file), http_status_to_return)
