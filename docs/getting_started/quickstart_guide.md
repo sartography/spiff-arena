@@ -533,7 +533,7 @@ The chef's process starts by listening for the order message, preparing the meal
 One of the complexities in BPMN messaging is ensuring that the right processes are communicating with each other, especially when multiple instances are running.
 This is achieved using correlation keys and properties.
 
-![correlation](/images/Corelation.png)
+![correlation](/images/Correlation.png)
 
 - **Correlation Keys**: These represent the topic of the conversation.
 In the given example, the correlation key is the "order".
