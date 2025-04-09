@@ -226,7 +226,7 @@ If you want to use process groups, you can first create a process group and with
 ![Process Group](/images/Add_Process_Group.png)
 
 
-The group will now be listed under Process Groups in your playground. Now perform the step 2 to create a newprocess model.
+The group will now be listed under Process Groups in your playground. Now perform the step 2 to create a new process model.
 
 ### Step 4: View and Manage the Process Model
 
@@ -286,7 +286,7 @@ To view a specific process instance:
 ![Process Diagram](/images/Diagram_Process_Instance.png)
 
 1. Find your process in the list (you can filter or search if needed).
-2. Next to **Action** column, click the **link icon**. This will open a detailed view of the process instance.
+2. In the **Action** column, click the **link icon**. This will open a detailed view of the process instance.
   
 
 ### Step 3: View the Process Diagram and Current Step
@@ -355,15 +355,15 @@ Once you have clicked on the process you want to view, a list of the model files
 
 By following these simple steps, you can easily view process model files in SpiffWorkflow.
 
-If you want to view or create information on specific process models, we allow you to create an about section.
+If you want to view or create information on specific process models, we allow you to create an 'About' section.
 
 ![About](/images/About_section.png)
 
-If you are creating a model, you can add information in the about section.
+If you are creating a model, you can add information in the 'About' section.
 We have integrated Markdown support, enabling you to create rich, formatted descriptions for your process models directly within the platform.
-In order to use this feature, simply create a **README File** inside the process model called README.md and document the model, so everyone can be on the same page.
+In order to use this feature, simply create a README file inside the process model called `README.md` and document the model, so everyone can be on the same page.
 
-Furthermore, to check the process instances you started, you can also switch to the "My process instance" tab.
+Furthermore, to check the process instances you started, you can also switch to the 'My process instances' tab.
 ![my process instance](/images/my_process_instance.png)
 
 ---
@@ -392,7 +392,7 @@ By clicking on the filter icon, you'll be taken to a full-screen process view.
 
 To filter the list, click on the "Filter" option.
 This will expand the filter section where you will be able to provide details about the process instance.
-This allows you to enter various details, including the process model, start date, end date, and time.
+This allows you to enter various details, including the process model, start date, end date, and status.
 To refine your search, you can enter multiple filter parameters.
 
 ![Filter](/images/Filter_2.png)
@@ -403,16 +403,16 @@ Once you have entered all the relevant filter details, click on the "**Apply**" 
 The system will then display all the process instances matching the input details.
 
 ![Untitled](/images/Untitled_21.png)
-To filter process instances by **process-defined metadata**, follow these steps:
-- Search for the specific **process** you want to filter and click on the column option to select metadata options.
+To filter process instances by **process-defined metadata**, first ensure the metadata field is displayed as a column:
+- Search for the specific **process** you want to filter by and click on the **Columns** button to select metadata options.
 ![Untitled](/images/Untitled_22.png)
 - The metadata fields will be displayed in the dropdown.
-Select the field you want to display and click on "**Save**" to apply the changes.
+Select the desired metadata field from the dropdown and click **Save**.
 
 ![Untitled](/images/Untitled_23.png)
 
-- After saving the details, the newly created column will be displayed.
-Finally, click on the “**Apply**” button to reflect the changes.
+- After saving, the new column will be displayed. You can now use the filter controls for this column.
+Click the main **Apply** button to apply all filters.
 
 ![Filter](/images/Filter_3.png)
 
@@ -422,9 +422,9 @@ If you wish to save the perspectives, click on the "**Save**" button.
 
 ![Untitled](/images/Untitled_25.png)
 
-A prompt will appear, allowing you to provide a name for the identifier associated with the saved filter.
-Enter a descriptive name for the filter identifier and “**Save**” changes.
-Now you can search for specific processes using Process Instance Perspectives.
+A prompt will appear, allowing you to provide a name for the perspective.
+Enter a descriptive name for the perspective and click **Save**.
+Now you can load this perspective later using the dropdown.
 
 ![Untitled](/images/Untitled_26.png)
 
@@ -481,8 +481,8 @@ It provides a high-level overview of the progress made in the process.
 
 ![Milestones](/images/Milestones.png)
 
-In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, start, or end) but give it a name, it becomes a milestone.
-Essentially, a milestone is an event that hasn't been set to something specific.
+In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, timer, or conditional) but give it a name, it becomes a milestone.
+Essentially, a milestone is a named, untyped intermediate throw event.
 
 ### Events
 
@@ -491,7 +491,7 @@ They record every task and its execution time.
 
 ![Events](/images/Events1.png)
 
-The events tab provides a detailed log of all the tasks and their execution times.
+The 'Events' tab provides a detailed log of all the tasks and their execution times.
 It can be noisy due to the granularity of the information, but it's essential for understanding the intricacies of the process.
 
 ---
@@ -569,7 +569,7 @@ Now, you can paste the short link into your desired communication medium to shar
 
 To access and review completed user forms within a specific process model, follow these guidelines:
 
-1. **Find the Tasks Tab in Process Instance**: Begin by going to the process instance and scrolling to locate the 'Tasks' tab. This area displays all user forms connected to the process.
+1. **Find the 'Tasks' tab in the Process Instance view**: Begin by going to the process instance and scrolling to locate the 'Tasks' tab. This area displays all user forms connected to the process.
 
 2. **Examine Completed Forms**:
    - **Forms You Completed**: In this section, you can view the forms that you have completed.
@@ -586,7 +586,7 @@ This approach ensures you can monitor and review the progress of user forms with
 ---
 ## How to View Task Instance History
 
-Monitoring the history of task instances is helpful for tracking the progress and execution details of a workflow.
+Monitoring the history of task instances is useful for tracking the progress and execution details of a workflow.
 This guide provides a step-by-step approach to access and understand the task instance history, including the interpretation of task statuses.
 
 ### Steps to Access Task Instance History
