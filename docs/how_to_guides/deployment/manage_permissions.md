@@ -174,7 +174,7 @@ The new Process Groups tile will be available under the Process Groups view.
 
 Make sure to accurately fill in all the required fields in the Process Model form to ensure proper configuration and functionality.
 
-![add_process_model](/images/add_process_model.png)
+![add_process_model](/images/1736024102_add_process_model.png)
 
 ### Step 3: Upload Workflows
 

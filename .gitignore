@@ -13,3 +13,4 @@ process_models
 .mypy_cache
 .aider*
 /spiffworkflow_docker_compose
+.DS_Store
