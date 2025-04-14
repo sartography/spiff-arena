@@ -282,6 +282,18 @@ export default function ProcessModelEditDiagram() {
     setProcessModelFileInvalidText('');
   };
 
+  const getProcessModelSpecs = () => {
+    let httpMethod = 'GET';
+    let path = `/process-models/${modifiedProcessModelId}/specs`;
+
+    HttpService.makeCallToBackend({
+      path,
+      httpMethod,
+      failureCallback: addError,
+      successCallback: (result: any) => {},
+    });
+  };
+
   const navigateToProcessModelFile = (file: ProcessFile) => {
     setDisplaySaveFileMessage(true);
     if (file.file_contents_hash) {
@@ -294,6 +306,8 @@ export default function ProcessModelEditDiagram() {
       navigate(
         `/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`,
       );
+    } else {
+      getProcessModelSpecs();
     }
   };
 
