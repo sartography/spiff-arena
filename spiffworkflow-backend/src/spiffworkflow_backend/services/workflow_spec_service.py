@@ -1,6 +1,9 @@
 import os
 from typing import NewType
 
+from flask import current_app
+from lxml import etree  # type: ignore
+from lxml.etree import XMLSyntaxError  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
@@ -16,6 +19,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
+
 
 class WorkflowSpecService:
     @classmethod
@@ -91,9 +95,7 @@ class WorkflowSpecService:
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
                 continue
 
-            new_bpmn_file_full_path = cls.bpmn_file_full_path_from_bpmn_process_identifier(
-                bpmn_process_identifier
-            )
+            new_bpmn_file_full_path = cls.bpmn_file_full_path_from_bpmn_process_identifier(bpmn_process_identifier)
             new_bpmn_files.add(new_bpmn_file_full_path)
             dmn_file_glob = os.path.join(os.path.dirname(new_bpmn_file_full_path), "*.dmn")
             parser.add_dmn_files_by_glob(dmn_file_glob)

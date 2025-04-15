@@ -621,4 +621,3 @@ def process_model_specs(
     WorkflowSpecService.get_spec(files, process_model)
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
