@@ -151,7 +151,7 @@ class ProcessInstanceService:
                 f"Failed to get the current git revision when attempting to create a process instance"
                 f" ({process_instance_model.id}) for process_model: '{process_model.id}'. Error was {str(git_revision_error)}"
             )
-            current_app.logger.warn(message)
+            current_app.logger.warning(message)
 
         if start_configuration is None:
             start_configuration = cls.next_start_event_configuration(process_instance_model)
@@ -729,7 +729,7 @@ class ProcessInstanceService:
             tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
             JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
         elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
-            with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+            with sentry_sdk.start_span(op="task", name="backend_do_engine_steps"):
                 execution_strategy_name = None
                 if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                     execution_strategy_name = "greedy"

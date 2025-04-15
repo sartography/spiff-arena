@@ -123,7 +123,7 @@ class SecretService:
             if spiff_secret_match is not None:
                 spiff_variable_name = spiff_secret_match.group("variable_name")
                 secret = cls.get_secret(spiff_variable_name)
-                with sentry_sdk.start_span(op="task", description="decrypt_secret"):
+                with sentry_sdk.start_span(op="task", name="decrypt_secret"):
                     decrypted_value = cls._decrypt(secret.value)
                     return re.sub(r"\bSPIFF_SECRET:\w+", decrypted_value, value)
         return value

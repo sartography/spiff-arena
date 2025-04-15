@@ -19,7 +19,7 @@ class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
     locked_at_in_seconds: int | None = db.Column(db.Integer, index=True, nullable=True)
     status: str = db.Column(db.String(50), index=True)
 
-    process_instance = relationship(ProcessInstanceModel)
+    process_instance = relationship(ProcessInstanceModel, overlaps="process_instance_queue")  # type: ignore
 
     # for timers. right now the apscheduler jobs without celery check for waiting process instances.
     # if the instance's run_at_in_seconds is now or earlier, the instance will run.
