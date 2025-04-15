@@ -537,7 +537,7 @@ def _task_submit_shared(
         only_tasks_that_can_be_completed=True,
     )
 
-    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+    with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
             ProcessInstanceService.complete_form_task(
                 processor=processor,
