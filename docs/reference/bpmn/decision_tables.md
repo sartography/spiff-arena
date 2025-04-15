@@ -71,19 +71,10 @@ You want to calculate the **total cost** of a sandwich based on:
 Each component adds a specific amount to the total cost. The table should allow multiple matches and sum up all the applicable values.
 
 ### Step 1: Create a New DMN File
-
-1. Navigate to your process model in SpiffWorkflow.
-2. Click on **Add File** > **New DMN File**.
-3. Open the file to begin editing the decision table.
-
+Navigate to your process model in SpiffWorkflow. Click on **Add File** > **New DMN File**. Open the file to begin editing the decision table.
 
 ### Step 2: Define the DMN Table
-
-#### Table Name
-Set the table name as `Sandwich Cost`.
-
-#### Hit Policy
-Choose `Collect (Sum)` to sum all matching rows' `cost_components`.
+Set the table name as `Sandwich Cost`. Choose `Collect (Sum)` to sum all matching rows' `cost_components`.
 
 ### Step 3: Add Decision Logic
 
@@ -97,11 +88,11 @@ Add a single output column:
 
 While using the editor, many users may enter **“OR”-style logic** like this:
 
-```plaintext
+```
 "chicken", "turkey"
 ```
 or
-```plaintext
+```
 "chicken" | "turkey"
 ```
 ![](/images/DMN_example.png)
