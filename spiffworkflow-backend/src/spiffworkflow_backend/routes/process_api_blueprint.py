@@ -56,6 +56,7 @@ from spiffworkflow_backend.services.reference_cache_service import ReferenceCach
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -688,7 +689,7 @@ def _get_task_model_for_request(
         all_processes = [i.identifier for i in refs]
         if task_process_identifier not in all_processes:
             top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
-            bpmn_file_full_path = ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+            bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
                 top_bpmn_process.bpmn_process_definition.bpmn_identifier
             )
             relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
