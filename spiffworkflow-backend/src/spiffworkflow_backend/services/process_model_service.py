@@ -258,7 +258,7 @@ class ProcessModelService(FileSystemService):
             process_model = cls.get_process_model_from_path(file)
 
             if include_files:
-                process_model.files = get_process_model_files(process_model)
+                process_model.files = cls.get_process_model_files(process_model)
             process_models.append(process_model)
         process_models.sort()
         return process_models
