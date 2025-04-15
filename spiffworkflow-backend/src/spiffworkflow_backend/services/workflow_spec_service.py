@@ -1,6 +1,9 @@
 import os
-
 from typing import NewType
+
+from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.file import File
@@ -11,10 +14,6 @@ from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 
 IdToBpmnProcessSpecMapping = NewType("IdToBpmnProcessSpecMapping", dict[str, BpmnProcessSpec])
 

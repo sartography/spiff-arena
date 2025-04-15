@@ -23,12 +23,9 @@ from uuid import uuid4
 import dateparser
 import pytz
 from flask import current_app
-from lxml import etree  # type: ignore
-from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
 from SpiffWorkflow.bpmn.script_engine import TaskDataEnvironment
@@ -40,7 +37,6 @@ from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
@@ -73,8 +69,6 @@ from spiffworkflow_backend.models.bpmn_process_definition_relationship import Bp
 
 # noqa: F401
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.file import File
-from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -86,8 +80,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
@@ -102,7 +94,6 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import CustomServiceTask
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
@@ -113,8 +104,8 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskModelS
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
-from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 from spiffworkflow_backend.specs.start_event import StartEvent
 
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter

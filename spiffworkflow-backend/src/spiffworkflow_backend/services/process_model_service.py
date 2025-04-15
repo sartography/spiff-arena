@@ -231,7 +231,7 @@ class ProcessModelService(FileSystemService):
             file_contents = FileSystemService.get_data(process_model, f.name)
             f.file_contents = file_contents
         return files
-    
+
     @classmethod
     def get_process_models(
         cls,

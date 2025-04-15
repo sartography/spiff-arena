@@ -283,14 +283,14 @@ export default function ProcessModelEditDiagram() {
   };
 
   const getProcessModelSpecs = () => {
-    let httpMethod = 'GET';
-    let path = `/process-models/${modifiedProcessModelId}/specs`;
+    const httpMethod = 'GET';
+    const path = `/process-models/${modifiedProcessModelId}/specs`;
 
     HttpService.makeCallToBackend({
       path,
       httpMethod,
       failureCallback: addError,
-      successCallback: (result: any) => {},
+      successCallback: (_result: any) => {},
     });
   };
 
