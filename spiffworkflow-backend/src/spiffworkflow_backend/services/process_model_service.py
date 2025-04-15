@@ -13,6 +13,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
+from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -224,6 +225,14 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     @classmethod
+    def get_process_model_files(cls, process_model: ProcessModelInfo) -> list[File]:
+        files = FileSystemService.get_sorted_files(process_model)
+        for f in files:
+            file_contents = FileSystemService.get_data(process_model, f.name)
+            f.file_contents = file_contents
+        return files
+
+    @classmethod
     def get_process_models(
         cls,
         process_group_id: str | None = None,
@@ -249,11 +258,7 @@ class ProcessModelService(FileSystemService):
             process_model = cls.get_process_model_from_path(file)
 
             if include_files:
-                files = FileSystemService.get_sorted_files(process_model)
-                for f in files:
-                    file_contents = FileSystemService.get_data(process_model, f.name)
-                    f.file_contents = file_contents
-                process_model.files = files
+                process_model.files = cls.get_process_model_files(process_model)
             process_models.append(process_model)
         process_models.sort()
         return process_models

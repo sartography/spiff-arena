@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_model_test_generator_service import 
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import ProcessModelFileInvalidError
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
 
 def process_model_create(
@@ -608,3 +609,15 @@ def _create_or_update_process_model_file(
         DataSetupService.save_all_process_models()
 
     return make_response(jsonify(file), http_status_to_return)
+
+
+def process_model_specs(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+
+    files = ProcessModelService.get_process_model_files(process_model)
+    WorkflowSpecService.get_spec(files, process_model)
+
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")

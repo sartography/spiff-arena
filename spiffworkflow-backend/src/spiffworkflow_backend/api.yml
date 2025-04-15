@@ -1691,6 +1691,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /process-models/{modified_process_model_identifier}/specs:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_specs
+      summary: Returns process model specs
+      tags:
+        - Process Model Specs
+      responses:
+        "200":
+          description: Returns the spec requested.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
       - name: modified_process_model_identifier
