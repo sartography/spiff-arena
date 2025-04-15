@@ -39,7 +39,6 @@ This policy is useful when you want to prioritize the order of rules.
 This policy allows for gathering multiple results.
 
 ## Using Numeric Ranges in DMN Tables for BPMN Workflows
-
 In BPMN workflows that utilize DMN tables to make decisions based on numerical data, it is crucial to use the correct syntax for specifying numeric ranges. 
 
 The recommended syntax for defining numeric ranges in a DMN table is shown in the example. It is straightforward and ensures that the DMN engine evaluates the conditions correctly without errors.
@@ -53,10 +52,6 @@ Expression for Range:
 - For values from 10 to 12 inclusive: 10 <= ? <= 12
 
 These expressions set up the conditions in a way that the DMN engine can clearly understand and process, ensuring that the workflow behaves as expected based on the input values.
-
-
-Got it! Here's a **refactored version** of the documentation written as a **use case-driven example** for using DMN tables in SpiffWorkflow, focusing on how to calculate sandwich cost using conditional logic.
-
 ---
 
 ## Calculating Sandwich Cost Using a DMN Table
