@@ -39,7 +39,6 @@ This policy is useful when you want to prioritize the order of rules.
 This policy allows for gathering multiple results.
 
 ## Using Numeric Ranges in DMN Tables for BPMN Workflows
-
 In BPMN workflows that utilize DMN tables to make decisions based on numerical data, it is crucial to use the correct syntax for specifying numeric ranges. 
 
 The recommended syntax for defining numeric ranges in a DMN table is shown in the example. It is straightforward and ensures that the DMN engine evaluates the conditions correctly without errors.
@@ -53,6 +52,74 @@ Expression for Range:
 - For values from 10 to 12 inclusive: 10 <= ? <= 12
 
 These expressions set up the conditions in a way that the DMN engine can clearly understand and process, ensuring that the workflow behaves as expected based on the input values.
+---
 
+## Calculating Sandwich Cost Using a DMN Table
+
+DMN (Decision Model and Notation) tables in SpiffWorkflow are ideal for modeling rule-based decisions like pricing, approvals, and conditional flows. In this example, we’ll walk through creating a **sandwich cost calculator** using a DMN table, where different ingredients contribute to the total cost.
+
+You want to calculate the **total cost** of a sandwich based on:
+- Whether it has cheese
+- The type of bread
+- The selected meat
+
+Each component adds a specific amount to the total cost. The table should allow multiple matches and sum up all the applicable values.
+
+### Step 1: Create a New DMN File
+Navigate to your process model in SpiffWorkflow. Click on **Add File** > **New DMN File**. Open the file to begin editing the decision table.
+
+### Step 2: Define the DMN Table
+Set the table name as `Sandwich Cost`. Choose `Collect (Sum)` to sum all matching rows' `cost_components`.
+
+### Step 3: Add Decision Logic
+
+Your decision table should have the following input columns:
+- **cheese** (`boolean`)
+- **bread** (`"white"`, `"wholemeal"`, `"multigrain"`)
+- **meat** (`"chicken"`, `"beef"`, `"pork"`, `"turkey"`)
+
+Add a single output column:
+- **cost_components** (`number`)
+
+While using the editor, many users may enter **“OR”-style logic** like this:
+
+```
+"chicken", "turkey"
+```
+or
+```
+"chicken" | "turkey"
+```
+![](/images/DMN_example.png)
+
+These seem intuitive but **result in syntax errors**, as seen in the screenshot. Even when selected using the UI’s dropdown, the editor does **not recognize these as valid expressions**, and the process will fail to match the expected inputs during runtime.
+
+To correctly express that a value can match one of several options, use the Python `in` expression with a list:
+
+```python
+ in ["chicken", "turkey"]
+```
+
+```{admonition} Important
+:class: info
+
+You must include a **space before the `in` keyword**. If you write `in[...]` without a space, the parser will throw a syntax error.
+```
+
+### Step 4: Evaluate the Table
+
+Let’s say the sandwich has:
+- Cheese: `True`
+- Bread: `"multigrain"`
+- Meat: `"turkey"`
+
+The rules that will match are:
+- Row 1 (cheese = True): `+1.0`
+- Row 2 (meat in chicken or turkey): `+2.0`
+- Row 7 (bread = multigrain): `+0.33`
+
+**Total cost = 1.0 + 2.0 + 0.33 = 3.33**
+
+The Collect (Sum) policy enables cumulative logic.
 ```{tags} reference, building_diagrams
 ```
