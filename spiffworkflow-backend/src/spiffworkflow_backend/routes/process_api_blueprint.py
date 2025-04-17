@@ -756,7 +756,7 @@ def _get_task_model_for_request(
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict) -> None:
     for k, value in in_dict.items():
-        if "anyOf" == k:
+        if k in {"anyOf", "items"}:
             # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
             if isinstance(value, list):
                 if len(value) == 1:
@@ -815,6 +815,8 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict)
                                     )
 
                                     in_dict[k] = options_for_react_json_schema_form
+                                else:
+                                    in_dict[k] = select_options_from_task_data
         elif isinstance(value, dict):
             _update_form_schema_with_task_data_as_needed(value, task_data)
         elif isinstance(value, list):
