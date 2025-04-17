@@ -1,0 +1,18 @@
+{
+    "server_error_title": "Server Error",
+    "server_error_message": "We apologize, but our service is temporarily unavailable due to technical difficulties. Please wait while we work to resolve the issue. If the problem persists, contact the site administrator.",
+    "home": "Home",
+    "processes": "Processes",
+    "process_instances": "Process Instances",
+    "data_stores": "Data Stores",
+    "messages": "Messages",
+    "configuration": "Configuration",
+    "expand_navigation": "Expand navigation",
+    "collapse_navigation": "Collapse navigation",
+    "user_actions": "User Actions",
+    "toggle_dark_mode": "Toggle dark mode",
+    "environment": "Environment",
+    "sign_out": "Sign out",
+    "about": "About",
+    "documentation": "Documentation"
+}

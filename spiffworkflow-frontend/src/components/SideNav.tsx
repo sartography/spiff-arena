@@ -49,6 +49,7 @@ import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, NavItem } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -88,6 +89,8 @@ function SideNav({
 
   const location = useLocation();
 
+  const { t } = useTranslation();
+
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.authenticationListPath]: ['GET'],
@@ -122,7 +125,7 @@ function SideNav({
   if (Object.keys(versionInfo).length) {
     aboutLinkElement = (
       <MuiLink component={Link} to="/about">
-        About
+        {t('about')}
       </MuiLink>
     );
   }
@@ -161,52 +164,52 @@ function SideNav({
   }, []);
 
   const collapseOrExpandIcon = isCollapsed ? (
-    <SpiffTooltip title="Expand navigation" placement="right">
+    <SpiffTooltip title={t('expand_navigation')} placement="right">
       <ChevronRight data-testid="expand-primary-nav" />
     </SpiffTooltip>
   ) : (
-    <SpiffTooltip title="Collapse navigation" placement="bottom">
+    <SpiffTooltip title={t('collapse_navigation')} placement="bottom">
       <ChevronLeft data-testid="collapse-primary-nav" />
     </SpiffTooltip>
   );
 
   const navItems: NavItem[] = [
     {
-      text: 'HOME',
+      text: t('home'),
       icon: <Home />,
       route: '/',
       id: routeIdentifiers.HOME,
     },
     {
-      text: 'PROCESSES',
+      text: t('processes'),
       icon: <Schema />,
       route: '/process-groups',
       id: routeIdentifiers.PROCESSES,
       permissionRoutes: [targetUris.processGroupListPath],
     },
     {
-      text: 'PROCESS INSTANCES',
+      text: t('process_instances'),
       icon: <Timeline />,
       route: '/process-instances',
       id: routeIdentifiers.PROCESS_INSTANCES,
       permissionRoutes: [targetUris.processInstanceListForMePath],
     },
     {
-      text: 'DATA STORES',
+      text: t('data_stores'),
       icon: <Storage />,
       route: '/data-stores',
       id: routeIdentifiers.DATA_STORES,
       permissionRoutes: [targetUris.dataStoreListPath],
     },
     {
-      text: 'MESSAGES',
+      text: t('messages'),
       icon: <Markunread />,
       route: '/messages',
       id: routeIdentifiers.MESSAGES,
       permissionRoutes: [targetUris.messageInstanceListPath],
     },
     {
-      text: 'CONFIGURATION',
+      text: t('configuration'),
       icon: <SettingsApplicationsSharp />,
       route: '/configuration',
       id: routeIdentifiers.CONFIGURATION,
@@ -215,7 +218,7 @@ function SideNav({
         targetUris.authenticationListPath,
       ],
     },
-  ];
+  ];  
 
   const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
@@ -403,11 +406,11 @@ function SideNav({
             }}
           >
             <SpiffTooltip
-              title="User Actions"
+              title={t('user_actions')}
               placement={isCollapsed ? 'right' : 'top'}
             >
               <IconButton
-                aria-label="User Actions"
+                aria-label={t('user_actions')}
                 onClick={handlePersonIconClick}
                 className="person-icon"
               >
@@ -416,7 +419,7 @@ function SideNav({
             </SpiffTooltip>
             {DARK_MODE_ENABLED ? (
               <SpiffTooltip
-                title="Toggle dark mode"
+                title={t('toggle_dark_mode')}
                 placement={isCollapsed ? 'right' : 'top'}
               >
                 <IconButton onClick={onToggleDarkMode}>
@@ -426,7 +429,7 @@ function SideNav({
             ) : null}
             {SPIFF_ENVIRONMENT && (
               <SpiffTooltip
-                title="Environment"
+                title={t('environment')} 
                 placement={isCollapsed ? 'right' : 'top'}
               >
                 {/* Use a Box to wrap the Chip and vertically align it */}
@@ -472,7 +475,7 @@ function SideNav({
               target="_blank"
               rel="noreferrer"
             >
-              Documentation
+              {t('documentation')}
             </MuiLink>
             <ExtensionUxElementForDisplay
               displayLocation="user_profile_item"
@@ -493,7 +496,7 @@ function SideNav({
                   }}
                 >
                   <Logout />
-                  &nbsp;&nbsp;Sign out
+                  &nbsp;&nbsp;{t('sign_out')}
                 </MuiLink>
               </>
             )}
