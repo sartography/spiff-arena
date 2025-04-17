@@ -28,7 +28,7 @@ flask-restful = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 # SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
-sentry-sdk = {extras = ['flask'], version = "^2.25"}
+sentry-sdk = {extras = ['flask'], version = "^2.26"}
 # sphinx-autoapi = "^2.0"
 psycopg2 = "^2.9.10"
 typing-extensions = "^4.12.2"
