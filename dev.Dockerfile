@@ -1,4 +1,4 @@
-FROM python:3.12.1-slim-bookworm
+FROM python:3.13.3-slim-bookworm
 
 ARG USER_ID
 ARG USER_NAME
@@ -18,4 +18,4 @@ RUN adduser --uid $USER_ID --gid $GROUP_ID $USER_NAME
 RUN git config --global --add safe.directory *
 
 RUN pip install --upgrade pip
-RUN pip install poetry==1.8.1
+RUN pip install poetry==2.1.1

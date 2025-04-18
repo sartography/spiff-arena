@@ -13,13 +13,11 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+python = ">=3.11,<3.14"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+git-debranch = "^0.1.9"
 pre-commit = "^3.7.1"
 pre-commit-hooks = "^4.6.0"
 ruff = "^0.8.2"
-
-[tool.poetry.group.dev.dependencies]
 tomli = "^2.0.1"
-git-debranch = "^0.1.9"
