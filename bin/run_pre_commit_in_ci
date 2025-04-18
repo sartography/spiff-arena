@@ -7,4 +7,4 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-poetry run pre-commit run --verbose --all-files
+uv run pre-commit run --verbose --all-files

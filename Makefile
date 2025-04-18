@@ -48,7 +48,7 @@ build-images:
 		--build-arg GROUP_NAME=$(GROUP_NAME) \
 		$(JUST)
 
-dev-env: stop-dev build-images poetry-i cp-poetry-i be-poetry-i be-db-clean fe-npm-i
+dev-env: stop-dev build-images uv-sync cp-poetry-i be-poetry-i be-db-clean fe-npm-i
 	@true
 
 start-dev: stop-dev
@@ -134,25 +134,19 @@ fe-sh:
 fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
-git-debranch:
-	$(IN_ARENA) poetry run git-debranch
+uv-sync:
+	$(IN_ARENA) uv sync
 
-git-debranch-offline:
-	$(IN_ARENA) poetry run git-debranch --offline
-
-poetry-i:
-	$(IN_ARENA) poetry install --no-root
-
-poetry-rm:
+venv-rm:
 	@if [ -d ".venv" ]; then \
 		rm -rf ".venv"; \
 	fi
 
 pre-commit:
-	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
+	$(IN_ARENA) uv run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) poetry run ruff check --fix spiffworkflow-backend
+	$(IN_ARENA) uv run ruff check --fix spiffworkflow-backend
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@true
@@ -169,6 +163,5 @@ take-ownership:
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
-	git-debranch git-debranch-offline \
-	poetry-i poetry-rm pre-commit ruff run-pyl \
+	uv-sync venv-rm pre-commit ruff run-pyl \
 	take-ownership
