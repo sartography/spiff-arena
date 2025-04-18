@@ -1,0 +1,18 @@
+{
+    "server_error_title": "Erro no Servidor",
+    "server_error_message": "Pedimos desculpas, mas nosso serviço está temporariamente indisponível devido a dificuldades técnicas. Por favor, aguarde enquanto trabalhamos para resolver o problema. Se o problema persistir, entre em contato com o administrador do site.",
+    "home": "Início",
+    "processes": "Processos",
+    "process_instances": "Instâncias de Processo",
+    "data_stores": "Armazenamento de Dados",
+    "messages": "Mensagens",
+    "configuration": "Configurações",
+    "expand_navigation": "Expandir navegação",
+    "collapse_navigation": "Recolher navegação",
+    "user_actions": "Ações do usuário",
+    "toggle_dark_mode": "Alternar modo escuro",
+    "environment": "Ambiente",
+    "sign_out": "Sair",
+    "about": "Sobre",
+    "documentation": "Documentação"
+}
