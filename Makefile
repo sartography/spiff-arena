@@ -137,7 +137,7 @@ fe-unimported:
 uv-sync:
 	$(IN_ARENA) uv sync
 
-poetry-rm:
+venv-rm:
 	@if [ -d ".venv" ]; then \
 		rm -rf ".venv"; \
 	fi
@@ -163,5 +163,5 @@ take-ownership:
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
-	uv-sync poetry-rm pre-commit ruff run-pyl \
+	uv-sync venv-rm pre-commit ruff run-pyl \
 	take-ownership
