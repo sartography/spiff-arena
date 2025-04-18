@@ -163,5 +163,5 @@ take-ownership:
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
-	poetry-i poetry-rm pre-commit ruff run-pyl \
+	uv-sync poetry-rm pre-commit ruff run-pyl \
 	take-ownership
