@@ -48,7 +48,7 @@ build-images:
 		--build-arg GROUP_NAME=$(GROUP_NAME) \
 		$(JUST)
 
-dev-env: stop-dev build-images uv-sync cp-poetry-i be-poetry-i be-db-clean fe-npm-i
+dev-env: stop-dev build-images uv-sync cp-poetry-i be-uv-sync be-db-clean fe-npm-i
 	@true
 
 start-dev: stop-dev
@@ -72,8 +72,8 @@ be-logs:
 be-mypy:
 	$(IN_BACKEND) poetry run mypy src tests
 
-be-poetry-i:
-	$(IN_BACKEND) poetry install
+be-uv-sync:
+	$(IN_BACKEND) uv sync
 
 be-poetry-lock:
 	$(IN_BACKEND) poetry lock --no-update
@@ -159,7 +159,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
+	be-clear-log-file be-logs be-mypy be-uv-sync be-poetry-lock be-poetry-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
