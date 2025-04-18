@@ -69,7 +69,7 @@ cryptography = "^44.0"
 prometheus-flask-exporter = "^0.23.1"
 
 sqlalchemy = "^2.0.31"
-marshmallow-sqlalchemy = "^1.4.1"
+marshmallow-sqlalchemy = "^1.4.2"
 
 # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
 # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
