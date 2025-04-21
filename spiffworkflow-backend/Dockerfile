@@ -46,7 +46,7 @@ RUN useradd _gunicorn --no-create-home --user-group
 # default-libmysqlclient-dev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
-  && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
+  && apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 COPY . /app
 RUN uv sync --no-dev
