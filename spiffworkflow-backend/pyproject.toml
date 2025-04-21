@@ -6,30 +6,14 @@ description = "Spiffworkflow Backend"
 #authors = ["Sartography <sartography@users.noreply.github.com>"]
 license = "LGPL-2.1"
 readme = "README.rst"
-homepage = "https://spiffworkflow.org"
-repository = "https://github.com/sartography/spiff-arena"
-documentation = "https://spiff-arena.readthedocs.io"
+# TODO
+#homepage = "https://spiffworkflow.org"
+#repository = "https://github.com/sartography/spiff-arena"
+#documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
 ]
 requires-python = ">=3.10,<3.13"
-
-# TODO
-#[build-system]
-#requires = ["setuptools"]
-#build-backend = "setuptools.build_meta"
-package = true
-
-# TODO
-#[tool.poetry.urls]
-#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
-
-[project.scripts]
-spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
-
-# TODO
-#[tool.poetry.extras]
-#boto3 = ["boto3"]
 
 dependencies = [
     "flask == 2.2.5",
@@ -103,7 +87,6 @@ dependencies = [
     "security >= 1.3.1,<1.4",
 ]
 
-
 [dependency-groups]
 dev = [
     "coverage[toml] >= 7.7,<8",
@@ -135,6 +118,26 @@ SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", branch =
 spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", branch = "main" }
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", branch = "scoped-session-delete" }
 
+[tool.uv]
+package = true
+
+
+# TODO
+#[build-system]
+#requires = ["setuptools"]
+#build-backend = "setuptools.build_meta"
+
+# TODO
+#[tool.poetry.urls]
+#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
+
+[project.scripts]
+spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
+
+# TODO
+#[tool.poetry.extras]
+#boto3 = ["boto3"]
+
 
 [tool.pytest.ini_options]
 # ignore deprecation warnings from various packages that we don't control
@@ -162,7 +165,7 @@ filterwarnings = [
     # dateutil/tz/tz.py:37
     'ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated:DeprecationWarning',
 ]
-#addotps = ["--import-mode=importlib"]
+addotps = ["--import-mode=importlib"]
 pythonpath = ["src", "tests"]
 
 [tool.coverage.paths]
