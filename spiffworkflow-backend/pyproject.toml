@@ -2,18 +2,18 @@
 name = "spiffworkflow-backend"
 version = "0.0.0"
 description = "Spiffworkflow Backend"
-# TODO
-#authors = ["Sartography <sartography@users.noreply.github.com>"]
 license = "LGPL-2.1"
 readme = "README.rst"
-# TODO
-#homepage = "https://spiffworkflow.org"
-#repository = "https://github.com/sartography/spiff-arena"
-#documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
 ]
 requires-python = ">=3.10,<3.13"
+
+# TODO - these arn't valid at the project level, see where to put them
+#authors = ["Sartography <sartography@users.noreply.github.com>"]
+#homepage = "https://spiffworkflow.org"
+#repository = "https://github.com/sartography/spiff-arena"
+#documentation = "https://spiff-arena.readthedocs.io"
 
 dependencies = [
     "flask == 2.2.5",
@@ -30,13 +30,6 @@ dependencies = [
     "psycopg2 >= 2.9.10, <2.10",
     "typing-extensions >= 4.12.2,<4.13",
     "spiffworkflow-connector-command",
-
-# pinned to higher than 65.5.0 because of a vulnerability
-# and to lower than 67 because i didn't feel like addressing
-# new deprecation warnings. we don't need this library explicitly,
-# but at one time it was pulled in by various libs we depend on.
-# TODO
-#setuptools = "^75.7.0"
 
     # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
     "werkzeug >= 2.3,<2.4",
@@ -122,20 +115,14 @@ sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", b
 [tool.uv]
 package = true
 
-
-# TODO
-#[build-system]
-#requires = ["setuptools"]
-#build-backend = "setuptools.build_meta"
-
-# TODO
-#[tool.poetry.urls]
-#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
-
 [project.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
-# TODO
+# TODO - where to migrate to
+#[tool.poetry.urls]
+#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
+
+# TODO - where to migrate to
 #[tool.poetry.extras]
 #boto3 = ["boto3"]
 
