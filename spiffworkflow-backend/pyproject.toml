@@ -153,7 +153,6 @@ filterwarnings = [
     # dateutil/tz/tz.py:37
     'ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated:DeprecationWarning',
 ]
-addotps = ["--import-mode=importlib"]
 pythonpath = ["src", "tests"]
 
 [tool.coverage.paths]
