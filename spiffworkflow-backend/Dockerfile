@@ -40,6 +40,7 @@ RUN git config --global --add safe.directory '*'
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
+RUN pip install uv==0.6.14
 RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
