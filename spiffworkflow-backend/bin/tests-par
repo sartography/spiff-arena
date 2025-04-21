@@ -14,7 +14,7 @@ fi
 
 # check if python package pytest-xdist is installed
 if ! uv run python -c "import xdist" &>/dev/null; then
-  echo >&2 -e "ERROR: please install the python package pytest-xdist by running poetry install"
+  echo >&2 -e "ERROR: please install the python package pytest-xdist by running uv install"
   exit 1
 fi
 
