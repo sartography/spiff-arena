@@ -49,30 +49,30 @@ function setup_db_for_ci() {
     fi
 
     # Run the 'init' and 'migrate' tasks using flask
-    poetry run flask db init
-    poetry run flask db migrate
+    uv run flask db init
+    uv run flask db migrate
   fi
 
   # Run the 'upgrade' task using flask
-  poetry run flask db upgrade
+  uv run flask db upgrade
 }
 
-poetry install
+uv sync
 
 if [[ "${session_type}" == "tests" ]]; then
   setup_db_for_ci
-  poetry run coverage run --parallel -m pytest "$@"
+  uv run coverage run --parallel -m pytest "$@"
 
 elif [[ "${session_type}" == "typeguard" ]]; then
   setup_db_for_ci
-  RUN_TYPEGUARD=true poetry run pytest "$@"
+  RUN_TYPEGUARD=true uv run pytest "$@"
 
 elif [[ "${session_type}" == "mypy" ]]; then
-  poetry run mypy src tests
+  uv run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
   # 72731 because flask-cors 5 actually fixes but safety just doesn't know: allows the Access-Control-Allow-Private-Network CORS header to be set to true by default
-  poetry run safety check --full-report \
+  uv run safety check --full-report \
     --ignore=70624 \
     --ignore=70612 \
     --ignore=71600 \
@@ -83,8 +83,8 @@ elif [[ "${session_type}" == "safety" ]]; then
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then
-    poetry run coverage combine
+    uv run coverage combine
   fi
-  poetry run coverage report
-  poetry run coverage xml
+  uv run coverage report
+  uv run coverage xml
 fi

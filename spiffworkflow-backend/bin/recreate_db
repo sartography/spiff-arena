@@ -61,7 +61,7 @@ if [[ -n "$database_password" ]]; then
 fi
 
 # uncomment this line to fix branching conflicts
-# poetry run flask db merge heads -m "merging heads"
+# uv run flask db merge heads -m "merging heads"
 
 function run_command_on_mysql_databases {
   local command="$1"

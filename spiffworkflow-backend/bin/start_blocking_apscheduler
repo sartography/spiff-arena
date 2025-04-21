@@ -12,4 +12,4 @@ script_dir="$(
   pwd -P
 )"
 "${script_dir}/wait_for_db_schema_migrations"
-exec poetry run ./bin/start_blocking_apscheduler.py
+exec uv run ./bin/start_blocking_apscheduler.py
