@@ -35,6 +35,7 @@ import {
   Extension,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import appVersionInfo from '../helpers/appVersionInfo';
 import {
   DARK_MODE_ENABLED,
@@ -49,7 +50,6 @@ import ExtensionUxElementForDisplay from './ExtensionUxElementForDisplay';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, NavItem } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 350;
 const collapsedDrawerWidth = 64;
@@ -218,7 +218,7 @@ function SideNav({
         targetUris.authenticationListPath,
       ],
     },
-  ];  
+  ];
 
   const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
     const navItemPage = `/extensions${uxElement.page}`;
@@ -429,7 +429,7 @@ function SideNav({
             ) : null}
             {SPIFF_ENVIRONMENT && (
               <SpiffTooltip
-                title={t('environment')} 
+                title={t('environment')}
                 placement={isCollapsed ? 'right' : 'top'}
               >
                 {/* Use a Box to wrap the Chip and vertically align it */}
