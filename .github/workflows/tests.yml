@@ -220,16 +220,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5.3.0
         with:
-          python-version: "3.11"
-      - name: Install Poetry
+          python-version: "3.12"
+      - name: Install uv
         run: |
           pwd
           ls -al
           pip --version
-          pip install --constraint=.github/workflows/constraints.txt pip poetry
-          poetry --version
-      - name: Poetry Install
-        run: poetry install
+          pip install --constraint=.github/workflows/constraints.txt pip uv
+          uv --version
+      - name: uv sync
+        run: uv sync
       - name: run_pre_commit
         run: ./bin/run_pre_commit_in_ci
 
