@@ -9,13 +9,9 @@ classifiers = [
 ]
 requires-python = ">=3.10,<3.13"
 
-# TODO - this has a different format
-#authors = ["Sartography <sartography@users.noreply.github.com>"]
+authors = [{ name = "Sartography", email = "sartography@users.noreply.github.com" }]
 
-# TODO - these arn't valid at the project level, see where to put them
-#homepage = "https://spiffworkflow.org"
-#repository = "https://github.com/sartography/spiff-arena"
-#documentation = "https://spiff-arena.readthedocs.io"
+urls = { homepage = "https://spiffworkflow.org", repository = "https://github.com/sartography/spiff-arena", documentation = "https://spiff-arena.readthedocs.io" }
 
 dependencies = [
     "flask == 2.2.5",
