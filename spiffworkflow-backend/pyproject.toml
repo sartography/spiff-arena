@@ -33,7 +33,7 @@ dependencies = [
     "werkzeug >= 2.3,<2.4",
     "connexion[swagger-ui] >= 2,<3",
 
-    "lxml >= 5.3.1,<5.4",
+    "lxml >= 5.3.1,< 5.5",
     "marshmallow-enum >= 1.5.1,<1.6",
     "PyJWT >= 2.10.1,<2.11",
     "APScheduler",
