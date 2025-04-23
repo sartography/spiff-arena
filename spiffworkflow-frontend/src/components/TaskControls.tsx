@@ -64,7 +64,7 @@ function TaskControls({
               onChange={(e) => setShowNonActive(e.target.checked)}
             />
           }
-          label="{t('show_non_active')}"
+          label={t('show_non_active')}
         />
       ) : null}
       {setViewMode ? (
