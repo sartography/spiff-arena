@@ -28,11 +28,11 @@ Running Locally
 
 See detailed instructions at the root of spiff-arena, but:
 
-* Install libraries using poetry:
+* Install libraries using uv:
 
 .. code:: console
 
-   $ poetry install
+   $ uv sync
 
 NOTE: Mysql and Postgres may require special binary files exist on your system prior
 to installing these libraries. Please see the `PyPi mysqlclient instructions`_
@@ -57,7 +57,7 @@ Requirements
 ------------
 
 * Python 3.10+
-* Poetry
+* UV 
 
 
 Contributing
