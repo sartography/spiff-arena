@@ -90,7 +90,7 @@ def load_test(message_identifier, num_requests=10, max_workers=5, username="admi
     print(f"Total Requests: {num_requests}")
     print(f"Successful Requests: {successful_requests}")
     print(f"Failed Requests: {failed_requests}")
-    print(f"Success Rate: {successful_requests/num_requests*100:.2f}%")
+    print(f"Success Rate: {successful_requests / num_requests * 100:.2f}%")
 
 
 def main():

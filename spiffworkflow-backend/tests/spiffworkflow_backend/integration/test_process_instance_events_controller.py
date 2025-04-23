@@ -33,8 +33,8 @@ class TestProcessInstanceEventsController(BaseTest):
                 migration_details={
                     "initial_git_revision": f"rev{ii}",
                     "initial_bpmn_process_hash": f"hash{ii}",
-                    "target_git_revision": f"rev{ii+1}",
-                    "target_bpmn_process_hash": f"hash{ii+1}",
+                    "target_git_revision": f"rev{ii + 1}",
+                    "target_bpmn_process_hash": f"hash{ii + 1}",
                 },
             )
         # add random event to ensure it does not come back from api
@@ -57,6 +57,6 @@ class TestProcessInstanceEventsController(BaseTest):
         for ii in range(number_of_events):
             assert events[ii]["initial_git_revision"] == f"rev{ii}"
             assert events[ii]["initial_bpmn_process_hash"] == f"hash{ii}"
-            assert events[ii]["target_git_revision"] == f"rev{ii+1}"
-            assert events[ii]["target_bpmn_process_hash"] == f"hash{ii+1}"
+            assert events[ii]["target_git_revision"] == f"rev{ii + 1}"
+            assert events[ii]["target_bpmn_process_hash"] == f"hash{ii + 1}"
             assert events[ii]["username"] == with_super_admin_user.username
