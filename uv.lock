@@ -58,7 +58,7 @@ wheels = [
 
 [[package]]
 name = "pre-commit"
-version = "3.7.1"
+version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cfgv" },
@@ -67,21 +67,21 @@ dependencies = [
     { name = "pyyaml" },
     { name = "virtualenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/46/cc214ef6514270328910083d0119d0a80a6d2c4ec8c6608c0219db0b74cf/pre_commit-3.7.1.tar.gz", hash = "sha256:8ca3ad567bc78a4972a3f1a477e94a79d4597e8140a6e0b651c5e33899c3654a", size = 177317 }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/c8/e22c292035f1bac8b9f5237a2622305bc0304e776080b246f3df57c4ff9f/pre_commit-4.0.1.tar.gz", hash = "sha256:80905ac375958c0444c65e9cebebd948b3cdb518f335a091a670a89d652139d2", size = 191678 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b9/0f/d6d0b4e2f5b2933a557087fc0560371aa545a18232d4d3427eb3bb3af12e/pre_commit-3.7.1-py2.py3-none-any.whl", hash = "sha256:fae36fd1d7ad7d6a5a1c0b0d5adb2ed1a3bda5a21bf6c3e5372073d7a11cd4c5", size = 204268 },
+    { url = "https://files.pythonhosted.org/packages/16/8f/496e10d51edd6671ebe0432e33ff800aa86775d2d147ce7d43389324a525/pre_commit-4.0.1-py2.py3-none-any.whl", hash = "sha256:efde913840816312445dc98787724647c65473daefe420785f885e8ed9a06878", size = 218713 },
 ]
 
 [[package]]
 name = "pre-commit-hooks"
-version = "4.6.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ruamel-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/83/0d/b4e97cd99b26c0cd8265c9f19ee7e55248142f0c9955e4d119de96fa4a13/pre_commit_hooks-4.6.0.tar.gz", hash = "sha256:eb1f43ee67869cd41b4c59017fad4a0f9d4d61201d163f2135535aaf65035a2b", size = 29579 }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/7d/3299241a753c738d114600c360d754550b28c285281dc6a5132c4ccfae65/pre_commit_hooks-5.0.0.tar.gz", hash = "sha256:10626959a9eaf602fbfc22bc61b6e75801436f82326bfcee82bb1f2fc4bc646e", size = 29747 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/d8/d09b270248bc2441f966dd094a3de8ae813112d2687036f621202bdef80b/pre_commit_hooks-4.6.0-py2.py3-none-any.whl", hash = "sha256:a69199e6a2d45ec59c1020a81ca1549abddc2afb798276d9a0d951752d6abbfe", size = 41193 },
+    { url = "https://files.pythonhosted.org/packages/1e/29/db1d855a661c02dbde5cab3057969133fcc62e7a0c6393e48fe9d0e81679/pre_commit_hooks-5.0.0-py2.py3-none-any.whl", hash = "sha256:8d71cfb582c5c314a5498d94e0104b6567a8b93fb35903ea845c491f4e290a7a", size = 41245 },
 ]
 
 [[package]]
@@ -190,8 +190,8 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pre-commit", specifier = ">=3.7.1,<3.8" },
-    { name = "pre-commit-hooks", specifier = ">=4.6.0,<4.7" },
+    { name = "pre-commit", specifier = ">=4.0.1,<4.1" },
+    { name = "pre-commit-hooks", specifier = ">=5.0.0,<6" },
     { name = "ruff", specifier = ">=0.8.2,<0.9" },
     { name = "tomli", specifier = ">=2.0.1,<2.1" },
 ]
