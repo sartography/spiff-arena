@@ -24,10 +24,10 @@ else
   else
 
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false poetry run python bin/save_all_bpmn.py
+      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false uv run python bin/save_all_bpmn.py
     fi
 
     # this line blocks
-    exec poetry run flask run -p "$PORT" --host=0.0.0.0
+    exec uv run flask run -p "$PORT" --host=0.0.0.0
   fi
 fi
