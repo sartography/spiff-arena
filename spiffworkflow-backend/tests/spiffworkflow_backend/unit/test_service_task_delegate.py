@@ -240,7 +240,7 @@ class TestServiceTaskDelegate(BaseTest):
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text
-        assert bool(
-            re.search(rf"\b{contains_message}\b", response_text)
-        ), f"Expected to find '{contains_message}' in: {response_text}"
+        assert bool(re.search(rf"\b{contains_message}\b", response_text)), (
+            f"Expected to find '{contains_message}' in: {response_text}"
+        )
         assert bool(re.search(rf"\b{status_code}\b", response_text)), f"Expected to find '{status_code}' in: {response_text}"

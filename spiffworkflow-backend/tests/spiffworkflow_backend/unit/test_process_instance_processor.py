@@ -315,9 +315,9 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        assert (
-            len(process_instance.active_human_tasks) == 1
-        ), "expected 1 active human tasks after 2nd one is completed, as we have looped back around."
+        assert len(process_instance.active_human_tasks) == 1, (
+            "expected 1 active human tasks after 2nd one is completed, as we have looped back around."
+        )
 
         processor.suspend()
 
@@ -349,9 +349,9 @@ class TestProcessInstanceProcessor(BaseTest):
         # make sure we did not remove the data during the reset which can happen if include_task_data_for_completed_tasks is False
         assert top_level_subprocess_script_spiff_task.data == {"set_in_top_level_script": 1}
         processor.resume()
-        assert (
-            len(process_instance.human_tasks) == 2
-        ), "expected 2 human tasks after resume since resume does not do anything in that regard"
+        assert len(process_instance.human_tasks) == 2, (
+            "expected 2 human tasks after resume since resume does not do anything in that regard"
+        )
         started_spiff_tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.STARTED)
         assert len(started_spiff_tasks) == 1
         assert "top_level_subprocess" == started_spiff_tasks[0].task_spec.name

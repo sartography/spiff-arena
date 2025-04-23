@@ -590,9 +590,9 @@ class BaseTest:
         else:
             if len(response.json["results"]) == 1:
                 first_result = response.json["results"][0]
-                assert (
-                    first_result["id"] != process_instance.id
-                ), f"expected not to find a specific process instance, but we found it: {first_result}"
+                assert first_result["id"] != process_instance.id, (
+                    f"expected not to find a specific process instance, but we found it: {first_result}"
+                )
             else:
                 assert len(response.json["results"]) == 0
         db.session.delete(process_instance_report)

@@ -36,7 +36,7 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str, root_path: st
         script = task.find("bpmn:script", namespaces=nsmap)
         if script is not None and script.text is not None and "get_current_user()" in script.text:
             relative_path = os.path.relpath(bpmn_file_path, root_path)
-            print(f'Found get_current_user() in script task {task.get("id")} of file {relative_path}')
+            print(f"Found get_current_user() in script task {task.get('id')} of file {relative_path}")
 
     # Check preScript elements for get_current_user() calls
     check_scripts_for_get_current_user(pre_scripts, bpmn_file_path, "preScript", root_path)
