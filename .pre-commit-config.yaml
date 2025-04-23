@@ -24,7 +24,7 @@ repos:
         entry: end-of-file-fixer
         language: system
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: ruff-check
         args: [check, --fix]
         files: ^spiffworkflow-backend/
@@ -53,5 +53,5 @@ repos:
         entry: trailing-whitespace-fixer
         language: system
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
         exclude: "/migrations/"
