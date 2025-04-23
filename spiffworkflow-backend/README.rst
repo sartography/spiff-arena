@@ -57,7 +57,7 @@ Requirements
 ------------
 
 * Python 3.10+
-* UV 
+* UV
 
 
 Contributing
