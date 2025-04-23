@@ -44,23 +44,22 @@ How to set up your development environment
 
 You need Python 3.10+ and the following tools:
 
-- Poetry_
+- UV_
 
 Install the package with development requirements:
 
 .. code:: console
 
-   $ poetry install
+   $ uv sync 
 
 You can now run an interactive Python session,
 or the command-line interface:
 
 .. code:: console
 
-   $ poetry run python
-   $ poetry run spiffworkflow-backend
+   $ python
 
-.. _Poetry: https://python-poetry.org/
+.. _UV: https://github.com/astral-sh/uv
 
 
 How to test the project

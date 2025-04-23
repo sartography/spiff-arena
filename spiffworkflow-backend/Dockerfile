@@ -29,7 +29,7 @@ RUN apt-get update \
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install poetry==1.8.1
+RUN pip install uv==0.6.14
 
 # Avoid host:container file ownership issues
 RUN git config --global --add safe.directory '*'
@@ -40,27 +40,16 @@ RUN git config --global --add safe.directory '*'
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-# poetry 1.4 seems to cause an issue where it errors with
-#   This error originates from the build backend, and is likely not a
-#   problem with poetry but with lazy-object-proxy (1.7.1) not supporting PEP 517 builds.
-#   You can verify this by running 'pip wheel --use-pep517 "lazy-object-proxy (==1.7.1) ; python_version >= "3.6""'.
-# Pinnning to 1.3.2 to attempt to avoid it.
-RUN pip install poetry==1.6.1
+RUN pip install uv==0.6.14
 RUN useradd _gunicorn --no-create-home --user-group
 
 # default-libmysqlclient-dev for mysqlclient lib
-# libpq-dev in order to be able to poetry install postgres lib, psycopg2. See also libpq5 above in deployment image.
+# libpq-dev in order to be able to install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
-  && apt-get install -y -q gcc libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
-
-# poetry install takes a long time and can be cached if dependencies don't change,
-# so that's why we tolerate running it twice.
-COPY pyproject.toml poetry.lock /app/
-RUN poetry install --without dev
+  && apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 COPY . /app
-RUN poetry install --without dev
-
+RUN uv sync --no-dev
 
 ######################## - FINAL
 

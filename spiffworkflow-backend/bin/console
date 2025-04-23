@@ -11,4 +11,4 @@ script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 . "${script_dir}/local_development_environment_setup"
 
 export SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false
-poetry run flask shell
+uv run flask shell

@@ -59,12 +59,12 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Install pip and poetry
+      - name: Install pip and uv
         run: |
-          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --constraint=../.github/workflows/constraints.txt pip uv
           pip install --upgrade setuptools # https://stackoverflow.com/a/77364602/6090676
           pip --version
-          poetry --version
+          uv --version
 
       - name: Upgrade pip in virtual environments
         shell: python
@@ -75,8 +75,8 @@ jobs:
           with open(os.environ["GITHUB_ENV"], mode="a") as io:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
-      - name: Poetry Install
-        run: poetry install
+      - name: uv Install
+        run: uv install
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline

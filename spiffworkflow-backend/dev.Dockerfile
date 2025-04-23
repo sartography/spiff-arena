@@ -10,6 +10,6 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
-RUN pip install poetry==2.1.1 pytest-xdist==3.6.1
+RUN pip install uv==0.6.16 pytest-xdist==3.6.1
 
 CMD ["./bin/run_server_locally"]

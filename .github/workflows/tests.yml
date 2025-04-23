@@ -124,13 +124,13 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install pip and poetry
+      - name: Install pip and uv
         run: |
           pwd
           ls -al
-          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --constraint=../.github/workflows/constraints.txt pip uv
           pip --version
-          poetry --version
+          uv --version
 
       - name: Upgrade pip in virtual environments
         shell: python
@@ -270,13 +270,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install pip and poetry
+      - name: Install pip and uv
         run: |
           pwd
           ls -al
-          pip install --constraint=../.github/workflows/constraints.txt pip poetry
+          pip install --constraint=../.github/workflows/constraints.txt pip uv
           pip --version
-          poetry --version
+          uv --version
 
       - name: Upgrade pip in virtual environments
         shell: python

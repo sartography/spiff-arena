@@ -15,6 +15,6 @@ script_dir="$(
 
 export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
 
-poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker purge -f
+uv run celery -A src.spiffworkflow_backend.background_processing.celery_worker purge -f
 
-# poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker inspect active
+# uv run celery -A src.spiffworkflow_backend.background_processing.celery_worker inspect active

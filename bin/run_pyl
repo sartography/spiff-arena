@@ -22,7 +22,7 @@ function get_python_dirs() {
 }
 
 function run_pre_commmit() {
-  poetry run pre-commit run --verbose --all-files
+  uv run pre-commit run --verbose --all-files
 }
 
 for react_project in "${react_projects[@]}"; do
@@ -49,8 +49,8 @@ function clear_log_file() {
 for python_project in "${python_projects[@]}"; do
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
-    poetry install
-    poetry run mypy $(get_python_dirs)
+    uv sync
+    uv run mypy $(get_python_dirs)
     clear_log_file
     ./bin/tests-par
     popd

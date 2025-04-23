@@ -1,127 +1,129 @@
-[tool.poetry]
+[project]
 name = "spiffworkflow-backend"
 version = "0.0.0"
 description = "Spiffworkflow Backend"
-authors = ["Sartography <sartography@users.noreply.github.com>"]
 license = "LGPL-2.1"
 readme = "README.rst"
-homepage = "https://spiffworkflow.org"
-repository = "https://github.com/sartography/spiff-arena"
-documentation = "https://spiff-arena.readthedocs.io"
 classifiers = [
     "Development Status :: 4 - Beta",
 ]
+requires-python = ">=3.10,<3.13"
 
-[tool.poetry.urls]
-Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
+authors = [{ name = "Sartography", email = "sartography@users.noreply.github.com" }]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-flask = "2.2.5"
-flask-admin = "*"
-flask-bcrypt = "*"
-flask-cors = "*"
-flask-jwt-extended = "^4.7.1"
-flask-marshmallow = "*"
-flask-migrate = "*"
-flask-restful = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-# SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
-# SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow/" }
-sentry-sdk = {extras = ['flask'], version = "^2.26"}
-# sphinx-autoapi = "^2.0"
-psycopg2 = "^2.9.10"
-typing-extensions = "^4.12.2"
+urls = { homepage = "https://spiffworkflow.org", repository = "https://github.com/sartography/spiff-arena", documentation = "https://spiff-arena.readthedocs.io" }
 
-spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
+dependencies = [
+    "flask == 2.2.5",
+    "flask-admin",
+    "flask-bcrypt",
+    "flask-cors",
+    "flask-jwt-extended >=4.7.1,<4.8",
+    "flask-marshmallow == 1.2.1",
+    "marshmallow == 3.20.2",
+    "flask-migrate",
+    "flask-restful",
+    "SpiffWorkflow",
+    "sentry-sdk[flask] >=2.26,<2.27",
+    "psycopg2 >= 2.9.10, <2.10",
+    "typing-extensions >= 4.12.2,<4.13",
+    "spiffworkflow-connector-command",
 
-# pinned to higher than 65.5.0 because of a vulnerability
-# and to lower than 67 because i didn't feel like addressing
-# new deprecation warnings. we don't need this library explicitly,
-# but at one time it was pulled in by various libs we depend on.
-setuptools = "^75.7.0"
+    # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
+    "werkzeug >= 2.3,<2.4",
+    "connexion[swagger-ui] >= 2,<3",
 
-# we cannot upgrade werkzeug due to connexion. See comment in .snyk file
-werkzeug = "^2.3"
-connexion = {extras = [ "swagger-ui",], version = "^2"}
+    "lxml >= 5.3.1,<5.4",
+    "marshmallow-enum >= 1.5.1,<1.6",
+    "PyJWT >= 2.10.1,<2.11",
+    "APScheduler",
+    "Jinja2 >= 3.1.6,<3.2",
+    "RestrictedPython >= 8.0,<8.1",
+    "Flask-SQLAlchemy >= 3,<4",
 
-lxml = "^5.3.1"
-marshmallow-enum = "^1.5.1"
-PyJWT = "^2.10.1"
-APScheduler = "*"
-Jinja2 = "^3.1.6"
-RestrictedPython = "^8.0"
-Flask-SQLAlchemy = "^3"
+    "gunicorn >= 23.0.0,<24",
 
-gunicorn = "^23.0.0"
+    # https://github.com/dropbox/sqlalchemy-stubs/pull/251
+    # someday get off github
+    # sqlalchemy-stubs = "^0.4"
+    # sqlalchemy-stubs = { git = "https://github.com/dropbox/sqlalchemy-stubs.git", rev = "master" }
+    # sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
+    # for now use my fork
+    "sqlalchemy-stubs",
 
-# https://github.com/dropbox/sqlalchemy-stubs/pull/251
-# someday get off github
-# sqlalchemy-stubs = "^0.4"
-# sqlalchemy-stubs = { git = "https://github.com/dropbox/sqlalchemy-stubs.git", rev = "master" }
-# sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
-# for now use my fork
-sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
-simplejson = "^3.20.1"
-pytz = "^2025.2"
-dateparser = "^1.2.0"
-cryptography = "^44.0"
-prometheus-flask-exporter = "^0.23.1"
+    "simplejson >= 3.20.1,<3.21",
+    "pytz >= 2025.2,<2026",
+    "dateparser >= 1.2.0,<1.3",
+    "cryptography >= 44.0,<45",
+    "prometheus-flask-exporter >= 0.23.1,<0.24",
 
-sqlalchemy = "^2.0.31"
-marshmallow-sqlalchemy = "^1.4.2"
+    "sqlalchemy >= 2.0.31,<2.1",
+    "marshmallow-sqlalchemy >= 1.4.2,<1.5",
 
-# mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
-# https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
-mysqlclient = "^2.2.6"
-flask-session = "^0.8.0"
-flask-oauthlib = "^0.9.6"
-celery = {extras = ["redis", "sqs"], version = "^5.4.0"}
-boto3 = {version = "^1.3.0", optional = true}
-celery-stubs = "^0.1.3"
-jsonschema = "^4.23.0"
-chardet = "^5.2.0"
+    # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
+    # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
+    "mysqlclient >= 2.2.6,<2.3",
+    "flask-session >= 0.8.0,<0.9",
+    "flask-oauthlib >= 0.9.6,<0.10",
+    "celery[redis, sqs] >= 5.4.0,<5.5",
 
-# 1.3.0 adds an print statement that keeps printing None
-# https://github.com/pixee/python-security/blob/6256809dac1c45530e5eeef8b48032a2bbd6b7d6/src/security/safe_command/api.py#L640
-security = "^1.3.1"
+    # TODO
+    #boto3 = {version = "^1.3.0", optional = true}
 
-[tool.poetry.scripts]
+    "celery-stubs >= 0.1.3,<0.2",
+    "jsonschema >= 4.23.0,<4.24",
+    "chardet >= 5.2.0,<5.3",
+
+    # 1.3.0 adds an print statement that keeps printing None
+    # https://github.com/pixee/python-security/blob/6256809dac1c45530e5eeef8b48032a2bbd6b7d6/src/security/safe_command/api.py#L640
+    "security >= 1.3.1,<1.4",
+]
+
+[dependency-groups]
+dev = [
+    "coverage[toml] >= 7.7,<8",
+    "safety >= 3.2.14,<3.3",
+    "mypy >= 0.961",
+    "typeguard >= 4,<5",
+    "xdoctest[colors] >= 1.2.0,<1.3",
+    "pre-commit >= 4.0.1,<4.1",
+    "ruff >= 0.11.5,<0.12",
+    "pytest-random-order >= 1.1.0,<1.2",
+    "pytest-flask >= 1.2.0,<1.3",
+    "pytest-flask-sqlalchemy >= 1.1.0,<1.2",
+    "pytest-xdist == 3.6.1",
+    "bandit == 1.8.3",
+    "pre-commit-hooks >= 5.0.0,<6",
+    "Pygments >= 2.19.1,<2.20",
+    # type hinting stuff
+    "types-dateparser >= 1.2.0.20250208,<1.3",
+    "types-Werkzeug >= 1.0.9,<1.1",
+    "types-PyYAML >= 6.0.12,<6.1",
+    "types-Flask >= 1.1.6,<1.2",
+    "types-requests >= 2.32.0,<2.33",
+    "types-pytz >= 2024.2.0,<2025.3",
+    "pytest>=8.3.5",
+]
+
+[tool.uv.sources]
+SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", branch = "main" }
+spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", branch = "main" }
+sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", branch = "scoped-session-delete" }
+
+[tool.uv]
+package = true
+
+[project.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.3"
-coverage = {extras = ["toml"], version = "^7.7"}
-safety = "^3.2.14"
-mypy = ">=0.961"
-typeguard = "^4"
-xdoctest = {extras = ["colors"], version = "^1.2.0"}
-pre-commit = "^4.0.1"
-ruff = "^0.11.5"
+# TODO - where to migrate to
+#[tool.poetry.urls]
+#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
 
-pytest-random-order = "^1.1.0"
-pytest-flask = "^1.2.0"
-pytest-flask-sqlalchemy = "^1.1.0"
+# TODO - where to migrate to
+#[tool.poetry.extras]
+#boto3 = ["boto3"]
 
-# 3.4+ broke existfirst option which we use
-# https://stackoverflow.com/questions/77667559/pytest-xdist-3-40-and-higher-not-honoring-exitfirst
-# https://github.com/pytest-dev/pytest-xdist/issues/1034
-pytest-xdist = "3.6.1"
-
-# 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
-bandit = "1.8.3"
-
-# flask-sqlalchemy-stubs = "^0.2"
-pre-commit-hooks = "^5.0.0"
-Pygments = "^2.19.1"
-
-# type hinting stuff
-types-dateparser = "^1.2.0.20250208"
-types-Werkzeug = "^1.0.9"
-types-PyYAML = "^6.0.12"
-types-Flask = "^1.1.6"
-types-requests = "^2.32.0"
-types-pytz = "^2024.2.0"
 
 [tool.pytest.ini_options]
 # ignore deprecation warnings from various packages that we don't control
@@ -149,6 +151,7 @@ filterwarnings = [
     # dateutil/tz/tz.py:37
     'ignore:datetime\.datetime\.utcfromtimestamp\(\) is deprecated:DeprecationWarning',
 ]
+pythonpath = ["src", "tests"]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
@@ -178,9 +181,6 @@ implicit_reexport = true
 # allow for subdirs to NOT require __init__.py
 namespace_packages = true
 explicit_package_bases = false
-
-[tool.poetry.extras]
-boto3 = ["boto3"]
 
 # [tool.pyright]
 # Pyright: Import "flask" could not be resolved
@@ -245,10 +245,6 @@ force-single-line = true
 disable = [
     "fixit.rules:CompareSingletonPrimitivesByIs",
 ]
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.safety]
 # you can generate a config file for safety, but this doesn't work with safety check.

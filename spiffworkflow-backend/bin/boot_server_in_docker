@@ -22,17 +22,17 @@ fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
   echo 'Waiting for db to be ready...'
-  poetry run python ./bin/wait_for_db_to_be_ready.py
+  uv run python ./bin/wait_for_db_to_be_ready.py
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DOWNGRADE_DB:-}" == "true" ]]; then
   echo 'Downgrading database...'
-  poetry run flask db downgrade
+  uv run flask db downgrade
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
   echo 'Upgrading database...'
-  poetry run flask db upgrade
+  uv run flask db upgrade
 fi
 
 if [[ -z "${GUNICORN_LOG_LEVEL:-}" ]]; then
@@ -115,21 +115,21 @@ fi
 # happening (somewhat like schema migrations (storing versions in a db table) to handle data migrations),
 # so it could poll some table and not start its work until the database is fully migrated.
 # log_info "Running data migrations"
-# poetry run python ./bin/data_migrations/run_all.py
+# uv run python ./bin/data_migrations/run_all.py
 
 ##### DO THIS right before starting the server
 if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   if [[ -z "${SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS:-}" ]]; then
     export SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false
   fi
-  poetry run python bin/save_all_bpmn.py
+  uv run python bin/save_all_bpmn.py
 fi
 
 # --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
 log_info "Starting gunicorn server"
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
-exec poetry run gunicorn ${additional_args} \
+exec uv run gunicorn ${additional_args} \
   --bind "0.0.0.0:$port" \
   --preload \
   --worker-class "gthread" \
