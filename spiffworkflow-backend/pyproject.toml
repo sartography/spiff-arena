@@ -19,7 +19,7 @@ dependencies = [
     "flask-bcrypt",
     "flask-cors",
     "flask-jwt-extended >=4.7.1,<4.8",
-    "flask-marshmallow == 1.2.1",
+    "flask-marshmallow == 1.3.0",
     "marshmallow == 3.20.2",
     "flask-migrate",
     "flask-restful",
