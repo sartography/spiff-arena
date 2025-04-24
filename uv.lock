@@ -183,7 +183,6 @@ dev = [
     { name = "pre-commit" },
     { name = "pre-commit-hooks" },
     { name = "ruff" },
-    { name = "tomli" },
 ]
 
 [package.metadata]
@@ -193,16 +192,6 @@ dev = [
     { name = "pre-commit", specifier = ">=4.0.1,<4.1" },
     { name = "pre-commit-hooks", specifier = ">=5.0.0,<6" },
     { name = "ruff", specifier = ">=0.11.6" },
-    { name = "tomli", specifier = ">=2.0.1,<2.1" },
-]
-
-[[package]]
-name = "tomli"
-version = "2.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/35/b9/de2a5c0144d7d75a57ff355c0c24054f965b2dc3036456ae03a51ea6264b/tomli-2.0.2.tar.gz", hash = "sha256:d46d457a85337051c36524bc5349dd91b1877838e2979ac5ced3e710ed8a60ed", size = 16096, upload_time = "2024-10-02T10:46:13.208Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/db/ce8eda256fa131af12e0a76d481711abe4681b6923c27efb9a255c9e4594/tomli-2.0.2-py3-none-any.whl", hash = "sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38", size = 13237, upload_time = "2024-10-02T10:46:11.806Z" },
 ]
 
 [[package]]
