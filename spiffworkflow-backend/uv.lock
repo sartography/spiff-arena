@@ -687,15 +687,15 @@ wheels = [
 
 [[package]]
 name = "flask-marshmallow"
-version = "1.2.1"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flask" },
     { name = "marshmallow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bf/9c/0c0cee00441981502358b4bc6e3d1b21247d3d80a277dde18bf3d0ad7426/flask_marshmallow-1.2.1.tar.gz", hash = "sha256:00ee96399ed664963afff3b5d6ee518640b0f91dbc2aace2b5abcf32f40ef23a", size = 40752, upload_time = "2024-03-18T19:09:47.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/91/f3893613c3a388a643f8a96e1b08a17b863fcc03beb6f2a40bb224da7df7/flask_marshmallow-1.3.0.tar.gz", hash = "sha256:27a35d0ce5dcba161cc5f2f4764afbc2536c93fa439a793250b827835e3f3be6", size = 40852, upload_time = "2025-01-07T04:04:07.757Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/58/b20b1c8e3174479ea23388d61a9772132586ff492a280acbc84082a2a176/flask_marshmallow-1.2.1-py3-none-any.whl", hash = "sha256:10b5048ecfaa26f7c8d0aed7d81083164450e6be8e81c04b3d4a586b3f7b6678", size = 12093, upload_time = "2024-03-18T19:09:44.347Z" },
+    { url = "https://files.pythonhosted.org/packages/27/cd/5b3d4103460766eb834f6deaf26a87a4735a0c9687f24163e07d1f3d7791/flask_marshmallow-1.3.0-py3-none-any.whl", hash = "sha256:c0a0644b46406851873ab41c1e8a7de3ef27fa69b00b89bf630f1696ec0813a0", size = 12174, upload_time = "2025-01-07T04:04:06.326Z" },
 ]
 
 [[package]]
@@ -2119,7 +2119,7 @@ requires-dist = [
     { name = "flask-bcrypt" },
     { name = "flask-cors" },
     { name = "flask-jwt-extended", specifier = ">=4.7.1,<4.8" },
-    { name = "flask-marshmallow", specifier = "==1.2.1" },
+    { name = "flask-marshmallow", specifier = "==1.3.0" },
     { name = "flask-migrate" },
     { name = "flask-oauthlib", specifier = ">=0.9.6,<0.10" },
     { name = "flask-restful" },
