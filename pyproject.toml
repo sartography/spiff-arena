@@ -16,7 +16,7 @@ requires-python = ">=3.11,<3.13"
 
 [dependency-groups]
 dev = [
-    "pre-commit >=4.0.1,<4.1",
-    "pre-commit-hooks >=5.0.0,<6",
-    "ruff >=0.11.6",
+    "pre-commit",
+    "pre-commit-hooks",
+    "ruff",
 ]
