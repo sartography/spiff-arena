@@ -191,7 +191,7 @@ dev = [
 dev = [
     { name = "pre-commit" },
     { name = "pre-commit-hooks" },
-    { name = "ruff", specifier = ">=0.11.6" },
+    { name = "ruff" },
 ]
 
 [[package]]
