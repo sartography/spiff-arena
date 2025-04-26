@@ -23,10 +23,10 @@ def test_login_and_navigate():
 
         # Wait for navigation to complete after login.  We'll wait for the
         # target element to appear as a proxy for successful login and redirect.
-        page.wait_for_selector('[data-qa="nav-start-new process"]')
+        page.wait_for_selector('[data-testid="nav-start-new process"]')
 
         # Click the "Start New Process" navigation element.
-        page.click('[data-qa="nav-start-new process"]')
+        page.click('[data-testid="nav-start-new process"]')
 
         # Add an assertion here - for example, check the URL after clicking.
         # Replace '/expected_url' with the actual URL you expect.

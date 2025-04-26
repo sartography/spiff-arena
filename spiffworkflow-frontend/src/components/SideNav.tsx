@@ -369,7 +369,7 @@ function SideNav({
                     {!isCollapsed && (
                       <ListItemText
                         primary={item.text}
-                        data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
+                        data-testid={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
                         primaryTypographyProps={{
                           fontSize: '0.875rem',
                           fontWeight:

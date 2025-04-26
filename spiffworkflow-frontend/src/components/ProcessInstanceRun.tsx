@@ -141,7 +141,7 @@ export default function ProcessInstanceRun({
   if (processModel.primary_file_name && processModel.is_executable) {
     startButton = (
       <Button
-        data-qa="start-process-instance"
+        data-testid="start-process-instance"
         onClick={processInstanceCreateAndRun}
         className={className}
         disabled={disableStartButton}

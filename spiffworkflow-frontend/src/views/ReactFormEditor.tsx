@@ -300,7 +300,7 @@ export default function ReactFormEditor() {
               onClick={saveFile}
               variant="contained"
               color="primary"
-              data-qa="file-save-button"
+              data-testid="file-save-button"
             >
               Save
             </Button>
@@ -312,7 +312,7 @@ export default function ReactFormEditor() {
           >
             {params.file_name ? (
               <ButtonWithConfirmation
-                data-qa="delete-process-model-file"
+                data-testid="delete-process-model-file"
                 description={`Delete file ${params.file_name}?`}
                 onConfirmation={deleteFile}
                 buttonLabel="Delete"
@@ -333,7 +333,7 @@ export default function ReactFormEditor() {
                 }
                 variant="contained"
                 color="primary"
-                data-qa="view-diagram-button"
+                data-testid="view-diagram-button"
               >
                 View Diagram
               </Button>

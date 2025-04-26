@@ -606,7 +606,7 @@ export default function ProcessModelTreePage({
                           ability={ability}
                         >
                           <IconButton
-                            data-qa="edit-process-group-button"
+                            data-testid="edit-process-group-button"
                             href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
                           >
                             <Edit />
@@ -618,7 +618,7 @@ export default function ProcessModelTreePage({
                           ability={ability}
                         >
                           <ButtonWithConfirmation
-                            data-qa="delete-process-group-button"
+                            data-testid="delete-process-group-button"
                             renderIcon={<Delete />}
                             iconDescription="Delete Process Group"
                             hasIconOnly
@@ -685,7 +685,7 @@ export default function ProcessModelTreePage({
                           <IconButton
                             size="small"
                             onClick={(e) => e.stopPropagation()}
-                            data-qa="add-process-model-button"
+                            data-testid="add-process-model-button"
                             href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
                           >
                             <Add />
@@ -744,7 +744,7 @@ export default function ProcessModelTreePage({
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-group-button"
+                          data-testid="add-process-group-button"
                           href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />
@@ -789,7 +789,7 @@ export default function ProcessModelTreePage({
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-group-button"
+                          data-testid="add-process-group-button"
                           href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />
