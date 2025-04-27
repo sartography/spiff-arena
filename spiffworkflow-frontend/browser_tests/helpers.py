@@ -22,6 +22,10 @@ def print_page_details(page: Page):
         print("No interactable elements (inputs, buttons, etc.) found.")
     else:
         for element in interactable_elements:
+            # Skip elements that already have a data-testid, as they were printed above.
+            if element.get_attribute('data-testid'):
+                continue
+
             tag_name = element.evaluate('element => element.tagName.toLowerCase()')
             element_id = element.get_attribute('id')
             element_name = element.get_attribute('name')

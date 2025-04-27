@@ -33,7 +33,11 @@ export default function HeaderTabs({
         sx={{ flexGrow: 1 }} // Make the Tabs container flexible
       >
         <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
-        <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
+        <Tab
+          label="Workflows created by me"
+          sx={{ textTransform: 'none' }}
+          data-testid="tab-workflows-created-by-me"
+        />
       </Tabs>
       <Box
         sx={{
