@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from .helpers import print_page_details
+from .helpers.debug import print_page_details
 
 
 def test_login():
