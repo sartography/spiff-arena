@@ -1,27 +1,23 @@
 from playwright.sync_api import sync_playwright
 from .helpers.debug import print_page_details
 
-
 def test_login():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
-        page.goto("http://localhost:7001")
-        
-        # Perform login
+
+        # Navigate to the sign-in page
+        page.goto('http://localhost:7001')
+
+        # Enter username and password and click login
         page.fill('#username', 'admin')
         page.fill('#password', 'admin')
         page.click('#spiff-login-button')
 
-        # Debug: Print details of interactable elements
+        # Debugging print
         print_page_details(page)
 
-        # Verify login was successful
-        print("\n--- Verifying Login ---")
-        try:
-            page.wait_for_url("**/process-groups", timeout=10000)
-            assert "Process Groups" in page.content()
-        except:
-            print("Failed to navigate to process groups")
-        
+        # Wait for the element that indicates login succeeded
+        assert page.get_by_role('button', name='User Actions').is_visible(), "Login failed: 'User Actions' button not found."
+
         browser.close()
