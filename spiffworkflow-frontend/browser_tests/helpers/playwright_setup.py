@@ -1,9 +1,9 @@
+import os
 import pytest
 from playwright.sync_api import sync_playwright
 
-# Consider making headless configurable via env var or command line arg
-# e.g., headless=os.environ.get("HEADLESS", "true").lower() == "true"
-HEADLESS = True
+# Configure headless mode via environment variable HEADLESS (default: true)
+HEADLESS = os.environ.get("HEADLESS", "true").lower() == "true"
 
 
 @pytest.fixture(scope="function")
