@@ -8,7 +8,7 @@ from playwright.sync_api import expect, BrowserContext
 # if helpers_path not in sys.path:
 #     sys.path.insert(0, helpers_path)
 
-from .helpers.login import login
+from .helpers.login import login, logout
 from .helpers.playwright_setup import browser_context  # Import the fixture
 
 
@@ -18,3 +18,6 @@ def test_login(browser_context: BrowserContext):
 
     # Use the login helper function
     login(page, "admin", "admin")
+
+    # Use the logout helper function
+    logout(page)

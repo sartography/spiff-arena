@@ -34,10 +34,7 @@ def logout(page: Page, base_url: str = BASE_URL):
     user_menu_button = page.get_by_role("button", name="User Actions")
     if user_menu_button.is_visible():
         user_menu_button.click()
-        # Use a more specific selector for the logout button if needed
-        logout_button = page.get_by_role("button", name="Logout")
-        expect(logout_button).to_be_visible()
-        logout_button.click()
+        page.locator('[data-testid="sign-out-button"]').click()
     else:
         # Fallback: Navigate directly to the signout URL
         # Ensure the signout URL is correct for the application

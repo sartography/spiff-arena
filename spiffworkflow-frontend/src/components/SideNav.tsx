@@ -487,6 +487,7 @@ function SideNav({
                 <hr />
                 <MuiLink
                   component="button"
+                  data-testid="sign-out-button"
                   onClick={() => UserService.doLogout()}
                   sx={{
                     display: 'flex',
