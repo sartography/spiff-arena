@@ -1,1 +1,1 @@
-browser_tests/tasks/test_can_complete_and_navigate_a_form.py
+browser_tests/tasks/public_tasks/test_can_complete_guest_task.py
