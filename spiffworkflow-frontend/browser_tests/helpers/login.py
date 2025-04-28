@@ -13,14 +13,14 @@ def login(page: Page, username: str, password: str, base_url: str = BASE_URL):
         # If not on sign-in, assume redirection or direct access works.
         # If specific navigation is needed, add it here.
         # Example: page.click('text=Sign In') if needed.
+        # If not on sign-in, assume redirection or direct access works.
+        # Example: page.click('text=Sign In') if needed.
         pass # Assuming goto handles redirection if not logged in.
 
-    # Use more specific selectors if IDs change or are not reliable
-    page.locator('input[name="username"]').fill(username)
-    page.locator('input[name="password"]').fill(password)
-    # Use a more robust selector for the login button if ID is not stable
-    page.locator('button[type="submit"]:has-text("Sign in"), #spiff-login-button').click()
-
+    # Use ID selectors based on the working test_login.py
+    page.locator('#username').fill(username)
+    page.locator('#password').fill(password)
+    page.locator('#spiff-login-button').click()
 
     # Wait for navigation and check for an element indicating successful login.
     # The 'User Actions' button seems reliable based on previous context.
@@ -41,6 +41,5 @@ def logout(page: Page, base_url: str = BASE_URL):
         # Ensure the signout URL is correct for the application
         page.goto(f"{base_url}/auth/signout")
 
-    # Verify logout by checking for a login page element.
-    # Use a selector that reliably identifies the login form/button.
-    expect(page.locator('button[type="submit"]:has-text("Sign in"), #spiff-login-button')).to_be_visible(timeout=10000)
+    # Verify logout by checking for the login button.
+    expect(page.locator('#spiff-login-button')).to_be_visible(timeout=10000)

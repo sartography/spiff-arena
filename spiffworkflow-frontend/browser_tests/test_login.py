@@ -1,23 +1,15 @@
-from playwright.sync_api import sync_playwright
-from .helpers.debug import print_page_details
+from playwright.sync_api import sync_playwright, expect
+from .helpers.login import login
 
 def test_login():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
 
-        # Navigate to the sign-in page
-        page.goto('http://localhost:7001')
-
-        # Enter username and password and click login
-        page.fill('#username', 'admin')
-        page.fill('#password', 'admin')
-        page.click('#spiff-login-button')
-
-        # Debugging print
-        print_page_details(page)
+        # Use the login helper function
+        login(page, "admin", "admin")
 
         # Wait for the element that indicates login succeeded
-        assert page.get_by_role('button', name='User Actions').is_visible(), "Login failed: 'User Actions' button not found."
+        expect(page.get_by_role('button', name='User Actions')).to_be_visible()
 
         browser.close()
