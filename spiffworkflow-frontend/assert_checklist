@@ -10,9 +10,9 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 # Read the checklist file and process each checked item
 while IFS= read -r line; do
-    if [[ $line == "- [x]"* ]]; then
+    if [[ $line =~ ^-\ \[x\] ]]; then
         # Extract the spec path and derive the test file path
-        spec_path=$(echo $line | awk '{print $2}')
+        spec_path=$(echo $line | awk '{print $3}')
         test_file="browser_tests/${spec_path/spec\//test_}.py"
 
         # Run the test file using pytest
