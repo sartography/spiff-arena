@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+
+# Read the checklist file and process each checked item
+while IFS= read -r line; do
+    if [[ $line == "- [x]"* ]]; then
+        # Extract the spec path and derive the test file path
+        spec_path=$(echo $line | awk '{print $2}')
+        test_file="browser_tests/${spec_path/spec\//test_}.py"
+
+        # Run the test file using pytest
+        echo "Running test: $test_file"
+        pytest -s "$test_file"
+        
+        # Check the exit status of pytest
+        if [[ $? -ne 0 ]]; then
+            echo "Test failed: $test_file"
+            exit 1
+        fi
+    fi
+done < checklist.md
+
+echo "All checked tests passed successfully."
