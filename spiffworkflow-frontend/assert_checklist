@@ -7,24 +7,27 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-
 # Read the checklist file and process each checked item
 while IFS= read -r line; do
-    if [[ $line =~ ^-\ \[x\] ]]; then
-        # Extract the spec path and derive the test file path
-        spec_path=$(echo $line | awk '{print $3}')
-        test_file="browser_tests/${spec_path/spec\//test_}.py"
+  if [[ $line =~ ^-\ \[x\] ]]; then
+    # Extract the spec path and derive the test file path
+    spec_path=$(echo $line | awk '{print $3}')
 
-        # Run the test file using pytest
-        echo "Running test: $test_file"
-        pytest -s "$test_file"
-        
-        # Check the exit status of pytest
-        if [[ $? -ne 0 ]]; then
-            echo "Test failed: $test_file"
-            exit 1
-        fi
+    initial_test_dirname=$(dirname "$spec_path")
+    test_dirname="browser_tests/${initial_test_dirname/spec\//}"
+    test_file="test_$(basename "$spec_path" | sed -E 's/\.md$/.py/')"
+    test_file_path="${test_dirname}/${test_file}"
+
+    # Run the test file using pytest
+    echo "Running test: $test_file_path"
+    pytest -s "$test_file_path"
+
+    # Check the exit status of pytest
+    if [[ $? -ne 0 ]]; then
+      echo "Test failed: $test_file_path"
+      exit 1
     fi
-done < checklist.md
+  fi
+done <checklist.md
 
 echo "All checked tests passed successfully."
