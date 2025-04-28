@@ -1,4 +1,4 @@
-- [ ] spec/tasks/can_complete_and_navigate_a_form.md
+- [x] spec/tasks/can_complete_and_navigate_a_form.md
 - [ ] spec/tasks/public_tasks/can_start_process_from_message_form.md
 - [ ] spec/tasks/public_tasks/can_complete_guest_task.md
 - [ ] spec/process_instances/can_paginate_items.md

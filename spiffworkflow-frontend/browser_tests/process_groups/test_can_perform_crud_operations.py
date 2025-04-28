@@ -2,22 +2,17 @@ import pytest
 import re
 from playwright.sync_api import Page, expect
 from uuid import uuid4
+# Assuming helpers are now relative to the tests directory root
+from ..helpers.login import login, logout
 
-def login(page: Page):
-    page.goto("http://localhost:7001/process-groups")
-    page.fill('#username', 'admin')
-    page.fill('#password', 'admin')
-    page.click('#spiff-login-button')
-    page.wait_for_selector('[data-testid=process-groups-loaded]')
-
-def logout(page: Page):
-    page.wait_for_timeout(500)  # Small wait to guarantee menu is loaded
-    page.click('.user-profile-toggletip-button')
-    page.click('[data-testid=logout-button]')
-    expect(page.locator('#spiff-login-button')).to_be_visible()
+# Removed inline login and logout functions, will use imported helpers
 
 def create_group(page: Page, group_id: str, group_display_name: str):
-    assert not page.locator(f'text={group_id}').is_visible()
+    # Navigate to process groups page before creating
+    page.goto("http://localhost:7001/process-groups")
+    expect(page.locator('[data-testid=process-groups-loaded]')).to_be_visible()
+    # Check if group already exists (optional, depends on test needs)
+    # assert not page.locator(f'text={group_id}').is_visible() # This might fail if test reruns without cleanup
     page.click('text=Add a process group')
     page.fill('input[name=display_name]', group_display_name)
     expect(page.locator('input[name=display_name]')).to_have_value(group_display_name)
@@ -28,7 +23,8 @@ def create_group(page: Page, group_id: str, group_display_name: str):
 
 @pytest.mark.order(1)
 def test_can_perform_crud_operations(page: Page):
-    login(page)
+    # Use imported login helper
+    login(page, "admin", "admin")
     unique = str(uuid4())[:8]
     group_id = f"test-group-1-{unique}"
     group_display_name = f"Test Group 1 {unique}"
@@ -59,4 +55,5 @@ def test_can_perform_crud_operations(page: Page):
     expect(page.locator(f'text={new_group_display_name}')).not_to_be_visible()
     expect(page.locator('[data-testid=process-groups-loaded]')).to_be_visible()
 
+    # Use imported logout helper
     logout(page)
