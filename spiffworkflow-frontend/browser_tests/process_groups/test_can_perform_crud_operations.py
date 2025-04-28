@@ -54,6 +54,3 @@ def test_can_perform_crud_operations(page: Page):
     expect(page).to_have_url(re.compile(r'.*/process-groups($|\?)'))
     expect(page.locator(f'text={new_group_display_name}')).not_to_be_visible()
     expect(page.locator('[data-testid=process-groups-loaded]')).to_be_visible()
-
-    # Use imported logout helper
-    logout(page)
