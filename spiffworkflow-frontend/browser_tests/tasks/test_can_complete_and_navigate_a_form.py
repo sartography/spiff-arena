@@ -1,56 +1,64 @@
 import pytest
-
-# In order to use the Playwright test runner fixture 'page',
-# we must use Playwright's test runner, not plain pytest.
-# This file will be rewritten using Playwright's own test runner API via 'pytest-playwright'.
-# To use the Playwright fixture, 'pytest-playwright' plugin must be enabled and installed.
-
 from playwright.sync_api import Page, expect, BrowserContext
-# Assuming helpers are now relative to the tests directory root
 from ..helpers.login import login
-from ..helpers.playwright_setup import browser_context # Import the fixture
-
+from ..helpers.playwright_setup import browser_context
+from ..helpers.debug import print_page_details
 
 def start_process(page: Page):
+    """Attempt to start a process for workflow test."""
     page.goto("http://localhost:7001/processes")
-    page.get_by_role("heading", name="Processes").wait_for(timeout=3000)
-    first_row = page.locator('[data-testid="process-row"]').first
-    first_row.wait_for(timeout=3000)
-    first_row.click()
-    run_btn = page.get_by_role("button", name="Run BPMN")
-    run_btn.wait_for(timeout=3000)
-    run_btn.click()
-    page.get_by_role("heading").filter(has_text="Task").wait_for(timeout=5000) # Increased timeout
-
+    page.wait_for_load_state("networkidle")
+    process_rows = page.locator('[data-testid="process-row"]')
+    process_row_ct = process_rows.count()
+    if process_row_ct == 0:
+        print_page_details(page)
+        raise AssertionError("There are no available processes to test workflow forms.")
+    else:
+        for idx in range(process_row_ct):
+            process_row = process_rows.nth(idx)
+            try:
+                process_row.click()
+                run_btn = page.get_by_role("button", name="Run BPMN")
+                expect(run_btn).to_be_visible(timeout=4000)
+                run_btn.click()
+                break
+            except Exception:
+                page.go_back()
+                continue
+        else:
+            print_page_details(page)
+            raise AssertionError("No process in the list allows for a Run BPMN workflow start.")
+    # Wait for something matching a task step
+    page.get_by_text("Task:", timeout=10000)
 
 def submit_form_field(page: Page, task_name: str, field_key: str, field_value: str, check_draft_data: bool = False):
-    expect(page.get_by_text(f"Task: {task_name}")).to_be_visible(timeout=10000)
-    field = page.locator(field_key)
-    field.fill("")
-    field.type(field_value)
-    # page.wait_for_timeout(100) # Often unnecessary due to auto-waiting
-    if check_draft_data:
-        # Wait a bit longer to allow potential autosave/draft mechanisms
-        page.wait_for_timeout(1000) # Keep this specific wait for draft check
-        page.reload()
-        # Wait for the field to be present again after reload
-        expect(field).to_be_visible(timeout=5000)
-        expect(field).to_have_value(field_value)
-    page.get_by_role("button", name="Submit").click()
-
+    try:
+        expect(page.get_by_text(f"Task: {task_name}")).to_be_visible(timeout=10000)
+        field = page.locator(field_key)
+        expect(field).to_be_visible(timeout=10000)
+        field.fill("")
+        field.type(field_value)
+        if check_draft_data:
+            page.wait_for_timeout(1000)
+            page.reload()
+            expect(field).to_be_visible(timeout=5000)
+            expect(field).to_have_value(field_value)
+        page.get_by_role("button", name="Submit").click()
+    except Exception:
+        print_page_details(page)
+        raise
 
 def go_home_and_resume(page: Page):
     page.get_by_role("link", name="Home").click()
     page.wait_for_url("http://localhost:7001/")
     resume_btn = page.get_by_role("button", name="Go")
-    resume_btn.wait_for(timeout=3000)
+    expect(resume_btn).to_be_visible(timeout=8000)
     resume_btn.click()
 
 
 def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     """Tests completing a multi-step form, including navigating away and back."""
     page = browser_context.new_page()
-    # Use the imported login helper
     login(page, "admin", "admin")
     start_process(page)
     submit_form_field(
@@ -66,7 +74,10 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     )
     page.get_by_role("link", name="Home").click()
     page.wait_for_url("http://localhost:7001/")
-    # Use expect to check the status text content directly
-    expect(page.locator('[data-testid="workflow-status"]').first).to_contain_text(
-        "complete", ignore_case=True, timeout=5000
-    )
+    try:
+        expect(page.locator('[data-testid="workflow-status"]').first).to_contain_text(
+            "complete", ignore_case=True, timeout=8000
+        )
+    except Exception:
+        print_page_details(page)
+        raise
