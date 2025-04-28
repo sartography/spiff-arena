@@ -5,9 +5,10 @@ import pytest
 # This file will be rewritten using Playwright's own test runner API via 'pytest-playwright'.
 # To use the Playwright fixture, 'pytest-playwright' plugin must be enabled and installed.
 
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, expect, BrowserContext
 # Assuming helpers are now relative to the tests directory root
 from ..helpers.login import login
+from ..helpers.playwright_setup import browser_context # Import the fixture
 
 
 def start_process(page: Page):
@@ -23,15 +24,18 @@ def start_process(page: Page):
 
 
 def submit_form_field(page: Page, task_name: str, field_key: str, field_value: str, check_draft_data: bool = False):
-    assert page.get_by_text(f"Task: {task_name}").is_visible(timeout=10000)
+    expect(page.get_by_text(f"Task: {task_name}")).to_be_visible(timeout=10000)
     field = page.locator(field_key)
     field.fill("")
     field.type(field_value)
-    page.wait_for_timeout(100)
+    # page.wait_for_timeout(100) # Often unnecessary due to auto-waiting
     if check_draft_data:
-        page.wait_for_timeout(1000)
+        # Wait a bit longer to allow potential autosave/draft mechanisms
+        page.wait_for_timeout(1000) # Keep this specific wait for draft check
         page.reload()
-        assert page.locator(field_key).input_value() == field_value
+        # Wait for the field to be present again after reload
+        expect(field).to_be_visible(timeout=5000)
+        expect(field).to_have_value(field_value)
     page.get_by_role("button", name="Submit").click()
 
 
@@ -43,7 +47,9 @@ def go_home_and_resume(page: Page):
     resume_btn.click()
 
 
-def test_can_complete_and_navigate_a_form(page: Page):
+def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
+    """Tests completing a multi-step form, including navigating away and back."""
+    page = browser_context.new_page()
     # Use the imported login helper
     login(page, "admin", "admin")
     start_process(page)
@@ -60,6 +66,7 @@ def test_can_complete_and_navigate_a_form(page: Page):
     )
     page.get_by_role("link", name="Home").click()
     page.wait_for_url("http://localhost:7001/")
-    status_text = page.locator('[data-testid="workflow-status"]').first.text_content()
-    assert status_text is not None
-    assert "complete" in status_text.lower()
+    # Use expect to check the status text content directly
+    expect(page.locator('[data-testid="workflow-status"]').first).to_contain_text(
+        "complete", ignore_case=True, timeout=5000
+    )
