@@ -19,5 +19,12 @@ def test_login(browser_context: BrowserContext):
     # Use the login helper function
     login(page, "admin", "admin")
 
-    # Use the logout helper function
+
+def test_logout(browser_context: BrowserContext):
+    """Tests the logout functionality and verifies the login page content."""
+    page = browser_context.new_page()
+    login(page, "admin", "admin")
     logout(page)
+    expect(
+        page.get_by_text("This login form is for demonstration purposes only")
+    ).to_be_visible()
