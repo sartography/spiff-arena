@@ -3,6 +3,7 @@ from playwright.sync_api import expect, Page, BrowserContext
 
 from helpers.login import login, logout, BASE_URL
 from helpers.playwright_setup import browser_context  # fixture
+from helpers.debug import print_page_details
 
 
 def submit_input_into_form_field(
@@ -12,18 +13,52 @@ def submit_input_into_form_field(
     field_value: str,
     check_draft: bool = False,
 ):
-    # Wait for the task prompt to appear (exact match)
-    page.get_by_text(f"Task: {task_name}", exact=True).wait_for(timeout=10000)
-    # Fill the input
-    page.locator(field_selector).fill(str(field_value))
-    # Wait briefly for auto-save debounce
+    task_header = page.get_by_text(f"Task: {task_name}", exact=True)
+    task_header.wait_for(timeout=10000)
+    print("\nDEBUG: URL during form input:", page.url)
+    print_page_details(page)  # --- DEBUG PRINT ---
+    # Try some diagnostics: list all inputs
+    all_inputs = page.query_selector_all("input")
+    print("\nDEBUG: All inputs ids/names:")
+    for inp in all_inputs:
+        print("Input", inp.get_attribute("id"), inp.get_attribute("name"), inp.is_visible(), inp.is_enabled())
+    # Then proceed as before:
+    visible_interactable = []
+    for idx in range(page.locator(field_selector).count()):
+        input_elem = page.locator(field_selector).nth(idx)
+        try:
+            if input_elem.is_visible() and input_elem.is_enabled():
+                input_elem.focus()
+                visible_interactable.append(input_elem)
+        except Exception:
+            continue
+    if not visible_interactable:
+        raise Exception(f"No visible and enabled input found for {field_selector}")
+    input_elem = visible_interactable[0]
+    input_elem.fill(str(field_value))
     page.wait_for_timeout(100)
     if check_draft:
-        # Reload to ensure draft was saved
+        page.wait_for_timeout(1000)
         page.reload()
-        expect(page.locator(field_selector)).to_have_value(str(field_value))
-    # Submit
-    page.get_by_text("Submit", exact=True).click()
+        interact = None
+        for idx in range(page.locator(field_selector).count()):
+            test_input = page.locator(field_selector).nth(idx)
+            if test_input.is_visible() and test_input.is_enabled():
+                test_input.focus()
+                interact = test_input
+                break
+        expect(interact).to_have_value(str(field_value))
+    submit_btn_candidates = page.get_by_text("Submit", exact=True)
+    submit_btn = None
+    for idx in range(submit_btn_candidates.count()):
+        btn = submit_btn_candidates.nth(idx)
+        if btn.is_visible() and btn.is_enabled():
+            submit_btn = btn
+            break
+    if submit_btn is None:
+        print_page_details(page)
+        raise Exception("No visible submit button found")
+    submit_btn.click()
 
 
 def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
@@ -94,7 +129,6 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     expect(page.get_by_text('"form_num_1": 2')).to_be_visible()
     expect(page.get_by_text('"form_num_2": 3')).to_be_visible()
     expect(page.get_by_text('"form_num_3": 4')).to_be_visible()
-    # Ensure form 4 data is not yet present
     assert page.get_by_text('"form_num_4": 5').count() == 0
     expect(page.locator('g[data-element-id="form1"]').first).to_have_class(
         completed_task_class
@@ -125,7 +159,6 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
         "#root_form_num_4",
         5,
     )
-    # Should be on tasks listing
     assert "/tasks" in page.url
 
     # 16. Verify final completion status on instance show

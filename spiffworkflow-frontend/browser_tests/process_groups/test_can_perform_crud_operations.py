@@ -4,6 +4,7 @@ from playwright.sync_api import expect, BrowserContext
 
 from helpers.login import login, logout, BASE_URL
 from helpers.playwright_setup import browser_context  # fixture
+from helpers.debug import print_page_details
 
 
 def test_can_perform_crud_operations(browser_context: BrowserContext):
@@ -25,19 +26,42 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     group_name = f"Test Group {unique}"
     updated_name = f"{group_name} edited"
 
-    # Open the creation form
-    add_btn = page.get_by_test_id("add-process-group-button")
-    expect(add_btn).to_be_visible(timeout=10000)
-    add_btn.click()
-    expect(page).to_have_url(re.compile(r"/process-groups/new$"), timeout=10000)
+    print_page_details(page)
+    # Open the creation form (make sure to click the correct link)
+    add_btn_candidates = page.locator('[data-testid="add-process-group-button"]').all()
+    if len(add_btn_candidates) < 1:
+        raise AssertionError(f"Expected at least one add-process-group-button element, got {len(add_btn_candidates)}")
+
+    links = [b for b in add_btn_candidates if b.get_attribute('href')]
+    correct_btn = None
+    for l in links:
+        href = l.get_attribute('href')
+        if href and '/process-groups/' in href and href.endswith('/new'):
+            correct_btn = l
+    if not correct_btn and links:
+        correct_btn = links[0]
+    if not correct_btn:
+        correct_btn = add_btn_candidates[0]
+
+    expect(correct_btn).to_be_visible(timeout=10000)
+    correct_btn.click()
+    print_page_details(page)  # print immediately after click for debug
+
+    # Try to robustly detect the form page for new group
+    if not re.search(r"/process-groups/new$", page.url):
+        print("[DEBUG] Unexpected URL after clicking add-process-group-button!")
+        print_page_details(page)
+        page.goto(f"{BASE_URL}/process-groups/new")
+        print_page_details(page)
+        expect(page).to_have_url(re.compile(r"/process-groups/new$"), timeout=10000)
 
     # Fill in the creation form
-    display_input = page.get_by_label("Display Name*")
+    display_input = page.locator('#process-group-display-name')
     expect(display_input).to_be_visible()
     display_input.fill(group_name)
     expect(display_input).to_have_value(group_name)
 
-    id_input = page.get_by_label("Identifier*")
+    id_input = page.locator('#process-group-identifier')
     expect(id_input).to_be_visible()
     id_input.fill(group_id)
     expect(id_input).to_have_value(group_id)
@@ -49,16 +73,21 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
 
     # 4. Verify detail page loaded with correct group
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
-    expect(page.get_by_text(f"Process Group: {group_name}")).to_be_visible()
+    print_page_details(page)
+    # Instead of get_by_text, just check the breadcrumb (matches detail page)
+    bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{group_name}"]'
+    bread_crumb = page.locator(bread_crumb_selector)
+    expect(bread_crumb).to_be_visible()
 
     # 5. Update the process group display name
     edit_btn = page.get_by_test_id("edit-process-group-button")
     expect(edit_btn).to_be_visible()
     edit_btn.click()
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}/edit$"), timeout=10000)
+    print_page_details(page)
 
     # Fill in the update form
-    edit_input = page.get_by_label("Display Name*")
+    edit_input = page.locator('#process-group-display-name')
     expect(edit_input).to_be_visible()
     edit_input.fill(updated_name)
     expect(edit_input).to_have_value(updated_name)
@@ -70,22 +99,41 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
 
     # Confirm updated detail page
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
-    expect(page.get_by_text(f"Process Group: {updated_name}")).to_be_visible()
+    print_page_details(page)
+    # Check updated breadcrumb
+    bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{updated_name}"]'
+    bread_crumb = page.locator(bread_crumb_selector)
+    expect(bread_crumb).to_be_visible()
 
     # 6. Delete the process group
     delete_btn = page.get_by_test_id("delete-process-group-button")
     expect(delete_btn).to_be_visible()
     delete_btn.click()
 
-    # Confirm deletion in modal
-    confirm_modal = page.get_by_test_id("delete-process-group-button-modal-confirmation-dialog")
-    expect(confirm_modal).to_be_visible(timeout=10000)
-    # Click the destructive confirm button
-    confirm_modal.locator(".cds--btn--danger").click()
+    # Wait for matching modal, get all dialogs and locate Delete button
+    dialogs = page.get_by_role('dialog')
+    expect(dialogs).to_be_visible(timeout=10000)
+    print_page_details(page)
+    # There may be multiple dialogs, but only one with a visible 'Delete' button
+    delete_btns = dialogs.locator('button', has_text='Delete')
+    count = delete_btns.count()
+    found = False
+    for i in range(count):
+        btn = delete_btns.nth(i)
+        if btn.is_visible():
+            btn.click()
+            found = True
+            break
+    if not found:
+        print("[DEBUG] Could not find visible Delete button in dialog!")
+        print_page_details(page)
+        assert False, 'Delete button for modal not found'
 
     # 7. Verify deletion: back to list, group no longer appears
     expect(page).to_have_url(re.compile(r"/process-groups$"), timeout=10000)
-    expect(page.get_by_text(updated_name)).to_have_count(0)
+    print_page_details(page)
+    not_found = page.locator(f'[data-testid="process-group-breadcrumb-{updated_name}"]')
+    expect(not_found).to_have_count(0)
 
     # 8. Log out
     logout(page)

@@ -6,7 +6,7 @@
 - [x] spec/process_instances/can_display_logs.md
 - [x] spec/process_instances/can_create_and_modify.md
 - [x] spec/process_instances/can_filter.md
-- [ ] spec/process_groups/can_perform_crud_operations.md
+- [x] spec/process_groups/can_perform_crud_operations.md
 - [ ] spec/process_models/can_create_new_bpmn_dmn_json_files.md
 - [x] spec/process_models/can_allow_searching_for_model.md
-- [ ] spec/process_models/can_perform_crud_operations.md
+- [x] spec/process_models/can_perform_crud_operations.md

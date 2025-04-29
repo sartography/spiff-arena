@@ -1,50 +1,74 @@
-import os
-from playwright.sync_api import expect
+import pytest
+from playwright.sync_api import expect, Page, BrowserContext
+from helpers.login import login, logout
+from helpers.debug import print_page_details
+from helpers.playwright_setup import browser_context
+import time
 
-from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
+PROCESS_GROUP = "Shared Resources"
+PROCESS_MODEL = "task-with-guest-form"
+BASE_URL = "http://localhost:7001"
+ADMIN_USER = "admin"
+ADMIN_PASS = "admin"
 
-def test_can_complete_guest_task(browser_context):
-    """Tests that a guest task can be completed via the public link and link cannot be reused."""
-    page = browser_context.new_page()
+# Try: go to /process_models/[group:model], then look for a start button there.
+def start_process_and_get_public_link(page: Page) -> str:
+    login(page, ADMIN_USER, ADMIN_PASS, base_url=BASE_URL)
+    page.goto(f"{BASE_URL}/process_models/misc:task-with-guest-form")
+    print_page_details(page)
+    # Look for start button(s)
+    found = False
+    # First, try data-testid run-model-primary
+    run_btn = page.get_by_test_id("run-model-primary")
+    if run_btn.is_visible():
+        run_btn.click()
+        for _ in range(10):
+            metadata_locator = page.locator('[data-testid="metadata-value-first_task_url"] a')
+            if metadata_locator.is_visible():
+                public_task_url = metadata_locator.get_attribute("href")
+                if public_task_url:
+                    return public_task_url
+            time.sleep(0.5)
+    # Fallback: try all Start This Process visible buttons
+    start_buttons = page.locator('button:has-text("Start this process")')
+    for idx in range(start_buttons.count()):
+        btn = start_buttons.nth(idx)
+        if btn.is_visible():
+            btn.click()
+            for _ in range(10):
+                metadata_locator = page.locator('[data-testid="metadata-value-first_task_url"] a')
+                if metadata_locator.is_visible():
+                    public_task_url = metadata_locator.get_attribute("href")
+                    if public_task_url:
+                        return public_task_url
+                time.sleep(0.5)
+    print_page_details(page)
+    raise AssertionError("No public (guest) task URL found after run attempts (even on model detail page).")
 
-    # 1. Log in and navigate to the 'Shared Resources' process model
-    login(page, "admin", "admin")
-    page.goto(f"{BASE_URL}/process-groups")
-    page.get_by_text("Shared Resources", exact=False).first.click()
-
-    # Open the process model details
-    model_name = "task-with-guest-form"
-    page.get_by_test_id(f"process-model-card-{model_name}").first.click()
-    expect(page.get_by_text(f"Process Model: {model_name}", exact=False)).to_be_visible()
-
-    # 2. Start the process instance; metadata appears below
-    page.get_by_test_id("start-process-instance").first.click()
-
-    # 3. Extract the public guest task link from metadata field
-    link_locator = page.get_by_test_id("metadata-value-first_task_url").locator("a")
-    expect(link_locator).to_be_visible(timeout=15000)
-    task_link = link_locator.get_attribute("href")
-    assert task_link, "Expected guest task link in metadata"
-
-    # 4. Log out of the authenticated session
-    logout(page)
-
-    # 5. Visit the public guest task URL as a guest and complete both forms
-    page.goto(task_link)
-    page.get_by_role("button", name="Submit").click()
-    page.get_by_role("button", name="Submit").click()
+def complete_guest_task_flow(page: Page, task_url: str):
+    page.goto(task_url)
+    for _ in range(2):
+        submit_button = page.get_by_text("Submit", exact=True)
+        expect(submit_button).to_be_visible()
+        submit_button.click()
     expect(page.get_by_text("You are done. Yay!", exact=False)).to_be_visible()
 
-    # 6. Verify the link cannot be reused
-    page.goto(task_link)
-    expect(page.get_by_text("Error retrieving content.", exact=False)).to_be_visible()
-
-    # 7. Public navigation: home and sign out
-    page.get_by_test_id("public-home-link").click()
-    page.get_by_test_id("public-sign-out").click()
-    # Check redirection to sign-in or presence of login button
-    if os.environ.get("SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK", "false").lower() == "true":
-        expect(page.get_by_text("Sign in to your account", exact=False)).to_be_visible()
+def test_can_complete_guest_task(browser_context: BrowserContext):
+    page = browser_context.new_page()
+    public_task_url = start_process_and_get_public_link(page)
+    logout(page, base_url=BASE_URL)
+    complete_guest_task_flow(page, public_task_url)
+    page.goto(public_task_url)
+    expect(page.get_by_text("Error retrieving content.")).to_be_visible()
+    home_link = page.get_by_test_id("public-home-link")
+    expect(home_link).to_be_visible()
+    home_link.click()
+    sign_out = page.get_by_test_id("public-sign-out")
+    expect(sign_out).to_be_visible()
+    sign_out.click()
+    login_button = page.locator("#spiff-login-button")
+    sign_in_prompt = page.get_by_text("Sign in to your account", exact=False)
+    if login_button.is_visible():
+        expect(login_button).to_be_visible()
     else:
-        expect(page.locator("#spiff-login-button")).to_be_visible()
+        expect(sign_in_prompt).to_be_visible()
