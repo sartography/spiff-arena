@@ -1,1 +1,1 @@
-browser_tests/tasks/public_tasks/test_can_complete_guest_task.py
+browser_tests/process_models/test_can_perform_crud_operations.py
