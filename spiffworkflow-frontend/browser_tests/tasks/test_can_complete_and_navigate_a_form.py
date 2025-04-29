@@ -1,4 +1,3 @@
-import pytest
 from playwright.sync_api import expect, Page, BrowserContext
 
 from helpers.login import login, logout, BASE_URL
@@ -13,51 +12,49 @@ def submit_input_into_form_field(
     field_value: str,
     check_draft: bool = False,
 ):
-    task_header = page.get_by_text(f"Task: {task_name}", exact=True)
-    task_header.wait_for(timeout=10000)
-    print("\nDEBUG: URL during form input:", page.url)
-    print_page_details(page)  # --- DEBUG PRINT ---
-    # Try some diagnostics: list all inputs
-    all_inputs = page.query_selector_all("input")
-    print("\nDEBUG: All inputs ids/names:")
-    for inp in all_inputs:
-        print("Input", inp.get_attribute("id"), inp.get_attribute("name"), inp.is_visible(), inp.is_enabled())
-    # Then proceed as before:
-    visible_interactable = []
-    for idx in range(page.locator(field_selector).count()):
-        input_elem = page.locator(field_selector).nth(idx)
+    # Wait for task header to ensure form is loaded
+    page.get_by_text(f"Task: {task_name}", exact=True).wait_for(timeout=10000)
+    # Wait for field to be present
+    page.wait_for_selector(field_selector, timeout=10000)
+    # Locate all matching inputs and pick the first visible and enabled
+    locator = page.locator(field_selector)
+    visible_input = None
+    for i in range(locator.count()):
+        inp = locator.nth(i)
         try:
-            if input_elem.is_visible() and input_elem.is_enabled():
-                input_elem.focus()
-                visible_interactable.append(input_elem)
+            if inp.is_visible() and inp.is_enabled():
+                visible_input = inp
+                break
         except Exception:
             continue
-    if not visible_interactable:
+    if not visible_input:
+        print_page_details(page)
         raise Exception(f"No visible and enabled input found for {field_selector}")
-    input_elem = visible_interactable[0]
-    input_elem.fill(str(field_value))
-    page.wait_for_timeout(100)
+    # Fill the value
+    visible_input.fill(str(field_value))
+    # Wait for debounce/autosave
+    page.wait_for_timeout(200)
     if check_draft:
         page.wait_for_timeout(1000)
         page.reload()
-        interact = None
-        for idx in range(page.locator(field_selector).count()):
-            test_input = page.locator(field_selector).nth(idx)
-            if test_input.is_visible() and test_input.is_enabled():
-                test_input.focus()
-                interact = test_input
-                break
-        expect(interact).to_have_value(str(field_value))
-    submit_btn_candidates = page.get_by_text("Submit", exact=True)
-    submit_btn = None
-    for idx in range(submit_btn_candidates.count()):
-        btn = submit_btn_candidates.nth(idx)
-        if btn.is_visible() and btn.is_enabled():
-            submit_btn = btn
-            break
-    if submit_btn is None:
-        print_page_details(page)
-        raise Exception("No visible submit button found")
+        page.wait_for_selector(field_selector, timeout=10000)
+        locator = page.locator(field_selector)
+        draft_ok = False
+        for i in range(locator.count()):
+            inp = locator.nth(i)
+            try:
+                if inp.is_visible() and inp.is_enabled():
+                    expect(inp).to_have_value(str(field_value))
+                    draft_ok = True
+                    break
+            except Exception:
+                continue
+        if not draft_ok:
+            print_page_details(page)
+            raise Exception(f"Draft value not found for {field_selector}")
+    # Click the Submit button
+    submit_btn = page.get_by_role("button", name="Submit")
+    submit_btn.wait_for(state="visible", timeout=10000)
     submit_btn.click()
 
 
@@ -91,77 +88,58 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     page.get_by_test_id("start-process-instance").first.click()
 
     # 7. Complete form 1 with draft check
-    submit_input_into_form_field(
-        page,
-        "get_form_num_one",
-        "#root_form_num_1",
-        2,
-        check_draft=True,
-    )
+    submit_input_into_form_field(page, "get_form_num_one", "#root_form_num_1", 2, check_draft=True)
 
     # 8. Complete form 2
-    submit_input_into_form_field(
-        page,
-        "get_form_num_two",
-        "#root_form_num_2",
-        3,
-    )
+    submit_input_into_form_field(page, "get_form_num_two", "#root_form_num_2", 3)
 
     # 9. Complete form 3
-    submit_input_into_form_field(
-        page,
-        "get_form_num_three",
-        "#root_form_num_3",
-        4,
-    )
+    submit_input_into_form_field(page, "get_form_num_three", "#root_form_num_3", 4)
 
-    # 10. Go to process instance list
+    # 10. Ensure form 4 is next
+    page.get_by_text("Task: get_form_num_four", exact=True).wait_for(timeout=10000)
+
+    # 11. Navigate to process instance list via model page
+    page.goto(f"{BASE_URL}/process-groups")
+    page.get_by_text(parent_group, exact=False).first.click()
+    expect(page.get_by_test_id(f"process-group-breadcrumb-{parent_group}")).to_be_visible()
+    page.get_by_text(child_group, exact=False).first.click()
+    expect(page.get_by_test_id(f"process-group-breadcrumb-{child_group}")).to_be_visible()
+    page.get_by_test_id(f"process-model-card-{model_display_name}").first.click()
+    expect(page.get_by_text(f"Process Model: {model_display_name}", exact=False)).to_be_visible()
     page.get_by_test_id("process-instance-list-link").click()
     rows = page.locator("tbody tr")
     assert rows.count() >= 1
 
-    # 11. Open first instance details
+    # 12. Open first instance details
     page.get_by_test_id("process-instance-show-link-id").first.click()
     expect(page.get_by_text("Process Instance Id:", exact=False)).to_be_visible()
 
-    # 12. Inspect form3 details and status highlighting
+    # 13. Inspect form3 details and status highlighting
     page.locator('g[data-element-id="form3"]').click()
     expect(page.get_by_text('"form_num_1": 2')).to_be_visible()
     expect(page.get_by_text('"form_num_2": 3')).to_be_visible()
     expect(page.get_by_text('"form_num_3": 4')).to_be_visible()
     assert page.get_by_text('"form_num_4": 5').count() == 0
-    expect(page.locator('g[data-element-id="form1"]').first).to_have_class(
-        completed_task_class
-    )
-    expect(page.locator('g[data-element-id="form2"]').first).to_have_class(
-        completed_task_class
-    )
-    expect(page.locator('g[data-element-id="form3"]').first).to_have_class(
-        completed_task_class
-    )
-    expect(page.locator('g[data-element-id="form4"]').first).to_have_class(
-        active_task_class
-    )
+    expect(page.locator('g[data-element-id="form1"]').first).to_have_class(completed_task_class)
+    expect(page.locator('g[data-element-id="form2"]').first).to_have_class(completed_task_class)
+    expect(page.locator('g[data-element-id="form3"]').first).to_have_class(completed_task_class)
+    expect(page.locator('g[data-element-id="form4"]').first).to_have_class(active_task_class)
 
-    # 13. Close the details modal
+    # 14. Close the details modal
     page.locator('.is-visible .cds--modal-close').click()
 
-    # 14. Navigate to Home and resume
+    # 15. Navigate to Home and resume
     page.get_by_test_id("header-menu-expand-button").click()
     page.get_by_test_id("side-nav-items").get_by_text("Home").click()
     expect(page.get_by_text("Waiting for me", exact=False)).to_be_visible()
     page.get_by_text("Go", exact=True).click()
 
-    # 15. Complete form 4
-    submit_input_into_form_field(
-        page,
-        "get_form_num_four",
-        "#root_form_num_4",
-        5,
-    )
+    # 16. Complete form 4
+    submit_input_into_form_field(page, "get_form_num_four", "#root_form_num_4", 5)
     assert "/tasks" in page.url
 
-    # 16. Verify final completion status on instance show
+    # 17. Verify final completion status on instance show
     page.goto(f"{BASE_URL}/process-groups")
     page.get_by_text(parent_group, exact=False).first.click()
     page.get_by_text(child_group, exact=False).first.click()
@@ -169,9 +147,7 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     expect(page.get_by_text(f"Process Model: {model_display_name}", exact=False)).to_be_visible()
     page.get_by_test_id("process-instance-list-link").click()
     page.get_by_test_id("process-instance-show-link-id").first.click()
-    expect(
-        page.locator(".process-instance-status").get_by_text("complete")
-    ).to_be_visible()
+    expect(page.locator(".process-instance-status").get_by_text("complete")).to_be_visible()
 
-    # 17. Logout
+    # 18. Logout
     logout(page)

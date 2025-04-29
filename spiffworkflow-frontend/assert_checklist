@@ -14,7 +14,11 @@ while IFS= read -r line; do
     spec_path=$(echo $line | awk '{print $3}')
 
     initial_test_dirname=$(dirname "$spec_path")
-    test_dirname="browser_tests/${initial_test_dirname/spec\//}"
+    if [[ "$initial_test_dirname" == "spec" ]]; then
+      test_dirname="browser_tests"
+    else
+      test_dirname="browser_tests/${initial_test_dirname/spec\//}"
+    fi
     test_file="test_$(basename "$spec_path" | sed -E 's/\.md$/.py/')"
     test_file_path="${test_dirname}/${test_file}"
 
