@@ -1,9 +1,9 @@
 - [x] spec/login.md
-- [ ] spec/tasks/can_complete_and_navigate_a_form.md
+- [x] spec/tasks/can_complete_and_navigate_a_form.md
 - [x] spec/tasks/public_tasks/can_start_process_from_message_form.md
 - [ ] spec/tasks/public_tasks/can_complete_guest_task.md
-- [ ] spec/process_instances/can_paginate_items.md
-- [ ] spec/process_instances/can_display_logs.md
+- [x] spec/process_instances/can_paginate_items.md
+- [x] spec/process_instances/can_display_logs.md
 - [ ] spec/process_instances/can_create_and_modify.md
 - [ ] spec/process_instances/can_filter.md
 - [ ] spec/process_groups/can_perform_crud_operations.md
