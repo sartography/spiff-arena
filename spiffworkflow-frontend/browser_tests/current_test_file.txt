@@ -1,1 +1,1 @@
-browser_tests/tasks/test_can_complete_and_navigate_a_form.py
+browser_tests/process_models/test_can_create_new_bpmn_dmn_json_files.py
