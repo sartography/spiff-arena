@@ -69,6 +69,8 @@ import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
 
+import PythonWorker from '../workers/python.js?worker'
+
 type OwnProps = {
   processModelId: string;
   diagramType: string;
@@ -174,6 +176,15 @@ export default function ReactDiagramEditor({
     },
     [diagramModelerState, diagramType],
   );
+
+  const [pythonWorker, setPythonWorker] = useState(null);
+
+  useEffect(() => {
+    const worker = new PythonWorker();
+    setPythonWorker(worker);
+  }, []);
+  
+  console.log("post python web worker loaded: ", pythonWorker);
 
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
   // @ts-ignore
