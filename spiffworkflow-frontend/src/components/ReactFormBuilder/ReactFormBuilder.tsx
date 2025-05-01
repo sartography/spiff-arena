@@ -111,64 +111,56 @@ export default function ReactFormBuilder({
 
   useEffect(() => {
     /**
-     * we need to run the schema and ui through a backend call before rendering the form,
-     * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
+     * we need to run the schema and ui through the python web worker before rendering the form,
+     * so it can mimic certain server side changes, such as jinja rendering and populating dropdowns, etc.
      */
-    const url: string = '/tasks/prepare-form';
-    let schema = {};
-    let ui = {};
-    let data = {};
-
     if (strSchema === '' || strUI === '' || strFormData === '' || pythonWorker === null) {
       return;
     }
 
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
-    pythonWorker.onmessage = async (e) => console.log(`back from worker: ${e.data}`);
+    pythonWorker.onmessage = async (e) => {
+      if (e.data.type !== 'didJinjaForm') {
+        console.log('unknown python worker response: ', e);
+	return;
+      }
+
+      if (e.data.error) {
+        setErrorMessage(error);
+	return;
+      }
+      
+      try {
+        const schema = JSON.parse(e.data.strSchema);
+      } catch (e) {
+        setErrorMessage('Please check the Json Schema for errors.');
+        return;
+      }
+      try {
+        const ui = JSON.parse(e.data.strUI);
+      } catch (e) {
+        setErrorMessage('Please check the UI Settings for errors.');
+        return;
+      }
+      try {
+        JSON.parse(e.data.strFormData);
+      } catch (e) {
+        setErrorMessage('Please check the Data View for errors.');
+        return;
+      }
+
+      setPostJsonSchema(schema);
+      setPostJsonUI(ui);
+      setErrorMessage('');
+    }
+    
+    setErrorMessage('');
   
     pythonWorker.postMessage({
       type: 'jinjaForm',
       strSchema,
       strUI,
       strFormData,
-    });
-
-    try {
-      schema = JSON.parse(strSchema);
-    } catch (e) {
-      setErrorMessage('Please check the Json Schema for errors.');
-      return;
-    }
-    try {
-      ui = JSON.parse(strUI);
-    } catch (e) {
-      setErrorMessage('Please check the UI Settings for errors.');
-      return;
-    }
-    try {
-      data = JSON.parse(strFormData);
-    } catch (e) {
-      setErrorMessage('Please check the Data View for errors.');
-      return;
-    }
-
-    setErrorMessage('');
-    HttpService.makeCallToBackend({
-      path: url,
-      successCallback: (response: any) => {
-        setPostJsonSchema(response.form_schema);
-        setPostJsonUI(response.form_ui);
-        setErrorMessage('');
-      },
-      failureCallback: (error: any) => {
-        setErrorMessage(error.message);
-      },
-      httpMethod: 'POST',
-      postBody: {
-        form_schema: schema,
-        form_ui: ui,
-        task_data: data,
-      },
     });
   }, [strSchema, strUI, strFormData, canCreateFiles]);
 

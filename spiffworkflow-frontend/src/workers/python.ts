@@ -46,8 +46,12 @@ import jinja2
 })();
 
 const messageHandlers = {
-  jinjaForm: async ({ data: { schema, uiSchema, formData }}) => {
+  jinjaForm: async ({ data: { strSchema, strUI, strFormData }}) => {
     self.postMessage({
+      type: 'didJinjaForm',
+      strSchema,
+      strUI,
+      strFormData,
     });
   },
 };
