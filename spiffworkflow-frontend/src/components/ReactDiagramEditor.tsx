@@ -69,7 +69,7 @@ import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
 
-import PythonWorker from '../workers/python.js?worker'
+//import PythonWorker from '../workers/python.js?worker'
 
 type OwnProps = {
   processModelId: string;
@@ -180,7 +180,8 @@ export default function ReactDiagramEditor({
   const [pythonWorker, setPythonWorker] = useState(null);
 
   useEffect(() => {
-    const worker = new PythonWorker();
+    // TODO: likely want to create this higher up and pass in down through props
+    const worker = new Worker(new URL("/src/workers/python.js", import.meta.url));
     setPythonWorker(worker);
   }, []);
   
