@@ -35,6 +35,12 @@ const pyodideInitialLoad = (async () => {
     await self.pyodide.runPythonAsync(`
 
 import jinja2
+
+def jinja_form(schema, ui, form_data):
+    if not schema or not ui:
+        return schema, ui, None
+
+    return "{}", "{}", "BOB"
 `);
     const end = Date.now();
 
@@ -46,12 +52,20 @@ import jinja2
 })();
 
 const messageHandlers = {
-  jinjaForm: async ({ data: { strSchema, strUI, strFormData }}) => {
+  jinjaForm: async e => {
+    const locals = self.pyodide.toPy(e.data);
+    const [strSchema, strUI, err] = await self.pyodide.runPythonAsync(
+      "jinja_form(strSchema, strUI, strFormData)",
+      { locals }
+    );
+
+    console.log("HERE");
+    
     self.postMessage({
       type: 'didJinjaForm',
       strSchema,
       strUI,
-      strFormData,
+      err,
     });
   },
 };

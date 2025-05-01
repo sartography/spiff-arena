@@ -125,8 +125,8 @@ export default function ReactFormBuilder({
 	return;
       }
 
-      if (e.data.error) {
-        setErrorMessage(error);
+      if (e.data.err) {
+        setErrorMessage(e.data.err);
 	return;
       }
       
@@ -142,12 +142,6 @@ export default function ReactFormBuilder({
         setErrorMessage('Please check the UI Settings for errors.');
         return;
       }
-      try {
-        JSON.parse(e.data.strFormData);
-      } catch (e) {
-        setErrorMessage('Please check the Data View for errors.');
-        return;
-      }
 
       setPostJsonSchema(schema);
       setPostJsonUI(ui);
@@ -155,6 +149,13 @@ export default function ReactFormBuilder({
     }
     
     setErrorMessage('');
+    
+    try {
+      JSON.parse(strFormData);
+    } catch (e) {
+      setErrorMessage('Please check the Data View for errors.');
+      return;
+    }
   
     pythonWorker.postMessage({
       type: 'jinjaForm',
