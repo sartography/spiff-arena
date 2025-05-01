@@ -34,9 +34,6 @@ const pyodideInitialLoad = (async () => {
   {
     const start = Date.now();
     await self.pyodide.runPythonAsync(`
-#
-# TODO: get this into its own pypi package so we can just micropip install it
-#
 
 import jinja2
 `
@@ -48,12 +45,16 @@ import jinja2
 
   const end = Date.now();
   console.log(`Loaded Python in ${end-start}ms`);
-
-  self.postMessage({ type: "didLoad" });
 })();
+
+const messageHandlers = {
+  jinja: async (e) => {
+    self.postMessage("jinja: " + e.data);
+  },
+};
 
 self.onmessage = async e => {
   await pyodideInitialLoad;
-  
-  self.postMessage("bob.ts: " + e.data);
+
+  messageHandlers[e.data.type]?.(e);
 };

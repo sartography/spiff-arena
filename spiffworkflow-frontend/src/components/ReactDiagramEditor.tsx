@@ -69,8 +69,6 @@ import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
 
-//import PythonWorker from '../workers/python.js?worker'
-
 type OwnProps = {
   processModelId: string;
   diagramType: string;
@@ -187,7 +185,9 @@ export default function ReactDiagramEditor({
     setPythonWorker(worker);
   }, []);
   
-  pythonWorker?.postMessage("sue");
+  pythonWorker?.postMessage({
+    type: 'jinja',
+  });
 
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
   // @ts-ignore
