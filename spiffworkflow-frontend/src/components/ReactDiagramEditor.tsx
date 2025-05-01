@@ -179,12 +179,14 @@ export default function ReactDiagramEditor({
 
   useEffect(() => {
     // TODO: likely want to create this higher up and pass in down through props
-    const worker = new Worker(new URL("/src/workers/python.ts", import.meta.url));
+    const worker = new Worker(
+      new URL('/src/workers/python.ts', import.meta.url),
+    );
 
-    worker.onmessage = async e => console.log("back from worker: " + e.data);
+    worker.onmessage = async (e) => console.log(`back from worker: ${e.data}`);
     setPythonWorker(worker);
   }, []);
-  
+
   pythonWorker?.postMessage({
     type: 'jinja',
   });

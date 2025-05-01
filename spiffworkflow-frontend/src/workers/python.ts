@@ -1,10 +1,9 @@
-
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js");
+importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
 const pyodideInitialLoad = (async () => {
-  console.log("Loading Python...");
+  console.log('Loading Python...');
   const start = Date.now();
-  
+
   /*
   // to regen lock file:
   {
@@ -25,10 +24,10 @@ const pyodideInitialLoad = (async () => {
       fulllStdLib: false,
       lockFileURL: '/pyodide-lock.json',
     });
-    await self.pyodide.loadPackage(["Jinja2"]);
+    await self.pyodide.loadPackage(['Jinja2']);
     const end = Date.now();
-  
-    console.log(`Loaded Python packages in ${end-start}ms`);
+
+    console.log(`Loaded Python packages in ${end - start}ms`);
   }
 
   {
@@ -36,24 +35,23 @@ const pyodideInitialLoad = (async () => {
     await self.pyodide.runPythonAsync(`
 
 import jinja2
-`
-    );
+`);
     const end = Date.now();
-  
-    console.log(`Loaded Python app code in ${end-start}ms`);
+
+    console.log(`Loaded Python app code in ${end - start}ms`);
   }
 
   const end = Date.now();
-  console.log(`Loaded Python in ${end-start}ms`);
+  console.log(`Loaded Python in ${end - start}ms`);
 })();
 
 const messageHandlers = {
   jinja: async (e) => {
-    self.postMessage("jinja: " + e.data);
+    self.postMessage(`jinja: ${e.data}`);
   },
 };
 
-self.onmessage = async e => {
+self.onmessage = async (e) => {
   await pyodideInitialLoad;
 
   messageHandlers[e.data.type]?.(e);

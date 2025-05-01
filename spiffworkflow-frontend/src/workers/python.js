@@ -1,7 +1,5 @@
+importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js");
-
-self.onmessage = function(e) {
-  self.postMessage("bob: " + e.data);
+self.onmessage = function (e) {
+  self.postMessage(`bob: ${e.data}`);
 };
-
