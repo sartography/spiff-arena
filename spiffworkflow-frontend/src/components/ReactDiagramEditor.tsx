@@ -175,22 +175,6 @@ export default function ReactDiagramEditor({
     [diagramModelerState, diagramType],
   );
 
-  const [pythonWorker, setPythonWorker] = useState(null);
-
-  useEffect(() => {
-    // TODO: likely want to create this higher up and pass in down through props
-    const worker = new Worker(
-      new URL('/src/workers/python.ts', import.meta.url),
-    );
-
-    worker.onmessage = async (e) => console.log(`back from worker: ${e.data}`);
-    setPythonWorker(worker);
-  }, []);
-
-  pythonWorker?.postMessage({
-    type: 'jinja',
-  });
-
   /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
   // @ts-ignore
   const fixUnresolvedReferences = (diagramModelerToUse: any): null => {

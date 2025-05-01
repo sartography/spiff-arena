@@ -56,6 +56,7 @@ type OwnProps = {
   onFileNameSet: (fileName: string) => void;
   canCreateFiles: boolean;
   canUpdateFiles: boolean;
+  pythonWorker: any,
 };
 
 export default function ReactFormBuilder({
@@ -64,6 +65,7 @@ export default function ReactFormBuilder({
   onFileNameSet,
   canCreateFiles,
   canUpdateFiles,
+  pythonWorker,
 }: OwnProps) {
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
@@ -117,9 +119,19 @@ export default function ReactFormBuilder({
     let ui = {};
     let data = {};
 
-    if (strSchema === '' || strUI === '' || strFormData === '') {
+    if (strSchema === '' || strUI === '' || strFormData === '' || pythonWorker === null) {
       return;
     }
+
+    // TODO: when we use this in more than one place we will need a better dispatching mechanism
+    pythonWorker.onmessage = async (e) => console.log(`back from worker: ${e.data}`);
+  
+    pythonWorker.postMessage({
+      type: 'jinjaForm',
+      strSchema,
+      strUI,
+      strFormData,
+    });
 
     try {
       schema = JSON.parse(strSchema);
