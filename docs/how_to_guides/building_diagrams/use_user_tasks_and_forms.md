@@ -75,17 +75,7 @@ The RJSF library is open source, free to use, and follows the principles of open
 Please note that while this guide provides a basic understanding of JSON Schema and RJSF, there is much more to explore.
 We encourage you to refer to the official [RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details and advanced techniques.
 
-2. **Using Form Builder**
-
-An alternative approach to creating JSON code is to utilize the form builder feature, which allows you to easily create various fields without the need for writing JSON manually.
-
-However, it's important to note that the form builder may have certain limitations in terms of features and may not be as powerful as using the JSON editor directly.
-
-While the form builder provides convenience and simplicity, using the JSON editor offers greater flexibility and control over the form structure.
-
-![Image](/images/Form-Builder.png)
-
-3. **Creating Forms from BPMN Editor**
+2. **Creating Forms from BPMN Editor**
 
 To create forms inside the editor, we utilize user tasks within the BPMN file.
 Upon creating a new BPMN file, open it to access the editor.
@@ -110,14 +100,6 @@ Upon creating a new BPMN file, open it to access the editor.
 
 ![Form Editor](/images/Form_editor3.png)
 
-**Adding and Customizing Form Elements**
-
-You can add existing templates to add elements to your form, such as text areas, checkboxes, and date selectors.
-Each element can be further customized in the JSON schema and UI settings.
-For instance, you can set the UI widget correctly for each element, ensuring it appears as intended on the form.
-
-![Form Editor](/images/Form_editor4.png)
-
 ### SpiffArena react-jsonschema-form enhancements
 
 SpiffArena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
@@ -129,6 +111,7 @@ Dynamic enumerations allow you to provide users with a list of options (in a sel
 This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
 
 To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
+
 In a script task, that would look like this:
 ```python
 #python
