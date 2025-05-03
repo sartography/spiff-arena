@@ -80,13 +80,25 @@ while IFS= read -r line; do
         exit 1
       else
         # In unchecked mode, failure is expected, continue silently
-        echo "Expected failure for unchecked item: $test_file_path (Exit code: $test_exit_code)"
+        echo "Got expected failure for unchecked item: $test_file_path"
       fi
     fi
 
     # Optional: Extract Cypress test file info if needed later
     cypress_test_file=$(sed -n 's/^..Test source:.. `\([^`]*\)`.*/\1/p' "$spec_path")
-    echo "cypress_test_file: $cypress_test_file"
+    if [[ -n "$cypress_test_file" ]]; then
+      echo "cypress_test_file: $cypress_test_file"
+      response=$(ca gpro --read "$cypress_test_file" --read "$test_file_path" --read "$spec_path" --no-auto-commits --no-detect-urls --no-gitignore --chat-mode ask --map-tokens 0 -m "does the python playwright test implement all of the same type of logic as the cypress test, with the same basic assertions, or are some missing? if it is good, reply with ELEPHANT. if the playwright test is potentially bad or incomplete, reply with HYENA")
+
+      if grep -Eq ELEPHANT <<<"$response"; then
+        echo "Cypress test and Playwright test logic match."
+      elif grep -Eq HYENA <<<"$response"; then
+        echo "Cypress test and Playwright test logic do not match."
+      else
+        echo "Unexpected response from ca gpro: $response"
+        exit 1
+      fi
+    fi
   fi
 done <checklist.md
 
