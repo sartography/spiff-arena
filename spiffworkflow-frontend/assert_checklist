@@ -4,14 +4,53 @@ function error_handler() {
   >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
-trap 'error_handler ${LINENO} $?' ERR
-set -o errtrace -o errexit -o nounset -o pipefail
+# Default mode is to check that checked items pass
+MODE="checked"
 
-# Read the checklist file and process each checked item
+# Parse command-line arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+  --mode=checked)
+    MODE="checked"
+    shift
+    ;;
+  --mode=unchecked)
+    MODE="unchecked"
+    shift
+    ;;
+  *)
+    echo "Unknown parameter passed: $1"
+    exit 1
+    ;;
+  esac
+done
+
+# Stricter error handling only needed for checked mode during test runs
+if [[ "$MODE" == "checked" ]]; then
+  trap 'error_handler ${LINENO} $?' ERR
+  set -o errtrace -o errexit -o nounset -o pipefail
+else
+  # Unchecked mode needs nounset and pipefail, but not errexit/errtrace during the loop
+  set -o nounset -o pipefail
+fi
+
+passing_unchecked_tests=()
+
+# Read the checklist file and process each item based on the mode
 while IFS= read -r line; do
-  if [[ $line =~ ^-\ \[x\] ]]; then
-    # Extract the spec path and derive the test file path
-    spec_path=$(echo $line | awk '{print $3}')
+  process_line=false
+  spec_path=""
+
+  if [[ "$MODE" == "checked" && $line =~ ^-\ \[x\] ]]; then
+    process_line=true
+    spec_path=$(echo "$line" | awk '{print $3}')
+  elif [[ "$MODE" == "unchecked" ]] && grep -Eq '^- \[ \]' <<<"$line"; then
+    process_line=true
+    spec_path=$(echo "$line" | awk '{print $4}')
+  fi
+
+  if [[ "$process_line" == true ]]; then
+    echo "Processing spec: $spec_path (Mode: $MODE)"
 
     initial_test_dirname=$(dirname "$spec_path")
     if [[ "$initial_test_dirname" == "spec" ]]; then
@@ -24,17 +63,44 @@ while IFS= read -r line; do
 
     # Run the test file using pytest
     echo "Running test: $test_file_path"
-    pytest -s "$test_file_path"
-
-    # Check the exit status of pytest
-    if [[ $? -ne 0 ]]; then
-      echo "Test failed: $test_file_path"
-      exit 1
+    # Suppress pytest output unless it fails to keep the script output clean
+    if pytest -s "$test_file_path" >/dev/null 2>&1; then
+      # Test passed
+      if [[ "$MODE" == "unchecked" ]]; then
+        echo "UNEXPECTED PASS: Test for unchecked item passed: $test_file_path"
+        passing_unchecked_tests+=("$test_file_path")
+      fi
+    else
+      # Test failed
+      test_exit_code=$?
+      if [[ "$MODE" == "checked" ]]; then
+        echo "Test failed: $test_file_path (Exit code: $test_exit_code)"
+        # Re-run with output for debugging
+        pytest -s "$test_file_path"
+        exit 1
+      else
+        # In unchecked mode, failure is expected, continue silently
+        echo "Expected failure for unchecked item: $test_file_path (Exit code: $test_exit_code)"
+      fi
     fi
 
+    # Optional: Extract Cypress test file info if needed later
     cypress_test_file=$(sed -n 's/^..Test source:.. `\([^`]*\)`.*/\1/p' "$spec_path")
     echo "cypress_test_file: $cypress_test_file"
   fi
 done <checklist.md
 
-echo "All checked tests passed successfully."
+# Final summary based on mode
+if [[ "$MODE" == "checked" ]]; then
+  echo "All checked tests passed successfully."
+elif [[ "$MODE" == "unchecked" ]]; then
+  if [[ ${#passing_unchecked_tests[@]} -eq 0 ]]; then
+    echo "All unchecked tests failed as expected."
+  else
+    echo "Error: The following unchecked tests passed unexpectedly:"
+    for test_path in "${passing_unchecked_tests[@]}"; do
+      echo "- $test_path"
+    done
+    exit 1
+  fi
+fi
