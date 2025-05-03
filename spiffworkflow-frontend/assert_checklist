@@ -31,6 +31,9 @@ while IFS= read -r line; do
       echo "Test failed: $test_file_path"
       exit 1
     fi
+
+    cypress_test_file=$(sed -n 's/^..Test source:.. `\([^`]*\)`.*/\1/p' "$spec_path")
+    echo "cypress_test_file: $cypress_test_file"
   fi
 done <checklist.md
 
