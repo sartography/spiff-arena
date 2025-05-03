@@ -63,13 +63,11 @@ Script Task 3 includes a delay with the code "time.sleep(2)" and aims to increas
 
 4. **Manual Task to Display Content**
 
-![Image](/images/Manual_instructions.png)
+![Image](/images/Manual_instructions_side_by_side.png)
 
 A Manual Task will display content based on the collected data and script-generated information.
 The instructions panel of the Manual Task provides the content to be displayed, which includes the form data entered by the user.
 It also offers an optional Chuck Norris joke based on user preference and a table of silly color names generated using Jinja templating.
-
-![Image](/images/Manual_instructions_side_by_side.png)
 
 5. **End Event**
 

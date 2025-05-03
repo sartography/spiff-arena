@@ -79,7 +79,7 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   fi
 fi
 
-if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" ]]; then
+if [[ "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" == "true" ]]; then
   ./bin/clone_process_models
 fi
 

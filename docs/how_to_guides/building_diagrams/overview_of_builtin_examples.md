@@ -3,14 +3,15 @@
 When logging into the dashboard, it is crucial to familiarize yourself with the functions it offers and how the underlying engine operates.
 In the demo website, we will explore two examples: the Minimal Example and the Essential Example, to provide a clear understanding of the process.
 
-![](https://lh5.googleusercontent.com/Db25xtzQon8tu4YbsOLx-DPEyONhrF5jfxhbEXOqDomT2YlGnhEWBZMVFF84ViPyCRD-HMca--Xl4bj8vIF5-KNfpoKjujUZk1wDIMuBMymbg0o1jgucPrZxSsxxT1GuLYGjXPwCyEQ8BhpSt6URJCg)
+
+![Built-in examples](/images/example_interface.png)
 
 ## Minimal Example
 
 Let's begin with the Minimal Example, which serves as a "Hello World" process—a simple executable BPMN Diagram designed to demonstrate basic functionality.
 Rather than immediately starting the process, we will first examine its structure.
 
-![](https://lh3.googleusercontent.com/MBj52gja_U5V4R7AQ1yMTwG3GoexCPLG-7Xwe40xURIOUYqJhGmQRapPln37QM9ylLiy17Oq0B1BHvsRQWVpAzd9ztt2AUs9XG26HUOORNXpgJNOGEt4DXG-_wh6YK7X4ms52W2O5yzOgdlIJ48dMOA)
+![Built-in examples](/images/minimal_example.png)
 
 ### Access the Process Directory
 
@@ -18,11 +19,11 @@ Clicking on the process name will open the directory dedicated to the Minimal Ex
 From here, you can start the process if desired, but for the purpose of this example, we will proceed with an explanation of its components and functionality.
 Therefore, locate and click on the .bpmn file to access the BPMN editor.
 
-![](https://lh3.googleusercontent.com/EKwOS_K29tFCDvIpdZHI2Ca_ZA8H5fw127OkUL3aAHw-JRjnDqsemFUyLXAKxr2CnsUfuAiY3yPswM03O04O57belSJnEi2PPeAfVElU-mraD3XV0v0ggQJsAuvdaMBf2-eOGsOIS5CCBp9et3IxR70)
+![Built-in examples](/images/minimal_example_files.png)
 
 The BPMN editor provides a visual representation of the process workflow.
 
-![](https://lh4.googleusercontent.com/kvDwQPz65ABWc653Ou54r9yfwGc1RHlzufKOE4oQ0uKsM_CRnuQPObAkbh9ldoXHUkGODZrLcdInKXMGOFra0wKoPxtvsdEASORHnuSTayOe_MEChuEqymJ5ur6rcuoCMQXKH7f-dfPAEBg2vukT53w)
+![](/images/example_workflow.png)
 
 ### Understand the Process Workflow
 
@@ -30,7 +31,8 @@ The Minimal Example process consists of three key elements: a start event, a man
 It is essential to understand the purpose and functionality of the properties panel, which is an integral component of the process diagram.
 Without selecting any specific task within the diagram editor, the properties panel will appear as follows:
 
-![](https://lh4.googleusercontent.com/Yx4xI4TmhLzdGfV68nKpamfgSZMDnK4d9-FKh99SEZjqmIXjl8coxbaWU9OACHszx6AiKUKIL21OKiiW-tZ9iyxMVJGE6yx8JTg8eEnthcp1h8Z3GugkvUdwlwax9aJtKW6DYBQBhHxXeVplWoazSKg)
+
+![minimal example](/images/example_workflow1.png)
 
 General
 
@@ -61,7 +63,8 @@ The first event in the Minimal Example is the start event.
 Each process diagram begins with a Start Event.
 Now explore the properties panel when you click on the first process of the diagram, “Start Event”.
 
-![](https://lh6.googleusercontent.com/-lXbK5RuTDTykc-JBRd7eCbrrGHroB5gsl77UXU7IxEsw4nSPcMmxe3wRVTr242ZRORBlEdtrFZZhBQAyILOYTWv7-fsMSzMYD2jBqJx71lkxuaP9mnePJtY21qx7DA6XgELmmZl6uDIhFwHcEaPYqM)
+
+![minimal example](/images/example_workflow2.png)
 
 General
 
@@ -93,7 +96,7 @@ Manual Tasks do not require user input other than clicking a button to acknowled
 
 Now explore the properties panel when you click on the first process of the process of “Show Example Manual Task”.
 
-![](https://lh6.googleusercontent.com/xbF6rEcK-agPjIl5bAMelArlnIpdgvMNCG-MB24130ZEm_pem8RpkZIn7Ej-cZ0uuBgW9ajGDFxbrEP7GDNnR4VUPrNcpTVyjMwxQUsKVB5lxzBsvVVWiDcbGGO5GtnqcqNTUasHgEwj-vunPmEz19M)
+![minimal example](/images/example_workflow3.png)
 
 Panel General Section
 
@@ -122,8 +125,7 @@ This section serves as a means to format and present information to the user.
 The formatting is achieved through a combination of Markdown and Jinja.
 To view and edit the instructions, click on the editor, and a window will open displaying the instructions in the specified format.
 
-![](https://lh4.googleusercontent.com/wWNqTB2EU4W0Hgz_u2l7PiEqbGVRuZMjtbgGUrckAPP9aD2TRGFvZgVkRXWcx-CV5JsSzWYDsZuXCkTpvmyfdUmFm13bTZ5o5OOf7ykBMoJ-vGBPcxQojSpE9leMn97zZDbEdJmZPgnrChQk6tbjUc8)
-
+![minimal example](/images/example_workflow4.png)
 
 **3. End Task**
 
@@ -133,7 +135,7 @@ A BPMN diagram should contain an end event for every distinct end state of a pro
 
 Now explore the properties panel when you click on the last end event process:
 
-![](https://lh5.googleusercontent.com/uu9dUBMExx7JxrVOtorZtc5doHlodI-dcvlWjO2L_qFz5-v9eN6vnIMLJC76Cb7PuabLjzR86EESP_Em7FTPEZssxS6ql-Prjmg-bK9MfaMAo5yyuUQ4IXsjhkFH60QEOjMY3r665LSL-R-pZAwyDg4)
+![minimal example](/images/example_workflow5.png)
 
 General
 
@@ -154,8 +156,7 @@ Instructions
 You can click on launch editor to see the markdown file.
 
 
-![](https://lh5.googleusercontent.com/lcGDq-colYTa0zRq5yObuN6D5aW2wH-PheyYFMPJ9D77lZ_-fQlUrtFHNwKmCod4v1JYrWnblJEzW5VkVFM_I_Q1d8fhiWC98DPK4ZDctI7Jbqf11DdXSJAUVvZ2C2ubv-3FKXzVkbgGY8Fnk0irSdo)
-
+![minimal example](/images/example_workflow6.png)
 
 ## Essential Example
 
