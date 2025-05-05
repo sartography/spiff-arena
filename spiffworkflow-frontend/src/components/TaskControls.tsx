@@ -8,8 +8,8 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
-import SpiffTooltip from './SpiffTooltip';
 import { useTranslation } from 'react-i18next';
+import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
   onGroupBySelect?: Function;

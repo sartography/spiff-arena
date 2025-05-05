@@ -34,8 +34,11 @@ export default function HeaderTabs({
         onChange={onChange}
         sx={{ flexGrow: 1 }} // Make the Tabs container flexible
       >
-        <Tab label={t("tasks_assigned_to_me")} sx={{ textTransform: 'none' }} />
-        <Tab label={t("workflows_created_by_me")} sx={{ textTransform: 'none' }} />
+        <Tab label={t('tasks_assigned_to_me')} sx={{ textTransform: 'none' }} />
+        <Tab
+          label={t('workflows_created_by_me')}
+          sx={{ textTransform: 'none' }}
+        />
       </Tabs>
       <Box
         sx={{
