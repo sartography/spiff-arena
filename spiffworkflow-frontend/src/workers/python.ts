@@ -23,7 +23,7 @@ const pyodideInitialLoad = (async () => {
     const start = Date.now();
     // eslint-disable-next-line no-undef
     this.pyodide = await loadPyodide({
-      fulllStdLib: false,
+      fullStdLib: false,
       lockFileURL: '/pyodide-lock.json',
     });
     await this.pyodide.loadPackage(['Jinja2']);

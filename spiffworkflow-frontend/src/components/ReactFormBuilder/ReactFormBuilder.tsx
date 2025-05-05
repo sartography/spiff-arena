@@ -108,21 +108,12 @@ export default function ReactFormBuilder({
   function handleDataEditorDidMount(editor: any) {
     dataEditorRef.current = editor;
   }
-
+  
   useEffect(() => {
-    /**
-     * we need to run the schema and ui through the python web worker before rendering the form,
-     * so it can mimic certain server side changes, such as jinja rendering and populating dropdowns, etc.
-     */
-    if (
-      strSchema === '' ||
-      strUI === '' ||
-      strFormData === '' ||
-      pythonWorker === null
-    ) {
+    if (pythonWorker === null) {
       return;
     }
-
+    
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
     // eslint-disable-next-line no-param-reassign
     pythonWorker.onmessage = async (e) => {
@@ -153,6 +144,20 @@ export default function ReactFormBuilder({
 
       setErrorMessage('');
     };
+  }, [pythonWorker]);
+
+  useEffect(() => {
+    /**
+     * we need to run the schema and ui through the python web worker before rendering the form,
+     * so it can mimic certain server side changes, such as jinja rendering and populating dropdowns, etc.
+     */
+    if (
+      strSchema === '' ||
+      strUI === '' ||
+      strFormData === ''
+    ) {
+      return;
+    }
 
     setErrorMessage('');
 
@@ -169,7 +174,7 @@ export default function ReactFormBuilder({
       strUI,
       strFormData,
     });
-  }, [strSchema, strUI, strFormData, canCreateFiles, pythonWorker]);
+  }, [strSchema, strUI, strFormData, canCreateFiles]);
 
   const saveFile = (
     file: File,
