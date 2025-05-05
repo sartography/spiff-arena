@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
 const pyodideInitialLoad = (async () => {
@@ -20,6 +21,7 @@ const pyodideInitialLoad = (async () => {
 
   {
     const start = Date.now();
+    // eslint-disable-next-line no-undef
     self.pyodide = await loadPyodide({
       fulllStdLib: false,
       lockFileURL: '/pyodide-lock.json',
