@@ -22,11 +22,11 @@ const pyodideInitialLoad = (async () => {
   {
     const start = Date.now();
     // eslint-disable-next-line no-undef
-    self.pyodide = await loadPyodide({
+    this.pyodide = await loadPyodide({
       fulllStdLib: false,
       lockFileURL: '/pyodide-lock.json',
     });
-    await self.pyodide.loadPackage(['Jinja2']);
+    await this.pyodide.loadPackage(['Jinja2']);
     const end = Date.now();
 
     console.log(`Loaded Python packages in ${end - start}ms`);
@@ -34,7 +34,7 @@ const pyodideInitialLoad = (async () => {
 
   {
     const start = Date.now();
-    await self.pyodide.runPythonAsync(`
+    await this.pyodide.runPythonAsync(`
 
 import jinja2
 import json
@@ -64,13 +64,13 @@ def jinja_form(schema, ui, form_data):
 
 const messageHandlers = {
   jinjaForm: async (e) => {
-    const locals = self.pyodide.toPy(e.data);
-    const [strSchema, strUI, err] = await self.pyodide.runPythonAsync(
+    const locals = this.pyodide.toPy(e.data);
+    const [strSchema, strUI, err] = await this.pyodide.runPythonAsync(
       'jinja_form(strSchema, strUI, strFormData)',
       { locals },
     );
 
-    self.postMessage({
+    this.postMessage({
       type: 'didJinjaForm',
       strSchema,
       strUI,
@@ -79,7 +79,7 @@ const messageHandlers = {
   },
 };
 
-self.onmessage = async (e) => {
+this.onmessage = async (e) => {
   await pyodideInitialLoad;
 
   messageHandlers[e.data.type]?.(e);
