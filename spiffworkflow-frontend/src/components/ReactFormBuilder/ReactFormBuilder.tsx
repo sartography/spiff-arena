@@ -124,7 +124,6 @@ export default function ReactFormBuilder({
     }
 
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
-    // @ts-ignore
     // eslint-disable-next-line no-param-reassign
     pythonWorker.onmessage = async (e) => {
       if (e.data.type !== 'didJinjaForm') {
