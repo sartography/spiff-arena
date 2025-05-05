@@ -61,13 +61,13 @@ def jinja_form(schema, ui, form_data):
 })();
 
 const messageHandlers = {
-  jinjaForm: async e => {
+  jinjaForm: async (e) => {
     const locals = self.pyodide.toPy(e.data);
     const [strSchema, strUI, err] = await self.pyodide.runPythonAsync(
-      "jinja_form(strSchema, strUI, strFormData)",
-      { locals }
+      'jinja_form(strSchema, strUI, strFormData)',
+      { locals },
     );
-    
+
     self.postMessage({
       type: 'didJinjaForm',
       strSchema,

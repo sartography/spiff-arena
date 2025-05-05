@@ -56,7 +56,7 @@ type OwnProps = {
   onFileNameSet: (fileName: string) => void;
   canCreateFiles: boolean;
   canUpdateFiles: boolean;
-  pythonWorker: any,
+  pythonWorker: any;
 };
 
 export default function ReactFormBuilder({
@@ -114,56 +114,63 @@ export default function ReactFormBuilder({
      * we need to run the schema and ui through the python web worker before rendering the form,
      * so it can mimic certain server side changes, such as jinja rendering and populating dropdowns, etc.
      */
-    if (strSchema === '' || strUI === '' || strFormData === '' || pythonWorker === null) {
+    if (
+      strSchema === '' ||
+      strUI === '' ||
+      strFormData === '' ||
+      pythonWorker === null
+    ) {
       return;
     }
 
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
+    // @ts-ignore
+    // eslint-disable-next-line no-param-reassign
     pythonWorker.onmessage = async (e) => {
       if (e.data.type !== 'didJinjaForm') {
         console.log('unknown python worker response: ', e);
-	return;
+        return;
       }
 
       if (e.data.err) {
         setErrorMessage(e.data.err);
-	return;
+        return;
       }
-      
+
       try {
         const schema = JSON.parse(e.data.strSchema);
         setPostJsonSchema(schema);
-      } catch (e) {
+      } catch (err) {
         setErrorMessage('Please check the Json Schema for errors.');
         return;
       }
       try {
         const ui = JSON.parse(e.data.strUI);
         setPostJsonUI(ui);
-      } catch (e) {
+      } catch (err) {
         setErrorMessage('Please check the UI Settings for errors.');
         return;
       }
 
       setErrorMessage('');
-    }
-    
+    };
+
     setErrorMessage('');
-    
+
     try {
       JSON.parse(strFormData);
     } catch (e) {
       setErrorMessage('Please check the Data View for errors.');
       return;
     }
-  
+
     pythonWorker.postMessage({
       type: 'jinjaForm',
       strSchema,
       strUI,
       strFormData,
     });
-  }, [strSchema, strUI, strFormData, canCreateFiles]);
+  }, [strSchema, strUI, strFormData, canCreateFiles, pythonWorker]);
 
   const saveFile = (
     file: File,

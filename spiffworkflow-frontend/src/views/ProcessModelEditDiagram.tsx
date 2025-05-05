@@ -224,7 +224,7 @@ export default function ProcessModelEditDiagram() {
 
     setPythonWorker(worker);
   }, []);
-  
+
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
   };
@@ -1340,7 +1340,7 @@ export default function ProcessModelEditDiagram() {
               'PUT',
               targetUris.processModelFileCreatePath,
             )}
-	    pythonWorker={pythonWorker}
+            pythonWorker={pythonWorker}
           />
           <Button onClick={handleJsonSchemaEditorClose}>Close</Button>
         </Box>
