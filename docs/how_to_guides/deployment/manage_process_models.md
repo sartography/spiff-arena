@@ -39,6 +39,33 @@ Editing process models locally is another perfectly good option, depending on yo
     * If you want to authorize the webhook, set `SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET` as appropriate.
     * Each webhook call from the Git remote will result in a Git pull in the backend.
 
+## Using a GitHub Repo via https
+
+We often use git+ssh to interact with the process model repo, but it is also possible to use https.
+Here are the steps for doing this using GitHub with the ability to read from and write to the repo.
+
+1. Under Developer Settings, create a fine-grained token with permissions to:
+    * Commit statuses - Read and Write
+    * Contents - Read and Write
+    * Metadata - Read only (this is mandatory by github)
+    * Pull request - Read only
+
+1. Configure spiffworkflow-backend, in one of two ways:
+    1. If you are mounting the process models into a container, you can include the token in the git remote url, and things should just work.
+    1. If you are using the docker image, you can set it to up clone for you, so a mount is not needed, like so:
+        ```bash
+        SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL=https://{token}@github.com/{project}/{repo}.git
+        SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS=true
+        ```
+1. In either case, you might want:
+
+    ```bash
+    SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE=true
+    ```
+
+You could also set up a cronjob or similar if changes are happening on the server and you want them to be reflected in your git repo.
+
+
 ## Editing Process Models Locally
 
 Rather than editing your process models on a shared server, you can choose to make all process model changes locally.
