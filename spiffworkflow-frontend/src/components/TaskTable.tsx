@@ -14,15 +14,13 @@ import {
 } from '@mui/material';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import SpiffTooltip from './SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import UserService from '../services/UserService';
 import { TimeAgo } from '../helpers/timeago';
 import DateAndTimeService from '../services/DateAndTimeService';
 import TaskCard from './TaskCard';
-import { useTranslation } from 'react-i18next';
-
-
 
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
