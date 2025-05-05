@@ -35,12 +35,21 @@ const pyodideInitialLoad = (async () => {
     await self.pyodide.runPythonAsync(`
 
 import jinja2
+import json
 
 def jinja_form(schema, ui, form_data):
     if not schema or not ui:
         return schema, ui, None
 
-    return "{}", "{}", "BOB"
+    try:
+        form_data = json.loads(form_data)
+        env = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        schema = env.from_string(schema).render(**form_data)
+        ui = env.from_string(ui).render(**form_data)
+    except Exception as e:
+        return schema, ui, f"{e.__class__.__name__}: {e}"
+
+    return schema, ui, None
 `);
     const end = Date.now();
 
@@ -58,8 +67,6 @@ const messageHandlers = {
       "jinja_form(strSchema, strUI, strFormData)",
       { locals }
     );
-
-    console.log("HERE");
     
     self.postMessage({
       type: 'didJinjaForm',

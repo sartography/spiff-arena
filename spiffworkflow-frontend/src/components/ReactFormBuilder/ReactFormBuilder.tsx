@@ -132,19 +132,19 @@ export default function ReactFormBuilder({
       
       try {
         const schema = JSON.parse(e.data.strSchema);
+        setPostJsonSchema(schema);
       } catch (e) {
         setErrorMessage('Please check the Json Schema for errors.');
         return;
       }
       try {
         const ui = JSON.parse(e.data.strUI);
+        setPostJsonUI(ui);
       } catch (e) {
         setErrorMessage('Please check the UI Settings for errors.');
         return;
       }
 
-      setPostJsonSchema(schema);
-      setPostJsonUI(ui);
       setErrorMessage('');
     }
     
