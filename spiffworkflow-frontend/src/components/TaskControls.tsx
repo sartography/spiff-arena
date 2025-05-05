@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { ViewModule } from '@mui/icons-material';
 import SpiffTooltip from './SpiffTooltip';
+import { useTranslation } from 'react-i18next';
 
 type OwnProps = {
   onGroupBySelect?: Function;
@@ -29,6 +30,7 @@ function TaskControls({
   viewMode = 'table',
   selectedGroupBy,
 }: OwnProps) {
+  const { t } = useTranslation();
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       {onGroupBySelect ? (
@@ -41,10 +43,10 @@ function TaskControls({
           sx={{ mr: 2, bgcolor: 'background.paper' }}
         >
           {selectedGroupBy ? (
-            <MenuItem value="">Ungrouped</MenuItem>
+            <MenuItem value="">{t('ungrouped')}</MenuItem>
           ) : (
             <MenuItem value="placeholder" disabled>
-              Group by
+              {t('group_by')}
             </MenuItem>
           )}
           {groupByOptions?.map((group) => (
@@ -62,11 +64,11 @@ function TaskControls({
               onChange={(e) => setShowNonActive(e.target.checked)}
             />
           }
-          label="Show non-active"
+          label={t('show_non_active')}
         />
       ) : null}
       {setViewMode ? (
-        <SpiffTooltip title="Toggle table / tiles">
+        <SpiffTooltip title={t('toggle_table_tiles')}>
           <IconButton
             onClick={() => setViewMode(viewMode === 'table' ? 'tile' : 'table')}
           >

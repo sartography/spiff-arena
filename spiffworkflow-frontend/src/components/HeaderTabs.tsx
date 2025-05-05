@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 type HeaderTabsProps = {
   value: number;
@@ -12,6 +13,7 @@ export default function HeaderTabs({
   onChange,
   taskControlElement,
 }: HeaderTabsProps) {
+  const { t } = useTranslation();
   return (
     <Box
       sx={{
@@ -32,8 +34,8 @@ export default function HeaderTabs({
         onChange={onChange}
         sx={{ flexGrow: 1 }} // Make the Tabs container flexible
       >
-        <Tab label="Tasks assigned to me" sx={{ textTransform: 'none' }} />
-        <Tab label="Workflows created by me" sx={{ textTransform: 'none' }} />
+        <Tab label={t("tasks_assigned_to_me")} sx={{ textTransform: 'none' }} />
+        <Tab label={t("workflows_created_by_me")} sx={{ textTransform: 'none' }} />
       </Tabs>
       <Box
         sx={{

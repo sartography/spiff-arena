@@ -20,6 +20,9 @@ import UserService from '../services/UserService';
 import { TimeAgo } from '../helpers/timeago';
 import DateAndTimeService from '../services/DateAndTimeService';
 import TaskCard from './TaskCard';
+import { useTranslation } from 'react-i18next';
+
+
 
 type TaskTableProps = {
   entries: ProcessInstanceTask[] | ProcessInstance[] | null;
@@ -33,7 +36,7 @@ export default function TaskTable({
   showNonActive = false,
 }: TaskTableProps) {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const getProcessInstanceId = (
     entry: ProcessInstanceTask | ProcessInstance,
   ) => {
@@ -166,7 +169,7 @@ export default function TaskTable({
         <TableCell>{waitingFor}</TableCell>
         <TableCell>
           {hasAccessToCompleteTask ? (
-            <SpiffTooltip title="Complete task">
+            <SpiffTooltip title={t('complete_task')}>
               <IconButton onClick={() => handleRunTask(entry)}>
                 <PlayArrow />
               </IconButton>
@@ -192,13 +195,13 @@ export default function TaskTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>Task details</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Last milestone</TableCell>
-              <TableCell>Last updated</TableCell>
-              <TableCell>Waiting for</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>{t('id')}</TableCell>
+              <TableCell>{t('task_details')}</TableCell>
+              <TableCell>{t('created')}</TableCell>
+              <TableCell>{t('last_milestone')}</TableCell>
+              <TableCell>{t('last_updated')}</TableCell>
+              <TableCell>{t('waiting_for')}</TableCell>
+              <TableCell>{t('actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{records}</TableBody>{' '}

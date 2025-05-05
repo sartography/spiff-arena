@@ -14,5 +14,19 @@
     "environment": "Environment",
     "sign_out": "Sign out",
     "about": "About",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "tasks_assigned_to_me": "Tasks assigned to me",
+    "workflows_created_by_me": "Workflows created by me",
+    "group_by": "Group by",
+    "ungrouped": "Ungrouped",
+    "toggle_table_tiles": "Toggle table / tiles",
+    "show_non_active": "Show non-active",
+    "id": "Id",
+    "task_details": "Task details",
+    "created": "Created",
+    "last_milestone": "Last milestone",
+    "last_updated": "Last updated",
+    "waiting_for": "Waiting for",
+    "actions": "Actions",
+    "complete_task": "Complete task"
 }
