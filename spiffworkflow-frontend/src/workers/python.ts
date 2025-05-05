@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // eslint-disable-next-line no-undef
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
