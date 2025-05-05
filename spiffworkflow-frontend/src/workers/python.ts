@@ -79,7 +79,7 @@ const messageHandlers = {
   },
 };
 
-this.onmessage = async (e) => {
+onmessage = async (e) => {
   await pyodideInitialLoad;
 
   messageHandlers[e.data.type]?.(e);
