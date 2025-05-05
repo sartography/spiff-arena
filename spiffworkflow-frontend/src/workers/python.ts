@@ -3,7 +3,7 @@ importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
 const pyodideInitialLoad = (async () => {
   console.log('Loading Python...');
-  const start = Date.now();
+  const pyStart = Date.now();
 
   /*
   // to regen lock file:
@@ -59,7 +59,7 @@ def jinja_form(schema, ui, form_data):
   }
 
   const end = Date.now();
-  console.log(`Loaded Python in ${end - start}ms`);
+  console.log(`Loaded Python in ${end - pyStart}ms`);
 })();
 
 const messageHandlers = {
