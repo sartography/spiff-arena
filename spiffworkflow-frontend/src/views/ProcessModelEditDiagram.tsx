@@ -199,7 +199,7 @@ export default function ProcessModelEditDiagram() {
 
   const [callers, setCallers] = useState<ProcessReference[]>([]);
 
-  const [pythonWorker, setPythonWorker] = useState(null);
+  const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
 
   const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
     const processResults = (result: any) => {

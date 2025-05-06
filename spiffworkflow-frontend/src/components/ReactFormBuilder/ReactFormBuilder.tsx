@@ -116,7 +116,7 @@ export default function ReactFormBuilder({
 
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
     // eslint-disable-next-line no-param-reassign
-    pythonWorker.onmessage = async (e) => {
+    pythonWorker.onmessage = async (e: any) => {
       if (e.data.type !== 'didJinjaForm') {
         console.log('unknown python worker response: ', e);
         return;
