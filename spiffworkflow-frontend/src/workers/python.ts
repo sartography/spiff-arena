@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable no-restricted-globals */
 
 // eslint-disable-next-line no-undef
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
@@ -86,4 +87,3 @@ self.onmessage = async (e) => {
 
   messageHandlers[e.data.type]?.(e);
 };
-
