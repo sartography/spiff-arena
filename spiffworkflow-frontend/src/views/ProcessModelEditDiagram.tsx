@@ -199,6 +199,8 @@ export default function ProcessModelEditDiagram() {
 
   const [callers, setCallers] = useState<ProcessReference[]>([]);
 
+  const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
+
   const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
     const processResults = (result: any) => {
       const selectionArray = result.map((item: any) => {
@@ -215,6 +217,12 @@ export default function ProcessModelEditDiagram() {
       path: `/processes`,
       successCallback: processResults,
     });
+
+    const worker = new Worker(
+      new URL('/src/workers/python.ts', import.meta.url),
+    );
+
+    setPythonWorker(worker);
   }, []);
 
   const handleEditorScriptChange = (value: any) => {
@@ -1332,6 +1340,7 @@ export default function ProcessModelEditDiagram() {
               'PUT',
               targetUris.processModelFileCreatePath,
             )}
+            pythonWorker={pythonWorker}
           />
           <Button onClick={handleJsonSchemaEditorClose}>Close</Button>
         </Box>
