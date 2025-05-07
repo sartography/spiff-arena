@@ -153,7 +153,7 @@ Then use JSON like this (note the `options_from_task_data_var:fruits`) when defi
 
 SpiffArena now supports dynamically generated array fields using data from the process instance. This allows developers to define array items (e.g., subfields of an object) at runtime using a task data variable.
 
-This feature is similar to [Dynamic Enumerations](#dynamic-enumerations), but instead of supplying dropdown options, you're providing an array schema definition dynamically via a task variable.
+This feature is similar to Dynamic Enumerations but instead of supplying dropdown options, you're providing an array schema definition dynamically via a task variable.
 
 ##### Example Use Case: Dynamically Defined Parcel ID Structure
 
