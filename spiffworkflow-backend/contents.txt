@@ -1,0 +1,21 @@
+{
+  "title": "Parcel Information",
+  "description": "We need to determine how this is going to work",
+  "type": "object",
+  "properties": {
+    "parcel_id": {
+      "title": "Parcel ID",
+      "type": "array",
+      "items": {{ parcel_id_fields }}
+    },
+    "order_search_type": {
+      "type": "string",
+      "title": "Order Search Method",
+      "enum": [
+        "Integration Service",
+        "External",
+        "Internal"
+      ]
+    }
+  }
+}

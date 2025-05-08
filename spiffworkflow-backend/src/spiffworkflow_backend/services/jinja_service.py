@@ -2,7 +2,7 @@ import re
 from sys import exc_info
 
 import jinja2
-from jinja2 import TemplateSyntaxError
+from jinja2 import TemplateSyntaxError, select_autoescape
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
@@ -65,9 +65,18 @@ class JinjaService:
 
     @classmethod
     def render_jinja_template(
-        cls, unprocessed_template: str, task: TaskModel | SpiffTask | None = None, task_data: dict | None = None
+        cls,
+        unprocessed_template: str,
+        task: TaskModel | SpiffTask | None = None,
+        task_data: dict | None = None,
+        autoescape_items: list | None = None,
     ) -> str:
-        jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        if autoescape_items is None:
+            # autoescape_items = ["html", "xml", "md"]
+            autoescape_items = ["json"]
+        jinja_environment = jinja2.Environment(
+            autoescape=select_autoescape(autoescape_items), lstrip_blocks=True, trim_blocks=True
+        )
         jinja_environment.filters.update(JinjaHelpers.get_helper_mapping())
         try:
             template = jinja_environment.from_string(unprocessed_template)

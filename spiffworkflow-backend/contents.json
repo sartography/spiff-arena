@@ -1,0 +1,6 @@
+{\n  "title": "Parcel Information",\n  "description": "We need to determine how this is going to work",\n  "type": "object",\n  "properties": {\n    "parcel_id": {\n      "title": "Parcel ID",\n      "type": "array",\n      "items": [
+        "{\\n  \\"title\\": \\"District\\",\\n  \\"type\\": \\"string\\",\\n  \\"pattern\\": \\"^(0|[
+          1-9
+        ]\\\\d*)$\\",\\n  \\"minLength\\": 2,\\n  \\"maxLength\\": 2\\n},\\n{\\n  \\"title\\": \\"Account Identifier\\",\\n  \\"type\\": \\"string\\",\\n  \\"pattern\\": \\"^(0|[
+          1-9
+        ]\\\\d*)$\\",\\n  \\"minLength\\": 6,\\n  \\"maxLength\\": 6\\n} ]\n    },\n    "order_search_type": {\n      "type": "string",\n      "title": "Order Search Method",\n      "enum": [\n        "Integration Service",\n        "External",\n        "Internal"\n      ]\n    }\n  }\n}
