@@ -6,7 +6,7 @@
     "parcel_id": {
       "title": "Parcel ID",
       "type": "array",
-      "items": {{ parcel_id_fields }}
+      "items": {{ parcel_id_fields|tojson }}
     },
     "order_search_type": {
       "type": "string",

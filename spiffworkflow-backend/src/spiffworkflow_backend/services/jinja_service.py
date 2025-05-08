@@ -69,14 +69,8 @@ class JinjaService:
         unprocessed_template: str,
         task: TaskModel | SpiffTask | None = None,
         task_data: dict | None = None,
-        autoescape_items: list | None = None,
     ) -> str:
-        if autoescape_items is None:
-            # autoescape_items = ["html", "xml", "md"]
-            autoescape_items = ["json"]
-        jinja_environment = jinja2.Environment(
-            autoescape=select_autoescape(autoescape_items), lstrip_blocks=True, trim_blocks=True
-        )
+        jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
         jinja_environment.filters.update(JinjaHelpers.get_helper_mapping())
         try:
             template = jinja_environment.from_string(unprocessed_template)
