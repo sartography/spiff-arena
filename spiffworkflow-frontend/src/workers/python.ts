@@ -8,28 +8,17 @@ const pyodideInitialLoad = (async () => {
   console.log('Loading Python...');
   const pyStart = Date.now();
 
-  /*
-  // to regen lock file:
-  {
-    const pyodide = await loadPyodide();
-    await pyodide.loadPackage("micropip");
-    const micropip = pyodide.pyimport("micropip");
-    await micropip.install(["Jinja2"]);
-    const frozen = micropip.freeze();
-    //
-    // copy/paste log output and save to pyodide-lock.json
-    console.log(JSON.stringify(JSON.parse(frozen)));
-  }
-  */
-
   {
     const start = Date.now();
     // eslint-disable-next-line no-undef
-    self.pyodide = await loadPyodide({
-      fullStdLib: false,
-      lockFileURL: '/pyodide-lock.json',
-    });
-    await self.pyodide.loadPackage(['Jinja2']);
+    const pyodide = await loadPyodide({ fullStdLib: false });
+    await pyodide.loadPackage('micropip');
+    const micropip = pyodide.pyimport('micropip');
+    await micropip.install(['Jinja2==3.1.6']);
+
+    // eslint-disable-next-line no-undef
+    self.pyodide = pyodide;
+
     const end = Date.now();
 
     console.log(`Loaded Python packages in ${end - start}ms`);
