@@ -10,14 +10,15 @@ const pyodideInitialLoad = (async () => {
 
   {
     const start = Date.now();
+    // eslint-disable-next-line no-undef
     const pyodide = await loadPyodide({ fullStdLib: false });
-    await pyodide.loadPackage("micropip");
-    const micropip = pyodide.pyimport("micropip");
-    await micropip.install(["Jinja2"]);
+    await pyodide.loadPackage('micropip');
+    const micropip = pyodide.pyimport('micropip');
+    await micropip.install(['Jinja2']);
 
     // eslint-disable-next-line no-undef
     self.pyodide = pyodide;
-    
+
     const end = Date.now();
 
     console.log(`Loaded Python packages in ${end - start}ms`);
