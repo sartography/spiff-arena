@@ -452,7 +452,10 @@ export default function ProcessModelTreePage({
   const dataStoresForProcessGroup = dataStores.filter(
     (dataStore: DataStore) => {
       return (
-        currentProcessGroup && dataStore.location === currentProcessGroup.id
+        (currentProcessGroup &&
+          dataStore.location === currentProcessGroup.id) ||
+        (!currentProcessGroup &&
+          (!dataStore.location || dataStore.location === '/'))
       );
     },
   );
