@@ -3,6 +3,8 @@ services:
     build:
       context: spiffworkflow-frontend
       dockerfile: dev.Dockerfile
+      additional_contexts:
+        python: ./spiffworkflow-backend/src/spiffworkflow_backend
     user: "${RUN_AS}"
     environment:
       npm_config_cache: "/app/.cache/npm"
