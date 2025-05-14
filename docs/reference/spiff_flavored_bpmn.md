@@ -1,10 +1,10 @@
-# SpiffWorkflow BPMN Extensions
+# Spiff-Flavored BPMN
 
-SpiffWorkflow uses the BPMN 2.0 specification to provide enhanced functionality, particularly for automated tasks like Script Tasks and Service Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
+SpiffWorkflow uses the BPMN 2.0 specification to provide functionality that helps to run your processes, particularly for tasks like Script Tasks, Service Tasks, and User Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
 
 ## Namespace
 
-SpiffWorkflow extensions typically use the `spiffworkflow` namespace. Ensure this namespace is defined in your BPMN XML, for example:
+SpiffWorkflow extensions use the `spiffworkflow` namespace. Ensure this namespace is defined in your BPMN XML:
 `xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"`
 
 ## Common Extensions
@@ -167,3 +167,8 @@ Example:
 When an error with this definition is thrown (e.g., from a Script Task or Service Task), the value of the variable `failed_item_id` from the throwing task's context can be included in the `BpmnEvent` payload, making it available to the catching error event.
 
 This document provides an overview of common SpiffWorkflow-specific BPMN extensions. For detailed behavior, advanced configurations, and other extensions, refer to the official SpiffWorkflow documentation and examples.
+
+## Process Model Directory
+
+SpiffWorkflow stores process models in diretories.
+Each directory contains a bpmn file (or files, in the case of call activities), JSON files representing for schemas and UI schemas, and a process_model.json file with metadata for the process model itself.
