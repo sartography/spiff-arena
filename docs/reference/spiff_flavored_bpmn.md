@@ -1,17 +1,17 @@
 # SpiffWorkflow BPMN Extensions
 
-SpiffWorkflow extends the standard BPMN 2.0 specification to provide enhanced functionality, particularly for automated tasks like Script Tasks and Service Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
+SpiffWorkflow uses the BPMN 2.0 specification to provide enhanced functionality, particularly for automated tasks like Script Tasks and Service Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
 
 ## Namespace
 
 SpiffWorkflow extensions typically use the `spiffworkflow` namespace. Ensure this namespace is defined in your BPMN XML, for example:
-`xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/extensions/1.0"`
+`xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"`
 
 ## Common Extensions
 
 ### `spiffworkflow:preScript` and `spiffworkflow:postScript`
 
-Many task types, including User Tasks and Service Tasks, can include pre-scripts and post-scripts. These are Python scripts executed before and after the main task logic, respectively. They operate within the task's data context.
+Many task types, including User Tasks and Service Tasks, can include pre-scripts and post-scripts. These are Python scripts executed before and after the main task logic, respectively. They operate within the task's data context, meaning variables defined or modified in these scripts become part of the task's data.
 
 Example:
 
@@ -20,11 +20,11 @@ Example:
   <bpmn:extensionElements>
     <spiffworkflow:preScript>
       # Code to run before the task's main logic
-      my_custom_task_status = 'pending'
+      my_custom_task_status = 'pending'  # This variable is now in the task data
     </spiffworkflow:preScript>
     <spiffworkflow:postScript>
       # Code to run after the task's main logic
-      my_custom_task_status = 'completed'
+      my_custom_task_status = 'completed' # This updates the variable in task data
     </spiffworkflow:postScript>
   </bpmn:extensionElements>
   <!-- ... other task definitions ... -->
@@ -37,20 +37,19 @@ A standard BPMN Script Task executes a script. SpiffWorkflow expects this script
 
 **Attributes:**
 
-- `scriptFormat`: Should be `text/python` or a similar Python identifier (e.g., `application/x-python`).
+- `scriptFormat`: `text/x-python`
 - The script content is placed directly within the `<bpmn:script>` tag.
 
 **Execution Context:**
-The script is executed within the context of the task's data. Variables in `task.data` (a dictionary-like object) are directly accessible and can be modified.
+The script is executed within the context of the task's data. Variables are directly accessible and can be modified within the script's scope. For example, if `input_value` exists in the task data, you can use it directly and assign new variables like `calculated_value = input_value + 5`. These new or modified variables become part of the task's data.
 
 Example:
 
 ```xml
-<bpmn:scriptTask id="MyScriptTask" name="Execute Python Script" scriptFormat="text/python">
+<bpmn:scriptTask id="MyScriptTask" name="Execute Python Script" scriptFormat="python">
   <bpmn:script>
     # Access and modify task data
-    data['calculated_value'] = data.get('input_value', 0) + 5
-    print(f"Calculated value: {data['calculated_value']}")
+    calculated_value = input_value + 5  # Assuming input_value is already in the task's data
   </bpmn:script>
 </bpmn:scriptTask>
 ```
@@ -59,7 +58,7 @@ Script Tasks can also utilize `spiffworkflow:preScript` and `spiffworkflow:postS
 
 ## Service Tasks (`bpmn:serviceTask`)
 
-While standard BPMN defines Service Tasks abstractly, SpiffWorkflow provides specific extensions to define their behavior, typically for calling external services or functions defined within the SpiffWorkflow script engine.
+While standard BPMN defines Service Tasks abstractly, SpiffWorkflow provides specific extensions to define their behavior, typically for calling external services.
 
 **Core Extension: `spiffworkflow:serviceTaskOperator`**
 
@@ -74,8 +73,8 @@ Nested within `spiffworkflow:serviceTaskOperator`, this element contains one or 
 
 - `spiffworkflow:parameter`:
   - `id` (or `name`): The name of the parameter as expected by the service.
-  - `type`: The data type of the parameter (e.g., `str`, `int`, `bool`). While SpiffWorkflow's Python script engine is flexible with types, specifying can be good for clarity.
-  - `value`: An expression (Python) to be evaluated against the task's data to provide the parameter's value.
+  - `type`: The data type of the parameter (e.g., `str`, `int`, `bool`).
+  - `value`: An expression (Python) evaluated using variables from the task's data context to provide the parameter's value. For example, `selected_product_id` would use the value of the `selected_product_id` variable.
 
 Example:
 
@@ -84,21 +83,20 @@ Example:
   <bpmn:extensionElements>
     <spiffworkflow:serviceTaskOperator id="lookup_product_info" resultVariable="product_details">
       <spiffworkflow:parameters>
-        <spiffworkflow:parameter id="product_name" type="str" value="data['selected_product_id']"/>
-        <spiffworkflow:parameter id="include_stock" type="bool" value="True"/>
+        <spiffworkflow:parameter id="product_id_param" type="str" value="selected_product_id"/> <!-- Assumes selected_product_id is a variable -->
+        <spiffworkflow:parameter id="include_stock_param" type="bool" value="True"/>
       </spiffworkflow:parameters>
     </spiffworkflow:serviceTaskOperator>
     <spiffworkflow:postScript>
       # Example: Process the result stored in 'product_details'
-      if data.get('product_details'):
-          print(f"Service returned: {data['product_details']}")
-          data['stock_available'] = data['product_details'].get('stock_level', 0)
+      if product_details:  # product_details is now directly in the scope
+          units_available = product_details.get('unit_available', 0) # Assign to a new variable
     </spiffworkflow:postScript>
   </bpmn:extensionElements>
 </bpmn:serviceTask>
 ```
 
-The SpiffWorkflow script engine's `call_service(task_data, operation_name, operation_params)` method is responsible for interpreting the `operation_name` and the evaluated `operation_params`. The result of this call is typically assigned to the `resultVariable` in the task's data.
+The SpiffWorkflow script engine's `call_service(task, operation_name, **operation_params)` method (or similar, depending on the engine version) is responsible for interpreting the `operation_name` and the evaluated `operation_params`. The result of this call is assigned to the variable specified by `resultVariable` in the task's data.
 
 ## User Tasks (`bpmn:userTask`) and Manual Tasks (`bpmn:manualTask`)
 
@@ -112,13 +110,41 @@ Example:
 <bpmn:userTask id="ReviewOrderItem" name="Review Order Item">
   <bpmn:extensionElements>
     <spiffworkflow:instructionsForEndUser>
-      Please review the details for product: {{ data.get('product_name', 'N/A') }}.
-      Quantity: {{ data.get('quantity', 1) }}
-      Notes: {{ data.get('customer_notes', 'None') }}
+      Please review the details for product: {{ product_name | default('N/A') }}.
+      Quantity: {{ quantity | default(1) }}
+      Notes: {{ customer_notes | default('None') }}
     </spiffworkflow:instructionsForEndUser>
   </bpmn:extensionElements>
 </bpmn:userTask>
 ```
+
+**`spiffworkflow:properties` for Form Configuration**
+
+User Tasks can be configured to display dynamic forms using JSON Schema for data structure and validation, and optionally a UI Schema for layout and presentation. This is done via `spiffworkflow:property` elements nested within `spiffworkflow:properties`.
+
+- `spiffworkflow:property`:
+  - `name`: Specifies the type of schema file. Common values are:
+    - `formJsonSchemaFilename`: The filename of the JSON Schema.
+    - `formUiSchemaFilename`: The filename of the UI Schema (optional).
+  - `value`: The actual filename (e.g., `my_form_schema.json`). These files are typically expected to be co-located with the BPMN process model or in a predefined location accessible to the frontend.
+
+Example:
+
+```xml
+<bpmn:userTask id="CollectUserData" name="Collect User Data">
+  <bpmn:extensionElements>
+    <spiffworkflow:properties>
+      <spiffworkflow:property name="formJsonSchemaFilename" value="user_data_schema.json" />
+      <spiffworkflow:property name="formUiSchemaFilename" value="user_data_uischema.json" />
+    </spiffworkflow:properties>
+    <spiffworkflow:instructionsForEndUser>
+      Please fill out the form below.
+    </spiffworkflow:instructionsForEndUser>
+  </bpmn:extensionElements>
+</bpmn:userTask>
+```
+
+This configuration tells the SpiffWorkflow frontend to render a form based on `user_data_schema.json` and `user_data_uischema.json` when this User Task becomes active. The data submitted through this form becomes part of the task's data.
 
 ## Error Definitions (`bpmn:error`)
 
