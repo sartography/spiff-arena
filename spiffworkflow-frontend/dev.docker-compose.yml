@@ -13,3 +13,4 @@ services:
       XDG_CACHE_HOME: "/app/.cache"
     volumes:
       - ./spiffworkflow-frontend:/app
+      - ./dist:/app/src/python

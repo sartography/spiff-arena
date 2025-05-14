@@ -14,7 +14,10 @@ const pyodideInitialLoad = (async () => {
     const pyodide = await loadPyodide({ fullStdLib: false });
     await pyodide.loadPackage('micropip');
     const micropip = pyodide.pyimport('micropip');
-    await micropip.install(['Jinja2==3.1.6']);
+    await micropip.install([
+        'Jinja2==3.1.6',
+	'http://localhost:8001/src/python/spiff_arena_common-0.1.0-py3-none-any.whl',
+    ]);
 
     // eslint-disable-next-line no-undef
     self.pyodide = pyodide;
@@ -30,6 +33,7 @@ const pyodideInitialLoad = (async () => {
 
 import jinja2
 import json
+import spiff_arena_common
 
 def jinja_form(schema, ui, form_data):
     if not schema or not ui:
