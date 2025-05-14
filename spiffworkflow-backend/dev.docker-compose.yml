@@ -18,3 +18,4 @@ services:
         required: false
     volumes:
       - ./spiffworkflow-backend:/app
+      - ./dist:/app/local_wheels
