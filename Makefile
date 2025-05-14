@@ -51,7 +51,7 @@ build-images:
 dev-env: stop-dev build-images uv-sync cp-poetry-i be-uv-sync be-db-clean fe-npm-i
 	@true
 
-start-dev: stop-dev
+start-dev: stop-dev wheels
 	$(DOCKER_COMPOSE) up -d
 
 stop-dev:
@@ -90,13 +90,14 @@ be-sqlite:
 	fi
 	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
-# TODO
 be-tests: be-clear-log-file
 	$(IN_BACKEND) uv run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
-# TODO
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+
+be-install-common-wheel:
+	$(IN_BACKEND) uv sync -P spiff-arena-common
 
 cp-sh:
 	$(IN_CONNECTOR_PROXY) /bin/bash
@@ -153,6 +154,12 @@ run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 sh:
 	$(IN_ARENA) /bin/bash
 
+build-common-wheel:
+	$(IN_ARENA) uv build spiff-arena-common
+	
+wheels: build-common-wheel be-install-common-wheel
+	$(IN_ARENA) uv build spiff-arena-common
+
 take-ownership:
 	$(SUDO) chown -R $(ME) .
 
@@ -160,7 +167,9 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
+	be- install-common-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	uv-sync venv-rm pre-commit ruff run-pyl \
-	take-ownership
+	take-ownership \
+	build-common-wheel wheels
