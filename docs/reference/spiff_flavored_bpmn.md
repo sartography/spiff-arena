@@ -31,6 +31,44 @@ Example:
 </bpmn:task>
 ```
 
+## Python Scripting Environment
+
+Scripts within SpiffWorkflow, whether in `<bpmn:script>` elements of Script Tasks, or in `<spiffworkflow:preScript>` and `<spiffworkflow:postScript>` elements, execute in a specialized Python environment.
+
+**Key Characteristics:**
+
+-   **No `import` Statements:** You cannot use `import` statements directly within your scripts.
+-   **Pre-defined Globals:** A set of commonly used modules, functions, and objects are made available globally. This means you can use them directly without importing.
+-   **Task Data Context:** Scripts operate within the context of the current task's data. Variables in the task data are directly accessible and can be modified. New variables created in the script are added to the task data.
+
+**Available Globals:**
+
+The following modules and functions are typically available in the script execution environment. For the definitive list and any environment-specific variations, refer to the `default_globals` dictionary within the `CustomBpmnScriptEngine` class in `spiffworkflow-backend/src/spiffworkflow_backend/services/process_instance_processor.py`.
+
+-   `_strptime`: A helper module for parsing dates/times (from Python's internal `_strptime`).
+-   `dateparser`: The `dateparser` library for parsing dates in various string formats.
+-   `datetime`: The `datetime` module from the Python standard library (e.g., `datetime.datetime.now()`).
+-   `decimal`: The `Decimal` type from the Python standard library `decimal` module for fixed and floating-point arithmetic.
+-   `json`: The `json` module from the Python standard library for working with JSON data (e.g., `json.dumps()`, `json.loads()`).
+-   `pytz`: The `pytz` library for working with timezones.
+-   `time`: The `time` module from the Python standard library (e.g., `time.time()`).
+-   `timedelta`: The `timedelta` class from the Python standard library `datetime` module.
+-   `uuid`: The `uuid` module from the Python standard library for generating UUIDs (e.g., `uuid.uuid4()`).
+-   `random`: The `random` module from the Python standard library for generating random numbers.
+
+**Built-in Functions and Types:**
+Standard Python built-in functions and types are generally available, such as:
+-   `dict`, `list`, `set`, `str`, `int`, `float`, `bool`
+-   `enumerate`, `filter`, `format`, `len`, `map`, `min`, `max`, `print`, `range`, `sum`, `zip`
+
+**Restricted Environment:**
+By default, SpiffWorkflow uses `RestrictedPython` to execute scripts. This means that while many standard library features and built-ins are available, some potentially unsafe operations might be restricted. The `safe_globals` from `RestrictedPython` augment the available built-ins.
+
+**Custom Helper Functions:**
+Additionally, helper functions defined in `spiffworkflow_backend.services.jinja_service.JinjaHelpers` are also exposed globally in the script environment.
+
+This curated environment provides a powerful yet controlled way to implement custom logic within your BPMN processes.
+
 ## Script Tasks (`bpmn:scriptTask`)
 
 A standard BPMN Script Task executes a script. SpiffWorkflow expects this script to be Python.
