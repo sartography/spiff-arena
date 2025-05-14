@@ -146,7 +146,7 @@ pre-commit:
 	$(IN_ARENA) uv run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) uv run ruff check --fix spiffworkflow-backend
+	$(IN_ARENA) uv run ruff check --fix spiffworkflow-backend spiff-arena-common
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@true

@@ -1,3 +1,5 @@
+import re
+
 class JinjaHelpers:
     """These are helpers that added to script tasks and to jinja for rendering templates.
 

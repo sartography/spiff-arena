@@ -1,12 +1,10 @@
-import re
 from sys import exc_info
 
 import jinja2
 from jinja2 import TemplateSyntaxError
+from spiff_arena_common.jinja import JinjaHelpers
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
-from spiff_arena_common.jinja import JinjaHelpers
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
