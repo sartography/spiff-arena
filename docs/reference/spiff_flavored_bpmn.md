@@ -1,6 +1,6 @@
 # Spiff-Flavored BPMN
 
-SpiffWorkflow uses the BPMN 2.0 specification to provide functionality that helps to run your processes, particularly for tasks like Script Tasks, Service Tasks, and User Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
+SpiffWorkflow uses the BPMN 2.0 specification to implement extensions that provide functionality to help run your processes, particularly with Script Tasks, Service Tasks, and User Tasks. These extensions are typically defined within the `<bpmn:extensionElements>` tag of a BPMN element.
 
 ## Namespace
 
@@ -172,3 +172,22 @@ This document provides an overview of common SpiffWorkflow-specific BPMN extensi
 
 SpiffWorkflow stores process models in diretories.
 Each directory contains a bpmn file (or files, in the case of call activities), JSON files representing for schemas and UI schemas, and a process_model.json file with metadata for the process model itself.
+
+Example `process_model.json`:
+
+```json
+{
+  "description": "This process model defines the how time off request and approval works",
+  "display_name": "Time Off Request",
+  "exception_notification_addresses": [],
+  "fault_or_suspend_on_exception": "fault",
+  "metadata_extraction_paths": [
+    { "key": "time_off_date", "path": "time_off_date" }
+  ],
+  "primary_file_name": "time_off.bpmn",
+  "primary_process_id": "time_off"
+}
+```
+
+The `primary_file_name` must be in the same directory, and the `primary_process_id` must be found in that file, in order for the engine to know where to start execution.
+The `metadata_extraction_paths` should match variables that are generated when the process runs, and these values will be indexed for reporting.
