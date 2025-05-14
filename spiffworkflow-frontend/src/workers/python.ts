@@ -33,7 +33,8 @@ const pyodideInitialLoad = (async () => {
 
 import jinja2
 import json
-import spiff_arena_common
+
+from spiff_arena_common.jinja import JinjaHelpers
 
 def jinja_form(schema, ui, form_data):
     if not schema or not ui:
@@ -42,6 +43,7 @@ def jinja_form(schema, ui, form_data):
     try:
         form_data = json.loads(form_data)
         env = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        env.filters.update(JinjaHelpers.get_helper_mapping())
         schema = env.from_string(schema).render(**form_data)
         ui = env.from_string(ui).render(**form_data)
     except Exception as e:
