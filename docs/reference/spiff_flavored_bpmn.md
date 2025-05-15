@@ -43,7 +43,7 @@ Scripts within SpiffWorkflow, whether in `<bpmn:script>` elements of Script Task
 
 **Available Globals:**
 
-The following modules and functions are typically available in the script execution environment. For the definitive list and any environment-specific variations, refer to the `default_globals` dictionary within the `CustomBpmnScriptEngine` class in `spiffworkflow-backend/src/spiffworkflow_backend/services/process_instance_processor.py`.
+The following modules and functions are typically available in the script execution environment.
 
 - `_strptime`: A helper module for parsing dates/times (from Python's internal `_strptime`).
 - `dateparser`: The `dateparser` library for parsing dates in various string formats.
@@ -61,6 +61,9 @@ Standard Python built-in functions and types are generally available, such as:
 
 - `dict`, `list`, `set`, `str`, `int`, `float`, `bool`
 - `enumerate`, `filter`, `format`, `len`, `map`, `min`, `max`, `print`, `range`, `sum`, `zip`
+
+Notably, `print` is not available.
+Instead, getting information to humans can be handled via `instructionsForEndUser` in human tasks and manual tasks.
 
 **Restricted Environment:**
 By default, SpiffWorkflow uses `RestrictedPython` to execute scripts. This means that while many standard library features and built-ins are available, some potentially unsafe operations might be restricted. The `safe_globals` from `RestrictedPython` augment the available built-ins.
