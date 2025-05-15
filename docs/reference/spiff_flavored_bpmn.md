@@ -161,8 +161,8 @@ This container holds all input parameters for the service operator.
     <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="post_response">
       <spiffworkflow:parameters>
         <spiffworkflow:parameter id="url" type="str" value="&#34;https://api.example.com/submit&#34;" />
-        <spiffworkflow:parameter id="headers" type="any" value="my_headers_variable" /> <!-- my_headers_variable is a process variable -->
-        <spiffworkflow:parameter id="data" type="any" value="{&#34;message&#34;: &#34;Hello, world!&#34;, &#34;user_id&#34;: current_user_id}" /> <!-- current_user_id is a process variable -->
+        <spiffworkflow:parameter id="headers" type="any" value="my_headers_variable" /> <!-- my_headers_variable is a dict process variable -->
+        <spiffworkflow:parameter id="data" type="any" value="request_data_var" /> <!-- request_data_var is a dict process variable -->
         <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;my_user&#34;" />
         <spiffworkflow:parameter id="basic_auth_password" type="str" value="&#34;SPIFF_SECRET:my_api_secret&#34;" />
       </spiffworkflow:parameters>
@@ -182,6 +182,7 @@ This container holds all input parameters for the service operator.
 
 **Important Notes for Service Tasks:**
 
+- **Parameter values**: It's probably better to assign dictionary values for headers and data in script tasks or pre scripts and then referencing these vars rather than using escaped dictionary values inline in the parameter node attribute.
 - **XML Escaping**: Ensure special XML characters in literal values are escaped (e.g., `&` becomes `&amp;`).
 - **Secrets**: Always use `SPIFF_SECRET:` prefix for sensitive string literals or load them securely into variables.
 - **Error Handling**: Consider BPMN error boundary events to manage exceptions from service calls (e.g., network issues, HTTP 4xx/5xx errors).
