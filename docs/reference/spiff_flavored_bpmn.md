@@ -96,45 +96,84 @@ Script Tasks can also utilize `spiffworkflow:preScript` and `spiffworkflow:postS
 
 ## Service Tasks (`bpmn:serviceTask`)
 
-While standard BPMN defines Service Tasks abstractly, SpiffWorkflow provides specific extensions to define their behavior, typically for calling external services.
+Service Tasks in SpiffWorkflow are extended to allow for specific operations, most notably calling external HTTP services. This is configured using the `spiffworkflow:serviceTaskOperator` element within `<bpmn:extensionElements>`.
 
 **Core Extension: `spiffworkflow:serviceTaskOperator`**
 
-This element, placed within `<bpmn:extensionElements>`, defines the operation to be performed.
-
-- `id` (or `operationRef`): Corresponds to an `operation_name` that the script engine uses to identify the service or function to call.
-- `resultVariable` (optional): Specifies the variable name in the task's data where the result of the service call will be stored.
+This element defines the service operation.
+-   **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequestV2`. Other operators may exist for different HTTP methods or service types.
+-   **`resultVariable`**: (Optional) The name of the process variable where the response from the service call will be stored. If not provided, the response isn't stored in a specific variable. The response object typically contains:
+    -   `body`: The response body. Often a Python dictionary/list for JSON responses, otherwise a string.
+    -   `status_code`: Integer HTTP status code (e.g., `200`, `404`).
+    -   `headers`: A Python dictionary of response headers.
 
 **Parameters: `spiffworkflow:parameters`**
 
-Nested within `spiffworkflow:serviceTaskOperator`, this element contains one or more `spiffworkflow:parameter` sub-elements to define the inputs to the service.
+This container holds all input parameters for the service operator.
 
-- `spiffworkflow:parameter`:
-  - `id` (or `name`): The name of the parameter as expected by the service.
-  - `type`: The data type of the parameter (e.g., `str`, `int`, `bool`).
-  - `value`: An expression (Python) evaluated using variables from the task's data context to provide the parameter's value. For example, `selected_product_id` would use the value of the `selected_product_id` variable.
+-   **`spiffworkflow:parameter`**: Defines each individual parameter.
+    -   **`id`**: (Required) The parameter's identifier (e.g., `url`, `headers`).
+    -   **`type`**: (Required) The expected data type (e.g., `str`, `any`). `any` is often used for dictionaries or complex objects.
+    -   **`value`**: (Required) The parameter's value.
+        -   **As a variable name**: Provide the variable name directly (e.g., `value="my_url_variable"`).
+        -   **As a string literal**: Enclose in double quotes within the XML attribute (e.g., `value="&#34;https://api.example.com&#34;"`).
+        -   **As a JSON string literal (for `type="any"`)**: Provide a JSON formatted string (e.g., `value="{&#34;Content-Type&#34;: &#34;application/json&#34;}"`).
 
-Example:
+**Common Parameters for `http/PostRequestV2`:**
+
+1.  **`url`** (`type="str"`): (Required) The target URL for the HTTP POST request.
+    ```xml
+    <spiffworkflow:parameter id="url" type="str" value="&#34;https://api.example.com/submit&#34;" />
+    ```
+2.  **`headers`** (`type="any"`): (Optional) A dictionary of HTTP headers.
+    ```xml
+    <spiffworkflow:parameter id="headers" type="any" value="{&#34;X-API-Key&#34;: &#34;secretkey&#34;}" />
+    ```
+3.  **`data`** (`type="any"`): (Optional) The payload/body of the POST request. Can be a dictionary (serialized to JSON if `Content-Type` is `application/json`) or a string.
+    ```xml
+    <spiffworkflow:parameter id="data" type="any" value="{&#34;message&#34;: &#34;Hello!&#34;}" />
+    ```
+4.  **`basic_auth_username`** (`type="str"`): (Optional) Username for HTTP Basic Authentication.
+    ```xml
+    <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;my_user&#34;" />
+    ```
+5.  **`basic_auth_password`** (`type="str"`): (Optional) Password for HTTP Basic Authentication. Use SpiffWorkflow's secret management: `"SPIFF_SECRET:your_secret_name"`.
+    ```xml
+    <spiffworkflow:parameter id="basic_auth_password" type="str" value="&#34;SPIFF_SECRET:my_api_secret&#34;" />
+    ```
+
+**Example: HTTP POST Request Service Task**
 
 ```xml
-<bpmn:serviceTask id="CallProductLookup" name="Lookup Product Information">
+<bpmn:serviceTask id="MyHttpPostTask" name="Send POST Request">
   <bpmn:extensionElements>
-    <spiffworkflow:serviceTaskOperator id="lookup_product_info" resultVariable="product_details">
+    <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="post_response">
       <spiffworkflow:parameters>
-        <spiffworkflow:parameter id="product_id_param" type="str" value="selected_product_id"/> <!-- Assumes selected_product_id is a variable -->
-        <spiffworkflow:parameter id="include_stock_param" type="bool" value="True"/>
+        <spiffworkflow:parameter id="url" type="str" value="&#34;https://api.example.com/submit&#34;" />
+        <spiffworkflow:parameter id="headers" type="any" value="my_headers_variable" /> <!-- my_headers_variable is a process variable -->
+        <spiffworkflow:parameter id="data" type="any" value="{&#34;message&#34;: &#34;Hello, world!&#34;, &#34;user_id&#34;: current_user_id}" /> <!-- current_user_id is a process variable -->
+        <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;my_user&#34;" />
+        <spiffworkflow:parameter id="basic_auth_password" type="str" value="&#34;SPIFF_SECRET:my_api_secret&#34;" />
       </spiffworkflow:parameters>
     </spiffworkflow:serviceTaskOperator>
     <spiffworkflow:postScript>
-      # Example: Process the result stored in 'product_details'
-      if product_details:  # product_details is now directly in the scope
-          units_available = product_details.get('unit_available', 0) # Assign to a new variable
+      # Example: Process the result stored in 'post_response'
+      if post_response and post_response.status_code == 200:
+          api_call_successful = True
+          response_body = post_response.body
+      else:
+          api_call_successful = False
+          error_message = f"API call failed with status: {post_response.status_code if post_response else 'N/A'}"
     </spiffworkflow:postScript>
   </bpmn:extensionElements>
 </bpmn:serviceTask>
 ```
 
-The SpiffWorkflow script engine's `call_service(task, operation_name, **operation_params)` method (or similar, depending on the engine version) is responsible for interpreting the `operation_name` and the evaluated `operation_params`. The result of this call is assigned to the variable specified by `resultVariable` in the task's data.
+**Important Notes for Service Tasks:**
+-   **XML Escaping**: Ensure special XML characters in literal values are escaped (e.g., `&` becomes `&amp;`).
+-   **Secrets**: Always use `SPIFF_SECRET:` prefix for sensitive string literals or load them securely into variables.
+-   **Error Handling**: Consider BPMN error boundary events to manage exceptions from service calls (e.g., network issues, HTTP 4xx/5xx errors).
+-   Service Tasks can also utilize `spiffworkflow:preScript` and `spiffworkflow:postScript` for logic before and after the main service call.
 
 ## User Tasks (`bpmn:userTask`) and Manual Tasks (`bpmn:manualTask`)
 
