@@ -107,10 +107,11 @@ Service Tasks in SpiffWorkflow are extended to allow for specific operations, mo
 This element defines the service operation.
 
 - **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequestV2`. Other operators may exist for different HTTP methods or service types.
-- **`resultVariable`**: (Optional) The name of the process variable where the response from the service call will be stored. If not provided, the response isn't stored in a specific variable. The response object typically contains:
+- **`resultVariable`**: (Optional) The name of the process variable where the response from the service call will be stored. If not provided, the response isn't stored in a specific variable. The response stored in `resultVariable` is a dict that contains the following:
   - `body`: The response body. Often a Python dictionary/list for JSON responses, otherwise a string.
   - `status_code`: Integer HTTP status code (e.g., `200`, `404`).
-  - `headers`: A Python dictionary of response headers.
+
+So if your `resultVariable` is `hotResponse`, you can access the body with `hotResponse["body"]` and the status code with `hotResponse["status_code"]`.
 
 **Parameters: `spiffworkflow:parameters`**
 
