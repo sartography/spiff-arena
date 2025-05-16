@@ -19,7 +19,7 @@ jobs:
     - name: Build a binary wheel and a source tarball
       run: uv build spiff-arena-common
     - name: Publish distribution 📦 to PyPI
-      if: startsWith(github.ref, 'refs/tags')
+      #if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         username: __token__
