@@ -14,10 +14,7 @@ const pyodideInitialLoad = (async () => {
     const pyodide = await loadPyodide({ fullStdLib: false });
     await pyodide.loadPackage('micropip');
     const micropip = pyodide.pyimport('micropip');
-    await micropip.install([
-      'Jinja2==3.1.6',
-      'spiff-arena-common==0.1.0',
-    ]);
+    await micropip.install(['Jinja2==3.1.6', 'spiff-arena-common==0.1.0']);
 
     // eslint-disable-next-line no-undef
     self.pyodide = pyodide;
