@@ -2026,6 +2026,15 @@ wheels = [
 ]
 
 [[package]]
+name = "spiff-arena-common"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/14/fd/50c89e1a0b82c58944e70e0f9c992fa56afdeb815cab7e9078c0b4cde387/spiff_arena_common-0.1.0.tar.gz", hash = "sha256:040f92e8b51337e0ed46bc4e37232b223c3a158e962072309483e7db35ff7c0c", size = 1278, upload_time = "2025-05-16T17:37:15.313Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bb/27/7e933f499d0a410ebfc05a4a754351c0b03b574ed7074cb5be849fc38257/spiff_arena_common-0.1.0-py3-none-any.whl", hash = "sha256:ba7773e750bf996af2238dfc1764b4fccc6d3c7390702947adfbf5998ee46c8f", size = 2081, upload_time = "2025-05-16T17:37:14.007Z" },
+]
+
+[[package]]
 name = "spiffworkflow"
 version = "3.1.1"
 source = { git = "https://github.com/sartography/SpiffWorkflow?branch=main#c1e89e3f3b4e2ffd80f7b773ffa302572fc69404" }
@@ -2072,6 +2081,7 @@ dependencies = [
     { name = "security" },
     { name = "sentry-sdk", extra = ["flask"] },
     { name = "simplejson" },
+    { name = "spiff-arena-common" },
     { name = "spiffworkflow" },
     { name = "spiffworkflow-connector-command" },
     { name = "sqlalchemy" },
@@ -2141,6 +2151,7 @@ requires-dist = [
     { name = "security", specifier = ">=1.3.1,<1.4" },
     { name = "sentry-sdk", extras = ["flask"], specifier = ">=2.26,<2.27" },
     { name = "simplejson", specifier = ">=3.20.1,<3.21" },
+    { name = "spiff-arena-common", specifier = ">=0.1.0" },
     { name = "spiffworkflow", git = "https://github.com/sartography/SpiffWorkflow?branch=main" },
     { name = "spiffworkflow-connector-command", git = "https://github.com/sartography/spiffworkflow-connector-command.git?branch=main" },
     { name = "sqlalchemy", specifier = ">=2.0.31,<2.1" },
