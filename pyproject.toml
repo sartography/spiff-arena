@@ -20,3 +20,8 @@ dev = [
     "pre-commit-hooks",
     "ruff",
 ]
+
+[tool.uv.workspace]
+members = [
+    "spiff-arena-common",
+]
