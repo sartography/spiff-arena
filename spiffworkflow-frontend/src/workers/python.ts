@@ -14,7 +14,10 @@ const pyodideInitialLoad = (async () => {
     const pyodide = await loadPyodide({ fullStdLib: false });
     await pyodide.loadPackage('micropip');
     const micropip = pyodide.pyimport('micropip');
-    await micropip.install(['Jinja2==3.1.6']);
+    await micropip.install([
+      'Jinja2==3.1.6',
+      'spiff-arena-common==0.1.0',
+    ]);
 
     // eslint-disable-next-line no-undef
     self.pyodide = pyodide;
@@ -31,6 +34,8 @@ const pyodideInitialLoad = (async () => {
 import jinja2
 import json
 
+from spiff_arena_common.jinja import JinjaHelpers
+
 def jinja_form(schema, ui, form_data):
     if not schema or not ui:
         return schema, ui, None
@@ -38,6 +43,7 @@ def jinja_form(schema, ui, form_data):
     try:
         form_data = json.loads(form_data)
         env = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        env.filters.update(JinjaHelpers.get_helper_mapping())
         schema = env.from_string(schema).render(**form_data)
         ui = env.from_string(ui).render(**form_data)
     except Exception as e:
