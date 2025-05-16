@@ -90,13 +90,14 @@ be-sqlite:
 	fi
 	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
-# TODO
 be-tests: be-clear-log-file
 	$(IN_BACKEND) uv run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
-# TODO
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+
+co-wheel:
+	$(IN_ARENA) uv build spiff-arena-common
 
 cp-sh:
 	$(IN_CONNECTOR_PROXY) /bin/bash
@@ -160,6 +161,7 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
+	co-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	uv-sync venv-rm pre-commit ruff run-pyl \
