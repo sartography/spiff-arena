@@ -293,9 +293,8 @@ class AuthenticationService:
         return state
 
     def get_redirect_uri_for_login_to_server(self) -> str:
-        host_url = request.host_url.strip("/")
         login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
-        redirect_url_to_use = f"{host_url}{login_return_path}"
+        redirect_url_to_use = f"{self.get_backend_url()}{login_return_path}"
         current_app.logger.debug(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
         return redirect_url_to_use
 
