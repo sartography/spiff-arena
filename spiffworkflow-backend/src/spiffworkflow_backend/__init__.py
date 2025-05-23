@@ -79,7 +79,10 @@ def create_app() -> flask.app.Flask:
 
     # only register the backend openid server if the backend is configured to use it
     backend_auths = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
-    if len(backend_auths) == 1 and backend_auths[0]["uri"] == f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/openid":
+    if len(backend_auths) == 1 and (
+        backend_auths[0]["uri"] == f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/openid"
+        or backend_auths[0]["uri"] == app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL")
+    ):
         app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
