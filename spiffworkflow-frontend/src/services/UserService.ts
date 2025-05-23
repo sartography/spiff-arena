@@ -34,7 +34,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 };
 
 const checkPathForTaskShowParams = (
-  redirectUrl: string = window.location.pathname,
+  redirectUrl: string = window.location.href,
 ) => {
   const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
