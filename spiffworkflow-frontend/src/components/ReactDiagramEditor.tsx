@@ -65,10 +65,15 @@ import {
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessModel, ProcessReference, Task } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessModel,
+  ProcessReference,
+  Task,
+} from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
-import ProcessInstanceRun from '../components/ProcessInstanceRun';
+import ProcessInstanceRun from './ProcessInstanceRun';
 
 type OwnProps = {
   processModelId: string;
@@ -857,7 +862,7 @@ export default function ReactDiagramEditor({
               Save
             </Button>
           </Can>
-          { processModel && <ProcessInstanceRun processModel={processModel} /> }
+          {processModel && <ProcessInstanceRun processModel={processModel} />}
           <Can
             I="DELETE"
             a={targetUris.processModelFileShowPath}
