@@ -857,7 +857,7 @@ export default function ReactDiagramEditor({
               Save
             </Button>
           </Can>
-          <ProcessInstanceRun processModel={processModel} />
+          { processModel && <ProcessInstanceRun processModel={processModel} /> }
           <Can
             I="DELETE"
             a={targetUris.processModelFileShowPath}
