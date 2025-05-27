@@ -84,7 +84,7 @@ type OwnProps = {
   disableSaveButton?: boolean;
   fileName?: string;
   isPrimaryFile?: boolean;
-  processModel?: ProcessModel;
+  processModel?: ProcessModel | null;
   onCallActivityOverlayClick?: (..._args: any[]) => any;
   onDataStoresRequested?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
