@@ -1411,6 +1411,7 @@ export default function ProcessModelEditDiagram() {
         disableSaveButton={!diagramHasChanges}
         fileName={params.file_name}
         isPrimaryFile={params.file_name === processModel?.primary_file_name}
+        processModel={processModel}
         onDataStoresRequested={onDataStoresRequested}
         onDeleteFile={onDeleteFile}
         onDmnFilesRequested={onDmnFilesRequested}
