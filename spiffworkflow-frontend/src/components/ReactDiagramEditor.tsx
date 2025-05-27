@@ -144,7 +144,6 @@ export default function ReactDiagramEditor({
   const permissionRequestData: PermissionsToCheck = {};
 
   if (diagramType !== 'readonly') {
-    permissionRequestData[targetUris.processInstanceCreatePath] = ['POST'];
     permissionRequestData[targetUris.processModelShowPath] = ['PUT'];
     permissionRequestData[targetUris.processModelFileShowPath] = [
       'POST',
@@ -858,11 +857,7 @@ export default function ReactDiagramEditor({
               Save
             </Button>
           </Can>
-          <Can I="POST" a={targetUris.processInstanceCreatePath} ability={ability}>
-	    {processModel?.primary_file_name && processModel?.is_executable && (
-              <ProcessInstanceRun processModel={processModel} />
-	    )}
-          </Can>
+          <ProcessInstanceRun processModel={processModel} />
           <Can
             I="DELETE"
             a={targetUris.processModelFileShowPath}
