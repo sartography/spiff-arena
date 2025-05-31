@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
@@ -33,19 +34,17 @@ type ErrorProps = {
 function FormErrorFallback({ error }: ErrorProps) {
   // This is displayed if the ErrorBoundary catches an error when rendering the form.
   const { resetBoundary } = useErrorBoundary();
+  const { t } = useTranslation();
 
   return (
     <Notification
-      title="Failed to render form. "
+      title={t('form_render_error_title')}
       onClose={() => resetBoundary()}
       type="error"
     >
-      <p>
-        The form could not be built with the current schema, UI and data. Please
-        try to correct the issue and try again.
-      </p>
+      <p>{t('form_render_error_message')}</p>
       <p>{error.message}</p>
-      <Button onClick={resetBoundary}>Try again</Button>
+      <Button onClick={resetBoundary}>{t('try_again')}</Button>
     </Notification>
   );
 }
@@ -87,6 +86,7 @@ export default function ReactFormBuilder({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const { t } = useTranslation();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
@@ -200,7 +200,7 @@ export default function ReactFormBuilder({
         }
       },
       failureCallback: (e: any) => {
-        setErrorMessage(`Failed to save file: '${fileName}'. ${e.message}`);
+        setErrorMessage(t('file_save_error', { fileName, error: e.message }));
       },
       httpMethod,
       postBody: submission,
@@ -385,18 +385,17 @@ export default function ReactFormBuilder({
     return (
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Typography variant="h4">Schema Name</Typography>
+          <Typography variant="h4">{t('schema_name')}</Typography>
           <Typography variant="body1">
-            Please provide a name for the Schema/Web Form you are about to
-            create...
+            {t('provide_schema_name')}
           </Typography>
           <TextField
             id="file_name"
-            label="Name"
+            label={t('name')}
             error={filenameBaseInvalid}
             helperText={
               filenameBaseInvalid
-                ? 'Name is required, must be at least three characters, and must be all lowercase characters and hyphens.'
+                ? t('schema_name_requirements')
                 : ''
             }
             value={newFileName}
@@ -406,20 +405,20 @@ export default function ReactFormBuilder({
             size="small"
           />
           <Typography variant="body1">
-            The changes you make here will be automatically saved to:
+            {t('auto_save_notice')}
           </Typography>
           <ul>
             <li>
               {newFileName}
-              {SCHEMA_EXTENSION} (for the schema)
+              {SCHEMA_EXTENSION} {t('for_schema')}
             </li>
             <li>
               {newFileName}
-              {UI_EXTENSION} (for additional UI form settings)
+              {UI_EXTENSION} {t('for_ui_settings')}
             </li>
             <li>
               {newFileName}
-              {DATA_EXTENSION} (for example data to test the form
+              {DATA_EXTENSION} {t('for_example_data')}
             </li>
           </ul>
           {canCreateFiles ? (
@@ -430,7 +429,7 @@ export default function ReactFormBuilder({
                 createFiles(newFileName);
               }}
             >
-              Create Files
+              {t('create_files')}
             </Button>
           ) : null}
         </Grid>
@@ -441,23 +440,21 @@ export default function ReactFormBuilder({
     <Grid container spacing={3}>
       <Grid item xs={12} md={6}>
         <Tabs value={selectedIndex} onChange={handleTabChange}>
-          <Tab label="Json Schema" />
-          <Tab label="UI Settings" />
-          <Tab label="Data View" />
-          {canUpdateFiles ? <Tab label="Examples" /> : null}
+          <Tab label={t('json_schema')} />
+          <Tab label={t('ui_settings')} />
+          <Tab label={t('data_view')} />
+          {canUpdateFiles ? <Tab label={t('examples')} /> : null}
         </Tabs>
         <Box>
           {selectedIndex === 0 && (
             <Box>
               <Typography variant="body1">
-                The Json Schema describes the structure of the data you want to
-                collect, and what validation rules should be applied to each
-                field.{' '}
+                {t('json_schema_description')}{' '}
                 <a
                   target="_spiff_rjsf_read_me"
                   href="https://json-schema.org/learn/getting-started-step-by-step"
                 >
-                  Read more
+                  {t('read_more')}
                 </a>
                 .
               </Typography>
@@ -478,13 +475,12 @@ export default function ReactFormBuilder({
           {selectedIndex === 1 && (
             <Box>
               <Typography variant="body1">
-                These UI Settings augment the Json Schema, specifying how the
-                web form should be displayed.{' '}
+                {t('ui_settings_description')}{' '}
                 <a
                   target="_spiff_rjsf_learn_more"
                   href="https://rjsf-team.github.io/react-jsonschema-form/docs/"
                 >
-                  Learn more
+                  {t('learn_more')}
                 </a>
                 .
               </Typography>
@@ -505,11 +501,7 @@ export default function ReactFormBuilder({
           {selectedIndex === 2 && (
             <Box>
               <Typography variant="body1">
-                Data entered in the form to the right will appear below in the
-                same way it will be provided in the Task Data. In order to
-                initialize a form in the Workflow with preconfigured values or
-                set up options for dynamic Dropdown lists, this data must be
-                made available as Task Data variables.
+                {t('data_view_description')}
               </Typography>
               <Editor
                 height={600}
@@ -528,9 +520,7 @@ export default function ReactFormBuilder({
           {selectedIndex === 3 && canUpdateFiles && (
             <Box>
               <Typography variant="body1">
-                If you are looking for a place to start, try adding these
-                example fields to your form and changing them to meet your
-                needs.
+                {t('examples_description')}
               </Typography>
               <ExamplesTable onSelect={insertFields} />
             </Box>
@@ -538,7 +528,7 @@ export default function ReactFormBuilder({
         </Box>
       </Grid>
       <Grid item xs={12} md={6}>
-        <Typography variant="h4">Form Preview</Typography>
+        <Typography variant="h4">{t('form_preview')}</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
           <CustomForm

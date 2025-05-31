@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -48,6 +49,8 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
+  const { t } = useTranslation();
+
   const addErrorCallback = useCallback((error: ErrorForDisplay) => {
     addError(error);
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
@@ -81,7 +84,7 @@ export default function TaskShow() {
         }
       }
       const hotCrumbList: HotCrumbItem[] = [
-        ['Process Groups', '/process-groups'],
+        [t('process_groups'), '/process-groups'],
         {
           entityToExplode: result.process_model_identifier,
           entityType: 'process-model-id',
@@ -89,12 +92,12 @@ export default function TaskShow() {
           checkPermission: true,
         },
         [
-          `Process Instance Id: ${result.process_instance_id}`,
+          t('process_id_label', { id: result.process_instance_id }),
           `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
             result.process_model_identifier,
           )}/${result.process_instance_id}`,
         ],
-        [`Task: ${result.name_for_display || result.id}`],
+        [`${t('task')}: ${result.name_for_display || result.id}`],
       ];
       setHotCrumbs(hotCrumbList);
     },
@@ -282,11 +285,11 @@ export default function TaskShow() {
       return null;
     }
     const submitButtonOptions = getSubmitButtonOptions(formUiSchema);
-    let submitButtonText = 'Submit';
+    let submitButtonText = t('submit');
     if ('submitText' in submitButtonOptions) {
       submitButtonText = submitButtonOptions.submitText as string;
     } else if (taskWithTaskData.typename === 'ManualTask') {
-      submitButtonText = 'Continue';
+      submitButtonText = t('continue');
     }
     return submitButtonText;
   };
@@ -336,11 +339,11 @@ export default function TaskShow() {
             id="close-button"
             onClick={handleCloseButton}
             disabled={formButtonsDisabled}
-            title="Save data as draft and close the form."
+            title={t('save_data_draft_close')}
             variant="contained"
             color="secondary"
           >
-            Save and close
+            {t('save_close')}
           </Button>
         );
       }

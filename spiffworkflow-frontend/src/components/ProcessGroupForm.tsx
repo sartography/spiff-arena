@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   TextField,
@@ -27,6 +28,7 @@ export default function ProcessGroupForm({
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   let newProcessGroupId = processGroup.id;
 
   const handleProcessGroupUpdateResponse = (_result: any) => {
@@ -118,8 +120,8 @@ export default function ProcessGroupForm({
         data-qa="process-group-display-name-input"
         name="display_name"
         error={displayNameInvalid}
-        helperText={displayNameInvalid ? 'Display Name is required.' : ''}
-        label="Display Name*"
+        helperText={displayNameInvalid ? t('display_name_required') : ''}
+        label={t('display_name_required_label')}
         value={processGroup.display_name}
         onChange={(event: any) => onDisplayNameChanged(event.target.value)}
       />,
@@ -133,10 +135,10 @@ export default function ProcessGroupForm({
           error={identifierInvalid}
           helperText={
             identifierInvalid
-              ? 'Identifier is required and must be all lowercase characters and hyphens.'
+              ? t('identifier_requirements')
               : ''
           }
-          label="Identifier*"
+          label={t('identifier_required')}
           value={processGroup.id}
           onChange={(event: any) => {
             updateProcessGroup({ id: event.target.value });
@@ -151,14 +153,14 @@ export default function ProcessGroupForm({
     }
 
     textInputs.push(
-      <InputLabel id="data-store-description-label">Description:</InputLabel>,
+      <InputLabel id="data-store-description-label">{t('description')}:</InputLabel>,
     );
     textInputs.push(
       <TextareaAutosize
         id="process-group-description"
         minRows={5}
         name="description"
-        placeholder="Description"
+        placeholder={t('description_placeholder')}
         value={processGroup.description || ''}
         onChange={(event: any) =>
           updateProcessGroup({ description: event.target.value })
@@ -171,7 +173,7 @@ export default function ProcessGroupForm({
   const formButtons = () => {
     return (
       <Button type="submit" variant="contained">
-        Submit
+        {t('submit')}
       </Button>
     );
   };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Tabs, Tab } from '@mui/material'; // Use MUI Tabs and Tab
 import { Can } from '@casl/react';
 import SecretList from './SecretList';
@@ -22,6 +23,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
   const location = useLocation();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -33,7 +35,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
   );
 
   useEffect(() => {
-    setPageTitle(['Configuration']);
+    setPageTitle([t('configuration')]);
     let newSelectedTabIndex = 0;
     if (
       location.pathname.match(/^\/(newui\/)?configuration\/authentications\b/)
@@ -83,13 +85,13 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
       >
         <Can I="GET" a={targetUris.secretListPath} ability={ability}>
           <Tab
-            label="Secrets"
+            label={t('secrets')}
             onClick={() => navigate('/configuration/secrets')}
           />
         </Can>
         <Can I="GET" a={targetUris.authenticationListPath} ability={ability}>
           <Tab
-            label="Authentications"
+            label={t('authentications')}
             onClick={() => navigate('/configuration/authentications')}
           />
         </Can>

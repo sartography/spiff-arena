@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   TextField,
@@ -24,9 +25,10 @@ export default function ProcessInstanceListSaveAsReport({
   onSuccess,
   processInstanceReportSelection,
   buttonClassName,
-  buttonText = 'Save as Perspective',
+  buttonText,
   reportMetadata,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [identifier, setIdentifier] = useState<string>(
     processInstanceReportSelection?.identifier || '',
   );
@@ -77,7 +79,7 @@ export default function ProcessInstanceListSaveAsReport({
     <TextField
       id="identifier"
       name="identifier"
-      label="Identifier"
+      label={t('identifier')}
       variant="outlined"
       fullWidth
       value={identifier}
@@ -85,11 +87,9 @@ export default function ProcessInstanceListSaveAsReport({
     />
   );
 
-  let descriptionText =
-    'Save the current columns and filters as a perspective so you can come back to this view in the future.';
+  let descriptionText = t('save_perspective_description');
   if (processInstanceReportSelection) {
-    descriptionText =
-      'Keep the identifier the same and click Save to update the current perspective. Change the identifier if you want to save the current view with a new name.';
+    descriptionText = t('save_perspective_edit_description');
   }
 
   return (
@@ -99,7 +99,7 @@ export default function ProcessInstanceListSaveAsReport({
         onClose={handleSaveFormClose}
         aria-labelledby="save-perspective-dialog"
       >
-        <DialogTitle id="save-perspective-dialog">Save Perspective</DialogTitle>
+        <DialogTitle id="save-perspective-dialog">{t('save_perspective')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" style={{ marginBottom: '1rem' }}>
             {descriptionText}
@@ -108,14 +108,14 @@ export default function ProcessInstanceListSaveAsReport({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleSaveFormClose} color="primary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={addProcessInstanceReport}
             color="primary"
             disabled={!identifier}
           >
-            Save
+            {t('save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -127,7 +127,7 @@ export default function ProcessInstanceListSaveAsReport({
           setShowSaveForm(true);
         }}
       >
-        {buttonText}
+        {buttonText ? buttonText : t('save_as_perspective')}
       </Button>
     </Stack>
   );

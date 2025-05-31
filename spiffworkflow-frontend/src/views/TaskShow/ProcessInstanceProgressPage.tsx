@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box } from '@mui/material';
 import ProcessInstanceProgress from '../../components/ProcessInstanceProgress';
 import ProcessBreadcrumb from '../../components/ProcessBreadcrumb';
@@ -9,6 +10,7 @@ type OwnProps = {
 };
 
 export default function ProcessInstanceProgressPage({ variant }: OwnProps) {
+  const { t } = useTranslation();
   const params = useParams();
 
   // TODO: the next version we should support the pi show page in the new ui
@@ -30,14 +32,14 @@ export default function ProcessInstanceProgressPage({ variant }: OwnProps) {
     >
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          [t('process_groups'), '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',
             linkLastItem: true,
           },
           [
-            `Process Instance: ${params.process_instance_id}`,
+            t('process_with_id', { id: params.process_instance_id }),
             `${processInstanceShowPageUrl}`,
           ],
         ]}

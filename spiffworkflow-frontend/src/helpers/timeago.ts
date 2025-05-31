@@ -1,4 +1,5 @@
-/* eslint-disable no-restricted-syntax */
+import i18n from "../i18n";
+
 // https://gist.github.com/caiotarifa/30ae974f2293c761f3139dd194abd9e5
 type Locales = {
   prefix: string;
@@ -19,20 +20,19 @@ type Locales = {
 
 export const TimeAgo = (function awesomeFunc() {
   const locales: Locales = {
-    prefix: '',
-    sufix: 'ago',
-
-    seconds: 'less than a minute',
-    minute: 'about a minute',
-    minutes: '%d minutes',
-    hour: 'about an hour',
-    hours: 'about %d hours',
-    day: 'a day',
-    days: '%d days',
-    month: 'about a month',
-    months: '%d months',
-    year: 'about a year',
-    years: '%d years',
+    prefix: i18n.t('time_ago_prefix'),
+    sufix: i18n.t('time_ago_suffix'),
+    seconds: i18n.t('time_less_than_minute'),
+    minute: i18n.t('time_about_minute'),
+    minutes: i18n.t('time_minutes'),
+    hour: i18n.t('time_about_hour'),
+    hours: i18n.t('time_about_hours'),
+    day: i18n.t('time_day'),
+    days: i18n.t('time_days'),
+    month: i18n.t('time_about_month'),
+    months: i18n.t('time_months'),
+    year: i18n.t('time_about_year'),
+    years: i18n.t('time_years'),
   };
 
   function inWords(timeAgo: number): string {

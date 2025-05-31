@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Edit,
@@ -44,6 +45,7 @@ export default function ProcessModelFileList({
   onSetPrimaryFile,
   isTestCaseFile,
 }: ProcessModelFileListProps) {
+  const { t } = useTranslation();
   const { addError, removeError } = useAPIError();
   const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
@@ -63,7 +65,7 @@ export default function ProcessModelFileList({
       processModelFile.file_contents === undefined
     ) {
       addError({
-        message: `Could not file file contents for file: ${processModelFile.name}`,
+        message: t('file_contents_not_found', { file: processModelFile.name }),
       });
       return;
     }
@@ -98,10 +100,10 @@ export default function ProcessModelFileList({
     const elements = [];
 
     let icon = <Visibility />;
-    let actionWord = 'View';
+    let actionWord = t('view');
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
       icon = <Edit />;
-      actionWord = 'Edit';
+      actionWord = t('edit');
     }
     const editUrl = profileModelFileEditUrl(processModelFile);
     if (editUrl) {
@@ -111,9 +113,9 @@ export default function ProcessModelFileList({
           a={targetUris.processModelFileCreatePath}
           ability={ability}
         >
-          <SpiffTooltip title={`${actionWord} File`} placement="top">
+          <SpiffTooltip title={`${actionWord} ${t('file')}`} placement="top">
             <IconButton
-              aria-label={`${actionWord} File`}
+              aria-label={`${actionWord} ${t('file')}`}
               data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
               href={editUrl}
             >
@@ -125,9 +127,9 @@ export default function ProcessModelFileList({
     }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
-        <SpiffTooltip title="Download File" placement="top">
+        <SpiffTooltip title={t('download_file')} placement="top">
           <IconButton
-            aria-label="Download File"
+            aria-label={t('download_file')}
             onClick={() => downloadFile(processModelFile.name)}
           >
             <GetApp />
@@ -146,12 +148,12 @@ export default function ProcessModelFileList({
           <ButtonWithConfirmation
             renderIcon={<Delete />}
             hasIconOnly
-            iconDescription="Delete File"
-            description={`Delete file: ${processModelFile.name}`}
+            iconDescription={t('delete_file')}
+            description={t('delete_file_description', { file: processModelFile.name })}
             onConfirmation={() => {
               onDeleteFile(processModelFile.name);
             }}
-            confirmButtonLabel="Delete"
+            confirmButtonLabel={t('delete')}
             classNameForModal="modal-within-table-cell"
           />
         </Can>,
@@ -160,9 +162,9 @@ export default function ProcessModelFileList({
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-          <SpiffTooltip title="Set As Primary File" placement="top">
+          <SpiffTooltip title={t('set_as_primary_file')} placement="top">
             <IconButton
-              aria-label="Set As Primary File"
+              aria-label={t('set_as_primary_file')}
               onClick={() => onSetPrimaryFile(processModelFile.name)}
             >
               <Favorite />
@@ -176,7 +178,7 @@ export default function ProcessModelFileList({
         <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
           <ProcessModelTestRun
             processModelFile={processModelFile}
-            titleText="Run BPMN unit tests defined in this file"
+            titleText={t('run_bpmn_unit_tests')}
             classNameForModal="modal-within-table-cell"
           />
         </Can>,
@@ -208,7 +210,7 @@ export default function ProcessModelFileList({
         primarySuffix = (
           <span>
             &nbsp;-{' '}
-            <span className="primary-file-text-suffix">Primary File</span>
+            <span className="primary-file-text-suffix">{t('primary_file')}</span>
           </span>
         );
       }
@@ -242,8 +244,8 @@ export default function ProcessModelFileList({
       <Table size="medium" className="process-model-file-table">
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell>{t('name')}</TableCell>
+            <TableCell align="right">{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>{tags}</TableBody>

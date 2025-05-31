@@ -17,6 +17,7 @@ import HttpService from '../services/HttpService';
 import { DataStore, DataStoreRecords, PaginationObject } from '../interfaces';
 import PaginationForTable from './PaginationForTable';
 import { getPageInfoFromSearchParams } from '../helpers';
+import { useTranslation } from 'react-i18next';
 
 export default function DataStoreListTable() {
   const [dataStores, setDataStores] = useState<DataStore[]>([]);
@@ -24,6 +25,7 @@ export default function DataStoreListTable() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation();
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -127,11 +129,11 @@ export default function DataStoreListTable() {
     <>
       <FormControl fullWidth>
         <InputLabel id="data-store-dropdown-label">
-          Select Data Store
+          {t('select_data_store')}
         </InputLabel>
         <Select
           labelId="data-store-dropdown-label"
-          label="Select Data Store"
+          label={t('select_data_store')}
           id="data-store-dropdown"
           value={dataStore ? dataStore.id : ''}
           onChange={(event) => {

@@ -46,6 +46,7 @@ import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { Can } from '@casl/react';
 import {
@@ -154,6 +155,7 @@ export default function ReactDiagramEditor({
   const navigate = useNavigate();
 
   const [showingReferences, setShowingReferences] = useState(false);
+  const { t } = useTranslation();
 
   const zoom = useCallback(
     (amount: number) => {
@@ -798,7 +800,7 @@ export default function ReactDiagramEditor({
     return (
       <Modal
         open={showingReferences}
-        modalHeading="Process Model References"
+        modalHeading={t('diagram_process_model_references')}
         onRequestClose={() => setShowingReferences(false)}
         passiveModal
       >
@@ -825,7 +827,9 @@ export default function ReactDiagramEditor({
     if (callers && callers.length > 0) {
       let buttonText = `View ${callers.length} Reference`;
       if (callers.length > 1) {
-        buttonText += 's';
+        buttonText = t('diagram_references_count_plural', { count: callers.length });
+      } else {
+        buttonText = t('diagram_references_count', { count: 1 });
       }
       return (
         <Button variant="contained" onClick={() => setShowingReferences(true)}>
@@ -851,7 +855,7 @@ export default function ReactDiagramEditor({
               disabled={disableSaveButton}
               data-qa="process-model-file-save-button"
             >
-              Save
+              {t('save')}
             </Button>
           </Can>
           <Can
@@ -861,16 +865,16 @@ export default function ReactDiagramEditor({
           >
             {fileName && !isPrimaryFile && (
               <ButtonWithConfirmation
-                description={`Delete file ${fileName}?`}
+                description={t('delete_file_description', { file: fileName })}
                 onConfirmation={handleDelete}
-                buttonLabel="Delete"
+                buttonLabel={t('delete')}
               />
             )}
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             {onSetPrimaryFile && (
               <Button onClick={handleSetPrimaryFile} variant="contained">
-                Set as primary file
+                {t('diagram_set_as_primary_file')}
               </Button>
             )}
           </Can>
@@ -880,7 +884,7 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             <Button variant="contained" onClick={downloadXmlFile}>
-              Download
+              {t('diagram_download')}
             </Button>
           </Can>
           <Can
@@ -897,7 +901,7 @@ export default function ReactDiagramEditor({
                   );
                 }}
               >
-                View XML
+                {t('diagram_view_xml')}
               </Button>
             )}
           </Can>
@@ -921,18 +925,18 @@ export default function ReactDiagramEditor({
     // when mousing through them
     return (
       <div className="diagram-control-buttons">
-        <SpiffTooltip title="Zoom in" placement="bottom">
-          <IconButton aria-label="Zoom in" onClick={() => zoom(1)}>
+        <SpiffTooltip title={t('diagram_zoom_in')} placement="bottom">
+          <IconButton aria-label={t('diagram_zoom_in')} onClick={() => zoom(1)}>
             <ZoomIn />
           </IconButton>
         </SpiffTooltip>
-        <SpiffTooltip title="Zoom out" placement="bottom">
-          <IconButton aria-label="Zoom out" onClick={() => zoom(-1)}>
+        <SpiffTooltip title={t('diagram_zoom_out')} placement="bottom">
+          <IconButton aria-label={t('diagram_zoom_out')} onClick={() => zoom(-1)}>
             <ZoomOut />
           </IconButton>
         </SpiffTooltip>
-        <SpiffTooltip title="Zoom fit" placement="bottom">
-          <IconButton aria-label="Zoom fit" onClick={() => zoom(0)}>
+        <SpiffTooltip title={t('diagram_zoom_fit')} placement="bottom">
+          <IconButton aria-label={t('diagram_zoom_fit')} onClick={() => zoom(0)}>
             <CenterFocusStrongOutlined />
           </IconButton>
         </SpiffTooltip>

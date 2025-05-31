@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Close, AddAlt } from '@carbon/icons-react';
@@ -47,6 +48,7 @@ import {
 import {
   getKeyByValue,
   getPageInfoFromSearchParams,
+  getProcessStatus,
   titleizeString,
   truncateString,
 } from '../helpers';
@@ -128,6 +130,7 @@ export default function ProcessInstanceListTableWithFilters({
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
 
+  const { t } = useTranslation();
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.userSearch]: ['GET'],
@@ -159,16 +162,16 @@ export default function ProcessInstanceListTableWithFilters({
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
   const filterOperatorMappings: FilterOperatorMapping = {
-    Is: { id: 'equals', requires_value: true },
-    'Is Not': { id: 'not_equals', requires_value: true },
-    Contains: { id: 'contains', requires_value: true },
-    'Is Empty': { id: 'is_empty', requires_value: false },
-    'Is Not Empty': { id: 'is_not_empty', requires_value: false },
+    [t('filter_operator_is')]: { id: 'equals', requires_value: true },
+    [t('filter_operator_is_not')]: { id: 'not_equals', requires_value: true },
+    [t('filter_operator_contains')]: { id: 'contains', requires_value: true },
+    [t('filter_operator_is_empty')]: { id: 'is_empty', requires_value: false },
+    [t('filter_operator_is_not_empty')]: { id: 'is_not_empty', requires_value: false },
   };
 
   const filterDisplayTypes: FilterDisplayTypeMapping = {
-    date_time: 'Date / time',
-    duration: 'Duration',
+    date_time: t('filter_display_type_date_time'),
+    duration: t('filter_display_type_duration'),
   };
 
   const processInstanceListPathPrefix =
@@ -635,16 +638,16 @@ export default function ProcessInstanceListTableWithFilters({
 
     let message = '';
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
-      message = '"Start date from" cannot be after "start date to"';
+      message = t('filter_error_start_from_after_start_to');
     }
     if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
-      message = '"End date from" cannot be after "end date to"';
+      message = t('filter_error_end_from_after_end_to');
     }
     if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
-      message = '"Start date from" cannot be after "end date from"';
+      message = t('filter_error_start_after_end_from');
     }
     if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
-      message = '"Start date to" cannot be after "end date to"';
+      message = t('filter_error_start_to_after_end_to');
     }
     if (message !== '') {
       addError({ message } as ErrorForDisplay);
@@ -661,7 +664,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const dateComponent = (
-    labelString: any,
+    labelTranslationKey: string,
     name: any,
     initialDate: any,
     initialTime: string,
@@ -686,7 +689,7 @@ export default function ProcessInstanceListTableWithFilters({
           <DatePickerInput
             id={`date-picker-${name}`}
             placeholder={DATE_FORMAT_FOR_DISPLAY}
-            labelText={labelString}
+            labelText={t(labelTranslationKey)}
             type="text"
             size="md"
             autocomplete="off"
@@ -718,7 +721,7 @@ export default function ProcessInstanceListTableWithFilters({
         <TimePicker
           invalid={timeInvalid}
           id={`time-picker-${name}`}
-          labelText="Select a time"
+          labelText={t('select_a_time')}
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
           onChange={(event: any) => {
@@ -746,7 +749,7 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const formatProcessInstanceStatus = (_row: any, value: any) => {
-    return titleizeString((value || '').replaceAll('_', ' '));
+    return getProcessStatus(value);
   };
 
   const processStatusSearch = () => {
@@ -755,10 +758,10 @@ export default function ProcessInstanceListTableWithFilters({
     }
     return (
       <MultiSelect
-        label="Choose Status"
+        label={t('choose_status')}
         className="our-class"
         id="process-instance-status-select"
-        titleText="Status"
+        titleText={t('status')}
         items={processStatusAllOptions}
         onChange={(selection: any) => {
           insertOrUpdateFieldInReportMetadata(
@@ -817,7 +820,7 @@ export default function ProcessInstanceListTableWithFilters({
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
         buttonClassName="narrow-button"
-        buttonText="Save"
+        buttonText={t('save')}
         processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={reportMetadata}
       />
@@ -1061,8 +1064,8 @@ export default function ProcessInstanceListTableWithFilters({
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
         <Dropdown
-          titleText="Display type"
-          label="Display type"
+          titleText={t('display_type')}
+          label={t('display_type')}
           id="report-column-display-type"
           key="report-column-display-type"
           items={[''].concat(Object.values(filterDisplayTypes))}
@@ -1087,8 +1090,8 @@ export default function ProcessInstanceListTableWithFilters({
       );
       formElements.push(
         <Dropdown
-          titleText="Operator"
-          label="Operator"
+          titleText={t('operator_label')}
+          label={t('operator_label')}
           id="report-column-condition-operator"
           items={Object.keys(filterOperatorMappings)}
           selectedItem={operator || null}
@@ -1106,7 +1109,7 @@ export default function ProcessInstanceListTableWithFilters({
           <TextInput
             id="report-column-condition-value"
             name="report-column-condition-value"
-            labelText="Condition Value"
+            labelText={t('condition_value')}
             value={
               reportColumnToOperateOn
                 ? reportColumnToOperateOn.filter_field_value
@@ -1122,15 +1125,15 @@ export default function ProcessInstanceListTableWithFilters({
     );
     const modalHeading =
       reportColumnFormMode === 'new'
-        ? 'Add Column'
-        : `Edit ${
-            reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
-          } column`;
+        ? t('add_column')
+        : t('edit_column', {
+            columnName: reportColumnToOperateOn ? reportColumnToOperateOn.accessor : '',
+          });
     return (
       <Modal
         open={showReportColumnForm}
         modalHeading={modalHeading}
-        primaryButtonText="Save"
+        primaryButtonText={t('save')}
         primaryButtonDisabled={!reportColumnToOperateOn}
         onRequestSubmit={handleUpdateReportColumn}
         onRequestClose={handleColumnFormClose}
@@ -1166,7 +1169,7 @@ export default function ProcessInstanceListTableWithFilters({
                 kind="ghost"
                 size="sm"
                 className={`button-tag ${tagTypeClass}`}
-                title={`Edit ${reportColumnForEditing.accessor} column`}
+                title={t('edit_column', { columnName: reportColumnForEditing.accessor })}
                 onClick={() => {
                   setReportColumnToOperateOn(reportColumnForEditing);
                   setShowReportColumnForm(true);
@@ -1178,7 +1181,7 @@ export default function ProcessInstanceListTableWithFilters({
               <Button
                 data-qa="remove-report-column"
                 renderIcon={Close}
-                iconDescription="Remove Column"
+                iconDescription={t('remove_column')}
                 className={`button-tag-icon ${tagTypeClass}`}
                 hasIconOnly
                 size="sm"
@@ -1196,7 +1199,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Button
               data-qa="add-column-button"
               renderIcon={AddAlt}
-              iconDescription="Column options"
+              iconDescription={t('column_options')}
               className="with-tiny-top-margin"
               kind="ghost"
               hasIconOnly
@@ -1230,14 +1233,14 @@ export default function ProcessInstanceListTableWithFilters({
         maxWidth="md"
       >
         <DialogTitle id="advanced-filter-options-title">
-          Advanced filter options
+          {t('advanced_filter_options')}
         </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
-            <InputLabel id="system-report-label">System report</InputLabel>
+            <InputLabel id="system-report-label">{t('system_report')}</InputLabel>
             <Select
               labelId="system-report-label"
-              label="System report"
+              label={t('system_report')}
               value={systemReport || ''}
               onChange={(event) => {
                 const { value } = event.target;
@@ -1259,9 +1262,9 @@ export default function ProcessInstanceListTableWithFilters({
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
-            <InputLabel id="user-group-label">Assigned user group</InputLabel>
+            <InputLabel id="user-group-label">{t('assigned_user_group')}</InputLabel>
             <Select
-              label="Assigned user group"
+              label={t('assigned_user_group')}
               labelId="user-group-label"
               value={selectedUserGroup || ''}
               onChange={(event) => {
@@ -1296,7 +1299,7 @@ export default function ProcessInstanceListTableWithFilters({
                 }}
               />
             }
-            label="Include oldest open task information"
+            label={t('include_oldest_open_task_information')}
           />
           {variant === 'all' && (
             <FormControlLabel
@@ -1313,13 +1316,13 @@ export default function ProcessInstanceListTableWithFilters({
                   }}
                 />
               }
-              label="Include tasks for me"
+              label={t('include_tasks_for_me')}
             />
           )}
         </DialogContent>
         <DialogActions>
           <MuiButton onClick={handleAdvancedOptionsClose} color="primary">
-            Close
+            {t('close')}
           </MuiButton>
         </DialogActions>
       </Dialog>
@@ -1351,7 +1354,7 @@ export default function ProcessInstanceListTableWithFilters({
       <>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8} lg={16} sm={4}>
-            <FormLabel>Columns</FormLabel>
+            <FormLabel>{t('columns_label')}</FormLabel>
             <br />
             {columnSelections()}
           </Column>
@@ -1398,8 +1401,8 @@ export default function ProcessInstanceListTableWithFilters({
                       id="process-instance-initiator-search"
                       data-qa="process-instance-initiator-search"
                       items={processInstanceInitiatorOptions}
-                      placeholder="Start typing username"
-                      titleText="Started by"
+                      placeholder={t('start_typing_username')}
+                      titleText={t('started_by')}
                       selectedItem={processInitiatorSelection}
                     />
                   );
@@ -1407,8 +1410,8 @@ export default function ProcessInstanceListTableWithFilters({
                 return (
                   <TextInput
                     id="process-instance-initiator-search"
-                    placeholder="Enter username"
-                    labelText="Started by"
+                    placeholder={t('enter_username')}
+                    labelText={t('started_by')}
                     onChange={(event: any) => {
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
@@ -1427,7 +1430,7 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid fullWidth className="with-bottom-margin">
           <Column md={4}>
             {dateComponent(
-              'Start date from',
+              t('filter_start_date_from'),
               'start-from',
               startFromDate,
               startFromTime,
@@ -1443,7 +1446,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'Start date to',
+              t('filter_start_date_to'),
               'start-to',
               startToDate,
               startToTime,
@@ -1459,7 +1462,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'End date from',
+              t('filter_end_date_from'),
               'end-from',
               endFromDate,
               endFromTime,
@@ -1475,7 +1478,7 @@ export default function ProcessInstanceListTableWithFilters({
           </Column>
           <Column md={4}>
             {dateComponent(
-              'End date to',
+              t('filter_end_date_to'),
               'end-to',
               endToDate,
               endToTime,
@@ -1494,7 +1497,7 @@ export default function ProcessInstanceListTableWithFilters({
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <MuiButton variant="outlined" onClick={clearFilters}>
-                Clear
+                {t('clear_button')}
               </MuiButton>
             </ButtonSet>
           </Column>
@@ -1511,7 +1514,7 @@ export default function ProcessInstanceListTableWithFilters({
               data-qa="advanced-options-filters"
               className="narrow-button button-link"
             >
-              Advanced
+              {t('advanced')}
             </Button>
           </Column>
         </Grid>

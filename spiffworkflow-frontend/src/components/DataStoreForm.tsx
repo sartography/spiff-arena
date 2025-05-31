@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   TextField,
@@ -40,6 +41,7 @@ export default function DataStoreForm({
   const [selectedDataStoreType, setSelectedDataStoreType] =
     useState<DataStoreType | null>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const dataStoreLocation = () => {
     const searchParams = new URLSearchParams(document.location.search);
@@ -188,8 +190,8 @@ export default function DataStoreForm({
         data-qa="data-store-name-input"
         name="name"
         error={nameInvalid}
-        helperText={nameInvalid ? 'Name is required.' : ''}
-        label="Name*"
+        helperText={nameInvalid ? t('name_is_required') : ''}
+        label={t('name_required')}
         value={dataStore.name}
         onChange={(event: any) => onNameChanged(event.target.value)}
       />,
@@ -205,10 +207,10 @@ export default function DataStoreForm({
         error={identifierInvalid}
         helperText={
           identifierInvalid
-            ? 'Identifier is required and must be all lowercase characters and hyphens.'
+            ? t('identifier_requirements')
             : ''
         }
-        label="Identifier*"
+        label={t('identifier_required')}
         value={dataStore.id}
         onChange={(event: any) => {
           updateDataStore({ id: event.target.value });
@@ -235,13 +237,13 @@ export default function DataStoreForm({
     } else {
       textInputs.push(
         <FormControl fullWidth error={typeInvalid}>
-          <InputLabel id="data-store-type-select-label">Type*</InputLabel>
+          <InputLabel id="data-store-type-select-label">{t('type') + '*'}</InputLabel>
           <Select
             labelId="data-store-type-select-label"
             id="data-store-type-select"
             value={selectedDataStoreType ? selectedDataStoreType.type : ''}
             onChange={onTypeChanged}
-            label="Type*"
+            label={t('type') + '*'}
           >
             {dataStoreTypes.map((type) => (
               <MenuItem key={type.type} value={type.type}>
@@ -259,9 +261,9 @@ export default function DataStoreForm({
         name="schema"
         error={schemaInvalid}
         helperText={
-          schemaInvalid ? 'Schema is required and must be valid JSON.' : ''
+          schemaInvalid ? t('schema_requirements') : ''
         }
-        label="Schema*"
+        label={t('schema_required')}
         multiline
         minRows={3}
         value={dataStore.schema}
@@ -270,7 +272,7 @@ export default function DataStoreForm({
     );
 
     textInputs.push(
-      <InputLabel id="data-store-description-label">Description:</InputLabel>,
+      <InputLabel id="data-store-description-label">{t('description')}:</InputLabel>,
     );
     textInputs.push(
       <TextareaAutosize
@@ -278,7 +280,7 @@ export default function DataStoreForm({
         name="description"
         minRows={5}
         aria-label="Description"
-        placeholder="Description"
+        placeholder={t('description')}
         value={dataStore.description || ''}
         onChange={(event: any) =>
           updateDataStore({ description: event.target.value })
@@ -292,7 +294,7 @@ export default function DataStoreForm({
   const formButtons = () => {
     return (
       <Button type="submit" variant="contained">
-        Submit
+        {t('submit')}
       </Button>
     );
   };

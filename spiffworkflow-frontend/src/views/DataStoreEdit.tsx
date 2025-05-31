@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
@@ -20,8 +21,9 @@ export default function DataStoreEdit() {
     schema: '',
     description: '',
   });
+  const { t } = useTranslation();
   useEffect(() => {
-    setPageTitle(['Edit Data Store']);
+    setPageTitle([t('edit_data_store')]);
   }, []);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function DataStoreEdit() {
     });
   }, [dataStoreIdentifier, parentGroupId, dataStoreType]);
 
-  const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
+  const hotCrumbs: HotCrumbItem[] = [[t('process_groups'), '/process-groups']];
   if (parentGroupId) {
     hotCrumbs.push({
       entityToExplode: parentGroupId,
@@ -50,7 +52,7 @@ export default function DataStoreEdit() {
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
       <Typography variant="h1" gutterBottom>
-        Edit Data Store
+        {t('edit_data_store')}
       </Typography>
       <DataStoreForm
         mode="edit"

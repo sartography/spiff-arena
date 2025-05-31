@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Stack, Box, Typography } from '@mui/material';
 import HttpService from '../services/HttpService';
 
 export default function SecretNew() {
+  const { t } = useTranslation();
   const [value, setValue] = useState<string>('');
   const [key, setKey] = useState<string>('');
   const [keyIsInvalid, setKeyIsInvalid] = useState<boolean>(false);
@@ -50,18 +52,18 @@ export default function SecretNew() {
   return (
     <Box component="main" sx={{ padding: '1rem 0' }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Add Secret
+        {t('add_secret')}
       </Typography>
       <form onSubmit={addSecret}>
         <Stack spacing={2}>
           <TextField
             id="secret-key"
-            label="Key*"
+            label={`${t('secret_key')} *`}
             value={key}
             error={keyIsInvalid}
             helperText={
               keyIsInvalid
-                ? 'The key must be alphanumeric characters and underscores'
+                ? t('key_alphanumeric_error')
                 : ''
             }
             onChange={(e: any) => setKey(e.target.value)}
@@ -69,10 +71,10 @@ export default function SecretNew() {
           />
           <TextField
             id="secret-value"
-            label="Value*"
+            label={`${t('value')} *`}
             value={value}
             error={valueIsInvalid}
-            helperText={valueIsInvalid ? 'The value must be set' : ''}
+            helperText={valueIsInvalid ? t('value_must_be_set') : ''}
             onChange={(e: any) => {
               setValue(e.target.value);
             }}
@@ -80,10 +82,10 @@ export default function SecretNew() {
           />
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" onClick={navigateToSecrets}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button variant="contained" type="submit">
-              Submit
+              {t('submit')}
             </Button>
           </Stack>
         </Stack>

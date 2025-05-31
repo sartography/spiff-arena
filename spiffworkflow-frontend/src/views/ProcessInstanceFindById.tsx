@@ -5,8 +5,10 @@ import { isANumber, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 import { ProcessInstance } from '../interfaces';
+import { useTranslation } from 'react-i18next';
 
 export default function ProcessInstanceFindById() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [processInstanceId, setProcessInstanceId] = useState<string>('');
   const [processInstanceIdValid, setProcessInstanceIdValid] =
@@ -56,9 +58,9 @@ export default function ProcessInstanceFindById() {
         id="process-instance-id-input"
         error={!processInstanceIdValid}
         helperText={
-          !processInstanceIdValid ? 'Process Instance Id must be a number.' : ''
+          !processInstanceIdValid ? t('process_id_must_be_a_number') : ''
         }
-        label="Process Instance Id*"
+        label={t('process_id')}
         value={processInstanceId}
         onChange={handleProcessInstanceIdChange}
         fullWidth
@@ -69,10 +71,11 @@ export default function ProcessInstanceFindById() {
   const formButtons = () => {
     return (
       <Button type="submit" variant="contained">
-        Submit
+        {t('submit')}
       </Button>
     );
   };
+
 
   return (
     <>
