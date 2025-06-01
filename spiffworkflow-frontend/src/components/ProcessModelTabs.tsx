@@ -88,11 +88,11 @@ export default function ProcessModelTabs({
   }
 
   const items = [
-    t('upload_file'),
-    t('new_bpmn_file'),
-    t('new_dmn_file'),
-    t('new_json_file'),
-    t('new_markdown_file'),
+    'upload_file',
+    'new_bpmn_file',
+    'new_dmn_file',
+    'new_json_file',
+    'new_markdown_file',
   ];
 
   const addFileComponent = () => {
@@ -104,22 +104,22 @@ export default function ProcessModelTabs({
           label={t('add_file')}
           onChange={(event) => {
             const selectedItem = event.target.value;
-            if (selectedItem === t('new_bpmn_file')) {
+            if (selectedItem === 'new_bpmn_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
               );
-            } else if (selectedItem === t('upload_file')) {
+            } else if (selectedItem === 'upload_file') {
               updateSelectedTab(1); // Switch to Files tab
               setShowFileUploadModal(true);
-            } else if (selectedItem === t('new_dmn_file')) {
+            } else if (selectedItem === 'new_dmn_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
               );
-            } else if (selectedItem === t('new_json_file')) {
+            } else if (selectedItem === 'new_json_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
               );
-            } else if (selectedItem === t('new_markdown_file')) {
+            } else if (selectedItem === 'new_markdown_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
               );
@@ -129,7 +129,7 @@ export default function ProcessModelTabs({
         >
           {items.map((item) => (
             <MenuItem key={item} value={item}>
-              {item}
+              {t(item)}
             </MenuItem>
           ))}
         </Select>
