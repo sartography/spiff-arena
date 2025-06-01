@@ -19,7 +19,7 @@ type Locales = {
 };
 
 export const TimeAgo = (function awesomeFunc() {
-  const locales: Locales = {
+  const getLocales: () => Locales = () => ({
     prefix: i18n.t('time_ago_prefix'),
     sufix: i18n.t('time_ago_suffix'),
     seconds: i18n.t('time_less_than_minute'),
@@ -33,9 +33,10 @@ export const TimeAgo = (function awesomeFunc() {
     months: i18n.t('time_months'),
     year: i18n.t('time_about_year'),
     years: i18n.t('time_years'),
-  };
+  });
 
   function inWords(timeAgo: number): string {
+    const locales = getLocales();
     const milliseconds = timeAgo * 1000;
     const seconds = Math.floor(
       (new Date().getTime() - parseInt(milliseconds.toString(), 10)) / 1000,
@@ -75,5 +76,5 @@ export const TimeAgo = (function awesomeFunc() {
     return words.trim();
   }
 
-  return { locales, inWords };
+  return { getLocales, inWords };
 })();
