@@ -200,7 +200,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       paginationQueryParamPrefix,
     );
     let breadcrumbElement = null;
-    if (searchParams.get('process_id')) {
+    if (searchParams.get('process_instance_id')) {
       breadcrumbElement = (
         <ProcessBreadcrumb
           hotCrumbs={[
@@ -211,10 +211,10 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               linkLastItem: true,
             },
             [
-              t('process_with_id', { id: searchParams.get('process_id') }),
+              `Process Instance: ${searchParams.get('process_instance_id')}`,
               `/process-instances/${searchParams.get(
                 'process_model_id',
-              )}/${searchParams.get('process_id')}`,
+              )}/${searchParams.get('process_instance_id')}`,
             ],
             [t('messages_tab')],
           ]}
