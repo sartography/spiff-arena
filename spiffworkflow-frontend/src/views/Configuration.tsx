@@ -43,7 +43,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location]);
+  }, [location, t]);
 
   const configurationExtensionTab = (
     uxElement: UiSchemaUxElement,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -16,7 +16,9 @@ export default function ProcessGroupNew() {
   });
   const { t } = useTranslation();
 
-  setPageTitle([t('new_process_group')]);
+  useEffect(() => {
+    setPageTitle([t('new_process_group')]);
+  }, [t]);
 
   const hotCrumbs: HotCrumbItem[] = [[t('process_groups'), '/process-groups']];
   if (parentGroupId) {

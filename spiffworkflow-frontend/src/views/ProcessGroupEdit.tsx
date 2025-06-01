@@ -25,8 +25,14 @@ export default function ProcessGroupEdit() {
   }, [params.process_group_id]);
 
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (processGroup) {
+      setPageTitle([t('editing_process_group', { name: processGroup.display_name })]);
+    }
+  }, [processGroup, t]);
+
   if (processGroup) {
-    setPageTitle([t('editing_process_group', { name: processGroup.display_name })]);
     return (
       <>
         <ProcessBreadcrumb

@@ -21,8 +21,13 @@ export default function ProcessModelEdit() {
     });
   }, [processModelPath]);
 
+  useEffect(() => {
+    if (processModel) {
+      setPageTitle([t('editing_process_model', { name: processModel.display_name })]);
+    }
+  }, [processModel, t]);
+
   if (processModel) {
-    setPageTitle([t('editing_process_model', { name: processModel.display_name })]);
     return (
       <Box>
         <ProcessBreadcrumb

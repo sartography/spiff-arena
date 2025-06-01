@@ -24,7 +24,7 @@ export default function DataStoreEdit() {
   const { t } = useTranslation();
   useEffect(() => {
     setPageTitle([t('edit_data_store')]);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const setDataStoreFromResult = (result: any) => {

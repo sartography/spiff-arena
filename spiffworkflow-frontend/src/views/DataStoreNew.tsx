@@ -21,7 +21,7 @@ export default function DataStoreNew() {
   const { t } = useTranslation();
   useEffect(() => {
     setPageTitle([t('new_data_store')]);
-  }, []);
+  }, [t]);
 
   const hotCrumbs: HotCrumbItem[] = [[t('process_groups'), '/process-groups']];
   if (parentGroupId) {

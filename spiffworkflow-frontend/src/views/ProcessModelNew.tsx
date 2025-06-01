@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material'; // Import MUI components
@@ -21,7 +21,10 @@ export default function ProcessModelNew() {
     primary_process_id: '',
     files: [],
   });
-  setPageTitle([t('add_new_process_model')]);
+
+  useEffect(() => {
+    setPageTitle([t('add_new_process_model')]);
+  }, [t]);
 
   return (
     <Box>

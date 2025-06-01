@@ -1,11 +1,14 @@
 import { Typography, Box } from '@mui/material';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import MessageInstanceList from '../components/messages/MessageInstanceList';
 import { setPageTitle } from '../helpers';
 
 export default function MessageListPage() {
   const { t } = useTranslation();
-  setPageTitle([t('messages')]);
+  useEffect(() => {
+    setPageTitle([t('messages')]);
+  }, [t]);
 
   // TODO: add tabs back in when MessageModelList is working again
   // TODO: only load the component for the tab we are currently on

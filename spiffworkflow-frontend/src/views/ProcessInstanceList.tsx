@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Box } from '@mui/material'; // MUI components
@@ -20,7 +20,9 @@ type OwnProps = {
 export default function ProcessInstanceList({ variant }: OwnProps) {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
-  setPageTitle([t('process_instances')]);
+  useEffect(() => {
+    setPageTitle([t('process_instances')]);
+  }, [t]);
 
   const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =
