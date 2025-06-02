@@ -155,12 +155,6 @@ const getPreferredUsername = () => {
   return null;
 };
 
-const loginIfNeeded = () => {
-  if (!isLoggedIn()) {
-    doLogin();
-  }
-};
-
 const UserService = {
   authenticationDisabled,
   doLogin,
@@ -172,7 +166,6 @@ const UserService = {
   getUserEmail,
   isLoggedIn,
   isPublicUser,
-  loginIfNeeded,
 };
 
 export default UserService;
