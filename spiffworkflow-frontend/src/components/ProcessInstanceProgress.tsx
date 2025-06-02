@@ -76,7 +76,7 @@ export default function ProcessInstanceProgress({
         ) {
           navigate(processInstanceShowPageUrl);
         } else {
-	  const toUrl = getAndRemoveLastProcessInstanceRunLocation() ?? '/';
+          const toUrl = getAndRemoveLastProcessInstanceRunLocation() ?? '/';
           navigate(toUrl);
         }
       }

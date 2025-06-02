@@ -4,7 +4,7 @@
  * but for now all we need is the basic accessors.
  */
 
-const LAST_PROCESS_INSTANCE_RUN_LOCATION = "lastProcessInstanceRunLocation";
+const LAST_PROCESS_INSTANCE_RUN_LOCATION = 'lastProcessInstanceRunLocation';
 const SPIFF_FAVORITES = 'spifffavorites';
 
 const getStorageValue = (key: string) => {

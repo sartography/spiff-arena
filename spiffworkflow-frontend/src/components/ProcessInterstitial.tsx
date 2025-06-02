@@ -236,7 +236,9 @@ export default function ProcessInterstitial({
   if (state === 'CLOSED' && lastTask === null && allowRedirect) {
     // Favor redirecting to the process instance show page
     if (processInstance) {
-      const toUrl = getAndRemoveLastProcessInstanceRunLocation() ?? processInstanceShowPageUrl;
+      const toUrl =
+        getAndRemoveLastProcessInstanceRunLocation() ??
+        processInstanceShowPageUrl;
       navigate(toUrl);
     } else {
       const taskUrl = '/tasks';
