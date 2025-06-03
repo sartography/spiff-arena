@@ -512,14 +512,6 @@ export default function ReactDiagramEditor({
     }
   }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
 
-  // save the diagram
-  useEffect(() => {
-    if (!diagramModelerState || disableSaveButton) {
-      return;
-    }
-    handleSave();
-  }, [diagramModelerState, disableSaveButton]);
-
   // import done operations
   useEffect(() => {
     // These seem to be system tasks that cannot be highlighted
@@ -764,7 +756,7 @@ export default function ReactDiagramEditor({
     url,
   ]);
 
-  function handleSave() {
+  const handleSave = useCallback(() => {
     if (saveDiagram) {
       (diagramModelerState as any)
         .saveXML({ format: true })
@@ -772,7 +764,15 @@ export default function ReactDiagramEditor({
           saveDiagram(xmlObject.xml);
         });
     }
-  }
+  }, [diagramModelerState, saveDiagram]);
+
+  // save the diagram
+  useEffect(() => {
+    if (!diagramModelerState || disableSaveButton) {
+      return;
+    }
+    handleSave();
+  }, [diagramModelerState, disableSaveButton, handleSave]);
 
   function handleDelete() {
     if (onDeleteFile) {
