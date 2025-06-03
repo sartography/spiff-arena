@@ -16,6 +16,7 @@ import {
   errorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
+import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
 
 type OwnProps = {
   processInstanceId: number;
@@ -75,7 +76,8 @@ export default function ProcessInstanceProgress({
         ) {
           navigate(processInstanceShowPageUrl);
         } else {
-          navigate('/');
+          const toUrl = getAndRemoveLastProcessInstanceRunLocation() ?? '/';
+          navigate(toUrl);
         }
       }
 
