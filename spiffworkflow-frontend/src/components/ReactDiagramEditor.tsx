@@ -512,6 +512,14 @@ export default function ReactDiagramEditor({
     }
   }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
 
+  // save the diagram
+  useEffect(() => {
+    if (!diagramModelerState || disableSaveButton) {
+      return;
+    }
+    handleSave();
+  }, [diagramModelerState, disableSaveButton]);
+
   // import done operations
   useEffect(() => {
     // These seem to be system tasks that cannot be highlighted
