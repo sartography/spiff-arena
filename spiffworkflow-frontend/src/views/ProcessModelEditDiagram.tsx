@@ -322,7 +322,6 @@ export default function ProcessModelEditDiagram() {
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
     setDisplaySaveFileMessage(false);
     removeError();
-    setBpmnXmlForDiagramRendering(bpmnXML);
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
@@ -1411,6 +1410,7 @@ export default function ProcessModelEditDiagram() {
         disableSaveButton={!diagramHasChanges}
         fileName={params.file_name}
         isPrimaryFile={params.file_name === processModel?.primary_file_name}
+        processModel={processModel}
         onDataStoresRequested={onDataStoresRequested}
         onDeleteFile={onDeleteFile}
         onDmnFilesRequested={onDmnFilesRequested}
