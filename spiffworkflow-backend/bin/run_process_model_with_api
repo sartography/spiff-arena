@@ -12,9 +12,9 @@ script_dir="$(
   pwd -P
 )"
 
-if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  export KEYCLOAK_BASE_URL="http://localhost:7002"
-fi
+# if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+#   export KEYCLOAK_BASE_URL="http://localhost:7002"
+# fi
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   export BACKEND_BASE_URL=http://localhost:7000
 fi
@@ -88,10 +88,10 @@ if ! grep -qE '^[0-9]+$' <<<"$process_instance_id"; then
   exit 1
 fi
 
-result=$(curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${process_instance_id}/run" -H "Authorization: Bearer $access_token")
+result=$(curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${process_instance_id}/run?execution_mode=synchronous" -H "Authorization: Bearer $access_token")
 check_result_for_error "$result"
 if [[ "$(jq -r '.status' <<<"$result")" == "complete" ]]; then
-  echo "Process instance completed"
+  echo "Process instance completed: $process_instance_id"
   exit 0
 fi
 check_on_proces_instance "$result"
