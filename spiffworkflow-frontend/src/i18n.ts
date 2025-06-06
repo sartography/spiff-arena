@@ -8,6 +8,7 @@ import es from './locales/es/translation.json';
 import de from './locales/de/translation.json';
 import fi from './locales/fi/translation.json';
 import ptPT from './locales/pt_pt/translation.json';
+import csCZ from './locales/cs_cz/translation.json';
 
 i18n
   .use(LanguageDetector)
@@ -20,13 +21,14 @@ i18n
       de: { translation: de },
       fi: { translation: fi },
       'pt-PT': { translation: ptPT },
+      'cs-CZ': { translation: csCZ },
     },
     fallbackLng: 'en-US',
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['navigator'],
+      order: ['localStorage', 'navigator'],
     },
   });
 

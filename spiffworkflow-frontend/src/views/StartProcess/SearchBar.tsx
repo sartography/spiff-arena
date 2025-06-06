@@ -1,5 +1,6 @@
 import { Box, InputAdornment, Paper, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { Subject, Subscription } from 'rxjs';
 
@@ -13,6 +14,7 @@ export default function SearchBar({
   callback: (search: string) => void;
   stream?: Subject<Record<string, any>>;
 }) {
+  const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const bgPaper = 'background.paper';
 
@@ -68,7 +70,7 @@ export default function SearchBar({
             backgroundColor: bgPaper,
           }}
           variant="outlined"
-          placeholder="Search"
+          placeholder={t('search_placeholder')}
           value={searchText}
           onChange={(e) => handleSearchChange(e.target.value)}
           InputProps={{

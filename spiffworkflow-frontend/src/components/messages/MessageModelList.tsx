@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Table } from '@carbon/react';
 import { useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
@@ -18,6 +19,7 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
   const [messageModels, setMessageModels] = useState<ReferenceCache[]>([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
@@ -78,9 +80,9 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Id</th>
-            <th>Location</th>
-            <th>Correlation</th>
+            <th>{t('id')}</th>
+            <th>{t('location')}</th>
+            <th>{t('correlations')}</th>
           </tr>
         </thead>
         <tbody>{rows}</tbody>
