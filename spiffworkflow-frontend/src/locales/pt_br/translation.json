@@ -311,7 +311,7 @@
   "process_label_instance": "Instância de Processo",
   "process_last_milestone": "Última Etapa",
   "process_migrated": "Instância de processo migrada",
-  "process_model_column": "Modelo de Processo",
+  "process_model": "Modelo de Processo",
   "process_model_no_files_help": "Este modelo de processo não tem ficheiros associados. Tente criar um ficheiro BPMN selecionando 'Novo ficheiro BPMN' no menu abaixo.",
   "process_models_with_count": "Modelos de Processo ({{count}})",
   "process_no_instances": "Nenhuma instância de processo encontrada",

@@ -33,7 +33,7 @@ export default function ProcessGroupNew() {
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
       <Typography variant="h1" gutterBottom>
-        {t('add_process_group')}
+        {t('new_process_group')}
       </Typography>
       <ProcessGroupForm
         mode="new"

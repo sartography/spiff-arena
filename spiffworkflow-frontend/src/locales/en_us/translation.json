@@ -311,7 +311,7 @@
   "process_label_instance": "Process Instance",
   "process_last_milestone": "Last Milestone",
   "process_migrated": "Process instance migrated",
-  "process_model_column": "Process Model",
+  "process_model": "Process Model",
   "process_model_no_files_help": "This process model does not have any files associated with it. Try creating a BPMN file by selecting 'New BPMN File' in the dropdown below.",
   "process_models_with_count": "Process Models ({{count}})",
   "process_no_instances": "No process instances found",

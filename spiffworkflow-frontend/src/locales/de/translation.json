@@ -311,7 +311,7 @@
   "process_label_instance": "Prozessinstanz",
   "process_last_milestone": "Letzter Meilenstein",
   "process_migrated": "Prozessinstanz migriert",
-  "process_model_column": "Prozessmodell",
+  "process_model": "Prozessmodell",
   "process_model_no_files_help": "Dieses Prozessmodell hat keine zugeordneten Dateien. Versuchen Sie, eine BPMN-Datei zu erstellen, indem Sie unten 'Neue BPMN-Datei' auswählen.",
   "process_models_with_count": "Prozessmodelle ({{count}})",
   "process_no_instances": "Keine Prozessinstanzen gefunden",

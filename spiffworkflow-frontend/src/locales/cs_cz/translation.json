@@ -311,7 +311,7 @@
   "process_label_instance": "Instance procesu",
   "process_last_milestone": "Poslední milník instance procesu",
   "process_migrated": "Instance procesu migrována",
-  "process_model_column": "Procesní model",
+  "process_model": "Procesní model",
   "process_model_no_files_help": "Tento procesní model nemá žádné soubory. Zkuste vytvořit soubor BPMN výběrem 'Nový soubor BPMN' v rozevíracím seznamu níže.",
   "process_models_with_count": "Procesní modely ({{count}})",
   "process_no_instances": "Žádné instance procesu",
