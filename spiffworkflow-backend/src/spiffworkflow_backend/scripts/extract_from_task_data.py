@@ -1,3 +1,4 @@
+from types import ModuleType
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
@@ -24,11 +25,12 @@ class ExtractFromTaskData(Script):
         if not callable(pred):
             raise ValueError("Optional predicate must either be a string or callable.")
 
-        keys = list(spiff_task.data.keys())
         extracted = {}
 
-        for key in keys:
-            if pred(key) and not callable(spiff_task.data[key]):
-                extracted[key] = spiff_task.data.pop(key)
+        for k, v in list(spiff_task.data.items()):
+            if k in ["__builtins__", "__annotations__"] or callable(v) or type(v) is ModuleType:
+                continue
+            if pred(k):
+                extracted[k] = spiff_task.data.pop(k)
 
         return extracted
