@@ -8,7 +8,7 @@
 }
 
 .fade-out {
-  animation: fadeOutStandard 2s ease-in-out;
+  animation: fadeOutStandard 5s ease-in-out;
 }
 
 @keyframes fadeInStandard {

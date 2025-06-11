@@ -108,7 +108,7 @@ export default function ProcessInterstitial({
           processInstanceId.toString(),
         );
         navigate(processInstanceShowPageUrl);
-      }, 2000); // Adjust the timeout to match the CSS transition duration
+      }, 4000); // Adjust the timeout to close-match the CSS transition duration
     }
     return undefined;
   }, [
