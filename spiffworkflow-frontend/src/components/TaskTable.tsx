@@ -221,7 +221,7 @@ export default function TaskTable({
   }
 
   const regex = new RegExp(
-    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
+    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()}|${UserService.getUserName()})\\b`,
   );
 
   const records = entries.map((entry) => {

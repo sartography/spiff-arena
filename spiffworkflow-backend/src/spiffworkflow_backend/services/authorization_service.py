@@ -449,7 +449,10 @@ class AuthorizationService:
         user_attributes = {}
 
         if "email" in user_info:
-            user_attributes["username"] = user_info["email"]
+            if "username" in user_info:
+                user_attributes["username"] = user_info["username"]
+            else:
+                user_attributes["username"] = user_info["email"]
             user_attributes["email"] = user_info["email"]
         else:  # we fall back to the sub, which may be very ugly.
             fallback_username = user_info["sub"] + "@" + user_info["iss"]

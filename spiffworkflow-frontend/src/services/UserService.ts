@@ -113,6 +113,15 @@ const getUserEmail = () => {
   return null;
 };
 
+const getUserName = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwtDecode(idToken);
+    return (idObject as any).username;
+  }
+  return null;
+};
+
 const authenticationDisabled = () => {
   const idToken = getIdToken();
   if (idToken) {
@@ -170,6 +179,7 @@ const UserService = {
   getCurrentLocation,
   getPreferredUsername,
   getUserEmail,
+  getUserName,
   isLoggedIn,
   isPublicUser,
   loginIfNeeded,
