@@ -1,8 +1,16 @@
+from collections.abc import Callable
 from types import ModuleType
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
+
+
+def str_prefix_pred(prefix: str) -> Callable[[str], bool]:
+    def pred(k: str) -> bool:
+        return k.startswith(prefix)
+
+    return pred
 
 
 class ExtractFromTaskData(Script):
@@ -18,10 +26,10 @@ class ExtractFromTaskData(Script):
         spiff_task = script_attributes_context.task
         if not spiff_task:
             return
-        
+
         pred = args[0] if args else lambda k: True
         if isinstance(pred, str):
-            pred = lambda k: k.startswith(args[0])
+            pred = str_prefix_pred(args[0])
         if not callable(pred):
             raise ValueError("Optional predicate must either be a string or callable.")
 
