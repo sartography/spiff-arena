@@ -119,6 +119,7 @@
   "diagram_script_editor_unit_test_title": "Yksikkötesti: {{testId}}",
   "diagram_set_as_primary_file": "Aseta ensisijaiseksi tiedostoksi",
   "diagram_tab": "Kaavio",
+  "diagram_view_diagram": "Näytä diagrammi",
   "diagram_view_xml": "Näytä XML",
   "diagram_zoom_fit": "Sovita näkymään",
   "diagram_zoom_in": "Lähennä",

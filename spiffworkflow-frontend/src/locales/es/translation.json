@@ -119,6 +119,7 @@
   "diagram_script_editor_unit_test_title": "Prueba Unitaria: {{testId}}",
   "diagram_set_as_primary_file": "Establecer como archivo principal",
   "diagram_tab": "Diagrama",
+  "diagram_view_diagram": "Ver Diagrama",
   "diagram_view_xml": "Ver XML",
   "diagram_zoom_fit": "Ajustar a la vista",
   "diagram_zoom_in": "Acercar",

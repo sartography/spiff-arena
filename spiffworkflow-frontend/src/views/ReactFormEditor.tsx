@@ -286,7 +286,7 @@ export default function ReactFormEditor() {
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
         <h1>
-          {t('process_model_file')}{processModelFile ? ': ' : ''}
+          {t('process_model')}{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
         {newFileNameBox()}
@@ -337,7 +337,7 @@ export default function ReactFormEditor() {
                 color="primary"
                 data-qa="view-diagram-button"
               >
-                {t('view_diagram')}
+                {t('diagram_view_diagram')}
               </Button>
             ) : null}
           </Can>
