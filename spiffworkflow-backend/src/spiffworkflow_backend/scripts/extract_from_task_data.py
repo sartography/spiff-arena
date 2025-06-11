@@ -25,7 +25,7 @@ class ExtractFromTaskData(Script):
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         spiff_task = script_attributes_context.task
         if not spiff_task:
-            return
+            return {}
 
         pred = args[0] if args else lambda k: True
         if isinstance(pred, str):
