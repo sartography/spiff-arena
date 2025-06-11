@@ -286,8 +286,7 @@ export default function ReactFormEditor() {
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
         <h1>
-          {t('process_model')}{processModelFile ? ': ' : ''}
-          {processModelFileName}
+          {t('process_model_file', { fileName: processModelFileName })}
         </h1>
         {newFileNameBox()}
         {saveFileMessage()}

@@ -1510,7 +1510,7 @@ export default function ProcessModelEditDiagram() {
           ]}
         />
         <h1>
-          {t('diagram_page_titles_process_model_file', { fileName: processModelFileName || '---' })}
+          {t('process_model_file', { fileName: processModelFileName || '---' })}
         </h1>
 
         {pageModals()}
