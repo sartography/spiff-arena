@@ -1,4 +1,4 @@
-from collections import namedtuple
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
@@ -6,7 +6,10 @@ import pytest
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.extract_from_task_data import ExtractFromTaskData
 
-MockTask = namedtuple("MockTask", ["data"])
+
+@dataclass
+class MockTask:
+    data: dict
 
 
 def islower(k: str) -> bool:
