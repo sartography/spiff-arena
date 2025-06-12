@@ -27,7 +27,7 @@ class ExtractFromTaskData(Script):
         if not spiff_task:
             return {}
 
-        pred = args[0] if args else lambda k: True
+        pred = args[0] if args and args[0] else lambda k: True
         if isinstance(pred, str):
             pred = str_prefix_pred(args[0])
         if not callable(pred):
