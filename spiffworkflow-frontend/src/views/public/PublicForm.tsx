@@ -1,6 +1,7 @@
 import { Box, CircularProgress, Grid } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import HttpService from '../../services/HttpService';
 import CustomForm from '../../components/CustomForm';
 import { recursivelyChangeNullAndUndefined } from '../../helpers';
@@ -23,6 +24,7 @@ export default function PublicForm() {
   const [publicTask, setPublicTask] = useState<PublicTask | null>(null);
   const [currentPageError, setCurrentPageError] =
     useState<ErrorForDisplay | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const taskGuid = params.task_guid;
@@ -41,7 +43,7 @@ export default function PublicForm() {
           setCurrentPageError(error);
         } else {
           setCurrentPageError(
-            errorForDisplayFromString('Error retrieving content.'),
+            errorForDisplayFromString(t('error_retrieving_content')),
           );
         }
         console.error(error);
@@ -60,7 +62,7 @@ export default function PublicForm() {
     if (result.confirmation_message_markdown) {
       setConfirmationMessage(result.confirmation_message_markdown);
     } else if (!result.form) {
-      setConfirmationMessage('Thank you!');
+      setConfirmationMessage(`${t('thank_you')}!`);
     }
   };
 
@@ -113,7 +115,7 @@ export default function PublicForm() {
           <p>
             Go to{' '}
             <a href="/" data-qa="public-home-link">
-              Home
+              {t('home')}
             </a>
           </p>
         </>

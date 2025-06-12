@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
 import { ElementForArray, ProcessInstance } from './interfaces';
+import i18n from './i18n';
 
 export const DEFAULT_PER_PAGE = 50;
 export const DEFAULT_PAGE = 1;
@@ -263,20 +264,28 @@ export const decodeBase64 = (data: string) => {
   return Buffer.from(data, 'base64').toString('ascii');
 };
 
+export const getProcessStatus = (processInstance: ProcessInstance | string) => {
+  if (typeof processInstance === 'string') {
+    return i18n.t(`status_${processInstance}`);
+  } else {
+    return i18n.t(`status_${processInstance.status}`);
+  }
+}
+
 export const getLastMilestoneFromProcessInstance = (
   processInstance: ProcessInstance,
-  value: any,
+  value: any = undefined,
 ) => {
   let valueToUse = value;
   if (!valueToUse) {
     if (processInstance.status === 'not_started') {
-      valueToUse = 'Created';
+      valueToUse = i18n.t('milestone_created');
     } else if (
       ['complete', 'error', 'terminated'].includes(processInstance.status)
     ) {
-      valueToUse = 'Completed';
+      valueToUse = i18n.t('milestone_completed');
     } else {
-      valueToUse = 'Started';
+      valueToUse = i18n.t('milestone_started');
     }
   }
   let truncatedValue = valueToUse;

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box } from '@mui/material'; // MUI components
 
 import 'react-datepicker/dist/react-datepicker.css';
@@ -18,7 +19,10 @@ type OwnProps = {
 
 export default function ProcessInstanceList({ variant }: OwnProps) {
   const [searchParams] = useSearchParams();
-  setPageTitle(['Process Instances']);
+  const { t } = useTranslation();
+  useEffect(() => {
+    setPageTitle([t('process_instances')]);
+  }, [t]);
 
   const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =
@@ -30,22 +34,22 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     return (
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          [t('process_groups'), '/process-groups'],
           {
             entityToExplode: processModelFullIdentifier,
             entityType: 'process-model-id',
             linkLastItem: true,
           },
-          ['Process Instances'],
+          [t('process_instances')],
         ]}
       />
     );
   };
 
   const processInstanceTitleElement = () => {
-    let headerText = 'My Process Instances';
+    let headerText = t('my_process_instances');
     if (variant === 'all') {
-      headerText = 'All Process Instances';
+      headerText = t('all_process_instances');
     }
     return { text: headerText };
   };

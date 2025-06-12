@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next'; 
 import {
   Table,
   TableHead,
@@ -85,6 +86,8 @@ type OwnProps = {
 };
 
 export default function ExamplesTable({ onSelect }: OwnProps) {
+  const { t } = useTranslation();
+
   function selectExample(index: number) {
     onSelect(examples[index].schema, examples[index].ui, examples[index].data);
   }
@@ -101,7 +104,7 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
             size="small"
             onClick={() => selectExample(index)}
           >
-            Load
+            {t('load')}
           </Button>
         </TableCell>
       </TableRow>
@@ -112,9 +115,9 @@ export default function ExamplesTable({ onSelect }: OwnProps) {
     <Table size="medium">
       <TableHead>
         <TableRow>
-          <TableCell>Name</TableCell>
-          <TableCell>Description</TableCell>
-          <TableCell>Insert</TableCell>
+          <TableCell>{t('name')}</TableCell>
+          <TableCell>{t('description')}</TableCell>
+          <TableCell>{t('insert')}</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>{rows}</TableBody>
