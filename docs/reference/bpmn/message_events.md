@@ -151,6 +151,3 @@ Learn more about configuring Message Events and the differences between Message 
 configuring_messages_and_correlation_properties
 message_events_vs_tasks
 ``` 
-
-```{tags} how_to_guide, building_diagrams
-```

@@ -90,6 +90,3 @@ It is also possible to promote models piecemeal.
 This is activated via `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH`, which is for a specific use case where you want to publish specific process models from the source branch to a target Git branch, rather than promoting the entire Git branch.
 A publish function appears in the UI when `SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH` is set.
 It is possibly not a recommended strategy for promoting changes, however, as it is not a standard Git workflow, and it is more error-prone in situations where multiple process models need to work together.
-
-```{tags} how_to_guide, devops
-```

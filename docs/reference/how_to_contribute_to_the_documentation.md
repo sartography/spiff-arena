@@ -155,7 +155,3 @@ A `.markdownlint.jsonc` file has been added that configures the same markdownlin
 
 We try to use [Diátaxis](https://diataxis.fr/).
 This is also highly related: <https://docsfordevelopers.com/>
-
-```{tags} tutorial
-
-```
