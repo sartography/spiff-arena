@@ -108,7 +108,10 @@ export default function ProcessInterstitial({
           'lastProcessInstanceId',
           processInstanceId.toString(),
         );
-        navigate(processInstanceShowPageUrl);
+        const toUrl =
+          getAndRemoveLastProcessInstanceRunLocation() ??
+          processInstanceShowPageUrl;
+        navigate(toUrl);
       }, 2000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
