@@ -131,6 +131,7 @@ To authenticate a user and get a valid access token, send a POST request to Keyc
 
 ```bash
 curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "client_id=spiff-frontend" \
   -d "username=<user_email>" \
