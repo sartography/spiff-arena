@@ -179,6 +179,7 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_toplevel_process_info              | Returns information about the currently running process.                                                                                                       |
 | get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
 | get_user_properties                    | Gets the user properties for the current user.                                                                                                                 |
+| get_user                    | Gets the user by username.                                                                                                                 |
 | markdown_file_download_link            | Returns a markdown format string for a file download link.                                                                                                     |
 | refresh_permissions                    | Adds permissions using a dictionary.                                                                                                                           |
 | set_user_properties                    | Sets given user properties on the current user.                                                                                                                |

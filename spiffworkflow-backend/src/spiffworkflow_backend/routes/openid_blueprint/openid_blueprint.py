@@ -135,6 +135,7 @@ def token() -> Response | dict:
             "iat": math.floor(time.time()),
             "exp": round(time.time()) + two_days,
             "sub": user_name,
+            "username": user_name,
             "email": user_details["email"],
             "preferred_username": user_details.get("preferred_username", user_name),
         },
