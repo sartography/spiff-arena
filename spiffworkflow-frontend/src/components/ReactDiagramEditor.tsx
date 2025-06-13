@@ -756,7 +756,7 @@ export default function ReactDiagramEditor({
     url,
   ]);
 
-  const handleSave = useCallback(() => {
+  function handleSave() {
     if (saveDiagram) {
       (diagramModelerState as any)
         .saveXML({ format: true })
@@ -764,15 +764,7 @@ export default function ReactDiagramEditor({
           saveDiagram(xmlObject.xml);
         });
     }
-  }, [diagramModelerState, saveDiagram]);
-
-  // save the diagram
-  useEffect(() => {
-    if (!diagramModelerState || disableSaveButton) {
-      return;
-    }
-    handleSave();
-  }, [diagramModelerState, disableSaveButton, handleSave]);
+  }
 
   function handleDelete() {
     if (onDeleteFile) {
