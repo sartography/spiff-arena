@@ -72,6 +72,3 @@ git repo for it.
 * flask run -p 8004 --host=0.0.0.0 (to turn it off press CTRL + C) 
 * You can now create your connectors and they will show up when you edit
   services tasks and select the service you want to call.
-
-```{tags} how_to_guide, dev_docs
-```

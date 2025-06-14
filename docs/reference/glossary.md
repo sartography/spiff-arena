@@ -168,6 +168,3 @@ This provides additional information about the elements in a diagram.
 ## Trigger
 
 This is a mechanism that detects and identifies a particular condition or circumstance within a Start Event or Intermediate Event, subsequently initiating a corresponding response.
-
-```{tags} reference
-```

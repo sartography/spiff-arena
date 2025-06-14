@@ -104,6 +104,3 @@ This shows a text message with a link: [filename.ext]”
 
 
 You can modify the final message formatting to include file size or type if those details are captured.
-
-```{tags} file upload process, building_diagrams
-```

@@ -242,7 +242,3 @@ This similarity can help clarify or make it easier for you to understand the DMN
 
 To ensure that User Groups and Permissions take effect, it is necessary to run the process at least once.
 Whenever changes are made to any of these diagrams, like adding a user group or permission, the process should be started and completed successfully in order for the changes to be applied.
-
-```{tags} how_to_guide, dev_docs
-
-```
