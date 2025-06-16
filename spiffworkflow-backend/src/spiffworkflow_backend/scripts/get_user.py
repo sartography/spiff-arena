@@ -16,9 +16,13 @@ class GetUser(Script):
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         if "username" in kwargs:
-            user = UserModel.query.filter_by(username=kwargs["username"]).first()
+            username = kwargs["username"]
+        elif args:
+            username = args[0]
         else:
-            user = UserModel.query.filter_by(username=args[0]).first()
+            raise ValueError("Username is required as a positional arg or 'username' kwarg")
+
+        user = UserModel.query.filter_by(username=username).first()
         if user is not None:
             return user.as_dict()
         return None
