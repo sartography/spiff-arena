@@ -448,15 +448,13 @@ class AuthorizationService:
         old_group_ids: set[int] = set()
         user_attributes = {}
 
-        if "email" in user_info:
-            if "username" in user_info:
-                user_attributes["username"] = user_info["username"]
-            else:
-                user_attributes["username"] = user_info["email"]
-            user_attributes["email"] = user_info["email"]
-        else:  # we fall back to the sub, which may be very ugly.
-            fallback_username = user_info["sub"] + "@" + user_info["iss"]
-            user_attributes["username"] = fallback_username
+        current_app.logger.debug(f"USER DICT: {user_info}")
+        if "preferred_username" in user_info:
+            user_attributes["username"] = user_info["preferred_username"]
+        elif "email" in user_info:
+            user_attributes["username"] = user_info["email"]
+        else:
+            user_attributes["username"] = f"{user_info['sub']}@{user_info['iss']}"
 
         if "preferred_username" in user_info:
             user_attributes["display_name"] = user_info["preferred_username"]
@@ -465,6 +463,7 @@ class AuthorizationService:
         elif "name" in user_info:
             user_attributes["display_name"] = user_info["name"]
 
+        user_attributes["email"] = user_info.get("email")
         user_attributes["service"] = user_info["iss"]
         user_attributes["service_id"] = user_info["sub"]
 
@@ -485,7 +484,7 @@ class AuthorizationService:
         # example value for service: http://localhost:7002/realms/spiffworkflow (keycloak url)
         user_model = (
             UserModel.query.filter(UserModel.service == user_attributes["service"])
-            .filter(UserModel.username == user_attributes["username"])
+            .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
         if user_model is None:

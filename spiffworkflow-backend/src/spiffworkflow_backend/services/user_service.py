@@ -64,7 +64,7 @@ class UserService:
                 db.session.rollback()
                 raise ApiError(
                     error_code="add_user_error",
-                    message=f"Could not add user {username}",
+                    message=f"Could not add user {username}: {e}",
                 ) from e
             cls.create_principal(user_model.id)
             cls.apply_waiting_group_assignments(user_model)
