@@ -1,82 +1,98 @@
-import pytest
-from playwright.sync_api import expect, Page, BrowserContext
-from helpers.login import login, logout, BASE_URL
+import re
+from playwright.sync_api import Page, expect, BrowserContext
+
+from helpers.playwright_setup import browser_context 
+from helpers.login import BASE_URL 
 from helpers.debug import print_page_details
-from helpers.playwright_setup import browser_context
 
-PROCESS_GROUP = "Shared Resources"
-PROCESS_MODEL = "task-with-guest-form"
-
-
-def start_process_and_get_public_link(page: Page) -> str:
-    # 1. Login and navigate to process group
-    login(page, "admin", "admin", base_url=BASE_URL)
-    page.goto(f"{BASE_URL}/process-groups")
-    # Select the Shared Resources group
-    page.get_by_text(PROCESS_GROUP, exact=False).first.click()
-    # Ensure group page loaded
-    expect(page.get_by_test_id(f"process-group-breadcrumb-{PROCESS_GROUP}"))
-    # 2. Select the target process model
-    page.get_by_test_id(f"process-model-card-{PROCESS_MODEL}").first.click()
-    # Ensure model detail page
-    expect(page.get_by_text(f"Process Model: {PROCESS_MODEL}"))
-    # 3. Start the process
-    start_button = page.get_by_test_id("start-process-instance").first
-    expect(start_button).to_be_visible()
-    start_button.click(no_wait_after=True)
-    # Wait for interstitial metadata page
-    page.wait_for_url("**/interstitial", timeout=15000)
-    # DEBUG: print page details to inspect metadata fields
-    print_page_details(page)
-    # DEBUG: print full page content
-    print("PAGE CONTENT START")
-    print(page.content())
-    print("PAGE CONTENT END")
-    pytest.skip("Debugging interstitial page content")
-    # 4. Extract the public guest task URL
-    metadata_link = page.locator('[data-testid="metadata-value-first_task_url"] a')
-    expect(metadata_link).to_be_visible()
-    public_task_url = metadata_link.get_attribute("href")
-    if not public_task_url:
-        print_page_details(page)
-        raise AssertionError("Guest task URL link missing or empty in metadata page.")
-    return public_task_url
-
-
-def complete_guest_task_flow(page: Page, task_url: str):
-    # Visit guest task link and complete forms
-    page.goto(task_url)
-    # There are two sequential forms, each with a Submit button
-    for _ in range(2):
-        submit_btn = page.get_by_text("Submit", exact=True)
-        expect(submit_btn).to_be_visible()
-        submit_btn.click()
-    # Confirm completion message
-    expect(page.get_by_text("You are done. Yay!", exact=False)).to_be_visible()
-
-
-def test_can_complete_guest_task(browser_context: BrowserContext):
+def test_can_complete_guest_task(browser_context: BrowserContext): 
     page = browser_context.new_page()
-    # Start process and get link
-    public_task_url = start_process_and_get_public_link(page)
-    # Logout as admin
-    logout(page, base_url=BASE_URL)
-    # Complete the guest task forms as unauthenticated user
-    complete_guest_task_flow(page, public_task_url)
-    # Verify link cannot be reused
-    page.goto(public_task_url)
-    expect(page.get_by_text("Error retrieving content.")).to_be_visible()
-    # Navigate to public home and sign out
-    home_link = page.get_by_test_id("public-home-link")
-    expect(home_link).to_be_visible()
-    home_link.click()
-    sign_out = page.get_by_test_id("public-sign-out")
-    expect(sign_out).to_be_visible()
-    sign_out.click()
-    # After sign out, verify login page or sign-in prompt
-    login_button = page.locator("#spiff-login-button")
-    sign_in_prompt = page.get_by_text("Sign in to your account", exact=False)
-    if login_button.is_visible():
-        expect(login_button).to_be_visible()
-    else:
-        expect(sign_in_prompt).to_be_visible()
+    
+    # --- Start of corrected login logic ---
+    sign_in_url = BASE_URL + "/auth/sign-in" 
+    page.goto(sign_in_url)
+    # print_page_details(page) # Keep for debugging if login still fails
+
+    # Use placeholder locators as IDs seem to be missing on the login page
+    expect(page.get_by_placeholder("Username", exact=False)).to_be_visible(timeout=10000)
+    page.get_by_placeholder("Username", exact=False).fill("admin")
+    page.get_by_placeholder("Password", exact=False).fill("admin")
+    page.get_by_role("button", name="Login").click() # Use role and name for login button
+    
+    # Wait for successful login - check for User Actions button
+    expect(page.get_by_role("button", name="User Actions")).to_be_visible(timeout=10000) 
+    # --- End of corrected login logic ---
+
+    # Navigate to process model
+    page.get_by_role("link", name="Processes", exact=True).click()
+    expect(page.get_by_role("heading", name="Process Models")).to_be_visible()
+
+    page.get_by_role("link", name="Shared Resources", exact=True).click()
+    expect(page.get_by_role("link", name="task-with-guest-form", exact=True)).to_be_visible()
+
+    page.get_by_role("link", name="task-with-guest-form", exact=True).click()
+    expect(page.get_by_role("heading", name="task-with-guest-form")).to_be_visible()
+
+    # Run the primary BPMN file
+    page.get_by_test_id("run-model-button").click()
+    run_dialog = page.get_by_role("dialog", name="Run process model")
+    expect(run_dialog).to_be_visible()
+    run_dialog.get_by_role("button", name="Run").click()
+
+    # Extract the guest task public link
+    expect(page.get_by_text("Process Instance Details")).to_be_visible(timeout=20000) 
+    
+    first_task_url_element = page.locator('[data-testid="metadata-value-first_task_url"] a')
+    expect(first_task_url_element).to_be_visible(timeout=15000)
+    guest_task_url = first_task_url_element.get_attribute("href")
+    assert guest_task_url is not None, "Guest task URL should not be None"
+    assert guest_task_url.startswith("/"), f"Guest task URL ({guest_task_url}) should be a relative path starting with /"
+
+    # --- Start of corrected logout logic ---
+    user_menu_button = page.get_by_role("button", name="User Actions")
+    expect(user_menu_button).to_be_visible()
+    user_menu_button.click()
+    page.locator('[data-testid="sign-out-button"]').click()
+    # Ensure logout is complete by checking for the login button on the login page
+    expect(page.get_by_role("button", name="Login")).to_be_visible(timeout=10000) # Corrected selector
+    expect(page.get_by_text("This login form is for demonstration purposes only")).to_be_visible(timeout=5000)
+    # --- End of corrected logout logic ---
+
+    # Visit public guest/task URL as a guest
+    full_guest_task_url = BASE_URL + guest_task_url 
+    page.goto(full_guest_task_url)
+    
+    expect(page.get_by_text("Complete Your Task", exact=False)).to_be_visible(timeout=25000) 
+
+    # Form 1
+    submit_button_form1 = page.get_by_role("button", name="Submit")
+    expect(submit_button_form1).to_be_visible()
+    expect(submit_button_form1).to_be_enabled() 
+    submit_button_form1.click()
+
+    # Form 2
+    submit_button_form2 = page.get_by_role("button", name="Submit") 
+    expect(submit_button_form2).to_be_visible(timeout=15000) 
+    expect(submit_button_form2).to_be_enabled() 
+    submit_button_form2.click()
+
+    # Confirm completion message
+    expect(page.get_by_text("You are done. Yay!")).to_be_visible(timeout=15000)
+
+    # Check the link cannot be reused
+    page.goto(full_guest_task_url) 
+    expect(page.get_by_text("Error retrieving content.")).to_be_visible(timeout=10000)
+
+    # Click the public home link
+    public_home_link = page.get_by_test_id("public-home-link")
+    expect(public_home_link).to_be_visible()
+    public_home_link.click()
+    
+    expect(page.get_by_test_id("public-sign-out")).to_be_visible(timeout=10000)
+
+    # Click sign out (from public page)
+    page.get_by_test_id("public-sign-out").click()
+
+    # Ensure redirection to sign-in page (login button should be visible)
+    expect(page.get_by_role("button", name="Login")).to_be_visible(timeout=10000) # Corrected selector
+    expect(page.get_by_text("This login form is for demonstration purposes only")).to_be_visible(timeout=5000)
