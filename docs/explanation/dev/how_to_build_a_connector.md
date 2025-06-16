@@ -22,6 +22,3 @@ The `run` method is where the actual work is done (send HTTP request, etc).
 
 If you end up writing a connector, please consider contributing it back to the community and please consider contributing to this documentation.
 Thank you!
-
-```{tags} how_to_guide, dev_docs
-```

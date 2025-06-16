@@ -618,6 +618,3 @@ While these tasks could be omitted for clarity, retaining them provides a comple
 
 Viewing task instance history in SpiffWorkflow is now more streamlined and informative, thanks to recent updates.
 Users can effectively track each task's execution, status, and timing, gaining insights into the workflow's overall performance.
-
-```{tags} tutorial
-```
