@@ -9,6 +9,7 @@ import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
 import { HUMAN_TASK_TYPES } from '../helpers';
+import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
 
 type OwnProps = {
   processInstanceId: number;
@@ -107,7 +108,10 @@ export default function ProcessInterstitial({
           'lastProcessInstanceId',
           processInstanceId.toString(),
         );
-        navigate(processInstanceShowPageUrl);
+        const toUrl =
+          getAndRemoveLastProcessInstanceRunLocation() ??
+          processInstanceShowPageUrl;
+        navigate(toUrl);
       }, 2000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
@@ -235,7 +239,10 @@ export default function ProcessInterstitial({
   if (state === 'CLOSED' && lastTask === null && allowRedirect) {
     // Favor redirecting to the process instance show page
     if (processInstance) {
-      navigate(processInstanceShowPageUrl);
+      const toUrl =
+        getAndRemoveLastProcessInstanceRunLocation() ??
+        processInstanceShowPageUrl;
+      navigate(toUrl);
     } else {
       const taskUrl = '/tasks';
       navigate(taskUrl);

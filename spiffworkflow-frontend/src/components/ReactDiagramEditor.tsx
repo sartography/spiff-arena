@@ -65,9 +65,15 @@ import {
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessReference, Task } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessModel,
+  ProcessReference,
+  Task,
+} from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
+import ProcessInstanceRun from './ProcessInstanceRun';
 
 type OwnProps = {
   processModelId: string;
@@ -78,6 +84,7 @@ type OwnProps = {
   disableSaveButton?: boolean;
   fileName?: string;
   isPrimaryFile?: boolean;
+  processModel?: ProcessModel | null;
   onCallActivityOverlayClick?: (..._args: any[]) => any;
   onDataStoresRequested?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
@@ -111,6 +118,7 @@ export default function ReactDiagramEditor({
   disableSaveButton,
   fileName,
   isPrimaryFile,
+  processModel,
   onCallActivityOverlayClick,
   onDataStoresRequested,
   onDeleteFile,
@@ -854,6 +862,7 @@ export default function ReactDiagramEditor({
               Save
             </Button>
           </Can>
+          {processModel && <ProcessInstanceRun processModel={processModel} />}
           <Can
             I="DELETE"
             a={targetUris.processModelFileShowPath}

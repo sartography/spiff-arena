@@ -587,6 +587,3 @@ To successfully change the hostname from `localhost` to a custom name:
    ```
 
 This allows SpiffWorkflow to run on `mycomputer1` instead of `localhost`, making it accessible from other machines on the network.
-
-```{tags} how_to_guide
-```

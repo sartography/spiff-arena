@@ -53,6 +53,3 @@ After inclusive merge, the end task marks the completion of the travel booking p
 This inclusive gateway setup is ideal for scenarios where multiple actions might be required based on a user's choice, such as planning a trip involving different modes of transportation. In this example, it ensures that all necessary arrangements are handled concurrently and efficiently, enhancing the user's experience by streamlining the booking process.
 
 By employing inclusive gateways, the process adapts dynamically to the user's specific needs without requiring separate processes or redundant tasks for different combinations of travel modes.
-
-```{tags} explanation, building_diagrams
-```

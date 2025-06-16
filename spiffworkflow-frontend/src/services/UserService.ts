@@ -34,7 +34,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 };
 
 const checkPathForTaskShowParams = (
-  redirectUrl: string = window.location.pathname,
+  redirectUrl: string = window.location.href,
 ) => {
   const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
@@ -164,12 +164,6 @@ const getPreferredUsername = () => {
   return null;
 };
 
-const loginIfNeeded = () => {
-  if (!isLoggedIn()) {
-    doLogin();
-  }
-};
-
 const UserService = {
   authenticationDisabled,
   doLogin,
@@ -182,7 +176,6 @@ const UserService = {
   getUserName,
   isLoggedIn,
   isPublicUser,
-  loginIfNeeded,
 };
 
 export default UserService;

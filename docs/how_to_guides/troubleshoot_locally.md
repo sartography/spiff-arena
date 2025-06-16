@@ -74,7 +74,3 @@ Setting up the SpiffWorkflow backend project locally can be straightforward once
 Whether you choose to clone the `sample-process-models` repository, use a different git repository, or opt for Docker Compose, the solutions provided should help you get started without any hitches.
 
 If you encounter further issues, always refer back to the repository's README or seek assistance from our Discord community.
-
-```{tags} how_to_guide
-
-```
