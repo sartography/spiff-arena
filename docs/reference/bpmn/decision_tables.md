@@ -235,5 +235,3 @@ The rules that will match are:
 **Total cost = 1.0 + 2.0 + 0.33 = 3.33**
 
 The Collect (Sum) policy enables cumulative logic.
-```{tags} reference, building_diagrams
-```
