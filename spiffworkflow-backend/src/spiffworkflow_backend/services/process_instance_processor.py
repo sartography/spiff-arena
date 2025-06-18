@@ -49,6 +49,7 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
 from SpiffWorkflow.util.task import TaskState
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
@@ -953,8 +954,10 @@ class ProcessInstanceProcessor:
             if group_model is not None:
                 lane_assignment_id = group_model.id
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
-                for username in task.data["lane_owners"][task_lane]:
-                    lane_owner_user = UserModel.query.filter_by(username=username).first()
+                for username_or_email in task.data["lane_owners"][task_lane]:
+                    lane_owner_user = UserModel.query.filter(
+                        or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
+                    ).first()
                     if lane_owner_user is not None:
                         potential_owners.append(
                             {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}

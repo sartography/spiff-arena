@@ -136,7 +136,7 @@ class UserService:
     ) -> tuple[UserGroupAssignmentWaitingModel, list[UserToGroupDict]]:
         """Only called from set-permissions."""
         wugam: UserGroupAssignmentWaitingModel | None = (
-            UserGroupAssignmentWaitingModel().query.filter_by(username=username_or_email).filter_by(group_id=group.id).first()
+            UserGroupAssignmentWaitingModel().query.filter_by(username=username_or_email, group_id=group.id).first()
         )
         if wugam is None:
             wugam = UserGroupAssignmentWaitingModel(username=username_or_email, group_id=group.id)
