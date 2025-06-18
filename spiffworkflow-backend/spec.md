@@ -2,6 +2,14 @@
 
 This document outlines the steps to systematically remove the Marshmallow serialization library from the codebase, replacing it with custom serialization and deserialization logic.
 
+## Guiding Principles
+
+- **No New Dependencies:** The refactoring should not introduce new third-party serialization libraries like Pydantic. The preference is to use Python's standard library features, such as `dataclasses`.
+- **Backwards Compatibility:** All custom serialization (`to_dict`) and deserialization (`from_dict`) logic must be fully backwards compatible with existing data formats and API contracts.
+- **Incremental Refactoring:** The process is designed to be incremental, file by file, to ensure the application remains stable and functional throughout the refactoring effort.
+- **Thorough Testing:** Each change must be accompanied by comprehensive testing to prevent regressions.
+- **Clean Code:** The resulting code should be clean, maintainable, and easy to understand.
+
 ## Refactoring Scope
 
 ### Python Files to Refactor
