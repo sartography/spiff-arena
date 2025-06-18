@@ -4,8 +4,6 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from flask_marshmallow import Schema
-from marshmallow import INCLUDE
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
@@ -95,6 +93,17 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         single_parent=True,
     )
 
+    def to_dict(self) -> dict:
+        """Create a dictionary representation of a ReferenceCacheModel"""
+        return {
+            "identifier": self.identifier,
+            "display_name": self.display_name,
+            "relative_location": self.relative_location,
+            "type": self.type,
+            "file_name": self.file_name,
+            "properties": self.properties,
+        }
+
     def relative_path(self) -> str:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
 
@@ -151,19 +160,3 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     @validates("type")
     def validate_type(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, ReferenceType)
-
-
-# SpecReferenceSchema
-class ReferenceSchema(Schema):
-    class Meta:
-        model = Reference
-        fields = [
-            "identifier",
-            "display_name",
-            "process_group_id",
-            "relative_location",
-            "type",
-            "file_name",
-            "properties",
-        ]
-        unknown = INCLUDE
