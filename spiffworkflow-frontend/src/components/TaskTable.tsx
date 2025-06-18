@@ -220,9 +220,12 @@ export default function TaskTable({
     return null;
   }
 
-  const regex = new RegExp(
-    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()}|${UserService.getUserName()})\\b`,
-  );
+  const ids = [
+    UserService.getPreferredUsername(),
+    UserService.getUserEmail(),
+    UserService.getUserName(),
+  ].filter(Boolean) as string[]; // remove null/undefined
+  const regex = new RegExp(`\\b(${ids.join('|')})\\b`);
 
   const records = entries.map((entry) => {
     if (
