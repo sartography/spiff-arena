@@ -14,7 +14,7 @@ This document outlines the steps to systematically remove the Marshmallow serial
 
 ### Python Files to Refactor
 
-- [ ] `src/spiffworkflow_backend/models/secret_model.py`: Remove marshmallow usage and replace with custom serialization/deserialization logic.
+- [x] `src/spiffworkflow_backend/models/secret_model.py`: Remove marshmallow usage and replace with custom serialization/deserialization logic.
 - [ ] `src/spiffworkflow_backend/models/reference_cache.py`: Remove marshmallow usage and replace with custom serialization/deserialization logic.
 - [ ] `src/spiffworkflow_backend/models/process_group.py`: Remove marshmallow usage and replace with custom serialization/deserialization logic.
 - [ ] `src/spiffworkflow_backend/models/process_model.py`: Remove marshmallow usage and replace with custom serialization/deserialization logic.
