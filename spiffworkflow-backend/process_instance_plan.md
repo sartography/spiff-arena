@@ -1,32 +1,117 @@
-### Plan to remove marshmallow from `src/spiffworkflow_backend/models/process_instance.py`
+### Plan to Remove Marshmallow from `process_instance.py`
 
-1.  **Identify marshmallow usage:** The file `src/spiffworkflow_backend/models/process_instance.py` defines two marshmallow schemas: `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema`.
+The file `src/spiffworkflow_backend/models/process_instance.py` contains two Marshmallow schemas that need to be removed: `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema`.
 
-2.  **Analyze `ProcessInstanceModelSchema`:**
-    *   **Fields:** It serializes a subset of the `ProcessInstanceModel` fields.
-    *   **Custom Logic:** It has a `get_status` method, but this method just returns `obj.status`. The `serialized` method on the `ProcessInstanceModel` already handles serialization, so this schema might be redundant or used for a specific view of the data.
+**1. `ProcessInstanceModelSchema`**
 
-3.  **Analyze `ProcessInstanceApiSchema`:**
-    *   **Fields:** It defines the fields for the `ProcessInstanceApi` class.
-    *   **Custom Logic:** The `make_process_instance` method filters the input data to only include the expected keys and then instantiates a `ProcessInstanceApi` object. It uses `marshmallow.INCLUDE` for unknown fields.
+*   **Current Implementation:**
+    ```python
+    class ProcessInstanceModelSchema(Schema):
+        class Meta:
+            model = ProcessInstanceModel
+            fields = [
+                "id", "process_model_identifier", "process_model_display_name",
+                "process_initiator_id", "start_in_seconds", "end_in_seconds",
+                "updated_at_in_seconds", "created_at_in_seconds", "status",
+                "bpmn_version_control_identifier",
+            ]
+        status = marshmallow.fields.Method("get_status", dump_only=True)
 
-4.  **Replacement Strategy:**
+        def get_status(self, obj: ProcessInstanceModel) -> str:
+            return obj.status
+    ```
+*   **Analysis:**
+    *   This schema is used for serializing the `ProcessInstanceModel` database model.
+    *   It has a custom method `get_status` which simply returns the `status` attribute of the object. This is redundant since the `status` is already a field.
+    *   The `ProcessInstanceModel` already has a `serialized()` method which serves a similar purpose, but `ProcessInstanceModelSchema` selects a different subset of fields.
 
-    *   **For `ProcessInstanceModelSchema`:**
-        *   This schema seems to be used for serialization. I will examine where it is used. If its serialization logic is different from the `serialized` method on `ProcessInstanceModel`, I will create a new serialization method on `ProcessInstanceModel` to replicate its behavior. Otherwise, I will replace its usage with the existing `serialized` method.
-        *   I will search for `ProcessInstanceModelSchema().dump(data)` and `ProcessInstanceModelSchema().dumps(data)` to find where it is used and then replace it.
+*   **Proposed Change:**
+    *   Remove the `ProcessInstanceModelSchema` class.
+    *   If the exact field selection of the schema is still needed, create a new serialization method on the `ProcessInstanceModel` class, for example `to_schema_dict()`, that returns the specific dictionary. Otherwise, update the calling code to use the existing `serialized()` method or to construct the desired dictionary directly. Given the direct mapping of fields, a new method is likely the cleanest approach.
 
-    *   **For `ProcessInstanceApiSchema`:**
-        *   Create a `from_dict` class method on the `ProcessInstanceApi` class.
-        *   This method will take a dictionary and instantiate a `ProcessInstanceApi` object.
-        *   The logic from `make_process_instance` will be moved into this new `from_dict` method, including the filtering of keys.
+*   **`ProcessInstanceModel` Modification:**
 
-5.  **Step-by-step Implementation:**
-    1.  Investigate the usage of `ProcessInstanceModelSchema`.
-    2.  If necessary, create a new serialization method on `ProcessInstanceModel` that produces the same output as `ProcessInstanceModelSchema`.
-    3.  Replace all uses of `ProcessInstanceModelSchema` with the appropriate serialization method.
-    4.  Create a `from_dict` class method on the `ProcessInstanceApi` class.
-    5.  Copy the key-filtering logic from `ProcessInstanceApiSchema.make_process_instance` into `ProcessInstanceApi.from_dict`.
-    6.  Search the codebase for usages of `ProcessInstanceApiSchema`.
-    7.  Replace `ProcessInstanceApiSchema().load(data)` with `ProcessInstanceApi.from_dict(data)`.
-    8.  Once all references are removed, delete both marshmallow schemas and their imports from the file.
+    ```python
+    # In ProcessInstanceModel class
+    def to_schema_dict(self) -> dict:
+        """Returns a dictionary with the same fields as the old ProcessInstanceModelSchema."""
+        return {
+            "id": self.id,
+            "process_model_identifier": self.process_model_identifier,
+            "process_model_display_name": self.process_model_display_name,
+            "process_initiator_id": self.process_initiator_id,
+            "start_in_seconds": self.start_in_seconds,
+            "end_in_seconds": self.end_in_seconds,
+            "updated_at_in_seconds": self.updated_at_in_seconds,
+            "created_at_in_seconds": self.created_at_in_seconds,
+            "status": self.status,
+            "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
+        }
+    ```
+
+**2. `ProcessInstanceApiSchema`**
+
+*   **Current Implementation:**
+    ```python
+    class ProcessInstanceApi:
+        # ... __init__ ...
+
+    class ProcessInstanceApiSchema(Schema):
+        class Meta:
+            model = ProcessInstanceApi
+            fields = [...]
+            unknown = INCLUDE
+        @marshmallow.post_load
+        def make_process_instance(self, data: dict, **kwargs) -> ProcessInstanceApi:
+            # ... filtering logic ...
+            return ProcessInstanceApi(**filtered_fields)
+    ```
+*   **Analysis:**
+    *   This schema is paired with a plain Python class `ProcessInstanceApi`.
+    *   The `post_load` hook filters the incoming data to only include the expected keys before creating a `ProcessInstanceApi` object.
+    *   `unknown = INCLUDE` allows extra fields in the input data.
+
+*   **Proposed Change:**
+    *   Convert the `ProcessInstanceApi` class into a `dataclass`.
+    *   Remove the `ProcessInstanceApiSchema`.
+    *   Add `from_dict` and `to_dict` methods to the new `ProcessInstanceApi` dataclass. The `from_dict` method will replicate the filtering logic from the `post_load` hook.
+
+*   **`ProcessInstanceApi` Dataclass Implementation:**
+
+    ```python
+    from dataclasses import dataclass, asdict
+
+    @dataclass
+    class ProcessInstanceApi:
+        id: int
+        status: str
+        process_model_identifier: str
+        process_model_display_name: str
+        updated_at_in_seconds: int
+
+        @classmethod
+        def from_dict(cls, data: dict) -> "ProcessInstanceApi":
+            """Creates a ProcessInstanceApi object from a dictionary, ignoring unknown fields."""
+            field_names = {f.name for f in cls.__dataclass_fields__.values()}
+            filtered_data = {k: v for k, v in data.items() if k in field_names}
+            return cls(**filtered_data)
+
+        def to_dict(self) -> dict:
+            """Serializes the ProcessInstanceApi object to a dictionary."""
+            return asdict(self)
+    ```
+
+**Execution Plan:**
+
+1.  **Refactor `ProcessInstanceApi`:**
+    *   Change `ProcessInstanceApi` from a regular class to a `dataclass`.
+    *   Implement the `from_dict` and `to_dict` methods as described above.
+2.  **Refactor `ProcessInstanceModel`:**
+    *   Add the `to_schema_dict()` method to the `ProcessInstanceModel` class.
+3.  **Update References:**
+    *   Search the codebase for usages of `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema`.
+    *   Replace `ProcessInstanceModelSchema().dump(obj)` with `obj.to_schema_dict()`.
+    *   Replace `ProcessInstanceApiSchema().load(data)` with `ProcessInstanceApi.from_dict(data)`.
+    *   Replace `ProcessInstanceApiSchema().dump(obj)` with `obj.to_dict()`.
+4.  **Remove Schemas:** After updating all references, delete `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema` from the file.
+5.  **Test:** Run the full test suite to validate the changes and ensure no functionality has been broken.
