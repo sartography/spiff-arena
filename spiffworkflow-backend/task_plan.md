@@ -1,138 +1,98 @@
-### Plan to Remove Marshmallow from `task.py`
+# Plan to Remove Marshmallow from `task.py`
 
 The file `src/spiffworkflow_backend/models/task.py` is the most complex file in terms of Marshmallow usage. It contains five schemas: `OptionSchema`, `ValidationSchema`, `FormFieldPropertySchema`, `FormFieldSchema`, and `TaskSchema`. The strategy will be to replace each of these with a dataclass and then update the parent containers.
 
-**1. Bottom-Up Replacement: Form Field Schemas**
+---
 
-We'll start with the schemas that are nested within others.
+### Phase 1: Simple Schemas
 
-*   **`OptionSchema`**:
-    *   **Current:** `class OptionSchema(Schema): class Meta: fields = ["id", "name", "data"]`
-    *   **Proposed:** Create an `Option` dataclass.
-      ```python
-      from dataclasses import dataclass
-      from typing import Any
+**1. `OptionSchema`**
 
-      @dataclass
-      class Option:
-          id: str
-          name: str
-          data: Any
-      ```
+*   **Current Implementation:**
+    ```python
+    class OptionSchema(Schema):
+        class Meta:
+            fields = ["id", "name", "data"]
+    ```
+*   **Proposed Change:** Replace with `Option` dataclass.
 
-*   **`ValidationSchema`**:
-    *   **Current:** `class ValidationSchema(Schema): class Meta: fields = ["name", "config"]`
-    *   **Proposed:** Create a `Validation` dataclass.
-      ```python
-      @dataclass
-      class Validation:
-          name: str
-          config: Any
-      ```
+**2. `ValidationSchema`**
 
-*   **`FormFieldPropertySchema`**:
-    *   **Current:** `class FormFieldPropertySchema(Schema): class Meta: fields = ["id", "value"]`
-    *   **Proposed:** Create a `FormFieldProperty` dataclass.
-      ```python
-      @dataclass
-      class FormFieldProperty:
-          id: str
-          value: Any
-      ```
+*   **Current Implementation:**
+    ```python
+    class ValidationSchema(Schema):
+        class Meta:
+            fields = ["name", "config"]
+    ```
+*   **Proposed Change:** Replace with `Validation` dataclass.
 
-**2. `FormFieldSchema` Replacement**
+**3. `FormFieldPropertySchema`**
 
-This schema composes the smaller schemas from step 1.
+*   **Current Implementation:**
+    ```python
+    class FormFieldPropertySchema(Schema):
+        class Meta:
+            fields = ["id", "value"]
+    ```
+*   **Proposed Change:** Replace with `FormFieldProperty` dataclass.
+
+### Phase 2: `FormFieldSchema` Replacement
+
+**1. `FormFieldSchema`**
 
 *   **Current Implementation:**
     ```python
     class FormFieldSchema(Schema):
-        class Meta: fields = [...]
+        class Meta:
+            fields = [
+                "id",
+                "type",
+                "label",
+                "default_value",
+                "options",
+                "validation",
+                "properties",
+                "value",
+            ]
+
+        default_value = marshmallow.fields.String(required=False, allow_none=True)
         options = marshmallow.fields.List(marshmallow.fields.Nested(OptionSchema))
         validation = marshmallow.fields.List(marshmallow.fields.Nested(ValidationSchema))
         properties = marshmallow.fields.List(marshmallow.fields.Nested(FormFieldPropertySchema))
     ```
-*   **Analysis:** This defines the structure of a single field within a form.
-*   **Proposed Change:** Replace it with a `FormField` dataclass that uses the new dataclasses defined above. We will also add `from_dict` and `to_dict` methods to handle the nested structures.
+*   **Analysis:** This schema nests `OptionSchema`, `ValidationSchema`, and `FormFieldPropertySchema`.
+*   **Proposed Change:** Replace with a `FormField` dataclass that uses the new dataclasses from Phase 1.
 
-    ```python
-    from dataclasses import field, asdict
+### Phase 3: `TaskSchema` Replacement
 
-    @dataclass
-    class FormField:
-        id: str
-        type: str
-        label: str
-        default_value: str | None = None
-        options: list[Option] = field(default_factory=list)
-        validation: list[Validation] = field(default_factory=list)
-        properties: list[FormFieldProperty] = field(default_factory=list)
-        value: Any | None = None
-
-        @classmethod
-        def from_dict(cls, data: dict) -> "FormField":
-            data['options'] = [Option(**o) for o in data.get('options', [])]
-            data['validation'] = [Validation(**v) for v in data.get('validation', [])]
-            data['properties'] = [FormFieldProperty(**p) for p in data.get('properties', [])]
-            return cls(**data)
-
-        def to_dict(self) -> dict:
-            return asdict(self)
-    ```
-
-**3. `TaskSchema` Replacement**
-
-This is the top-level schema for the `Task` object.
+**1. `TaskSchema`**
 
 *   **Current Implementation:** A `TaskSchema` with a `post_load` method that creates a `Task` object.
-*   **Analysis:** It serializes and deserializes the main `Task` object. The existing `Task` class is a plain class with a large `__init__`.
+*   **Analysis:** This is the root schema for task-related serialization.
 *   **Proposed Change:**
-    *   Convert the `Task` class into a dataclass. This will simplify its definition.
+    *   The `Task` class already exists and will be converted to a dataclass.
+    *   `to_dict` and `from_dict` methods will be added to handle serialization.
     *   Remove the `TaskSchema` entirely.
-    *   Add `from_dict` and `to_dict` methods to the `Task` dataclass. The `from_dict` method will handle the logic of instantiating the object from a dictionary, and `to_dict` will replace the schema's dump functionality. The existing `serialized()` method can be adapted or replaced by `to_dict`.
 
-*   **`Task` Dataclass Implementation:**
+### Execution Plan:
 
-    ```python
-    from dataclasses import dataclass, field, asdict
+1.  **Create Dataclasses:**
+    *   Define `Option`, `Validation`, and `FormFieldProperty` dataclasses.
+    *   Add `to_dict` and `from_dict` methods to each.
+    *   Remove the corresponding Marshmallow schemas.
 
-    @dataclass
-    class Task:
-        id: str
-        # ... all other fields from the original __init__ ...
+2.  **Update `FormFieldSchema`:**
+    *   Define the `FormField` dataclass.
+    *   Update its `to_dict` and `from_dict` methods to handle the nested `Option`, `Validation`, and `FormFieldProperty` dataclasses.
+    *   Remove the `FormFieldSchema`.
 
-        # We can probably remove the complex __init__ method and just use the dataclass's default.
-        # We might need a __post_init__ if there's complex logic.
+3.  **Update `Task` Class:**
+    *   Convert the `Task` class to a dataclass.
+    *   Add `to_dict` and `from_dict` methods.
+    *   Remove `TaskSchema`.
 
-        @classmethod
-        def from_dict(cls, data: dict) -> "Task":
-            # This method will handle nested objects like 'form' if needed.
-            # It will also need to handle the Enum conversion for multi_instance_type.
-            field_names = {f.name for f in cls.__dataclass_fields__.values()}
-            filtered_data = {k: v for k, v in data.items() if k in field_names}
-            # Add logic for nested `form` and `EnumField`
-            return cls(**filtered_data)
-
-        def to_dict(self) -> dict:
-            # Replaces the old `serialized()` method.
-            data = asdict(self)
-            # Handle enum serialization if needed
-            if self.multi_instance_type:
-                data['multi_instance_type'] = self.multi_instance_type.value
-            return data
-    ```
-
-**Execution Plan:**
-
-1.  **Implement Dataclasses:**
-    *   Create the `Option`, `Validation`, and `FormFieldProperty` dataclasses.
-    *   Create the `FormField` dataclass with its `from_dict` and `to_dict` methods.
-2.  **Refactor the `Task` Class:**
-    *   Convert the existing `Task` class to a `@dataclass`.
-    *   Add the `from_dict` and `to_dict` methods. This will likely involve adapting the logic from the old `__init__` and `serialized` methods.
-3.  **Update References:**
+4.  **Refactor Code:**
     *   Search the entire codebase for usages of `TaskSchema`, `FormFieldSchema`, etc.
-    *   Replace all `Schema().load(data)` calls with the corresponding `ClassName.from_dict(data)`.
-    *   Replace all `Schema().dump(obj)` calls with `obj.to_dict()`.
-4.  **Remove Schemas:** Delete all five Marshmallow schemas from `task.py`.
-5.  **Test:** Thoroughly run the test suite to ensure that task serialization and deserialization work correctly across the application, especially in API endpoints that rely on this model.
+    *   Replace all usages with the new dataclasses and their methods. This will primarily affect `spiffworkflow_backend/routes/tasks_controller.py` and any other locations where task serialization is performed.
+
+By breaking down the task into these phases, we can incrementally replace the Marshmallow schemas with dataclasses without breaking the application.
