@@ -34,7 +34,6 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import ProcessInstanceTaskDataCannotBeUpdatedError
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
@@ -287,7 +286,7 @@ def task_data_update(
             message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_guid}.",
         )
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(process_instance.to_dict()),
         status=200,
         mimetype="application/json",
     )
@@ -339,7 +338,7 @@ def manual_complete_task(
             message=f"Could not complete Task {task_guid} in Instance {process_instance_id}",
         )
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(process_instance.to_dict()),
         status=200,
         mimetype="application/json",
     )
