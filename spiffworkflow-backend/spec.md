@@ -35,6 +35,11 @@ For each file listed under "Python Files to Refactor," follow these steps:
    - Identify all points where the Marshmallow schema for the current model is instantiated or used (e.g., `YourSchema().load(data)`, `YourSchema().dump(obj)`).
    - Understand the expected input/output formats at these integration points (e.g., API request bodies, response payloads, internal data passing).
    - Map Marshmallow fields to the corresponding attributes in the Python model and their expected types.
+   - Find the corresponding detailed plan file for the python file based on this list:
+     ./process_instance_plan.md
+     ./task_plan.md
+     ./process_model_plan.md
+     ./process_group_plan.md
 
 2. **Convert to Dataclass (if applicable):**
 
