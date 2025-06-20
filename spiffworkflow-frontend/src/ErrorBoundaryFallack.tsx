@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useErrorBoundary } from 'react-error-boundary';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -11,6 +12,7 @@ type ErrorProps = {
 export function ErrorBoundaryFallback({ error }: ErrorProps) {
   // This is displayed if the ErrorBoundary catches an error when rendering the form.
   const { resetBoundary } = useErrorBoundary();
+  const { t } = useTranslation();
 
   // print the error to the console so we can debug issues
   console.error(error);
@@ -20,14 +22,13 @@ export function ErrorBoundaryFallback({ error }: ErrorProps) {
       severity="error"
       action={
         <Button color="inherit" size="small" onClick={resetBoundary}>
-          Try again
+          {t('try_again')}
         </Button>
       }
     >
-      <AlertTitle>Something Went Wrong.</AlertTitle>
+      <AlertTitle>{t('something_went_wrong')}</AlertTitle>
       <p>
-        We encountered an unexpected error. Please try again. If the problem
-        persists, please contact your administrator.
+        {t('unexpected_error_call_admin')}
       </p>
       <p>{error.message}</p>
     </Alert>

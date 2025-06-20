@@ -1,5 +1,6 @@
 import { Autocomplete, TextField } from '@mui/material';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'use-debounce';
 import { User } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -15,6 +16,7 @@ export default function UserSearch({
   className,
   label = 'User',
 }: OwnProps) {
+  const { t } = useTranslation();
   const lastRequestedInitatorSearchTerm = useRef<string>();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userList, setUserList] = useState<User[]>([]);
@@ -65,7 +67,7 @@ export default function UserSearch({
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
           label={label}
-          placeholder="Start typing username"
+          placeholder={t('enter_username')}
         />
       )}
       value={selectedUser}
