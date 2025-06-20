@@ -222,14 +222,6 @@ class AuthorizationService:
         return cls.has_permissions_and_all_permissions_permit(matching_permission_assignments)
 
     @classmethod
-    def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:
-        user_group_assignemnt = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).first()
-        if user_group_assignemnt is None:
-            user_group_assignemnt = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
-            db.session.add(user_group_assignemnt)
-            db.session.commit()
-
-    @classmethod
     def import_permissions_from_yaml_file(cls, user_model: UserModel | None = None) -> AddedPermissionDict:
         group_permissions = cls.parse_permissions_yaml_into_group_info()
         result = cls.add_permissions_from_group_permissions(group_permissions, user_model)
@@ -448,12 +440,12 @@ class AuthorizationService:
         old_group_ids: set[int] = set()
         user_attributes = {}
 
-        if "email" in user_info:
+        if "preferred_username" in user_info:
+            user_attributes["username"] = user_info["preferred_username"]
+        elif "email" in user_info:
             user_attributes["username"] = user_info["email"]
-            user_attributes["email"] = user_info["email"]
-        else:  # we fall back to the sub, which may be very ugly.
-            fallback_username = user_info["sub"] + "@" + user_info["iss"]
-            user_attributes["username"] = fallback_username
+        else:
+            user_attributes["username"] = f"{user_info['sub']}@{user_info['iss']}"
 
         if "preferred_username" in user_info:
             user_attributes["display_name"] = user_info["preferred_username"]
@@ -462,6 +454,7 @@ class AuthorizationService:
         elif "name" in user_info:
             user_attributes["display_name"] = user_info["name"]
 
+        user_attributes["email"] = user_info.get("email")
         user_attributes["service"] = user_info["iss"]
         user_attributes["service_id"] = user_info["sub"]
 
@@ -482,7 +475,7 @@ class AuthorizationService:
         # example value for service: http://localhost:7002/realms/spiffworkflow (keycloak url)
         user_model = (
             UserModel.query.filter(UserModel.service == user_attributes["service"])
-            .filter(UserModel.username == user_attributes["username"])
+            .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
         if user_model is None:
@@ -915,10 +908,10 @@ class AuthorizationService:
 
         if not group_permissions_only and default_group is not None:
             if user_model:
-                cls.associate_user_with_group(user_model, default_group)
+                UserService.add_user_to_group(user_model, default_group)
             else:
                 for user in UserModel.query.filter(UserModel.username.not_in([SPIFF_GUEST_USER])).all():  # type: ignore
-                    cls.associate_user_with_group(user, default_group)
+                    UserService.add_user_to_group(user, default_group)
 
         return {
             "group_identifiers": unique_user_group_identifiers,
