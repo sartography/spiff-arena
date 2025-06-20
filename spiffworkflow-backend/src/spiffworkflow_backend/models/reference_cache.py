@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -47,6 +48,18 @@ class Reference:
     called_element_ids: list  # The element ids of any called elements
 
     properties: dict
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Reference object to a dictionary."""
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Reference:
+        """Create a Reference object from a dictionary."""
+        # remove keys not in dataclass
+        known_fields = {f.name for f in dataclasses.fields(cls)}
+        filtered_data = {k: v for k, v in data.items() if k in known_fields}
+        return cls(**filtered_data)
 
     def prop_is_true(self, prop_name: str) -> bool:
         return prop_name in self.properties and self.properties[prop_name] is True

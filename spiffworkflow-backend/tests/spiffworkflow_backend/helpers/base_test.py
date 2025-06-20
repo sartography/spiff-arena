@@ -32,7 +32,6 @@ from spiffworkflow_backend.models.process_instance_report import ProcessInstance
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -221,7 +220,7 @@ class BaseTest:
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
                     content_type="application/json",
-                    data=json.dumps(ProcessModelInfoSchema().dump(model)),
+                    data=json.dumps(model.to_dict()),
                     headers=self.logged_in_headers(user),
                 )
 

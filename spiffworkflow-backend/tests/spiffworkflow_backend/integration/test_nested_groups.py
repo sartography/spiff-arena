@@ -6,7 +6,6 @@ from flask.testing import FlaskClient
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -209,7 +208,7 @@ class TestNestedGroups(BaseTest):
             "v1.0/process-models",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
+            data=json.dumps(process_model.to_dict()),
         )
 
     def test_process_group_show(

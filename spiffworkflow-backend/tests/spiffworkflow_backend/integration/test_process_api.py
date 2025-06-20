@@ -26,7 +26,6 @@ from spiffworkflow_backend.models.process_instance_metadata import ProcessInstan
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
@@ -412,7 +411,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
+            data=json.dumps(process_model.to_dict()),
         )
         assert response.status_code == 200
         assert response.json is not None

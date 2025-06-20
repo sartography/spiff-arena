@@ -65,8 +65,13 @@ class ProcessGroup:
         return False
 
     def serialized(self) -> dict:
-        original_dict = dataclasses.asdict(self)
-        return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
+        data = dataclasses.asdict(self)
+        data.pop("sort_index", None)
+        if self.process_models:
+            data["process_models"] = [pm.to_dict() for pm in self.process_models]
+        if self.process_groups:
+            data["process_groups"] = [pg.serialized() for pg in self.process_groups]
+        return data
 
     # for use with os.path.join, so it can work on windows
     def id_for_file_path(self) -> str:
@@ -101,14 +106,12 @@ class ProcessGroupSchema(Schema):
         fields = [
             "id",
             "display_name",
-            "process_models",
             "description",
             "process_groups",
             "messages",
             "correlation_properties",
         ]
 
-    process_models = marshmallow.fields.List(marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False))
     process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
     messages = marshmallow.fields.List(marshmallow.fields.Nested(MessageSchema, dump_only=True, required=False))
     correlation_properties = marshmallow.fields.List(
