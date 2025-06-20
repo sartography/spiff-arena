@@ -40,7 +40,7 @@ export default function ProcessGroupForm({
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]*[a-z0-9]$/);
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z.-]*[a-z0-9]$/);
   };
 
   const handleFormSubmission = (event: any) => {
