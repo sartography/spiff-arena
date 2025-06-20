@@ -112,7 +112,7 @@ export default function ProcessInterstitial({
           getAndRemoveLastProcessInstanceRunLocation() ??
           processInstanceShowPageUrl;
         navigate(toUrl);
-      }, 2000); // Adjust the timeout to match the CSS transition duration
+      }, 4000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
   }, [
