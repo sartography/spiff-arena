@@ -184,3 +184,5 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | set_user_properties                    | Sets given user properties on the current user.                                                                                                                |
 | times_executed_by_user                 | Returns the number of times the user has started an instance of the current process model.                                                                     |
 | user_has_started_instance              | Returns a boolean indicating if the user has started an instance of the current process model.                                                                 |
+| update_task_data_with_dictionary | Takes the value of a variable already present in task data and copies all of its key-value pairs into the root of task data. **Example**: update_task_data_with_dictionary(resp_order_start) will take all keys from resp_order_start and insert them into task data, allowing you to remove the original response variable.
+|
