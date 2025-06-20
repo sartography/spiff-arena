@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
+from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Any
 
-import marshmallow
-from marshmallow import Schema
-from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -132,85 +130,45 @@ class TaskModel(SpiffworkflowBaseDBModel):
         return False
 
 
+@dataclass
 class Task:
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
-
-    def __init__(
-        self,
-        id: str,
-        name: str,
-        title: str,
-        type: str,
-        state: str,
-        can_complete: bool,
-        lane: str | None = None,
-        form: None = None,
-        documentation: str = "",
-        data: dict[str, Any] | None = None,
-        multi_instance_type: MultiInstanceType | None = None,
-        multi_instance_count: str = "",
-        multi_instance_index: str = "",
-        process_identifier: str = "",
-        properties: dict | None = None,
-        runtime_info: dict | None = None,
-        process_instance_id: int | None = None,
-        process_instance_status: str | None = None,
-        process_model_display_name: str | None = None,
-        process_group_identifier: str | None = None,
-        process_model_identifier: str | None = None,
-        bpmn_process_identifier: str | None = None,
-        form_schema: dict | None = None,
-        form_ui_schema: dict | None = None,
-        parent: str | None = None,
-        event_definition: dict[str, Any] | None = None,
-        error_message: str | None = None,
-        assigned_user_group_identifier: str | None = None,
-        potential_owner_usernames: str | None = None,
-        process_model_uses_queued_execution: bool | None = None,
-    ):
-        self.id = id
-        self.name = name
-        self.title = title
-        self.type = type
-        self.state = state
-        self.can_complete = can_complete
-        self.form = form
-        self.documentation = documentation
-        self.lane = lane
-        self.parent = parent
-        self.event_definition = event_definition
-        self.process_model_uses_queued_execution = process_model_uses_queued_execution
-
-        self.data = data
-        if self.data is None:
-            self.data = {}
-
-        self.process_instance_id = process_instance_id
-        self.process_instance_status = process_instance_status
-        self.process_group_identifier = process_group_identifier
-        self.process_model_identifier = process_model_identifier
-        self.bpmn_process_identifier = bpmn_process_identifier
-        self.process_model_display_name = process_model_display_name
-        self.form_schema = form_schema
-        self.form_ui_schema = form_ui_schema
-        self.assigned_user_group_identifier = assigned_user_group_identifier
-        self.potential_owner_usernames = potential_owner_usernames
-
-        self.multi_instance_type = multi_instance_type  # Some tasks have a repeat behavior.
-        self.multi_instance_count = multi_instance_count  # This is the number of times the task could repeat.
-        self.multi_instance_index = multi_instance_index  # And the index of the currently repeating task.
-        self.process_identifier = process_identifier
-
-        self.properties = properties  # Arbitrary extension properties from BPMN editor.
-        if self.properties is None:
-            self.properties = {}
-        self.error_message = error_message
+    id: str
+    name: str
+    title: str
+    type: str
+    state: str
+    can_complete: bool
+    lane: str | None = None
+    form: None = None
+    documentation: str = ""
+    data: dict[str, Any] = field(default_factory=dict)
+    multi_instance_type: MultiInstanceType | None = None
+    multi_instance_count: str = ""
+    multi_instance_index: str = ""
+    process_identifier: str = ""
+    properties: dict = field(default_factory=dict)
+    runtime_info: dict | None = None
+    process_instance_id: int | None = None
+    process_instance_status: str | None = None
+    process_model_display_name: str | None = None
+    process_group_identifier: str | None = None
+    process_model_identifier: str | None = None
+    bpmn_process_identifier: str | None = None
+    form_schema: dict | None = None
+    form_ui_schema: dict | None = None
+    parent: str | None = None
+    event_definition: dict[str, Any] | None = None
+    error_message: str | None = None
+    assigned_user_group_identifier: str | None = None
+    potential_owner_usernames: str | None = None
+    process_model_uses_queued_execution: bool | None = None
 
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
         multi_instance_type = None
         if self.multi_instance_type:
-            MultiInstanceType(self.multi_instance_type)
+            multi_instance_type = self.multi_instance_type.value
 
         return {
             "id": self.id,
@@ -245,83 +203,93 @@ class Task:
         }
 
     @classmethod
+    def from_dict(cls, data: dict) -> Task:
+        data_copy = data.copy()
+        multi_instance_type = data_copy.get("multi_instance_type")
+        if multi_instance_type:
+            data_copy["multi_instance_type"] = MultiInstanceType(multi_instance_type)
+        else:
+            data_copy["multi_instance_type"] = None
+        return cls(**data_copy)
+
+    @classmethod
     def task_state_name_to_int(cls, task_state_name: str) -> int:
         state_value: int = TaskState.get_value(task_state_name)
         return state_value
 
 
-class OptionSchema(Schema):
-    class Meta:
-        fields = ["id", "name", "data"]
+@dataclass
+class Option:
+    id: str
+    name: str
+    data: Any
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "name": self.name, "data": self.data}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Option:
+        return cls(**data)
 
 
-class ValidationSchema(Schema):
-    class Meta:
-        fields = ["name", "config"]
+@dataclass
+class Validation:
+    name: str
+    config: Any
+
+    def to_dict(self) -> dict:
+        return {"name": self.name, "config": self.config}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Validation:
+        return cls(**data)
 
 
-class FormFieldPropertySchema(Schema):
-    class Meta:
-        fields = ["id", "value"]
+@dataclass
+class FormFieldProperty:
+    id: str
+    value: Any
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "value": self.value}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> FormFieldProperty:
+        return cls(**data)
 
 
-class FormFieldSchema(Schema):
-    class Meta:
-        fields = [
-            "id",
-            "type",
-            "label",
-            "default_value",
-            "options",
-            "validation",
-            "properties",
-            "value",
-        ]
+@dataclass
+class FormField:
+    id: str
+    type: str
+    label: str
+    options: list[Option]
+    validation: list[Validation]
+    properties: list[FormFieldProperty]
+    default_value: str | None = None
+    value: Any | None = None
 
-    default_value = marshmallow.fields.String(required=False, allow_none=True)
-    options = marshmallow.fields.List(marshmallow.fields.Nested(OptionSchema))
-    validation = marshmallow.fields.List(marshmallow.fields.Nested(ValidationSchema))
-    properties = marshmallow.fields.List(marshmallow.fields.Nested(FormFieldPropertySchema))
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "label": self.label,
+            "default_value": self.default_value,
+            "options": [o.to_dict() for o in self.options],
+            "validation": [v.to_dict() for v in self.validation],
+            "properties": [p.to_dict() for p in self.properties],
+            "value": self.value,
+        }
 
-
-# class FormSchema(Schema):
-#     """FormSchema."""
-#
-#     key = marshmallow.fields.String(required=True, allow_none=False)
-#     fields = marshmallow.fields.List(marshmallow.fields.Nested(FormFieldSchema))
-
-
-class TaskSchema(Schema):
-    class Meta:
-        fields = [
-            "id",
-            "name",
-            "title",
-            "type",
-            "state",
-            "lane",
-            "form",
-            "documentation",
-            "data",
-            "multi_instance_type",
-            "multi_instance_count",
-            "multi_instance_index",
-            "process_identifier",
-            "properties",
-            "process_instance_id",
-            "form_schema",
-            "form_ui_schema",
-            "event_definition",
-            "runtime_info",
-        ]
-
-    multi_instance_type = EnumField(MultiInstanceType)
-    documentation = marshmallow.fields.String(required=False, allow_none=True)
-    # form = marshmallow.fields.Nested(FormSchema, required=False, allow_none=True)
-    title = marshmallow.fields.String(required=False, allow_none=True)
-    process_identifier = marshmallow.fields.String(required=False, allow_none=True)
-    lane = marshmallow.fields.String(required=False, allow_none=True)
-
-    @marshmallow.post_load
-    def make_task(self, data: dict[str, Any], **kwargs: dict) -> Task:
-        return Task(**data)
+    @classmethod
+    def from_dict(cls, data: dict) -> FormField:
+        return cls(
+            id=data["id"],
+            type=data["type"],
+            label=data["label"],
+            default_value=data.get("default_value"),
+            options=[Option.from_dict(o) for o in data.get("options", [])],
+            validation=[Validation.from_dict(v) for v in data.get("validation", [])],
+            properties=[FormFieldProperty.from_dict(p) for p in data.get("properties", [])],
+            value=data.get("value"),
+        )
