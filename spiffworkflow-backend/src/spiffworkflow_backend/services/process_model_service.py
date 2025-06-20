@@ -17,7 +17,6 @@ from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -42,8 +41,6 @@ class ProcessModelService(FileSystemService):
     Workflow Specification process_groups.
     We do this, so we can easily drop in a new configuration on the file system, and change all
     the workflow process_models at once, or manage those file in a git repository."""
-
-    GROUP_SCHEMA = ProcessGroupSchema()
 
     @classmethod
     def path_to_id(cls, path: str) -> str:
@@ -696,7 +693,7 @@ class ProcessModelService(FileSystemService):
                 relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
                 data["id"] = cls.path_to_id(relative_path)
                 restricted_data = cls.restrict_dict(data)
-                process_group = ProcessGroup(**restricted_data)
+                process_group = ProcessGroup.from_dict(restricted_data)
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
@@ -708,7 +705,7 @@ class ProcessModelService(FileSystemService):
                 id="",
                 display_name=process_group_id,
             )
-            cls.write_json_file(cat_path, cls.GROUP_SCHEMA.dump(process_group))
+            cls.write_json_file(cat_path, process_group.serialized())
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 

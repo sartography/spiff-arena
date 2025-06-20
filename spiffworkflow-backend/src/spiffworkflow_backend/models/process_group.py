@@ -6,10 +6,6 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 
-import marshmallow
-from marshmallow import Schema
-from marshmallow import post_load
-
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
@@ -47,7 +43,7 @@ class ProcessGroup:
     parent_groups: list[ProcessGroupLite] | None = None
     messages: dict[str, Any] | None = None
     correlation_keys: list[dict[str, Any]] | None = None
-    correlation_properties: list[dict[str, Any]] | None = None
+    correlation_properties: list[CorrelationProperty] | None = None
 
     # TODO: delete these once they no no longer mentioned in current
     # process_group.json files
@@ -73,6 +69,43 @@ class ProcessGroup:
             data["process_groups"] = [pg.serialized() for pg in self.process_groups]
         return data
 
+    def to_dict(self) -> dict:
+        """Custom serialization to match Marshmallow schema."""
+        messages_list = []
+        if self.messages:
+            for msg_id, msg_schema in self.messages.items():
+                messages_list.append({"id": msg_id, "schema": msg_schema})
+        return {
+            "id": self.id,
+            "display_name": self.display_name,
+            "description": self.description,
+            "process_groups": [pg.to_dict() for pg in self.process_groups] if self.process_groups else [],
+            "messages": messages_list,
+            "correlation_properties": [cp.to_dict() for cp in self.correlation_properties] if self.correlation_properties else [],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ProcessGroup:
+        data_copy = data.copy()
+        if "messages" in data_copy and data_copy["messages"] is not None:
+            messages_val = data_copy["messages"]
+            if isinstance(messages_val, list):
+                messages_dict = {}
+                for m in messages_val:
+                    messages_dict[m["id"]] = m["schema"]
+                data_copy["messages"] = messages_dict
+        if "correlation_properties" in data_copy and data_copy["correlation_properties"] is not None:
+            data_copy["correlation_properties"] = [
+                CorrelationProperty.from_dict(cp) for cp in data_copy["correlation_properties"]
+            ]
+        if "process_groups" in data_copy and data_copy["process_groups"] is not None:
+            data_copy["process_groups"] = [ProcessGroup.from_dict(pg) for pg in data_copy["process_groups"]]
+
+        known_fields = {f.name for f in dataclasses.fields(cls)}
+        filtered_data = {k: v for k, v in data_copy.items() if k in known_fields}
+
+        return cls(**filtered_data)
+
     # for use with os.path.join, so it can work on windows
     def id_for_file_path(self) -> str:
         return self.id.replace("/", os.sep)
@@ -83,41 +116,32 @@ class ProcessGroup:
         return list(dict_keys)
 
 
-class MessageSchema(Schema):
-    class Meta:
-        fields = ["id", "schema"]
+@dataclass
+class RetrievalExpression:
+    message_ref: str
+    formal_expression: str
+
+    def to_dict(self) -> dict:
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RetrievalExpression:
+        return cls(**data)
 
 
-class RetrievalExpressionSchema(Schema):
-    class Meta:
-        fields = ["message_ref", "formal_expression"]
+@dataclass
+class CorrelationProperty:
+    id: str
+    retrieval_expression: RetrievalExpression | None = None
 
+    def to_dict(self) -> dict:
+        data = dataclasses.asdict(self)
+        if self.retrieval_expression:
+            data["retrieval_expression"] = self.retrieval_expression.to_dict()
+        return data
 
-class CorrelationPropertySchema(Schema):
-    class Meta:
-        fields = ["id", "retrieval_expression"]
-
-    retrieval_expression = marshmallow.fields.Nested(RetrievalExpressionSchema, required=False)
-
-
-class ProcessGroupSchema(Schema):
-    class Meta:
-        model = ProcessGroup
-        fields = [
-            "id",
-            "display_name",
-            "description",
-            "process_groups",
-            "messages",
-            "correlation_properties",
-        ]
-
-    process_groups = marshmallow.fields.List(marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False))
-    messages = marshmallow.fields.List(marshmallow.fields.Nested(MessageSchema, dump_only=True, required=False))
-    correlation_properties = marshmallow.fields.List(
-        marshmallow.fields.Nested(CorrelationPropertySchema, dump_only=True, required=False)
-    )
-
-    @post_load
-    def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:
-        return ProcessGroup(**data)  # type: ignore
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CorrelationProperty:
+        if "retrieval_expression" in data and data["retrieval_expression"] is not None:
+            data["retrieval_expression"] = RetrievalExpression.from_dict(data["retrieval_expression"])
+        return cls(**data)

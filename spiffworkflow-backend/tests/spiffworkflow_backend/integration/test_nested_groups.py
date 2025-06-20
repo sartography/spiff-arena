@@ -4,7 +4,6 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -71,7 +70,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=json.dumps(process_group_a.to_dict()),
         )
 
         process_group_id = "group_a/test_group"
@@ -138,7 +137,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=json.dumps(process_group_a.to_dict()),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -150,7 +149,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            data=json.dumps(process_group_b.to_dict()),
         )
         process_group_c = ProcessGroup(
             id="group_a/group_b/group_c",
@@ -162,7 +161,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
+            data=json.dumps(process_group_c.to_dict()),
         )
 
     def test_process_model_create_nested(
@@ -182,7 +181,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=json.dumps(process_group_a.to_dict()),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -194,7 +193,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            data=json.dumps(process_group_b.to_dict()),
         )
         process_model = ProcessModelInfo(
             id="process_model",
@@ -237,7 +236,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=json.dumps(process_group_a.to_dict()),
         )
 
         target_uri = "/v1.0/process-groups/group_a"
