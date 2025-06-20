@@ -1,4 +1,4 @@
-### Plan to Remove Marshmallow from `process_instance.py`
+## Plan to Remove Marshmallow from `process_instance.py`
 
 The file `src/spiffworkflow_backend/models/process_instance.py` contains two Marshmallow schemas that need to be removed: `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema`.
 
@@ -10,11 +10,18 @@ The file `src/spiffworkflow_backend/models/process_instance.py` contains two Mar
         class Meta:
             model = ProcessInstanceModel
             fields = [
-                "id", "process_model_identifier", "process_model_display_name",
-                "process_initiator_id", "start_in_seconds", "end_in_seconds",
-                "updated_at_in_seconds", "created_at_in_seconds", "status",
+                "id",
+                "process_model_identifier",
+                "process_model_display_name",
+                "process_initiator_id",
+                "start_in_seconds",
+                "end_in_seconds",
+                "updated_at_in_seconds",
+                "created_at_in_seconds",
+                "status",
                 "bpmn_version_control_identifier",
             ]
+
         status = marshmallow.fields.Method("get_status", dump_only=True)
 
         def get_status(self, obj: ProcessInstanceModel) -> str:
@@ -25,15 +32,21 @@ The file `src/spiffworkflow_backend/models/process_instance.py` contains two Mar
     *   It has a custom method `get_status` which simply returns the `status` attribute of the object. This is redundant since the `status` is already a field.
     *   The `ProcessInstanceModel` already has a `serialized()` method which serves a similar purpose, but `ProcessInstanceModelSchema` selects a different subset of fields.
 
+*   **Usages:**
+    *   `src/spiffworkflow_backend/routes/messages_controller.py`: `ProcessInstanceModelSchema(many=True).dump(process_instances)`
+    *   `src/spiffworkflow_backend/routes/process_instances_controller.py`: `ProcessInstanceModelSchema().dump(process_instance)`
+    *   `src/spiffworkflow_backend/routes/tasks_controller.py`: `ProcessInstanceModelSchema().dump(process_instance)`
+
 *   **Proposed Change:**
     *   Remove the `ProcessInstanceModelSchema` class.
-    *   If the exact field selection of the schema is still needed, create a new serialization method on the `ProcessInstanceModel` class, for example `to_schema_dict()`, that returns the specific dictionary. Otherwise, update the calling code to use the existing `serialized()` method or to construct the desired dictionary directly. Given the direct mapping of fields, a new method is likely the cleanest approach.
+    *   Create a new serialization method on the `ProcessInstanceModel` class, `to_dict()`, that returns the specific dictionary.
+    *   Update the calling code to use the new `to_dict()` method.
 
 *   **`ProcessInstanceModel` Modification:**
 
     ```python
     # In ProcessInstanceModel class
-    def to_schema_dict(self) -> dict:
+    def to_dict(self) -> dict:
         """Returns a dictionary with the same fields as the old ProcessInstanceModelSchema."""
         return {
             "id": self.id,
@@ -71,6 +84,9 @@ The file `src/spiffworkflow_backend/models/process_instance.py` contains two Mar
     *   The `post_load` hook filters the incoming data to only include the expected keys before creating a `ProcessInstanceApi` object.
     *   `unknown = INCLUDE` allows extra fields in the input data.
 
+*   **Usages:**
+    *   `src/spiffworkflow_backend/routes/process_instances_controller.py`: `ProcessInstanceApiSchema().load(process_instance_data)`
+
 *   **Proposed Change:**
     *   Convert the `ProcessInstanceApi` class into a `dataclass`.
     *   Remove the `ProcessInstanceApiSchema`.
@@ -107,11 +123,12 @@ The file `src/spiffworkflow_backend/models/process_instance.py` contains two Mar
     *   Change `ProcessInstanceApi` from a regular class to a `dataclass`.
     *   Implement the `from_dict` and `to_dict` methods as described above.
 2.  **Refactor `ProcessInstanceModel`:**
-    *   Add the `to_schema_dict()` method to the `ProcessInstanceModel` class.
+    *   Add the `to_dict()` method to the `ProcessInstanceModel` class.
 3.  **Update References:**
     *   Search the codebase for usages of `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema`.
-    *   Replace `ProcessInstanceModelSchema().dump(obj)` with `obj.to_schema_dict()`.
-    *   Replace `ProcessInstanceApiSchema().load(data)` with `ProcessInstanceApi.from_dict(data)`.
-    *   Replace `ProcessInstanceApiSchema().dump(obj)` with `obj.to_dict()`.
-4.  **Remove Schemas:** After updating all references, delete `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema` from the file.
+    *   In `src/spiffworkflow_backend/routes/messages_controller.py`, change `ProcessInstanceModelSchema(many=True).dump(process_instances)` to `[pi.to_dict() for pi in process_instances]`.
+    *   In `src/spiffworkflow_backend/routes/process_instances_controller.py`, change `ProcessInstanceModelSchema().dump(process_instance)` to `process_instance.to_dict()`.
+    *   In `src/spiffworkflow_backend/routes/tasks_controller.py`, change `ProcessInstanceModelSchema().dump(process_instance)` to `process_instance.to_dict()`.
+    *   In `src/spiffworkflow_backend/routes/process_instances_controller.py`, change `ProcessInstanceApiSchema().load(process_instance_data)` to `ProcessInstanceApi.from_dict(process_instance_data)`.
+4.  **Remove Schemas:** After updating all references, delete `ProcessInstanceModelSchema` and `ProcessInstanceApiSchema` from `src/spiffworkflow_backend/models/process_instance.py`.
 5.  **Test:** Run the full test suite to validate the changes and ensure no functionality has been broken.
