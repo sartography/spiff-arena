@@ -70,7 +70,6 @@ class ProcessGroup:
         return data
 
     def to_dict(self) -> dict:
-        """Custom serialization to match Marshmallow schema."""
         messages_list = []
         if self.messages:
             for msg_id, msg_schema in self.messages.items():
