@@ -37,16 +37,18 @@ class TestAuthentication(BaseTest):
             group_one = UserService.find_or_create_group("group_one")
             assert group_one.source_is_open_id is False
 
-            user = self.find_or_create_user("testing@e.com")
-            user.email = "testing@e.com"
+            user = self.find_or_create_user("testing@example.com")
+            user.email = "testing@example.com"
             user.service = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+            user.service_id = f"service:{user.service}::service_id:{user.service_id}"
             db.session.add(user)
             db.session.commit()
 
             access_token = user.encode_auth_token(
                 {
                     "groups": ["group_one", "group_two"],
-                    "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                    "iss": user.service,
+                    "sub": user.service_id,
                     "aud": "spiffworkflow-backend",
                 }
             )
@@ -66,7 +68,8 @@ class TestAuthentication(BaseTest):
             access_token = user.encode_auth_token(
                 {
                     "groups": ["group_one"],
-                    "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                    "iss": user.service,
+                    "sub": user.service_id,
                     "aud": "spiffworkflow-backend",
                 }
             )

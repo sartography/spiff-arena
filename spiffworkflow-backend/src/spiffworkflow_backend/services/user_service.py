@@ -64,7 +64,7 @@ class UserService:
                 db.session.rollback()
                 raise ApiError(
                     error_code="add_user_error",
-                    message=f"Could not add user {username}",
+                    message=f"Could not add user {username}: {e}",
                 ) from e
             cls.create_principal(user_model.id)
             cls.apply_waiting_group_assignments(user_model)
@@ -123,25 +123,23 @@ class UserService:
         return principal
 
     @classmethod
-    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> GroupModel | None:
-        existing_assignment_count = UserGroupAssignmentModel.query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
-        if existing_assignment_count == 0:
-            ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
-            db.session.add(ugam)
+    def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
+        user_group_assignemnt_count = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).count()
+        if user_group_assignemnt_count == 0:
+            user_group_assignemnt = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
+            db.session.add(user_group_assignemnt)
             db.session.commit()
-            return group
-        return None
 
     @classmethod
     def add_waiting_group_assignment(
-        cls, username: str, group: GroupModel
+        cls, username_or_email: str, group: GroupModel
     ) -> tuple[UserGroupAssignmentWaitingModel, list[UserToGroupDict]]:
         """Only called from set-permissions."""
         wugam: UserGroupAssignmentWaitingModel | None = (
-            UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
+            UserGroupAssignmentWaitingModel().query.filter_by(username=username_or_email, group_id=group.id).first()
         )
         if wugam is None:
-            wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
+            wugam = UserGroupAssignmentWaitingModel(username=username_or_email, group_id=group.id)
             db.session.add(wugam)
             db.session.commit()
 
@@ -276,14 +274,14 @@ class UserService:
 
     @classmethod
     def add_user_to_group_or_add_to_waiting(
-        cls, username: str | UserModel, group_identifier: str
+        cls, username_or_email: str, group_identifier: str
     ) -> tuple[UserGroupAssignmentWaitingModel | None, list[UserToGroupDict] | None]:
         group = cls.find_or_create_group(group_identifier)
-        user = UserModel.query.filter_by(username=username).first()
+        user = UserModel.query.filter(or_(UserModel.username == username_or_email, UserModel.email == username_or_email)).first()
         if user:
             cls.add_user_to_group(user, group)
         else:
-            return cls.add_waiting_group_assignment(username, group)
+            return cls.add_waiting_group_assignment(username_or_email, group)
         return (None, None)
 
     @classmethod
@@ -291,7 +289,8 @@ class UserService:
         cls, user: UserModel, group_identifier: str, source_is_open_id: bool = False
     ) -> GroupModel | None:
         group = cls.find_or_create_group(group_identifier, source_is_open_id=source_is_open_id)
-        return cls.add_user_to_group(user, group)
+        cls.add_user_to_group(user, group)
+        return group
 
     @classmethod
     def remove_user_from_group(cls, user: UserModel, group_id: int) -> None:
@@ -315,7 +314,8 @@ class UserService:
         ).first()
         if user is None:
             user = cls.create_user(username, "spiff_guest_service", "spiff_guest_service_id")
-            cls.add_user_to_group_or_add_to_waiting(user.username, group_identifier)
+            group = cls.find_or_create_group(group_identifier)
+            cls.add_user_to_group(user, group)
 
         return user
 
@@ -333,7 +333,7 @@ class UserService:
     def create_public_user(cls) -> UserModel:
         username = UserModel.generate_random_username()
         user = UserService.create_user(username, "spiff_public_service", username)
-        cls.add_user_to_group_or_add_to_waiting(
-            user.username, current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]
-        )
+        group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]
+        group = cls.find_or_create_group(group_identifier)
+        cls.add_user_to_group(user, group)
         return user
