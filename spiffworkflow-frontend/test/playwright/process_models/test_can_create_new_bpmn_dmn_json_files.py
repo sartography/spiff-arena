@@ -68,7 +68,10 @@ def test_can_create_new_bpmn_dmn_json_files(browser_context: BrowserContext):
         save_btn.click()
 
         # Fill in file name input using role= textbox labeled 'File Name'
-        name_input = page.get_by_role("textbox", name=re.compile(r"File Name"))
+        if ext == "json":
+            name_input = page.get_by_test_id("process-model-file-name-field").locator("input")
+        else:
+            name_input = page.get_by_role("textbox", name="File Name")
         expect(name_input, "Filename input visible").to_be_visible(timeout=10000)
         name_input.fill(file_name)
 
