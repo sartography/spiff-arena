@@ -380,7 +380,7 @@ class AuthenticationService:
             overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
         internal_server_url = cls.server_url(authentication_identifier, internal=True)
-        additional_valid_issuer_urls = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS"] or []
+        additional_valid_issuer_urls = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS"].split(",")
         trusted_issuer_urls = [
             cls.server_url(authentication_identifier),
             UserModel.spiff_generated_jwt_issuer(),
