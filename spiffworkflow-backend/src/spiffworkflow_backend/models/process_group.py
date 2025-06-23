@@ -61,13 +61,8 @@ class ProcessGroup:
         return False
 
     def serialized(self) -> dict:
-        data = dataclasses.asdict(self)
-        data.pop("sort_index", None)
-        if self.process_models:
-            data["process_models"] = [pm.to_dict() for pm in self.process_models]
-        if self.process_groups:
-            data["process_groups"] = [pg.serialized() for pg in self.process_groups]
-        return data
+        original_dict = dataclasses.asdict(self)
+        return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 
     def to_dict(self) -> dict:
         messages_list = []
