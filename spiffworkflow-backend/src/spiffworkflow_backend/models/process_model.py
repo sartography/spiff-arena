@@ -101,4 +101,11 @@ class ProcessModelInfo:
         return cls(**filtered_data)
 
     def serialized(self) -> dict[str, Any]:
-        return self.to_dict()
+        file_objects = self.files
+        dictionary = self.__dict__
+        if file_objects is not None:
+            serialized_files = []
+            for file in file_objects:
+                serialized_files.append(file.serialized())
+            dictionary["files"] = serialized_files
+        return dictionary
