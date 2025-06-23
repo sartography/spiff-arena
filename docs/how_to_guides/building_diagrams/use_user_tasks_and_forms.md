@@ -149,7 +149,56 @@ Then use JSON like this (note the `options_from_task_data_var:fruits`) when defi
         }
     }
 ```
+#### Dynamic Array Fields from Task Data
 
+SpiffArena now supports dynamically generated array fields using data from the process instance. This allows developers to define array items (e.g., subfields of an object) at runtime using a task data variable.
+
+This feature is similar to Dynamic Enumerations but instead of supplying dropdown options, you're providing an array schema definition dynamically via a task variable.
+
+##### Example Use Case: Dynamically Defined Parcel ID Structure
+
+**JSON Schema**:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "parcelID": {
+      "title": "Parcel ID",
+      "type": "array",
+      "items": [
+        "options_from_task_data_var:parcelID_fields"
+      ]
+    }
+  }
+}
+```
+
+**Python Script Example**:
+
+```python
+parcelID_fields = [
+    {
+        "title": "Ward",
+        "type": "string",
+    },
+    {
+        "title": "Lot",
+        "type": "string",
+    },
+    {
+        "title": "Plot",
+        "type": "string",
+    },
+    {
+        "title": "Other Field",
+        "type": "string",
+    }
+]
+```
+
+* The variable `parcelID_fields` must be defined in Task Data before the form is rendered.
+* Each dictionary in the array should match the structure expected by JSON Schema Forms (e.g., with `title`, `type`, etc.).
 #### Checkbox Validation
 
 Checkbox validation ensures that checkboxes, especially required boolean fields, are properly validated.
@@ -566,6 +615,8 @@ Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
   }
 }
 ```
+
+
 ## Guest User Task
 The Guest User Task feature in SpiffArena allows users who are not logged into the system to complete specified human tasks. This functionality enhances accessibility and usability, enabling a broader range of users to interact with the process models without requiring an account.
 
@@ -610,6 +661,3 @@ Open an incognito or private browsing window (not logged into Spiff). Navigate t
 ![Guest user](/images/guest_user3.png)
 
 The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
-
-```{tags} how_to_guide, building_diagrams
-```

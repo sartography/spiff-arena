@@ -41,7 +41,7 @@ RUN ./bin/build
 ######################## - FINAL
 
 # Use nginx as the base image
-FROM nginx:1.25.4-bookworm
+FROM nginx:1.27.5-bookworm
 
 RUN apt-get update \
   && apt-get clean -y \

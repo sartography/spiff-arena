@@ -126,6 +126,3 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /users/exists/by-username:
   /users/search:
 ```
-
-```{tags} reference
-```

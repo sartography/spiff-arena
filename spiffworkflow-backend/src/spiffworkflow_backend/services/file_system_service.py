@@ -80,13 +80,28 @@ class FileSystemService:
         return os.path.abspath(os.path.join(dir_name, ""))
 
     @staticmethod
+    def path_join(*path_segments: str) -> str:
+        """Runs os.path.join on an arry while stripping out leading slashes for elements [1:]
+
+        This method exists because os.path.join by default builds the string based on the last element
+        with a leading slash. This means ['/root', 'path', '/relative', 'path'] becomes '/relative/path'
+        instead of '/root/path/relative/path'. This is never what we want since we have to deal
+        with root process groups that can have an id of '/'.
+        """
+        new_segments = list(path_segments)
+        if len(path_segments) > 1:
+            new_segments = [ps.lstrip(os.path.sep) for ps in path_segments[1:]]
+            new_segments.insert(0, path_segments[0])
+        return os.path.join(*new_segments)
+
+    @staticmethod
     def id_string_to_relative_path(id_string: str) -> str:
         return id_string.replace("/", os.sep)
 
     @classmethod
     def full_path_from_id(cls, id: str) -> str:
         return os.path.abspath(
-            os.path.join(
+            cls.path_join(
                 cls.root_path(),
                 cls.id_string_to_relative_path(id),
             )
@@ -100,7 +115,7 @@ class FileSystemService:
         extension_filter: str = "",
     ) -> list[File]:
         """Return all files associated with a workflow specification."""
-        path = os.path.join(FileSystemService.root_path(), process_model_info.id_for_file_path())
+        path = cls.path_join(FileSystemService.root_path(), process_model_info.id_for_file_path())
         files = cls._get_files(path, file_name)
         if extension_filter != "":
             files = list(filter(lambda file: file.name.endswith(extension_filter), files))
@@ -128,20 +143,20 @@ class FileSystemService:
 
     @staticmethod
     def full_file_path(process_model: ProcessModelInfo, file_name: str) -> str:
-        return os.path.abspath(os.path.join(FileSystemService.process_model_full_path(process_model), file_name))
+        return os.path.abspath(FileSystemService.path_join(FileSystemService.process_model_full_path(process_model), file_name))
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:
-        return os.path.join(FileSystemService.root_path(), relative_path)
+        return FileSystemService.path_join(FileSystemService.root_path(), relative_path)
 
     @classmethod
     def file_exists_at_relative_path(cls, relative_path: str, file_name: str) -> bool:
-        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        full_path = cls.full_path_from_relative_path(cls.path_join(relative_path, file_name))
         return os.path.isfile(full_path)
 
     @classmethod
     def contents_of_file_at_relative_path(cls, relative_path: str, file_name: str) -> str:
-        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        full_path = cls.full_path_from_relative_path(cls.path_join(relative_path, file_name))
         with open(full_path) as f:
             return f.read()
 
@@ -152,7 +167,7 @@ class FileSystemService:
 
     @classmethod
     def write_to_file_at_relative_path(cls, relative_path: str, file_name: str, contents: str) -> None:
-        full_path = cls.full_path_from_relative_path(os.path.join(relative_path, file_name))
+        full_path = cls.full_path_from_relative_path(cls.path_join(relative_path, file_name))
         with open(full_path, "w") as f:
             f.write(contents)
 
@@ -186,7 +201,7 @@ class FileSystemService:
 
     @staticmethod
     def full_path_to_process_model_file(process_model: ProcessModelInfo) -> str:
-        return os.path.join(
+        return FileSystemService.path_join(
             FileSystemService.process_model_full_path(process_model),
             process_model.primary_file_name,  # type: ignore
         )

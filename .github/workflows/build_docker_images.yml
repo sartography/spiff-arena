@@ -114,6 +114,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
+        # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
         uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: "${{ steps.full_tag.outputs.full_tag }}"

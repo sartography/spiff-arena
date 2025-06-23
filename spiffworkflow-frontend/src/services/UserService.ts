@@ -34,7 +34,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 };
 
 const checkPathForTaskShowParams = (
-  redirectUrl: string = window.location.pathname,
+  redirectUrl: string = window.location.href,
 ) => {
   const pathSegments = parseTaskShowUrl(redirectUrl);
   if (pathSegments) {
@@ -113,6 +113,15 @@ const getUserEmail = () => {
   return null;
 };
 
+const getUserName = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwtDecode(idToken);
+    return (idObject as any).username;
+  }
+  return null;
+};
+
 const authenticationDisabled = () => {
   const idToken = getIdToken();
   if (idToken) {
@@ -155,12 +164,6 @@ const getPreferredUsername = () => {
   return null;
 };
 
-const loginIfNeeded = () => {
-  if (!isLoggedIn()) {
-    doLogin();
-  }
-};
-
 const UserService = {
   authenticationDisabled,
   doLogin,
@@ -170,9 +173,9 @@ const UserService = {
   getCurrentLocation,
   getPreferredUsername,
   getUserEmail,
+  getUserName,
   isLoggedIn,
   isPublicUser,
-  loginIfNeeded,
 };
 
 export default UserService;

@@ -56,6 +56,7 @@ type OwnProps = {
   onFileNameSet: (fileName: string) => void;
   canCreateFiles: boolean;
   canUpdateFiles: boolean;
+  pythonWorker: any;
 };
 
 export default function ReactFormBuilder({
@@ -64,6 +65,7 @@ export default function ReactFormBuilder({
   onFileNameSet,
   canCreateFiles,
   canUpdateFiles,
+  pythonWorker,
 }: OwnProps) {
   const SCHEMA_EXTENSION = '-schema.json';
   const UI_EXTENSION = '-uischema.json';
@@ -108,57 +110,67 @@ export default function ReactFormBuilder({
   }
 
   useEffect(() => {
-    /**
-     * we need to run the schema and ui through a backend call before rendering the form,
-     * so it can handle certain server side changes, such as jinja rendering and populating dropdowns, etc.
-     */
-    const url: string = '/tasks/prepare-form';
-    let schema = {};
-    let ui = {};
-    let data = {};
+    if (pythonWorker === null) {
+      return;
+    }
 
+    // TODO: when we use this in more than one place we will need a better dispatching mechanism
+    // eslint-disable-next-line no-param-reassign
+    pythonWorker.onmessage = async (e: any) => {
+      if (e.data.type !== 'didJinjaForm') {
+        console.log('unknown python worker response: ', e);
+        return;
+      }
+
+      if (e.data.err) {
+        setErrorMessage(e.data.err);
+        return;
+      }
+
+      try {
+        const schema = JSON.parse(e.data.strSchema);
+        setPostJsonSchema(schema);
+      } catch (err) {
+        setErrorMessage('Please check the Json Schema for errors.');
+        return;
+      }
+      try {
+        const ui = JSON.parse(e.data.strUI);
+        setPostJsonUI(ui);
+      } catch (err) {
+        setErrorMessage('Please check the UI Settings for errors.');
+        return;
+      }
+
+      setErrorMessage('');
+    };
+  }, [pythonWorker]);
+
+  useEffect(() => {
+    /**
+     * we need to run the schema and ui through the python web worker before rendering the form,
+     * so it can mimic certain server side changes, such as jinja rendering and populating dropdowns, etc.
+     */
     if (strSchema === '' || strUI === '' || strFormData === '') {
       return;
     }
 
+    setErrorMessage('');
+
     try {
-      schema = JSON.parse(strSchema);
-    } catch (e) {
-      setErrorMessage('Please check the Json Schema for errors.');
-      return;
-    }
-    try {
-      ui = JSON.parse(strUI);
-    } catch (e) {
-      setErrorMessage('Please check the UI Settings for errors.');
-      return;
-    }
-    try {
-      data = JSON.parse(strFormData);
+      JSON.parse(strFormData);
     } catch (e) {
       setErrorMessage('Please check the Data View for errors.');
       return;
     }
 
-    setErrorMessage('');
-    HttpService.makeCallToBackend({
-      path: url,
-      successCallback: (response: any) => {
-        setPostJsonSchema(response.form_schema);
-        setPostJsonUI(response.form_ui);
-        setErrorMessage('');
-      },
-      failureCallback: (error: any) => {
-        setErrorMessage(error.message);
-      },
-      httpMethod: 'POST',
-      postBody: {
-        form_schema: schema,
-        form_ui: ui,
-        task_data: data,
-      },
+    pythonWorker.postMessage({
+      type: 'jinjaForm',
+      strSchema,
+      strUI,
+      strFormData,
     });
-  }, [strSchema, strUI, strFormData, canCreateFiles]);
+  }, [strSchema, strUI, strFormData, canCreateFiles, pythonWorker]);
 
   const saveFile = (
     file: File,

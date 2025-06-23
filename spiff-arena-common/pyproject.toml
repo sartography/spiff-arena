@@ -1,0 +1,11 @@
+[project]
+name = "spiff-arena-common"
+version = "0.1.0"
+description = "Shared Python utilities for Spiff Arena frontend and backend components"
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -82,6 +82,3 @@ For one of our users, the following setup was used to pass group information to 
 - [Okta App Integration Wizard](https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_oidc.htm)  
 - [Groups Claim Documentation](https://developer.okta.com/docs/guides/customize-tokens-groups-claim/main/)  
 - [Active Directory Groups in Okta](https://support.okta.com/help/s/article/Can-we-retrieve-both-Active-Directory-and-Okta-groups-in-OpenID-Connect-claims?language=en_US).  
-
-```{tags} how_to_guide, devops
-```

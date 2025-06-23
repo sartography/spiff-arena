@@ -227,6 +227,3 @@ Once the score messages are displayed, a **signal event** is included, providing
 Signal events enable external forces or internal errors to interact with the process, and in this scenario, a button press allows for the interruption of the diagram's normal course.
 
 ![](/images/Signal_EM.png)
-
-```{tags} tutorial, building_diagrams
-```

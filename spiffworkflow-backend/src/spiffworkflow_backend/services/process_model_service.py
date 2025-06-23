@@ -621,11 +621,11 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:
         original_group_path = cls.full_path_from_id(original_process_group_id)
-        _, original_group_id = os.path.split(original_group_path)
-        new_root = os.path.join(FileSystemService.root_path(), new_location)
-        new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_root, original_group_id))
-        destination = shutil.move(original_group_path, new_group_path)
-        new_process_group = cls.get_process_group(destination)
+        _, original_base_group_id = os.path.split(original_group_path)
+        new_group_id = os.path.join(new_location, original_base_group_id)
+        new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_location))
+        shutil.move(original_group_path, new_group_path)
+        new_process_group = cls.get_process_group(new_group_id)
         return new_process_group
 
     @classmethod
