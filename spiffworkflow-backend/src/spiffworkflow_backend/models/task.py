@@ -168,7 +168,7 @@ class Task:
         """Return object data in serializeable format."""
         multi_instance_type = None
         if self.multi_instance_type:
-            multi_instance_type = self.multi_instance_type.value
+            MultiInstanceType(self.multi_instance_type)
 
         return {
             "id": self.id,
