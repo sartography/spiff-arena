@@ -80,6 +80,7 @@ class AuthenticationOptionForApi(TypedDict):
 class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
     client_secret: str
+    additional_valid_issuers: list[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -121,6 +122,11 @@ class AuthenticationService:
     @classmethod
     def valid_audiences(cls, authentication_identifier: str) -> list[str]:
         return [cls.client_id(authentication_identifier), "account"]
+
+    @classmethod
+    def valid_issuers(cls, authentication_identifier: str) -> list[str]:
+        issuers: list[str] = cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_issuers"]
+        return issuers
 
     @classmethod
     def server_url(cls, authentication_identifier: str, internal: bool = False) -> str:
@@ -380,10 +386,11 @@ class AuthenticationService:
             overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
         internal_server_url = cls.server_url(authentication_identifier, internal=True)
-
+        additional_valid_issuer_urls = cls.valid_audiences(authentication_identifier)
         trusted_issuer_urls = [
             cls.server_url(authentication_identifier),
             UserModel.spiff_generated_jwt_issuer(),
+            *additional_valid_issuer_urls,
         ]
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER"]:

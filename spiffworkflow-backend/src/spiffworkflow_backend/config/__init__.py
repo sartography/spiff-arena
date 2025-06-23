@@ -252,9 +252,12 @@ def setup_config(app: Flask) -> None:
     )
 
     if app.config.get("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS") is None:
+        additional_valid_issuers_str = app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS")
+        additional_valid_issuers = additional_valid_issuers_str.split(",") if additional_valid_issuers_str else []
         app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
             {
                 "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
+                "additional_valid_issuers": additional_valid_issuers,
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
                 "identifier": "default",
