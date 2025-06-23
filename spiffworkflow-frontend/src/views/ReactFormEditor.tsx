@@ -200,6 +200,7 @@ export default function ReactFormEditor() {
             onChange={(e) => setNewFileName(e.target.value)}
             autoFocus
             fullWidth
+            data-testid="process-model-file-name-field"
             margin="normal"
           />
           <ButtonGroup>
