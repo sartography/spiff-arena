@@ -161,7 +161,7 @@ class BaseTest:
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user),
             content_type="application/json",
-            data=json.dumps(process_group.to_dict()),
+            data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 201
         assert response.json is not None

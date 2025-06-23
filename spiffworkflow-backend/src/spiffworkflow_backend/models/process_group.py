@@ -64,20 +64,6 @@ class ProcessGroup:
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 
-    def to_dict(self) -> dict:
-        messages_list = []
-        if self.messages:
-            for msg_id, msg_schema in self.messages.items():
-                messages_list.append({"id": msg_id, "schema": msg_schema})
-        return {
-            "id": self.id,
-            "display_name": self.display_name,
-            "description": self.description,
-            "process_groups": [pg.to_dict() for pg in self.process_groups] if self.process_groups else [],
-            "messages": messages_list,
-            "correlation_properties": [cp.to_dict() for cp in self.correlation_properties] if self.correlation_properties else [],
-        }
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProcessGroup:
         data_copy = data.copy()

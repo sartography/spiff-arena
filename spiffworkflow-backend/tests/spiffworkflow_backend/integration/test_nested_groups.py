@@ -70,7 +70,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_a.to_dict()),
+            data=json.dumps(process_group_a.serialized()),
         )
 
         process_group_id = "group_a/test_group"
@@ -137,7 +137,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_a.to_dict()),
+            data=json.dumps(process_group_a.serialized()),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -149,7 +149,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_b.to_dict()),
+            data=json.dumps(process_group_b.serialized()),
         )
         process_group_c = ProcessGroup(
             id="group_a/group_b/group_c",
@@ -161,7 +161,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_c.to_dict()),
+            data=json.dumps(process_group_c.serialized()),
         )
 
     def test_process_model_create_nested(
@@ -181,7 +181,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_a.to_dict()),
+            data=json.dumps(process_group_a.serialized()),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -193,7 +193,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_b.to_dict()),
+            data=json.dumps(process_group_b.serialized()),
         )
         process_model = ProcessModelInfo(
             id="process_model",
@@ -236,7 +236,7 @@ class TestNestedGroups(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(process_group_a.to_dict()),
+            data=json.dumps(process_group_a.serialized()),
         )
 
         target_uri = "/v1.0/process-groups/group_a"

@@ -107,7 +107,7 @@ def process_group_list(
         pages += 1
 
     response_json = {
-        "results": [group.to_dict() for group in batch],
+        "results": [group.serialized() for group in batch],
         "pagination": {
             "count": len(batch),
             "total": len(process_groups),
