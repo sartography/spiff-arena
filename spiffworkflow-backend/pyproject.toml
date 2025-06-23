@@ -140,7 +140,7 @@ source = ["spiffworkflow_backend", "tests"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 50
+fail_under = 80
 
 [tool.mypy]
 strict = true
