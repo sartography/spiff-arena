@@ -84,7 +84,7 @@ class ProcessModelInfo:
         """Convert the ProcessModelInfo object to a dictionary."""
         data = dataclasses.asdict(self)
         if self.files is not None:
-            data["files"] = [f.to_dict() for f in self.files]
+            data["files"] = [f.serialized() for f in self.files]
         return data
 
     @classmethod

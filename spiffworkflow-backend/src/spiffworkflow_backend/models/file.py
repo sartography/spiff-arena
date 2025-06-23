@@ -97,16 +97,6 @@ class File:
         )
         return instance
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert the File object to a dictionary."""
-        data = dataclasses.asdict(self)
-        if self.file_contents is not None:
-            data["file_contents"] = self.file_contents.decode("utf-8")
-        data["last_modified"] = self.last_modified.isoformat()
-        if self.references is not None:
-            data["references"] = [r.to_dict() for r in self.references]
-        return data
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> File:
         """Create a File object from a dictionary."""
