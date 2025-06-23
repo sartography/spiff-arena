@@ -76,7 +76,7 @@ def process_instance_create(
     LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
     return Response(
-        json.dumps(process_instance.to_dict()),
+        json.dumps(process_instance.serialized()),
         status=201,
         mimetype="application/json",
     )

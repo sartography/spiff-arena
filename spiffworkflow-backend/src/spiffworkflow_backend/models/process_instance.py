@@ -166,21 +166,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         process_instance_attributes["process_model_with_diagram_identifier"] = self.process_model_with_diagram_identifier
         return process_instance_attributes
 
-    def to_dict(self) -> dict:
-        """Returns a dictionary with the same fields as the old ProcessInstanceModelSchema."""
-        return {
-            "id": self.id,
-            "process_model_identifier": self.process_model_identifier,
-            "process_model_display_name": self.process_model_display_name,
-            "process_initiator_id": self.process_initiator_id,
-            "start_in_seconds": self.start_in_seconds,
-            "end_in_seconds": self.end_in_seconds,
-            "updated_at_in_seconds": self.updated_at_in_seconds,
-            "created_at_in_seconds": self.created_at_in_seconds,
-            "status": self.status,
-            "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
-        }
-
     @validates("status")
     def validate_status(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, ProcessInstanceStatus)

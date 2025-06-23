@@ -99,7 +99,7 @@ def message_send(
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
     response_json = {
         "task_data": process_instance.get_data(),
-        "process_instance": process_instance.to_dict(),
+        "process_instance": process_instance.serialized(),
     }
     return Response(
         json.dumps(response_json),

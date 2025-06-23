@@ -286,7 +286,7 @@ def task_data_update(
             message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_guid}.",
         )
     return Response(
-        json.dumps(process_instance.to_dict()),
+        json.dumps(process_instance.serialized()),
         status=200,
         mimetype="application/json",
     )
@@ -338,7 +338,7 @@ def manual_complete_task(
             message=f"Could not complete Task {task_guid} in Instance {process_instance_id}",
         )
     return Response(
-        json.dumps(process_instance.to_dict()),
+        json.dumps(process_instance.serialized()),
         status=200,
         mimetype="application/json",
     )
