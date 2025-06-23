@@ -124,4 +124,7 @@ class File:
         return cls(**filtered_data)
 
     def serialized(self) -> dict[str, Any]:
-        return self.to_dict()
+        dictionary = self.__dict__
+        if isinstance(self.file_contents, bytes):
+            dictionary["file_contents"] = self.file_contents.decode("utf-8")
+        return dictionary
