@@ -6,7 +6,7 @@ from helpers.login import login, logout, BASE_URL
 from helpers.playwright_setup import browser_context  # fixture
 
 
-def test_can_perform_crud_operations(browser_context: BrowserContext):
+def test_can_perform_crud_operations_on_models(browser_context: BrowserContext):
     """
     Test that a user can create, view, update, and delete a process model via the UI.
     """
@@ -21,8 +21,12 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     page.goto(f"{BASE_URL}/process-groups/{group_path}")
 
     # Confirm on group page via breadcrumbs
-    expect(page.get_by_test_id("process-group-breadcrumb-Shared Resources")).to_be_visible(timeout=10000)
-    expect(page.get_by_test_id("process-group-breadcrumb-Acceptance Tests Group One")).to_be_visible(timeout=10000)
+    expect(
+        page.get_by_test_id("process-group-breadcrumb-Shared Resources")
+    ).to_be_visible(timeout=10000)
+    expect(
+        page.get_by_test_id("process-group-breadcrumb-Acceptance Tests Group One")
+    ).to_be_visible(timeout=10000)
 
     # 3. Create a new process model
     unique = uuid.uuid4().hex
@@ -35,10 +39,8 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     add_btn.click()
 
     # Verify navigation to new model form
-    expect(
-        page
-    ).to_have_url(
-        re.compile(fr".*/process-models/{re.escape(group_path)}/new$"),
+    expect(page).to_have_url(
+        re.compile(rf".*/process-models/{re.escape(group_path)}/new$"),
         timeout=10000,
     )
 
@@ -60,15 +62,15 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
 
     # 4. Verify detail page loaded with correct model
     # URL pattern: /process-models/{group_path}:{model_id}
-    expect(
-        page
-    ).to_have_url(
-        re.compile(fr".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}$"),
+    expect(page).to_have_url(
+        re.compile(
+            rf".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}$"
+        ),
         timeout=10000,
     )
-    expect(
-        page.get_by_text(f"Process Model: {display_name}")
-    ).to_be_visible(timeout=10000)
+    expect(page.get_by_text(f"Process Model: {display_name}")).to_be_visible(
+        timeout=10000
+    )
 
     # 5. Update the process model display name
     new_display = f"{display_name} edited"
@@ -77,10 +79,10 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     edit_btn.click()
 
     # Verify navigation to edit form
-    expect(
-        page
-    ).to_have_url(
-        re.compile(fr".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}/edit$"),
+    expect(page).to_have_url(
+        re.compile(
+            rf".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}/edit$"
+        ),
         timeout=10000,
     )
 
@@ -94,15 +96,15 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     update_btn.click()
 
     # Confirm updated detail page
-    expect(
-        page
-    ).to_have_url(
-        re.compile(fr".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}$"),
+    expect(page).to_have_url(
+        re.compile(
+            rf".*/process-models/{re.escape(group_path)}:{re.escape(model_id)}$"
+        ),
         timeout=10000,
     )
-    expect(
-        page.get_by_text(f"Process Model: {new_display}")
-    ).to_be_visible(timeout=10000)
+    expect(page.get_by_text(f"Process Model: {new_display}")).to_be_visible(
+        timeout=10000
+    )
 
     # 6. Delete the process model
     delete_btn = page.get_by_test_id("delete-process-model-button")
@@ -117,10 +119,8 @@ def test_can_perform_crud_operations(browser_context: BrowserContext):
     confirm_btn.click()
 
     # 7. Verify deletion: back to group page, model no longer appears
-    expect(
-        page
-    ).to_have_url(
-        re.compile(fr".*/process-groups/{re.escape(group_path)}$"),
+    expect(page).to_have_url(
+        re.compile(rf".*/process-groups/{re.escape(group_path)}$"),
         timeout=10000,
     )
     expect(page.get_by_text(model_id)).to_have_count(0)
