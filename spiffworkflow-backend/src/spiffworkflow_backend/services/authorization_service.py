@@ -875,7 +875,7 @@ class AuthorizationService:
                 unique_user_group_identifiers.add(group_identifier)
             if not group_permissions_only:
                 for username in group["users"]:
-                    if user_model and username != user_model.username:
+                    if user_model and username not in [user_model.username, user_model.email]:
                         continue
                     user_to_group_dict: UserToGroupDict = {
                         "username": username,
