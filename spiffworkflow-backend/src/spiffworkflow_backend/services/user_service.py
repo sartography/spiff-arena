@@ -157,7 +157,11 @@ class UserService:
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
         """Only called from create_user which is normally called at sign-in time"""
-        waiting = UserGroupAssignmentWaitingModel().query.filter(UserGroupAssignmentWaitingModel.username == user.username).all()
+        waiting = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(UserGroupAssignmentWaitingModel.username.in_([user.username, user.email]))  # type: ignore
+            .all()
+        )
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
@@ -167,7 +171,9 @@ class UserService:
             .all()
         )
         for wildcard in wildcards:
-            if re.match(wildcard.pattern_from_wildcard_username(), user.username):
+            if re.match(wildcard.pattern_from_wildcard_username(), user.username) or (
+                user.email and re.match(wildcard.pattern_from_wildcard_username(), user.email)
+            ):
                 cls.add_user_to_group(user, wildcard.group)
         db.session.commit()
 
