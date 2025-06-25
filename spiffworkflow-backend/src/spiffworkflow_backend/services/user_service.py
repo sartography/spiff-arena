@@ -157,7 +157,11 @@ class UserService:
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
         """Only called from create_user which is normally called at sign-in time"""
-        waiting = UserGroupAssignmentWaitingModel().query.filter(UserGroupAssignmentWaitingModel.username == user.username).all()
+        waiting = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(UserGroupAssignmentWaitingModel.username.in_([user.username, user.email]))  # type: ignore
+            .all()
+        )
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
@@ -167,7 +171,9 @@ class UserService:
             .all()
         )
         for wildcard in wildcards:
-            if re.match(wildcard.pattern_from_wildcard_username(), user.username):
+            if re.match(wildcard.pattern_from_wildcard_username(), user.username) or (
+                user.email and re.match(wildcard.pattern_from_wildcard_username(), user.email)
+            ):
                 cls.add_user_to_group(user, wildcard.group)
         db.session.commit()
 
@@ -275,14 +281,15 @@ class UserService:
     @classmethod
     def add_user_to_group_or_add_to_waiting(
         cls, username_or_email: str, group_identifier: str
-    ) -> tuple[UserGroupAssignmentWaitingModel | None, list[UserToGroupDict] | None]:
+    ) -> tuple[UserGroupAssignmentWaitingModel | None, list[UserToGroupDict]]:
         group = cls.find_or_create_group(group_identifier)
         user = UserModel.query.filter(or_(UserModel.username == username_or_email, UserModel.email == username_or_email)).first()
         if user:
+            user_to_group_identifiers: list[UserToGroupDict] = [{"username": user.username, "group_identifier": group.identifier}]
             cls.add_user_to_group(user, group)
+            return (None, user_to_group_identifiers)
         else:
             return cls.add_waiting_group_assignment(username_or_email, group)
-        return (None, None)
 
     @classmethod
     def add_user_to_group_by_group_identifier(
