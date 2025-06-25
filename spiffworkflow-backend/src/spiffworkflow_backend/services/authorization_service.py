@@ -874,11 +874,11 @@ class AuthorizationService:
             if group_identifier == current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]:
                 unique_user_group_identifiers.add(group_identifier)
             if not group_permissions_only:
-                for username in group["users"]:
-                    if user_model and username not in [user_model.username, user_model.email]:
+                for username_or_email in group["users"]:
+                    if user_model and username_or_email not in [user_model.username, user_model.email]:
                         continue
                     (wugam, new_user_to_group_identifiers) = UserService.add_user_to_group_or_add_to_waiting(
-                        username, group_identifier
+                        username_or_email, group_identifier
                     )
                     if wugam is not None:
                         waiting_user_group_assignments.append(wugam)
