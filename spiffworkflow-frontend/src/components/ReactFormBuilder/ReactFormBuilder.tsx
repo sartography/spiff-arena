@@ -439,7 +439,7 @@ export default function ReactFormBuilder({
   }
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Tabs value={selectedIndex} onChange={handleTabChange}>
           <Tab label="Json Schema" />
           <Tab label="UI Settings" />
@@ -537,7 +537,7 @@ export default function ReactFormBuilder({
           )}
         </Box>
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Typography variant="h4">Form Preview</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
