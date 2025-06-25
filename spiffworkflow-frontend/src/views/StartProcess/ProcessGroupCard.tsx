@@ -1,3 +1,5 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardActionArea,
@@ -26,6 +28,7 @@ export default function ProcessGroupCard({
 }) {
   const navigate = useNavigate();
   const captionColor = 'text.secondary';
+  const { t } = useTranslation();
 
   return (
     <Card
@@ -67,10 +70,10 @@ export default function ProcessGroupCard({
             </Typography>
 
             <Typography variant="caption" sx={{ color: captionColor }}>
-              Groups: {group.process_groups.length}
+              {t('groups') + ': ' + group.process_groups.length}
             </Typography>
             <Typography variant="caption" sx={{ color: captionColor }}>
-              Models: {group.process_models.length}
+              {t('models') + ': ' + group.process_models.length}
             </Typography>
           </Stack>
         </CardContent>

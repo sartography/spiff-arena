@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 import DataStoreForm from '../components/DataStoreForm';
 import { DataStore, HotCrumbItem } from '../interfaces';
 import { setPageTitle } from '../helpers';
@@ -17,11 +18,12 @@ export default function DataStoreNew() {
     description: '',
   });
 
+  const { t } = useTranslation();
   useEffect(() => {
-    setPageTitle(['New Data Store']);
-  }, []);
+    setPageTitle([t('new_data_store')]);
+  }, [t]);
 
-  const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/process-groups']];
+  const hotCrumbs: HotCrumbItem[] = [[t('process_groups'), '/process-groups']];
   if (parentGroupId) {
     hotCrumbs.push({
       entityToExplode: parentGroupId,
@@ -34,7 +36,7 @@ export default function DataStoreNew() {
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
       <Typography variant="h1" gutterBottom>
-        Add Data Store
+        {t('add_data_store')}
       </Typography>
       <DataStoreForm
         mode="new"

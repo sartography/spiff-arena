@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -30,6 +31,7 @@ export default function ProcessModelFileUploadModal({
   const [duplicateFilename, setDuplicateFilename] = useState<string>('');
   const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
     useState(false);
+  const { t } = useTranslation();
 
   const handleOverwriteFileConfirm = () => {
     setShowOverwriteConfirmationPrompt(false);
@@ -76,20 +78,20 @@ export default function ProcessModelFileUploadModal({
         onClose={handleOverwriteFileCancel}
         aria-labelledby="overwrite-dialog-title"
       >
-        <DialogTitle id="overwrite-dialog-title">Overwrite file?</DialogTitle>
+        <DialogTitle id="overwrite-dialog-title">{t('overwrite_file')}</DialogTitle>
         <DialogContent>
-          <Typography>Overwrite the file: {duplicateFilename}</Typography>
+          <Typography>{t('overwrite_file_description', { filename: duplicateFilename })}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleOverwriteFileCancel} color="primary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleOverwriteFileConfirm}
             color="primary"
             autoFocus
           >
-            Yes
+            {t('yes')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -104,13 +106,12 @@ export default function ProcessModelFileUploadModal({
         onClose={handleFileUploadCancel}
         aria-labelledby="upload-dialog-title"
       >
-        <DialogTitle id="upload-dialog-title">Upload File</DialogTitle>
+        <DialogTitle id="upload-dialog-title">{t('upload_file')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Max file size is 500mb. Only .bpmn, .dmn, .json, and .md files are
-            supported.
+            {t('upload_file_instructions')}
           </Typography>
-          <SpiffTooltip title="Delete file">
+          <SpiffTooltip title={t('delete_file')}>
             <input
               type="file"
               accept=".bpmn,.dmn,.json,.md"
@@ -124,14 +125,14 @@ export default function ProcessModelFileUploadModal({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFileUploadCancel} color="primary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleLocalFileUpload}
             color="primary"
             disabled={filesToUpload === null}
           >
-            Upload
+            {t('upload_button')}
           </Button>
         </DialogActions>
       </Dialog>
