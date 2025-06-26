@@ -1,6 +1,0 @@
-FAILED browser_tests/process_models/test_can_create_new_bpmn_dmn_json_files.py::test_can_create_new_bpmn_dmn_json_files - AssertionError: Filename input visible
-FAILED browser_tests/tasks/test_can_complete_and_navigate_a_form.py::test_can_complete_and_navigate_a_form - playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
-
-FAILED test/browser/process_instances/test_can_create_and_modify.py::test_can_create_and_modify - AssertionError: Locator expected to be visible
-FAILED test/browser/tasks/test_can_complete_and_navigate_a_form.py::test_can_complete_and_navigate_a_form - playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
-
