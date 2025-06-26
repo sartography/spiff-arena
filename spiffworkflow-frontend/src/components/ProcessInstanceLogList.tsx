@@ -298,7 +298,7 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       tableRow.push(
         <>
-          <TableCell data-qa="paginated-entity-id">{logEntry.id}</TableCell>
+          <TableCell data-testid="paginated-entity-id">{logEntry.id}</TableCell>
           {bpmnProcessCell}
           {taskNameCell}
         </>,
@@ -338,7 +338,7 @@ export default function ProcessInstanceLogList({
         <TableCell>
           <Link
             reloadDocument
-            data-qa="process-instance-show-link"
+            data-testid="process-instance-show-link"
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
             title="View state when task was completed"
           >
@@ -564,7 +564,7 @@ export default function ProcessInstanceLogList({
         pagination={pagination}
         tableToDisplay={buildTable()}
         paginationQueryParamPrefix={paginationQueryParamPrefix}
-        paginationDataQATag={`pagination-options-${tableType}`}
+        paginationDataTestidTag={`pagination-options-${tableType}`}
       />
     </>
   );

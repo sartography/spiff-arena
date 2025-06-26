@@ -9,6 +9,7 @@
 /docs/_build/
 /src/*.egg-info/
 /src/instance
+/process_models
 __pycache__/
 *.sqlite3
 node_modules

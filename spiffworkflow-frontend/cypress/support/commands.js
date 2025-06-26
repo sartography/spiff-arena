@@ -29,7 +29,7 @@ import 'cypress-file-upload';
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
 Cypress.Commands.add('getBySel', (selector, ...args) => {
-  return cy.get(`[data-qa=${selector}]`, ...args);
+  return cy.get(`[data-testid=${selector}]`, ...args);
 });
 
 Cypress.Commands.add('navigateToHome', () => {
@@ -150,11 +150,11 @@ Cypress.Commands.add(
 Cypress.Commands.add(
   'basicPaginationTest',
   (
-    dataQaTagToUseToEnsureTableHasLoaded = 'paginated-entity-id',
-    paginationOptionsDataQa = 'pagination-options',
+    dataTestidTagToUseToEnsureTableHasLoaded = 'paginated-entity-id',
+    paginationOptionsDataTestid = 'pagination-options',
   ) => {
-    cy.getBySel(paginationOptionsDataQa).scrollIntoView();
-    cy.getBySel(paginationOptionsDataQa)
+    cy.getBySel(paginationOptionsDataTestid).scrollIntoView();
+    cy.getBySel(paginationOptionsDataTestid)
       .find('.cds--select__item-count')
       .find('.cds--select-input')
       .select('2');
@@ -168,22 +168,22 @@ Cypress.Commands.add(
     // to be sure it's finished, grab the log id from page 1. remember it.
     // then use the magical contains command that waits for the element to exist AND
     // for that element to contain the text we're looking for.
-    cy.getBySel(dataQaTagToUseToEnsureTableHasLoaded)
+    cy.getBySel(dataTestidTagToUseToEnsureTableHasLoaded)
       .first()
       .then(($element) => {
         const oldId = $element.text().trim();
-        cy.getBySel(paginationOptionsDataQa)
+        cy.getBySel(paginationOptionsDataTestid)
           .find('.cds--pagination__button--forward')
           .click();
-        cy.getBySel(paginationOptionsDataQa)
-          .contains(`[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`, oldId)
+        cy.getBySel(paginationOptionsDataTestid)
+          .contains(`[data-testid=${dataTestidTagToUseToEnsureTableHasLoaded}]`, oldId)
           .should('not.exist');
-        cy.getBySel(paginationOptionsDataQa).contains(/\b3–4 of \d+/);
-        cy.getBySel(paginationOptionsDataQa)
+        cy.getBySel(paginationOptionsDataTestid).contains(/\b3–4 of \d+/);
+        cy.getBySel(paginationOptionsDataTestid)
           .find('.cds--pagination__button--backward')
           .click();
-        cy.getBySel(paginationOptionsDataQa).contains(/\b1–2 of \d+/);
-        cy.contains(`[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`, oldId);
+        cy.getBySel(paginationOptionsDataTestid).contains(/\b1–2 of \d+/);
+        cy.contains(`[data-testid=${dataTestidTagToUseToEnsureTableHasLoaded}]`, oldId);
       });
   },
 );

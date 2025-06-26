@@ -57,7 +57,7 @@ export default function UserSearch({
         onSelectedUser(value);
       }}
       id="user-search"
-      data-qa="user-search"
+      data-testid="user-search"
       options={userList}
       getOptionLabel={(option: User) => option.username || ''}
       renderInput={(params) => (

@@ -185,7 +185,7 @@ export default function DataStoreForm({
     const textInputs = [
       <TextField
         id="data-store-name"
-        data-qa="data-store-name-input"
+        data-testid="data-store-name-input"
         name="name"
         error={nameInvalid}
         helperText={nameInvalid ? 'Name is required.' : ''}

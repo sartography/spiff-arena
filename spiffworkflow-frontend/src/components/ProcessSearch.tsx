@@ -33,7 +33,7 @@ export default function ProcessSearch({
       <div style={{ width: '100%', height }}>
         <Autocomplete
           id="process-model-select"
-          data-qa="process-model-selection"
+          data-testid="process-model-selection"
           options={processes}
           disablePortal
           value={selectedItem || null}

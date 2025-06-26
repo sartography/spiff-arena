@@ -265,7 +265,7 @@ export default function ProcessInstanceListTable({
     processInstance: ProcessInstance,
     id: number,
   ) => {
-    return <span data-qa="paginated-entity-id">{id}</span>;
+    return <span data-testid="paginated-entity-id">{id}</span>;
   };
   const formatProcessModelIdentifier = (
     processInstance: ProcessInstance,
@@ -337,7 +337,7 @@ export default function ProcessInstanceListTable({
         <TableCell
           onClick={() => navigateToProcessInstance(processInstance)}
           onKeyDown={() => navigateToProcessInstance(processInstance)}
-          data-qa={`process-instance-status-${value}`}
+          data-testid={`process-instance-status-${value}`}
         >
           {formatter(processInstance, value)}
         </TableCell>
@@ -374,7 +374,7 @@ export default function ProcessInstanceListTable({
         key={`td-${columnAccessor}-${processInstance.id}`}
         onClick={() => navigateToProcessInstance(processInstance)}
         onKeyDown={() => navigateToProcessInstance(processInstance)}
-        data-qa={`process-instance-show-link-${columnAccessor}`}
+        data-testid={`process-instance-show-link-${columnAccessor}`}
       >
         {cellContent}
       </TableCell>
@@ -411,7 +411,7 @@ export default function ProcessInstanceListTable({
             <Grid>
               <SpiffTooltip title="Refresh data in the table">
                 <IconButton
-                  data-qa="refresh-process-instance-table"
+                  data-testid="refresh-process-instance-table"
                   onClick={() => getProcessInstances()}
                 >
                   <Refresh />
@@ -436,7 +436,7 @@ export default function ProcessInstanceListTable({
         <Grid style={{ textAlign: 'right' }} offset="auto">
           <SpiffTooltip title="View Filterable List" placement="top">
             <IconButton
-              data-qa="process-instance-list-link"
+              data-testid="process-instance-list-link"
               onClick={() =>
                 navigate(`/process-instances?report_hash=${reportHash}`)
               }

@@ -445,7 +445,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <Link
         reloadDocument
-        data-qa="process-instance-step-link"
+        data-testid="process-instance-step-link"
         to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
       >
         {label}
@@ -551,7 +551,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               </Typography>
               <Typography component="dd" variant="body2">
                 <Link
-                  data-qa="go-to-current-diagram-process-model"
+                  data-testid="go-to-current-diagram-process-model"
                   to={`/process-models/${modifyProcessIdentifierForPathParam(
                     processInstance.process_model_with_diagram_identifier || '',
                   )}`}
@@ -608,7 +608,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <Typography
                   component="dd"
                   variant="body2"
-                  data-qa={`metadata-value-${processInstanceMetadata.key}`}
+                  data-testid={`metadata-value-${processInstanceMetadata.key}`}
                 >
                   {formatMetadataValue(
                     processInstanceMetadata.key,
@@ -724,7 +724,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       return (
         <ButtonWithConfirmation
-          data-qa="process-instance-delete"
+          data-testid="process-instance-delete"
           renderIcon={<DeleteOutlineOutlined />}
           iconDescription="Delete"
           hasIconOnly
@@ -1200,7 +1200,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<RuleDraft />}
-          data-qa="create-script-unit-test-button"
+          data-testid="create-script-unit-test-button"
           onClick={createScriptUnitTest}
         >
           Create Script Unit Test
@@ -1234,7 +1234,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Edit />}
-          data-qa="edit-task-data-button"
+          data-testid="edit-task-data-button"
           onClick={() => setEditingTaskData(true)}
         >
           Edit Task Data
@@ -1247,7 +1247,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           variant="outlined"
           startIcon={<UserFollow />}
           title="Allow an additional user to complete this task"
-          data-qa="add-potential-owners-button"
+          data-testid="add-potential-owners-button"
           onClick={() => setAddingPotentialOwners(true)}
         >
           Assign user
@@ -1259,7 +1259,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Play />}
-          data-qa="execute-task-complete-button"
+          data-testid="execute-task-complete-button"
           onClick={() => completeTask(true)}
         >
           Execute Task
@@ -1269,7 +1269,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<SkipForward />}
-          data-qa="mark-task-complete-button"
+          data-testid="mark-task-complete-button"
           onClick={() => completeTask(false)}
         >
           Skip Task
@@ -1281,7 +1281,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Send />}
-          data-qa="select-event-button"
+          data-testid="select-event-button"
           onClick={() => setSelectingEvent(true)}
         >
           Send Event
@@ -1299,7 +1299,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           variant="outlined"
           startIcon={<Reset />}
           title={titleText}
-          data-qa="reset-process-button"
+          data-testid="reset-process-button"
           onClick={() => resetProcessInstance()}
         >
           Reset Process Here
@@ -1757,7 +1757,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               was active.{' '}
               <Link
                 reloadDocument
-                data-qa="process-instance-view-active-task-link"
+                data-testid="process-instance-view-active-task-link"
                 to={processInstanceShowPageBaseUrl}
               >
                 View current process instance state.

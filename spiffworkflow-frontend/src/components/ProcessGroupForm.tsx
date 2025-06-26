@@ -115,7 +115,7 @@ export default function ProcessGroupForm({
     const textInputs = [
       <TextField
         id="process-group-display-name"
-        data-qa="process-group-display-name-input"
+        data-testid="process-group-display-name-input"
         name="display_name"
         error={displayNameInvalid}
         helperText={displayNameInvalid ? 'Display Name is required.' : ''}

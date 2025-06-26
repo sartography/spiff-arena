@@ -37,7 +37,7 @@ export default function Login() {
       buttons.push(
         <Button
           key={option.identifier}
-          data-qa={`login-button-${option.identifier}`}
+          data-testid={`login-button-${option.identifier}`}
           size="large"
           variant="contained"
           endIcon={<ArrowForward />}

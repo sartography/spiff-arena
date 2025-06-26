@@ -21,7 +21,7 @@ export default function SignOut() {
       <Button
         variant="contained"
         onClick={logoutUser}
-        data-qa="public-sign-out"
+        data-testid="public-sign-out"
       >
         Sign out
       </Button>

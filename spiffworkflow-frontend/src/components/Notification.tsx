@@ -22,7 +22,7 @@ type OwnProps = {
   allowTogglingFullMessage?: boolean;
   timeout?: number;
   withBottomMargin?: boolean;
-  'data-qa'?: string;
+  'data-testid'?: string;
 };
 
 export function Notification({
@@ -34,7 +34,7 @@ export function Notification({
   allowTogglingFullMessage = false,
   timeout,
   withBottomMargin = true,
-  'data-qa': dataQa,
+  'data-testid': dataTestid,
 }: OwnProps) {
   const [showMessage, setShowMessage] = useState<boolean>(
     !allowTogglingFullMessage,
@@ -48,8 +48,8 @@ export function Notification({
   }
 
   const additionalProps: ObjectWithStringKeysAndValues = {};
-  if (dataQa) {
-    additionalProps['data-qa'] = dataQa;
+  if (dataTestid) {
+    additionalProps['data-testid'] = dataTestid;
   }
 
   return (

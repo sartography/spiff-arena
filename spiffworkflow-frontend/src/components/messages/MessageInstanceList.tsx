@@ -128,7 +128,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         processLink = FormatProcessModelDisplayName(row);
         instanceLink = (
           <Link
-            data-qa="process-instance-show-link"
+            data-testid="process-instance-show-link"
             to={`/process-instances/${modifyProcessIdentifierForPathParam(
               row.process_model_identifier,
             )}/${row.process_instance_id}`}
