@@ -410,6 +410,7 @@ class ProcessModelTestRunner:
         bpmn_process_instance.script_engine = ProcessModelTestRunnerScriptEngine(method_overrides=method_overrides)
         next_task = self._get_next_task(bpmn_process_instance)
         while next_task is not None:
+            print("TAKS", next_task.task_spec.bpmn_id)
             test_case_task_properties = None
             test_case_task_key = next_task.task_spec.bpmn_id
             if "tasks" in test_case_contents:
@@ -427,10 +428,19 @@ class ProcessModelTestRunner:
                     f"Cannot run test case '{test_case_identifier}'. It requires task data for"
                     f" {next_task.task_spec.bpmn_id} because it is of type '{task_type}'"
                 )
+            print("PROPS", test_case_task_properties)
             self._execute_task(next_task, test_case_task_key, test_case_task_properties)
+            print("DATA", bpmn_process_instance.data)
+            print("TASK AFTER", next_task)
+            bpmn_process_instance.refresh_waiting_tasks()
+            bpmn_process_instance.refresh_waiting_tasks()
             bpmn_process_instance.refresh_waiting_tasks()
             next_task = self._get_next_task(bpmn_process_instance)
+            print("NEXT", next_task)
 
+        spiff_tasks = bpmn_process_instance.get_tasks()
+        print("REMAINING TSKS", spiff_tasks)
+        print("DATA END", bpmn_process_instance.data)
         error_message = None
         if bpmn_process_instance.is_completed() is False:
             error_message = {

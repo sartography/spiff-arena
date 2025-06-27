@@ -1,0 +1,16 @@
+{
+  "test_case_for_process_instance_3": {
+    "tasks": {
+      "intermediate:task_a": {
+        "data": [
+          {}
+        ]
+      }
+    },
+    "expected_output_json": {
+      "data_objects": {
+        "task_a_done": true
+      }
+    }
+  }
+}

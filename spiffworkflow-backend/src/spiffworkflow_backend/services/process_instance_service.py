@@ -736,6 +736,7 @@ class ProcessInstanceService:
 
                 # maybe move this out once we have the interstitial page since this is
                 # here just so we can get the next human task
+                print("DO ENGING")
                 processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
