@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
 
-from marshmallow import Schema
 from sqlalchemy import ForeignKey
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -9,7 +8,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 
 
-@dataclass()
+@dataclass
 class SecretModel(SpiffworkflowBaseDBModel):
     __tablename__ = "secret"
     id: int = db.Column(db.Integer, primary_key=True)
@@ -19,16 +18,17 @@ class SecretModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
-    # value is not included in the serialized output because it is sensitive
-    def serialized(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Create a JSON serializable representation of the model."""
         return {
             "id": self.id,
             "key": self.key,
             "user_id": self.user_id,
+            "updated_at_in_seconds": self.updated_at_in_seconds,
+            "created_at_in_seconds": self.created_at_in_seconds,
         }
 
-
-class SecretModelSchema(Schema):
-    class Meta:
-        model = SecretModel
-        fields = ["key", "value", "user_id"]
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SecretModel":
+        """Create a SecretModel instance from a dictionary."""
+        return cls(**data)

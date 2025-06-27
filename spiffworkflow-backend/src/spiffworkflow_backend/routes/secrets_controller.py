@@ -8,7 +8,6 @@ from flask import make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.models.secret_model import SecretModel
-from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -16,14 +15,14 @@ from spiffworkflow_backend.services.user_service import UserService
 
 def secret_show(key: str) -> Response:
     secret = SecretService.get_secret(key)
-    return make_response(jsonify(secret), 200)
+    return make_response(jsonify(secret.to_dict()), 200)
 
 
 def secret_show_value(key: str) -> Response:
     secret = SecretService.get_secret(key)
 
     # normal serialization does not include the secret value, but this is the one endpoint where we want to return the goods
-    secret_as_dict = secret.serialized()
+    secret_as_dict = secret.to_dict()
     secret_as_dict["value"] = SecretService._decrypt(secret.value)
 
     return make_response(secret_as_dict, 200)
@@ -41,8 +40,14 @@ def secret_list(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+    results = []
+    for secret, username in secrets.items:
+        s = secret.to_dict()
+        s["username"] = username
+        results.append(s)
+
     response_json = {
-        "results": secrets.items,
+        "results": results,
         "pagination": {
             "count": len(secrets.items),
             "total": secrets.total,
@@ -56,7 +61,7 @@ def secret_create(body: dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
     return Response(
-        json.dumps(SecretModelSchema().dump(secret_model)),
+        json.dumps(secret_model.to_dict()),
         status=201,
         mimetype="application/json",
     )
