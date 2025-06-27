@@ -14,7 +14,7 @@
       <bpmn:incoming>Flow_0ko13c7</bpmn:incoming>
       <bpmn:outgoing>Flow_0sopv1l</bpmn:outgoing>
       <bpmn:conditionalEventDefinition id="ConditionalEventDefinition_1hjay1u">
-        <bpmn:condition>task_a_done</bpmn:condition>
+        <bpmn:condition>get_task_data_value("task_a_done") == True</bpmn:condition>
       </bpmn:conditionalEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_17j4s3n" sourceRef="task_a" targetRef="gateway_b" />
@@ -52,7 +52,7 @@
     <bpmn:scriptTask id="Activity_1j9p8tc">
       <bpmn:incoming>Flow_1mljxxc</bpmn:incoming>
       <bpmn:outgoing>Flow_1tqwnqb</bpmn:outgoing>
-      <bpmn:script>task_a_done = False</bpmn:script>
+      <bpmn:script># task_a_done = False</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -118,13 +118,13 @@
         <di:waypoint x="685" y="260" />
         <di:waypoint x="752" y="260" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1tqwnqb_di" bpmnElement="Flow_1tqwnqb">
-        <di:waypoint x="350" y="260" />
-        <di:waypoint x="365" y="260" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="DataOutputAssociation_0iw335n_di" bpmnElement="DataOutputAssociation_0iw335n">
         <di:waypoint x="488" y="220" />
         <di:waypoint x="452" y="155" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tqwnqb_di" bpmnElement="Flow_1tqwnqb">
+        <di:waypoint x="350" y="260" />
+        <di:waypoint x="365" y="260" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

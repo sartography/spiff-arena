@@ -332,6 +332,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            "globals": globals,
             **JinjaHelpers.get_helper_mapping(),
         }
 
