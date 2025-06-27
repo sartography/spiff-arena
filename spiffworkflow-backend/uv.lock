@@ -2036,9 +2036,18 @@ wheels = [
 [[package]]
 name = "spiffworkflow"
 version = "3.1.1"
-source = { git = "https://github.com/sartography/SpiffWorkflow?branch=main#c1e89e3f3b4e2ffd80f7b773ffa302572fc69404" }
+source = { directory = "../../SpiffWorkflow" }
 dependencies = [
     { name = "lxml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "build", marker = "extra == 'dev'" },
+    { name = "coverage", marker = "extra == 'dev'" },
+    { name = "lxml" },
+    { name = "sphinx", marker = "extra == 'doc'" },
+    { name = "sphinx-rtd-theme", marker = "extra == 'doc'" },
 ]
 
 [[package]]
@@ -2152,7 +2161,7 @@ requires-dist = [
     { name = "sentry-sdk", extras = ["flask"], specifier = ">=2.26,<2.27" },
     { name = "simplejson", specifier = ">=3.20.1,<3.21" },
     { name = "spiff-arena-common", specifier = ">=0.1.0" },
-    { name = "spiffworkflow", git = "https://github.com/sartography/SpiffWorkflow?branch=main" },
+    { name = "spiffworkflow", directory = "../../SpiffWorkflow" },
     { name = "spiffworkflow-connector-command", git = "https://github.com/sartography/spiffworkflow-connector-command.git?branch=main" },
     { name = "sqlalchemy", specifier = ">=2.0.31,<2.1" },
     { name = "sqlalchemy-stubs", git = "https://github.com/burnettk/sqlalchemy-stubs.git?branch=scoped-session-delete" },
