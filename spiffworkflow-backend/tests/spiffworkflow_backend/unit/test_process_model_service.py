@@ -48,8 +48,8 @@ class TestProcessModelService(BaseTest):
         process_models = ProcessModelService.get_process_models(recursive=True, include_files=True)
         assert len(process_models) == 1
 
-        pm_string = app.json.dumps(process_models[0])
-        pm_dict = app.json.loads(pm_string)
+        pm_string = app.app.json.dumps(process_models[0])
+        pm_dict = app.app.json.loads(pm_string)
         assert len(pm_dict["files"]) == 1
         file = pm_dict["files"][0]
         assert re.search("hello", file["file_contents"]) is not None

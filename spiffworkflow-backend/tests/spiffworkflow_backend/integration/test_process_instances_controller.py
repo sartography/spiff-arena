@@ -78,7 +78,7 @@ class TestProcessInstancesController(BaseTest):
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -137,7 +137,7 @@ class TestProcessInstancesController(BaseTest):
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",

@@ -192,7 +192,7 @@ class TestProcessInstanceService(BaseTest):
         assert spiff_task is None
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -283,7 +283,7 @@ class TestProcessInstanceService(BaseTest):
         assert spiff_task is None
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -376,7 +376,7 @@ class TestProcessInstanceService(BaseTest):
         assert spiff_task is None
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -407,7 +407,7 @@ class TestProcessInstanceService(BaseTest):
         assert spiff_task is not None
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -467,7 +467,7 @@ class TestProcessInstanceService(BaseTest):
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -508,7 +508,7 @@ class TestProcessInstanceService(BaseTest):
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
@@ -577,7 +577,7 @@ class TestProcessInstanceService(BaseTest):
         assert len(timer_event_children_guids) == 5
 
         new_file_path = os.path.join(
-            app.instance_path,
+            app.app.instance_path,
             "..",
             "..",
             "tests",
