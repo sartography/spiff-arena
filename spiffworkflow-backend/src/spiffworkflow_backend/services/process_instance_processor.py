@@ -1693,14 +1693,15 @@ class ProcessInstanceProcessor:
             "metadata": self.extract_metadata(),
         }
         LoggingService.log_event(task_event, log_extras)
+
         # children of a multi-instance task has the attribute "triggered" set to True
         # so use that to determine if a spiff_task is apart of a multi-instance task
         # and therefore we need to process its parent since the current task will not
         # know what is actually going on.
         # Basically "triggered" means "this task is not part of the task spec outputs"
-        spiff_task_to_process = spiff_task
-        if spiff_task_to_process.triggered is True:
+        if spiff_task.triggered is True:
             spiff_task_to_process = spiff_task.parent
+            task_service.update_task_model_with_spiff_task(spiff_task_to_process)
 
         tasks_to_update = self.bpmn_process_instance.get_tasks(updated_ts=run_started_at)
         for spiff_task_to_update in tasks_to_update:
