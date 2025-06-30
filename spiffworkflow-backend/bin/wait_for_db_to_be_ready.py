@@ -9,7 +9,7 @@ from spiffworkflow_backend.helpers.db_helper import try_to_connect
 def main() -> None:
     app = create_app()
     start_time = time.time()
-    with app.app_context():
+    with app.app.app_context():
         try_to_connect(start_time)
 
 

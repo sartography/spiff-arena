@@ -36,7 +36,7 @@ def _set_unit_testing_env_variables() -> None:
 def app() -> Generator[FlaskApp, Any, Any]:  # noqa
     _set_unit_testing_env_variables()
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         # to screw with this, poet add nplusone --group dev
         # from nplusone.ext.flask_sqlalchemy import NPlusOne
         # app.config["NPLUSONE_RAISE"] = True

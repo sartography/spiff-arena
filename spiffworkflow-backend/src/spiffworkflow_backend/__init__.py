@@ -116,4 +116,4 @@ def create_app() -> FlaskApp:
     start_apscheduler_if_appropriate(app)
     init_celery_if_appropriate(app)
 
-    return app
+    return connexion_app
