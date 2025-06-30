@@ -37,7 +37,7 @@ class TestNestedGroups(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -51,9 +51,9 @@ class TestNestedGroups(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json["error_code"] == "existing_instances"
-        assert "We cannot delete the group" in response.json["message"]
-        assert "there are models with existing instances inside the group" in response.json["message"]
+        assert response.json()["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json()["message"]
+        assert "there are models with existing instances inside the group" in response.json()["message"]
 
     def test_delete_group_with_running_instance_in_nested_group(
         self,
@@ -92,7 +92,7 @@ class TestNestedGroups(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{process_instance_id}/run",
@@ -106,9 +106,9 @@ class TestNestedGroups(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json["error_code"] == "existing_instances"
-        assert "We cannot delete the group" in response.json["message"]
-        assert "there are models with existing instances inside the group" in response.json["message"]
+        assert response.json()["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json()["message"]
+        assert "there are models with existing instances inside the group" in response.json()["message"]
 
     def test_nested_groups(
         self,

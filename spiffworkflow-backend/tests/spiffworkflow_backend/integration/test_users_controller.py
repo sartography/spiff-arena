@@ -37,6 +37,6 @@ class TestUsersController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json
-        assert response.json["users"] is not None
-        assert response.json["username_prefix"] == username_prefix
-        assert len(response.json["users"]) == expected_count
+        assert response.json()["users"] is not None
+        assert response.json()["username_prefix"] == username_prefix
+        assert len(response.json()["users"]) == expected_count

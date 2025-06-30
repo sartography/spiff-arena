@@ -45,8 +45,8 @@ class TestServiceAccounts(BaseTest):
             data=json.dumps(post_body),
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["key"] == post_body["key"]
+        assert response.json() is not None
+        assert response.json()["key"] == post_body["key"]
 
     def test_send_message_with_service_account(
         self,

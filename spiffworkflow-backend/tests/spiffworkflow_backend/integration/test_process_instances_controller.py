@@ -37,8 +37,8 @@ class TestProcessInstancesController(BaseTest):
         assert response.status_code == 200
         assert response.json
         assert "process_instance" in response.json
-        assert response.json["process_instance"]["id"] == process_instance.id
-        assert response.json["uri_type"] == "for-me"
+        assert response.json()["process_instance"]["id"] == process_instance.id
+        assert response.json()["uri_type"] == "for-me"
 
         response = client.get(
             f"/v1.0/process-instances/find-by-id/{process_instance.id}",
@@ -53,8 +53,8 @@ class TestProcessInstancesController(BaseTest):
         assert response.status_code == 200
         assert response.json
         assert "process_instance" in response.json
-        assert response.json["process_instance"]["id"] == process_instance.id
-        assert response.json["uri_type"] is None
+        assert response.json()["process_instance"]["id"] == process_instance.id
+        assert response.json()["uri_type"] is None
 
     def test_process_instance_migrate(
         self,
@@ -102,7 +102,7 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
@@ -160,10 +160,10 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["can_migrate"] is True
-        assert response.json["process_instance_id"] == process_instance.id
-        assert response.json["current_bpmn_process_hash"] is not None
+        assert response.json() is not None
+        assert response.json()["can_migrate"] is True
+        assert response.json()["process_instance_id"] == process_instance.id
+        assert response.json()["current_bpmn_process_hash"] is not None
 
         # this can actually be None if the process model repo is not git at all
         # such as when running the docker container ci tests.

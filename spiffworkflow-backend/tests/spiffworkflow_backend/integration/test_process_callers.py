@@ -30,9 +30,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 4
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 4
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -40,9 +40,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1
 
     def test_references_after_process_model_delete(
         self,
@@ -72,9 +72,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -82,9 +82,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
     def test_references_after_process_group_delete(
         self,
@@ -156,9 +156,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 3
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 3
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -166,9 +166,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
     def test_references_after_process_file_delete_and_upload(
         self,
@@ -218,6 +218,6 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1

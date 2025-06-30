@@ -86,8 +86,8 @@ class TestMessages(BaseTest):
             content_type="application/json",
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 4
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 4
 
         response = client.get(
             "/v1.0/message-models",
@@ -95,8 +95,8 @@ class TestMessages(BaseTest):
             content_type="application/json",
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 0, "should not have access to messages defined in a sub directory"
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 0, "should not have access to messages defined in a sub directory"
 
     def test_process_group_update_syncs_message_models(
         self,
@@ -113,8 +113,8 @@ class TestMessages(BaseTest):
             content_type="application/json",
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 0
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 0
 
         process_group = {
             "admin": False,
@@ -165,10 +165,10 @@ class TestMessages(BaseTest):
             content_type="application/json",
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
         assert "messages" in response.json
 
-        messages = response.json["messages"]
+        messages = response.json()["messages"]
         expected_message_identifiers = {"table_seated", "order_ready", "end_of_day_receipts"}
         assert len(messages) == len(expected_message_identifiers)
 

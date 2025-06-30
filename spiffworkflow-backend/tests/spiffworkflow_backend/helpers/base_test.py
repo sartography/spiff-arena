@@ -128,15 +128,15 @@ class BaseTest:
 
         headers = self.logged_in_headers(user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(user),
         )
 
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         return (process_model, int(process_instance_id))
 
@@ -162,7 +162,6 @@ class BaseTest:
         display_name: str = "",
     ) -> str:
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
-        headers = self.logged_in_headers(user, additional_headers={"Content-type": "application/json"})
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
@@ -469,7 +468,7 @@ class BaseTest:
             data=json.dumps({"report_metadata": report_metadata_to_use}),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
         return response
 
     def empty_report_metadata_body(self) -> ReportMetadata:
@@ -585,16 +584,16 @@ class BaseTest:
         response = self.post_to_process_instance_list(client, user, report_metadata=process_instance_report.get_report_metadata())
 
         if expect_to_find_instance is True:
-            assert len(response.json["results"]) == 1
-            assert response.json["results"][0]["id"] == process_instance.id
+            assert len(response.json()["results"]) == 1
+            assert response.json()["results"][0]["id"] == process_instance.id
         else:
-            if len(response.json["results"]) == 1:
-                first_result = response.json["results"][0]
+            if len(response.json()["results"]) == 1:
+                first_result = response.json()["results"][0]
                 assert first_result["id"] != process_instance.id, (
                     f"expected not to find a specific process instance, but we found it: {first_result}"
                 )
             else:
-                assert len(response.json["results"]) == 0
+                assert len(response.json()["results"]) == 0
         db.session.delete(process_instance_report)
         db.session.commit()
 

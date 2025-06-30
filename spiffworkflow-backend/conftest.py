@@ -1,12 +1,11 @@
-from collections.abc import Generator
-from typing import Any
-
 # noqa
 import os
 import shutil
+from collections.abc import Generator
+from typing import Any
 
-from connexion import FlaskApp
 import pytest
+from connexion import FlaskApp
 from flask.app import Flask
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel

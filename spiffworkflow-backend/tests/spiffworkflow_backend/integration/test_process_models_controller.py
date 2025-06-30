@@ -62,8 +62,8 @@ class TestProcessModelsController(BaseTest):
         )
 
         assert response.status_code == 403
-        assert response.json is not None
-        assert response.json["message"].startswith(
+        assert response.json() is not None
+        assert response.json()["message"].startswith(
             "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
         )
 
@@ -200,10 +200,10 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
 
-        top_process_group = response.json["results"][0]
+        top_process_group = response.json()["results"][0]
         assert top_process_group["id"] == "top_group"
         assert top_process_group["display_name"] == "top_group"
         assert top_process_group["description"] is None
@@ -233,11 +233,11 @@ class TestProcessModelsController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["id"] == process_model.id
-        assert len(response.json["files"]) == 1
-        assert response.json["files"][0]["name"] == "random_fact.bpmn"
-        assert response.json["parent_groups"] == [
+        assert response.json() is not None
+        assert response.json()["id"] == process_model.id
+        assert len(response.json()["files"]) == 1
+        assert response.json()["files"][0]["name"] == "random_fact.bpmn"
+        assert response.json()["parent_groups"] == [
             {"display_name": "test_group", "id": "test_group", "description": None, "process_models": [], "process_groups": []}
         ]
 
@@ -257,8 +257,8 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "process_model_cannot_be_found"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "process_model_cannot_be_found"
 
     def _get_process_show_show_response(
         self, client: FlaskClient, user: UserModel, process_model_id: str, expected_response: int = 200
@@ -270,6 +270,6 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == expected_response
-        assert response.json is not None
+        assert response.json() is not None
         process_model_data: dict = response.json
         return process_model_data

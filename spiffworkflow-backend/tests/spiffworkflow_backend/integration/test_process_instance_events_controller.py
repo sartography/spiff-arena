@@ -49,7 +49,7 @@ class TestProcessInstanceEventsController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json
-        events = response.json["results"]
+        events = response.json()["results"]
         assert len(events) == number_of_events
 
         # events are returned newest first so reverse order to make checking easier

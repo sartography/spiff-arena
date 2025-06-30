@@ -161,8 +161,8 @@ class TestAuthentication(BaseTest):
             f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )
         assert response.status_code == 500
-        assert response.json is not None
-        assert response.json["message"].startswith("InvalidRedirectUrlError:")
+        assert response.json() is not None
+        assert response.json()["message"].startswith("InvalidRedirectUrlError:")
 
     def test_can_access_public_endpoints_and_get_token(
         self,

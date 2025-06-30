@@ -31,8 +31,8 @@ class TestDataStores(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -90,10 +90,10 @@ class TestDataStores(BaseTest):
             "artist": "Pantera",
         }
 
-        assert response.json is not None
-        assert len(response.json["results"]) == 10
-        assert response.json["pagination"]["count"] == 10
-        assert response.json["pagination"]["total"] == 76
-        assert response.json["pagination"]["pages"] == 8
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 10
+        assert response.json()["pagination"]["count"] == 10
+        assert response.json()["pagination"]["total"] == 76
+        assert response.json()["pagination"]["pages"] == 8
 
-        assert expected_item_in_response in response.json["results"]
+        assert expected_item_in_response in response.json()["results"]

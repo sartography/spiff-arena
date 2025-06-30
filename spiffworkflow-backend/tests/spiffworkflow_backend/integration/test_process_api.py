@@ -98,8 +98,8 @@ class TestProcessApi(BaseTest):
             data=json.dumps(request_body),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json == expected_response_body
+        assert response.json() is not None
+        assert response.json() == expected_response_body
 
     def test_permissions_check_with_wildcard_permissions_through_group(
         self,
@@ -139,8 +139,8 @@ class TestProcessApi(BaseTest):
             data=json.dumps(request_body),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json == expected_response_body
+        assert response.json() is not None
+        assert response.json() == expected_response_body
 
     def test_process_model_create(
         self,
@@ -222,16 +222,16 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["id"] == f"{process_group_id}/bug-tracker"
-        assert response.json["display_name"] == "Bug Tracker"
-        assert response.json["metadata_extraction_paths"] == [
+        assert response.json() is not None
+        assert response.json()["id"] == f"{process_group_id}/bug-tracker"
+        assert response.json()["display_name"] == "Bug Tracker"
+        assert response.json()["metadata_extraction_paths"] == [
             {"key": "summary", "path": "summary"},
             {"key": "description", "path": "description"},
             {"key": "priority", "path": "priority"},
         ]
 
-        process_model = ProcessModelService.get_process_model(response.json["id"])
+        process_model = ProcessModelService.get_process_model(response.json()["id"])
         process_model_path = os.path.join(
             FileSystemService.root_path(),
             FileSystemService.id_string_to_relative_path(process_model.id),
@@ -332,8 +332,8 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["ok"] is True
+        assert response.json() is not None
+        assert response.json()["ok"] is True
 
     def test_process_model_delete_with_instances(
         self,
@@ -415,11 +415,11 @@ class TestProcessApi(BaseTest):
             data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["display_name"] == "Updated Display Name"
-        assert response.json["primary_file_name"] == "superduper.bpmn"
-        assert response.json["primary_process_id"] == "superduper"
-        assert response.json["metadata_extraction_paths"] == [{"key": "extraction1", "path": "path1"}]
+        assert response.json() is not None
+        assert response.json()["display_name"] == "Updated Display Name"
+        assert response.json()["primary_file_name"] == "superduper.bpmn"
+        assert response.json()["primary_process_id"] == "superduper"
+        assert response.json()["metadata_extraction_paths"] == [{"key": "extraction1", "path": "path1"}]
 
     def test_process_model_list_all(
         self,
@@ -449,11 +449,11 @@ class TestProcessApi(BaseTest):
             "/v1.0/process-models?per_page=1000&recursive=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 5
-        assert response.json["pagination"]["count"] == 5
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 5
+        assert response.json()["pagination"]["count"] == 5
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 1
 
     def test_process_model_list(
         self,
@@ -484,47 +484,47 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models?process_group_identifier={group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 5
-        assert response.json["pagination"]["count"] == 5
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 5
+        assert response.json()["pagination"]["count"] == 5
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 1
 
         # get first page, 1 per page
         response = client.get(
             f"/v1.0/process-models?page=1&per_page=1&process_group_identifier={group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_group/test_model_0"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "test_group/test_model_0"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 5
 
         # get second page, 1 per page
         response = client.get(
             f"/v1.0/process-models?page=2&per_page=1&process_group_identifier={group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_group/test_model_1"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "test_group/test_model_1"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 5
 
         # get first page, 3 per page
         response = client.get(
             f"/v1.0/process-models?page=1&per_page=3&process_group_identifier={group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 3
-        assert response.json["results"][0]["id"] == "test_group/test_model_0"
-        assert response.json["pagination"]["count"] == 3
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 3
+        assert response.json()["results"][0]["id"] == "test_group/test_model_0"
+        assert response.json()["pagination"]["count"] == 3
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 2
 
         # get second page, 3 per page
         response = client.get(
@@ -532,12 +532,12 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         # there should only be 2 left
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["id"] == "test_group/test_model_3"
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][0]["id"] == "test_group/test_model_3"
+        assert response.json()["pagination"]["count"] == 2
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 2
 
     def test_process_list(
         self,
@@ -571,11 +571,11 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
         # We should get 5 back, as one of the items in the cache is a decision.
-        assert len(response.json) == 5
-        simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
+        assert len(response.json()) == 5
+        simple_form = next(p for p in response.json() if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["relative_location"] == "test_group_one/simple_form"
         assert simple_form["properties"]["has_lanes"] is False
@@ -619,12 +619,12 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(user_one),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         # This user should only have access to one process
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
-        simple_form = next(p for p in response.json if p["identifier"] == "Process_WithForm")
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1
+        simple_form = next(p for p in response.json() if p["identifier"] == "Process_WithForm")
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["relative_location"] == "test_group_one/simple_form"
         assert simple_form["properties"]["has_lanes"] is False
@@ -667,10 +667,10 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
         # We should get 1 back, Level1 calls Level2
-        assert len(response.json) == 1
-        caller = response.json[0]
+        assert len(response.json()) == 1
+        caller = response.json()[0]
         assert caller["identifier"] == "Level1"
 
     def test_process_model_file_update_fails_if_no_file_given(
@@ -692,8 +692,8 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "no_file_given"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "no_file_given"
 
     def test_process_model_file_update_fails_if_contents_is_empty(
         self,
@@ -715,8 +715,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "file_contents_empty"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "file_contents_empty"
 
     def test_process_model_file_update(
         self,
@@ -748,8 +748,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["file_contents"] is not None
+        assert response.json() is not None
+        assert response.json()["file_contents"] is not None
 
         response = client.get(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/simple_form.json",
@@ -776,8 +776,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "process_model_cannot_be_found"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "process_model_cannot_be_found"
 
     def test_process_model_file_delete_when_bad_file(
         self,
@@ -796,8 +796,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "process_model_file_cannot_be_found"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "process_model_file_cannot_be_found"
 
     def test_process_model_file_delete_when_primary_file(
         self,
@@ -817,8 +817,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "process_model_file_cannot_be_deleted"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "process_model_file_cannot_be_deleted"
 
     def test_process_model_file_delete(
         self,
@@ -846,8 +846,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["ok"]
+        assert response.json() is not None
+        assert response.json()["ok"]
 
         response = client.get(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.bpmn",
@@ -870,9 +870,9 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["name"] == "random_fact.bpmn"
-        assert response.json["process_model_id"] == "test_group/random_fact"
+        assert response.json() is not None
+        assert response.json()["name"] == "random_fact.bpmn"
+        assert response.json()["process_model_id"] == "test_group/random_fact"
 
     def test_get_workflow_from_workflow_spec(
         self,
@@ -889,8 +889,8 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert "test_group/random_fact" == response.json["process_model_identifier"]
+        assert response.json() is not None
+        assert "test_group/random_fact" == response.json()["process_model_identifier"]
 
     def test_process_model_list_when_user_has_resticted_access(
         self,
@@ -913,23 +913,23 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["total"] == 2
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2
+        assert response.json()["pagination"]["count"] == 2
+        assert response.json()["pagination"]["total"] == 2
+        assert response.json()["pagination"]["pages"] == 1
 
         response = client.get(
             "/v1.0/process-models?recursive=true",
             headers=self.logged_in_headers(user_one),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "all_users/hello_world"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 1
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "all_users/hello_world"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 1
+        assert response.json()["pagination"]["pages"] == 1
 
     def test_process_instance_create(
         self,
@@ -941,13 +941,13 @@ class TestProcessApi(BaseTest):
         test_process_model_id = "runs_without_input/sample"
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, test_process_model_id, headers)
-        assert response.json is not None
-        assert response.json["updated_at_in_seconds"] is not None
-        assert response.json["status"] == "not_started"
-        assert response.json["process_model_identifier"] == test_process_model_id
+        assert response.json() is not None
+        assert response.json()["updated_at_in_seconds"] is not None
+        assert response.json()["status"] == "not_started"
+        assert response.json()["process_model_identifier"] == test_process_model_id
         # TODO: mock out the responses for the git service so we can do something like this
         # current_revision = GitService.get_current_revision()
-        # assert response.json["bpmn_version_control_identifier"] == current_revision
+        # assert response.json()["bpmn_version_control_identifier"] == current_revision
 
     def test_process_instance_run(
         self,
@@ -968,19 +968,19 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json["updated_at_in_seconds"], int)
-        assert response.json["updated_at_in_seconds"] > 0
-        assert response.json["status"] == "complete"
-        assert response.json["process_model_identifier"] == process_model.id
+        assert response.json() is not None
+        assert isinstance(response.json()["updated_at_in_seconds"], int)
+        assert response.json()["updated_at_in_seconds"] > 0
+        assert response.json()["status"] == "complete"
+        assert response.json()["process_model_identifier"] == process_model.id
 
         event_count = ProcessInstanceEventModel.query.filter_by(
             process_instance_id=process_instance_id, event_type=ProcessInstanceEventType.process_instance_force_run.value
@@ -1006,19 +1006,19 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run?force_run=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json["updated_at_in_seconds"], int)
-        assert response.json["updated_at_in_seconds"] > 0
-        assert response.json["status"] == "complete"
-        assert response.json["process_model_identifier"] == process_model.id
+        assert response.json() is not None
+        assert isinstance(response.json()["updated_at_in_seconds"], int)
+        assert response.json()["updated_at_in_seconds"] > 0
+        assert response.json()["status"] == "complete"
+        assert response.json()["process_model_identifier"] == process_model.id
 
         event_count = ProcessInstanceEventModel.query.filter_by(
             process_instance_id=process_instance_id, event_type=ProcessInstanceEventType.process_instance_force_run.value
@@ -1044,19 +1044,19 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json["updated_at_in_seconds"], int)
-        assert response.json["updated_at_in_seconds"] > 0
-        assert response.json["status"] == "complete"
-        assert response.json["process_model_identifier"] == process_model.id
+        assert response.json() is not None
+        assert isinstance(response.json()["updated_at_in_seconds"], int)
+        assert response.json()["updated_at_in_seconds"] > 0
+        assert response.json()["status"] == "complete"
+        assert response.json()["process_model_identifier"] == process_model.id
 
     def test_process_instance_show(
         self,
@@ -1220,14 +1220,14 @@ class TestProcessApi(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
+        assert response.json() is not None
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         processor = ProcessInstanceProcessor(process_instance)
@@ -1297,8 +1297,8 @@ class TestProcessApi(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         processor = ProcessInstanceProcessor(process_instance)
@@ -1325,7 +1325,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert response.json
-        assert response.json["error_code"] == "message_not_accepted"
+        assert response.json()["error_code"] == "message_not_accepted"
 
         processor.resume()
         payload["description"] = "Message To Resumed"
@@ -1356,7 +1356,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert response.json
-        assert response.json["error_code"] == "message_not_accepted"
+        assert response.json()["error_code"] == "message_not_accepted"
 
     def test_can_download_uploaded_file(
         self,
@@ -1406,8 +1406,8 @@ class TestProcessApi(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         processor = ProcessInstanceProcessor(process_instance)
@@ -1484,8 +1484,8 @@ class TestProcessApi(BaseTest):
                 process_model.id,
                 self.logged_in_headers(with_super_admin_user),
             )
-            assert response.json is not None
-            process_instance_id = response.json["id"]
+            assert response.json() is not None
+            process_instance_id = response.json()["id"]
 
             process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
             processor = ProcessInstanceProcessor(process_instance)
@@ -1542,15 +1542,15 @@ class TestProcessApi(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         ready_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id, state="READY").all()
         assert len(ready_tasks) == 1
@@ -1565,7 +1565,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
@@ -1598,14 +1598,14 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
+        assert response.json() is not None
         assert response.status_code == 200
 
         delete_response = client.delete(
@@ -1637,12 +1637,12 @@ class TestProcessApi(BaseTest):
         self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
 
         response = self.post_to_process_instance_list(client, with_super_admin_user)
-        assert len(response.json["results"]) == 1
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["pages"] == 1
-        assert response.json["pagination"]["total"] == 1
+        assert len(response.json()["results"]) == 1
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["pages"] == 1
+        assert response.json()["pagination"]["total"] == 1
 
-        process_instance_dict = response.json["results"][0]
+        process_instance_dict = response.json()["results"][0]
         assert isinstance(process_instance_dict["id"], int)
         assert process_instance_dict["process_model_identifier"] == process_model.id
         assert isinstance(process_instance_dict["start_in_seconds"], int)
@@ -1677,16 +1677,16 @@ class TestProcessApi(BaseTest):
         self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
 
         response = self.post_to_process_instance_list(client, with_super_admin_user, param_string="?per_page=2&page=3")
-        assert len(response.json["results"]) == 1
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["pages"] == 3
-        assert response.json["pagination"]["total"] == 5
+        assert len(response.json()["results"]) == 1
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["pages"] == 3
+        assert response.json()["pagination"]["total"] == 5
 
         response = self.post_to_process_instance_list(client, with_super_admin_user, param_string="?per_page=2&page=1")
-        assert len(response.json["results"]) == 2
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["pages"] == 3
-        assert response.json["pagination"]["total"] == 5
+        assert len(response.json()["results"]) == 2
+        assert response.json()["pagination"]["count"] == 2
+        assert response.json()["pagination"]["pages"] == 3
+        assert response.json()["pagination"]["total"] == 5
 
     def test_process_instance_list_filter(
         self,
@@ -1737,7 +1737,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 5
 
         # filter for each of the status
@@ -1760,7 +1760,7 @@ class TestProcessApi(BaseTest):
                 "order_by": [],
             }
             response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-            results = response.json["results"]
+            results = response.json()["results"]
             assert len(results) == 1
             assert results[0]["status"] == ProcessInstanceStatus[statuses[i]].value
 
@@ -1777,7 +1777,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 2
         assert results[0]["status"] in ["complete", "not_started"]
         assert results[1]["status"] in ["complete", "not_started"]
@@ -1790,7 +1790,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 4
         for i in range(4):
             assert json.loads(results[i]["bpmn_version_control_identifier"]) in (
@@ -1810,7 +1810,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (2, 3)
         assert json.loads(results[1]["bpmn_version_control_identifier"]) in (2, 3)
@@ -1825,7 +1825,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (1, 2)
         assert json.loads(results[1]["bpmn_version_control_identifier"]) in (1, 2)
@@ -1840,7 +1840,7 @@ class TestProcessApi(BaseTest):
             "order_by": [],
         }
         response = self.post_to_process_instance_list(client, with_super_admin_user, report_metadata=report_metadata_body)
-        results = response.json["results"]
+        results = response.json()["results"]
         assert len(results) == 3
         for i in range(3):
             assert json.loads(results[i]["bpmn_version_control_identifier"]) in (
@@ -1882,10 +1882,10 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json) == 1
-        assert response.json[0]["identifier"] == report_identifier
-        assert response.json[0]["report_metadata"]["order_by"] == ["month"]
+        assert response.json() is not None
+        assert len(response.json()) == 1
+        assert response.json()[0]["identifier"] == report_identifier
+        assert response.json()[0]["report_metadata"]["order_by"] == ["month"]
 
     def test_error_handler(
         self,
@@ -2080,8 +2080,8 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        process_instance_id_one = response.json["process_instance"]["id"]
+        assert response.json() is not None
+        process_instance_id_one = response.json()["process_instance"]["id"]
 
         payload["po_number"] = "1002"
         response = client.post(
@@ -2091,36 +2091,36 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        process_instance_id_two = response.json["process_instance"]["id"]
+        assert response.json() is not None
+        process_instance_id_two = response.json()["process_instance"]["id"]
 
         response = client.get(
             f"/v1.0/messages?process_instance_id={process_instance_id_one}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2  # Two messages, one is the completed receive, the other is new send
-        assert response.json["results"][0]["process_instance_id"] == process_instance_id_one
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2  # Two messages, one is the completed receive, the other is new send
+        assert response.json()["results"][0]["process_instance_id"] == process_instance_id_one
 
         response = client.get(
             f"/v1.0/messages?process_instance_id={process_instance_id_two}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["process_instance_id"] == process_instance_id_two
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][0]["process_instance_id"] == process_instance_id_two
 
         response = client.get(
             "/v1.0/messages",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
         #   4 -Two messages for each process (a record of the completed receive, and then a send created)
         # + 2 -Two messages logged for the API Calls used to create the processes.
-        assert len(response.json["results"]) == 6
+        assert len(response.json()["results"]) == 6
 
     # TODO: test the auth callback endpoint
     # def test_can_store_authentication_secret(
@@ -2264,8 +2264,8 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -2386,7 +2386,7 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -2408,16 +2408,16 @@ class TestProcessApi(BaseTest):
             data=json.dumps(data),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["type"] == "Default End Event"
-        assert response.json["state"] == "COMPLETED"
+        assert response.json() is not None
+        assert response.json()["type"] == "Default End Event"
+        assert response.json()["state"] == "COMPLETED"
 
         response = client.get(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info?all_tasks=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        end_task = next(task for task in response.json if task["bpmn_identifier"] == "Event_174a838")
+        end_task = next(task for task in response.json() if task["bpmn_identifier"] == "Event_174a838")
         response = client.get(
             f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{end_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -2458,7 +2458,7 @@ class TestProcessApi(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -2469,8 +2469,8 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert len(response.json) == 7
-        human_task = next(task for task in response.json if task["bpmn_identifier"] == "manual_task_one")
+        assert len(response.json()) == 7
+        human_task = next(task for task in response.json() if task["bpmn_identifier"] == "manual_task_one")
 
         response = client.post(
             f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{human_task['guid']}",
@@ -2479,7 +2479,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps({"execute": False}),
         )
 
-        assert response.json["status"] == "suspended"
+        assert response.json()["status"] == "suspended"
         task_model = TaskModel.query.filter_by(guid=human_task["guid"]).first()
         assert task_model is not None
         assert task_model.state == "COMPLETED"
@@ -2489,7 +2489,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert len(response.json) == 7
+        assert len(response.json()) == 7
 
         task_event = ProcessInstanceEventModel.query.filter_by(
             task_guid=human_task["guid"], event_type=ProcessInstanceEventType.task_skipped.value
@@ -2542,7 +2542,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json["id"] == new_process_model_path
+        assert response.json()["id"] == new_process_model_path
 
         # make sure the original model does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
@@ -2582,7 +2582,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json["id"] == new_sub_path
+        assert response.json()["id"] == new_sub_path
 
         # make sure the original subgroup does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
@@ -2769,15 +2769,15 @@ class TestProcessApi(BaseTest):
             client, with_super_admin_user, report_metadata=process_instance_report.get_report_metadata()
         )
 
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["status"] == "complete"
-        assert response.json["results"][0]["id"] == process_instance.id
-        assert response.json["results"][0]["key1"] == "value1"
-        assert response.json["results"][0]["key2"] == "value2"
-        assert response.json["results"][0]["last_milestone_bpmn_name"] == "Completed"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["pages"] == 1
-        assert response.json["pagination"]["total"] == 1
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["status"] == "complete"
+        assert response.json()["results"][0]["id"] == process_instance.id
+        assert response.json()["results"][0]["key1"] == "value1"
+        assert response.json()["results"][0]["key2"] == "value2"
+        assert response.json()["results"][0]["last_milestone_bpmn_name"] == "Completed"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["pages"] == 1
+        assert response.json()["pagination"]["total"] == 1
 
     def test_can_get_process_instance_list_with_report_metadata_using_different_operators(
         self,
@@ -2998,14 +2998,14 @@ class TestProcessApi(BaseTest):
         response = self.post_to_process_instance_list(
             client, user_one, report_metadata=process_instance_report_user_one.get_report_metadata()
         )
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["process_initiator_username"] == user_one.username
-        assert response.json["results"][1]["process_initiator_username"] == user_one.username
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][0]["process_initiator_username"] == user_one.username
+        assert response.json()["results"][1]["process_initiator_username"] == user_one.username
 
         response = self.post_to_process_instance_list(
             client, user_one, report_metadata=process_instance_report_dne.get_report_metadata()
         )
-        assert len(response.json["results"]) == 0
+        assert len(response.json()["results"]) == 0
 
     def test_can_get_process_instance_report_column_list(
         self,
@@ -3053,9 +3053,9 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
-        assert response.json is not None
+        assert response.json() is not None
         assert response.status_code == 200
-        assert response.json == [
+        assert response.json() == [
             {"Header": "Id", "accessor": "id", "filterable": False},
             {
                 "Header": "Process",
@@ -3100,7 +3100,7 @@ class TestProcessApi(BaseTest):
             "/v1.0/process-instances/reports/columns?process_model_identifier=save_process_instance_metadata/save_process_instance_metadata",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
+        assert response.json() is not None
         assert response.status_code == 200
         accessors = [column["accessor"] for column in response.json]
         assert accessors == stock_columns + ["key1", "key2", "key3"]
@@ -3151,9 +3151,9 @@ class TestProcessApi(BaseTest):
         response = self.post_to_process_instance_list(
             client, with_super_admin_user, report_metadata=report_one.get_report_metadata()
         )
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["id"] == process_instance_one.id
-        assert response.json["results"][1]["id"] == process_instance_two.id
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][0]["id"] == process_instance_one.id
+        assert response.json()["results"][1]["id"] == process_instance_two.id
 
         report_metadata = {
             "columns": [
@@ -3172,9 +3172,9 @@ class TestProcessApi(BaseTest):
         response = self.post_to_process_instance_list(
             client, with_super_admin_user, report_metadata=report_two.get_report_metadata()
         )
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][1]["id"] == process_instance_one.id
-        assert response.json["results"][0]["id"] == process_instance_two.id
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][1]["id"] == process_instance_one.id
+        assert response.json()["results"][0]["id"] == process_instance_two.id
 
     def test_process_data_show(
         self,
@@ -3198,8 +3198,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["process_data_value"] == "hey"
+        assert response.json() is not None
+        assert response.json()["process_data_value"] == "hey"
 
     def test_process_data_show_with_sub_process(
         self,
@@ -3247,8 +3247,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["process_data_value"] == "d"
+        assert response.json() is not None
+        assert response.json()["process_data_value"] == "d"
 
     def test_process_data_show_with_sub_process_from_top_level(
         self,
@@ -3284,8 +3284,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["process_data_value"] == "HEY"
+        assert response.json() is not None
+        assert response.json()["process_data_value"] == "HEY"
 
     def test_returns_blank_array_if_process_instance_not_started(
         self,
@@ -3300,15 +3300,15 @@ class TestProcessApi(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         response = client.get(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json == []
+        assert response.json() is not None
+        assert response.json() == []
 
     def _setup_testing_instance(
         self,

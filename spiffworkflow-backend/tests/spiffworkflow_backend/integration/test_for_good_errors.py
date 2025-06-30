@@ -32,18 +32,18 @@ class TestForGoodErrors(BaseTest):
             process_model.id,
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
         response = self._get_next_user_task(process_instance_id, client, with_super_admin_user)
-        assert response.json is not None
-        assert response.json["error_type"] == "TemplateSyntaxError"
-        assert response.json["line_number"] == 3
-        assert response.json["file_name"] == "simple_form.json"
+        assert response.json() is not None
+        assert response.json()["error_type"] == "TemplateSyntaxError"
+        assert response.json()["line_number"] == 3
+        assert response.json()["file_name"] == "simple_form.json"
 
     def test_jinja2_error_message_for_end_user_instructions(
         self,
@@ -68,14 +68,14 @@ class TestForGoodErrors(BaseTest):
         response = self._get_next_user_task(process_instance.id, client, with_super_admin_user)
 
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_type"] == "TemplateSyntaxError"
-        assert response.json["line_number"] == 3
-        assert response.json["error_line"] == "{{ x +=- 1}}"
-        assert response.json["file_name"] == "instructions_error.bpmn"
-        assert "instructions for end user" in response.json["message"]
-        assert "Jinja2" in response.json["message"]
-        assert "unexpected '='" in response.json["message"]
+        assert response.json() is not None
+        assert response.json()["error_type"] == "TemplateSyntaxError"
+        assert response.json()["line_number"] == 3
+        assert response.json()["error_line"] == "{{ x +=- 1}}"
+        assert response.json()["file_name"] == "instructions_error.bpmn"
+        assert "instructions for end user" in response.json()["message"]
+        assert "Jinja2" in response.json()["message"]
+        assert "unexpected '='" in response.json()["message"]
 
     def _get_next_user_task(
         self,
