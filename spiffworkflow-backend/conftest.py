@@ -1,7 +1,11 @@
+from collections.abc import Generator
+from typing import Any
+
 # noqa
 import os
 import shutil
 
+from connexion import FlaskApp
 import pytest
 from flask.app import Flask
 
@@ -29,7 +33,7 @@ def _set_unit_testing_env_variables() -> None:
 
 
 @pytest.fixture(scope="session")
-def app() -> Flask:  # noqa
+def app() -> Generator[FlaskApp, Any, Any]:  # noqa
     _set_unit_testing_env_variables()
     app = create_app()
     with app.app_context():

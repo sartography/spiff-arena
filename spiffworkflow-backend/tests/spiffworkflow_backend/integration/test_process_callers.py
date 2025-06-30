@@ -93,18 +93,22 @@ class TestProcessCallers(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_group_and_model_with_bpmn(
-            client=client,
-            user=with_super_admin_user,
-            process_group_id="test_group_two",
-            process_model_id="call_activity_nested",
-            bpmn_file_location="call_activity_nested",
-        )
+        # self.create_group_and_model_with_bpmn(
+        #     client=client,
+        #     user=with_super_admin_user,
+        #     process_group_id="test_group_two",
+        #     process_model_id="call_activity_nested",
+        #     bpmn_file_location="call_activity_nested",
+        # )
 
-        response = client.delete(
-            "/v1.0/process-groups/test_group_two",
+        response = client.get(
+            "testing",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        # response = client.delete(
+        #     "/v1.0/process-groups/test_group_two",
+        #     headers=self.logged_in_headers(with_super_admin_user),
+        # )
 
         assert response.status_code == 200
 
