@@ -124,7 +124,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         db.session.add(process_instance_report)
         db.session.commit()
 
-        return process_instance_report  # type: ignore
+        return process_instance_report
 
     def with_substitutions(self, field_value: Any, substitution_variables: dict) -> Any:
         if substitution_variables is not None:

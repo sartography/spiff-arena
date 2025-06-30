@@ -2,8 +2,8 @@ import faulthandler
 import os
 from typing import Any
 
-import connexion
 import sqlalchemy
+from connexion import FlaskApp
 from flask.json.provider import DefaultJSONProvider
 from starlette.middleware.cors import CORSMiddleware
 
@@ -54,7 +54,7 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
-def create_app() -> connexion.FlaskApp:
+def create_app() -> FlaskApp:
     faulthandler.enable()
 
     # We need to create the sqlite database in a known location.
@@ -62,8 +62,10 @@ def create_app() -> connexion.FlaskApp:
     # variable, it will be one thing when we run flask db upgrade in the
     # noxfile and another thing when the tests actually run.
     # instance_path is described more at https://flask.palletsprojects.com/en/2.1.x/config/
-    connexion_app = connexion.FlaskApp(__name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")})
+    connexion_app = FlaskApp(__name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")})
     app = connexion_app.app
+    if app is None:
+        raise Exception("Could not find app in FlaskApp")
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
     setup_prometheus_metrics(app, connexion_app)
@@ -72,7 +74,7 @@ def create_app() -> connexion.FlaskApp:
     db.init_app(app)
     migrate.init_app(app, db)
 
-    connexion_app.add_error_handler(Exception, handle_exception)
+    connexion_app.add_error_handler(500, handle_exception)
 
     app.register_blueprint(user_blueprint)
 
@@ -114,4 +116,4 @@ def create_app() -> connexion.FlaskApp:
     start_apscheduler_if_appropriate(app)
     init_celery_if_appropriate(app)
 
-    return connexion_app
+    return app

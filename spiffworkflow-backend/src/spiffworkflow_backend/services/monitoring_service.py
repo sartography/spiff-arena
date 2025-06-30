@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Any
 
-import connexion  # type: ignore
+import connexion
 import flask.wrappers
 import sentry_sdk
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore

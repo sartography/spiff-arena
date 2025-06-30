@@ -38,8 +38,8 @@ class GenerateMarkdownTable(Script):
     def run(
         self,
         script_attributes_context: ScriptAttributesContext,
-        *args: Any,
-        **kwargs: Any,
+        *args: list[Any],
+        **kwargs: list[Any],
     ) -> Any:
         """
         Generates a markdown table from columns and data.
@@ -49,8 +49,8 @@ class GenerateMarkdownTable(Script):
         :param data: List of dictionaries containing the data.
         :return: A string containing the markdown table.
         """
-        columns: list = kwargs.get("columns", args[0] if len(args) > 0 else None)
-        data: list = kwargs.get("data", args[1] if len(args) > 1 else None)
+        columns: list | None = kwargs.get("columns", args[0] if len(args) > 0 else None)
+        data: list | None = kwargs.get("data", args[1] if len(args) > 1 else None)
 
         if columns is None:
             raise ValueError(

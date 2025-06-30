@@ -32,13 +32,18 @@ def _set_unit_testing_env_variables() -> None:
 def app() -> Flask:  # noqa
     _set_unit_testing_env_variables()
     app = create_app()
+    with app.app_context():
+        # to screw with this, poet add nplusone --group dev
+        # from nplusone.ext.flask_sqlalchemy import NPlusOne
+        # app.config["NPLUSONE_RAISE"] = True
+        # NPlusOne(app)
 
-    # to screw with this, poet add nplusone --group dev
-    # from nplusone.ext.flask_sqlalchemy import NPlusOne
-    # app.config["NPLUSONE_RAISE"] = True
-    # NPlusOne(app)
+        yield app
 
-    return app
+
+@pytest.fixture(scope="session")
+def client(app) -> Flask:  # noqa
+    return app.test_client()
 
 
 @pytest.fixture()
