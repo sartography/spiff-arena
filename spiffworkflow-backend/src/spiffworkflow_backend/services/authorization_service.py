@@ -7,7 +7,7 @@ import yaml
 from flask import current_app
 from flask import g
 from flask import request
-from flask import scaffold
+from flask.sansio import scaffold
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import literal

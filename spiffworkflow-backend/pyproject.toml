@@ -14,7 +14,7 @@ authors = [{ name = "Sartography", email = "sartography@users.noreply.github.com
 urls = { homepage = "https://spiffworkflow.org", repository = "https://github.com/sartography/spiff-arena", documentation = "https://spiff-arena.readthedocs.io" }
 
 dependencies = [
-    "flask == 2.2.5",
+    "flask == 3.1.1",
     "flask-admin >=1.5.8",
     "flask-bcrypt >=0.7.1",
     "flask-cors >=3.0.10",
@@ -29,8 +29,8 @@ dependencies = [
     "typing-extensions >= 4.12.2,<4.13",
     "spiffworkflow-connector-command",
     # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
-    "werkzeug >= 2.3,<2.4",
-    "connexion[swagger-ui] >= 2,<3",
+    "werkzeug >= 2.3",
+    "connexion[swagger-ui, flask] >= 3",
     "lxml >= 5.3.1,< 5.5",
     "marshmallow-enum >= 1.5.1,<1.6",
     "PyJWT >= 2.10.1,<2.11",

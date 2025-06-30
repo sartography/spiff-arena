@@ -20,7 +20,7 @@ def get_version_info_data() -> dict[str, Any]:
     return version_info_data_dict
 
 
-def setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
+def setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
     app.config["PROMETHEUS_METRICS"] = metrics
     version_info_data = get_version_info_data()
