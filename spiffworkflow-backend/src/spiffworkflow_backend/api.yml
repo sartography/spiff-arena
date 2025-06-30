@@ -3235,143 +3235,143 @@ paths:
   #         #content:
   #         #  - application/json
   #
-  # /data-stores:
-  #   parameters:
-  #     - name: process_group_identifier
-  #       in: query
-  #       required: false
-  #       description: Optional parameter to filter by a single group
-  #       schema:
-  #         type: string
-  #     - name: upsearch
-  #       in: query
-  #       required: false
-  #       description: Optional parameter to indicate if an upsearch should be performed
-  #       schema:
-  #         type: boolean
-  #     - name: page
-  #       in: query
-  #       required: false
-  #       description: The page number to return. Defaults to page 1.
-  #       schema:
-  #         type: integer
-  #     - name: per_page
-  #       in: query
-  #       required: false
-  #       description: The number of groups to show per page. Defaults to 10.
-  #       schema:
-  #         type: integer
-  #   get:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_list
-  #     summary: Return a list of the data store objects.
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: The list of currently defined data store objects
-  #   post:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
-  #     summary: Create a new data store instance.
-  #     requestBody:
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/DataStore"
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: The newly created data store instance
-  #   put:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_update
-  #     summary: Update a data store instance.
-  #     requestBody:
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/DataStore"
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: The updated data store instance
-  # /data-stores/types:
-  #   get:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_types
-  #     summary: Return a list of the data store types.
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: The list of currently defined data store types
-  # /data-stores/{data_store_type}/{identifier}/items:
-  #   parameters:
-  #     - name: data_store_type
-  #       in: path
-  #       required: true
-  #       description: The type of datastore, such as "typeahead"
-  #       schema:
-  #         type: string
-  #     - name: identifier
-  #       in: path
-  #       required: true
-  #       description: The identifier of the datastore, such as "cities"
-  #       schema:
-  #         type: string
-  #     - name: location
-  #       in: query
-  #       required: false
-  #       description: The location of the data store
-  #       schema:
-  #         type: string
-  #     - name: page
-  #       in: query
-  #       required: false
-  #       description: The page number to return. Defaults to page 1.
-  #       schema:
-  #         type: integer
-  #     - name: per_page
-  #       in: query
-  #       required: false
-  #       description: The page number to return. Defaults to page 1.
-  #       schema:
-  #         type: integer
-  #   get:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_item_list
-  #     summary: Returns a paginated list of the contents of a data store.
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: A list of the data stored in the requested data store.
-  # /data-stores/{data_store_type}/{identifier}:
-  #   parameters:
-  #     - name: data_store_type
-  #       in: path
-  #       required: true
-  #       description: The type of datastore, such as "typeahead"
-  #       schema:
-  #         type: string
-  #     - name: identifier
-  #       in: path
-  #       required: true
-  #       description: The identifier of the datastore, such as "cities"
-  #       schema:
-  #         type: string
-  #     - name: process_group_identifier
-  #       in: query
-  #       required: true
-  #       description: The process group
-  #       schema:
-  #         type: string
-  #   get:
-  #     operationId: spiffworkflow_backend.routes.data_store_controller.data_store_show
-  #     summary: Returns a description of the data store.
-  #     tags:
-  #       - Data Stores
-  #     responses:
-  #       "200":
-  #         description: The requested data store.
+  /data-stores:
+    parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: Optional parameter to filter by a single group
+        schema:
+          type: string
+      - name: upsearch
+        in: query
+        required: false
+        description: Optional parameter to indicate if an upsearch should be performed
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of groups to show per page. Defaults to 10.
+        schema:
+          type: integer
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_list
+      summary: Return a list of the data store objects.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The list of currently defined data store objects
+    post:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
+      summary: Create a new data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The newly created data store instance
+    put:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_update
+      summary: Update a data store instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataStore"
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The updated data store instance
+  /data-stores/types:
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_types
+      summary: Return a list of the data store types.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The list of currently defined data store types
+  /data-stores/{data_store_type}/{identifier}/items:
+    parameters:
+      - name: data_store_type
+        in: path
+        required: true
+        description: The type of datastore, such as "typeahead"
+        schema:
+          type: string
+      - name: identifier
+        in: path
+        required: true
+        description: The identifier of the datastore, such as "cities"
+        schema:
+          type: string
+      - name: location
+        in: query
+        required: false
+        description: The location of the data store
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_item_list
+      summary: Returns a paginated list of the contents of a data store.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: A list of the data stored in the requested data store.
+  /data-stores/{data_store_type}/{identifier}:
+    parameters:
+      - name: data_store_type
+        in: path
+        required: true
+        description: The type of datastore, such as "typeahead"
+        schema:
+          type: string
+      - name: identifier
+        in: path
+        required: true
+        description: The identifier of the datastore, such as "cities"
+        schema:
+          type: string
+      - name: process_group_identifier
+        in: query
+        required: true
+        description: The process group
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_show
+      summary: Returns a description of the data store.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The requested data store.
 
 components:
   securitySchemes:

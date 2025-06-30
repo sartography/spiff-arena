@@ -62,11 +62,11 @@ class TestDataStores(BaseTest):
         It should be possible to get a list of the data store categories that are available.
         """
         results = client.get("/v1.0/data-stores", headers=self.logged_in_headers(with_super_admin_user))
-        assert results.json == []
+        assert results.json() == []
 
         self.load_data_store(app, client, with_db_and_bpmn_file_cleanup, with_super_admin_user)
         results = client.get("/v1.0/data-stores", headers=self.logged_in_headers(with_super_admin_user))
-        assert results.json == [
+        assert results.json() == [
             {"name": "albums", "type": "typeahead", "id": "albums", "clz": "TypeaheadDataStore"},
             {"name": "cereals", "type": "typeahead", "id": "cereals", "clz": "TypeaheadDataStore"},
         ]

@@ -20,7 +20,7 @@ class TestOnboarding(BaseTest):
         )
 
         assert results.status_code == 200
-        assert results.json == {}
+        assert results.json() == {}
 
     def set_up_onboarding(self, client: FlaskClient, with_super_admin_user: UserModel, file_location: str) -> None:
         process_group_id = "site-administration"
@@ -50,10 +50,10 @@ class TestOnboarding(BaseTest):
 
         assert results.status_code == 200
         assert len(results.json.keys()) == 4
-        assert results.json["type"] == "default_view"
-        assert results.json["value"] == "my_tasks"
-        assert results.json["instructions"] == ""
-        assert results.json["task_id"] is not None
+        assert results.json()["type"] == "default_view"
+        assert results.json()["value"] == "my_tasks"
+        assert results.json()["instructions"] == ""
+        assert results.json()["task_id"] is not None
 
         # Assure no residual process model is left behind if it executes and completes without additinal user tasks
         assert len(ProcessInstanceModel.query.all()) == 0
@@ -75,7 +75,7 @@ class TestOnboarding(BaseTest):
         )
         assert results.status_code == 200
         assert len(results.json.keys()) == 4
-        assert results.json["type"] == "user_input_required"
-        assert results.json["process_instance_id"] is not None
-        instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == results.json["process_instance_id"]).first()
+        assert results.json()["type"] == "user_input_required"
+        assert results.json()["process_instance_id"] is not None
+        instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == results.json()["process_instance_id"]).first()
         assert instance is not None
