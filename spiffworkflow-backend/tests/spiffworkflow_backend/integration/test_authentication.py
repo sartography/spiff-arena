@@ -132,9 +132,9 @@ class TestAuthentication(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+        redirect_uri = f"{app.app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
         auth_uri = app.app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
-        login_return_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/login_return"
+        login_return_uri = f"{app.app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/login_return"
 
         class_method_mock = mocker.patch(
             "spiffworkflow_backend.services.authentication_service.AuthenticationService.open_id_endpoint_for_name",
