@@ -1076,8 +1076,8 @@ class TestProcessApi(BaseTest):
         modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert create_response.json is not None
-        process_instance_id = create_response.json["id"]
+        assert create_response.json() is not None
+        process_instance_id = create_response.json()["id"]
         client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -1086,14 +1086,14 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert show_response.json is not None
+        assert show_response.json() is not None
         assert show_response.status_code == 200
-        assert show_response.json["bpmn_xml_file_contents_retrieval_error"] is None
+        assert show_response.json()["bpmn_xml_file_contents_retrieval_error"] is None
         file_system_root = FileSystemService.root_path()
         file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
+            assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
 
     def test_process_instance_show_with_specified_process_identifier(
         self,
@@ -1115,9 +1115,9 @@ class TestProcessApi(BaseTest):
         modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert create_response.json is not None
+        assert create_response.json() is not None
         assert create_response.status_code == 201
-        process_instance_id = create_response.json["id"]
+        process_instance_id = create_response.json()["id"]
         run_response = client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -1127,18 +1127,18 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}?process_identifier={spec_reference.identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert show_response.json is not None
+        assert show_response.json() is not None
         assert show_response.status_code == 200
-        assert show_response.json["bpmn_xml_file_contents_retrieval_error"] is None
+        assert show_response.json()["bpmn_xml_file_contents_retrieval_error"] is None
         file_system_root = FileSystemService.root_path()
         process_instance_file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(process_instance_file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json["bpmn_xml_file_contents"] != xml_file_contents
+            assert show_response.json()["bpmn_xml_file_contents"] != xml_file_contents
         spec_reference_file_path = os.path.join(file_system_root, spec_reference.relative_path())
         with open(spec_reference_file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
+            assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
 
     def test_message_send_when_starting_process_instance(
         self,
@@ -1612,7 +1612,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert delete_response.json["ok"] is True
+        assert delete_response.json()["ok"] is True
         assert delete_response.status_code == 200
 
     def test_process_instance_list_with_default_list(

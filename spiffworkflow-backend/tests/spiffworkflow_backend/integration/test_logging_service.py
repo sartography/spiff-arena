@@ -46,8 +46,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:
@@ -106,8 +106,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:

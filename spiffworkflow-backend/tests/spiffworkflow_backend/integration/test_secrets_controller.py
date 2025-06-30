@@ -55,8 +55,8 @@ class TestSecretsController(SecretServiceTestHelpers):
         )
         assert secret_response
         assert secret_response.status_code == 200
-        assert secret_response.json
-        assert "value" not in secret_response.json
+        assert secret_response.json()
+        assert "value" not in secret_response.json()
 
     def test_get_secret_value(
         self,
@@ -73,8 +73,8 @@ class TestSecretsController(SecretServiceTestHelpers):
         )
         assert secret_response
         assert secret_response.status_code == 200
-        assert secret_response.json
-        assert SecretService._decrypt(secret_response.json["value"]) == self.test_value
+        assert secret_response.json()
+        assert SecretService._decrypt(secret_response.json()["value"]) == self.test_value
 
     def test_update_secret(
         self,
@@ -150,6 +150,6 @@ class TestSecretsController(SecretServiceTestHelpers):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert secret_response.status_code == 200
-        first_secret_in_results = secret_response.json["results"][0]
+        first_secret_in_results = secret_response.json()["results"][0]
         assert first_secret_in_results["key"] == self.test_key
         assert "value" not in first_secret_in_results
