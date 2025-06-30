@@ -821,21 +821,6 @@ wheels = [
 ]
 
 [[package]]
-name = "flask-oauthlib"
-version = "0.9.6"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cachelib" },
-    { name = "flask" },
-    { name = "oauthlib" },
-    { name = "requests-oauthlib" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/75/f2/54a551d00a39dac9aa58d97b45e3c05051e7eea8ed686e4b6be91fc075a6/Flask-OAuthlib-0.9.6.tar.gz", hash = "sha256:5bb79c8a8e670c2eb4cb553dfc3283b6c8d1202f674934676dc173cee94fe39c", size = 37253 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/d8/f272aae56f12cf5f2f84ca7340e17be7f2e5e880f914838afb1b3ef045c1/Flask_OAuthlib-0.9.6-py3-none-any.whl", hash = "sha256:a5c3b62959aa1922470a62b6ebf4273b75f1c29561a7eb4a69cde85d45a1d669", size = 40184 },
-]
-
-[[package]]
 name = "flask-restful"
 version = "0.3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -1447,15 +1432,6 @@ wheels = [
 ]
 
 [[package]]
-name = "oauthlib"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/df/5f/3f4aae7b28db87ddef18afed3b71921e531ca288dc604eb981e9ec9f8853/oauthlib-2.1.0.tar.gz", hash = "sha256:ac35665a61c1685c56336bda97d5eefa246f1202618a1d6f34fccb1bdd404162", size = 128807 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/d1/ddd9cfea3e736399b97ded5c2dd62d1322adef4a72d816f1ed1049d6a179/oauthlib-2.1.0-py2.py3-none-any.whl", hash = "sha256:d883b36b21a6ad813953803edfa563b1b579d79ca758fe950d1bc9e8b326025b", size = 121792 },
-]
-
-[[package]]
 name = "packaging"
 version = "25.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1969,19 +1945,6 @@ wheels = [
 ]
 
 [[package]]
-name = "requests-oauthlib"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "oauthlib" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/62/49/88b3b9019c649f63e722208dc540dbcb144c6f53e24bf438117bec8e64dc/requests-oauthlib-1.1.0.tar.gz", hash = "sha256:eabd8eb700ebed81ba080c6ead96d39d6bdc39996094bd23000204f6965786b0", size = 72369 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/d2/91fd85529288418f81e9ed9347b1c548df09327059515cac39e1727b349f/requests_oauthlib-1.1.0-py2.py3-none-any.whl", hash = "sha256:be76f2bb72ca5525998e81d47913e09b1ca8b7957ae89b46f787a79e68ad5e61", size = 21414 },
-]
-
-[[package]]
 name = "restrictedpython"
 version = "8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2395,6 +2358,7 @@ version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "apscheduler" },
+    { name = "authlib" },
     { name = "celery", extra = ["redis", "sqs"] },
     { name = "celery-stubs" },
     { name = "chardet" },
@@ -2408,7 +2372,6 @@ dependencies = [
     { name = "flask-jwt-extended" },
     { name = "flask-marshmallow" },
     { name = "flask-migrate" },
-    { name = "flask-oauthlib" },
     { name = "flask-restful" },
     { name = "flask-session" },
     { name = "flask-sqlalchemy" },
@@ -2453,6 +2416,7 @@ dev = [
     { name = "safety" },
     { name = "setuptools" },
     { name = "typeguard" },
+    { name = "types-authlib" },
     { name = "types-dateparser" },
     { name = "types-flask" },
     { name = "types-pytz" },
@@ -2465,6 +2429,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.6.0" },
+    { name = "authlib", specifier = ">=1.6.0" },
     { name = "celery", extras = ["redis", "sqs"], specifier = ">=5.4.0" },
     { name = "celery-stubs", specifier = ">=0.1.3" },
     { name = "chardet", specifier = ">=5.2.0" },
@@ -2478,7 +2443,6 @@ requires-dist = [
     { name = "flask-jwt-extended", specifier = ">=4.7.1" },
     { name = "flask-marshmallow", specifier = "==1.3.0" },
     { name = "flask-migrate", specifier = ">=4.0.0" },
-    { name = "flask-oauthlib", specifier = ">=0.9.6" },
     { name = "flask-restful", specifier = ">=0.3.9" },
     { name = "flask-session", specifier = ">=0.8.0" },
     { name = "flask-sqlalchemy", specifier = ">=3" },
@@ -2523,6 +2487,7 @@ dev = [
     { name = "safety", specifier = ">=3.2.14" },
     { name = "setuptools", specifier = ">=78.1.1" },
     { name = "typeguard", specifier = ">=4" },
+    { name = "types-authlib", specifier = ">=1.5.0.20250608" },
     { name = "types-dateparser", specifier = ">=1.2.0.20250208" },
     { name = "types-flask", specifier = ">=1.1.6" },
     { name = "types-pytz", specifier = ">=2024.2.0" },
@@ -2726,6 +2691,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c5/8c/7d682431efca5fd290017663ea4588bf6f2c6aad085c7f108c5dbc316e70/typer-0.16.0.tar.gz", hash = "sha256:af377ffaee1dbe37ae9440cb4e8f11686ea5ce4e9bae01b84ae7c63b87f1dd3b", size = 102625 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl", hash = "sha256:1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855", size = 46317 },
+]
+
+[[package]]
+name = "types-authlib"
+version = "1.5.0.20250608"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c8/8e/ee4af80f51b10b351464b8f2d4b3bc8474d569327a5e95e1c60f66b936ea/types_authlib-1.5.0.20250608.tar.gz", hash = "sha256:165149473c951fbbbea0b0f65cb232ac4ce2ee491191383afe119723a3d8059b", size = 34519 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/4c/5683cd9d0d49124f46fc621da362d6bc6555807e20b6b04fa12340677a53/types_authlib-1.5.0.20250608-py3-none-any.whl", hash = "sha256:ce65b51f8fd4892945a5b23e82071601a47f3e9e0398b4947e702f9ad5c14b40", size = 74435 },
 ]
 
 [[package]]
