@@ -1430,7 +1430,7 @@ class TestProcessApi(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 200
-            assert response.data == expected_content
+            assert response.content == expected_content
 
     def test_can_download_uploaded_file_from_file_system(
         self,
@@ -1508,11 +1508,11 @@ class TestProcessApi(BaseTest):
                     headers=self.logged_in_headers(with_super_admin_user),
                 )
                 assert response.status_code == 200
-                assert response.data == expected_content
+                assert response.content == expected_content
 
                 dir_parts = ProcessInstanceFileDataModel.get_hashed_directory_structure(digest)
                 filepath = os.path.join(
-                    app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
+                    app.app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
                 )
                 assert os.path.isfile(filepath)
 

@@ -23,7 +23,7 @@ class TestPublicController(BaseTest):
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "name": app.app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
                 "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
             }
         ]
@@ -56,7 +56,7 @@ class TestPublicController(BaseTest):
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "name": app.app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
                 "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
             }
         ]
@@ -96,7 +96,7 @@ class TestPublicController(BaseTest):
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [user.username],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "name": app.app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
                 "permissions": [{"actions": ["create", "read", "update"], "uri": "/public/*"}],
             },
             {
@@ -179,7 +179,7 @@ class TestPublicController(BaseTest):
         group_info: list[GroupPermissionsDict] = [
             {
                 "users": [],
-                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "name": app.app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
                 "permissions": [{"actions": ["create", "read", "update"], "uri": "/public/*"}],
             },
             {

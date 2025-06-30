@@ -15,7 +15,7 @@ class TestScriptUnitTestRunner(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+        app.app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
         process_model_id = "simple_script"
@@ -46,7 +46,7 @@ class TestScriptUnitTestRunner(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+        app.app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
         process_model_id = "simple_script"
@@ -77,7 +77,7 @@ class TestScriptUnitTestRunner(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+        app.app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
         process_model_id = "script_with_unit_tests"
@@ -104,7 +104,7 @@ class TestScriptUnitTestRunner(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+        app.app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
         process_model_id = "script_with_unit_tests"

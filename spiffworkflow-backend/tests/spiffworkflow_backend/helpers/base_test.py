@@ -619,12 +619,12 @@ class BaseTest:
 
     @contextmanager
     def app_config_mock(self, app: Flask, config_identifier: str, new_config_value: Any) -> Generator:
-        initial_value = app.config[config_identifier]
-        app.config[config_identifier] = new_config_value
+        initial_value = app.app.config[config_identifier]
+        app.app.config[config_identifier] = new_config_value
         try:
             yield
         finally:
-            app.config[config_identifier] = initial_value
+            app.app.config[config_identifier] = initial_value
 
     @staticmethod
     def copy_example_process_models() -> None:
