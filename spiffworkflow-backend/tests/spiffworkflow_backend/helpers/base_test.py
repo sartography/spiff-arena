@@ -44,8 +44,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-# from tests.spiffworkflow_backend.helpers.test_data import logged_in_headers
-
 
 class BaseTest:
     @staticmethod
@@ -64,8 +62,13 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, extra_token_payload: dict | None = None) -> dict[str, str]:
-        return {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
+    def logged_in_headers(
+        user: UserModel, extra_token_payload: dict | None = None, additional_headers: dict | None = None
+    ) -> dict[str, str]:
+        auth_headers = {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
+        if additional_headers:
+            return {**auth_headers, **additional_headers}
+        return auth_headers
 
     def create_group_and_model_with_bpmn(
         self,
@@ -159,15 +162,15 @@ class BaseTest:
         display_name: str = "",
     ) -> str:
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
+        headers = self.logged_in_headers(user, additional_headers={"Content-type": "application/json"})
         response = client.post(
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
+            headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group)),
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["id"] == process_group_id
+        assert response.json() is not None
+        assert response.json()["id"] == process_group_id
         return process_group_id
 
     def create_process_model(
@@ -220,9 +223,8 @@ class BaseTest:
 
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
-                    content_type="application/json",
                     data=json.dumps(ProcessModelInfoSchema().dump(model)),
-                    headers=self.logged_in_headers(user),
+                    headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
                 )
 
                 assert response.status_code == 201
@@ -283,8 +285,7 @@ class BaseTest:
             f"/v1.0/process-models/{modified_process_model_id}/files",
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(user),
+            headers=self.logged_in_headers(user, additional_headers={"Content-type": "multipart/form-data"}),
         )
         assert response.status_code == 201
         assert response.get_data() is not None
@@ -464,8 +465,7 @@ class BaseTest:
             report_metadata_to_use = self.empty_report_metadata_body()
         response = client.post(
             f"/v1.0/process-instances{param_string}",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
+            headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
             data=json.dumps({"report_metadata": report_metadata_to_use}),
         )
         assert response.status_code == 200

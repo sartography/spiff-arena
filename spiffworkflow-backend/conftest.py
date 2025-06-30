@@ -48,6 +48,8 @@ def app() -> Generator[FlaskApp, Any, Any]:  # noqa
 @pytest.fixture(scope="session")
 def client(app) -> Flask:  # noqa
     return app.test_client()
+    # with app.test_client() as client:
+    #     yield client
 
 
 @pytest.fixture()
