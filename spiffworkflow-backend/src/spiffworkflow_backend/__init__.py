@@ -2,18 +2,16 @@ import faulthandler
 import os
 from typing import Any
 
-import connexion  # type: ignore
-import flask.app
-import flask.json
+import connexion
 import sqlalchemy
 from flask.json.provider import DefaultJSONProvider
-from flask_cors import CORS  # type: ignore
+from starlette.middleware.cors import CORSMiddleware
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate
 from spiffworkflow_backend.background_processing.celery import init_celery_if_appropriate
 from spiffworkflow_backend.config import setup_config
-from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
+from spiffworkflow_backend.exceptions.api_error import handle_exception
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
@@ -56,7 +54,7 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
-def create_app() -> flask.app.Flask:
+def create_app() -> connexion.FlaskApp:
     faulthandler.enable()
 
     # We need to create the sqlite database in a known location.
@@ -74,8 +72,9 @@ def create_app() -> flask.app.Flask:
     db.init_app(app)
     migrate.init_app(app, db)
 
+    connexion_app.add_error_handler(Exception, handle_exception)
+
     app.register_blueprint(user_blueprint)
-    app.register_blueprint(api_error_blueprint)
 
     # only register the backend openid server if the backend is configured to use it
     backend_auths = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
@@ -85,11 +84,19 @@ def create_app() -> flask.app.Flask:
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
     # need to continually keep asking for the same path.
-    origins_re = [
+    origins_re_list = [
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")  # noqa: UP031
         for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
     ]
-    CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
+    origin_regex = "|".join(origins_re_list)
+    connexion_app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=origin_regex,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        max_age=3600,
+    )
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
 
@@ -107,4 +114,4 @@ def create_app() -> flask.app.Flask:
     start_apscheduler_if_appropriate(app)
     init_celery_if_appropriate(app)
 
-    return app  # type: ignore
+    return connexion_app

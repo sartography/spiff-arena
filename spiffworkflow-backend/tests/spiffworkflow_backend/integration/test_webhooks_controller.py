@@ -2,7 +2,7 @@ import json
 from hashlib import sha256
 from hmac import HMAC
 
-from connexion import FlaskApp  # type: ignore
+from connexion import FlaskApp
 from flask.app import Flask
 from flask.testing import FlaskClient
 

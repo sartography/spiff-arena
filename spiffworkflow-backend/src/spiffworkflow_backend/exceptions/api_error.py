@@ -6,13 +6,11 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-import flask.wrappers
 import sentry_sdk
-from flask import Blueprint
+from connexion.lifecycle import ConnexionRequest
+from connexion.problem import problem
 from flask import current_app
 from flask import g
-from flask import jsonify
-from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -20,6 +18,7 @@ from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
+from starlette.responses import Response as ConnexionResponse
 from werkzeug.exceptions import MethodNotAllowed
 
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
@@ -29,8 +28,6 @@ from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
-
-api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
 
 @dataclass
@@ -267,8 +264,7 @@ def should_notify_sentry(exception: Exception) -> bool:
     return True
 
 
-@api_error_blueprint.app_errorhandler(Exception)  # type: ignore
-def handle_exception(exception: Exception) -> flask.wrappers.Response:
+def handle_exception(request: ConnexionRequest, exception: Exception) -> ConnexionResponse:
     """Handles unexpected exceptions."""
     set_user_sentry_context()
 
@@ -319,12 +315,23 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
             status_code=status_code,
         )
 
-    response_message = api_exception.response_message
-    if response_message is None:
-        response_message = jsonify(api_exception)
+    if api_exception.response_message is not None:
+        return ConnexionResponse(
+            content=api_exception.response_message,
+            status_code=api_exception.status_code or 500,
+            headers=api_exception.response_headers,
+        )
 
-    error_response = make_response(response_message, api_exception.status_code)
-    if api_exception.response_headers is not None:
-        for header, value in api_exception.response_headers.items():
-            error_response.headers[header] = value
-    return error_response
+    serialized_error = api_exception.serialized()
+    status = int(serialized_error.pop("status_code", 500))
+    title = str(serialized_error.pop("error_code", "internal_server_error"))
+    detail = str(serialized_error.pop("message", str(exception)))
+    headers = api_exception.response_headers
+
+    return problem(  # type: ignore[no-any-return]
+        status=status,
+        title=title,
+        detail=detail,
+        headers=headers,
+        ext=serialized_error,
+    )

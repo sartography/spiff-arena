@@ -6,7 +6,7 @@ import string
 from hashlib import sha256
 from typing import Any
 
-import connexion  # type: ignore
+import connexion
 import flask.wrappers
 from flask import current_app
 from flask import g
