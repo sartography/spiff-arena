@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 import flask
 import pytest
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
@@ -2480,7 +2480,9 @@ class TestProcessApi(BaseTest):
         ).first()
         assert task_event is not None
 
-    def setup_initial_groups_for_move_tests(self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel) -> None:
+    def setup_initial_groups_for_move_tests(
+        self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel
+    ) -> None:
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:

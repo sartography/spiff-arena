@@ -1,9 +1,9 @@
 import json
 
 import pytest
+import starlette
 from flask import Flask
 from flask import g
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel

@@ -1,8 +1,8 @@
 import json
 
 import pytest
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.secret_model import SecretModel

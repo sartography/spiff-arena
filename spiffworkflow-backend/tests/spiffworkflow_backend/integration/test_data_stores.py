@@ -1,5 +1,5 @@
+import starlette
 from flask import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from spiffworkflow_backend.models.user import UserModel

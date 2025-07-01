@@ -3,8 +3,8 @@ import json
 from hashlib import sha256
 from unittest.mock import patch
 
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus

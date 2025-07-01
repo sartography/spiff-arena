@@ -1,5 +1,5 @@
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel

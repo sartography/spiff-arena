@@ -1,7 +1,7 @@
 from typing import Any
 
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel

@@ -2,8 +2,8 @@ import ast
 import base64
 import re
 
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 from pytest_mock.plugin import MockerFixture
 
 from spiffworkflow_backend.models.db import db

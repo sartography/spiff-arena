@@ -1,8 +1,8 @@
 import time
 
+import starlette
 from flask import Flask
 from flask import g
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db

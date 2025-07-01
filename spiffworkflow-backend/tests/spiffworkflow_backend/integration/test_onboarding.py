@@ -1,5 +1,5 @@
+import starlette
 from flask import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -22,7 +22,9 @@ class TestOnboarding(BaseTest):
         assert results.status_code == 200
         assert results.json() == {}
 
-    def set_up_onboarding(self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel, file_location: str) -> None:
+    def set_up_onboarding(
+        self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel, file_location: str
+    ) -> None:
         process_group_id = "site-administration"
         process_model_id = "onboarding"
         bpmn_file_location = file_location

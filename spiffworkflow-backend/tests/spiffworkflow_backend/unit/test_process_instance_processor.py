@@ -1,9 +1,9 @@
 from uuid import UUID
 
 import pytest
+import starlette
 from flask import g
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 

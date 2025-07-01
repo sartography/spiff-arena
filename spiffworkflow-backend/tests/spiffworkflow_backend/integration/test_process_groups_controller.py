@@ -2,8 +2,8 @@ import json
 import os
 
 import pytest
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.process_group import ProcessGroup

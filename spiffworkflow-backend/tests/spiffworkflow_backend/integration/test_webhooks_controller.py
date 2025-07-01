@@ -2,9 +2,9 @@ import json
 from hashlib import sha256
 from hmac import HMAC
 
+import starlette
 from connexion import FlaskApp
 from flask.app import Flask
-from flask.testing import FlaskClient
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec

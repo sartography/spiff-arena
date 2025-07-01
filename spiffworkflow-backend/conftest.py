@@ -5,8 +5,8 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from connexion import FlaskApp
 import starlette
+from connexion import FlaskApp
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db

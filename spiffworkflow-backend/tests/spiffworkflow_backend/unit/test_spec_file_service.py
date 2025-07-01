@@ -2,8 +2,8 @@ import os
 import sys
 
 import pytest
+import starlette
 from flask import Flask
-from flask.testing import FlaskClient
 from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel

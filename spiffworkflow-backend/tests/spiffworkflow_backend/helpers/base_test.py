@@ -9,9 +9,9 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
+import starlette
 from flask import current_app
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.test import TestResponse  # type: ignore

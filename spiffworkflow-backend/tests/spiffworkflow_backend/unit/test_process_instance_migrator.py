@@ -2,8 +2,8 @@ import copy
 import json
 import os
 
+import starlette
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
 from sqlalchemy import or_
 
