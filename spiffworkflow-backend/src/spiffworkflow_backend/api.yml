@@ -1093,6 +1093,11 @@ paths:
       summary: Create script unit test based on given criteria
       tags:
         - Script Unit Test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Script Unit Test Result
@@ -1114,6 +1119,11 @@ paths:
       summary: Run a given script unit test.
       tags:
         - Script Unit Test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Script Unit Test Result
@@ -1586,6 +1596,11 @@ paths:
       summary: Returns all process instance reports for process model
       tags:
         - Process Instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "201":
           description: The process instance report was created.
@@ -2252,6 +2267,11 @@ paths:
       summary: Send a BPMN event to the process
       tags:
         - Process Instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
@@ -2285,6 +2305,11 @@ paths:
       summary: Mark a task complete without executing it
       tags:
         - Process Instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
@@ -2682,6 +2707,11 @@ paths:
       summary: Send a BPMN event to the process
       tags:
         - Process Instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
