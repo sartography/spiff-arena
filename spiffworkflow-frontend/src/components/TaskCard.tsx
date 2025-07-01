@@ -1,4 +1,5 @@
 import React, { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -26,6 +27,7 @@ export default function TaskCard({
   handleRunTask,
   getProcessInstanceSummary,
 }: TaskCardProps) {
+  const { t } = useTranslation();
   return (
     <Grid id="task-card-grid" item key={entry.id} xs={12} sm={6} md={4}>
       <Card
@@ -73,23 +75,25 @@ export default function TaskCard({
           }}
         >
           <Typography variant="body2">
-            <strong>Process Instance Id</strong>:{' '}
+            <strong>{t('process_id')}</strong>:{' '}
             {'process_instance_id' in entry
               ? entry.process_instance_id
               : entry.id}
           </Typography>
           <Typography variant="body2">
-            <strong>Created by</strong>: {entry.process_initiator_username}
+            <strong>{t('created_by')}</strong>:{' '}
+            {entry.process_initiator_username}
           </Typography>
           <Typography
             variant="body2"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <strong>Last milestone</strong>: {entry.last_milestone_bpmn_name}
+            <strong>{t('last_milestone')}</strong>:{' '}
+            {entry.last_milestone_bpmn_name}
           </Typography>
           {waitingFor ? (
             <Typography variant="body2">
-              <strong>Waiting for</strong>: {waitingFor}
+              <strong>{t('waiting_for')}</strong>: {waitingFor}
             </Typography>
           ) : null}
         </Container>

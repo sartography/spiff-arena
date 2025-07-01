@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
@@ -26,6 +27,7 @@ export default function AuthenticationList() {
     null,
   );
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const processResult = (result: any) => {
@@ -74,7 +76,7 @@ export default function AuthenticationList() {
                 {row.id}
               </a>
             </TableCell>
-            <TableCell>Local Configuration</TableCell>
+            <TableCell>{t('local_configuration')}</TableCell>
           </TableRow>
         );
       });
@@ -83,8 +85,8 @@ export default function AuthenticationList() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Id</TableCell>
-                <TableCell>Source</TableCell>
+                <TableCell>{t('id')}</TableCell>
+                <TableCell>{t('source')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -101,7 +103,7 @@ export default function AuthenticationList() {
   if (authenticationList) {
     return (
       <>
-        <Typography variant="h1">Authentications</Typography>
+        <Typography variant="h1">{t('authentications')}</Typography>
         {buildTable()}
         <AuthenticationConfiguration />
       </>

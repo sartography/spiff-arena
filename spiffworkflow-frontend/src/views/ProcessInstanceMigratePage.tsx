@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import {
   Alert,
@@ -41,6 +42,7 @@ function DangerousMigrationButton({
   const [openDialog, setOpenDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { targetUris } = useUriListForPermissions();
+  const { t } = useTranslation();
   const [migrationCheckResult, setMigrationCheckResult] =
     useState<MigrationCheckResult | null>(null);
 
@@ -112,7 +114,7 @@ function DangerousMigrationButton({
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog} disabled={isLoading}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               onClick={handleRunMigration}
@@ -120,7 +122,7 @@ function DangerousMigrationButton({
               variant="contained"
               disabled={isLoading}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Confirm'}
+              {isLoading ? <CircularProgress size={24} /> : t('submit')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -179,6 +181,7 @@ function MigrationStatus({
 }
 
 export default function ProcessInstanceMigratePage() {
+  const { t } = useTranslation();
   const params = useParams();
   const [migrationCheckResult, setMigrationCheckResult] =
     useState<MigrationCheckResult | null>(null);
@@ -216,7 +219,7 @@ export default function ProcessInstanceMigratePage() {
     }
 
     if (migrationResult.ok) {
-      return <Alert severity="success">Process instance migrated</Alert>;
+      return <Alert severity="success">{t('process_migrated')}</Alert>;
     }
 
     let alertBody = null;
@@ -240,7 +243,7 @@ export default function ProcessInstanceMigratePage() {
     }
     return (
       <Alert severity="error">
-        <AlertTitle>Error</AlertTitle>
+        <AlertTitle>{t('error')}</AlertTitle>
         {alertBody}
       </Alert>
     );
@@ -254,7 +257,7 @@ export default function ProcessInstanceMigratePage() {
     const columns = [
       {
         field: 'username',
-        headerName: 'Username',
+        headerName: t('username'),
         flex: 2,
         renderCell: (data: Record<string, any>) => {
           return <CellRenderer header="username" data={data} />;
@@ -262,7 +265,7 @@ export default function ProcessInstanceMigratePage() {
       },
       {
         field: 'timestamp',
-        headerName: 'Timestamp',
+        headerName: t('timestamp'),
         flex: 2,
         renderCell: (data: Record<string, any>) => {
           return <CellRenderer header="timestamp" data={data} />;
@@ -270,7 +273,7 @@ export default function ProcessInstanceMigratePage() {
       },
       {
         field: 'initial_git_revision',
-        headerName: 'Initial Git Revision',
+        headerName: t('initial_git_revision'),
         flex: 2,
         renderCell: (data: Record<string, any>) => {
           return (
@@ -284,7 +287,7 @@ export default function ProcessInstanceMigratePage() {
       },
       {
         field: 'target_git_revision',
-        headerName: 'Target Git Revision',
+        headerName: t('target_git_revision'),
         flex: 2,
         renderCell: (data: Record<string, any>) => {
           return (
@@ -298,7 +301,7 @@ export default function ProcessInstanceMigratePage() {
       },
       {
         field: 'actions',
-        headerName: 'Actions',
+        headerName: t('actions'),
         flex: 2,
         renderCell: (data: Record<string, any>) => {
           if (
@@ -312,9 +315,11 @@ export default function ProcessInstanceMigratePage() {
             <DangerousMigrationButton
               successCallback={onMigrationComplete}
               failureCallback={onMigrationFailure}
-              title={`Run another migration to switch to model version: '${data.row.initial_git_revision}'`}
+              title={t('migrate_to_version', {
+                git_revision: data.row.initial_git_revision,
+              })}
               targetBpmnProcessHash={data.row.initial_bpmn_process_hash}
-              buttonText="Revert"
+              buttonText={t('revert')}
             />
           );
         },
@@ -325,7 +330,7 @@ export default function ProcessInstanceMigratePage() {
     });
     return (
       <>
-        <h3>Previous Migrations</h3>
+        <h3>{t('previous_migrations')}</h3>
         <DataGrid
           sx={{
             '& .MuiDataGrid-cell:focus': {
@@ -354,17 +359,17 @@ export default function ProcessInstanceMigratePage() {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          [t('process_groups'), '/process-groups'],
           {
             entityToExplode: String(params.process_model_id),
             entityType: 'process-model-id',
             linkLastItem: true,
           },
           [
-            `Process Instance: ${params.process_instance_id}`,
+            t('process_with_id', { id: params.process_instance_id }),
             `/i/${params.process_instance_id}`,
           ],
-          ['Migrate'],
+          [t('migrate')],
         ]}
       />
       <br />

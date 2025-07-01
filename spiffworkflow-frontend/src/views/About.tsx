@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -14,6 +15,7 @@ import { ObjectWithStringKeysAndValues } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 function About() {
+  const { t } = useTranslation();
   const frontendVersionInfo = appVersionInfo();
   const [backendVersionInfo, setBackendVersionInfo] =
     useState<ObjectWithStringKeysAndValues | null>(null);
@@ -65,10 +67,16 @@ function About() {
   return (
     <Box p={3}>
       <Typography variant="h1" gutterBottom>
-        About
+        {t('about')}
       </Typography>
-      {versionInfoFromDict('Frontend version information', frontendVersionInfo)}
-      {versionInfoFromDict('Backend version information', backendVersionInfo)}
+      {versionInfoFromDict(
+        t('frontend_version_information'),
+        frontendVersionInfo,
+      )}
+      {versionInfoFromDict(
+        t('backend_version_information'),
+        backendVersionInfo,
+      )}
     </Box>
   );
 }
