@@ -42,7 +42,7 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        app.app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
         FeatureFlagService.set_feature_flags(
             {},
             {"a/b/c": {"some_feature": False}},
@@ -54,7 +54,7 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        app.app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
         FeatureFlagService.set_feature_flags(
             {"some_feature": True},
             {"a/b/c": {"some_feature": False}},
@@ -66,7 +66,7 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        app.app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"
         FeatureFlagService.set_feature_flags(
             {"one_feature": False},
             {"a/b/c": {"two_feature": False}},

@@ -56,7 +56,7 @@ class TestMessages(BaseTest):
         )
 
         # The response's task data should also match up with the correlation keys.
-        response_json = response.json
+        response_json = response.json()
         assert response_json["task_data"]["po_number"] == 1001
         assert response_json["task_data"]["customer_id"] == "Sartography"
 
@@ -166,7 +166,7 @@ class TestMessages(BaseTest):
         )
         assert response.status_code == 200
         assert response.json() is not None
-        assert "messages" in response.json
+        assert "messages" in response.json()
 
         messages = response.json()["messages"]
         expected_message_identifiers = {"table_seated", "order_ready", "end_of_day_receipts"}

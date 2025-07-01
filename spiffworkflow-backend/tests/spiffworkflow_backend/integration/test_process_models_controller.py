@@ -179,7 +179,7 @@ class TestProcessModelsController(BaseTest):
                 },
             }
         }
-        assert expected_specification == response.json
+        assert expected_specification == response.json()
 
     def test_process_model_list_with_grouping_by_process_group(
         self,
@@ -271,5 +271,5 @@ class TestProcessModelsController(BaseTest):
         )
         assert response.status_code == expected_response
         assert response.json() is not None
-        process_model_data: dict = response.json
+        process_model_data: dict = response.json()
         return process_model_data

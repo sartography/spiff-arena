@@ -24,14 +24,14 @@ class TestOpenidBlueprint(BaseTest):
 
         # SPIFFWORKFLOW_BACKEND_URL is set to http://localhost in unit_testing.py, but we ignore it anyway. See mock below.
         response = client.get("/openid/.well-known/openid-configuration")
-        discovered_urls = response.json
+        discovered_urls = response.json()
         assert "http://localhost/openid" == discovered_urls["issuer"]
         assert "http://localhost/openid/auth" == discovered_urls["authorization_endpoint"]
         assert "http://localhost/openid/token" == discovered_urls["token_endpoint"]
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", None):
             response = client.get("/openid/.well-known/openid-configuration")
-            discovered_urls = response.json
+            discovered_urls = response.json()
             # in unit tests, request.host_url will not have the port but it will have it in actual localhost flask server
             assert "http://localhost/openid" == discovered_urls["issuer"]
             assert "http://localhost/openid/auth" == discovered_urls["authorization_endpoint"]
@@ -73,9 +73,9 @@ class TestOpenidBlueprint(BaseTest):
         response = client.post("/openid/token", data=data, headers=headers)
         assert response.status_code == 200
         assert response.is_json
-        assert "access_token" in response.json
-        assert "id_token" in response.json
-        assert "refresh_token" in response.json
+        assert "access_token" in response.json()
+        assert "id_token" in response.json()
+        assert "refresh_token" in response.json()
 
         decoded_token = jwt.decode(response.json()["id_token"], options={"verify_signature": False})
         assert "iss" in decoded_token

@@ -1175,7 +1175,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 200
-        json_data = response.json
+        json_data = response.json()
         assert json_data
         assert json_data["process_instance"]["status"] == "complete"
         assert json_data["task_data"]["invoice"] == payload
@@ -1251,7 +1251,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 200
-        json_data = response.json
+        json_data = response.json()
         assert json_data
         assert json_data["process_instance"]["status"] == "complete"
         assert json_data["task_data"]["the_payload"] == payload
@@ -1324,7 +1324,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 400
-        assert response.json
+        assert response.json()
         assert response.json()["error_code"] == "message_not_accepted"
 
         processor.resume()
@@ -1336,7 +1336,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 200
-        json_data = response.json
+        json_data = response.json()
         assert json_data
         assert json_data["process_instance"]["status"] == "complete"
         process_instance_id = json_data["process_instance"]["id"]
@@ -1355,7 +1355,7 @@ class TestProcessApi(BaseTest):
             data=json.dumps(payload),
         )
         assert response.status_code == 400
-        assert response.json
+        assert response.json()
         assert response.json()["error_code"] == "message_not_accepted"
 
     def test_can_download_uploaded_file(
@@ -2423,7 +2423,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        task = response.json
+        task = response.json()
         assert task["data"]["result"] == {"message": "message 1"}
 
     def test_manual_complete_task(
@@ -3318,7 +3318,7 @@ class TestProcessApi(BaseTest):
     ) -> Any:
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model_id, headers)
-        process_instance = response.json
+        process_instance = response.json()
         assert isinstance(process_instance, dict)
         process_instance_id = process_instance["id"]
         return process_instance_id

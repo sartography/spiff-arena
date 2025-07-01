@@ -74,7 +74,7 @@ def create_app() -> FlaskApp:
     db.init_app(app)
     migrate.init_app(app, db)
 
-    connexion_app.add_error_handler(500, handle_exception)
+    connexion_app.add_error_handler(Exception, handle_exception)
 
     app.register_blueprint(user_blueprint)
 

@@ -339,7 +339,7 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(finance_user),
         )
         assert response.status_code == 500
-        assert response.json
+        assert response.json()
         assert "UserDoesNotHaveAccessToTaskError" in response.json()["message"]
 
         response = client.put(

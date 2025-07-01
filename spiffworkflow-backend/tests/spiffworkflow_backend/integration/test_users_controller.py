@@ -36,7 +36,7 @@ class TestUsersController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
+        assert response.json()
         assert response.json()["users"] is not None
         assert response.json()["username_prefix"] == username_prefix
         assert len(response.json()["users"]) == expected_count

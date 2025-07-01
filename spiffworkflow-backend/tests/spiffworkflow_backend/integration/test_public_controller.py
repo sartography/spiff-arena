@@ -38,9 +38,9 @@ class TestPublicController(BaseTest):
         response = client.get(url)
         assert response.status_code == 200
         assert response.json() is not None
-        assert "form" in response.json
-        assert "confirmation_message_markdown" in response.json
-        assert "task_guid" in response.json
+        assert "form" in response.json()
+        assert "confirmation_message_markdown" in response.json()
+        assert "task_guid" in response.json()
         assert "form_schema" in response.json()["form"]
         assert "form_ui_schema" in response.json()["form"]
         assert response.json()["form"]["form_schema"]["title"] == "Form for message start event"
@@ -77,9 +77,9 @@ class TestPublicController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json() is not None
-        assert "form" in response.json
-        assert "confirmation_message_markdown" in response.json
-        assert "task_guid" in response.json
+        assert "form" in response.json()
+        assert "confirmation_message_markdown" in response.json()
+        assert "task_guid" in response.json()
         assert response.json()["form"] is None
         assert response.json()["confirmation_message_markdown"] == "# Thanks\n\nWe hear you. Your name is **MyName**."
         assert response.json()["task_guid"] is None
@@ -124,10 +124,10 @@ class TestPublicController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json() is not None
-        assert "form" in response.json
-        assert "confirmation_message_markdown" in response.json
-        assert "task_guid" in response.json
-        assert "process_instance_id" in response.json
+        assert "form" in response.json()
+        assert "confirmation_message_markdown" in response.json()
+        assert "task_guid" in response.json()
+        assert "process_instance_id" in response.json()
         assert response.json()["form"] == {
             "form_schema": {
                 "description": "Hey, MyName. Thanks for telling us who you are. Just one more field.",
@@ -157,10 +157,10 @@ class TestPublicController(BaseTest):
 
         assert response.status_code == 200
         assert response.json() is not None
-        assert "form" in response.json
-        assert "confirmation_message_markdown" in response.json
-        assert "task_guid" in response.json
-        assert "process_instance_id" in response.json
+        assert "form" in response.json()
+        assert "confirmation_message_markdown" in response.json()
+        assert "task_guid" in response.json()
+        assert "process_instance_id" in response.json()
         assert response.json()["form"] is None
         assert response.json()["confirmation_message_markdown"] == "# Thanks\n\nWe hear you. Your name is **MyName MyLastName**."
         assert response.json()["task_guid"] is None

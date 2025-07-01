@@ -35,8 +35,8 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(user_one),
         )
         assert response.status_code == 200
-        assert response.json
-        assert "process_instance" in response.json
+        assert response.json()
+        assert "process_instance" in response.json()
         assert response.json()["process_instance"]["id"] == process_instance.id
         assert response.json()["uri_type"] == "for-me"
 
@@ -51,8 +51,8 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
-        assert "process_instance" in response.json
+        assert response.json()
+        assert "process_instance" in response.json()
         assert response.json()["process_instance"]["id"] == process_instance.id
         assert response.json()["uri_type"] is None
 
@@ -167,4 +167,4 @@ class TestProcessInstancesController(BaseTest):
 
         # this can actually be None if the process model repo is not git at all
         # such as when running the docker container ci tests.
-        assert "current_git_revision" in response.json
+        assert "current_git_revision" in response.json()

@@ -13,7 +13,7 @@ from tests.spiffworkflow_backend.integration.test_secret_service import SecretSe
 
 
 class TestSecretsController(SecretServiceTestHelpers):
-    def test_add_secret(
+    def test_add_secret_api(
         self,
         app: Flask,
         client: FlaskClient,
@@ -28,12 +28,11 @@ class TestSecretsController(SecretServiceTestHelpers):
         data = json.dumps(SecretModelSchema().dump(secret_model))
         response = client.post(
             "/v1.0/secrets",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-type": "application/json"}),
             data=data,
         )
-        assert response.json
-        secret: dict = response.json
+        assert response.json()
+        secret: dict = response.json()
         for key in ["key", "value", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
@@ -76,7 +75,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         assert secret_response.json()
         assert SecretService._decrypt(secret_response.json()["value"]) == self.test_value
 
-    def test_update_secret(
+    def test_update_secret_api(
         self,
         app: Flask,
         client: FlaskClient,
@@ -94,8 +93,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         )
         response = client.put(
             f"/v1.0/secrets/{self.test_key}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-type": "application/json"}),
             data=json.dumps(SecretModelSchema().dump(secret_model)),
         )
         assert response.status_code == 200

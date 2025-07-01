@@ -66,7 +66,7 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 403
-            assert response.json
+            assert response.json()
             assert response.json()["error_code"] == "extensions_api_not_enabled"
 
     def test_returns_403_if_process_model_does_not_match_configured_prefix(
@@ -90,7 +90,7 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 403
-            assert response.json
+            assert response.json()
             assert response.json()["error_code"] == "invalid_process_model_extension"
 
     def test_extension_can_run_without_restriction(
@@ -119,7 +119,7 @@ class TestExtensionsController(BaseTest):
             )
 
             assert response.json() is not None
-            assert "task_data" in response.json
+            assert "task_data" in response.json()
             task_data = response.json()["task_data"]
             assert "pi_json" in task_data
             assert "id" in task_data["pi_json"]

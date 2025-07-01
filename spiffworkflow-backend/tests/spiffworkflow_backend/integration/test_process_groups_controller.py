@@ -35,7 +35,7 @@ class TestProcessGroupsController(BaseTest):
             data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 201
-        assert response.json
+        assert response.json()
 
         # Check what is returned
         result = ProcessGroup(**response.json())
