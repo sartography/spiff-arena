@@ -28,7 +28,9 @@ export default function ProcessGroupEdit() {
 
   useEffect(() => {
     if (processGroup) {
-      setPageTitle([t('editing_process_group', { name: processGroup.display_name })]);
+      setPageTitle([
+        t('editing_process_group', { name: processGroup.display_name }),
+      ]);
     }
   }, [processGroup, t]);
 

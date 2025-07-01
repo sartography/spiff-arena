@@ -627,7 +627,9 @@ export default function ProcessModelTreePage({
                             renderIcon={<Delete />}
                             iconDescription={t('delete_process_group')}
                             hasIconOnly
-                            description={t('delete_process_group_with_name', { name: currentProcessGroup.display_name })}
+                            description={t('delete_process_group_with_name', {
+                              name: currentProcessGroup.display_name,
+                            })}
                             onConfirmation={deleteProcessGroup}
                             confirmButtonLabel={t('delete')}
                           />
@@ -680,7 +682,11 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>{t('process_models_with_count', { count: models.length })}</Typography>
+                      <Typography>
+                        {t('process_models_with_count', {
+                          count: models.length,
+                        })}
+                      </Typography>
                       {currentProcessGroup && (
                         <Can
                           I="POST"
@@ -740,7 +746,9 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>{t('process_groups')} ({groups?.length})</Typography>
+                      <Typography>
+                        {t('process_groups')} ({groups?.length})
+                      </Typography>
                       <Can
                         I="POST"
                         a={targetUris.processGroupListPath}
@@ -789,7 +797,8 @@ export default function ProcessModelTreePage({
                         }}
                       >
                         <Typography>
-                          {t('data_stores')} ({dataStoresForProcessGroup?.length})
+                          {t('data_stores')} (
+                          {dataStoresForProcessGroup?.length})
                         </Typography>
                         <IconButton
                           size="small"

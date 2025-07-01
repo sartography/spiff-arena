@@ -133,11 +133,7 @@ export default function ProcessGroupForm({
           id="process-group-identifier"
           name="id"
           error={identifierInvalid}
-          helperText={
-            identifierInvalid
-              ? t('identifier_requirements')
-              : ''
-          }
+          helperText={identifierInvalid ? t('identifier_requirements') : ''}
           label={t('identifier_required')}
           value={processGroup.id}
           onChange={(event: any) => {
@@ -153,7 +149,9 @@ export default function ProcessGroupForm({
     }
 
     textInputs.push(
-      <InputLabel id="data-store-description-label">{t('description')}:</InputLabel>,
+      <InputLabel id="data-store-description-label">
+        {t('description')}:
+      </InputLabel>,
     );
     textInputs.push(
       <TextareaAutosize

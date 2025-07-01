@@ -78,9 +78,13 @@ export default function ProcessModelFileUploadModal({
         onClose={handleOverwriteFileCancel}
         aria-labelledby="overwrite-dialog-title"
       >
-        <DialogTitle id="overwrite-dialog-title">{t('overwrite_file')}</DialogTitle>
+        <DialogTitle id="overwrite-dialog-title">
+          {t('overwrite_file')}
+        </DialogTitle>
         <DialogContent>
-          <Typography>{t('overwrite_file_description', { filename: duplicateFilename })}</Typography>
+          <Typography>
+            {t('overwrite_file_description', { filename: duplicateFilename })}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleOverwriteFileCancel} color="primary">
@@ -108,9 +112,7 @@ export default function ProcessModelFileUploadModal({
       >
         <DialogTitle id="upload-dialog-title">{t('upload_file')}</DialogTitle>
         <DialogContent>
-          <Typography>
-            {t('upload_file_instructions')}
-          </Typography>
+          <Typography>{t('upload_file_instructions')}</Typography>
           <SpiffTooltip title={t('delete_file')}>
             <input
               type="file"

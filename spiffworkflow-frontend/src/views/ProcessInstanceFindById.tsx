@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField, Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { isANumber, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 import { ProcessInstance } from '../interfaces';
-import { useTranslation } from 'react-i18next';
 
 export default function ProcessInstanceFindById() {
   const { t } = useTranslation();
@@ -75,7 +75,6 @@ export default function ProcessInstanceFindById() {
       </Button>
     );
   };
-
 
   return (
     <>

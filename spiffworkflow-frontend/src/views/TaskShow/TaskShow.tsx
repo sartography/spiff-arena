@@ -101,7 +101,7 @@ export default function TaskShow() {
       ];
       setHotCrumbs(hotCrumbList);
     },
-    [navigateToInterstitial, navigate],
+    [navigateToInterstitial, navigate, t],
   );
 
   useEffect(() => {

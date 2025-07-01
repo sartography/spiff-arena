@@ -166,7 +166,10 @@ export default function ProcessInstanceListTableWithFilters({
     [t('filter_operator_is_not')]: { id: 'not_equals', requires_value: true },
     [t('filter_operator_contains')]: { id: 'contains', requires_value: true },
     [t('filter_operator_is_empty')]: { id: 'is_empty', requires_value: false },
-    [t('filter_operator_is_not_empty')]: { id: 'is_not_empty', requires_value: false },
+    [t('filter_operator_is_not_empty')]: {
+      id: 'is_not_empty',
+      requires_value: false,
+    },
   };
 
   const filterDisplayTypes: FilterDisplayTypeMapping = {
@@ -1127,7 +1130,9 @@ export default function ProcessInstanceListTableWithFilters({
       reportColumnFormMode === 'new'
         ? t('add_column')
         : t('edit_column', {
-            columnName: reportColumnToOperateOn ? reportColumnToOperateOn.accessor : '',
+            columnName: reportColumnToOperateOn
+              ? reportColumnToOperateOn.accessor
+              : '',
           });
     return (
       <Modal
@@ -1169,7 +1174,9 @@ export default function ProcessInstanceListTableWithFilters({
                 kind="ghost"
                 size="sm"
                 className={`button-tag ${tagTypeClass}`}
-                title={t('edit_column', { columnName: reportColumnForEditing.accessor })}
+                title={t('edit_column', {
+                  columnName: reportColumnForEditing.accessor,
+                })}
                 onClick={() => {
                   setReportColumnToOperateOn(reportColumnForEditing);
                   setShowReportColumnForm(true);
@@ -1237,7 +1244,9 @@ export default function ProcessInstanceListTableWithFilters({
         </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
-            <InputLabel id="system-report-label">{t('system_report')}</InputLabel>
+            <InputLabel id="system-report-label">
+              {t('system_report')}
+            </InputLabel>
             <Select
               labelId="system-report-label"
               label={t('system_report')}
@@ -1262,7 +1271,9 @@ export default function ProcessInstanceListTableWithFilters({
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
-            <InputLabel id="user-group-label">{t('assigned_user_group')}</InputLabel>
+            <InputLabel id="user-group-label">
+              {t('assigned_user_group')}
+            </InputLabel>
             <Select
               label={t('assigned_user_group')}
               labelId="user-group-label"

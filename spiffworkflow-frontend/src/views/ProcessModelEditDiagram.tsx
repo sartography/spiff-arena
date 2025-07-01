@@ -402,7 +402,9 @@ export default function ProcessModelEditDiagram() {
   const handleFileNameSave = (event: any) => {
     event.preventDefault();
     if (!newFileName) {
-      setProcessModelFileInvalidText(t('diagram_file_name_editor_error_required'));
+      setProcessModelFileInvalidText(
+        t('diagram_file_name_editor_error_required'),
+      );
       return;
     }
     setProcessModelFileInvalidText('');
@@ -741,10 +743,12 @@ export default function ProcessModelEditDiagram() {
       if (scriptUnitTestResult.context) {
         errorObject = t('diagram_errors_unexpected_result');
       } else if (scriptUnitTestResult.line_number) {
-        errorObject = t('diagram_errors_script_error_line', { lineNumber: scriptUnitTestResult.line_number });
+        errorObject = t('diagram_errors_script_error_line', {
+          lineNumber: scriptUnitTestResult.line_number,
+        });
       } else {
-        errorObject = t('diagram_errors_script_error_generic', { 
-          errorMessage: JSON.stringify(scriptUnitTestResult.error) 
+        errorObject = t('diagram_errors_script_error_generic', {
+          errorMessage: JSON.stringify(scriptUnitTestResult.error),
         });
       }
       let errorStringElement = <span>{errorObject}</span>;
@@ -850,7 +854,9 @@ export default function ProcessModelEditDiagram() {
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <p className="with-top-margin-for-unit-test-name">
-                {t('diagram_script_editor_unit_test_title', { testId: currentScriptUnitTest.id })}
+                {t('diagram_script_editor_unit_test_title', {
+                  testId: currentScriptUnitTest.id,
+                })}
               </p>
             </Grid>
             <Grid item xs={6}>
@@ -894,7 +900,9 @@ export default function ProcessModelEditDiagram() {
               </div>
             </Grid>
             <Grid item xs={6}>
-              <div>{t('diagram_script_editor_unit_test_expected_output_json')}</div>
+              <div>
+                {t('diagram_script_editor_unit_test_expected_output_json')}
+              </div>
               <div>
                 <Editor
                   height={500}
@@ -939,10 +947,14 @@ export default function ProcessModelEditDiagram() {
         setScriptAssistQuery(scriptAssistValue);
         setScriptAssistError(null);
       } catch (error) {
-        setScriptAssistError(t('diagram_script_assist_error_processing', { error }));
+        setScriptAssistError(
+          t('diagram_script_assist_error_processing', { error }),
+        );
       }
     } else {
-      setScriptAssistError(t('diagram_script_assist_error_instructions_required'));
+      setScriptAssistError(
+        t('diagram_script_assist_error_instructions_required'),
+      );
     }
   };
 
@@ -1052,9 +1064,7 @@ export default function ProcessModelEditDiagram() {
               {scriptUnitTestEditorElement()}
             </TabPanel>
           </Box>
-          <Button onClick={handleScriptEditorClose}>
-            {t('close')}
-          </Button>
+          <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );
@@ -1103,9 +1113,7 @@ export default function ProcessModelEditDiagram() {
               }}
             />
           </div>
-          <Button onClick={handleMarkdownEditorClose}>
-            {t('close')}
-          </Button>
+          <Button onClick={handleMarkdownEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );
@@ -1194,7 +1202,9 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_process_model_selector_title')}</h2>
+          <h2 id="modal-modal-title">
+            {t('diagram_process_model_selector_title')}
+          </h2>
           <ProcessSearch
             height="500px"
             onChange={processSearchOnClose}
@@ -1339,7 +1349,9 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_json_schema_editor_title')}</h2>
+          <h2 id="modal-modal-title">
+            {t('diagram_json_schema_editor_title')}
+          </h2>
           <ReactFormBuilder
             processModelId={params.process_model_id || ''}
             fileName={jsonSchemaFileName}
@@ -1354,9 +1366,7 @@ export default function ProcessModelEditDiagram() {
             )}
             pythonWorker={pythonWorker}
           />
-          <Button onClick={handleJsonSchemaEditorClose}>
-            {t('close')}
-          </Button>
+          <Button onClick={handleJsonSchemaEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );

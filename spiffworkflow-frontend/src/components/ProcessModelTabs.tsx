@@ -80,9 +80,7 @@ export default function ProcessModelTabs({
   if (processModel.files.length === 0) {
     helpText = (
       <p className="no-results-message with-bottom-margin">
-        <strong>
-          {t('process_model_no_files_help')}
-        </strong>
+        <strong>{t('process_model_no_files_help')}</strong>
       </p>
     );
   }
@@ -173,7 +171,9 @@ export default function ProcessModelTabs({
               {helpText}
               <div className="with-bottom-margin">
                 {processModel && processModel.bpmn_version_control_identifier
-                  ? t('files_with_revision', { revision: processModel.bpmn_version_control_identifier })
+                  ? t('files_with_revision', {
+                      revision: processModel.bpmn_version_control_identifier,
+                    })
                   : t('files')}
               </div>
               {addFileComponent()}

@@ -407,27 +407,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const terminateProcessInstance = () => {
-      HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceTerminatePath}`,
-        successCallback: refreshPage,
-        httpMethod: 'POST',
-      });
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceTerminatePath}`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
   };
 
   const suspendProcessInstance = () => {
-      HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceSuspendPath}`,
-        successCallback: refreshPage,
-        httpMethod: 'POST',
-      });
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceSuspendPath}`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
   };
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceResumePath}`,
-        successCallback: refreshPage,
-        httpMethod: 'POST',
-      });
+      path: `${targetUris.processInstanceResumePath}`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
   };
 
   const currentToTaskGuid = () => {
@@ -461,11 +461,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const resetProcessInstance = () => {
-      HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceResetPath}/${currentToTaskGuid()}`,
-        successCallback: returnToProcessInstance,
-        httpMethod: 'POST',
-      });
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceResetPath}/${currentToTaskGuid()}`,
+      successCallback: returnToProcessInstance,
+      httpMethod: 'POST',
+    });
   };
 
   const formatMetadataValue = (key: string, value: string) => {
@@ -647,7 +647,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           renderIcon={<StopCircleOutlined />}
           iconDescription={t('terminate_button')}
           hasIconOnly
-          description={t('terminate_process_instance', { id: processInstance.id })}
+          description={t('terminate_process_instance', {
+            id: processInstance.id,
+          })}
           onConfirmation={terminateProcessInstance}
           confirmButtonLabel={t('terminate_button')}
         />
@@ -667,7 +669,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       return (
         <SpiffTooltip title={t('suspend_tooltip')} placement="top">
-          <IconButton onClick={suspendProcessInstance} aria-label={t('suspend_tooltip')}>
+          <IconButton
+            onClick={suspendProcessInstance}
+            aria-label={t('suspend_tooltip')}
+          >
             <PauseOutlined />
           </IconButton>
         </SpiffTooltip>
@@ -819,8 +824,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClose={handleProcessDataDisplayClose}
         >
           <DialogTitle>
-            {t('process_data_object', { 
-              identifier: processDataToDisplay.process_data_identifier 
+            {t('process_data_object', {
+              identifier: processDataToDisplay.process_data_identifier,
             })}
           </DialogTitle>
           <DialogContent>{bodyComponent}</DialogContent>
@@ -1021,7 +1026,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ];
     return (
       (task.state === 'WAITING' &&
-        subprocessTypes.filter((t) => t === task.typename).length > 0) ||
+        subprocessTypes.filter((type) => type === task.typename).length > 0) ||
       task.state === 'READY' ||
       (processInstance &&
         processInstance.status === 'suspended' &&
@@ -1047,7 +1052,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'waiting' &&
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
-      taskTypes.filter((t) => t === task.typename).length > 0 &&
+      taskTypes.filter((type) => type === task.typename).length > 0 &&
       task.state === 'WAITING' &&
       showingActiveTask()
     );
@@ -1370,7 +1375,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const potentialOwnerSelector = () => {
     return (
       <Box>
-        <h3 className="task-data-details-header">{t('update_task_ownership')}</h3>
+        <h3 className="task-data-details-header">
+          {t('update_task_ownership')}
+        </h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
             {t('select_user_to_complete_task')}
@@ -1404,7 +1411,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return (
       <Box>
-        <h3 className="task-data-details-header">{t('choose_event_to_send')}</h3>
+        <h3 className="task-data-details-header">
+          {t('choose_event_to_send')}
+        </h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
             {t('select_event_description')}
@@ -1458,7 +1467,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
     if (taskListToUse && taskToDisplay) {
-      const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
+      const task = taskListToUse.find((task_: Task) => task_.guid === taskGuid);
       if (task) {
         // set to null right away to hopefully avoid using the incorrect task later
         setTaskToDisplay(null);
@@ -1558,9 +1567,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         accordionItems.push(
           <Accordion key={`mi-instance-${titleizeString(infoType)}`}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              {t('mi_instances', { type: titleizeString(infoType) })} ({
-                taskInstances.length
-              })
+              {t('mi_instances', { type: titleizeString(infoType) })} (
+              {taskInstances.length})
             </AccordionSummary>
             <AccordionDetails>{taskInstances}</AccordionDetails>
           </Accordion>,
@@ -1581,7 +1589,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           'undefined' &&
         taskToDisplay.state !== 'COMPLETED'
       ) {
-        text += t('remaining', { count: taskToDisplay.runtime_info.iterations_remaining });
+        text += t('remaining', {
+          count: taskToDisplay.runtime_info.iterations_remaining,
+        });
       }
       accordionItems.push(
         <Accordion key="mi-loop-iterations">

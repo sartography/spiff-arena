@@ -1,4 +1,4 @@
-import i18n from "../i18n";
+import i18n from '../i18n';
 
 // https://gist.github.com/caiotarifa/30ae974f2293c761f3139dd194abd9e5
 type Locales = {

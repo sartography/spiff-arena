@@ -23,7 +23,9 @@ export default function ProcessModelEdit() {
 
   useEffect(() => {
     if (processModel) {
-      setPageTitle([t('editing_process_model', { name: processModel.display_name })]);
+      setPageTitle([
+        t('editing_process_model', { name: processModel.display_name }),
+      ]);
     }
   }, [processModel, t]);
 

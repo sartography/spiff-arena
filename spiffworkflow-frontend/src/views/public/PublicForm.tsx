@@ -53,6 +53,7 @@ export default function PublicForm() {
     params.modified_message_name,
     params.process_instance_id,
     params.task_guid,
+    t,
   ]);
 
   const processSubmitResult = (result: PublicTask) => {

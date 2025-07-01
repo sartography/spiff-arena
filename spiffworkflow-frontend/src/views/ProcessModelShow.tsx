@@ -253,7 +253,9 @@ export default function ProcessModelShow() {
               renderIcon={<Delete />}
               iconDescription={t('delete_process_model')}
               hasIconOnly
-              description={t('delete_process_model_confirm', { processModelName: processModel.display_name })}
+              description={t('delete_process_model_confirm', {
+                processModelName: processModel.display_name,
+              })}
               onConfirmation={deleteProcessModel}
               confirmButtonLabel={t('delete')}
             />

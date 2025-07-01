@@ -196,7 +196,9 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
           }}
         >
           <Typography variant="h6">{t('last_process_instance')}</Typography>
-          <Typography variant="body2">{t('id_label')}: {lastProcessInstanceId}</Typography>
+          <Typography variant="body2">
+            {t('id_label')}: {lastProcessInstanceId}
+          </Typography>
         </Box>
       )}
 

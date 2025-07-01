@@ -315,7 +315,9 @@ export default function ProcessInstanceMigratePage() {
             <DangerousMigrationButton
               successCallback={onMigrationComplete}
               failureCallback={onMigrationFailure}
-              title={t('migrate_to_version', { git_revision: data.row.initial_git_revision })}
+              title={t('migrate_to_version', {
+                git_revision: data.row.initial_git_revision,
+              })}
               targetBpmnProcessHash={data.row.initial_bpmn_process_hash}
               buttonText={t('revert')}
             />

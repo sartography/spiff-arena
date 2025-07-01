@@ -285,9 +285,7 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
-        <h1>
-          {t('process_model_file', { fileName: processModelFileName })}
-        </h1>
+        <h1>{t('process_model_file', { fileName: processModelFileName })}</h1>
         {newFileNameBox()}
         {saveFileMessage()}
 
@@ -314,7 +312,9 @@ export default function ReactFormEditor() {
             {params.file_name ? (
               <ButtonWithConfirmation
                 data-qa="delete-process-model-file"
-                description={t('delete_file_description', { file: params.file_name })}
+                description={t('delete_file_description', {
+                  file: params.file_name,
+                })}
                 onConfirmation={deleteFile}
                 buttonLabel={t('delete')}
               />

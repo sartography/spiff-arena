@@ -23,7 +23,9 @@ export default function ProcessInstanceListDeleteReport({
 
   return (
     <ButtonWithConfirmation
-      description={t('delete_perspective_confirmation', { identifier: processInstanceReportSelection.identifier })}
+      description={t('delete_perspective_confirmation', {
+        identifier: processInstanceReportSelection.identifier,
+      })}
       onConfirmation={deleteProcessInstanceReport}
       buttonLabel={t('delete')}
     />

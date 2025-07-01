@@ -61,11 +61,7 @@ export default function SecretNew() {
             label={`${t('secret_key')} *`}
             value={key}
             error={keyIsInvalid}
-            helperText={
-              keyIsInvalid
-                ? t('key_alphanumeric_error')
-                : ''
-            }
+            helperText={keyIsInvalid ? t('key_alphanumeric_error') : ''}
             onChange={(e: any) => setKey(e.target.value)}
             fullWidth
           />

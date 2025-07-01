@@ -374,7 +374,7 @@ export default function ProcessInstanceLogList({
           <TableCell>{t('task_type')}</TableCell>
           <TableCell>{t('event_type')}</TableCell>
           <TableCell>{t('user')}</TableCell>
-        </>
+        </>,
       );
     } else {
       tableHeaders.push(
@@ -471,7 +471,9 @@ export default function ProcessInstanceLogList({
           </Grid>
           <Grid item md={4}>
             <FormControl fullWidth>
-              <InputLabel id="task-type-select-label">{t('task_type')}</InputLabel>
+              <InputLabel id="task-type-select-label">
+                {t('task_type')}
+              </InputLabel>
               <Select
                 labelId="task-type-select-label"
                 label={t('task_type')}
@@ -491,7 +493,9 @@ export default function ProcessInstanceLogList({
           </Grid>
           <Grid item md={4}>
             <FormControl fullWidth>
-              <InputLabel id="event-type-select-label">{t('event_type')}</InputLabel>
+              <InputLabel id="event-type-select-label">
+                {t('event_type')}
+              </InputLabel>
               <Select
                 labelId="event-type-select-label"
                 label={t('event_type')}

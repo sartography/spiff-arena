@@ -13,11 +13,11 @@ import {
   FormControl,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreRecords, PaginationObject } from '../interfaces';
 import PaginationForTable from './PaginationForTable';
 import { getPageInfoFromSearchParams } from '../helpers';
-import { useTranslation } from 'react-i18next';
 
 export default function DataStoreListTable() {
   const [dataStores, setDataStores] = useState<DataStore[]>([]);

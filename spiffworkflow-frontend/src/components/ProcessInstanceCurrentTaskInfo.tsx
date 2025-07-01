@@ -54,19 +54,20 @@ export default function ProcessInstanceCurrentTaskInfo({
     if (!task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
       let message = t('task_assigned_different_person');
       if (task.assigned_user_group_identifier) {
-        message = t('task_assigned_group', { group: task.assigned_user_group_identifier });
+        message = t('task_assigned_group', {
+          group: task.assigned_user_group_identifier,
+        });
       } else if (task.potential_owner_usernames) {
         let potentialOwnerArray = task.potential_owner_usernames.split(',');
         if (potentialOwnerArray.length > 2) {
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
-        message = t('task_assigned_users', { users: potentialOwnerArray.join(', ') });
+        message = t('task_assigned_users', {
+          users: potentialOwnerArray.join(', '),
+        });
       }
 
-      return inlineMessage(
-        '',
-        `${message} ${t('no_action_required')}`,
-      );
+      return inlineMessage('', `${message} ${t('no_action_required')}`);
     }
     if (task && task.can_complete && HUMAN_TASK_TYPES.includes(task.type)) {
       return null;
@@ -82,10 +83,12 @@ export default function ProcessInstanceCurrentTaskInfo({
     if (!processInstance) {
       return null;
     }
-    if (["terminated", "suspended"].includes(processInstance.status)) {
+    if (['terminated', 'suspended'].includes(processInstance.status)) {
       return inlineMessage(
         t('process_status', { status: getProcessStatus(processInstance) }),
-        t('process_status_by_admin', { status: getProcessStatus(processInstance) }),
+        t('process_status_by_admin', {
+          status: getProcessStatus(processInstance),
+        }),
         'warning',
       );
     }

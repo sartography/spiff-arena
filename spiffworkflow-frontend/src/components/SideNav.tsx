@@ -444,10 +444,11 @@ function SideNav({
               title={t('language')}
               placement={isCollapsed ? 'right' : 'top'}
             >
-              <IconButton 
+              <IconButton
                 aria-label={t('language')}
                 onClick={handleLanguageMenuClick}
-                className="language-icon">
+                className="language-icon"
+              >
                 <Flag />
               </IconButton>
             </SpiffTooltip>
@@ -541,25 +542,28 @@ function SideNav({
               bgcolor: 'background.paper',
             }}
           >
-            {Object.keys(i18n.store.data).sort().map((language) => (
-              <MuiLink
-                key={language}
-                component="button"
-                onClick={() => {
-                  i18n.changeLanguage(language);
-                  setShowLanguageMenu(false);
-                }}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  fontWeight: i18n.resolvedLanguage === language ? 'bold' : 'unset',
-                }}
-              >
-                {language}
-              </MuiLink>
-            ))}
+            {Object.keys(i18n.store.data)
+              .sort()
+              .map((language) => (
+                <MuiLink
+                  key={language}
+                  component="button"
+                  onClick={() => {
+                    i18n.changeLanguage(language);
+                    setShowLanguageMenu(false);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    fontWeight:
+                      i18n.resolvedLanguage === language ? 'bold' : 'unset',
+                  }}
+                >
+                  {language}
+                </MuiLink>
+              ))}
           </Paper>
         )}
       </>

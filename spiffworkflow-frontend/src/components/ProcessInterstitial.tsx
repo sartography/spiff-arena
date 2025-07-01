@@ -188,19 +188,20 @@ export default function ProcessInterstitial({
     if (!myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)) {
       let message = t('task_assigned_different_person');
       if (myTask.assigned_user_group_identifier) {
-        message = t('task_assigned_group', { group: myTask.assigned_user_group_identifier });
+        message = t('task_assigned_group', {
+          group: myTask.assigned_user_group_identifier,
+        });
       } else if (myTask.potential_owner_usernames) {
         let potentialOwnerArray = myTask.potential_owner_usernames.split(',');
         if (potentialOwnerArray.length > 2) {
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
-        message = t('task_assigned_users', { users: potentialOwnerArray.join(', ') });
+        message = t('task_assigned_users', {
+          users: potentialOwnerArray.join(', '),
+        });
       }
 
-      return inlineMessage(
-        '',
-        `${message} ${t('no_action_required')}`,
-      );
+      return inlineMessage('', `${message} ${t('no_action_required')}`);
     }
     if (shouldRedirectToTask(myTask)) {
       return inlineMessage('', t('redirecting'));

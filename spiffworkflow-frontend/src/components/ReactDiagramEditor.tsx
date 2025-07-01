@@ -825,11 +825,11 @@ export default function ReactDiagramEditor({
 
   const getReferencesButton = () => {
     if (callers && callers.length > 0) {
-      let buttonText = `View ${callers.length} Reference`;
+      let buttonText = t('diagram_references_count', { count: 1 });
       if (callers.length > 1) {
-        buttonText = t('diagram_references_count_plural', { count: callers.length });
-      } else {
-        buttonText = t('diagram_references_count', { count: 1 });
+        buttonText = t('diagram_references_count_plural', {
+          count: callers.length,
+        });
       }
       return (
         <Button variant="contained" onClick={() => setShowingReferences(true)}>
@@ -931,12 +931,18 @@ export default function ReactDiagramEditor({
           </IconButton>
         </SpiffTooltip>
         <SpiffTooltip title={t('diagram_zoom_out')} placement="bottom">
-          <IconButton aria-label={t('diagram_zoom_out')} onClick={() => zoom(-1)}>
+          <IconButton
+            aria-label={t('diagram_zoom_out')}
+            onClick={() => zoom(-1)}
+          >
             <ZoomOut />
           </IconButton>
         </SpiffTooltip>
         <SpiffTooltip title={t('diagram_zoom_fit')} placement="bottom">
-          <IconButton aria-label={t('diagram_zoom_fit')} onClick={() => zoom(0)}>
+          <IconButton
+            aria-label={t('diagram_zoom_fit')}
+            onClick={() => zoom(0)}
+          >
             <CenterFocusStrongOutlined />
           </IconButton>
         </SpiffTooltip>

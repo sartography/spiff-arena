@@ -65,7 +65,7 @@ export default function ButtonWithConfirmation({
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            {description ? description : null}
+            {description || null}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

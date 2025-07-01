@@ -267,10 +267,9 @@ export const decodeBase64 = (data: string) => {
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
   if (typeof processInstance === 'string') {
     return i18n.t(`status_${processInstance}`);
-  } else {
-    return i18n.t(`status_${processInstance.status}`);
   }
-}
+  return i18n.t(`status_${processInstance.status}`);
+};
 
 export const getLastMilestoneFromProcessInstance = (
   processInstance: ProcessInstance,

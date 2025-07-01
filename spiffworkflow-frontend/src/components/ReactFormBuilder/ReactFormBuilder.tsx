@@ -386,17 +386,13 @@ export default function ReactFormBuilder({
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h4">{t('schema_name')}</Typography>
-          <Typography variant="body1">
-            {t('provide_schema_name')}
-          </Typography>
+          <Typography variant="body1">{t('provide_schema_name')}</Typography>
           <TextField
             id="file_name"
             label={t('name')}
             error={filenameBaseInvalid}
             helperText={
-              filenameBaseInvalid
-                ? t('schema_name_requirements')
-                : ''
+              filenameBaseInvalid ? t('schema_name_requirements') : ''
             }
             value={newFileName}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -404,9 +400,7 @@ export default function ReactFormBuilder({
             }}
             size="small"
           />
-          <Typography variant="body1">
-            {t('auto_save_notice')}
-          </Typography>
+          <Typography variant="body1">{t('auto_save_notice')}</Typography>
           <ul>
             <li>
               {newFileName}

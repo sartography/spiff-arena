@@ -108,7 +108,9 @@ export default function SecretShow() {
     return (
       <>
         {showSuccessNotification && successNotificationComponent}
-        <h1>{t('secret_key')}: {secret.key}</h1>
+        <h1>
+          {t('secret_key')}: {secret.key}
+        </h1>
         <Stack direction="row" spacing={3}>
           <Can I="DELETE" a={targetUris.secretShowPath} ability={ability}>
             <ButtonWithConfirmation

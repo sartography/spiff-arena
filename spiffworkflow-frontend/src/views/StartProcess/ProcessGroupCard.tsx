@@ -70,10 +70,10 @@ export default function ProcessGroupCard({
             </Typography>
 
             <Typography variant="caption" sx={{ color: captionColor }}>
-              {t('groups') + ': ' + group.process_groups.length}
+              {`${t('groups')}: ${group.process_groups.length}`}
             </Typography>
             <Typography variant="caption" sx={{ color: captionColor }}>
-              {t('models') + ': ' + group.process_models.length}
+              {`${t('models')}: ${group.process_models.length}`}
             </Typography>
           </Stack>
         </CardContent>

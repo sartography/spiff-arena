@@ -146,6 +146,7 @@ export function MessageEditor({
       modifiedProcessGroupIdentifier,
       processGroup,
       updateCorrelationPropertiesOnProcessGroup,
+      t,
     ],
   );
 
@@ -271,7 +272,7 @@ export function MessageEditor({
           </Notification>
         ) : null}
         {displayNotSyncedMessage && !displaySaveMessageMessage ? (
-   <Notification
+          <Notification
             title={t('save_warning_title')}
             type="warning"
             hideCloseButton

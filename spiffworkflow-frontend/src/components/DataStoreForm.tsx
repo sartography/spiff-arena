@@ -205,11 +205,7 @@ export default function DataStoreForm({
           readOnly: mode === 'edit',
         }}
         error={identifierInvalid}
-        helperText={
-          identifierInvalid
-            ? t('identifier_requirements')
-            : ''
-        }
+        helperText={identifierInvalid ? t('identifier_requirements') : ''}
         label={t('identifier_required')}
         value={dataStore.id}
         onChange={(event: any) => {
@@ -237,13 +233,15 @@ export default function DataStoreForm({
     } else {
       textInputs.push(
         <FormControl fullWidth error={typeInvalid}>
-          <InputLabel id="data-store-type-select-label">{t('type') + '*'}</InputLabel>
+          <InputLabel id="data-store-type-select-label">
+            {`${t('type')}*`}
+          </InputLabel>
           <Select
             labelId="data-store-type-select-label"
             id="data-store-type-select"
             value={selectedDataStoreType ? selectedDataStoreType.type : ''}
             onChange={onTypeChanged}
-            label={t('type') + '*'}
+            label={`${t('type')}*`}
           >
             {dataStoreTypes.map((type) => (
               <MenuItem key={type.type} value={type.type}>
@@ -260,9 +258,7 @@ export default function DataStoreForm({
         id="data-store-schema"
         name="schema"
         error={schemaInvalid}
-        helperText={
-          schemaInvalid ? t('schema_requirements') : ''
-        }
+        helperText={schemaInvalid ? t('schema_requirements') : ''}
         label={t('schema_required')}
         multiline
         minRows={3}
@@ -272,7 +268,9 @@ export default function DataStoreForm({
     );
 
     textInputs.push(
-      <InputLabel id="data-store-description-label">{t('description')}:</InputLabel>,
+      <InputLabel id="data-store-description-label">
+        {t('description')}:
+      </InputLabel>,
     );
     textInputs.push(
       <TextareaAutosize

@@ -1,7 +1,5 @@
 import { ArrowRightAlt, OpenInNew, Refresh } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import Chip from '@mui/material/Chip';
 import {
   TableRow,
   Table,
@@ -283,12 +281,9 @@ export default function ProcessInstanceListTable({
   ) => {
     return getProcessModelSpanTag(processInstance, identifier);
   };
-  const formatLastMilestone = (
-    processInstance: ProcessInstance
-  ) => {
-    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
-      processInstance
-    );
+  const formatLastMilestone = (processInstance: ProcessInstance) => {
+    const [valueToUse, truncatedValue] =
+      getLastMilestoneFromProcessInstance(processInstance);
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
@@ -565,7 +560,9 @@ export default function ProcessInstanceListTable({
                 <TableCell
                   key={tableRowHeader}
                   title={
-                    tableRowHeader === 'Id' ? t('process_id_tooltip') : undefined
+                    tableRowHeader === 'Id'
+                      ? t('process_id_tooltip')
+                      : undefined
                   }
                 >
                   <TableSortLabel>{tableRowHeader}</TableSortLabel>

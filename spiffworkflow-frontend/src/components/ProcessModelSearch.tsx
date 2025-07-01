@@ -89,7 +89,7 @@ export default function ProcessModelSearch({
         <TextField
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
-          label={titleText ? titleText : t('process_model')}
+          label={titleText || t('process_model')}
           placeholder={t('choose_process_model')}
         />
       )}

@@ -99,7 +99,9 @@ export default function ProcessInstanceListSaveAsReport({
         onClose={handleSaveFormClose}
         aria-labelledby="save-perspective-dialog"
       >
-        <DialogTitle id="save-perspective-dialog">{t('save_perspective')}</DialogTitle>
+        <DialogTitle id="save-perspective-dialog">
+          {t('save_perspective')}
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" style={{ marginBottom: '1rem' }}>
             {descriptionText}
@@ -127,7 +129,7 @@ export default function ProcessInstanceListSaveAsReport({
           setShowSaveForm(true);
         }}
       >
-        {buttonText ? buttonText : t('save_as_perspective')}
+        {buttonText || t('save_as_perspective')}
       </Button>
     </Stack>
   );

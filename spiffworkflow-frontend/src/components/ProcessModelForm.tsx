@@ -282,9 +282,7 @@ export default function ProcessModelForm({
           name="id"
           error={identifierInvalid}
           helperText={
-            identifierInvalid
-              ? t('identifier_validation_message')
-              : ''
+            identifierInvalid ? t('identifier_validation_message') : ''
           }
           label={t('identifier')}
           value={processModel.id}

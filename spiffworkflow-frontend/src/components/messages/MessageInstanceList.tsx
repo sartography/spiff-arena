@@ -94,7 +94,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
             {t('message_title', {
               id: messageInstanceForModal.id,
               name: messageInstanceForModal.name,
-              type: messageInstanceForModal.message_type
+              type: messageInstanceForModal.message_type,
             })}
           </DialogTitle>
           <DialogContent>

@@ -81,13 +81,15 @@ export default function TaskCard({
               : entry.id}
           </Typography>
           <Typography variant="body2">
-            <strong>{t('created_by')}</strong>: {entry.process_initiator_username}
+            <strong>{t('created_by')}</strong>:{' '}
+            {entry.process_initiator_username}
           </Typography>
           <Typography
             variant="body2"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <strong>{t('last_milestone')}</strong>: {entry.last_milestone_bpmn_name}
+            <strong>{t('last_milestone')}</strong>:{' '}
+            {entry.last_milestone_bpmn_name}
           </Typography>
           {waitingFor ? (
             <Typography variant="body2">

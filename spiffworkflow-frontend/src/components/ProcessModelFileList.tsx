@@ -149,7 +149,9 @@ export default function ProcessModelFileList({
             renderIcon={<Delete />}
             hasIconOnly
             iconDescription={t('delete_file')}
-            description={t('delete_file_description', { file: processModelFile.name })}
+            description={t('delete_file_description', {
+              file: processModelFile.name,
+            })}
             onConfirmation={() => {
               onDeleteFile(processModelFile.name);
             }}
@@ -210,7 +212,9 @@ export default function ProcessModelFileList({
         primarySuffix = (
           <span>
             &nbsp;-{' '}
-            <span className="primary-file-text-suffix">{t('primary_file')}</span>
+            <span className="primary-file-text-suffix">
+              {t('primary_file')}
+            </span>
           </span>
         );
       }

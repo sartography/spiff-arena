@@ -27,9 +27,7 @@ export function ErrorBoundaryFallback({ error }: ErrorProps) {
       }
     >
       <AlertTitle>{t('something_went_wrong')}</AlertTitle>
-      <p>
-        {t('unexpected_error_call_admin')}
-      </p>
+      <p>{t('unexpected_error_call_admin')}</p>
       <p>{error.message}</p>
     </Alert>
   );

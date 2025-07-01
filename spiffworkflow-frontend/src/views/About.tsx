@@ -69,8 +69,14 @@ function About() {
       <Typography variant="h1" gutterBottom>
         {t('about')}
       </Typography>
-      {versionInfoFromDict(t('frontend_version_information'), frontendVersionInfo)}
-      {versionInfoFromDict(t('backend_version_information'), backendVersionInfo)}
+      {versionInfoFromDict(
+        t('frontend_version_information'),
+        frontendVersionInfo,
+      )}
+      {versionInfoFromDict(
+        t('backend_version_information'),
+        backendVersionInfo,
+      )}
     </Box>
   );
 }

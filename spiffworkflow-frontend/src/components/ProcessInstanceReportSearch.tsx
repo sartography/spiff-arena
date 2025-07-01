@@ -66,7 +66,7 @@ export default function ProcessInstanceReportSearch({
     return (
       <Grid container spacing={2} style={{ paddingTop: '0px' }}>
         <Grid item xs={12} sm={6} md={12}>
-          <FormLabel>{titleText ? titleText : t('process_perspectives')}</FormLabel>
+          <FormLabel>{titleText || t('process_perspectives')}</FormLabel>
           <Autocomplete
             onChange={(_, value) => onChange(value)}
             id="process-instance-report-select"
