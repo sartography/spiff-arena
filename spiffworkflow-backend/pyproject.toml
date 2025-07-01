@@ -108,14 +108,6 @@ package = true
 [project.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
-# TODO - where to migrate to
-#[tool.poetry.urls]
-#Changelog = "https://github.com/orgs/sartography/packages?repo_name=spiff-arena"
-
-# TODO - where to migrate to
-#[tool.poetry.extras]
-#boto3 = ["boto3"]
-
 
 [tool.pytest.ini_options]
 # ignore deprecation warnings from various packages that we don't control
