@@ -53,15 +53,12 @@ class TestProcessModelsController(BaseTest):
             f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/"
             f"{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
         )
-        print("CLIENT", client.__class__)
         response = client.put(
             url,
             files=files,
             follow_redirects=True,
             headers=self.logged_in_headers(user_one),
         )
-
-        print("REPONSE", response.text)
         assert response.status_code == 403
         assert response.json() is not None
         assert response.json()["message"].startswith(

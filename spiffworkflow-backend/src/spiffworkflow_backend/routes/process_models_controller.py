@@ -6,7 +6,6 @@ import string
 from hashlib import sha256
 from typing import Any
 
-import connexion
 import flask.wrappers
 from flask import current_app
 from flask import g
@@ -511,7 +510,7 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
 
 
 def _get_file_from_request() -> FileStorage:
-    request_file: FileStorage | None = connexion.request.files.get("file")
+    request_file: FileStorage | None = flask.request.files.get("file")
     if not request_file:
         raise ApiError(
             error_code="no_file_given",
