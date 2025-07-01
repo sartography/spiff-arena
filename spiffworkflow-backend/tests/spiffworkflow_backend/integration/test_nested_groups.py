@@ -1,7 +1,5 @@
-import json
-
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
@@ -16,7 +14,7 @@ class TestNestedGroups(BaseTest):
     def test_delete_group_with_running_instance(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -58,7 +56,7 @@ class TestNestedGroups(BaseTest):
     def test_delete_group_with_running_instance_in_nested_group(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -71,7 +69,7 @@ class TestNestedGroups(BaseTest):
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
 
         process_group_id = "group_a/test_group"
@@ -112,7 +110,7 @@ class TestNestedGroups(BaseTest):
     def test_nested_groups(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # /process-groups/{process_group_path}/show
@@ -124,7 +122,7 @@ class TestNestedGroups(BaseTest):
     def test_add_nested_group(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -137,7 +135,7 @@ class TestNestedGroups(BaseTest):
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -148,7 +146,7 @@ class TestNestedGroups(BaseTest):
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            data=ProcessGroupSchema().dump(process_group_b),
         )
         process_group_c = ProcessGroup(
             id="group_a/group_b/group_c",
@@ -159,13 +157,13 @@ class TestNestedGroups(BaseTest):
         response_c = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
+            data=ProcessGroupSchema().dump(process_group_c),
         )
 
     def test_process_model_create_nested(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -178,7 +176,7 @@ class TestNestedGroups(BaseTest):
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -189,7 +187,7 @@ class TestNestedGroups(BaseTest):
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            data=ProcessGroupSchema().dump(process_group_b),
         )
         process_model = ProcessModelInfo(
             id="process_model",
@@ -202,13 +200,13 @@ class TestNestedGroups(BaseTest):
         model_response = client.post(  # noqa: F841
             "v1.0/process-models",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
+            data=ProcessModelInfoSchema().dump(process_model),
         )
 
     def test_process_group_show(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -230,7 +228,7 @@ class TestNestedGroups(BaseTest):
         response_create_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
 
         target_uri = "/v1.0/process-groups/group_a"

@@ -1,8 +1,8 @@
 import hashlib
 import json
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.data_migrations.process_instance_file_data_migrator import ProcessInstanceFileDataMigrator
 from spiffworkflow_backend.models.db import db
@@ -19,7 +19,7 @@ class TestProcessInstanceFileDataMigrator(BaseTest):
     def test_can_migrate_from_db_to_fs(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -66,7 +66,7 @@ class TestProcessInstanceFileDataMigrator(BaseTest):
     def test_can_migrate_binary_file_from_db_to_fs(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(

@@ -1,8 +1,8 @@
 import json
 from uuid import UUID
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -23,7 +23,7 @@ class TestTasksController(BaseTest):
     def test_task_show(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -74,7 +74,7 @@ class TestTasksController(BaseTest):
     def test_prepare_schema(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -110,7 +110,7 @@ class TestTasksController(BaseTest):
         response = client.post(
             "/v1.0/tasks/prepare-form",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(data),
+            data=data,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -125,7 +125,7 @@ class TestTasksController(BaseTest):
     def test_interstitial_returns_process_instance_if_suspended_or_terminated(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -175,7 +175,7 @@ class TestTasksController(BaseTest):
     def test_interstitial_page(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -273,7 +273,7 @@ class TestTasksController(BaseTest):
     def test_correct_user_can_get_and_update_a_task(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -366,7 +366,7 @@ class TestTasksController(BaseTest):
     def test_task_save_draft(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -410,7 +410,7 @@ class TestTasksController(BaseTest):
         response = client.post(
             f"/v1.0/tasks/{process_instance_id}/{task_id}/save-draft",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(draft_data),
+            data=draft_data,
         )
         assert response.status_code == 200
 
@@ -425,7 +425,7 @@ class TestTasksController(BaseTest):
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(draft_data),
+            data=draft_data,
         )
         assert response.status_code == 200
 
@@ -442,7 +442,7 @@ class TestTasksController(BaseTest):
     def test_task_instance_list(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -480,7 +480,7 @@ class TestTasksController(BaseTest):
     def test_task_instance_list_returns_only_for_same_bpmn_process(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

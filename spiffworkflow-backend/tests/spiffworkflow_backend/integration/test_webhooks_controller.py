@@ -2,9 +2,9 @@ import json
 from hashlib import sha256
 from hmac import HMAC
 
-import starlette
 from connexion import FlaskApp
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -14,7 +14,7 @@ class TestWebhooksController(BaseTest):
     def test_webhook_runs_configured_process_model(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         load_test_spec(

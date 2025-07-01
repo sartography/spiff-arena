@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.db import db
@@ -167,7 +167,7 @@ class TestKkvDataStore(BaseTest):
     def test_can_retrieve_data_store_from_script_task(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_clean_data_store: KKVDataStoreModel,
     ) -> None:
@@ -187,7 +187,7 @@ class TestKkvDataStore(BaseTest):
     def test_can_retrieve_data_store_from_script_task_with_instructions(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_clean_data_store: KKVDataStoreModel,
     ) -> None:

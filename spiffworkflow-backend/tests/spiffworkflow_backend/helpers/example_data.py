@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 
 from flask import current_app
@@ -79,7 +80,7 @@ class ExampleDataLoader:
                 file = open(file_path, "rb")
                 data = file.read()
                 _, new_references = SpecFileService.update_file(
-                    process_model_info=spec, file_name=filename, binary_data=data, update_process_cache_only=True
+                    process_model_info=spec, file_name=filename, binary_data=json.loads(data), update_process_cache_only=True
                 )
                 all_references += new_references
                 if is_primary:

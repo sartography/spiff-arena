@@ -1,5 +1,5 @@
-import starlette
 from flask import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -10,7 +10,7 @@ class TestOnboarding(BaseTest):
     def test_returns_nothing_if_no_onboarding_model(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -22,9 +22,7 @@ class TestOnboarding(BaseTest):
         assert results.status_code == 200
         assert results.json() == {}
 
-    def set_up_onboarding(
-        self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel, file_location: str
-    ) -> None:
+    def set_up_onboarding(self, client: TestClient, with_super_admin_user: UserModel, file_location: str) -> None:
         process_group_id = "site-administration"
         process_model_id = "onboarding"
         bpmn_file_location = file_location
@@ -39,7 +37,7 @@ class TestOnboarding(BaseTest):
     def test_returns_onboarding_if_onboarding_model(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -63,7 +61,7 @@ class TestOnboarding(BaseTest):
     def skip_test_persists_if_user_task_encountered(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

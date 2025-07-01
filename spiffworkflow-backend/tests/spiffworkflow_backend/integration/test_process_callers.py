@@ -1,7 +1,7 @@
 import os
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
@@ -12,7 +12,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_model_create(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -47,7 +47,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_model_delete(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -89,7 +89,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_group_delete(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -131,7 +131,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_file_delete(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -173,7 +173,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_file_delete_and_upload(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

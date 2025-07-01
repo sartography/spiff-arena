@@ -1,5 +1,5 @@
-import starlette
 from flask import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
@@ -34,7 +34,7 @@ class TestThreadedExecution(BaseTest):
     def test_multi_instance_can_run_in_parallel(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

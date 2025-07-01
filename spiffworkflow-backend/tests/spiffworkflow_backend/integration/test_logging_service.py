@@ -1,7 +1,7 @@
 from uuid import UUID
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -16,7 +16,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_detailed_logs(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -70,7 +70,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_simple_logs(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

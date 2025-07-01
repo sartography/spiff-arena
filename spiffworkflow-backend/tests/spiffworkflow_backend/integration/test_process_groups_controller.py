@@ -1,9 +1,8 @@
-import json
 import os
 
 import pytest
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -17,7 +16,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_add(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -31,7 +30,7 @@ class TestProcessGroupsController(BaseTest):
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(process_group.serialized()),
+            data=process_group.serialized(),
         )
         assert response.status_code == 201
         assert response.json()
@@ -52,7 +51,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_delete(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -80,7 +79,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_update(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -98,7 +97,7 @@ class TestProcessGroupsController(BaseTest):
         response = client.put(
             f"/v1.0/process-groups/{group_id}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(process_group.serialized()),
+            data=process_group.serialized(),
         )
         assert response.status_code == 200
 
@@ -108,7 +107,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -184,7 +183,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_none(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -199,7 +198,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_there_are_some(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -218,7 +217,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_user_has_resticted_access(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -257,7 +256,7 @@ class TestProcessGroupsController(BaseTest):
     def test_get_process_group_when_found(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -278,7 +277,7 @@ class TestProcessGroupsController(BaseTest):
     def test_get_process_group_show_when_nested(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

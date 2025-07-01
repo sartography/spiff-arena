@@ -1,8 +1,9 @@
 import base64
+import json
 
 import jwt
-import starlette
 from flask import Flask
+from starlette.testclient import TestClient
 
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -17,7 +18,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_discovery_of_endpoints(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test discovery endpoints."""
@@ -40,7 +41,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_get_login_page(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """It should be possible to get to a login page."""
@@ -52,7 +53,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_get_token(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         code = "testadmin1:1234123412341234"
@@ -70,7 +71,7 @@ class TestOpenidBlueprint(BaseTest):
             "code": code,
             "redirect_url": "http://testserver:7000/v1.0/login_return",
         }
-        response = client.post("/openid/token", data=data, headers=headers)
+        response = client.post("/openid/token", data=json.loads(data), headers=headers)
         assert response.status_code == 200
         assert "access_token" in response.json()
         assert "id_token" in response.json()

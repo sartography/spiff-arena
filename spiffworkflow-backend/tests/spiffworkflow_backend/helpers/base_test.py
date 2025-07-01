@@ -9,11 +9,11 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
-import starlette
 from flask import current_app
 from flask.app import Flask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy.orm.attributes import flag_modified
+from starlette.testclient import TestClient
 from werkzeug.test import TestResponse  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -72,7 +72,7 @@ class BaseTest:
 
     def create_group_and_model_with_bpmn(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -110,7 +110,7 @@ class BaseTest:
 
     def create_and_run_process_instance(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -156,7 +156,7 @@ class BaseTest:
 
     def create_process_group_with_api(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         user: Any,
         process_group_id: str,
         display_name: str = "",
@@ -165,7 +165,7 @@ class BaseTest:
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=ProcessGroupSchema().dump(process_group),
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -189,7 +189,7 @@ class BaseTest:
 
     def create_process_model_with_api(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         process_model_id: str | None = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
@@ -222,7 +222,7 @@ class BaseTest:
 
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
-                    data=json.dumps(ProcessModelInfoSchema().dump(model)),
+                    data=ProcessModelInfoSchema().dump(model),
                     headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
                 )
 
@@ -252,7 +252,7 @@ class BaseTest:
 
     def create_spec_file(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         process_model_id: str,
         process_model_location: str | None = None,
         process_model: ProcessModelInfo | None = None,
@@ -282,7 +282,7 @@ class BaseTest:
         modified_process_model_id = process_model.id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/files",
-            data=data,
+            data=json.loads(data),
             follow_redirects=True,
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "multipart/form-data"}),
         )
@@ -303,7 +303,7 @@ class BaseTest:
 
     @staticmethod
     def create_process_instance_from_process_model_id_with_api(
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         test_process_model_id: str,
         headers: dict[str, str],
     ) -> TestResponse:
@@ -454,7 +454,7 @@ class BaseTest:
 
     def post_to_process_instance_list(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         user: UserModel,
         report_metadata: ReportMetadata | None = None,
         param_string: str | None = "",
@@ -465,7 +465,7 @@ class BaseTest:
         response = client.post(
             f"/v1.0/process-instances{param_string}",
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
-            data=json.dumps({"report_metadata": report_metadata_to_use}),
+            data={"report_metadata": report_metadata_to_use},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -476,7 +476,7 @@ class BaseTest:
 
     def start_sender_process(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         payload: dict,
         group_name: str = "test_group",
     ) -> ProcessInstanceModel:
@@ -554,7 +554,7 @@ class BaseTest:
 
     def assert_report_with_process_metadata_operator_includes_instance(
         self,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         user: UserModel,
         process_instance: ProcessInstanceModel,
         operator: str,
@@ -611,7 +611,7 @@ class BaseTest:
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=user_task,
-            data=data or {},
+            data=json.loads(data or {}),
             user=user,
             human_task=human_task,
             execution_mode=execution_mode,

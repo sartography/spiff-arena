@@ -1,7 +1,5 @@
-import json
-
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.user import UserModel
@@ -14,7 +12,7 @@ class TestServiceAccounts(BaseTest):
     def test_can_create_a_service_account(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -41,7 +39,7 @@ class TestServiceAccounts(BaseTest):
         response = client.post(
             "/v1.0/secrets",
             headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
-            data=json.dumps(post_body),
+            data=post_body,
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -50,7 +48,7 @@ class TestServiceAccounts(BaseTest):
     def test_send_message_with_service_account(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -84,7 +82,7 @@ class TestServiceAccounts(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
-            data=json.dumps(payload),
+            data=payload,
         )
         assert response.status_code == 200
 
@@ -95,7 +93,7 @@ class TestServiceAccounts(BaseTest):
     def test_create_service_account_with_already_hashed_key(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

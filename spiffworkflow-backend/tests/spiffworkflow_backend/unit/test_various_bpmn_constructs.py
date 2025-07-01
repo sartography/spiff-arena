@@ -1,7 +1,7 @@
 from uuid import UUID
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -14,7 +14,7 @@ class TestVariousBpmnConstructs(BaseTest):
     def test_running_process_with_timer_intermediate_catch_event(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -32,7 +32,7 @@ class TestVariousBpmnConstructs(BaseTest):
     def test_multi_instances_user_task_with_celery(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):

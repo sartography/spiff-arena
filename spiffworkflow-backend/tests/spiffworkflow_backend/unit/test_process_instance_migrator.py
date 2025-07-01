@@ -2,10 +2,10 @@ import copy
 import json
 import os
 
-import starlette
 from flask.app import Flask
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
 from sqlalchemy import or_
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
@@ -30,7 +30,7 @@ class TestProcessInstanceMigrator(BaseTest):
     def test_data_migrations_directory_has_not_changed(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
     ) -> None:
         md5checksums = ProcessInstanceMigrator.generate_migration_checksum()
         assert md5checksums == SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM, (
@@ -53,7 +53,7 @@ class TestProcessInstanceMigrator(BaseTest):
     def test_can_run_all_migrations(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -73,7 +73,7 @@ class TestProcessInstanceMigrator(BaseTest):
     def test_can_run_version_1_3_migration(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -113,7 +113,7 @@ class TestProcessInstanceMigrator(BaseTest):
     def test_can_run_version_4_migration(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -173,7 +173,7 @@ class TestProcessInstanceMigrator(BaseTest):
     def test_can_run_version_5_migration(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(

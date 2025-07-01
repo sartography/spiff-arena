@@ -3,8 +3,8 @@ import json
 from hashlib import sha256
 from unittest.mock import patch
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -19,7 +19,7 @@ class TestProcessModelsController(BaseTest):
     def test_cannot_save_process_model_file_with_called_elements_user_does_not_have_access_to(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -68,7 +68,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_show(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -97,7 +97,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_show_when_not_found(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -109,7 +109,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_test_generate(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -141,7 +141,7 @@ class TestProcessModelsController(BaseTest):
         response = client.post(
             url,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps({"process_instance_id": process_instance_id}),
+            data={"process_instance_id": process_instance_id},
         )
         assert response.status_code == 200
 
@@ -181,7 +181,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_list_with_grouping_by_process_group(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -217,7 +217,7 @@ class TestProcessModelsController(BaseTest):
     def test_get_process_model_when_found(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -241,7 +241,7 @@ class TestProcessModelsController(BaseTest):
     def test_get_process_model_when_not_found(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -258,7 +258,7 @@ class TestProcessModelsController(BaseTest):
         assert response.json()["error_code"] == "process_model_cannot_be_found"
 
     def _get_process_show_show_response(
-        self, client: starlette.testclient.TestClient, user: UserModel, process_model_id: str, expected_response: int = 200
+        self, client: TestClient, user: UserModel, process_model_id: str, expected_response: int = 200
     ) -> dict:
         url = f"/v1.0/process-models/{process_model_id}"
         response = client.get(

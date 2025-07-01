@@ -1,5 +1,5 @@
-import starlette
 from flask import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from spiffworkflow_backend.models.user import UserModel
@@ -10,7 +10,7 @@ class TestDataStores(BaseTest):
     def load_data_store(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -42,7 +42,7 @@ class TestDataStores(BaseTest):
     def test_create_data_store_populates_db(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -54,7 +54,7 @@ class TestDataStores(BaseTest):
     def test_get_list_of_data_stores(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -74,7 +74,7 @@ class TestDataStores(BaseTest):
     def test_get_data_store_returns_paginated_results(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

@@ -1,7 +1,7 @@
 from typing import Any
 
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -17,7 +17,7 @@ class TestForGoodErrors(BaseTest):
     def test_invalid_form(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -48,7 +48,7 @@ class TestForGoodErrors(BaseTest):
     def test_jinja2_error_message_for_end_user_instructions(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -80,7 +80,7 @@ class TestForGoodErrors(BaseTest):
     def _get_next_user_task(
         self,
         process_instance_id: int,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_super_admin_user: UserModel,
     ) -> Any:
         # Call this to assure all engine-steps are fully processed before we search for human tasks.

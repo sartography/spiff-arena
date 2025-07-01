@@ -1,8 +1,8 @@
 import json
 
 import pytest
-import starlette
 from flask.app import Flask
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.secret_model import SecretModel
@@ -16,7 +16,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_add_secret_api(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -29,7 +29,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         response = client.post(
             "/v1.0/secrets",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=data,
+            data=json.loads(data),
         )
         assert response.json()
         secret: dict = response.json()
@@ -42,7 +42,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_get_secret_api(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -60,7 +60,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_get_secret_value(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -78,7 +78,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_update_secret_api(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -94,7 +94,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         response = client.put(
             f"/v1.0/secrets/{self.test_key}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(SecretModelSchema().dump(secret_model)),
+            data=SecretModelSchema().dump(secret_model),
         )
         assert response.status_code == 200
 
@@ -104,7 +104,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_delete_secret(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -124,7 +124,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_delete_secret_bad_key(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -138,7 +138,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_secret_list(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

@@ -1,9 +1,7 @@
-import json
-
 import pytest
-import starlette
 from flask import Flask
 from flask import g
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -17,7 +15,7 @@ class TestMessages(BaseTest):
     def test_message_from_api_into_running_process(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test sending a message to a running process via the API.
@@ -74,7 +72,7 @@ class TestMessages(BaseTest):
     def test_message_model_list_up_search(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -99,7 +97,7 @@ class TestMessages(BaseTest):
     def test_process_group_update_syncs_message_models(
         self,
         app: Flask,
-        client: starlette.testclient.TestClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -151,7 +149,7 @@ class TestMessages(BaseTest):
         response = client.put(
             "/v1.0/process-groups/bob",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=json.dumps(process_group),
+            data=process_group,
         )
         assert response.status_code == 200
 
