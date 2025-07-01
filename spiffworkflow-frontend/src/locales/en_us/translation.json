@@ -464,7 +464,7 @@
   "tooltip_search_by_id": "Search for a process instance by id",
   "tooltip_show_for_all": "Show process instances for all users",
   "try_again": "Try again",
-  "type": "Typ",
+  "type": "Type",
   "ui_settings": "UI Settings",
   "ui_settings_description": "These UI Settings augment the JSON Schema, specifying how the web form should be displayed",
   "unexpected_error_call_admin": "We encountered an unexpected error. Please try again. If the problem persists, please contact your administrator.",
