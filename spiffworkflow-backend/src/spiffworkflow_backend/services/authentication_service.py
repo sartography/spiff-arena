@@ -235,8 +235,7 @@ class AuthenticationService:
                 str(current_app.secret_key),
                 algorithms=[SPIFF_GENERATED_JWT_ALGORITHM],
                 audience=SPIFF_GENERATED_JWT_AUDIENCE,
-                options={"verify_exp": False},
-            )
+                options={"verify_exp": True})
         else:
             algorithm = str(header.get("alg"))
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
@@ -493,7 +492,7 @@ class AuthenticationService:
     def decode_auth_token(auth_token: str) -> dict[str, str | None]:
         """This is only used for debugging."""
         try:
-            payload: dict[str, str | None] = jwt.decode(auth_token, options={"verify_signature": False})
+            payload: dict[str, str | None] = jwt.decode(auth_token, options={"verify_signature": True})
             return payload
         except jwt.ExpiredSignatureError as exception:
             raise TokenExpiredError(
