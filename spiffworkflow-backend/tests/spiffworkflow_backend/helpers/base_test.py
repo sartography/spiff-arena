@@ -164,7 +164,7 @@ class BaseTest:
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
-            data=ProcessGroupSchema().dump(process_group),
+            json=ProcessGroupSchema().dump(process_group),
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -221,7 +221,7 @@ class BaseTest:
 
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
-                    data=ProcessModelInfoSchema().dump(model),
+                    json=ProcessModelInfoSchema().dump(model),
                     headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
                 )
 
@@ -464,7 +464,7 @@ class BaseTest:
         response = client.post(
             f"/v1.0/process-instances{param_string}",
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
-            data={"report_metadata": report_metadata_to_use},
+            json={"report_metadata": report_metadata_to_use},
         )
         assert response.status_code == 200
         assert response.json() is not None
