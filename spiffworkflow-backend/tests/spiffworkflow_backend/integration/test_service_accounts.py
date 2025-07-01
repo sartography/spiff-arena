@@ -40,8 +40,7 @@ class TestServiceAccounts(BaseTest):
         }
         response = client.post(
             "/v1.0/secrets",
-            content_type="application/json",
-            headers={"SpiffWorkflow-Api-Key": service_account.api_key},
+            headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
             data=json.dumps(post_body),
         )
         assert response.status_code == 201
@@ -84,8 +83,7 @@ class TestServiceAccounts(BaseTest):
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers={"SpiffWorkflow-Api-Key": service_account.api_key},
+            headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
             data=json.dumps(payload),
         )
         assert response.status_code == 200

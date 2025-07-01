@@ -324,10 +324,9 @@ def handle_exception(request: ConnexionRequest, exception: Exception) -> Connexi
 
     serialized_error = api_exception.serialized()
     status = int(serialized_error.pop("status_code", 500))
-    title = str(serialized_error.pop("error_code", "internal_server_error"))
-    detail = str(serialized_error.pop("message", str(exception)))
+    title = str(serialized_error.get("error_code", "internal_server_error"))
+    detail = str(serialized_error.get("message", str(exception)))
     headers = api_exception.response_headers
-    serialized_error["message"] = detail
 
     return problem(  # type: ignore[no-any-return]
         status=status,

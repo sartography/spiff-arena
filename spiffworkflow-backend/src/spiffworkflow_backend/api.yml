@@ -1044,6 +1044,12 @@ paths:
       summary: Run an extension for a given process model
       tags:
         - Extensions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "200":
           description: Resulting task data

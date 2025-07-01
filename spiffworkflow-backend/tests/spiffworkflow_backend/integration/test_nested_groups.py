@@ -70,8 +70,7 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
         )
 
@@ -137,8 +136,7 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
         )
         process_group_b = ProcessGroup(
@@ -149,8 +147,7 @@ class TestNestedGroups(BaseTest):
         )
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
         )
         process_group_c = ProcessGroup(
@@ -161,8 +158,7 @@ class TestNestedGroups(BaseTest):
         )
         response_c = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
         )
 
@@ -181,8 +177,7 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
         )
         process_group_b = ProcessGroup(
@@ -193,8 +188,7 @@ class TestNestedGroups(BaseTest):
         )
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
         )
         process_model = ProcessModelInfo(
@@ -207,8 +201,7 @@ class TestNestedGroups(BaseTest):
         )
         model_response = client.post(  # noqa: F841
             "v1.0/process-models",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
         )
 
@@ -236,8 +229,7 @@ class TestNestedGroups(BaseTest):
         )
         response_create_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
         )
 

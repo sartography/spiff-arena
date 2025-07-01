@@ -30,8 +30,7 @@ class TestProcessGroupsController(BaseTest):
         )
         response = client.post(
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 201
@@ -98,8 +97,7 @@ class TestProcessGroupsController(BaseTest):
 
         response = client.put(
             f"/v1.0/process-groups/{group_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(process_group.serialized()),
         )
         assert response.status_code == 200

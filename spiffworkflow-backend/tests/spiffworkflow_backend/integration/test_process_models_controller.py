@@ -57,10 +57,10 @@ class TestProcessModelsController(BaseTest):
             url,
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(user_one),
+            headers=self.logged_in_headers(user_one, additional_headers={"Content-Type": "multipart/form-data"}),
         )
 
+        print("REPONSE", response.text)
         assert response.status_code == 403
         assert response.json() is not None
         assert response.json()["message"].startswith(
@@ -142,8 +142,7 @@ class TestProcessModelsController(BaseTest):
         url = f"/v1.0/process-model-tests/create/{process_model.modified_process_model_identifier()}"
         response = client.post(
             url,
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps({"process_instance_id": process_instance_id}),
         )
         assert response.status_code == 200

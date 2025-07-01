@@ -82,8 +82,7 @@ class TestMessages(BaseTest):
         DataSetupService.save_all_process_models()
         response = client.get(
             "/v1.0/message-models/examples:1-basic-concepts",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -91,8 +90,7 @@ class TestMessages(BaseTest):
 
         response = client.get(
             "/v1.0/message-models",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -109,8 +107,7 @@ class TestMessages(BaseTest):
 
         response = client.get(
             "/v1.0/message-models/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -153,16 +150,14 @@ class TestMessages(BaseTest):
 
         response = client.put(
             "/v1.0/process-groups/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(process_group),
         )
         assert response.status_code == 200
 
         response = client.get(
             "/v1.0/message-models/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
         assert response.json() is not None

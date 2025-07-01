@@ -26,7 +26,7 @@ class TestWebhooksController(BaseTest):
 
         response = client.post(
             "/v1.0/webhook",
-            headers={"X-Hub-Signature-256": f"sha256={encoded_signature}", "Content-type": "application/json"},
+            headers={"X-Hub-Signature-256": f"sha256={encoded_signature}", "Content-Type": "application/json"},
             data=request_data,
         )
         assert response.status_code == 200

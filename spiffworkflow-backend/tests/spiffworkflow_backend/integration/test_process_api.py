@@ -93,8 +93,7 @@ class TestProcessApi(BaseTest):
         }
         response = client.post(
             "/v1.0/permissions-check",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
+            headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(request_body),
         )
         assert response.status_code == 200
@@ -134,8 +133,7 @@ class TestProcessApi(BaseTest):
         }
         response = client.post(
             "/v1.0/permissions-check",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
+            headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(request_body),
         )
         assert response.status_code == 200
@@ -217,9 +215,8 @@ class TestProcessApi(BaseTest):
         )
         response = client.post(
             f"/v1.0/process-model-natural-language/{process_group_id}",
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(body),
-            headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -297,8 +294,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
         assert response.status_code == 200
         process_model = ProcessModelService.get_process_model(process_model_identifier)
@@ -410,8 +406,7 @@ class TestProcessApi(BaseTest):
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
         )
         assert response.status_code == 200
@@ -688,8 +683,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
         assert response.status_code == 400
         assert response.json() is not None
@@ -710,8 +704,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
 
         assert response.status_code == 400
@@ -743,8 +736,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
 
         assert response.status_code == 200
@@ -1170,8 +1162,7 @@ class TestProcessApi(BaseTest):
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(payload),
         )
         assert response.status_code == 200
@@ -1246,8 +1237,7 @@ class TestProcessApi(BaseTest):
 
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(payload),
         )
         assert response.status_code == 200
@@ -1319,8 +1309,7 @@ class TestProcessApi(BaseTest):
         payload["description"] = "Message To Suspended"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(payload),
         )
         assert response.status_code == 400
@@ -1331,8 +1320,7 @@ class TestProcessApi(BaseTest):
         payload["description"] = "Message To Resumed"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(payload),
         )
         assert response.status_code == 200
@@ -1350,8 +1338,7 @@ class TestProcessApi(BaseTest):
         processor.terminate()
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(payload),
         )
         assert response.status_code == 400
@@ -2346,8 +2333,7 @@ class TestProcessApi(BaseTest):
 
         response = client.post(  # noqa: F841
             f"/v1.0/process-models/{process_group_id}/{process_model_id}/script-unit-tests/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(data),
         )
         # TODO: fix this test. I'm not sure it ever worked since it used to NOT check the status code
@@ -2403,8 +2389,7 @@ class TestProcessApi(BaseTest):
         }
         response = client.post(
             f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(data),
         )
         assert response.status_code == 200
@@ -2474,8 +2459,7 @@ class TestProcessApi(BaseTest):
 
         response = client.post(
             f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{human_task['guid']}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps({"execute": False}),
         )
 

@@ -142,7 +142,7 @@ class ExecutionStrategy:
         process_model_identifier: str,
         process_instance_id: int,
     ) -> SpiffTask:
-        with app.app.app_context():
+        with app.app_context():
             tld = current_app.config.get("THREAD_LOCAL_DATA")
             if tld:
                 tld.process_model_identifier = process_model_identifier

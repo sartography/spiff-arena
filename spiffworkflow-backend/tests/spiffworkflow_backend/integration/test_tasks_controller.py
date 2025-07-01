@@ -109,9 +109,8 @@ class TestTasksController(BaseTest):
         self.logged_in_headers(with_super_admin_user)
         response = client.post(
             "/v1.0/tasks/prepare-form",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(data),
-            content_type="application/json",
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -410,8 +409,7 @@ class TestTasksController(BaseTest):
 
         response = client.post(
             f"/v1.0/tasks/{process_instance_id}/{task_id}/save-draft",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(draft_data),
         )
         assert response.status_code == 200
@@ -426,8 +424,7 @@ class TestTasksController(BaseTest):
 
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(draft_data),
         )
         assert response.status_code == 200

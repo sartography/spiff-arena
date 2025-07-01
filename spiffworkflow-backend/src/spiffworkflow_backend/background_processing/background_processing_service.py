@@ -67,7 +67,7 @@ class BackgroundProcessingService:
         """
 
         with self.app.app.app_context():
-            future_task_lookahead_in_seconds = self.app.config[
+            future_task_lookahead_in_seconds = self.app.app.config[
                 "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS"
             ]
             self.__class__.do_process_future_tasks(future_task_lookahead_in_seconds)

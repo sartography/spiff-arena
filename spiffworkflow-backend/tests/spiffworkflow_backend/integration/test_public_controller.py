@@ -73,7 +73,7 @@ class TestPublicController(BaseTest):
             data=json.dumps(
                 {"firstName": "MyName"},
             ),
-            content_type="application/json",
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -119,8 +119,7 @@ class TestPublicController(BaseTest):
             data=json.dumps(
                 {"firstName": "MyName"},
             ),
-            content_type="application/json",
-            headers=headers,
+            headers=headers | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -151,8 +150,7 @@ class TestPublicController(BaseTest):
             data=json.dumps(
                 {"lastName": "MyLastName"},
             ),
-            content_type="application/json",
-            headers=headers,
+            headers=headers | {"Content-Type": "application/json"},
         )
 
         assert response.status_code == 200
@@ -239,8 +237,7 @@ class TestPublicController(BaseTest):
         response = client.put(
             f"/v1.0/public/tasks/{process_instance_id}/{first_task_guid}?execution_mode=synchronous",
             data="{}",
-            content_type="application/json",
-            headers=user_header,
+            headers=user_header | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -254,8 +251,7 @@ class TestPublicController(BaseTest):
         response = client.put(
             f"/v1.0/public/tasks/{process_instance_id}/{second_task_guid}?execution_mode=synchronous",
             data="{}",
-            content_type="application/json",
-            headers=user_header,
+            headers=user_header | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200
         assert response.json() is not None

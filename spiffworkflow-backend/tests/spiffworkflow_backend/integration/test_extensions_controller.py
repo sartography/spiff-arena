@@ -27,9 +27,8 @@ class TestExtensionsController(BaseTest):
 
             response = client.post(
                 f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
-                headers=self.logged_in_headers(with_super_admin_user),
-                content_type="application/json",
-                data=json.dumps({"extension_input": {"OUR_AWESOME_INPUT": "the awesome value"}}),
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json={"extension_input": {"OUR_AWESOME_INPUT": "the awesome value"}},
             )
 
             expected_task_data = {

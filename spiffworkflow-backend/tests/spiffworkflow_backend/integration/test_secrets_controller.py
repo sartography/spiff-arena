@@ -28,7 +28,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         data = json.dumps(SecretModelSchema().dump(secret_model))
         response = client.post(
             "/v1.0/secrets",
-            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-type": "application/json"}),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=data,
         )
         assert response.json()
@@ -93,7 +93,7 @@ class TestSecretsController(SecretServiceTestHelpers):
         )
         response = client.put(
             f"/v1.0/secrets/{self.test_key}",
-            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-type": "application/json"}),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=json.dumps(SecretModelSchema().dump(secret_model)),
         )
         assert response.status_code == 200
