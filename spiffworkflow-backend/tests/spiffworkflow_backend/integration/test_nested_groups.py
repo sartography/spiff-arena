@@ -16,7 +16,7 @@ class TestNestedGroups(BaseTest):
     def test_delete_group_with_running_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -58,7 +58,7 @@ class TestNestedGroups(BaseTest):
     def test_delete_group_with_running_instance_in_nested_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -112,7 +112,7 @@ class TestNestedGroups(BaseTest):
     def test_nested_groups(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # /process-groups/{process_group_path}/show
@@ -124,7 +124,7 @@ class TestNestedGroups(BaseTest):
     def test_add_nested_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -165,7 +165,7 @@ class TestNestedGroups(BaseTest):
     def test_process_model_create_nested(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -208,7 +208,7 @@ class TestNestedGroups(BaseTest):
     def test_process_group_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

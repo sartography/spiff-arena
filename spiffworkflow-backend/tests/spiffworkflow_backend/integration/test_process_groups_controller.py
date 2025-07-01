@@ -17,7 +17,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_add(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -52,7 +52,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -80,7 +80,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_update(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -108,7 +108,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -184,7 +184,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_none(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -199,7 +199,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_there_are_some(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -218,7 +218,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list_when_user_has_resticted_access(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -257,7 +257,7 @@ class TestProcessGroupsController(BaseTest):
     def test_get_process_group_when_found(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -278,7 +278,7 @@ class TestProcessGroupsController(BaseTest):
     def test_get_process_group_show_when_nested(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

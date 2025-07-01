@@ -16,7 +16,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_add_secret_api(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -42,7 +42,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_get_secret_api(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -60,7 +60,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_get_secret_value(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -78,7 +78,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_update_secret_api(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -104,7 +104,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_delete_secret(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -124,7 +124,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_delete_secret_bad_key(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -138,7 +138,7 @@ class TestSecretsController(SecretServiceTestHelpers):
     def test_secret_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

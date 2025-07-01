@@ -17,7 +17,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_discovery_of_endpoints(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test discovery endpoints."""
@@ -40,7 +40,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_get_login_page(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """It should be possible to get to a login page."""
@@ -52,7 +52,7 @@ class TestOpenidBlueprint(BaseTest):
     def test_get_token(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         code = "testadmin1:1234123412341234"

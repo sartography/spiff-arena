@@ -11,7 +11,7 @@ class TestDataSetupService(BaseTest):
     def test_data_setup_service_finds_models(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.copy_example_process_models()
@@ -22,7 +22,7 @@ class TestDataSetupService(BaseTest):
     def test_data_setup_service_finds_messages(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.copy_example_process_models()

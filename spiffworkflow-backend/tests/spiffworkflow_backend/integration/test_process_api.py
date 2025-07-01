@@ -44,7 +44,7 @@ class TestProcessApi(BaseTest):
     def test_returns_403_if_user_does_not_have_permission(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user()
@@ -74,7 +74,7 @@ class TestProcessApi(BaseTest):
     def test_permissions_check(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user()
@@ -103,7 +103,7 @@ class TestProcessApi(BaseTest):
     def test_permissions_check_with_wildcard_permissions_through_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user()
@@ -143,7 +143,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_create(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -195,7 +195,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_create_with_natural_language(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -261,7 +261,7 @@ class TestProcessApi(BaseTest):
     def test_primary_process_id_updates_via_xml(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -304,7 +304,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -334,7 +334,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_delete_with_instances(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -381,7 +381,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_update(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -419,7 +419,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_list_all(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -453,7 +453,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -537,7 +537,7 @@ class TestProcessApi(BaseTest):
     def test_process_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -580,7 +580,7 @@ class TestProcessApi(BaseTest):
     def test_process_list_with_restricted_access(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -629,7 +629,7 @@ class TestProcessApi(BaseTest):
     def test_process_callers(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -671,7 +671,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_update_fails_if_no_file_given(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -692,7 +692,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_update_fails_if_contents_is_empty(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -714,7 +714,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_update(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -754,7 +754,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_delete_when_bad_process_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -774,7 +774,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_delete_when_bad_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -794,7 +794,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_delete_when_primary_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -815,7 +815,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -850,7 +850,7 @@ class TestProcessApi(BaseTest):
     def test_get_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -869,7 +869,7 @@ class TestProcessApi(BaseTest):
     def test_get_workflow_from_workflow_spec(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -887,7 +887,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_list_when_user_has_resticted_access(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -926,7 +926,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_create(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -944,7 +944,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_run(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -982,7 +982,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_run_with_force(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1020,7 +1020,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_run_with_instructions(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1053,7 +1053,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1090,7 +1090,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_show_with_specified_process_identifier(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1135,7 +1135,7 @@ class TestProcessApi(BaseTest):
     def test_message_send_when_starting_process_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1182,7 +1182,7 @@ class TestProcessApi(BaseTest):
     def test_message_send_when_providing_message_to_running_process_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1257,7 +1257,7 @@ class TestProcessApi(BaseTest):
     def test_message_send_errors_when_providing_message_to_suspended_process_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1348,7 +1348,7 @@ class TestProcessApi(BaseTest):
     def test_can_download_uploaded_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1422,7 +1422,7 @@ class TestProcessApi(BaseTest):
     def test_can_download_uploaded_file_from_file_system(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1506,7 +1506,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_can_be_terminated(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1568,7 +1568,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1605,7 +1605,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_list_with_default_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1640,7 +1640,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_list_with_paginated_items(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1678,7 +1678,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_list_filter(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1839,7 +1839,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_report_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1877,7 +1877,7 @@ class TestProcessApi(BaseTest):
     def test_error_handler(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1917,7 +1917,7 @@ class TestProcessApi(BaseTest):
     def test_error_handler_suspend(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1962,7 +1962,7 @@ class TestProcessApi(BaseTest):
     def test_task_data_is_set_even_if_process_instance_errors_through_the_api(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -1996,7 +1996,7 @@ class TestProcessApi(BaseTest):
     def test_process_model_file_create(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2032,7 +2032,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_message_instances_by_process_instance_id_and_without(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2111,7 +2111,7 @@ class TestProcessApi(BaseTest):
 
     # TODO: test the auth callback endpoint
     # def test_can_store_authentication_secret(
-    #     self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None
+    #     self, app: Flask, client: starlette.testclient.TestClient, with_db_and_bpmn_file_cleanup: None
     # ) -> None:
     #     """Test_can_store_authentication_secret."""
     #     response = client.get(
@@ -2225,7 +2225,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_suspend(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2288,7 +2288,7 @@ class TestProcessApi(BaseTest):
     def test_script_unit_test_run(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2343,7 +2343,7 @@ class TestProcessApi(BaseTest):
     def test_send_event(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2414,7 +2414,7 @@ class TestProcessApi(BaseTest):
     def test_manual_complete_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2480,7 +2480,7 @@ class TestProcessApi(BaseTest):
         ).first()
         assert task_event is not None
 
-    def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
+    def setup_initial_groups_for_move_tests(self, client: starlette.testclient.TestClient, with_super_admin_user: UserModel) -> None:
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:
@@ -2494,7 +2494,7 @@ class TestProcessApi(BaseTest):
     def test_move_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2541,7 +2541,7 @@ class TestProcessApi(BaseTest):
     def test_move_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2584,7 +2584,7 @@ class TestProcessApi(BaseTest):
     # def test_process_model_publish(
     #     self,
     #     app: Flask,
-    #     client: FlaskClient,
+    #     client: starlette.testclient.TestClient,
     #     with_db_and_bpmn_file_cleanup: None,
     #     with_super_admin_user: UserModel,
     # ) -> None:
@@ -2704,7 +2704,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_process_instance_list_with_report_metadata(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2766,7 +2766,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_process_instance_list_with_report_metadata_using_different_operators(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2844,7 +2844,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_process_instance_list_with_report_metadata_using_different_operators_when_no_matches(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2922,7 +2922,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_process_instance_list_with_report_metadata_and_process_initiator(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -2994,7 +2994,7 @@ class TestProcessApi(BaseTest):
     def test_can_get_process_instance_report_column_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3092,7 +3092,7 @@ class TestProcessApi(BaseTest):
     def test_process_instance_list_can_order_by_metadata(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3163,7 +3163,7 @@ class TestProcessApi(BaseTest):
     def test_process_data_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3188,7 +3188,7 @@ class TestProcessApi(BaseTest):
     def test_process_data_show_with_sub_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3237,7 +3237,7 @@ class TestProcessApi(BaseTest):
     def test_process_data_show_with_sub_process_from_top_level(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3274,7 +3274,7 @@ class TestProcessApi(BaseTest):
     def test_returns_blank_array_if_process_instance_not_started(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -3296,7 +3296,7 @@ class TestProcessApi(BaseTest):
 
     def _setup_testing_instance(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         process_model_id: str,
         with_super_admin_user: UserModel,
     ) -> Any:

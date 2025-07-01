@@ -17,7 +17,7 @@ class TestForGoodErrors(BaseTest):
     def test_invalid_form(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -48,7 +48,7 @@ class TestForGoodErrors(BaseTest):
     def test_jinja2_error_message_for_end_user_instructions(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -80,7 +80,7 @@ class TestForGoodErrors(BaseTest):
     def _get_next_user_task(
         self,
         process_instance_id: int,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_super_admin_user: UserModel,
     ) -> Any:
         # Call this to assure all engine-steps are fully processed before we search for human tasks.

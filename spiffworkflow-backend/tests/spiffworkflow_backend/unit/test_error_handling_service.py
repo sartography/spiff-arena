@@ -32,7 +32,7 @@ class TestErrorHandlingService(BaseTest):
     def test_handle_error_suspends_or_faults_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Process Model in DB marked as suspended when error occurs."""
@@ -55,7 +55,7 @@ class TestErrorHandlingService(BaseTest):
     def test_error_sends_bpmn_message(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Real BPMN Messages should get generated and processes should fire off and complete."""

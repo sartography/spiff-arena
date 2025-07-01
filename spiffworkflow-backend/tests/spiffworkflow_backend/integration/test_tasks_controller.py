@@ -23,7 +23,7 @@ class TestTasksController(BaseTest):
     def test_task_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -74,7 +74,7 @@ class TestTasksController(BaseTest):
     def test_prepare_schema(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -125,7 +125,7 @@ class TestTasksController(BaseTest):
     def test_interstitial_returns_process_instance_if_suspended_or_terminated(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -175,7 +175,7 @@ class TestTasksController(BaseTest):
     def test_interstitial_page(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -273,7 +273,7 @@ class TestTasksController(BaseTest):
     def test_correct_user_can_get_and_update_a_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -366,7 +366,7 @@ class TestTasksController(BaseTest):
     def test_task_save_draft(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -442,7 +442,7 @@ class TestTasksController(BaseTest):
     def test_task_instance_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -480,7 +480,7 @@ class TestTasksController(BaseTest):
     def test_task_instance_list_returns_only_for_same_bpmn_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

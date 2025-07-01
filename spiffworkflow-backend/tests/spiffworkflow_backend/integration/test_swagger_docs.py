@@ -8,7 +8,7 @@ class TestSwaggerDocs(BaseTest):
     def test_can_retrieve_swagger_docs_without_auth(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
     ) -> None:
         response = client.get("/v1.0/ui/")
         assert response.status_code == 200

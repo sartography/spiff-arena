@@ -16,7 +16,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_detailed_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -70,7 +70,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_simple_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

@@ -18,7 +18,7 @@ class TestUpsearchControllerController(BaseTest):
     def test_return_upsearch_locations_for_path(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
         location: str,

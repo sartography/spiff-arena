@@ -9,7 +9,7 @@
 # from spiffworkflow_backend.models.user import UserModel
 #
 #
-# def test_acceptance(client: FlaskClient) -> None:
+# def test_acceptance(client: starlette.testclient.TestClient) -> None:
 #     """Test_acceptance."""
 #     # Create a user U
 #     user = create_user(client, "U")
@@ -31,7 +31,7 @@
 #     delete_user(client, user.username)
 #
 #
-# def test_user_can_be_created_and_deleted(client: FlaskClient) -> None:
+# def test_user_can_be_created_and_deleted(client: starlette.testclient.TestClient) -> None:
 #     """Test_user_can_be_created_and_deleted."""
 #     username = "joe"
 #     response = client.get(f"/user/{username}")
@@ -45,14 +45,14 @@
 #     assert user is None
 #
 #
-# def test_delete_returns_an_error_if_user_is_not_found(client: FlaskClient) -> None:
+# def test_delete_returns_an_error_if_user_is_not_found(client: starlette.testclient.TestClient) -> None:
 #     """Test_delete_returns_an_error_if_user_is_not_found."""
 #     username = "joe"
 #     response = client.delete(f"/user/{username}")
 #     assert response.status_code == 400
 #
 #
-# def test_create_returns_an_error_if_user_exists(client: FlaskClient) -> None:
+# def test_create_returns_an_error_if_user_exists(client: starlette.testclient.TestClient) -> None:
 #     """Test_create_returns_an_error_if_user_exists."""
 #     username = "joe"
 #     response = client.get(f"/user/{username}")
@@ -69,7 +69,7 @@
 #     assert user is None
 #
 #
-# def test_group_can_be_created_and_deleted(client: FlaskClient) -> None:
+# def test_group_can_be_created_and_deleted(client: starlette.testclient.TestClient) -> None:
 #     """Test_group_can_be_created_and_deleted."""
 #     group_name = "administrators"
 #     response = client.get(f"/group/{group_name}")
@@ -83,14 +83,14 @@
 #     assert group is None
 #
 #
-# def test_delete_returns_an_error_if_group_is_not_found(client: FlaskClient) -> None:
+# def test_delete_returns_an_error_if_group_is_not_found(client: starlette.testclient.TestClient) -> None:
 #     """Test_delete_returns_an_error_if_group_is_not_found."""
 #     group_name = "administrators"
 #     response = client.delete(f"/group/{group_name}")
 #     assert response.status_code == 400
 #
 #
-# def test_create_returns_an_error_if_group_exists(client: FlaskClient) -> None:
+# def test_create_returns_an_error_if_group_exists(client: starlette.testclient.TestClient) -> None:
 #     """Test_create_returns_an_error_if_group_exists."""
 #     group_name = "administrators"
 #     response = client.get(f"/group/{group_name}")
@@ -107,7 +107,7 @@
 #     assert group is None
 #
 #
-# def test_user_can_be_assigned_to_a_group(client: FlaskClient) -> None:
+# def test_user_can_be_assigned_to_a_group(client: starlette.testclient.TestClient) -> None:
 #     """Test_user_can_be_assigned_to_a_group."""
 #     user = create_user(client, "joe")
 #     group = create_group(client, "administrators")
@@ -116,7 +116,7 @@
 #     delete_group(client, group.name)
 #
 #
-# def test_user_can_be_removed_from_a_group(client: FlaskClient) -> None:
+# def test_user_can_be_removed_from_a_group(client: starlette.testclient.TestClient) -> None:
 #     """Test_user_can_be_removed_from_a_group."""
 #     user = create_user(client, "joe")
 #     group = create_group(client, "administrators")
@@ -126,7 +126,7 @@
 #     delete_group(client, group.name)
 #
 #
-# def create_user(client: FlaskClient, username: str) -> Any:
+# def create_user(client: starlette.testclient.TestClient, username: str) -> Any:
 #     """Create_user."""
 #     response = client.get(f"/user/{username}")
 #     assert response.status_code == 201
@@ -135,7 +135,7 @@
 #     return user
 #
 #
-# def delete_user(client: FlaskClient, username: str) -> None:
+# def delete_user(client: starlette.testclient.TestClient, username: str) -> None:
 #     """Delete_user."""
 #     response = client.delete(f"/user/{username}")
 #     assert response.status_code == 204
@@ -143,7 +143,7 @@
 #     assert user is None
 #
 #
-# def create_group(client: FlaskClient, group_name: str) -> Any:
+# def create_group(client: starlette.testclient.TestClient, group_name: str) -> Any:
 #     """Create_group."""
 #     response = client.get(f"/group/{group_name}")
 #     assert response.status_code == 201
@@ -152,7 +152,7 @@
 #     return group
 #
 #
-# def delete_group(client: FlaskClient, group_name: str) -> None:
+# def delete_group(client: starlette.testclient.TestClient, group_name: str) -> None:
 #     """Delete_group."""
 #     response = client.delete(f"/group/{group_name}")
 #     assert response.status_code == 204
@@ -161,7 +161,7 @@
 #
 #
 # def assign_user_to_group(
-#     client: FlaskClient, user: UserModel, group: GroupModel
+#     client: starlette.testclient.TestClient, user: UserModel, group: GroupModel
 # ) -> None:
 #     """Assign_user_to_group."""
 #     response = client.post(
@@ -176,7 +176,7 @@
 #
 #
 # def remove_user_from_group(
-#     client: FlaskClient, user: UserModel, group: GroupModel
+#     client: starlette.testclient.TestClient, user: UserModel, group: GroupModel
 # ) -> None:
 #     """Remove_user_from_group."""
 #     response = client.post(

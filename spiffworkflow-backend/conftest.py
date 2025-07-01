@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from connexion import FlaskApp
-from flask.app import Flask
+import starlette
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
@@ -45,7 +45,7 @@ def app() -> Generator[FlaskApp, Any, Any]:  # noqa
 
 
 @pytest.fixture(scope="session")
-def client(app) -> Flask:  # noqa
+def client(app) -> starlette.testclient.TestClient:  # noqa
     return app.test_client()
     # with app.test_client() as client:
     #     yield client

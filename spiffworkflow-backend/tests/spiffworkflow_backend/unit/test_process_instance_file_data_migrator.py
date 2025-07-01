@@ -19,7 +19,7 @@ class TestProcessInstanceFileDataMigrator(BaseTest):
     def test_can_migrate_from_db_to_fs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -66,7 +66,7 @@ class TestProcessInstanceFileDataMigrator(BaseTest):
     def test_can_migrate_binary_file_from_db_to_fs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(

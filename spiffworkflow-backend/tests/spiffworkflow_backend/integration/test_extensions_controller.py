@@ -11,7 +11,7 @@ class TestExtensionsController(BaseTest):
     def test_basic_extension(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -46,7 +46,7 @@ class TestExtensionsController(BaseTest):
     def test_returns_403_if_extensions_not_enabled(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -70,7 +70,7 @@ class TestExtensionsController(BaseTest):
     def test_returns_403_if_process_model_does_not_match_configured_prefix(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -94,7 +94,7 @@ class TestExtensionsController(BaseTest):
     def test_extension_can_run_without_restriction(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -126,7 +126,7 @@ class TestExtensionsController(BaseTest):
     def test_extension_data_get_can_return_proper_response(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

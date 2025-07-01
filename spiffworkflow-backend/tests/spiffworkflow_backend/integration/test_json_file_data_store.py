@@ -11,7 +11,7 @@ class TestJsonFileDataStore(BaseTest):
     def test_can_execute_diagram(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

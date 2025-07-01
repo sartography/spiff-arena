@@ -17,7 +17,7 @@ class TestMessages(BaseTest):
     def test_message_from_api_into_running_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test sending a message to a running process via the API.
@@ -74,7 +74,7 @@ class TestMessages(BaseTest):
     def test_message_model_list_up_search(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -99,7 +99,7 @@ class TestMessages(BaseTest):
     def test_process_group_update_syncs_message_models(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

@@ -22,7 +22,7 @@ class TestPermissions(BaseTest):
     def test_user_can_be_given_permission_to_administer_process_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_group_id = "group-a"

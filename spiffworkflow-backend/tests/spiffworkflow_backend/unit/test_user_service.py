@@ -11,7 +11,7 @@ class TestUserService(BaseTest):
     def test_assigning_a_group_to_a_user_before_the_user_is_created(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         a_test_group = UserService.find_or_create_group("aTestGroup")
@@ -22,7 +22,7 @@ class TestUserService(BaseTest):
     def test_assigning_a_group_to_all_users_updates_new_users(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         everybody_group = UserService.find_or_create_group("everybodyGroup")
@@ -33,7 +33,7 @@ class TestUserService(BaseTest):
     def test_assigning_a_group_to_all_users_updates_existing_users(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")

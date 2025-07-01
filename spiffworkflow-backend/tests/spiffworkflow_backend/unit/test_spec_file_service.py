@@ -30,7 +30,7 @@ class TestSpecFileService(BaseTest):
     def test_can_store_process_ids_for_lookup(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         load_test_spec(
@@ -45,7 +45,7 @@ class TestSpecFileService(BaseTest):
     def test_fails_to_save_duplicate_process_id_in_same_process_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn_process_identifier = "Level1"
@@ -71,7 +71,7 @@ class TestSpecFileService(BaseTest):
     def test_updates_relative_file_path_when_appropriate(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn_process_identifier = "Level1"
@@ -128,7 +128,7 @@ class TestSpecFileService(BaseTest):
     def test_change_the_identifier_cleans_up_cache(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """When a BPMN processes identifier is changed in a file, the old id is removed from the cache."""
@@ -167,7 +167,7 @@ class TestSpecFileService(BaseTest):
     def test_load_reference_information(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_load_reference_information.
@@ -205,7 +205,7 @@ class TestSpecFileService(BaseTest):
     def test_validate_bpmn_xml_with_invalid_xml(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -222,7 +222,7 @@ class TestSpecFileService(BaseTest):
     def test_uses_correct_cache_generation(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         current_cache_generation = CacheGenerationModel.newest_generation_for_table("reference_cache")
@@ -276,7 +276,7 @@ class TestSpecFileService(BaseTest):
     def test_can_correctly_clear_caches_for_a_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         load_test_spec(
@@ -311,7 +311,7 @@ class TestSpecFileService(BaseTest):
     def test_does_not_evaluate_entities(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         string_replacement = b"THIS_STRING_SHOULD_NOT_EXIST_ITS_SECRET"

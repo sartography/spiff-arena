@@ -34,7 +34,7 @@ class TestThreadedExecution(BaseTest):
     def test_multi_instance_can_run_in_parallel(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

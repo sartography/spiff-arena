@@ -72,7 +72,7 @@ class BaseTest:
 
     def create_group_and_model_with_bpmn(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -110,7 +110,7 @@ class BaseTest:
 
     def create_and_run_process_instance(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -156,7 +156,7 @@ class BaseTest:
 
     def create_process_group_with_api(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         user: Any,
         process_group_id: str,
         display_name: str = "",
@@ -189,7 +189,7 @@ class BaseTest:
 
     def create_process_model_with_api(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         process_model_id: str | None = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
@@ -252,7 +252,7 @@ class BaseTest:
 
     def create_spec_file(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         process_model_id: str,
         process_model_location: str | None = None,
         process_model: ProcessModelInfo | None = None,
@@ -303,7 +303,7 @@ class BaseTest:
 
     @staticmethod
     def create_process_instance_from_process_model_id_with_api(
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         test_process_model_id: str,
         headers: dict[str, str],
     ) -> TestResponse:
@@ -454,7 +454,7 @@ class BaseTest:
 
     def post_to_process_instance_list(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         user: UserModel,
         report_metadata: ReportMetadata | None = None,
         param_string: str | None = "",
@@ -476,7 +476,7 @@ class BaseTest:
 
     def start_sender_process(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         payload: dict,
         group_name: str = "test_group",
     ) -> ProcessInstanceModel:
@@ -554,7 +554,7 @@ class BaseTest:
 
     def assert_report_with_process_metadata_operator_includes_instance(
         self,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         user: UserModel,
         process_instance: ProcessInstanceModel,
         operator: str,

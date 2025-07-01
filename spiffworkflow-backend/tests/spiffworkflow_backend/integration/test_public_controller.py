@@ -17,7 +17,7 @@ class TestPublicController(BaseTest):
     def test_can_get_a_form_from_message_start_event(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         group_info: list[GroupPermissionsDict] = [
@@ -50,7 +50,7 @@ class TestPublicController(BaseTest):
     def test_can_submit_to_public_message_submit(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         group_info: list[GroupPermissionsDict] = [
@@ -87,7 +87,7 @@ class TestPublicController(BaseTest):
     def test_can_submit_to_public_message_submit_and_get_and_submit_subsequent_form(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user("testuser1")
@@ -170,7 +170,7 @@ class TestPublicController(BaseTest):
     def test_can_complete_complete_a_guest_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         admin_user = self.find_or_create_user("admin")

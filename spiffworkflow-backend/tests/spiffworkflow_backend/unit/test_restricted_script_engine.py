@@ -12,7 +12,7 @@ class TestRestrictedScriptEngine(BaseTest):
     def test_dot_notation_with_open_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -30,7 +30,7 @@ class TestRestrictedScriptEngine(BaseTest):
     def test_dot_notation_with_import_module(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(

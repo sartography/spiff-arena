@@ -14,7 +14,7 @@ class TestWebhooksController(BaseTest):
     def test_webhook_runs_configured_process_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         load_test_spec(

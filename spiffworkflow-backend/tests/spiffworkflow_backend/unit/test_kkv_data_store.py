@@ -165,7 +165,7 @@ class TestKkvDataStore(BaseTest):
         assert result == "newValue2"
 
     def test_can_retrieve_data_store_from_script_task(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
+        self, app: Flask, client: starlette.testclient.TestClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
     ) -> None:
         process_model_identifier = "simple_data_store"
         bpmn_file_location = "data_store_simple"
@@ -181,7 +181,7 @@ class TestKkvDataStore(BaseTest):
         assert process_instance.status == "complete"
 
     def test_can_retrieve_data_store_from_script_task_with_instructions(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
+        self, app: Flask, client: starlette.testclient.TestClient, with_db_and_bpmn_file_cleanup: None, with_clean_data_store: KKVDataStoreModel
     ) -> None:
         process_model_identifier = "simple_data_store"
         bpmn_file_location = "data_store_simple"

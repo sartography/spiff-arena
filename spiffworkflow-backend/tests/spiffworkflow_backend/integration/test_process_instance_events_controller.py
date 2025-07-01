@@ -12,7 +12,7 @@ class TestProcessInstanceEventsController(BaseTest):
     def test_process_instance_migration_event_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

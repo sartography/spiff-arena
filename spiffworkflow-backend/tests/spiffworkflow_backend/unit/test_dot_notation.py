@@ -16,7 +16,7 @@ class TestDotNotation(BaseTest):
     def test_dot_notation_in_message_path(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "dot_notation_group/test_dot_notation"

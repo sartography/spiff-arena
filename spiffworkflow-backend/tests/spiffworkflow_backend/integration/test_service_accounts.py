@@ -14,7 +14,7 @@ class TestServiceAccounts(BaseTest):
     def test_can_create_a_service_account(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -50,7 +50,7 @@ class TestServiceAccounts(BaseTest):
     def test_send_message_with_service_account(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -95,7 +95,7 @@ class TestServiceAccounts(BaseTest):
     def test_create_service_account_with_already_hashed_key(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

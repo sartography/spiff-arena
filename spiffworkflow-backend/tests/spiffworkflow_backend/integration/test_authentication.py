@@ -30,7 +30,7 @@ class TestAuthentication(BaseTest):
     def test_properly_adds_user_to_groups_from_token_on_login(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
@@ -101,7 +101,7 @@ class TestAuthentication(BaseTest):
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -129,7 +129,7 @@ class TestAuthentication(BaseTest):
         self,
         app: Flask,
         mocker: MockerFixture,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         redirect_uri = f"{app.app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
@@ -153,7 +153,7 @@ class TestAuthentication(BaseTest):
     def test_raises_error_if_invalid_redirect_url(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         redirect_url = "http://www.bad_url.com/test-redirect-dne"
@@ -167,7 +167,7 @@ class TestAuthentication(BaseTest):
     def test_can_access_public_endpoints_and_get_token(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         group_info: list[GroupPermissionsDict] = [

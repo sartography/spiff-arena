@@ -8,7 +8,7 @@ class TestDebugController(BaseTest):
     def test_test_raise_error(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: starlette.testclient.TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         response = client.post(
