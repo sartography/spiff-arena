@@ -49,7 +49,7 @@ class TestOnboarding(BaseTest):
         )
 
         assert results.status_code == 200
-        assert len(results.json.keys()) == 4
+        assert len(results.json().keys()) == 4
         assert results.json()["type"] == "default_view"
         assert results.json()["value"] == "my_tasks"
         assert results.json()["instructions"] == ""
@@ -74,7 +74,7 @@ class TestOnboarding(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert results.status_code == 200
-        assert len(results.json.keys()) == 4
+        assert len(results.json().keys()) == 4
         assert results.json()["type"] == "user_input_required"
         assert results.json()["process_instance_id"] is not None
         instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == results.json()["process_instance_id"]).first()
