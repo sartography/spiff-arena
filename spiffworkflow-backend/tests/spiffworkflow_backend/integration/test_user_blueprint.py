@@ -166,7 +166,7 @@
 #     """Assign_user_to_group."""
 #     response = client.post(
 #         "/assign_user_to_group",
-#         content_type="application/json",
+#         headers={"Content-Type": "application/json"},
 #         data={"user_id": user.id, "group_id": group.id},
 #     )
 #     assert response.status_code == 201
@@ -181,7 +181,7 @@
 #     """Remove_user_from_group."""
 #     response = client.post(
 #         "remove_user_from_group",
-#         content_type="application/json",
+#         headers={"Content-Type": "application/json"},
 #         data={"user_id": user.id, "group_id": group.id},
 #     )
 #     assert response.status_code == 204

@@ -2062,8 +2062,7 @@ class TestProcessApi(BaseTest):
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=payload,
         )
         assert response.status_code == 200
@@ -2073,8 +2072,7 @@ class TestProcessApi(BaseTest):
         payload["po_number"] = "1002"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers=self.logged_in_headers(with_super_admin_user),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             data=payload,
         )
         assert response.status_code == 200

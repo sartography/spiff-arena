@@ -1,5 +1,3 @@
-import json
-
 from flask import Flask
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
@@ -25,7 +23,7 @@ class TestGenerateMarkdownTable(BaseTest):
         result = GenerateMarkdownTable().run(
             script_attributes_context,
             columns=columns,
-            data=json.loads(data),
+            data=data,
         )
         expected_result = (
             "| Name | Age | Created At |\n"
@@ -58,7 +56,7 @@ class TestGenerateMarkdownTable(BaseTest):
         result = GenerateMarkdownTable().run(
             script_attributes_context,
             columns=columns,
-            data=json.loads(data),
+            data=data,
         )
         expected_result = (
             "| Name | Description |\n"
@@ -93,7 +91,7 @@ class TestGenerateMarkdownTable(BaseTest):
         result = GenerateMarkdownTable().run(
             script_attributes_context,
             columns=columns,
-            data=json.loads(data),
+            data=data,
         )
         expected_result = (
             "| Name | Description |\n"

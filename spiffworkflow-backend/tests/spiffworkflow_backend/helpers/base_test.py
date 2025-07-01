@@ -1,7 +1,6 @@
 import copy
 import datetime
 import io
-import json
 import os
 import shutil
 import time
@@ -164,7 +163,7 @@ class BaseTest:
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         response = client.post(
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
+            headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
             data=ProcessGroupSchema().dump(process_group),
         )
         assert response.status_code == 201
@@ -282,13 +281,13 @@ class BaseTest:
         modified_process_model_id = process_model.id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/files",
-            data=json.loads(data),
+            json=data,
             follow_redirects=True,
             headers=self.logged_in_headers(user, additional_headers={"Content-type": "multipart/form-data"}),
         )
         assert response.status_code == 201
-        assert response.get_data() is not None
-        file = json.loads(response.get_data(as_text=True))
+        assert response.content is not None
+        file = response.json()
         # assert FileType.svg.value == file["type"]
         # assert "image/svg+xml" == file["content_type"]
 
@@ -297,7 +296,7 @@ class BaseTest:
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 200
-        file2 = json.loads(response.get_data(as_text=True))
+        file2 = response.json()
         assert file["file_contents"] == file2["file_contents"]
         return file
 
@@ -611,7 +610,7 @@ class BaseTest:
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=user_task,
-            data=json.loads(data or {}),
+            data=data or {},
             user=user,
             human_task=human_task,
             execution_mode=execution_mode,

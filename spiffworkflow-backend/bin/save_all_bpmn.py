@@ -8,7 +8,7 @@ from spiffworkflow_backend.services.data_setup_service import DataSetupService
 
 def main() -> None:
     app = create_app()
-    with app.app.app_context():
+    with app.app_context():
         failing_process_models = DataSetupService.save_all_process_models()
         for bpmn_errors in failing_process_models:
             print(bpmn_errors)
