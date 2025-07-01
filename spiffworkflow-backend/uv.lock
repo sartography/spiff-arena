@@ -534,6 +534,9 @@ flask = [
 swagger-ui = [
     { name = "swagger-ui-bundle" },
 ]
+uvicorn = [
+    { name = "uvicorn", extra = ["standard"] },
+]
 
 [[package]]
 name = "coverage"
@@ -2362,7 +2365,7 @@ dependencies = [
     { name = "celery", extra = ["redis", "sqs"] },
     { name = "celery-stubs" },
     { name = "chardet" },
-    { name = "connexion", extra = ["flask", "swagger-ui"] },
+    { name = "connexion", extra = ["flask", "swagger-ui", "uvicorn"] },
     { name = "cryptography" },
     { name = "dateparser" },
     { name = "flask" },
@@ -2434,7 +2437,7 @@ requires-dist = [
     { name = "celery", extras = ["redis", "sqs"], specifier = ">=5.4.0" },
     { name = "celery-stubs", specifier = ">=0.1.3" },
     { name = "chardet", specifier = ">=5.2.0" },
-    { name = "connexion", extras = ["swagger-ui", "flask"], specifier = ">=3" },
+    { name = "connexion", extras = ["swagger-ui", "flask", "uvicorn"], specifier = ">=3" },
     { name = "cryptography", specifier = ">=44.0" },
     { name = "dateparser", specifier = ">=1.2.0" },
     { name = "flask", specifier = "==3.1.1" },

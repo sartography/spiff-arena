@@ -30,7 +30,7 @@ dependencies = [
     "spiffworkflow-connector-command",
     # we cannot upgrade werkzeug due to connexion. See comment in .snyk file
     "werkzeug >= 2.3",
-    "connexion[swagger-ui, flask] >= 3",
+    "connexion[swagger-ui, flask, uvicorn] >= 3",
     "lxml >= 5.3.1",
     "marshmallow-enum >= 1.5.1",
     "PyJWT >= 2.10.1",
