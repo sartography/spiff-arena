@@ -71,6 +71,10 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     ).to_be_visible()
     page.get_by_test_id("start-process-instance").first.click()
 
+    # 6-8. Complete forms 1 through 3
+    submit_input_into_form_field(
+        page, "get_form_num_one", "#root_form_num_1", 2, check_draft=True
+    )
     # Extract process_instance_id from the URL
     current_url = page.url
     match = re.search(r"/tasks/(\d+)/", current_url)
@@ -81,11 +85,6 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
         raise ValueError(
             f"Could not extract process instance ID from URL: {current_url}"
         )
-
-    # 6-8. Complete forms 1 through 3
-    submit_input_into_form_field(
-        page, "get_form_num_one", "#root_form_num_1", 2, check_draft=True
-    )
     submit_input_into_form_field(page, "get_form_num_two", "#root_form_num_2", 3)
     submit_input_into_form_field(page, "get_form_num_three", "#root_form_num_3", 4)
 
@@ -118,11 +117,14 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
 
     # 10. Resume form 4 from home
     page.get_by_test_id("nav-home").click()
-    expect(page.get_by_text("Waiting for me", exact=False)).to_be_visible()
-    page.get_by_text("Go", exact=True).click()
+    expect(page.get_by_text("Tasks assigned to me", exact=False)).to_be_visible()
+    # Find the specific row and click its "Complete task" button
+    page.get_by_test_id(f"process-instance-row-{process_instance_id}").locator(
+        'button[aria-label="Complete task"]'
+    ).click()
 
     # 11. Complete form 4
-    submit_input_into_form_field(page, "get_form_num_four", "#root_form_num_4", 5)
+    submit_input_into_form_field(page, "get_form_num_four", "#root_form_num_4", "5")
     expect(page).to_have_url(lambda url: "/tasks" in url)
 
     # 12. Final: verify instance status is complete

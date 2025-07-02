@@ -101,10 +101,11 @@ export default function TaskTable({
     waitingFor: ReactElement | null,
     hasAccessToCompleteTask: boolean,
   ) => {
+    const processInstanceId = getProcessInstanceId(entry);
     return (
-      <TableRow key={entry.id}>
+      <TableRow key={entry.id} data-testid={`process-instance-row-${processInstanceId}`}>
         <TableCell>
-          <Typography variant="body2">{getProcessInstanceId(entry)}</Typography>
+          <Typography variant="body2">{processInstanceId}</Typography>
         </TableCell>
         <TableCell>
           <Chip
