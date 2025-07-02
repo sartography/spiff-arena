@@ -1999,7 +1999,7 @@ wheels = [
 [[package]]
 name = "spiffworkflow"
 version = "3.1.1"
-source = { git = "https://github.com/sartography/SpiffWorkflow?branch=main#c1e89e3f3b4e2ffd80f7b773ffa302572fc69404" }
+source = { git = "https://github.com/sartography/SpiffWorkflow?branch=main#9b50630ea72387b8914fb5810be495ffd81f6898" }
 dependencies = [
     { name = "lxml" },
 ]
