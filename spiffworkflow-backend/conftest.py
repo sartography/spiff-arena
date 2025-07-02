@@ -4,6 +4,7 @@ import shutil
 from collections.abc import Generator
 from typing import Any
 
+import flask
 import pytest
 import starlette
 from connexion import FlaskApp
@@ -61,6 +62,11 @@ def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())
     db.session.commit()
+
+    # when g.user gets set and then we clear the db, the user is now deleted and so
+    # this fails so reset it
+    if hasattr(flask.g, "user") and flask.g.user:
+        flask.g.user = None
 
     try:
         yield

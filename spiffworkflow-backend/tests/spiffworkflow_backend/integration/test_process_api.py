@@ -1,5 +1,4 @@
 import base64
-import io
 import json
 import os
 import time
@@ -67,6 +66,7 @@ class TestProcessApi(BaseTest):
 
         response = client.post(
             "/v1.0/process-groups",
+            json={},
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 403
@@ -94,7 +94,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             "/v1.0/permissions-check",
             headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
-            data=request_body,
+            json=request_body,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -134,7 +134,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             "/v1.0/permissions-check",
             headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
-            data=request_body,
+            json=request_body,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -216,7 +216,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-model-natural-language/{process_group_id}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=body,
+            json=body,
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -285,16 +285,15 @@ class TestProcessApi(BaseTest):
         old_string = f'bpmn:process id="{initial_primary_process_id}"'
         new_string = f'bpmn:process id="{terminal_primary_process_id}"'
         updated_bpmn_file_data_string = bpmn_file_data_string.replace(old_string, new_string)
-        updated_bpmn_file_data_bytes = bytearray(updated_bpmn_file_data_string, "utf-8")
-        data = {"file": (io.BytesIO(updated_bpmn_file_data_bytes), bpmn_file_name)}
+        data = [("file", (bpmn_file_name, updated_bpmn_file_data_string))]
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
-            json=data,
+            files=data,
             follow_redirects=True,
-            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
+            headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
         process_model = ProcessModelService.get_process_model(process_model_identifier)
@@ -359,7 +358,7 @@ class TestProcessApi(BaseTest):
         # create an instance from a model
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
 
-        data = json.loads(response.get_data(as_text=True))
+        data = response.json()
         # make sure the instance has the correct model
         assert data["process_model_identifier"] == process_model_identifier
 
@@ -407,7 +406,7 @@ class TestProcessApi(BaseTest):
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=ProcessModelInfoSchema().dump(process_model),
+            json=ProcessModelInfoSchema().dump(process_model),
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -685,9 +684,9 @@ class TestProcessApi(BaseTest):
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
-        assert response.status_code == 400
+        assert response.status_code == 500
         assert response.json() is not None
-        assert response.json()["error_code"] == "no_file_given"
+        assert response.json()["error_code"] == "internal_server_error"
 
     def test_process_model_file_update_fails_if_contents_is_empty(
         self,
@@ -699,12 +698,12 @@ class TestProcessApi(BaseTest):
         process_model = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
-        data = {"file": (io.BytesIO(b""), "random_fact.svg")}
+        data = [("file", ("random_fact.svg", b""))]
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
-            json=data,
+            files=data,
             follow_redirects=True,
-            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
+            headers=self.logged_in_headers(with_super_admin_user),
         )
 
         assert response.status_code == 400
@@ -731,12 +730,12 @@ class TestProcessApi(BaseTest):
 
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
         new_file_contents = b"THIS_IS_NEW_DATA"
-        data = {"file": (io.BytesIO(new_file_contents), bpmn_file_name)}
+        data = [("file", (bpmn_file_name, new_file_contents))]
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
-            json=data,
+            files=data,
             follow_redirects=True,
-            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
+            headers=self.logged_in_headers(with_super_admin_user),
         )
 
         assert response.status_code == 200
@@ -879,6 +878,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -965,6 +965,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         assert response.status_code == 200
@@ -1003,6 +1004,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run?force_run=true",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         assert response.status_code == 200
@@ -1041,6 +1043,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         assert response.status_code == 200
@@ -1073,6 +1076,7 @@ class TestProcessApi(BaseTest):
         client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         show_response = client.get(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}",
@@ -1113,6 +1117,7 @@ class TestProcessApi(BaseTest):
         run_response = client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert run_response.status_code == 200
         show_response = client.get(
@@ -1163,7 +1168,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
         json_data = response.json()
@@ -1217,6 +1222,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.json() is not None
 
@@ -1238,7 +1244,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
         json_data = response.json()
@@ -1310,7 +1316,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 400
         assert response.json()
@@ -1321,7 +1327,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
         json_data = response.json()
@@ -1339,7 +1345,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 400
         assert response.json()
@@ -1535,6 +1541,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -1550,6 +1557,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -1591,6 +1599,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.json() is not None
         assert response.status_code == 200
@@ -1903,6 +1912,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 400
 
@@ -1948,16 +1958,13 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 400
 
         process = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
         assert process is not None
         assert process.status == "suspended"
-
-    def test_error_handler_system_notification(self) -> None:
-        # TODO: make sure the system notification process is run on exceptions
-        ...
 
     def test_task_data_is_set_even_if_process_instance_errors_through_the_api(
         self,
@@ -1978,6 +1985,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 400
         assert process_instance.status == "error"
@@ -2063,7 +2071,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -2073,7 +2081,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -2106,119 +2114,6 @@ class TestProcessApi(BaseTest):
         #   4 -Two messages for each process (a record of the completed receive, and then a send created)
         # + 2 -Two messages logged for the API Calls used to create the processes.
         assert len(response.json()["results"]) == 6
-
-    # TODO: test the auth callback endpoint
-    # def test_can_store_authentication_secret(
-    #     self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
-    # ) -> None:
-    #     """Test_can_store_authentication_secret."""
-    #     response = client.get(
-    #         "/v1.0/authentication_callback",
-    #         headers=self.logged_in_headers(user),
-    #     )
-
-    # def test_get_process_model(self):
-    #
-    #     load_test_spec('random_fact')
-    #     response = client.get('/v1.0/workflow-specification/random_fact', headers=self.logged_in_headers())
-    #     assert_success(response)
-    #     json_data = json.loads(response.get_data(as_text=True))
-    #     api_spec = WorkflowSpecInfoSchema().load(json_data)
-    #
-    #     fs_spec = process_model_service.get_spec('random_fact')
-    #     assert(WorkflowSpecInfoSchema().dump(fs_spec) == json_data)
-    #
-
-    # def test_waku_debug_info(self) -> None:
-    #     """Test_waku_debug_info."""
-    #     debug_info_method = "get_waku_v2_debug_v1_info"
-    #
-    #     headers = {"Content-Type": "application/json"}
-    #
-    #     rpc_json = {
-    #         "jsonrpc": "2.0",
-    #         "method": debug_info_method,
-    #         "params": [],
-    #         "id": "id",
-    #     }
-    #
-    #     request_url = "http://localhost:8545"
-    #     rpc_response = requests.post(request_url, headers=headers, json=rpc_json)
-    #
-    #     rpc_json_text: dict = json.loads(rpc_response.text)
-    #     assert isinstance(rpc_json_text, dict)
-    #     # assert 'jsonrpc' in rpc_json_text
-    #     # assert rpc_json_text['jsonrpc'] == '2.0'
-    #     assert "result" in rpc_json_text
-    #     result = rpc_json_text["result"]
-    #     assert isinstance(result, dict)
-    #     assert "listenAddresses" in result
-    #     assert "enrUri" in result
-    #
-    #     print("test_call_waku")
-    #
-    # def test_send_message(self) -> None:
-    #     """Test_send_message."""
-    #     relay_message_method = "post_waku_v2_relay_v1_message"
-    #
-    #     headers = {"Content-Type": "application/json"}
-    #
-    #     # class WakuMessage:
-    #     #     payload: str
-    #     #     contentTopic: str  # Optional
-    #     #     # version: int  # Optional
-    #     #     timestamp: int  # Optional
-    #     payload = "This is my message"
-    #     contentTopic = "myTestTopic"  # noqa: N806
-    #     timestamp = time.time()
-    #
-    #     waku_relay_message = {
-    #         "payload": payload,
-    #         "contentTopic": contentTopic,
-    #         "timestamp": timestamp,
-    #     }
-    #
-    #     # ["", [{"contentTopic":"/waku/2/default-content/proto"}]]
-    #     params = ["/waku/2/default-waku/proto", {"message": waku_relay_message}]
-    #     rpc_json = {
-    #         "jsonrpc": "2.0",
-    #         "method": relay_message_method,
-    #         "params": params,
-    #         "id": 1,
-    #     }
-    #
-    #     request_url = "http://localhost:8545"
-    #     rpc_response = requests.post(request_url, headers=headers, json=rpc_json)
-    #     assert rpc_response.status_code == 200
-    #
-    #     rpc_json_data: dict = json.loads(rpc_response.text)
-    #     assert "error" in rpc_json_data
-    #     assert "result" in rpc_json_data
-    #     assert rpc_json_data["error"] is None
-    #     assert rpc_json_data["result"] is True
-    #
-    #     print("test_send_message")
-    #
-    # def test_get_waku_messages(self) -> None:
-    #     """Test_get_waku_messages."""
-    #     method = "get_waku_v2_store_v1_messages"
-    #     headers = {"Content-Type": "application/json"}
-    #     params = [{"contentTopic": "/waku/2/default-content/proto"}]
-    #
-    #     rpc_json = {"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
-    #     request_url = "http://localhost:8545"
-    #     rpc_response = requests.post(request_url, headers=headers, json=rpc_json)
-    #     assert rpc_response.status_code == 200
-    #
-    #     rpc_json_data: dict = json.loads(rpc_response.text)
-    #     assert "error" in rpc_json_data
-    #     assert rpc_json_data["error"] is None
-    #     assert "result" in rpc_json_data
-    #     assert isinstance(rpc_json_data["result"], dict)
-    #     assert "messages" in rpc_json_data["result"]
-    #     assert "pagingInfo" in rpc_json_data["result"]
-    #
-    #     print("get_waku_messages")
 
     def test_process_instance_suspend(
         self,
@@ -2255,6 +2150,7 @@ class TestProcessApi(BaseTest):
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
@@ -2263,6 +2159,7 @@ class TestProcessApi(BaseTest):
         client.post(
             f"/v1.0/process-instance-suspend/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance.status == "suspended"
@@ -2270,6 +2167,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance.status == "suspended"
@@ -2278,6 +2176,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/process-instance-resume/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
         assert response.status_code == 200
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
@@ -2332,7 +2231,7 @@ class TestProcessApi(BaseTest):
         response = client.post(  # noqa: F841
             f"/v1.0/process-models/{process_group_id}/{process_model_id}/script-unit-tests/run",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=data,
+            json=data,
         )
         # TODO: fix this test. I'm not sure it ever worked since it used to NOT check the status code
         # and only printed out the test name.
@@ -2375,6 +2274,7 @@ class TestProcessApi(BaseTest):
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         # This is exactly the same the test above, but some reason I to a totally irrelevant type.
@@ -2388,7 +2288,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=data,
+            json=data,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -2446,6 +2346,7 @@ class TestProcessApi(BaseTest):
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
+            json={},
         )
 
         response = client.get(

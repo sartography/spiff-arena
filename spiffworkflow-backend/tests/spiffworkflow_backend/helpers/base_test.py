@@ -1,6 +1,5 @@
 import copy
 import datetime
-import io
 import os
 import shutil
 import time
@@ -275,15 +274,15 @@ class BaseTest:
                 bpmn_file_name=file_name,
                 process_model_source_directory=process_model_location,
             )
-        data = {"file": (io.BytesIO(file_data), file_name)}
+        data = [("file", (file_name, file_data))]
         if user is None:
             user = self.find_or_create_user()
         modified_process_model_id = process_model.id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/files",
-            json=data,
+            files=data,
             follow_redirects=True,
-            headers=self.logged_in_headers(user, additional_headers={"Content-type": "multipart/form-data"}),
+            headers=self.logged_in_headers(user),
         )
         assert response.status_code == 201
         assert response.content is not None

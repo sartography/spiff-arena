@@ -1,4 +1,3 @@
-import io
 import json
 from hashlib import sha256
 from unittest.mock import patch
@@ -48,7 +47,7 @@ class TestProcessModelsController(BaseTest):
         bpmn_file_data_bytes = SpecFileService.get_data(process_model, process_model.primary_file_name)
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        files = {"file": (process_model.primary_file_name, io.BytesIO(bpmn_file_data_bytes))}
+        files = [("file", (process_model.primary_file_name, bpmn_file_data_bytes))]
         url = (
             f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/"
             f"{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
