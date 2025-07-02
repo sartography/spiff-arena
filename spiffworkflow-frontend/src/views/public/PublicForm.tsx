@@ -112,7 +112,7 @@ export default function PublicForm() {
           {errorDisplayStateless(currentPageError)}
           <p>
             Go to{' '}
-            <a href="/" data-qa="public-home-link">
+            <a href="/" data-testid="public-home-link">
               Home
             </a>
           </p>

@@ -34,7 +34,7 @@ export default function ProcessModelReadmeArea({
             >
               <Button
                 kind="ghost"
-                data-qa="process-model-readme-file-edit"
+                data-testid="process-model-readme-file-edit"
                 renderIcon={Edit}
                 iconDescription="Edit README.md"
                 hasIconOnly
@@ -56,7 +56,7 @@ export default function ProcessModelReadmeArea({
       <Can I="POST" a={targetUris.processModelFileCreatePath} ability={ability}>
         <Button
           className="with-top-margin"
-          data-qa="process-model-readme-file-create"
+          data-testid="process-model-readme-file-create"
           href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
           size="md"
         >
