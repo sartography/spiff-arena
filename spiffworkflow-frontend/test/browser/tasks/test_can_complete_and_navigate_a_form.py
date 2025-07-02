@@ -95,7 +95,7 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     expect(form3).to_have_class(re.compile(rf"(^|\s){completed_task_class}($|\s)"))
     expect(form4).to_have_class(re.compile(rf"(^|\s){active_task_class}($|\s)"))
     # Close modal
-    page.locator('.is-visible .cds--modal-close').click()
+    page.get_by_role("button", name="Close").click()
 
     # 10. Resume form 4 from home
     page.get_by_test_id("nav-home").click()
