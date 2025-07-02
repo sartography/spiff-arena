@@ -9,7 +9,7 @@ import { IconButton } from '@mui/material';
 import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
-  'data-qa'?: string;
+  'data-testid'?: string;
   description?: string;
   buttonLabel?: string;
   onConfirmation: (..._args: any[]) => any;
@@ -26,7 +26,7 @@ export default function ButtonWithConfirmation({
   description,
   buttonLabel,
   onConfirmation,
-  'data-qa': dataQa,
+  'data-testid': dataTestid,
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
   kind = 'contained',
@@ -81,7 +81,7 @@ export default function ButtonWithConfirmation({
       <>
         <SpiffTooltip title={iconDescription || ''} placement="top">
           <IconButton
-            data-qa={dataQa}
+            data-testid={dataTestid}
             onClick={handleShowConfirmationPrompt}
             aria-label={iconDescription || ''}
           >
@@ -95,7 +95,7 @@ export default function ButtonWithConfirmation({
   return (
     <>
       <Button
-        data-qa={dataQa}
+        data-testid={dataTestid}
         onClick={handleShowConfirmationPrompt}
         variant={kind}
         color="error"

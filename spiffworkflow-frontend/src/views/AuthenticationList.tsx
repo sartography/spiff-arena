@@ -47,7 +47,7 @@ export default function AuthenticationList() {
           <TableRow key={row.id}>
             <TableCell>
               <a
-                data-qa="authentication-create-link"
+                data-testid="authentication-create-link"
                 href={`${connectProxyBaseUrl}/v1/auth/${
                   row.id
                 }?redirect_url=${redirectUrl}/${
@@ -66,7 +66,7 @@ export default function AuthenticationList() {
           <TableRow key={row.id}>
             <TableCell>
               <a
-                data-qa="authentication-create-link"
+                data-testid="authentication-create-link"
                 href={`${BACKEND_BASE_URL}/authentication_begin/${
                   row.id
                 }?token=${UserService.getAccessToken()}`}

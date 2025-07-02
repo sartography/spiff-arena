@@ -107,16 +107,20 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
 
             if (crumb.linkLastItem) {
               let apiBase = '/process-groups';
-              let dataQaTag = '';
+              let dataTestidTag = '';
               if (crumb.entityType.startsWith('process-model')) {
                 apiBase = '/process-models';
-                dataQaTag = 'process-model-breadcrumb-link';
+                dataTestidTag = 'process-model-breadcrumb-link';
               }
               const fullUrl = `${apiBase}/${modifyProcessIdentifierForPathParam(
                 processEntity.id,
               )}`;
               breadcrumbs.push(
-                <Link key={processEntity.id} to={fullUrl} data-qa={dataQaTag}>
+                <Link
+                  key={processEntity.id}
+                  to={fullUrl}
+                  data-testid={dataTestidTag}
+                >
                   <Typography color="primary.main">
                     {processEntity.display_name}
                   </Typography>

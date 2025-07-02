@@ -80,7 +80,7 @@ class AuthenticationOptionForApi(TypedDict):
 class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
     client_secret: str
-    additional_valid_issuers: list[str]
+    additional_valid_issuers: NotRequired[list[str]]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -125,8 +125,10 @@ class AuthenticationService:
 
     @classmethod
     def valid_issuers(cls, authentication_identifier: str) -> list[str]:
-        issuers: list[str] = cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_issuers"]
-        return issuers
+        auth_options = cls.authentication_option_for_identifier(authentication_identifier)
+        if "additional_valid_issuers" in auth_options:
+            return auth_options["additional_valid_issuers"]
+        return []
 
     @classmethod
     def server_url(cls, authentication_identifier: str, internal: bool = False) -> str:
