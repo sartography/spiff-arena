@@ -110,7 +110,7 @@ class TestTasksController(BaseTest):
         response = client.post(
             "/v1.0/tasks/prepare-form",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=data,
+            json=data,
         )
         assert response.status_code == 200
         assert response.json() is not None
@@ -229,6 +229,7 @@ class TestTasksController(BaseTest):
             headers=headers,
         )
 
+        assert response.status_code == 200
         assert response.json() is not None
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
@@ -410,7 +411,7 @@ class TestTasksController(BaseTest):
         response = client.post(
             f"/v1.0/tasks/{process_instance_id}/{task_id}/save-draft",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=draft_data,
+            json=draft_data,
         )
         assert response.status_code == 200
 
@@ -425,7 +426,7 @@ class TestTasksController(BaseTest):
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=draft_data,
+            json=draft_data,
         )
         assert response.status_code == 200
 
@@ -470,7 +471,7 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.headers["content_type"] == "application/json"
+        assert response.headers["content-type"] == "application/json"
         assert isinstance(response.json(), list)
 
         expected_states = sorted(["COMPLETED", "COMPLETED", "MAYBE", "READY"])
@@ -508,6 +509,6 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.headers["content_type"] == "application/json"
+        assert response.headers["content-type"] == "application/json"
         assert isinstance(response.json(), list)
         assert len(response.json()) == 1

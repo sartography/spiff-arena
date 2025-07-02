@@ -189,9 +189,8 @@ class TestAuthentication(BaseTest):
 
         response = client.get(url)
         assert response.status_code == 200
-        headers_dict = dict(response.headers)
-        assert "Set-Cookie" in headers_dict
-        cookie = headers_dict["Set-Cookie"]
+        assert "Set-Cookie" in response.headers
+        cookie = response.headers["Set-Cookie"]
         cookie_split = cookie.split(";")
         access_token = [cookie for cookie in cookie_split if cookie.startswith("access_token=")][0]
         assert access_token is not None
@@ -205,8 +204,7 @@ class TestAuthentication(BaseTest):
         assert response.status_code == 200
 
         # make sure we do not create and set a new cookie with this request
-        headers_dict = dict(response.headers)
-        assert "Set-Cookie" not in headers_dict
+        assert "Set-Cookie" not in response.headers
 
         response = client.get(
             "/v1.0/process-groups",

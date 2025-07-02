@@ -54,9 +54,8 @@ class TestMessages(BaseTest):
         )
 
         # The response's task data should also match up with the correlation keys.
-        response_json = response.json()
-        assert response_json["task_data"]["po_number"] == 1001
-        assert response_json["task_data"]["customer_id"] == "Sartography"
+        assert response.json["task_data"]["po_number"] == 1001
+        assert response.json["task_data"]["customer_id"] == "Sartography"
 
         # There is no longer a waiting message
         waiting_messages = (

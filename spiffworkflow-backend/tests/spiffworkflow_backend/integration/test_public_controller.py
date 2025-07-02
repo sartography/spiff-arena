@@ -217,9 +217,8 @@ class TestPublicController(BaseTest):
         assert response.json()["task_guid"] == first_task_guid
         assert response.json()["process_instance_id"] == process_instance_id
 
-        headers_dict = dict(response.headers)
-        assert "Set-Cookie" in headers_dict
-        cookie = headers_dict["Set-Cookie"]
+        assert "Set-Cookie" in response.headers
+        cookie = response.headers["Set-Cookie"]
         cookie_split = cookie.split(";")
         access_token = [cookie for cookie in cookie_split if cookie.startswith("access_token=")][0]
         assert access_token is not None

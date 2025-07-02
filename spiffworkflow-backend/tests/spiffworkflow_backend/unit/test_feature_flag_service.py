@@ -1,5 +1,6 @@
 from collections.abc import Generator
 
+import flask
 import pytest
 from flask.app import Flask
 
@@ -9,6 +10,11 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 @pytest.fixture()
 def no_feature_flags(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+    tld = app.app.config.get("THREAD_LOCAL_DATA")
+    if tld and hasattr(tld, "process_model_identifier"):
+        delattr(tld, "process_model_identifier")
+    if hasattr(flask.g, "feature_flags"):
+        delattr(flask.g, "feature_flags")
     yield
 
 

@@ -39,7 +39,7 @@ class TestServiceAccounts(BaseTest):
         response = client.post(
             "/v1.0/secrets",
             headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
-            data=post_body,
+            json=post_body,
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -82,7 +82,7 @@ class TestServiceAccounts(BaseTest):
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers={"SpiffWorkflow-Api-Key": (service_account.api_key or ""), "Content-Type": "application/json"},
-            data=payload,
+            json=payload,
         )
         assert response.status_code == 200
 

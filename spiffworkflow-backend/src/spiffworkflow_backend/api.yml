@@ -2628,10 +2628,11 @@ paths:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
       summary: Update the form data for a tasks
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
+              nullable: true
               $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
