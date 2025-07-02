@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import datetime
@@ -95,6 +96,22 @@ class File:
             size=file_size,
         )
         return instance
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> File:
+        """Create a File object from a dictionary."""
+        data_copy = data.copy()
+        data_copy["last_modified"] = datetime.fromisoformat(data_copy["last_modified"])
+        if "file_contents" in data_copy and data_copy["file_contents"] is not None:
+            data_copy["file_contents"] = data_copy["file_contents"].encode("utf-8")
+        if "references" in data_copy and data_copy["references"] is not None:
+            data_copy["references"] = [Reference.from_dict(r) for r in data_copy["references"]]
+
+        # remove keys not in dataclass
+        known_fields = {f.name for f in dataclasses.fields(cls)}
+        filtered_data = {k: v for k, v in data_copy.items() if k in known_fields}
+
+        return cls(**filtered_data)
 
     def serialized(self) -> dict[str, Any]:
         dictionary = self.__dict__
