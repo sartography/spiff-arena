@@ -58,15 +58,34 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     # 2-5. Navigate to the process model and start instance
     page.goto(f"{BASE_URL}/process-groups")
     page.get_by_text(parent_group, exact=False).first.click()
-    expect(page.get_by_test_id(f"process-group-breadcrumb-{parent_group}")).to_be_visible()
+    expect(
+        page.get_by_test_id(f"process-group-breadcrumb-{parent_group}")
+    ).to_be_visible()
     page.get_by_text(child_group, exact=False).first.click()
-    expect(page.get_by_test_id(f"process-group-breadcrumb-{child_group}")).to_be_visible()
+    expect(
+        page.get_by_test_id(f"process-group-breadcrumb-{child_group}")
+    ).to_be_visible()
     page.get_by_test_id(f"process-model-card-{model_display_name}").first.click()
-    expect(page.get_by_text(f"Process Model: {model_display_name}", exact=False)).to_be_visible()
+    expect(
+        page.get_by_text(f"Process Model: {model_display_name}", exact=False)
+    ).to_be_visible()
     page.get_by_test_id("start-process-instance").first.click()
 
+    # Extract process_instance_id from the URL
+    current_url = page.url
+    match = re.search(r"/tasks/(\d+)/", current_url)
+    process_instance_id = None
+    if match:
+        process_instance_id = match.group(1)
+    else:
+        raise ValueError(
+            f"Could not extract process instance ID from URL: {current_url}"
+        )
+
     # 6-8. Complete forms 1 through 3
-    submit_input_into_form_field(page, "get_form_num_one", "#root_form_num_1", 2, check_draft=True)
+    submit_input_into_form_field(
+        page, "get_form_num_one", "#root_form_num_1", 2, check_draft=True
+    )
     submit_input_into_form_field(page, "get_form_num_two", "#root_form_num_2", 3)
     submit_input_into_form_field(page, "get_form_num_three", "#root_form_num_3", 4)
 
@@ -111,7 +130,9 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     instances = page.get_by_test_id("process-instance-show-link-id")
     expect(instances.first).to_be_visible()
     instances.first.click()
-    expect(page.locator(".process-instance-status").get_by_text("complete")).to_be_visible()
+    expect(
+        page.locator(".process-instance-status").get_by_text("complete")
+    ).to_be_visible()
 
     # 13. Logout
     logout(page)
