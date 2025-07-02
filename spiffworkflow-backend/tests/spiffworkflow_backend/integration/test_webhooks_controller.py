@@ -21,13 +21,13 @@ class TestWebhooksController(BaseTest):
             "test_group/simple_script",
             process_model_source_directory="simple_script",
         )
-        request_data = json.dumps({"body": "THIS IS OUR REQEST"})
-        encoded_signature = self._create_encoded_signature(app, request_data)
+        request_data = {"body": "THIS IS OUR REQEST"}
+        encoded_signature = self._create_encoded_signature(app, json.dumps(request_data))
 
         response = client.post(
             "/v1.0/webhook",
             headers={"X-Hub-Signature-256": f"sha256={encoded_signature}", "Content-Type": "application/json"},
-            data=request_data,
+            json=request_data,
         )
         assert response.status_code == 200
 

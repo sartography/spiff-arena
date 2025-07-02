@@ -141,7 +141,7 @@ class TestProcessModelsController(BaseTest):
         response = client.post(
             url,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data={"process_instance_id": process_instance_id},
+            json={"process_instance_id": process_instance_id},
         )
         assert response.status_code == 200
 

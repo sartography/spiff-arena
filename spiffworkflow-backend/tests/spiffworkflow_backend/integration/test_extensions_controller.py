@@ -147,6 +147,6 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 200
-            assert response.mimetype == "text/csv"
-            assert response.headers[0] == ("Content-disposition", "attachment; filename=metadata_export.csv")
+            assert response.headers["content-type"] == "text/csv; charset=utf-8"
+            assert response.headers["Content-disposition"] == "attachment; filename=metadata_export.csv"
             assert re.match(r"\d+", response.text)

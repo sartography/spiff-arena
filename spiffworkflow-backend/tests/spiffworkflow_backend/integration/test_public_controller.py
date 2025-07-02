@@ -1,4 +1,3 @@
-import json
 import re
 
 from flask import Flask
@@ -70,9 +69,7 @@ class TestPublicController(BaseTest):
 
         response = client.post(
             url,
-            data=json.dumps(
-                {"firstName": "MyName"},
-            ),
+            json={"firstName": "MyName"},
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 200
@@ -116,9 +113,7 @@ class TestPublicController(BaseTest):
         )
         response = client.post(
             initial_url,
-            data=json.dumps(
-                {"firstName": "MyName"},
-            ),
+            json={"firstName": "MyName"},
             headers=headers | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200
@@ -147,9 +142,7 @@ class TestPublicController(BaseTest):
         second_form_url = f"/v1.0/public/tasks/{process_instance_id}/{task_guid}?execution_mode=synchronous"
         response = client.put(
             second_form_url,
-            data=json.dumps(
-                {"lastName": "MyLastName"},
-            ),
+            json={"lastName": "MyLastName"},
             headers=headers | {"Content-Type": "application/json"},
         )
 
@@ -236,7 +229,7 @@ class TestPublicController(BaseTest):
 
         response = client.put(
             f"/v1.0/public/tasks/{process_instance_id}/{first_task_guid}?execution_mode=synchronous",
-            data="{}",
+            json={},
             headers=user_header | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200
@@ -250,7 +243,7 @@ class TestPublicController(BaseTest):
         second_task_guid = response.json()["task_guid"]
         response = client.put(
             f"/v1.0/public/tasks/{process_instance_id}/{second_task_guid}?execution_mode=synchronous",
-            data="{}",
+            json={},
             headers=user_header | {"Content-Type": "application/json"},
         )
         assert response.status_code == 200

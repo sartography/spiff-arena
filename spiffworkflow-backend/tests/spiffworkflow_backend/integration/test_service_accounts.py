@@ -81,7 +81,7 @@ class TestServiceAccounts(BaseTest):
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
+            headers={"SpiffWorkflow-Api-Key": (service_account.api_key or ""), "Content-Type": "application/json"},
             data=payload,
         )
         assert response.status_code == 200

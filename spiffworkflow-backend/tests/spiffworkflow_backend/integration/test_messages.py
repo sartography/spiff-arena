@@ -149,7 +149,7 @@ class TestMessages(BaseTest):
         response = client.put(
             "/v1.0/process-groups/bob",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data=process_group,
+            json=process_group,
         )
         assert response.status_code == 200
 

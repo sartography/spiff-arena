@@ -292,7 +292,7 @@ class TestProcessApi(BaseTest):
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
-            data=json.loads(data),
+            json=data,
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
@@ -371,7 +371,7 @@ class TestProcessApi(BaseTest):
 
         # make sure we get an error in the response
         assert response.status_code == 400
-        data = json.loads(response.get_data(as_text=True))
+        data = response.json()
         assert data["error_code"] == "existing_instances"
         assert (
             data["message"]
@@ -681,7 +681,7 @@ class TestProcessApi(BaseTest):
         data = {"key1": "THIS DATA"}
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
-            data=json.loads(data),
+            json=data,
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
@@ -702,7 +702,7 @@ class TestProcessApi(BaseTest):
         data = {"file": (io.BytesIO(b""), "random_fact.svg")}
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg?file_contents_hash=does_not_matter",
-            data=json.loads(data),
+            json=data,
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
@@ -734,7 +734,7 @@ class TestProcessApi(BaseTest):
         data = {"file": (io.BytesIO(new_file_contents), bpmn_file_name)}
         response = client.put(
             f"/v1.0/process-models/{modified_process_model_identifier}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
-            data=json.loads(data),
+            json=data,
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "multipart/form-data"}),
         )
@@ -748,7 +748,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        updated_file = json.loads(response.get_data(as_text=True))
+        updated_file = response.json()
         assert updated_file["file_contents"] == new_file_contents.decode()
 
     def test_process_model_file_delete_when_bad_process_model(
@@ -1906,7 +1906,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
 
-        api_error = json.loads(response.get_data(as_text=True))
+        api_error = response.json()
         assert api_error["error_code"] == "unexpected_workflow_exception"
         assert 'TypeError:can only concatenate str (not "int") to str' in api_error["message"]
 
@@ -2458,7 +2458,7 @@ class TestProcessApi(BaseTest):
         response = client.post(
             f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{human_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            data={"execute": False},
+            json={"execute": False},
         )
 
         assert response.json()["status"] == "suspended"
@@ -3063,7 +3063,7 @@ class TestProcessApi(BaseTest):
         ]
 
         # pluck accessor from each dict in list
-        accessors = [column["accessor"] for column in response.json]
+        accessors = [column["accessor"] for column in response.json()]
         stock_columns = [
             "id",
             "process_model_display_name",
@@ -3084,7 +3084,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.json() is not None
         assert response.status_code == 200
-        accessors = [column["accessor"] for column in response.json]
+        accessors = [column["accessor"] for column in response.json()]
         assert accessors == stock_columns + ["key1", "key2", "key3"]
 
     def test_process_instance_list_can_order_by_metadata(

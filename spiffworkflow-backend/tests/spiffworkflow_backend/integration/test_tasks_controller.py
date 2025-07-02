@@ -470,11 +470,11 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.content_type == "application/json"
+        assert response.headers["content_type"] == "application/json"
         assert isinstance(response.json(), list)
 
         expected_states = sorted(["COMPLETED", "COMPLETED", "MAYBE", "READY"])
-        actual_states = sorted([t["state"] for t in response.json])
+        actual_states = sorted([t["state"] for t in response.json()])
         assert actual_states == expected_states
 
     def test_task_instance_list_returns_only_for_same_bpmn_process(
@@ -508,6 +508,6 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.content_type == "application/json"
+        assert response.headers["content_type"] == "application/json"
         assert isinstance(response.json(), list)
         assert len(response.json()) == 1

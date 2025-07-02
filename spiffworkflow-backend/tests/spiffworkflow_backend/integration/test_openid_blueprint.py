@@ -1,5 +1,4 @@
 import base64
-import json
 
 import jwt
 from flask import Flask
@@ -46,7 +45,7 @@ class TestOpenidBlueprint(BaseTest):
     ) -> None:
         """It should be possible to get to a login page."""
         data = {"state": {"bubblegum": 1, "daydream": 2}}
-        response = client.get("/openid/auth", params=data)
+        response = client.get("/openid/auth", params=data)  # type: ignore
         assert b"<h2>Login</h2>" in response.content
         assert b"bubblegum" in response.content
 
