@@ -1044,10 +1044,10 @@ paths:
       tags:
         - Extensions
       requestBody:
-        required: true
         content:
           application/json:
             schema:
+              nullable: true
               type: object
       responses:
         "200":
