@@ -125,7 +125,7 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
 
     # 11. Complete form 4
     submit_input_into_form_field(page, "get_form_num_four", "#root_form_num_4", "5")
-    expect(page).to_have_url(lambda url: "/tasks" in url)
+    expect(page).to_have_url(re.compile(r"/tasks"))
 
     # 12. Final: verify instance status is complete
     page.goto(f"{BASE_URL}/process-instances/all")
