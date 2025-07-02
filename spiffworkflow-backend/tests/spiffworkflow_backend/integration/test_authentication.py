@@ -147,8 +147,10 @@ class TestAuthentication(BaseTest):
 
         assert class_method_mock.call_count == 1
         assert response.status_code == 302
-        assert response.location.startswith(auth_uri)
-        assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), response.location) is not None
+        assert response.has_redirect_location
+        redirect_location = response.headers["location"]
+        assert redirect_location.startswith(auth_uri)
+        assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), redirect_location) is not None
 
     def test_raises_error_if_invalid_redirect_url(
         self,

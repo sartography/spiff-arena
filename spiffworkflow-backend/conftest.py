@@ -46,13 +46,13 @@ def app() -> Generator[FlaskApp, Any, Any]:  # noqa
 
 @pytest.fixture(scope="session")
 def client(app) -> starlette.testclient.TestClient:  # noqa
-    return app.test_client()
+    return app.test_client(follow_redirects=False, base_url="http://localhost")
     # with app.test_client() as client:
     #     yield client
 
 
 @pytest.fixture()
-def with_db_and_bpmn_file_cleanup() -> None:
+def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     """Do it cleanly!"""
     meta = db.metadata
     db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))

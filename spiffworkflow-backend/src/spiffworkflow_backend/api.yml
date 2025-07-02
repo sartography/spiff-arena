@@ -19,7 +19,6 @@ paths:
       responses:
         "200":
           description: Redirects to authentication server
-
   /login:
     parameters:
       - name: authentication_identifier
