@@ -89,11 +89,9 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     submit_input_into_form_field(page, "get_form_num_three", "#root_form_num_3", 4)
 
     # 9. Mid-progress: inspect instance via all instances list
-    page.goto(f"{BASE_URL}/process-instances/all")
-    expect(page.get_by_text("All Process Instances", exact=False)).to_be_visible()
-    instances = page.get_by_test_id("process-instance-show-link-id")
-    expect(instances.first).to_be_visible()
-    instances.first.click()
+    page.goto(f"{BASE_URL}/process-instances/find-by-id")
+    page.locator("#process-instance-id-input").fill(str(process_instance_id))
+    page.get_by_role("button", name="Submit").click()
 
     # Verify form3 data and highlighting
     heading = page.get_by_role("heading", name=re.compile(r"Process Instance Id:"))
@@ -132,8 +130,9 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     instances = page.get_by_test_id("process-instance-show-link-id")
     expect(instances.first).to_be_visible()
     instances.first.click()
+    # Updated selector to use data-testid and then check for text content
     expect(
-        page.locator(".process-instance-status").get_by_text("complete")
+        page.get_by_test_id("process-instance-status-chip").get_by_text("complete")
     ).to_be_visible()
 
     # 13. Logout

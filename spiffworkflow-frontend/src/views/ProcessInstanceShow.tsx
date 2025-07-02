@@ -530,6 +530,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <Chip
                 label={`${processInstance.status}`}
                 icon={statusIcon}
+                data-testid="process-instance-status-chip"
                 // color={statusColor}
                 size="small"
               />
