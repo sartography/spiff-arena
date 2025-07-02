@@ -68,7 +68,7 @@ export default function ProcessInstanceReportSearch({
           <Autocomplete
             onChange={(_, value) => onChange(value)}
             id="process-instance-report-select"
-            data-qa="process-instance-report-selection"
+            data-testid="process-instance-report-selection"
             options={processInstanceReports || []}
             getOptionLabel={(processInstanceReport: ProcessInstanceReport) => {
               if (processInstanceReport) {

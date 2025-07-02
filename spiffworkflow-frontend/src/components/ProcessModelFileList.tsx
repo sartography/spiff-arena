@@ -114,7 +114,7 @@ export default function ProcessModelFileList({
           <SpiffTooltip title={`${actionWord} File`} placement="top">
             <IconButton
               aria-label={`${actionWord} File`}
-              data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
+              data-testid={`edit-file-${processModelFile.name.replace('.', '-')}`}
               href={editUrl}
             >
               {icon}

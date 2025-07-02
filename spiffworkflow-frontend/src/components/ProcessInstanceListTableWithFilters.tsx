@@ -1023,7 +1023,7 @@ export default function ProcessInstanceListTableWithFilters({
           onChange={updateReportColumn}
           id="report-column-selection"
           key="report-column-selection"
-          data-qa="report-column-selection"
+          data-testid="report-column-selection"
           data-modal-primary-focus
           items={availableReportColumns}
           itemToString={(reportColumn: ReportColumn) => {
@@ -1176,7 +1176,7 @@ export default function ProcessInstanceListTableWithFilters({
                 {truncateString(reportColumnLabel, 10)}
               </Button>
               <Button
-                data-qa="remove-report-column"
+                data-testid="remove-report-column"
                 renderIcon={Close}
                 iconDescription="Remove Column"
                 className={`button-tag-icon ${tagTypeClass}`}
@@ -1194,7 +1194,7 @@ export default function ProcessInstanceListTableWithFilters({
           {tags}
           <Column md={1} lg={1} sm={1}>
             <Button
-              data-qa="add-column-button"
+              data-testid="add-column-button"
               renderIcon={AddAlt}
               iconDescription="Column options"
               className="with-tiny-top-margin"
@@ -1396,7 +1396,7 @@ export default function ProcessInstanceListTableWithFilters({
                         setProcessInitiatorSelection(event.selectedItem);
                       }}
                       id="process-instance-initiator-search"
-                      data-qa="process-instance-initiator-search"
+                      data-testid="process-instance-initiator-search"
                       items={processInstanceInitiatorOptions}
                       placeholder="Start typing username"
                       titleText="Started by"
@@ -1508,7 +1508,7 @@ export default function ProcessInstanceListTableWithFilters({
             <Button
               kind="ghost"
               onClick={() => setShowAdvancedOptions(true)}
-              data-qa="advanced-options-filters"
+              data-testid="advanced-options-filters"
               className="narrow-button button-link"
             >
               Advanced
