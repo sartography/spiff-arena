@@ -64,7 +64,7 @@ def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     # when g.user gets set and then we clear the db, the user is now deleted and so
     # this fails so reset it
     if hasattr(flask.g, "user") and flask.g.user:
-        flask.g.user = None
+        delattr(flask.g, "user")
 
     try:
         yield

@@ -72,7 +72,7 @@ class TestErrorHandlingService(BaseTest):
         )
         process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
         ProcessModelService.save_process_model(process_model)
-        # kick off the process and assure it got marked as an error.
+        # kick off the process and ensure it got marked as an error.
         process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.error.value == process_instance.status
 
