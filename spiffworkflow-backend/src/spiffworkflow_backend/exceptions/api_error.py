@@ -9,6 +9,7 @@ from typing import Any
 import sentry_sdk
 from connexion.lifecycle import ConnexionRequest
 from connexion.problem import problem
+from flask import Flask
 from flask import current_app
 from flask import g
 from sentry_sdk import capture_exception
@@ -264,74 +265,79 @@ def should_notify_sentry(exception: Exception) -> bool:
     return True
 
 
-def handle_exception(request: ConnexionRequest, exception: Exception) -> ConnexionResponse:
+def handle_exception(app: Flask, request: ConnexionRequest, exception: Exception) -> ConnexionResponse:
     """Handles unexpected exceptions."""
-    set_user_sentry_context()
+    with app.app_context():
+        set_user_sentry_context()
 
-    sentry_link = None
-    if should_notify_sentry(exception):
-        id = capture_exception(exception)
+        sentry_link = None
+        if should_notify_sentry(exception):
+            id = capture_exception(exception)
 
+            if isinstance(exception, ApiError):
+                current_app.logger.info(
+                    f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}"
+                )
+
+            organization_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
+            project_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
+            if organization_slug and project_slug:
+                sentry_link = f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
+
+            # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
+            # seems to break the sentry sdk context where we no longer get back
+            # an event id or send out tags like username
+            current_app.logger.exception(exception)
+        else:
+            current_app.logger.warning(
+                f"Received exception: {exception}. Since we do not want this particular"
+                " exception in sentry, we cannot use logger.exception or logger.error, so"
+                " there will be no backtrace. see api_error.py"
+            )
+
+        error_code = "internal_server_error"
+        status_code = 500
+        if isinstance(exception, NotAuthorizedError | TokenNotProvidedError | TokenInvalidError):
+            error_code = "not_authorized"
+            status_code = 403
+        if isinstance(exception, UserNotLoggedInError):
+            error_code = "not_authenticated"
+            status_code = 401
+
+        # set api_exception like this to avoid confusing mypy
+        # about what type the object is
+        api_exception = None
         if isinstance(exception, ApiError):
-            current_app.logger.info(f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
+            api_exception = exception
+        elif isinstance(exception, SpiffWorkflowException):
+            api_exception = ApiError.from_workflow_exception(
+                "unexpected_workflow_exception", "Unexpected Workflow Error", exception
+            )
+        else:
+            api_exception = ApiError(
+                error_code=error_code,
+                message=f"{exception.__class__.__name__}: {str(exception)}",
+                sentry_link=sentry_link,
+                status_code=status_code,
+            )
 
-        organization_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
-        project_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
-        if organization_slug and project_slug:
-            sentry_link = f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
+        if api_exception.response_message is not None:
+            return ConnexionResponse(
+                content=api_exception.response_message,
+                status_code=api_exception.status_code or 500,
+                headers=api_exception.response_headers,
+            )
 
-        # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
-        # seems to break the sentry sdk context where we no longer get back
-        # an event id or send out tags like username
-        current_app.logger.exception(exception)
-    else:
-        current_app.logger.warning(
-            f"Received exception: {exception}. Since we do not want this particular"
-            " exception in sentry, we cannot use logger.exception or logger.error, so"
-            " there will be no backtrace. see api_error.py"
+        serialized_error = api_exception.serialized()
+        status = int(serialized_error.pop("status_code", 500))
+        title = str(serialized_error.get("error_code", "internal_server_error"))
+        detail = str(serialized_error.get("message", str(exception)))
+        headers = api_exception.response_headers
+
+        return problem(  # type: ignore[no-any-return]
+            status=status,
+            title=title,
+            detail=detail,
+            headers=headers,
+            ext=serialized_error,
         )
-
-    error_code = "internal_server_error"
-    status_code = 500
-    if isinstance(exception, NotAuthorizedError | TokenNotProvidedError | TokenInvalidError):
-        error_code = "not_authorized"
-        status_code = 403
-    if isinstance(exception, UserNotLoggedInError):
-        error_code = "not_authenticated"
-        status_code = 401
-
-    # set api_exception like this to avoid confusing mypy
-    # about what type the object is
-    api_exception = None
-    if isinstance(exception, ApiError):
-        api_exception = exception
-    elif isinstance(exception, SpiffWorkflowException):
-        api_exception = ApiError.from_workflow_exception("unexpected_workflow_exception", "Unexpected Workflow Error", exception)
-    else:
-        api_exception = ApiError(
-            error_code=error_code,
-            message=f"{exception.__class__.__name__}: {str(exception)}",
-            sentry_link=sentry_link,
-            status_code=status_code,
-        )
-
-    if api_exception.response_message is not None:
-        return ConnexionResponse(
-            content=api_exception.response_message,
-            status_code=api_exception.status_code or 500,
-            headers=api_exception.response_headers,
-        )
-
-    serialized_error = api_exception.serialized()
-    status = int(serialized_error.pop("status_code", 500))
-    title = str(serialized_error.get("error_code", "internal_server_error"))
-    detail = str(serialized_error.get("message", str(exception)))
-    headers = api_exception.response_headers
-
-    return problem(  # type: ignore[no-any-return]
-        status=status,
-        title=title,
-        detail=detail,
-        headers=headers,
-        ext=serialized_error,
-    )

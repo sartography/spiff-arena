@@ -1,5 +1,6 @@
 import faulthandler
 import os
+from functools import partial
 from typing import Any
 
 import sqlalchemy
@@ -74,7 +75,7 @@ def create_app() -> FlaskApp:
     db.init_app(app)
     migrate.init_app(app, db)
 
-    connexion_app.add_error_handler(Exception, handle_exception)
+    connexion_app.add_error_handler(Exception, partial(handle_exception, app))
 
     app.register_blueprint(user_blueprint)
 
