@@ -38,8 +38,8 @@ class GenerateMarkdownTable(Script):
     def run(
         self,
         script_attributes_context: ScriptAttributesContext,
-        *args: tuple[Any, ...],
-        **kwargs: dict[str, Any],
+        *args: list[Any],
+        **kwargs: list[Any],
     ) -> Any:
         """
         Generates a markdown table from columns and data.
