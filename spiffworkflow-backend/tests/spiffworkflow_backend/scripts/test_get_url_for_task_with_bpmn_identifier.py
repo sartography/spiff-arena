@@ -38,7 +38,7 @@ class TestGetUrlForTaskWithBpmnIdentifier(BaseTest):
         assert spiff_task is not None
         assert "url" in spiff_task.data
 
-        fe_url = app.app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        fe_url = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
         expected_url = f"{fe_url}/public/tasks/{process_instance.id}/{str(spiff_task.id)}"
         assert spiff_task.data["url"] == expected_url
 
@@ -71,6 +71,6 @@ class TestGetUrlForTaskWithBpmnIdentifier(BaseTest):
         assert spiff_task is not None
         assert "url" in spiff_task.data
 
-        fe_url = app.app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        fe_url = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
         expected_url = f"{fe_url}/tasks/{process_instance.id}/{str(spiff_task.id)}"
         assert spiff_task.data["url"] == expected_url

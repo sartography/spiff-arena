@@ -32,5 +32,5 @@ class TestWebhooksController(BaseTest):
         assert response.status_code == 200
 
     def _create_encoded_signature(self, app: FlaskApp, request_data: str) -> str:
-        secret = app.app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
+        secret = app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
         return HMAC(key=secret, msg=request_data.encode(), digestmod=sha256).hexdigest()

@@ -1505,7 +1505,7 @@ class TestProcessApi(BaseTest):
 
                 dir_parts = ProcessInstanceFileDataModel.get_hashed_directory_structure(digest)
                 filepath = os.path.join(
-                    app.app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
+                    app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"], *dir_parts, digest
                 )
                 assert os.path.isfile(filepath)
 

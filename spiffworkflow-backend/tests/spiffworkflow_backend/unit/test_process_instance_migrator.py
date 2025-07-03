@@ -212,7 +212,7 @@ class TestProcessInstanceMigrator(BaseTest):
 
     def _import_bpmn_json_for_test(self, app: Flask, bpmn_json_file_name: str, process_model: ProcessModelInfo) -> tuple:
         bpmn_json_file = os.path.join(
-            app.app.instance_path,
+            app.instance_path,
             "..",
             "..",
             "tests",

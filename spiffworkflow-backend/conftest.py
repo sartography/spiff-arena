@@ -8,6 +8,7 @@ import flask
 import pytest
 import starlette
 from connexion import FlaskApp
+from flask import Flask
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
@@ -33,21 +34,26 @@ def _set_unit_testing_env_variables() -> None:
 
 
 @pytest.fixture(scope="session")
-def app() -> Generator[FlaskApp, Any, Any]:  # noqa
+def connexion_app() -> Generator[FlaskApp, Any, Any]:  # noqa
     _set_unit_testing_env_variables()
-    app = create_app()
-    with app.app.app_context():
+    connexion_app = create_app()
+    with connexion_app.app.app_context():
         # to screw with this, poet add nplusone --group dev
         # from nplusone.ext.flask_sqlalchemy import NPlusOne
-        # app.config["NPLUSONE_RAISE"] = True
-        # NPlusOne(app)
+        # connexion_app.config["NPLUSONE_RAISE"] = True
+        # NPlusOne(connexion_app)
 
-        yield app
+        yield connexion_app
 
 
 @pytest.fixture(scope="session")
-def client(app) -> starlette.testclient.TestClient:  # noqa
-    return app.test_client(follow_redirects=False, base_url="http://localhost")
+def app(connexion_app: FlaskApp) -> Generator[Flask, Any, Any]:  # noqa
+    yield connexion_app.app
+
+
+@pytest.fixture(scope="session")
+def client(connexion_app: FlaskApp) -> starlette.testclient.TestClient:  # noqa
+    return connexion_app.test_client(follow_redirects=False, base_url="http://localhost")
 
 
 @pytest.fixture()

@@ -23,7 +23,7 @@ class MockTask:
 
 @pytest.fixture()
 def with_clean_data_store(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[KKVDataStoreModel, None, None]:
-    app.app.config["THREAD_LOCAL_DATA"].process_model_identifier = "the_location/of/some/process-model"
+    app.config["THREAD_LOCAL_DATA"].process_model_identifier = "the_location/of/some/process-model"
 
     db.session.query(KKVDataStoreModel).delete()
     db.session.commit()
