@@ -1753,6 +1753,12 @@ paths:
         description: The id of the spec file
         schema:
           type: string
+      - name: file_contents_hash
+        in: query
+        required: false
+        description: The hash of the file contents that originally came with the file.
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_show
       summary: Returns metadata about the file
@@ -1768,13 +1774,6 @@ paths:
     put:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_update
       summary: save the contents to the given file
-      parameters:
-        - name: file_contents_hash
-          in: query
-          required: false
-          description: The hash of the file contents that originally came with the file.
-          schema:
-            type: string
       tags:
         - Process Model Files
       requestBody:
