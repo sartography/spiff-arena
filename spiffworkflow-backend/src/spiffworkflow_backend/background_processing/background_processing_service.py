@@ -25,37 +25,37 @@ class BackgroundProcessingService:
 
     def process_not_started_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:notstarted")
             ProcessInstanceService.do_waiting(ProcessInstanceStatus.not_started.value)
 
     def process_waiting_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:waiting")
             ProcessInstanceService.do_waiting(ProcessInstanceStatus.waiting.value)
 
     def process_running_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:running")
             ProcessInstanceService.do_waiting(ProcessInstanceStatus.running.value)
 
     def process_user_input_required_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:userinput")
             ProcessInstanceService.do_waiting(ProcessInstanceStatus.user_input_required.value)
 
     def process_message_instances_with_app_context(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:messages")
             MessageService.correlate_all_message_instances(execution_mode="synchronous")
 
     def remove_stale_locks(self) -> None:
         """If something has been locked for a certain amount of time it is probably stale so unlock it."""
-        with self.app.app.app_context():
+        with self.app.app_context():
             ProcessInstanceLockService.remove_stale_locks()
 
     def process_future_tasks(self) -> None:
@@ -66,8 +66,8 @@ class BackgroundProcessingService:
         that are 5 minutes away or less.
         """
 
-        with self.app.app.app_context():
-            future_task_lookahead_in_seconds = self.app.app.config[
+        with self.app.app_context():
+            future_task_lookahead_in_seconds = self.app.config[
                 "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS"
             ]
             self.__class__.do_process_future_tasks(future_task_lookahead_in_seconds)

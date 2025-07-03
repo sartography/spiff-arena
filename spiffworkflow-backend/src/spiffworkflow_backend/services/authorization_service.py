@@ -299,6 +299,7 @@ class AuthorizationService:
             "connexion.apis.flask_api.console_ui_home",
             "connexion.apis.flask_api.console_ui_static_files",
             "connexion.apis.flask_api.get_json_spec",
+            "flask.blueprints.send_static_file",
         ]
         if not current_app.config["SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS"]:
             authentication_exclusion_list.append("prometheus_flask_exporter.prometheus_metrics")
