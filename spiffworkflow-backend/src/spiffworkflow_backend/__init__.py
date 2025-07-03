@@ -74,7 +74,7 @@ def create_app() -> FlaskApp:
         raise Exception("Could not find app in FlaskApp")
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
-    setup_prometheus_metrics(app, connexion_app)
+    setup_prometheus_metrics(connexion_app)
 
     setup_config(app)
     db.init_app(app)

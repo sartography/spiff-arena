@@ -3,9 +3,9 @@ import os
 import sys
 from typing import Any
 
-import connexion
 import flask.wrappers
 import sentry_sdk
+from connexion import FlaskApp
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import MethodNotAllowed
@@ -20,9 +20,9 @@ def get_version_info_data() -> dict[str, Any]:
     return version_info_data_dict
 
 
-def setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.FlaskApp) -> None:
+def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
-    app.config["PROMETHEUS_METRICS"] = metrics
+    connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
     version_info_data = get_version_info_data()
     if len(version_info_data) > 0:
         # prometheus does not allow periods in key names
