@@ -56,6 +56,10 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
+def create_app_for_flask() -> Any:
+    return create_app().app
+
+
 def create_app() -> FlaskApp:
     faulthandler.enable()
 

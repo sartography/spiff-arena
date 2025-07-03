@@ -14,8 +14,6 @@ function log_info() {
 # example command:
 # SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
 
-export FLASK_APP=/app/src/spiffworkflow_backend
-
 if [[ -z "${FLASK_DEBUG:-}" ]]; then
   export FLASK_DEBUG=0
 fi
@@ -103,7 +101,7 @@ fi
 
 log_info "Starting uvicorn server"
 # THIS MUST BE THE LAST COMMAND!
-exec uv run uvicorn wsgi:app ${additional_args} \
+exec uv run uvicorn spiff_web_server:app ${additional_args} \
   --host "0.0.0.0" \
   --port "$port" \
   --workers "$worker_count" \

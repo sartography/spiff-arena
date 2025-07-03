@@ -12,7 +12,7 @@ def init_celery_if_appropriate(app: flask.app.Flask) -> None:
 def celery_init_app(app: flask.app.Flask) -> Celery:
     class FlaskTask(Task):
         def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app.app_context():
+            with app.app_context():
                 return self.run(*args, **kwargs)  # type: ignore
 
     celery_configs = {

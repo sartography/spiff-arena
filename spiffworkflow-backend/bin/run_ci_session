@@ -38,7 +38,6 @@ function setup_db_for_ci() {
   # Set environment variables
   export FLASK_INSTANCE_PATH="${script_dir}/../src/instance"
   export FLASK_SESSION_SECRET_KEY="e7711a3ba96c46c68e084a86952de16f"
-  export FLASK_APP="src/spiffworkflow_backend"
   export SPIFFWORKFLOW_BACKEND_ENV="unit_testing"
 
   # Check if SPIFFWORKFLOW_BACKEND_DATABASE_TYPE is set to "sqlite"
