@@ -2632,7 +2632,8 @@ paths:
           application/json:
             schema:
               nullable: true
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
