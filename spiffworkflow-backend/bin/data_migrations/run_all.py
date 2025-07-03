@@ -94,7 +94,7 @@ def main() -> None:
     app = create_app()
     end_time = time.time()
 
-    with app.app_context():
+    with app.app.app_context():
         current_app.logger.debug(f"data_migrations/run_all::create_app took {end_time - start_time} seconds")
         start_time = time.time()
         put_serializer_version_onto_numeric_track()

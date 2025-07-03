@@ -1,5 +1,5 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -11,7 +11,7 @@ class TestJsonFileDataStore(BaseTest):
     def test_can_execute_diagram(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

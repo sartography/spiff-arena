@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -32,7 +32,7 @@ class TestErrorHandlingService(BaseTest):
     def test_handle_error_suspends_or_faults_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Process Model in DB marked as suspended when error occurs."""
@@ -55,7 +55,7 @@ class TestErrorHandlingService(BaseTest):
     def test_error_sends_bpmn_message(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Real BPMN Messages should get generated and processes should fire off and complete."""
@@ -72,7 +72,7 @@ class TestErrorHandlingService(BaseTest):
         )
         process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
         ProcessModelService.save_process_model(process_model)
-        # kick off the process and assure it got marked as an error.
+        # kick off the process and ensure it got marked as an error.
         process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.error.value == process_instance.status
 

@@ -7,7 +7,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 def main() -> None:
     """Main."""
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         AuthorizationService.delete_all_permissions()
         AuthorizationService.import_permissions_from_yaml_file()
 

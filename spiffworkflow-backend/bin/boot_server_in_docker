@@ -14,8 +14,6 @@ function log_info() {
 # example command:
 # SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite SPIFFWORKFLOW_BACKEND_ENV=local_docker SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=true FLASK_DEBUG=0 FLASK_SESSION_SECRET_KEY=HEY SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${HOME}/projects/github/sartography/sample-process-models/" ./bin/boot_server_in_docker
 
-export FLASK_APP=/app/src/spiffworkflow_backend
-
 if [[ -z "${FLASK_DEBUG:-}" ]]; then
   export FLASK_DEBUG=0
 fi
@@ -35,12 +33,8 @@ if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
   uv run flask db upgrade
 fi
 
-if [[ -z "${GUNICORN_LOG_LEVEL:-}" ]]; then
-  GUNICORN_LOG_LEVEL=debug
-fi
-
-if [[ -z "${GUNICORN_TIMEOUT_SECONDS:-}" ]]; then
-  GUNICORN_TIMEOUT_SECONDS=90
+if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
+  UVICORN_LOG_LEVEL=debug
 fi
 
 port="${SPIFFWORKFLOW_BACKEND_PORT:-}"
@@ -61,7 +55,7 @@ if [[ -n "$path_prefix" ]] && [[ "${path_prefix}" != "/" ]]; then
     echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX must start with a '/'. '$SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX' was used instead."
     exit 1
   fi
-  additional_args="${additional_args} -e SCRIPT_NAME=${path_prefix}"
+  additional_args="${additional_args} --root-path ${path_prefix}"
 fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
@@ -87,26 +81,6 @@ fi
 log_info "Running git init"
 git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
-if [[ -z "${SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER:-}" ]]; then
-  # default to 3 * 2 = 6 threads per worker
-  # you may want to configure threads_to_use_per_core based on whether your workload is more cpu intensive or more I/O intensive:
-  #   cpu heavy, make it smaller
-  #   I/O heavy, make it larger
-  threads_to_use_per_core=3
-
-  # https://stackoverflow.com/a/55423170/6090676
-  # if we had access to python (i'm not sure i want to run another python script here),
-  # we could do something like this (on linux) to get the number of cores available to this process and a better estimate of a
-  # reasonable num_cores_multiple_for_threads
-  # if hasattr(os, 'sched_getaffinity')
-  #   number_of_available_cores = os.sched_getaffinity(0)
-  # BUT the python solution isn't even as portable as this one, which is mostly posix compliant and works on linux/mac/freebsd.
-  num_cores_multiple_for_threads=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || echo 1)
-
-  SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER=$((threads_to_use_per_core * num_cores_multiple_for_threads))
-  export SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER
-fi
-
 # # VersionOneThree and the process_instance_file_data db => filesystem migration have run on all necessary environments,
 # so commenting out run_all.py.
 # one day we might have another blocking-style data migration that we want to complete before the app boots.
@@ -125,18 +99,10 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   uv run python bin/save_all_bpmn.py
 fi
 
-# --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
-log_info "Starting gunicorn server"
-export IS_GUNICORN="true"
+log_info "Starting uvicorn server"
 # THIS MUST BE THE LAST COMMAND!
-exec uv run gunicorn ${additional_args} \
-  --bind "0.0.0.0:$port" \
-  --preload \
-  --worker-class "gthread" \
-  --workers="$worker_count" \
-  --threads "$SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER" \
-  --limit-request-line 8192 \
-  --timeout "$GUNICORN_TIMEOUT_SECONDS" \
-  --capture-output \
-  --access-logfile '-' \
-  --log-level "$GUNICORN_LOG_LEVEL" wsgi:app
+exec uv run uvicorn spiff_web_server:app ${additional_args} \
+  --host "0.0.0.0" \
+  --port "$port" \
+  --workers "$worker_count" \
+  --log-level "$UVICORN_LOG_LEVEL"

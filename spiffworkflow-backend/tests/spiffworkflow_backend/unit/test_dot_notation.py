@@ -1,5 +1,5 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -16,7 +16,7 @@ class TestDotNotation(BaseTest):
     def test_dot_notation_in_message_path(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "dot_notation_group/test_dot_notation"

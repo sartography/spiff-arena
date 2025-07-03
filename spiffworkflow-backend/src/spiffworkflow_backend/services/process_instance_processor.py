@@ -1623,7 +1623,7 @@ class ProcessInstanceProcessor:
                 user_tasks,
             )
         )
-        return user_tasks  # type: ignore
+        return user_tasks
 
     def get_task_dict_from_spiff_task(self, spiff_task: SpiffTask) -> dict[str, Any]:
         default_registry = DefaultRegistry()

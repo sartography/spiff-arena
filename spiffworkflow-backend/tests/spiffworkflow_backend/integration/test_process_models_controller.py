@@ -1,10 +1,9 @@
-import io
 import json
 from hashlib import sha256
 from unittest.mock import patch
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -19,7 +18,7 @@ class TestProcessModelsController(BaseTest):
     def test_cannot_save_process_model_file_with_called_elements_user_does_not_have_access_to(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -48,29 +47,27 @@ class TestProcessModelsController(BaseTest):
         bpmn_file_data_bytes = SpecFileService.get_data(process_model, process_model.primary_file_name)
         file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
-        data = {"file": (io.BytesIO(bpmn_file_data_bytes), process_model.primary_file_name)}
+        files = [("file", (process_model.primary_file_name, bpmn_file_data_bytes))]
         url = (
             f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/"
             f"{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
         )
         response = client.put(
             url,
-            data=data,
+            files=files,
             follow_redirects=True,
-            content_type="multipart/form-data",
             headers=self.logged_in_headers(user_one),
         )
-
         assert response.status_code == 403
-        assert response.json is not None
-        assert response.json["message"].startswith(
+        assert response.json() is not None
+        assert response.json()["message"].startswith(
             "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
         )
 
     def test_process_model_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -99,7 +96,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_show_when_not_found(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -111,7 +108,7 @@ class TestProcessModelsController(BaseTest):
     def test_process_model_test_generate(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -142,9 +139,8 @@ class TestProcessModelsController(BaseTest):
         url = f"/v1.0/process-model-tests/create/{process_model.modified_process_model_identifier()}"
         response = client.post(
             url,
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps({"process_instance_id": process_instance_id}),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"process_instance_id": process_instance_id},
         )
         assert response.status_code == 200
 
@@ -179,12 +175,12 @@ class TestProcessModelsController(BaseTest):
                 },
             }
         }
-        assert expected_specification == response.json
+        assert expected_specification == response.json()
 
     def test_process_model_list_with_grouping_by_process_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -200,10 +196,10 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
 
-        top_process_group = response.json["results"][0]
+        top_process_group = response.json()["results"][0]
         assert top_process_group["id"] == "top_group"
         assert top_process_group["display_name"] == "top_group"
         assert top_process_group["description"] is None
@@ -220,7 +216,7 @@ class TestProcessModelsController(BaseTest):
     def test_get_process_model_when_found(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -233,18 +229,18 @@ class TestProcessModelsController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["id"] == process_model.id
-        assert len(response.json["files"]) == 1
-        assert response.json["files"][0]["name"] == "random_fact.bpmn"
-        assert response.json["parent_groups"] == [
+        assert response.json() is not None
+        assert response.json()["id"] == process_model.id
+        assert len(response.json()["files"]) == 1
+        assert response.json()["files"][0]["name"] == "random_fact.bpmn"
+        assert response.json()["parent_groups"] == [
             {"display_name": "test_group", "id": "test_group", "description": None, "process_models": [], "process_groups": []}
         ]
 
     def test_get_process_model_when_not_found(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -257,11 +253,11 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json is not None
-        assert response.json["error_code"] == "process_model_cannot_be_found"
+        assert response.json() is not None
+        assert response.json()["error_code"] == "process_model_cannot_be_found"
 
     def _get_process_show_show_response(
-        self, client: FlaskClient, user: UserModel, process_model_id: str, expected_response: int = 200
+        self, client: TestClient, user: UserModel, process_model_id: str, expected_response: int = 200
     ) -> dict:
         url = f"/v1.0/process-models/{process_model_id}"
         response = client.get(
@@ -270,6 +266,6 @@ class TestProcessModelsController(BaseTest):
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == expected_response
-        assert response.json is not None
-        process_model_data: dict = response.json
+        assert response.json() is not None
+        process_model_data: dict = response.json()
         return process_model_data

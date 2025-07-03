@@ -60,7 +60,7 @@ def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type
 
 def main() -> NoReturn:
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         hot_dir = FileSystemService.root_path()
         # Search for BPMN files and check for get_current_user() calls in script tasks
         bpmn_files = glob.glob(os.path.expanduser(f"{hot_dir}/**/*.bpmn"), recursive=True)
