@@ -5,6 +5,7 @@ from typing import Any
 
 import sqlalchemy
 from connexion import FlaskApp
+from connexion.middleware import MiddlewarePosition
 from flask.json.provider import DefaultJSONProvider
 from starlette.middleware.cors import CORSMiddleware
 
@@ -94,6 +95,7 @@ def create_app() -> FlaskApp:
     origin_regex = "|".join(origins_re_list)
     connexion_app.add_middleware(
         CORSMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION,
         allow_origin_regex=origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
