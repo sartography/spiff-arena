@@ -103,7 +103,10 @@ export default function TaskTable({
   ) => {
     const processInstanceId = getProcessInstanceId(entry);
     return (
-      <TableRow key={entry.id} data-testid={`process-instance-row-${processInstanceId}`}>
+      <TableRow
+        key={entry.id}
+        data-testid={`process-instance-row-${processInstanceId}`}
+      >
         <TableCell>
           <Typography variant="body2">{processInstanceId}</Typography>
         </TableCell>
