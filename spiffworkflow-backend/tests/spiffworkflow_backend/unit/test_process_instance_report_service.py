@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -17,7 +17,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_can_filter_by_completed_instances_initiated_by_me(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "runs_without_input/sample"
@@ -54,7 +54,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_raises_if_filtering_with_both_task_i_can_complete_and_tasks_completed_by_me(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user_one = self.find_or_create_user(username="user_one")
@@ -75,7 +75,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_with_group_identifier_does_not_conflict_with_system_filters(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user_one = self.find_or_create_user(username="user_one")
@@ -110,7 +110,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_can_filter_by_completed_instances_with_tasks_completed_by_me(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "runs_without_input/sample"
@@ -185,7 +185,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "runs_without_input/sample"
@@ -271,7 +271,7 @@ class TestProcessInstanceReportService(BaseTest):
     def test_can_filter_by_with_relation_to_me(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model_id = "runs_without_input/sample"

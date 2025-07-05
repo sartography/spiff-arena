@@ -246,7 +246,7 @@ class ProcessInstanceReportService:
             report_metadata=report_metadata,
         )
 
-        return process_instance_report  # type: ignore
+        return process_instance_report
 
     @classmethod
     def add_metadata_columns_to_process_instance(

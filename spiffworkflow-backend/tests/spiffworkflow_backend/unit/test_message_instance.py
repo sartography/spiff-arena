@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -24,7 +24,7 @@ class TestMessageInstance(BaseTest):
     def test_can_create_message_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "Message Model One"
@@ -50,7 +50,7 @@ class TestMessageInstance(BaseTest):
     def test_cannot_set_invalid_status(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"
@@ -83,7 +83,7 @@ class TestMessageInstance(BaseTest):
     def test_cannot_set_invalid_message_type(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"
@@ -115,7 +115,7 @@ class TestMessageInstance(BaseTest):
     def test_force_failure_cause_if_status_is_failure(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         message_name = "message_model_one"

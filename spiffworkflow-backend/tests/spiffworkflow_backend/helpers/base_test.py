@@ -1,7 +1,5 @@
 import copy
 import datetime
-import io
-import json
 import os
 import shutil
 import time
@@ -11,9 +9,9 @@ from typing import Any
 
 from flask import current_app
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy.orm.attributes import flag_modified
+from starlette.testclient import TestClient
 from werkzeug.test import TestResponse  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -44,8 +42,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-# from tests.spiffworkflow_backend.helpers.test_data import logged_in_headers
-
 
 class BaseTest:
     @staticmethod
@@ -64,12 +60,17 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, extra_token_payload: dict | None = None) -> dict[str, str]:
-        return {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
+    def logged_in_headers(
+        user: UserModel, extra_token_payload: dict | None = None, additional_headers: dict | None = None
+    ) -> dict[str, str]:
+        auth_headers = {"Authorization": "Bearer " + user.encode_auth_token(extra_token_payload)}
+        if additional_headers:
+            return {**auth_headers, **additional_headers}
+        return auth_headers
 
     def create_group_and_model_with_bpmn(
         self,
-        client: FlaskClient,
+        client: TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -107,7 +108,7 @@ class BaseTest:
 
     def create_and_run_process_instance(
         self,
-        client: FlaskClient,
+        client: TestClient,
         user: UserModel,
         process_group_id: str | None = "test_group",
         process_model_id: str | None = "random_fact",
@@ -125,15 +126,15 @@ class BaseTest:
 
         headers = self.logged_in_headers(user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(user),
         )
 
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         return (process_model, int(process_instance_id))
 
@@ -153,7 +154,7 @@ class BaseTest:
 
     def create_process_group_with_api(
         self,
-        client: FlaskClient,
+        client: TestClient,
         user: Any,
         process_group_id: str,
         display_name: str = "",
@@ -161,13 +162,12 @@ class BaseTest:
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         response = client.post(
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
+            json=ProcessGroupSchema().dump(process_group),
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["id"] == process_group_id
+        assert response.json() is not None
+        assert response.json()["id"] == process_group_id
         return process_group_id
 
     def create_process_model(
@@ -187,7 +187,7 @@ class BaseTest:
 
     def create_process_model_with_api(
         self,
-        client: FlaskClient,
+        client: TestClient,
         process_model_id: str | None = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
@@ -220,9 +220,8 @@ class BaseTest:
 
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
-                    content_type="application/json",
-                    data=json.dumps(ProcessModelInfoSchema().dump(model)),
-                    headers=self.logged_in_headers(user),
+                    json=ProcessModelInfoSchema().dump(model),
+                    headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
                 )
 
                 assert response.status_code == 201
@@ -251,7 +250,7 @@ class BaseTest:
 
     def create_spec_file(
         self,
-        client: FlaskClient,
+        client: TestClient,
         process_model_id: str,
         process_model_location: str | None = None,
         process_model: ProcessModelInfo | None = None,
@@ -275,20 +274,19 @@ class BaseTest:
                 bpmn_file_name=file_name,
                 process_model_source_directory=process_model_location,
             )
-        data = {"file": (io.BytesIO(file_data), file_name)}
+        data = [("file", (file_name, file_data))]
         if user is None:
             user = self.find_or_create_user()
         modified_process_model_id = process_model.id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/files",
-            data=data,
+            files=data,
             follow_redirects=True,
-            content_type="multipart/form-data",
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 201
-        assert response.get_data() is not None
-        file = json.loads(response.get_data(as_text=True))
+        assert response.content is not None
+        file = response.json()
         # assert FileType.svg.value == file["type"]
         # assert "image/svg+xml" == file["content_type"]
 
@@ -297,13 +295,13 @@ class BaseTest:
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 200
-        file2 = json.loads(response.get_data(as_text=True))
+        file2 = response.json()
         assert file["file_contents"] == file2["file_contents"]
         return file
 
     @staticmethod
     def create_process_instance_from_process_model_id_with_api(
-        client: FlaskClient,
+        client: TestClient,
         test_process_model_id: str,
         headers: dict[str, str],
     ) -> TestResponse:
@@ -454,7 +452,7 @@ class BaseTest:
 
     def post_to_process_instance_list(
         self,
-        client: FlaskClient,
+        client: TestClient,
         user: UserModel,
         report_metadata: ReportMetadata | None = None,
         param_string: str | None = "",
@@ -464,12 +462,11 @@ class BaseTest:
             report_metadata_to_use = self.empty_report_metadata_body()
         response = client.post(
             f"/v1.0/process-instances{param_string}",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
-            data=json.dumps({"report_metadata": report_metadata_to_use}),
+            headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
+            json={"report_metadata": report_metadata_to_use},
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
         return response
 
     def empty_report_metadata_body(self) -> ReportMetadata:
@@ -477,7 +474,7 @@ class BaseTest:
 
     def start_sender_process(
         self,
-        client: FlaskClient,
+        client: TestClient,
         payload: dict,
         group_name: str = "test_group",
     ) -> ProcessInstanceModel:
@@ -555,7 +552,7 @@ class BaseTest:
 
     def assert_report_with_process_metadata_operator_includes_instance(
         self,
-        client: FlaskClient,
+        client: TestClient,
         user: UserModel,
         process_instance: ProcessInstanceModel,
         operator: str,
@@ -585,16 +582,16 @@ class BaseTest:
         response = self.post_to_process_instance_list(client, user, report_metadata=process_instance_report.get_report_metadata())
 
         if expect_to_find_instance is True:
-            assert len(response.json["results"]) == 1
-            assert response.json["results"][0]["id"] == process_instance.id
+            assert len(response.json()["results"]) == 1
+            assert response.json()["results"][0]["id"] == process_instance.id
         else:
-            if len(response.json["results"]) == 1:
-                first_result = response.json["results"][0]
+            if len(response.json()["results"]) == 1:
+                first_result = response.json()["results"][0]
                 assert first_result["id"] != process_instance.id, (
                     f"expected not to find a specific process instance, but we found it: {first_result}"
                 )
             else:
-                assert len(response.json["results"]) == 0
+                assert len(response.json()["results"]) == 0
         db.session.delete(process_instance_report)
         db.session.commit()
 

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -16,7 +16,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_detailed_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -46,8 +46,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:
@@ -70,7 +70,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_simple_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -106,8 +106,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:

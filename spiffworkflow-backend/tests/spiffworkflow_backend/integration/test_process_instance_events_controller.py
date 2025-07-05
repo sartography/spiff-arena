@@ -1,5 +1,5 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -12,7 +12,7 @@ class TestProcessInstanceEventsController(BaseTest):
     def test_process_instance_migration_event_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -48,8 +48,8 @@ class TestProcessInstanceEventsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
-        events = response.json["results"]
+        assert response.json()
+        events = response.json()["results"]
         assert len(events) == number_of_events
 
         # events are returned newest first so reverse order to make checking easier

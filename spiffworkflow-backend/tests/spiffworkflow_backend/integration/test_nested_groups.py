@@ -1,7 +1,5 @@
-import json
-
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
@@ -16,7 +14,7 @@ class TestNestedGroups(BaseTest):
     def test_delete_group_with_running_instance(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -37,7 +35,7 @@ class TestNestedGroups(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -51,14 +49,14 @@ class TestNestedGroups(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json["error_code"] == "existing_instances"
-        assert "We cannot delete the group" in response.json["message"]
-        assert "there are models with existing instances inside the group" in response.json["message"]
+        assert response.json()["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json()["message"]
+        assert "there are models with existing instances inside the group" in response.json()["message"]
 
     def test_delete_group_with_running_instance_in_nested_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -70,9 +68,8 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
 
         process_group_id = "group_a/test_group"
@@ -92,7 +89,7 @@ class TestNestedGroups(BaseTest):
             process_model.id,
             self.logged_in_headers(with_super_admin_user),
         )
-        process_instance_id = response.json["id"]
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{process_instance_id}/run",
@@ -106,14 +103,14 @@ class TestNestedGroups(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
-        assert response.json["error_code"] == "existing_instances"
-        assert "We cannot delete the group" in response.json["message"]
-        assert "there are models with existing instances inside the group" in response.json["message"]
+        assert response.json()["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json()["message"]
+        assert "there are models with existing instances inside the group" in response.json()["message"]
 
     def test_nested_groups(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # /process-groups/{process_group_path}/show
@@ -125,7 +122,7 @@ class TestNestedGroups(BaseTest):
     def test_add_nested_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -137,9 +134,8 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -149,9 +145,8 @@ class TestNestedGroups(BaseTest):
         )
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_b),
         )
         process_group_c = ProcessGroup(
             id="group_a/group_b/group_c",
@@ -161,15 +156,14 @@ class TestNestedGroups(BaseTest):
         )
         response_c = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_c),
         )
 
     def test_process_model_create_nested(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -181,9 +175,8 @@ class TestNestedGroups(BaseTest):
         )
         response_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
         process_group_b = ProcessGroup(
             id="group_a/group_b",
@@ -193,9 +186,8 @@ class TestNestedGroups(BaseTest):
         )
         response_b = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_b)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_b),
         )
         process_model = ProcessModelInfo(
             id="process_model",
@@ -207,15 +199,14 @@ class TestNestedGroups(BaseTest):
         )
         model_response = client.post(  # noqa: F841
             "v1.0/process-models",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessModelInfoSchema().dump(process_model),
         )
 
     def test_process_group_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -236,9 +227,8 @@ class TestNestedGroups(BaseTest):
         )
         response_create_a = client.post(  # noqa: F841
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            data=ProcessGroupSchema().dump(process_group_a),
         )
 
         target_uri = "/v1.0/process-groups/group_a"

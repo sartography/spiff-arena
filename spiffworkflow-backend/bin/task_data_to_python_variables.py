@@ -9,7 +9,7 @@ def main() -> None:
     task_data_json_file = sys.argv[1]
     python_variable_file = f"{task_data_json_file}_output.py"
 
-    with app.app_context():
+    with app.app.app_context():
         contents = None
         with open(task_data_json_file) as file:
             contents = json.load(file)

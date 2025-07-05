@@ -327,7 +327,7 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-          // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
+            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
@@ -376,8 +376,9 @@ export default function ProcessModelTreePage({
   const getProcessModelLabelForSearch = (
     processItem: ProcessModel | ProcessGroup,
   ) => {
-    return `${processItem.display_name} ${processItem.id
-      } ${getParentGroupsDisplayName(processItem)}`;
+    return `${processItem.display_name} ${
+      processItem.id
+    } ${getParentGroupsDisplayName(processItem)}`;
   };
   const shouldFilterProcessModel = (
     processItem: ProcessModel,
