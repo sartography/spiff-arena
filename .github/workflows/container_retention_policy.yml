@@ -20,4 +20,3 @@ jobs:
           keep-n-most-recent: 1
           # see https://github.com/settings/tokens/1335541013 under burnettk, classic personal access token with write:packages, read:packages, and delete:packages
           token: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
-          dry-run: true
