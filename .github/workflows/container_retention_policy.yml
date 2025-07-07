@@ -11,13 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete 'spiff' main containers older than a week
-        uses: snok/container-retention-policy@v2
+        uses: snok/container-retention-policy@v3
         with:
+          account: sartography
+          cut-off: 3months
           image-names: spiffworkflow-backend, spiffworkflow-frontend
-          cut-off: Three months ago UTC
-          account-type: org
-          org-name: sartography
-          keep-at-least: 1
-          filter-tags: "main-*"
+          image-tags: "main-*"
+          keep-n-most-recent: 1
           # see https://github.com/settings/tokens/1335541013 under burnettk, classic personal access token with write:packages, read:packages, and delete:packages
           token: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
