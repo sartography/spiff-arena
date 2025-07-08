@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# files=(
+#   '.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py'
+#   'bin/boot_server_in_docker'
+#   'src/spiffworkflow_backend/__init__.py'
+#   'spiff_web_server.py'
+#   '.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py'
+# )
+# for file in "${files[@]}"; do
+#   filename="$(basename $file)"
+#   scpe "$file" "testuvicorn:~/$filename"
+#   SPIFF_SSH_COMMAND="docker cp $filename spiffworkflow-backend:/app/$file" sshe testuvicorn
+# done
+#
+# SPIFF_SSH_COMMAND="docker restart spiffworkflow-backend" sshe testuvicorn
+# SPIFF_SSH_COMMAND="docker logs -f spiffworkflow-backend --since=30s" sshe testuvicorn
+#
+# HERE?
+# HEY WE HERE
+# APP: <connexion.apps.flask.FlaskApp object at 0x7f3bcead09b0>
+# TRUSTED: ['127.0.0.1', '::1']
+# HEY WE HERE
+# APP: <connexion.middleware.context.ContextMiddleware object at 0x7f3bce323470>
+# TRUSTED: ['172.18.0.8']
+# CLIENT HOST 172.18.0.8
+# CLIENT HOST 172.18.0.8
+# HEADERS X-Forwarded-Host: testuvicorn.spiff.works
+# X-Forwarded-Proto: https
+# X-Forwarded-Path: /api
+# Host: testuvicorn.spiff.works:443
+# Connection: close
+# User-Agent: curl/7.81.0
+# Accept: */*
+copy_file_to_docker_container testuvicorn \
+  '.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py' \
+  'bin/boot_server_in_docker' \
+  'src/spiffworkflow_backend/__init__.py' \
+  'spiff_web_server.py' \
+  '.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py'

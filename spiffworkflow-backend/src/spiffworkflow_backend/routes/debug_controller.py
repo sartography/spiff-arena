@@ -25,6 +25,7 @@ def version_info() -> Response:
 # that might be bad, and might require some server configuration to make sure flask knows it is running on https.
 # if using path based routing, the path will probably not be returned from this endpoint.
 def url_info() -> Response:
+    print("HEADERS", request.headers)
     return make_response(
         {
             "request.root_path": request.root_path,  # type: ignore
