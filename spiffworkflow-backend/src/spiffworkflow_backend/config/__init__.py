@@ -281,6 +281,7 @@ def setup_config(app: Flask) -> None:
             )
 
     base_path = V1_API_PATH_PREFIX
+    open_id_path = "/openid"
     if app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"]:
         if not app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"].startswith("/"):
             raise ConfigurationError(
@@ -288,7 +289,9 @@ def setup_config(app: Flask) -> None:
                 f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']} is invalid."
             )
         base_path = f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']}{base_path}"
+        open_id_path = f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']}{open_id_path}"
     app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"] = base_path
+    app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PATH_PREFIX"] = open_id_path
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data

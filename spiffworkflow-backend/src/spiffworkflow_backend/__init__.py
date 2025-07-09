@@ -86,7 +86,7 @@ def create_app() -> FlaskApp:
     # only register the backend openid server if the backend is configured to use it
     backend_auths = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
     if len(backend_auths) == 1 and backend_auths[0]["uri"] == f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/openid":
-        app.register_blueprint(openid_blueprint, url_prefix="/openid")
+        app.register_blueprint(openid_blueprint, url_prefix=app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PATH_PREFIX"])
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
