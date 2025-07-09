@@ -1,5 +1,3 @@
-"""__init__.py."""
-
 import base64
 import logging
 import os
@@ -10,6 +8,7 @@ from urllib.parse import urlparse
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
@@ -280,6 +279,16 @@ def setup_config(app: Flask) -> None:
                 "Could not find the directory specified with SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH: "
                 f"{app.config['SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH']}"
             )
+
+    base_path = V1_API_PATH_PREFIX
+    if app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"]:
+        if not app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"].startswith("/"):
+            raise ConfigurationError(
+                "SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX must start with '/'. "
+                f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']} is invalid."
+            )
+        base_path = f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']}{base_path}"
+    app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"] = base_path
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
