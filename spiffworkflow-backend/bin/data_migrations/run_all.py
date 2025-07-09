@@ -107,7 +107,7 @@ def main() -> None:
             run_version_1()
             # this will run while using the new per instance on demand data migration framework
             # run_version_2(process_instances)
-        if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        if app.app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
             ProcessInstanceFileDataMigrator.migrate_from_database_to_filesystem()
 
         end_time = time.time()
