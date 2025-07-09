@@ -109,6 +109,8 @@ git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 log_info "Starting gunicorn server"
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
+# Run with gunicorn as per recommendation from uvicorn
+#   https://www.uvicorn.org/deployment/
 exec uv run gunicorn ${additional_args} \
   --bind "0.0.0.0:$port" \
   --workers="$worker_count" \

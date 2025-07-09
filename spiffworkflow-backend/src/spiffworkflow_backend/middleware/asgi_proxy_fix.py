@@ -1,9 +1,23 @@
 from __future__ import annotations
 
-import typing as t
-
-from uvicorn._types import ASGI3Application, ASGIReceiveCallable, ASGISendCallable, Scope
+from uvicorn._types import ASGI3Application
+from uvicorn._types import ASGIReceiveCallable
+from uvicorn._types import ASGISendCallable
+from uvicorn._types import HTTPScope
+from uvicorn._types import WebSocketScope
 from werkzeug.http import parse_list_header
+
+# NOTE: this file is a mixture of:
+#   * werkzeug/middleware/proxy_fix.py
+#   * uvicorn/middleware/proxy_headers.py
+# Its purpose is to make proxy_fix work in an asgi enironment since it was originally intended to be used with wsgi.
+# proxy_headers.py would work but it forces us to know the host when starting up the proxy or open it up to ALL hosts.
+# We cannot always know the host that the proxy will use in a docker environment since it uses its ip which we do not
+# know when the backend starts up so we are going back to the old way and count the number of proxy jumps instead
+
+# removes the LIfespanScope from the Scope type in uvicorn since it doesn't
+# match the other types and we do require these based on the code this files is partly based on
+ScopeType = HTTPScope | WebSocketScope
 
 
 class ASGIProxyFix:
@@ -56,8 +70,7 @@ class ASGIProxyFix:
             return values[-trusted]
         return None
 
-    async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable) -> None:
-        print("WE CALL THIS NOW")
+    async def __call__(self, scope: ScopeType, receive: ASGIReceiveCallable, send: ASGISendCallable) -> None:
         if scope["type"] not in ("http", "websocket"):
             await self.app(scope, receive, send)
             return
