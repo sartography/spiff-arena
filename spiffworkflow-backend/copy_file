@@ -44,4 +44,6 @@ copy_file_to_docker_container testuvicorn \
   'bin/boot_server_in_docker' \
   'src/spiffworkflow_backend/__init__.py' \
   'spiff_web_server.py' \
-  '.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py'
+  '.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py' \
+  'src/spiffworkflow_backend/middleware/asgi_proxy_fix.py' \
+  'src/spiffworkflow_backend/middleware/__init__.py'
