@@ -36,6 +36,13 @@ fi
 if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
   UVICORN_LOG_LEVEL=debug
 fi
+if [[ -z "${GUNICORN_LOG_LEVEL:-}" ]]; then
+  GUNICORN_LOG_LEVEL=debug
+fi
+
+if [[ -z "${GUNICORN_TIMEOUT_SECONDS:-}" ]]; then
+  GUNICORN_TIMEOUT_SECONDS=90
+fi
 
 port="${SPIFFWORKFLOW_BACKEND_PORT:-}"
 if [[ -z "$port" ]]; then
@@ -48,14 +55,6 @@ app_root="${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT:-}"
 if [[ -n "$app_root" ]] && [[ "${app_root}" != "/" ]]; then
   echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT has been set. This variable has been renamed to SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX. Please use that instead."
   exit 1
-fi
-path_prefix="${SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX:-}"
-if [[ -n "$path_prefix" ]] && [[ "${path_prefix}" != "/" ]]; then
-  if ! grep -E '^/' <<<"${path_prefix}"; then
-    echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX must start with a '/'. '$SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX' was used instead."
-    exit 1
-  fi
-  additional_args="${additional_args} --root-path ${path_prefix}"
 fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
@@ -99,10 +98,17 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   uv run python bin/save_all_bpmn.py
 fi
 
-log_info "Starting uvicorn server"
+log_info "Starting gunicorn server"
+export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
-exec uv run uvicorn spiff_web_server:app ${additional_args} \
-  --host "0.0.0.0" \
-  --port "$port" \
-  --workers "$worker_count" \
-  --log-level "$UVICORN_LOG_LEVEL"
+# Run with gunicorn as per recommendation from uvicorn
+#   https://www.uvicorn.org/deployment/
+exec uv run gunicorn ${additional_args} \
+  --bind "0.0.0.0:$port" \
+  --workers="$worker_count" \
+  --limit-request-line 8192 \
+  --timeout "$GUNICORN_TIMEOUT_SECONDS" \
+  --capture-output \
+  --access-logfile '-' \
+  --worker-class uvicorn_worker.UvicornWorker \
+  --log-level "$GUNICORN_LOG_LEVEL" spiff_web_server:connexion_app

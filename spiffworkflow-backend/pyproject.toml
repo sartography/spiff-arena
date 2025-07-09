@@ -69,6 +69,7 @@ dependencies = [
     "spiff-arena-common>=0.1.0",
     "authlib>=1.6.0",
     "starlette>=0.47.1",
+    "uvicorn-worker>=0.3.0",
 ]
 
 [dependency-groups]

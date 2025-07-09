@@ -14,7 +14,6 @@ from spiffworkflow_backend.background_processing.apscheduler import start_apsche
 from spiffworkflow_backend.background_processing.celery import init_celery_if_appropriate
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.exceptions.api_error import handle_exception
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.authentication_controller import _set_new_access_token_in_cookie
@@ -107,7 +106,7 @@ def create_app() -> FlaskApp:
         max_age=3600,
     )
 
-    connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
+    connexion_app.add_api("api.yml", base_path=app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"])
 
     app.json = MyJSONEncoder(app)
 

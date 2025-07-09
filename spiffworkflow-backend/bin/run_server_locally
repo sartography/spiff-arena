@@ -31,7 +31,7 @@ else
     fi
 
     # this line blocks
-    exec uv run uvicorn spiff_web_server:app \
+    exec uv run uvicorn spiff_web_server:connexion_app \
       --reload \
       --host "0.0.0.0" \
       --port "$PORT" \
