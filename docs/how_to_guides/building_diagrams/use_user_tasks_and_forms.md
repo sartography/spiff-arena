@@ -761,8 +761,6 @@ https://spiffdemo.org/public/tasks/4184/8287e493-b590-4be2-9900-68ad84fcc3d4
 ![Guest task view before submission](/images/after_submission.png)
 
 ```
-We look forward to helping you find out more about SpiffWorks.
-```
 
 To verify that guest task access works as expected:
 
