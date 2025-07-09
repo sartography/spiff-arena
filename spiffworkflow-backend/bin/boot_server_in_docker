@@ -18,21 +18,21 @@ if [[ -z "${FLASK_DEBUG:-}" ]]; then
   export FLASK_DEBUG=0
 fi
 
-# if [[ "${SPIFFWORKFLOW_BACKEND_WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
-#   echo 'Waiting for db to be ready...'
-#   uv run python ./bin/wait_for_db_to_be_ready.py
-# fi
-#
-# if [[ "${SPIFFWORKFLOW_BACKEND_DOWNGRADE_DB:-}" == "true" ]]; then
-#   echo 'Downgrading database...'
-#   uv run flask db downgrade
-# fi
-#
-# if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
-#   echo 'Upgrading database...'
-#   uv run flask db upgrade
-# fi
-#
+if [[ "${SPIFFWORKFLOW_BACKEND_WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
+  echo 'Waiting for db to be ready...'
+  uv run python ./bin/wait_for_db_to_be_ready.py
+fi
+
+if [[ "${SPIFFWORKFLOW_BACKEND_DOWNGRADE_DB:-}" == "true" ]]; then
+  echo 'Downgrading database...'
+  uv run flask db downgrade
+fi
+
+if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
+  echo 'Upgrading database...'
+  uv run flask db upgrade
+fi
+
 if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
   UVICORN_LOG_LEVEL=debug
 fi
@@ -80,9 +80,9 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   fi
 fi
 
-# if [[ "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" == "true" ]]; then
-#   ./bin/clone_process_models
-# fi
+if [[ "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" == "true" ]]; then
+  ./bin/clone_process_models
+fi
 
 # ensure that the Process Models Directory is initialized as a git repo
 log_info "Running git init"
@@ -99,12 +99,12 @@ git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 # uv run python ./bin/data_migrations/run_all.py
 
 ##### DO THIS right before starting the server
-# if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-#   if [[ -z "${SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS:-}" ]]; then
-#     export SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false
-#   fi
-#   uv run python bin/save_all_bpmn.py
-# fi
+if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
+  if [[ -z "${SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS:-}" ]]; then
+    export SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false
+  fi
+  uv run python bin/save_all_bpmn.py
+fi
 
 log_info "Starting gunicorn server"
 export IS_GUNICORN="true"
