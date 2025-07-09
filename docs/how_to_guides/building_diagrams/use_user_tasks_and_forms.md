@@ -584,49 +584,197 @@ Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
 }
 ```
 ## Guest User Task
-The Guest User Task feature in SpiffArena allows users who are not logged into the system to complete specified human tasks. This functionality enhances accessibility and usability, enabling a broader range of users to interact with the process models without requiring an account.
+
+The **Guest User Task** feature in SpiffWorkflow enables non-logged-in users to complete designated **Manual** or **User Tasks** in a workflow. This improves accessibility and external engagement, allowing customers, applicants, vendors, or other third parties to participate in workflows without needing a Spiff account.
 
 ### Key Features
 
-- **Task Accessibility**: Allows guest users to complete tasks marked as "allow guest" in the process model.
-- **Direct Navigation**: Guests can access tasks via a constructed URL, eliminating the need for login credentials.
-- **Security Measures**: Guests are redirected to the login screen if they attempt to navigate away from the task page, ensuring secure access control.
+* **Task Accessibility**
+  Guest users can complete human tasks marked with the **"Guest can complete this task"** option in the process model.
 
-### Testing Instructions
+* **Direct Navigation via Link**
+  Guests access tasks through a dedicated public URL—no login or authentication is required.
 
-To verify the functionality of the Guest User Task feature, follow these steps:
+* **Secure Session Behavior**
+  If a guest attempts to navigate away from the assigned task, they are redirected to the login screen to protect access boundaries.
 
-1. **Create a Process Model**:
+* **Multiple URL Options**
+  Spiff supports:
 
-Design a process model that includes a manual or user task. Ensure you check the **"allow guest"** checkbox.
+  * Dynamic URL generation using the custom function `get_url_for_task_with_bpmn_identifier()`
+  * Manual URL construction using the process instance ID and task GUID
 
-![Guest user](/images/guest_user1.png)
+### Setup Instructions
 
-2. **Start the Process Model**:
+#### 1. Create a Process Model
 
-Initiate the process model using the same user account that created it.
+Design your process to include a **Manual** or **User Task**.
 
-3. **Access the Task GUID**:
+* In the task's properties, check the **Guest can complete this task** box
+* (Optional) Configure:
 
-Navigate to the process instance show page and retrieve the GUID of the human task.
+  * **Instructions** (shown before submission)
+  * **Guest confirmation** message (shown after submission)
+  * Both support **Markdown** and **Jinja**
 
-![Guest user](/images/guest_user2.png)
+![Simple guest-enabled process](/images/simple_guest_enabled_process.png)
 
-4. **Construct the Access URL**:
+#### 2. Start the Process with Incoming Payload
 
-Create a URL in this format:
-     ```
-     [domain]/public/tasks/[process_instance_id]/[task_guid]
-     ```
-     
-Replace `[domain]`, `[process_instance_id]`, and `[task_guid]` with appropriate values.
+For example, a contact form on a website could initiate a process and pass in data like:
 
-5. **Test as a Guest User**:
+```json
+{
+  "request": {
+    "name": "My Name",
+    "email": "user@domain.tld",
+    "followup": true
+  }
+}
+```
 
-Open an incognito or private browsing window (not logged into Spiff). Navigate to the constructed URL. Confirm that the guest user can complete the task.
-![Guest user](/images/guest_user3.png)
+This data becomes available in the process's **Task Data**.
 
-The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
+![Task data payload](/images/Task_data_payload.png)
 
-```{tags} how_to_guide, building_diagrams
+
+#### 3. Extend the Process for Guest Access
+
+To send a link to the guest user:
+
+* Add a **Script Task** to build the link and email body
+* Add a **Service Task** (e.g., smtp/SendEmail) to send the email
+
+*Extended guest-enabled process:*
+
+![Expanded process flow](/images/Expanded_process_flow.png)
+
+#### 4. Generate the Guest Link
+
+**Option A: Using `get_url_for_task_with_bpmn_identifier()` (Recommended)**
+
+In the Script Task:
+
+```python
+# Get Guest Link URL
+guest_link_url = get_url_for_task_with_bpmn_identifier("Confirmation")
+
+# Create Email Body
+email_body = f"{request['name']}, thanks for your interest in SpiffWorks. Click this link to confirm your email: {guest_link_url}"
+```
+
+![Script to generate guest link and email body](/images/Script_to_generate_guest_link.png)
+
+Make sure the task's **BPMN ID** is set correctly:
+
+![Manual task configuration with ID](/images/manual_task_config_ID.png)
+
+**Option B: Manual URL Construction**
+
+Use this format:
+
+```
+[domain]/public/tasks/[process_instance_id]/[task_guid]
+```
+
+Replace:
+
+* `[domain]`: your Spiff base URL (e.g., spiffdemo.org)
+* `[process_instance_id]`: from the instance
+* `[task_guid]`: from the specific human task
+
+This method can be useful in test scripts, external systems, or fallback strategies.
+
+#### 5. Configure Email Delivery
+```{image} /images/Email_connector_configuration.png
+:alt: Email connector configuration
+:class: bg-primary mb-1
+:width: 230px
+:align: right
+```
+Use the `smtp/SendEmail` connector in a Service Task.
+
+Example setup:
+* **Operator ID**: `smtp/SendEmail`
+
+* **email\_subject**: `"SpiffWorks Confirmation"`
+
+* **email\_body**: the body from the previous Script Task
+
+* **email\_to**: `request["email"]`
+
+* **smtp\_host**, **smtp\_port**, **smtp\_user**,
+
+**smtp\_password**, **smtp\_starttls**: set per your SMTP provider (e.g., MailTrap)
+
+#### 6. Enable and Customize Guest Task
+
+In the Manual/User Task:
+
+* Enable: **Guest can complete this task**
+* Add Instructions (before submit):
+
+  ```jinja
+  {{ request["name"] }}, thanks for confirming your email address!
+  ```
+  ![Instructions customization](/images/Instructions_customization.png)
+* Add Guest Confirmation (after submit):
+
+  ```
+  We look forward to helping you find out more about SpiffWorks.
+  ```
+  ![Guest access](/images/Guest_access.png)
+
+### Example – "Be My Guest!" Flow
+
+This example demonstrates how guest options allow an external user to confirm their email.
+
+#### Process Steps
+
+1. **Message Start Event**: Receives name/email from a form
+2. **Script Task**: Builds guest URL and email body
+3. **Service Task**: Sends confirmation email to the guest
+4. **Manual Task**: Displays the confirmation screen to the guest
+5. **End Event**
+
+#### Email Sent to Guest
+
+```
+From: sales@spiff.works.com
+To: user@domain.tld
+Subject: SpiffWorks Confirmation
+
+My Name, thanks for your interest in SpiffWorks.
+Click this link to confirm your email:
+https://spiffdemo.org/public/tasks/4184/8287e493-b590-4be2-9900-68ad84fcc3d4
+```
+
+![Email preview](/images/Email_preview.png)
+
+#### Guest Experience
+
+**Before Submit:**
+
+![Guest task view before submission](/images/before_submission.png)
+
+**After Submit:**
+![Guest task view before submission](/images/after_submission.png)
+
+```
+We look forward to helping you find out more about SpiffWorks.
+```
+
+To verify that guest task access works as expected:
+
+1. Start the process using a payload with email/name data
+2. Check that the guest link is generated and sent via email
+3. Open the guest URL in a **private/incognito** browser window
+4. Confirm:
+
+   * The task displays with instructions
+   * The task can be submitted
+   * The guest confirmation message appears
+
+```{admonition} Note:
+One guest link can allow multiple human tasks if they are sequential and marked for guest access. If a **Guest confirmation** message is present, it signals the end of guest interaction unless another link is sent. Combine with dynamic payloads and Jinja to customize experiences per user.
 ```
