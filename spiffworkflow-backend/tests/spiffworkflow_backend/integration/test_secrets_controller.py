@@ -17,23 +17,24 @@ class TestSecretsController(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        secret_model = SecretModel(
-            key=self.test_key,
-            value=self.test_value,
-            user_id=with_super_admin_user.id,
-        )
-        data = secret_model.to_dict()
+        secret_model = {
+            "key": self.test_key,
+            "value": self.test_value,
+            "user_id": with_super_admin_user.id,
+        }
         response = client.post(
             "/v1.0/secrets",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            json=data,
+            json=secret_model,
         )
+        assert response.status_code == 201
         assert response.json()
         secret: dict = response.json()
-        for key in ["key", "value", "user_id"]:
+        for key in ["key", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
         assert secret["user_id"] == with_super_admin_user.id
+        assert "value" not in response.json()
 
     def test_get_secret_api(
         self,

@@ -64,11 +64,12 @@ class TestNestedGroups(BaseTest):
             display_order=0,
             admin=False,
         )
-        response_a = client.post(  # noqa: F841
+        response_a = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_a.serialized(),
         )
+        assert response_a.status_code == 201
 
         process_group_id = "group_a/test_group"
         process_model_id = "manual_task"
@@ -105,18 +106,6 @@ class TestNestedGroups(BaseTest):
         assert "We cannot delete the group" in response.json()["message"]
         assert "there are models with existing instances inside the group" in response.json()["message"]
 
-    def test_nested_groups(
-        self,
-        app: Flask,
-        client: TestClient,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        # /process-groups/{process_group_path}/show
-        target_uri = "/v1.0/process-groups/group_a,group_b"
-        user = self.find_or_create_user()
-        self.add_permissions_to_user(user, target_uri=target_uri, permission_names=["read"])
-        response = client.get(target_uri, headers=self.logged_in_headers(user))  # noqa: F841
-
     def test_add_nested_group(
         self,
         app: Flask,
@@ -130,33 +119,36 @@ class TestNestedGroups(BaseTest):
             display_order=0,
             admin=False,
         )
-        response_a = client.post(  # noqa: F841
+        response_a = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_a.serialized(),
         )
+        assert response_a.status_code == 201
         process_group_b = ProcessGroup(
             id="group_a/group_b",
             display_name="Group B",
             display_order=0,
             admin=False,
         )
-        response_b = client.post(  # noqa: F841
+        response_b = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_b.serialized(),
         )
+        assert response_b.status_code == 201
         process_group_c = ProcessGroup(
             id="group_a/group_b/group_c",
             display_name="Group C",
             display_order=0,
             admin=False,
         )
-        response_c = client.post(  # noqa: F841
+        response_c = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_c.serialized(),
         )
+        assert response_c.status_code == 201
 
     def test_process_model_create_nested(
         self,
@@ -171,22 +163,24 @@ class TestNestedGroups(BaseTest):
             display_order=0,
             admin=False,
         )
-        response_a = client.post(  # noqa: F841
+        response_a = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_a.serialized(),
         )
+        assert response_a.status_code == 201
         process_group_b = ProcessGroup(
             id="group_a/group_b",
             display_name="Group B",
             display_order=0,
             admin=False,
         )
-        response_b = client.post(  # noqa: F841
+        response_b = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_b.serialized(),
         )
+        assert response_b.status_code == 201
         process_model = ProcessModelInfo(
             id="process_model",
             display_name="Process Model",
@@ -195,11 +189,12 @@ class TestNestedGroups(BaseTest):
             primary_process_id="primary_process_id",
             display_order=0,
         )
-        model_response = client.post(  # noqa: F841
-            "v1.0/process-models",
+        model_response = client.post(
+            "/v1.0/process-models/group_a:group_b",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_model.to_dict(),
         )
+        assert model_response.status_code == 201
 
     def test_process_group_show(
         self,
@@ -223,13 +218,15 @@ class TestNestedGroups(BaseTest):
             display_order=0,
             admin=False,
         )
-        response_create_a = client.post(  # noqa: F841
+        response_create_a = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=process_group_a.serialized(),
         )
+        assert response_create_a.status_code == 201
 
         target_uri = "/v1.0/process-groups/group_a"
         user = self.find_or_create_user()
         self.add_permissions_to_user(user, target_uri=target_uri, permission_names=["read"])
-        response = client.get(target_uri, headers=self.logged_in_headers(user))  # noqa: F841
+        response = client.get(target_uri, headers=self.logged_in_headers(user))
+        assert response.status_code == 200
