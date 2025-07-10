@@ -261,6 +261,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", defau
 
 # how many proxies are in front of this flask server (for use with ProxyFix)
 config_from_env("SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX", default=0)
+config_from_env("SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX")
 
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)

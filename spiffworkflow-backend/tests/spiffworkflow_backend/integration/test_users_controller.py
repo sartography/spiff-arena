@@ -1,5 +1,5 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -9,7 +9,7 @@ class TestUsersController(BaseTest):
     def test_user_search_returns_a_user(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -26,7 +26,7 @@ class TestUsersController(BaseTest):
 
     def _assert_search_has_count(
         self,
-        client: FlaskClient,
+        client: TestClient,
         with_super_admin_user: UserModel,
         username_prefix: str,
         expected_count: int,
@@ -36,7 +36,7 @@ class TestUsersController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
-        assert response.json["users"] is not None
-        assert response.json["username_prefix"] == username_prefix
-        assert len(response.json["users"]) == expected_count
+        assert response.json()
+        assert response.json()["users"] is not None
+        assert response.json()["username_prefix"] == username_prefix
+        assert len(response.json()["users"]) == expected_count

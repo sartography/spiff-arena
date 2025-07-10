@@ -26,8 +26,16 @@ else
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false uv run python bin/save_all_bpmn.py
     fi
+    if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
+      UVICORN_LOG_LEVEL=debug
+    fi
 
     # this line blocks
-    exec uv run flask run -p "$PORT" --host=0.0.0.0
+    exec uv run uvicorn spiff_web_server:connexion_app \
+      --reload \
+      --host "0.0.0.0" \
+      --port "$PORT" \
+      --workers "1" \
+      --log-level "$UVICORN_LOG_LEVEL"
   fi
 fi

@@ -10,7 +10,7 @@ def main() -> None:
     app = create_app()
     process_model_identifier = sys.argv[1].replace(":", "/")
 
-    with app.app_context():
+    with app.app.app_context():
         user = UserModel.query.first()
         if user is None:
             username = "testuser"

@@ -7,7 +7,6 @@ import yaml
 from flask import current_app
 from flask import g
 from flask import request
-from flask import scaffold
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import literal
@@ -295,6 +294,7 @@ class AuthorizationService:
             "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
             "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
             "spiffworkflow_backend.routes.webhooks_controller.webhook",
+            "flask.blueprints.send_static_file",
             # swagger api calls
             "connexion.apis.flask_api.console_ui_home",
             "connexion.apis.flask_api.console_ui_static_files",
@@ -320,7 +320,7 @@ class AuthorizationService:
         if (
             api_function_full_path
             and (api_function_full_path in cls.authentication_exclusion_list())
-            or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
+            or module == openid_blueprint
         ):
             return True
 

@@ -19,7 +19,6 @@ paths:
       responses:
         "200":
           description: Redirects to authentication server
-
   /login:
     parameters:
       - name: authentication_identifier
@@ -402,6 +401,7 @@ paths:
       tags:
         - Process Groups
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -449,6 +449,7 @@ paths:
       tags:
         - Process Groups
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -582,6 +583,7 @@ paths:
       tags:
         - Process Models
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -608,6 +610,7 @@ paths:
       tags:
         - Process Models
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -645,18 +648,13 @@ paths:
       summary: Run a test for a process model
       tags:
         - Process Model Tests
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
-        "201":
-          description: Metadata about the uploaded file, but not the file content.
+        "200":
+          description: Test results
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/File"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /process-model-tests/create/{modified_process_model_identifier}:
     parameters:
@@ -678,6 +676,7 @@ paths:
       tags:
         - Process Model Tests
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -761,6 +760,7 @@ paths:
       tags:
         - Process Models
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -888,6 +888,7 @@ paths:
       operationId: spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive
       summary: receives push webhooks from github so we can keep our process model repo up to date
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -907,6 +908,7 @@ paths:
       operationId: spiffworkflow_backend.routes.webhooks_controller.webhook
       summary: receives webhooks from external systems and runs a process model using the data received from the caller so arbitrary handling can be achieved.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1044,6 +1046,13 @@ paths:
       summary: Run an extension for a given process model
       tags:
         - Extensions
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              nullable: true
+              type: object
       responses:
         "200":
           description: Resulting task data
@@ -1087,6 +1096,12 @@ paths:
       summary: Create script unit test based on given criteria
       tags:
         - Script Unit Test
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Script Unit Test Result
@@ -1108,6 +1123,12 @@ paths:
       summary: Run a given script unit test.
       tags:
         - Script Unit Test
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Script Unit Test Result
@@ -1580,6 +1601,12 @@ paths:
       summary: Returns all process instance reports for process model
       tags:
         - Process Instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "201":
           description: The process instance report was created.
@@ -1726,6 +1753,12 @@ paths:
         description: The id of the spec file
         schema:
           type: string
+      - name: file_contents_hash
+        in: query
+        required: false
+        description: The hash of the file contents that originally came with the file.
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_show
       summary: Returns metadata about the file
@@ -1741,13 +1774,6 @@ paths:
     put:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_update
       summary: save the contents to the given file
-      parameters:
-        - name: file_contents_hash
-          in: query
-          required: false
-          description: The hash of the file contents that originally came with the file.
-          schema:
-            type: string
       tags:
         - Process Model Files
       requestBody:
@@ -2032,6 +2058,7 @@ paths:
       operationId: spiffworkflow_backend.routes.users_controller.user_exists_by_username
       summary: Returns a true if user exists by username.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2097,6 +2124,12 @@ paths:
       summary: Update the task data for requested instance and task
       tags:
         - Process Instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Task Updated Successfully
@@ -2131,6 +2164,7 @@ paths:
       tags:
         - Process Instances
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2246,6 +2280,12 @@ paths:
       summary: Send a BPMN event to the process
       tags:
         - Process Instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
@@ -2279,6 +2319,12 @@ paths:
       summary: Mark a task complete without executing it
       tags:
         - Process Instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
@@ -2334,6 +2380,7 @@ paths:
       tags:
         - Authentication
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2470,6 +2517,7 @@ paths:
       operationId: spiffworkflow_backend.routes.tasks_controller.prepare_form
       summary: Pre-processes a form schema, ui schema, and data, useful for previewing a form
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2579,10 +2627,13 @@ paths:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
       summary: Update the form data for a tasks
       requestBody:
+        required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task
@@ -2617,6 +2668,7 @@ paths:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_save_draft
       summary: Update the draft form for this task
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2676,6 +2728,12 @@ paths:
       summary: Send a BPMN event to the process
       tags:
         - Process Instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: Event Sent Successfully
@@ -2775,6 +2833,7 @@ paths:
       operationId: spiffworkflow_backend.routes.messages_controller.message_send
       summary: Instantiate and run a given process model with a message start event matching given name
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2835,6 +2894,7 @@ paths:
       operationId: spiffworkflow_backend.routes.public_controller.message_form_submit
       summary: Instantiate and run a given process model with a message start event matching given name
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2892,6 +2952,7 @@ paths:
       operationId: spiffworkflow_backend.routes.public_controller.form_submit
       summary: Update the form data for a tasks
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3086,6 +3147,7 @@ paths:
       tags:
         - Secrets
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3148,6 +3210,7 @@ paths:
       tags:
         - Secrets
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3192,6 +3255,7 @@ paths:
       tags:
         - Permissions
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3273,6 +3337,7 @@ paths:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
       summary: Create a new data store instance.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3286,6 +3351,7 @@ paths:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_update
       summary: Update a data store instance.
       requestBody:
+        required: true
         content:
           application/json:
             schema:

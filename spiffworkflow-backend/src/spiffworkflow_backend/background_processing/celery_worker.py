@@ -13,7 +13,8 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.services.logging_service import get_log_formatter
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
-the_flask_app = create_app()
+connexion_app = create_app()
+the_flask_app = connexion_app.app
 
 setting_variable_to_make_celery_happy_no_idea_how_this_works = the_flask_app.celery_app
 
