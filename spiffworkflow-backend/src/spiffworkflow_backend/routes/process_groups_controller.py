@@ -16,7 +16,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -28,7 +27,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
-    process_group = ProcessGroup(**body)
+    process_group = ProcessGroup.from_dict(body)
 
     if ProcessModelService.is_process_model_identifier(process_group.id):
         raise ApiError(
@@ -83,7 +82,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
             status_code=400,
         )
 
-    process_group = ProcessGroup(id=process_group_id, **body_filtered)
+    process_group = ProcessGroup.from_dict({"id": process_group_id, **body_filtered})
     ProcessModelService.update_process_group(process_group)
 
     all_message_models: dict[tuple[str, str], MessageModel] = {}
@@ -108,7 +107,7 @@ def process_group_list(
         pages += 1
 
     response_json = {
-        "results": ProcessGroupSchema(many=True).dump(batch),
+        "results": [group.serialized() for group in batch],
         "pagination": {
             "count": len(batch),
             "total": len(process_groups),
