@@ -2668,11 +2668,13 @@ paths:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_save_draft
       summary: Update the draft form for this task
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
           description: One task

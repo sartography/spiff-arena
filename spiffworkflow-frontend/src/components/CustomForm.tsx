@@ -16,6 +16,16 @@ import { matchNumberRegex } from '../helpers';
 
 ajvErrors(validator.ajv);
 
+/**
+ * NOTE There is a bug with the MuiForm where if a property in the jsonschema has
+ * an enum with objects (vs array of strings) then when the form is submitted, the formObject.formData
+ * will NOT have the values set by the enum property. However, the onChange will have these values set.
+ * It is uncertain why this is, but it does mean we cannot currently save the formData to the taskData since
+ * we need to use formData from the formObject that is passed in by the MuiForm.
+ * See the usage of onChange and onSubmit in TaskShow for better illustration of how we are using these items.
+ * The example that borks up was copied from "Enumerated objects" at https://rjsf-team.github.io/react-jsonschema-form/
+ */
+
 enum DateCheckType {
   minimum = 'minimum',
   maximum = 'maximum',
