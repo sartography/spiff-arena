@@ -27,6 +27,7 @@ name: Build Docker Images
 #   curl -H "Authorization: Bearer $(echo -n $TOKEN | base64 -w0)" https://ghcr.io/v2/sartography/spiffworkflow-backend/tags/list | jq -r '.tags | sort_by(.)'
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
