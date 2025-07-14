@@ -11,7 +11,6 @@ from flask import current_app
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
 from spiffworkflow_backend.models.file import File
@@ -286,14 +285,14 @@ class ProcessModelService(FileSystemService):
         process_model_identifiers = [p.id for p in process_models]
 
         permission_to_check = "read"
-        permission_base_uri = f"{V1_API_PATH_PREFIX}/process-models"
+        permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-models"
         extension_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
         if filter_runnable_by_user:
             permission_to_check = "create"
-            permission_base_uri = f"{V1_API_PATH_PREFIX}/process-instances"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances"
         if filter_runnable_as_extension:
             permission_to_check = "create"
-            permission_base_uri = f"{V1_API_PATH_PREFIX}/extensions"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/extensions"
             process_model_identifiers = [p.id.replace(f"{extension_prefix}/", "") for p in process_models]
 
         # these are the ones (identifiers, at least) you are allowed to start

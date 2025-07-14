@@ -2,7 +2,6 @@ from typing import Any
 
 from flask import current_app
 
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
@@ -38,7 +37,7 @@ class GetMarkdownFileDownloadLink(Script):
             raise self.get_proces_instance_id_is_missing_error("save_process_instance_metadata")
         url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
         url += (
-            f"{V1_API_PATH_PREFIX}/process-data-file-download/{modified_process_model_identifier}/"
+            f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-data-file-download/{modified_process_model_identifier}/"
             + f"{process_instance_id}/{digest}"
         )
         link = f"[{label}]({url})"
