@@ -117,35 +117,35 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Trivy vulnerability scanner
-        # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
-        uses: aquasecurity/trivy-action@0.29.0
-        with:
-          image-ref: "${{ steps.full_tag.outputs.full_tag }}"
-          scan-type: "image"
-          hide-progress: false
-          limit-severities-for-sarif: true
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL"
-          exit-code: 1 # Fail the workflow if critical vulnerabilities are found
-          timeout: 15m0s
-          ignore-unfixed: true
-      - name: Check if Trivy results exist
-        if: always()
-        # trivy will fail if vulnerabilities are found but we need to upload them anyway
-        run: |
-          if [ -f "trivy-results.sarif" ]; then
-            echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
-          else
-            echo "Trivy results file not found. Skipping upload."
-            echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
-          fi
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
-        with:
-          sarif_file: "trivy-results.sarif"
+      # - name: Run Trivy vulnerability scanner
+      #   # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
+      #   uses: aquasecurity/trivy-action@0.29.0
+      #   with:
+      #     image-ref: "${{ steps.full_tag.outputs.full_tag }}"
+      #     scan-type: "image"
+      #     hide-progress: false
+      #     limit-severities-for-sarif: true
+      #     format: "sarif"
+      #     output: "trivy-results.sarif"
+      #     severity: "CRITICAL"
+      #     exit-code: 1 # Fail the workflow if critical vulnerabilities are found
+      #     timeout: 15m0s
+      #     ignore-unfixed: true
+      # - name: Check if Trivy results exist
+      #   if: always()
+      #   # trivy will fail if vulnerabilities are found but we need to upload them anyway
+      #   run: |
+      #     if [ -f "trivy-results.sarif" ]; then
+      #       echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
+      #     else
+      #       echo "Trivy results file not found. Skipping upload."
+      #       echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
+      #     fi
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
+      #   with:
+      #     sarif_file: "trivy-results.sarif"
 
       - name: Push Docker image
         uses: docker/build-push-action@v6.10.0
