@@ -9,6 +9,7 @@ from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -204,7 +205,7 @@ class SpecFileService(FileSystemService):
                 permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
                     user=user,
                     permission_to_check="create",
-                    permission_base_uri="/v1.0/process-instances",
+                    permission_base_uri=f"{V1_API_PATH_PREFIX}/process-instances",
                     process_model_identifiers=process_model_identifiers,
                 )
                 unpermitted_process_model_identifiers = set(process_model_identifiers) - set(permitted_process_model_identifiers)

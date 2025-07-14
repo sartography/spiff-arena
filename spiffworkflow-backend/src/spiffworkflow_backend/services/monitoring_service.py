@@ -44,8 +44,8 @@ def traces_sampler(sampling_context: Any) -> Any:
     #     # tasks_controller.task_submit
     #     # this is the current pain point as of 31 jan 2023.
     #     if path_info and (
-    #         (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
-    #         or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
+    #         (path_info.startswith(f"{V1_API_PATH_PREFIX}/tasks/") and request_method == "PUT")
+    #         or (path_info.startswith(f"{V1_API_PATH_PREFIX}/task-data/") and request_method == "GET")
     #     ):
     #         return 1
 

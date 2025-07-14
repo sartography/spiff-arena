@@ -29,6 +29,7 @@ from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedErro
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
@@ -115,7 +116,7 @@ def process_list() -> Any:
     permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
         user=g.user,
         permission_to_check="create",
-        permission_base_uri="/v1.0/process-instances",
+        permission_base_uri=f"{V1_API_PATH_PREFIX}/process-instances",
         process_model_identifiers=process_model_identifiers,
     )
     permitted_references = []
@@ -419,7 +420,7 @@ def _find_process_instance_for_me_or_raise(
         modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(
             process_instance.process_model_identifier
         )
-        target_uri = f"/v1.0/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
+        target_uri = f"{V1_API_PATH_PREFIX}/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
         has_permission = AuthorizationService.user_has_permission(
             user=g.user,
             permission="read",

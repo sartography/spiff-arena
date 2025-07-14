@@ -11,6 +11,7 @@ from flask import request
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.routes.authentication_controller import verify_token
 from spiffworkflow_backend.services.oauth_service import OAuthService
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -30,7 +31,7 @@ def authentication_list() -> flask.wrappers.Response:
         "results": available_authentications,
         "resultsV2": available_v2_authentications,
         "connector_proxy_base_url": current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"],
-        "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback",
+        "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}{V1_API_PATH_PREFIX}/authentication_callback",
     }
 
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
@@ -56,7 +57,7 @@ def authentication_begin(
     if not OAuthService.supported_service(service):
         raise ApiError("unknown_authentication_service", f"Unknown authentication service: {service}", status_code=400)
     remote_app = OAuthService.remote_app(service, token)
-    callback = f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback/{service}/oauth"
+    callback = f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}{V1_API_PATH_PREFIX}/authentication_callback/{service}/oauth"
     return remote_app.authorize(callback=callback, _external=True)  # type: ignore
 
 
