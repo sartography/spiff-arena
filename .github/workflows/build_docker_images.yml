@@ -34,6 +34,7 @@ on:
       - keycloak-realm-with-groups
       - fail-fast-off
       - newui-all-in
+      - rebuild-v1.0.0
     tags: [v*]
 
 jobs:
@@ -88,6 +89,8 @@ jobs:
             org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
+            type=raw,value=v1.0.0,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
             type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
             type=ref,event=tag,enable=true,format={{version}}
