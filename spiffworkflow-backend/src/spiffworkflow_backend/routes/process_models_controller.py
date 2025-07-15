@@ -14,6 +14,7 @@ from flask import make_response
 from flask.wrappers import Response
 from werkzeug.datastructures import FileStorage
 
+from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_task import trigger_metadata_backfill
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
@@ -164,7 +165,34 @@ def process_model_update(
         primary_file_contents = SpecFileService.get_data(process_model, process_model.primary_file_name)
         SpecFileService.update_file(process_model, process_model.primary_file_name, primary_file_contents)
 
+    # Create a copy of the original process model before the update
+    original_process_model = None
+    if "metadata_extraction_paths" in body_filtered:
+        # Get the original process model before any updates to check for metadata changes
+        original_process_model = ProcessModelInfo(
+            id=process_model.id,
+            display_name=process_model.display_name,
+            description=process_model.description,
+            primary_file_name=process_model.primary_file_name,
+            primary_process_id=process_model.primary_process_id,
+            metadata_extraction_paths=process_model.metadata_extraction_paths,
+            fault_or_suspend_on_exception=process_model.fault_or_suspend_on_exception,
+            exception_notification_addresses=process_model.exception_notification_addresses,
+        )
+
     _commit_and_push_to_git(f"User: {g.user.username} updated process model {process_model_identifier}")
+
+    # Trigger metadata backfill if metadata extraction paths have been updated
+    if original_process_model is not None and "metadata_extraction_paths" in body_filtered:
+        try:
+            # Pass the original and updated process model to check for changes
+            trigger_metadata_backfill(original_process_model, process_model)
+            current_app.logger.info(f"Triggered metadata backfill check for process model {process_model_identifier}")
+        except Exception as ex:
+            current_app.logger.error(
+                f"Failed to trigger metadata backfill for process model {process_model_identifier}: {str(ex)}"
+            )
+
     return ProcessModelInfoSchema().dump(process_model)
 
 
