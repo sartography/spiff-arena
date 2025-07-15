@@ -123,14 +123,14 @@ When troubleshooting, review the application logs for entries with:
 
 ## FAQ
 
-**Q: Will adding new metadata extraction paths affect running process instances?**  
+**Q: Will adding new metadata extraction paths affect running process instances?**
 A: No, the backfill process only affects completed tasks and does not interfere with running process instances.
 
-**Q: What happens if the data doesn't exist in some process instances?**  
+**Q: What happens if the data doesn't exist in some process instances?**
 A: The backfill process will set the metadata value to `null` for instances where the data doesn't exist.
 
-**Q: Can I trigger a backfill manually for existing metadata paths?**  
+**Q: Can I trigger a backfill manually for existing metadata paths?**
 A: The current implementation only triggers backfills when new metadata paths are added. For manual backfills, you would need to remove and re-add the metadata paths.
 
-**Q: How long does the backfill process take?**  
+**Q: How long does the backfill process take?**
 A: It depends on the number of process instances and the complexity of the data. For most cases, it completes within seconds or minutes.

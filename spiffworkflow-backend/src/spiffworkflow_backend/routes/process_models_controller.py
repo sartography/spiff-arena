@@ -149,6 +149,11 @@ def process_model_update(
 
     process_model = _get_process_model(process_model_identifier)
 
+    # Store the original metadata extraction paths before any updates
+    original_metadata_extraction_paths = None
+    if "metadata_extraction_paths" in body_filtered:
+        original_metadata_extraction_paths = process_model.metadata_extraction_paths
+
     # FIXME: the logic to update the the process id would be better if it could go into the
     #   process model save method but this causes circular imports with SpecFileService.
     # All we really need this for is to get the process id from a bpmn file so maybe that could
@@ -165,28 +170,27 @@ def process_model_update(
         primary_file_contents = SpecFileService.get_data(process_model, process_model.primary_file_name)
         SpecFileService.update_file(process_model, process_model.primary_file_name, primary_file_contents)
 
-    # Create a copy of the original process model before the update
-    original_process_model = None
-    if "metadata_extraction_paths" in body_filtered:
-        # Get the original process model before any updates to check for metadata changes
-        original_process_model = ProcessModelInfo(
-            id=process_model.id,
-            display_name=process_model.display_name,
-            description=process_model.description,
-            primary_file_name=process_model.primary_file_name,
-            primary_process_id=process_model.primary_process_id,
-            metadata_extraction_paths=process_model.metadata_extraction_paths,
-            fault_or_suspend_on_exception=process_model.fault_or_suspend_on_exception,
-            exception_notification_addresses=process_model.exception_notification_addresses,
-        )
-
     _commit_and_push_to_git(f"User: {g.user.username} updated process model {process_model_identifier}")
 
     # Trigger metadata backfill if metadata extraction paths have been updated
-    if original_process_model is not None and "metadata_extraction_paths" in body_filtered:
+    if original_metadata_extraction_paths is not None and "metadata_extraction_paths" in body_filtered:
         try:
-            # Pass the original and updated process model to check for changes
-            trigger_metadata_backfill(original_process_model, process_model)
+            # Create temporary model objects with just the needed information
+            old_model = ProcessModelInfo(
+                id=process_model.id,
+                display_name="",  # Not used by trigger_metadata_backfill
+                description="",  # Not used by trigger_metadata_backfill
+                metadata_extraction_paths=original_metadata_extraction_paths,
+            )
+            new_model = ProcessModelInfo(
+                id=process_model.id,
+                display_name="",  # Not used by trigger_metadata_backfill
+                description="",  # Not used by trigger_metadata_backfill
+                metadata_extraction_paths=process_model.metadata_extraction_paths,
+            )
+
+            # Pass the models containing only the necessary information
+            trigger_metadata_backfill(old_model, new_model)
             current_app.logger.info(f"Triggered metadata backfill check for process model {process_model_identifier}")
         except Exception as ex:
             current_app.logger.error(

@@ -1,12 +1,10 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-import pytest
 from flask import Flask
 from starlette.testclient import TestClient
 
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -104,4 +102,3 @@ class TestProcessModelMetadataBackfillIntegration(BaseTest):
         # Verify the display name was updated
         updated_model = _get_process_model(process_model.id)
         assert updated_model.display_name == "Updated Display Name"
-
