@@ -70,8 +70,7 @@ Default value: `false`
 
 1. Unit tests to verify the detection of metadata changes.
 2. Integration tests to verify the backfill process correctly updates existing process instances.
-3. Load tests to ensure the backfill process performs adequately with large numbers of process instances.
-4. Tests for the application startup validation when the feature is enabled without Celery.
+3. Tests for the application startup validation when the feature is enabled without Celery.
 
 ## Implementation Todo List
 
@@ -101,7 +100,7 @@ Default value: `false`
 - [ ] Create a metadata backfill service in `src/spiffworkflow_backend/services/metadata_backfill_service.py`:
   - [ ] Implement batch processing for large numbers of process instances
   - [ ] Implement extraction of metadata values from existing process instances
-  - [ ] Create method to apply new metadata fields to process instances
+  - [ ] Create method to apply new metadata fields to process instances, finding the most recent task for each instance, finding that tasks's data, and using that data as the source for the metadata value (if the data exists within the task)
   - [ ] Implement database transaction handling to ensure atomic updates
 
 ### Integration with Process Model Update Flow
@@ -122,11 +121,10 @@ Default value: `false`
 - [ ] Create unit tests for metadata change detection
 - [ ] Create integration tests for the complete backfill flow
 - [ ] Add tests for configuration validation
-- [ ] Add performance tests for large-scale backfill operations
 
 ### Documentation
 
-- [ ] Update API documentation to include information about the backfill feature
+- [ ] Update API documentation to include information about the backfill feature (this goes in ../docs, where .. is the root of the git repo, and ../docs is where we put all docs)
 - [ ] Document the environment variable in the configuration guide
 - [ ] Add examples of usage and expected behavior
 
@@ -136,10 +134,9 @@ Default value: `false`
   - [ ] Track number of instances updated per backfill task
   - [ ] Track processing time for backfill operations
   - [ ] Log errors and exceptions with detailed context
-- [ ] Create admin endpoint to view status of ongoing backfill operations
 
 ### Deployment and Release
 
 - [ ] Create database migration script if needed
-- [ ] Add feature to changelog
 - [ ] Create deployment documentation with configuration examples
+
