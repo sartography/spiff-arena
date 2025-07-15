@@ -43,9 +43,10 @@ def traces_sampler(sampling_context: Any) -> Any:
     #
     #     # tasks_controller.task_submit
     #     # this is the current pain point as of 31 jan 2023.
+    #     api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
     #     if path_info and (
-    #         (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
-    #         or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
+    #         (path_info.startswith(f"{api_path_prefix}/tasks/") and request_method == "PUT")
+    #         or (path_info.startswith(f"{api_path_prefix}/task-data/") and request_method == "GET")
     #     ):
     #         return 1
 

@@ -285,14 +285,14 @@ class ProcessModelService(FileSystemService):
         process_model_identifiers = [p.id for p in process_models]
 
         permission_to_check = "read"
-        permission_base_uri = "/v1.0/process-models"
+        permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-models"
         extension_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
         if filter_runnable_by_user:
             permission_to_check = "create"
-            permission_base_uri = "/v1.0/process-instances"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances"
         if filter_runnable_as_extension:
             permission_to_check = "create"
-            permission_base_uri = "/v1.0/extensions"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/extensions"
             process_model_identifiers = [p.id.replace(f"{extension_prefix}/", "") for p in process_models]
 
         # these are the ones (identifiers, at least) you are allowed to start
