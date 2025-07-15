@@ -1,0 +1,3 @@
+When you add a new process instance metadata to a process model, it would backfill all previous metadata as if you had added it at the very beginning.
+This should be a new app configuration option that you can opt in to via an env var.
+The configuration option is only available if celery is enabled. If you try to set it to true and celery is not enabled, the app fails fast.
