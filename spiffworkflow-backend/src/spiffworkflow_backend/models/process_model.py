@@ -93,6 +93,23 @@ class ProcessModelInfo:
             dictionary["files"] = serialized_files
         return dictionary
 
+    @classmethod
+    def extract_metadata(cls, task_data: dict[str, Any], metadata_extraction_paths: list[dict[str, str]]) -> dict[str, Any]:
+        current_metadata = {}
+        for metadata_extraction_path in metadata_extraction_paths:
+            key = metadata_extraction_path["key"]
+            path = metadata_extraction_path["path"]
+            path_segments = path.split(".")
+            data_for_key: dict[str, Any] | None = task_data
+            for path_segment in path_segments:
+                if path_segment in (data_for_key or {}):
+                    data_for_key = (data_for_key or {})[path_segment]
+                else:
+                    data_for_key = None
+                    break
+            current_metadata[key] = data_for_key
+        return current_metadata
+
 
 class ProcessModelInfoSchema(Schema):
     class Meta:

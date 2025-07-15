@@ -7,6 +7,7 @@ from sqlalchemy import desc
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 
 
@@ -63,23 +64,6 @@ class MetadataBackfillService:
         return {}
 
     @classmethod
-    def extract_metadata_for_instance(cls, task_data: dict[str, Any], metadata_paths: list[dict[str, str]]) -> dict[str, Any]:
-        metadata: dict[str, Any] = {}
-        for metadata_path in metadata_paths:
-            key = metadata_path["key"]
-            path = metadata_path["path"]
-            path_segments = path.split(".")
-            data_for_key: Any = task_data
-            for path_segment in path_segments:
-                if isinstance(data_for_key, dict) and path_segment in data_for_key:
-                    data_for_key = data_for_key[path_segment]
-                else:
-                    data_for_key = None
-                    break
-            metadata[key] = data_for_key
-        return metadata
-
-    @classmethod
     def add_metadata_to_instance(cls, process_instance_id: int, metadata: dict[str, Any]) -> None:
         for key, value in metadata.items():
             if value is not None:
@@ -125,7 +109,7 @@ class MetadataBackfillService:
             for instance in instances:
                 try:
                     task_data = cls.get_latest_task_data(instance.id)
-                    new_metadata = cls.extract_metadata_for_instance(task_data, new_metadata_paths)
+                    new_metadata = ProcessModelInfo.extract_metadata(task_data, new_metadata_paths)
                     if new_metadata:
                         cls.add_metadata_to_instance(instance.id, new_metadata)
                         stats["instances_updated"] += 1

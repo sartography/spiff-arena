@@ -90,7 +90,7 @@ class TestMetadataBackfillService(BaseTest):
             {"key": "invoice", "path": "invoice_number"},
             {"key": "nonexistent", "path": "does.not.exist"},
         ]
-        result = MetadataBackfillService.extract_metadata_for_instance(task_data, metadata_paths)
+        result = ProcessModelInfo.extract_metadata(task_data, metadata_paths)
         assert result["test_key"] == "test_value"
         assert result["invoice"] == "INV-123"
         assert result["nonexistent"] is None
@@ -143,7 +143,7 @@ class TestMetadataBackfillService(BaseTest):
             with (
                 patch.object(MetadataBackfillService, "get_process_instances", get_instances_mock),
                 patch.object(MetadataBackfillService, "get_latest_task_data", return_value={"outer": {"inner": "test_value"}}),
-                patch.object(MetadataBackfillService, "extract_metadata_for_instance", return_value={"new_key": "test_value"}),
+                patch.object(ProcessModelInfo, "extract_metadata", return_value={"new_key": "test_value"}),
                 patch.object(MetadataBackfillService, "add_metadata_to_instance") as mock_add_metadata,
             ):
                 result = MetadataBackfillService.backfill_metadata_for_model(process_model.id, new_metadata_paths)
