@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run with Celery worker: `./bin/run_server_locally celery_worker`
 
 ### Testing
-- Run all tests: `./bin/run_ci_session tests`
+- Run lint and tests in parallel (this is all you need): `../bin/run_pyl`
 - Run specific test: `uv run pytest tests/path/to/test_file.py -v`
 - Run tests in parallel: `./bin/tests-par`
 - Run type checking: `./bin/run_ci_session mypy`
