@@ -81,7 +81,6 @@ class MetadataBackfillService:
 
     @classmethod
     def add_metadata_to_instance(cls, process_instance_id: int, metadata: dict[str, Any]) -> None:
-        current_time = int(time.time())
         for key, value in metadata.items():
             if value is not None:
                 existing_metadata = ProcessInstanceMetadataModel.query.filter_by(
@@ -93,8 +92,6 @@ class MetadataBackfillService:
                         process_instance_id=process_instance_id,
                         key=key,
                         value=cls.truncate_string(str(value), 255),
-                        created_at_in_seconds=current_time,
-                        updated_at_in_seconds=current_time,
                     )
                     db.session.add(new_metadata)
 
