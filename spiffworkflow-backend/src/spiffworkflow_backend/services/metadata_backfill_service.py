@@ -210,7 +210,7 @@ class MetadataBackfillService:
         offset = 0
         while True:
             # Get a batch of process instances
-            instances = cls.get_process_instances(process_model_identifier, cls.BATCH_SIZE, offset)
+            instances = cls.get_process_instances(process_model_identifier, cls.BATCH_SIZE, offset=offset)
             if not instances:
                 break  # No more instances to process
 

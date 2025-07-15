@@ -146,9 +146,6 @@ class TestMetadataBackfillService(BaseTest):
         # Set up metadata paths for backfill
         new_metadata_paths = [{"key": "new_key", "path": "outer.inner"}]
 
-        # Create mock process instances
-        instance_ids = [1, 2, 3]
-
         # Mock the filter query for verification
         mock_filter = MagicMock()
         mock_metadata = MagicMock()
@@ -158,16 +155,18 @@ class TestMetadataBackfillService(BaseTest):
 
         # Set up a stack of mocks
         with patch.object(MetadataBackfillService, "get_process_instance_count", return_value=3):
-            # Create mock instances
-            mock_instances = []
-            for i in instance_ids:
-                mock_instance = MagicMock()
-                mock_instance.id = i
-                mock_instances.append(mock_instance)
+            # Create mock instances for each batch
+            batch1 = [MagicMock(id=1), MagicMock(id=2)]
+            batch2 = [MagicMock(id=3)]
+            empty_batch: list = []
+
+            # Mock get_process_instances to return different batches on each call
+            get_instances_mock = MagicMock()
+            get_instances_mock.side_effect = [batch1, batch2, empty_batch]
 
             # Mock the remaining service methods
             with (
-                patch.object(MetadataBackfillService, "get_process_instances", return_value=mock_instances),
+                patch.object(MetadataBackfillService, "get_process_instances", get_instances_mock),
                 patch.object(MetadataBackfillService, "get_latest_task_data", return_value={"outer": {"inner": "test_value"}}),
                 patch.object(MetadataBackfillService, "extract_metadata_for_instance", return_value={"new_key": "test_value"}),
                 patch.object(MetadataBackfillService, "add_metadata_to_instance") as mock_add_metadata,
@@ -180,6 +179,15 @@ class TestMetadataBackfillService(BaseTest):
                 assert result["instances_updated"] == 3
                 assert "execution_time" in result
                 assert mock_add_metadata.call_count == 3
+
+                # Check that get_process_instances was called correctly with increasing offsets
+                assert get_instances_mock.call_count == 3
+                assert get_instances_mock.call_args_list[0][0][0] == process_model.id
+                assert get_instances_mock.call_args_list[0][1]["offset"] == 0
+                assert get_instances_mock.call_args_list[1][0][0] == process_model.id
+                assert get_instances_mock.call_args_list[1][1]["offset"] == 100  # BATCH_SIZE
+                assert get_instances_mock.call_args_list[2][0][0] == process_model.id
+                assert get_instances_mock.call_args_list[2][1]["offset"] == 200  # BATCH_SIZE * 2
 
     def test_no_metadata_paths_to_backfill(
         self,
