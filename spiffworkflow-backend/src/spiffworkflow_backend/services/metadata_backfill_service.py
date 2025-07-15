@@ -33,16 +33,6 @@ class MetadataBackfillService:
     def get_process_instances(
         cls, process_model_identifier: str, batch_size: int | None = None, offset: int = 0
     ) -> list[ProcessInstanceModel]:
-        """Get process instances for a specific process model in batches.
-
-        Args:
-            process_model_identifier: The identifier of the process model
-            batch_size: The number of instances to retrieve (defaults to cls.PROCESS_INSTANCE_BATCH_SIZE)
-            offset: The offset for pagination
-
-        Returns:
-            List of process instances
-        """
         size = cls.PROCESS_INSTANCE_BATCH_SIZE if batch_size is None else batch_size
 
         instances: list[ProcessInstanceModel] = (
@@ -56,28 +46,11 @@ class MetadataBackfillService:
 
     @classmethod
     def get_process_instance_count(cls, process_model_identifier: str) -> int:
-        """Get the total count of process instances for a process model.
-
-        Args:
-            process_model_identifier: The identifier of the process model
-
-        Returns:
-            The count of process instances
-        """
         count: int = ProcessInstanceModel.query.filter_by(process_model_identifier=process_model_identifier).count()
         return count
 
     @classmethod
     def get_latest_task_data(cls, process_instance_id: int) -> dict[str, Any]:
-        """Get the data from the most recent completed task for a process instance.
-
-        Args:
-            process_instance_id: The ID of the process instance
-
-        Returns:
-            The task data as a dictionary
-        """
-        # SQLAlchemy's desc() works on the column itself, not the value
         latest_task = (
             TaskModel.query.filter_by(process_instance_id=process_instance_id, state="COMPLETED")
             .order_by(desc(TaskModel.end_in_seconds))  # type: ignore
@@ -90,19 +63,7 @@ class MetadataBackfillService:
         return {}
 
     @classmethod
-    def extract_metadata_for_instance(
-        cls, process_model_identifier: str, task_data: dict[str, Any], metadata_paths: list[dict[str, str]]
-    ) -> dict[str, Any]:
-        """Extract metadata values from task data based on extraction paths.
-
-        Args:
-            process_model_identifier: The identifier of the process model
-            task_data: The data from a task
-            metadata_paths: The metadata extraction path configurations
-
-        Returns:
-            Dictionary mapping metadata keys to their extracted values
-        """
+    def extract_metadata_for_instance(cls, task_data: dict[str, Any], metadata_paths: list[dict[str, str]]) -> dict[str, Any]:
         metadata: dict[str, Any] = {}
         for metadata_path in metadata_paths:
             key = metadata_path["key"]
@@ -120,22 +81,14 @@ class MetadataBackfillService:
 
     @classmethod
     def add_metadata_to_instance(cls, process_instance_id: int, metadata: dict[str, Any]) -> None:
-        """Add metadata to a process instance.
-
-        Args:
-            process_instance_id: The ID of the process instance
-            metadata: Dictionary of metadata key-value pairs to add
-        """
         current_time = int(time.time())
         for key, value in metadata.items():
             if value is not None:
-                # Check if metadata already exists
                 existing_metadata = ProcessInstanceMetadataModel.query.filter_by(
                     process_instance_id=process_instance_id, key=key
                 ).first()
 
                 if existing_metadata is None:
-                    # Create new metadata entry
                     new_metadata = ProcessInstanceMetadataModel(
                         process_instance_id=process_instance_id,
                         key=key,
@@ -147,15 +100,6 @@ class MetadataBackfillService:
 
     @staticmethod
     def truncate_string(value: str, max_length: int) -> str:
-        """Truncate a string to a maximum length.
-
-        Args:
-            value: The string to truncate
-            max_length: The maximum allowed length
-
-        Returns:
-            The truncated string
-        """
         if len(value) <= max_length:
             return value
         return value[:max_length]
@@ -164,15 +108,6 @@ class MetadataBackfillService:
     def backfill_metadata_for_model(
         cls, process_model_identifier: str, new_metadata_paths: list[dict[str, str]]
     ) -> dict[str, Any]:
-        """Backfill metadata for all process instances of a specific model.
-
-        Args:
-            process_model_identifier: The identifier of the process model
-            new_metadata_paths: List of new metadata extraction paths to apply
-
-        Returns:
-            Statistics about the backfill operation
-        """
         if not new_metadata_paths:
             return {"instances_processed": 0, "instances_updated": 0, "message": "No new metadata paths to process"}
 
@@ -188,18 +123,12 @@ class MetadataBackfillService:
             # Get a batch of process instances
             instances = cls.get_process_instances(process_model_identifier, cls.PROCESS_INSTANCE_BATCH_SIZE, offset=offset)
             if not instances:
-                break  # No more instances to process
+                break
 
-            # Process each instance in the batch
             for instance in instances:
                 try:
-                    # Get the latest task data
                     task_data = cls.get_latest_task_data(instance.id)
-
-                    # Extract metadata values from task data
-                    new_metadata = cls.extract_metadata_for_instance(process_model_identifier, task_data, new_metadata_paths)
-
-                    # Add metadata to process instance
+                    new_metadata = cls.extract_metadata_for_instance(task_data, new_metadata_paths)
                     if new_metadata:
                         cls.add_metadata_to_instance(instance.id, new_metadata)
                         stats["instances_updated"] += 1
@@ -209,19 +138,14 @@ class MetadataBackfillService:
                 except Exception as ex:
                     current_app.logger.error(f"Error processing metadata backfill for instance {instance.id}: {str(ex)}")
 
-            # Commit the transaction for this batch
             db.session.commit()
-
-            # Move to next batch
             offset += cls.PROCESS_INSTANCE_BATCH_SIZE
 
-            # Log progress
             current_app.logger.info(
                 f"Metadata backfill progress: {stats['instances_processed']}/{total_instances} "
                 f"instances processed for model {process_model_identifier}"
             )
 
-        # Calculate execution time and add it to stats
         stats["execution_time"] = time.time() - stats["start_time"]
         stats["message"] = (
             f"Successfully processed {stats['instances_processed']} instances, updated {stats['instances_updated']}"

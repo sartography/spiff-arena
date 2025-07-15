@@ -90,7 +90,7 @@ class TestMetadataBackfillService(BaseTest):
             {"key": "invoice", "path": "invoice_number"},
             {"key": "nonexistent", "path": "does.not.exist"},
         ]
-        result = MetadataBackfillService.extract_metadata_for_instance("test_model", task_data, metadata_paths)
+        result = MetadataBackfillService.extract_metadata_for_instance(task_data, metadata_paths)
         assert result["test_key"] == "test_value"
         assert result["invoice"] == "INV-123"
         assert result["nonexistent"] is None
