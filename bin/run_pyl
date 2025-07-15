@@ -7,6 +7,12 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+cd "${script_dir}/../"
+
 python_projects=(
   spiffworkflow-backend
 )

@@ -139,4 +139,3 @@ Default value: `false`
 
 - [ ] Create database migration script if needed
 - [ ] Create deployment documentation with configuration examples
-
