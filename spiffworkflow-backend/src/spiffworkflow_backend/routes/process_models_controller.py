@@ -172,26 +172,11 @@ def process_model_update(
 
     _commit_and_push_to_git(f"User: {g.user.username} updated process model {process_model_identifier}")
 
-    # Trigger metadata backfill if metadata extraction paths have been updated
-    if original_metadata_extraction_paths is not None and "metadata_extraction_paths" in body_filtered:
+    if "metadata_extraction_paths" in body_filtered:
         try:
-            # Create temporary model objects with just the needed information
-            old_model = ProcessModelInfo(
-                id=process_model.id,
-                display_name="",  # Not used by trigger_metadata_backfill
-                description="",  # Not used by trigger_metadata_backfill
-                metadata_extraction_paths=original_metadata_extraction_paths,
+            trigger_metadata_backfill(
+                process_model.id, original_metadata_extraction_paths, process_model.metadata_extraction_paths
             )
-            new_model = ProcessModelInfo(
-                id=process_model.id,
-                display_name="",  # Not used by trigger_metadata_backfill
-                description="",  # Not used by trigger_metadata_backfill
-                metadata_extraction_paths=process_model.metadata_extraction_paths,
-            )
-
-            # Pass the models containing only the necessary information
-            trigger_metadata_backfill(old_model, new_model)
-            current_app.logger.info(f"Triggered metadata backfill check for process model {process_model_identifier}")
         except Exception as ex:
             current_app.logger.error(
                 f"Failed to trigger metadata backfill for process model {process_model_identifier}: {str(ex)}"

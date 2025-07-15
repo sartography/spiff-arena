@@ -17,7 +17,6 @@ class TestMetadataBackfillTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup
         mock_backfill_result = {
             "instances_processed": 10,
             "instances_updated": 5,
@@ -25,21 +24,14 @@ class TestMetadataBackfillTask(BaseTest):
             "message": "Successfully processed 10 instances, updated 5",
         }
         mock_metadata_backfill_service.backfill_metadata_for_model.return_value = mock_backfill_result
-
-        # Mock the Celery task's self.request.id
         mock_self = MagicMock()
         mock_self.request.id = "test-task-id"
 
-        # Test metadata paths
         metadata_paths = [{"key": "test_key", "path": "test.path"}]
-
-        # Call the implementation function directly
         result = _celery_task_backfill_metadata_impl("test-task-id", "test_process_model", metadata_paths)
 
-        # Assert the service was called with correct parameters
         mock_metadata_backfill_service.backfill_metadata_for_model.assert_called_once_with("test_process_model", metadata_paths)
 
-        # Assert the task returns expected result
         assert result["ok"] is True
         assert result["process_model_identifier"] == "test_process_model"
         assert result["statistics"] == mock_backfill_result
@@ -51,20 +43,13 @@ class TestMetadataBackfillTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup - make the service method raise an exception
         mock_metadata_backfill_service.backfill_metadata_for_model.side_effect = ValueError("Test error")
-
-        # Mock the Celery task's self.request.id
         mock_self = MagicMock()
         mock_self.request.id = "test-task-id"
 
-        # Test metadata paths
         metadata_paths = [{"key": "test_key", "path": "test.path"}]
-
-        # Call the implementation function directly
         result = _celery_task_backfill_metadata_impl("test-task-id", "test_process_model", metadata_paths)
 
-        # Assert the result contains error information
         assert result["ok"] is False
         assert result["process_model_identifier"] == "test_process_model"
         assert result["error"] == "Test error"
@@ -80,7 +65,6 @@ class TestMetadataBackfillTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup
         mock_current_app.config = {"SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED": True}
 
         # Create mock models with different metadata paths
@@ -90,7 +74,6 @@ class TestMetadataBackfillTask(BaseTest):
             description="Test Description",
             metadata_extraction_paths=[{"key": "existing", "path": "existing.path"}],
         )
-
         new_model = ProcessModelInfo(
             id="test_model",
             display_name="Test Model",
@@ -98,19 +81,16 @@ class TestMetadataBackfillTask(BaseTest):
             metadata_extraction_paths=[{"key": "existing", "path": "existing.path"}, {"key": "new_key", "path": "new.path"}],
         )
 
-        # Setup the detect_metadata_changes mock
         mock_service.detect_metadata_changes.return_value = [{"key": "new_key", "path": "new.path"}]
-
-        # Setup the task delay mock
         mock_task_result = MagicMock()
         mock_task_result.id = "test-task-id"
         mock_task.delay.return_value = mock_task_result
 
-        # Test
-        result = trigger_metadata_backfill(old_model, new_model)
+        result = trigger_metadata_backfill(old_model.id, old_model.metadata_extraction_paths, new_model.metadata_extraction_paths)
 
-        # Assert
-        mock_service.detect_metadata_changes.assert_called_once_with(old_model, new_model)
+        mock_service.detect_metadata_changes.assert_called_once_with(
+            old_model.metadata_extraction_paths, new_model.metadata_extraction_paths
+        )
         mock_task.delay.assert_called_once_with("test_model", [{"key": "new_key", "path": "new.path"}])
 
         assert result["status"] == "triggered"
@@ -125,16 +105,11 @@ class TestMetadataBackfillTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup - feature is disabled
         mock_current_app.config = {"SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED": False}
-
         old_model = ProcessModelInfo(id="test_model", display_name="Test Model", description="Test")
         new_model = ProcessModelInfo(id="test_model", display_name="Test Model", description="Test")
+        result = trigger_metadata_backfill(old_model.id, old_model.metadata_extraction_paths, new_model.metadata_extraction_paths)
 
-        # Test
-        result = trigger_metadata_backfill(old_model, new_model)
-
-        # Assert
         assert result["status"] == "skipped"
         assert result["reason"] == "Metadata backfill feature is disabled"
 
@@ -147,17 +122,12 @@ class TestMetadataBackfillTask(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup - feature is enabled but no new paths
         mock_current_app.config = {"SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED": True}
-
         mock_service.detect_metadata_changes.return_value = []
 
         old_model = ProcessModelInfo(id="test_model", display_name="Test Model", description="Test")
         new_model = ProcessModelInfo(id="test_model", display_name="Test Model", description="Test")
+        result = trigger_metadata_backfill(old_model.id, old_model.metadata_extraction_paths, new_model.metadata_extraction_paths)
 
-        # Test
-        result = trigger_metadata_backfill(old_model, new_model)
-
-        # Assert
         assert result["status"] == "skipped"
         assert result["reason"] == "No new metadata paths detected"

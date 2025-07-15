@@ -14,7 +14,6 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup
         old_model = ProcessModelInfo(
             id="test_model",
             display_name="Test Model",
@@ -29,10 +28,9 @@ class TestMetadataBackfillService(BaseTest):
             metadata_extraction_paths=[{"key": "existing_key", "path": "existing.path"}, {"key": "new_key", "path": "new.path"}],
         )
 
-        # Test
-        result = MetadataBackfillService.detect_metadata_changes(old_model, new_model)
-
-        # Assert
+        result = MetadataBackfillService.detect_metadata_changes(
+            old_model.metadata_extraction_paths, new_model.metadata_extraction_paths
+        )
         assert len(result) == 1
         assert result[0]["key"] == "new_key"
         assert result[0]["path"] == "new.path"
@@ -42,7 +40,6 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup
         old_model = ProcessModelInfo(
             id="test_model", display_name="Test Model", description="Test description", metadata_extraction_paths=None
         )
@@ -54,10 +51,9 @@ class TestMetadataBackfillService(BaseTest):
             metadata_extraction_paths=[{"key": "new_key", "path": "new.path"}],
         )
 
-        # Test
-        result = MetadataBackfillService.detect_metadata_changes(old_model, new_model)
-
-        # Assert
+        result = MetadataBackfillService.detect_metadata_changes(
+            old_model.metadata_extraction_paths, new_model.metadata_extraction_paths
+        )
         assert len(result) == 1
         assert result[0]["key"] == "new_key"
         assert result[0]["path"] == "new.path"
@@ -67,10 +63,7 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Create test process model
         process_model = self.create_process_model_with_metadata()
-
-        # Create process instances
         instance1 = self.create_process_instance_from_process_model(process_model)
         instance2 = self.create_process_instance_from_process_model(process_model)
         instance3 = self.create_process_instance_from_process_model(process_model)
@@ -91,18 +84,13 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Setup test data
         task_data = {"outer": {"inner": "test_value"}, "invoice_number": "INV-123"}
         metadata_paths = [
             {"key": "test_key", "path": "outer.inner"},
             {"key": "invoice", "path": "invoice_number"},
             {"key": "nonexistent", "path": "does.not.exist"},
         ]
-
-        # Test
         result = MetadataBackfillService.extract_metadata_for_instance("test_model", task_data, metadata_paths)
-
-        # Assert
         assert result["test_key"] == "test_value"
         assert result["invoice"] == "INV-123"
         assert result["nonexistent"] is None
@@ -112,18 +100,13 @@ class TestMetadataBackfillService(BaseTest):
     def test_add_metadata_to_instance(
         self, mock_query: MagicMock, mock_add: MagicMock, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        # Setup
         mock_filter = MagicMock()
         mock_first = MagicMock()
         mock_first.return_value = None
         mock_filter.first = mock_first
         mock_query.filter_by.return_value = mock_filter
-
-        # Test
         metadata = {"key1": "value1", "key2": "value2", "key3": None}
         MetadataBackfillService.add_metadata_to_instance(123, metadata)
-
-        # Assert - should only add non-None values
         assert mock_add.call_count == 2
 
     @patch("spiffworkflow_backend.models.db.db.session.commit")
@@ -135,52 +118,41 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Create a mock process model
         process_model = ProcessModelInfo(
             id="test_model",
             display_name="Test Model",
             description="Test model for backfill",
             metadata_extraction_paths=[{"key": "existing_key", "path": "existing.path"}],
         )
-
-        # Set up metadata paths for backfill
         new_metadata_paths = [{"key": "new_key", "path": "outer.inner"}]
 
-        # Mock the filter query for verification
         mock_filter = MagicMock()
         mock_metadata = MagicMock()
         mock_metadata.value = "test_value"
         mock_filter.first = MagicMock(return_value=mock_metadata)
         mock_query.filter_by = MagicMock(return_value=mock_filter)
 
-        # Set up a stack of mocks
         with patch.object(MetadataBackfillService, "get_process_instance_count", return_value=3):
-            # Create mock instances for each batch
             batch1 = [MagicMock(id=1), MagicMock(id=2)]
             batch2 = [MagicMock(id=3)]
             empty_batch: list = []
 
-            # Mock get_process_instances to return different batches on each call
             get_instances_mock = MagicMock()
             get_instances_mock.side_effect = [batch1, batch2, empty_batch]
 
-            # Mock the remaining service methods
             with (
                 patch.object(MetadataBackfillService, "get_process_instances", get_instances_mock),
                 patch.object(MetadataBackfillService, "get_latest_task_data", return_value={"outer": {"inner": "test_value"}}),
                 patch.object(MetadataBackfillService, "extract_metadata_for_instance", return_value={"new_key": "test_value"}),
                 patch.object(MetadataBackfillService, "add_metadata_to_instance") as mock_add_metadata,
             ):
-                # Run the test
                 result = MetadataBackfillService.backfill_metadata_for_model(process_model.id, new_metadata_paths)
 
-                # Verify results
                 assert result["instances_processed"] == 3
                 assert result["instances_updated"] == 3
                 assert "execution_time" in result
                 assert mock_add_metadata.call_count == 3
 
-                # Check that get_process_instances was called correctly with increasing offsets
                 assert get_instances_mock.call_count == 3
                 assert get_instances_mock.call_args_list[0][0][0] == process_model.id
                 assert get_instances_mock.call_args_list[0][1]["offset"] == 0
@@ -194,7 +166,6 @@ class TestMetadataBackfillService(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # Test calling backfill with empty metadata paths
         result = MetadataBackfillService.backfill_metadata_for_model("test_model", [])
         assert result["instances_processed"] == 0
         assert result["instances_updated"] == 0

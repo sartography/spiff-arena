@@ -1,9 +1,3 @@
-"""Service to handle backfilling of process instance metadata.
-
-When a process model adds new metadata extraction paths, this service handles
-backfilling the metadata for existing process instances.
-"""
-
 import time
 from typing import Any
 
@@ -13,44 +7,26 @@ from sqlalchemy import desc
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 
 
 class MetadataBackfillService:
-    """Service for backfilling process instance metadata when metadata extraction paths are added."""
-
-    BATCH_SIZE = 100  # Number of process instances to process in a single batch
+    PROCESS_INSTANCE_BATCH_SIZE = 100
 
     @classmethod
-    def detect_metadata_changes(cls, old_model: ProcessModelInfo, new_model: ProcessModelInfo) -> list[dict[str, str]]:
-        """Detect new metadata extraction paths between old and new process models.
+    def detect_metadata_changes(
+        cls,
+        old_metadata_extraction_paths: list[dict[str, str]] | None = None,
+        new_metadata_extraction_paths: list[dict[str, str]] | None = None,
+    ) -> list[dict[str, str]]:
+        old_paths = old_metadata_extraction_paths or []
+        new_paths = new_metadata_extraction_paths or []
 
-        Args:
-            old_model: The previous version of the process model
-            new_model: The updated version of the process model
-
-        Returns:
-            List of new metadata extraction path objects
-        """
-        if old_model.metadata_extraction_paths is None:
-            old_paths = []
-        else:
-            old_paths = old_model.metadata_extraction_paths
-
-        if new_model.metadata_extraction_paths is None:
-            new_paths = []
-        else:
-            new_paths = new_model.metadata_extraction_paths
-
-        # Extract just the keys for comparison
         old_keys = {path["key"] for path in old_paths}
         new_keys = {path["key"] for path in new_paths}
 
-        # Find keys that are in new_paths but not in old_paths
         new_metadata_keys = new_keys - old_keys
 
-        # Return the full path objects for new keys
         return [path for path in new_paths if path["key"] in new_metadata_keys]
 
     @classmethod
@@ -61,13 +37,13 @@ class MetadataBackfillService:
 
         Args:
             process_model_identifier: The identifier of the process model
-            batch_size: The number of instances to retrieve (defaults to cls.BATCH_SIZE)
+            batch_size: The number of instances to retrieve (defaults to cls.PROCESS_INSTANCE_BATCH_SIZE)
             offset: The offset for pagination
 
         Returns:
             List of process instances
         """
-        size = cls.BATCH_SIZE if batch_size is None else batch_size
+        size = cls.PROCESS_INSTANCE_BATCH_SIZE if batch_size is None else batch_size
 
         instances: list[ProcessInstanceModel] = (
             ProcessInstanceModel.query.filter_by(process_model_identifier=process_model_identifier)
@@ -210,7 +186,7 @@ class MetadataBackfillService:
         offset = 0
         while True:
             # Get a batch of process instances
-            instances = cls.get_process_instances(process_model_identifier, cls.BATCH_SIZE, offset=offset)
+            instances = cls.get_process_instances(process_model_identifier, cls.PROCESS_INSTANCE_BATCH_SIZE, offset=offset)
             if not instances:
                 break  # No more instances to process
 
@@ -237,7 +213,7 @@ class MetadataBackfillService:
             db.session.commit()
 
             # Move to next batch
-            offset += cls.BATCH_SIZE
+            offset += cls.PROCESS_INSTANCE_BATCH_SIZE
 
             # Log progress
             current_app.logger.info(
