@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from flask import Flask
 
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.metadata_backfill_service import MetadataBackfillService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -170,3 +171,41 @@ class TestMetadataBackfillService(BaseTest):
         assert result["instances_processed"] == 0
         assert result["instances_updated"] == 0
         assert result["message"] == "No new metadata paths to process"
+
+    def test_backfill_metadata_for_model_with_real_db(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = self.create_process_model_with_metadata()
+        task_data = {"outer": {"inner": "test_value"}, "invoice_number": "INV-123"}
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        new_metadata_paths = [
+            {"key": "new_key", "path": "outer.inner"},
+        ]
+
+        with patch.object(MetadataBackfillService, "get_latest_task_data", return_value=task_data):
+            result = MetadataBackfillService.backfill_metadata_for_model(process_model.id, new_metadata_paths)
+            assert result["instances_processed"] == 1
+            assert result["instances_updated"] == 1
+            assert "execution_time" in result
+
+            metadata = ProcessInstanceMetadataModel.query.filter_by(
+                process_instance_id=process_instance.id, key="new_key"
+            ).first()
+
+            assert metadata is not None
+            assert metadata.value == "test_value"
+
+        new_metadata_paths = [
+            {"key": "new_key", "path": "outer.inner"},
+        ]
+        result = MetadataBackfillService.backfill_metadata_for_model(process_model.id, new_metadata_paths)
+
+        assert result["instances_processed"] == 1
+        assert result["instances_updated"] == 1
+        assert "execution_time" in result
+
+        metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id, key="new_key").first()
+        assert metadata is not None
+        assert metadata.value == "test_value"
