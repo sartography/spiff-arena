@@ -14,3 +14,4 @@ UNKNOWN.egg-info/
 .aider*
 /spiffworkflow_docker_compose
 .DS_Store
+.claude

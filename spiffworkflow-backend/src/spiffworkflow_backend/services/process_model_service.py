@@ -151,21 +151,7 @@ class ProcessModelService(FileSystemService):
             return {}
         if len(metadata_extraction_paths) <= 0:
             return {}
-
-        current_metadata = {}
-        for metadata_extraction_path in metadata_extraction_paths:
-            key = metadata_extraction_path["key"]
-            path = metadata_extraction_path["path"]
-            path_segments = path.split(".")
-            data_for_key: dict[str, Any] | None = current_data
-            for path_segment in path_segments:
-                if path_segment in (data_for_key or {}):
-                    data_for_key = (data_for_key or {})[path_segment]
-                else:
-                    data_for_key = None
-                    break
-            current_metadata[key] = data_for_key
-        return current_metadata
+        return process_model_info.__class__.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:

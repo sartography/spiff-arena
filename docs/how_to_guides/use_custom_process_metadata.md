@@ -39,3 +39,7 @@ This guide will walk you through the steps to create a process model that genera
    - You can also filter process instances based on your custom column using the same column options.
 
 By following these steps, you can create a process model that generates custom metadata and efficiently query that metadata using process instance filtering.
+
+## Adding Metadata Fields to Existing Process Instances
+
+If you need to add new metadata extraction paths to an existing process model that already has instances, you may want to ensure that the new metadata is applied to all existing instances. For information on how to automatically backfill metadata for existing process instances, see [Use Process Metadata Backfill](use_process_metadata_backfill.md).

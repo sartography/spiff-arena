@@ -5,11 +5,6 @@ from typing import Any
 import celery
 
 from spiffworkflow_backend import create_app
-
-# we need to import tasks from this file so they can be used elsewhere in the app
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
-    celery_task_process_instance_run,  # noqa: F401
-)
 from spiffworkflow_backend.services.logging_service import get_log_formatter
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 

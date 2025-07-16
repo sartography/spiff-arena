@@ -79,6 +79,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://loca
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED", default=False)
 
 # give a little overlap to ensure we do not miss items although the query will handle it either way
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS", default=301)
