@@ -5,7 +5,6 @@ from typing import Any
 import celery
 
 from spiffworkflow_backend import create_app
-
 from spiffworkflow_backend.services.logging_service import get_log_formatter
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
