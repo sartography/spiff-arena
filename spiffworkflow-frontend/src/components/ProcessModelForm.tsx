@@ -45,7 +45,7 @@ export default function ProcessModelForm({
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z.-]+[a-z0-9]$/);
   };
 
   const handleFormSubmission = (event: any) => {
@@ -352,7 +352,7 @@ export default function ProcessModelForm({
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
       <Button
-        data-qa="add-notification-address-button"
+        data-testid="add-notification-address-button"
         startIcon={<AddAlt />}
         variant="outlined"
         size="small"
@@ -379,7 +379,7 @@ export default function ProcessModelForm({
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
       <Button
-        data-qa="add-metadata-extraction-path-button"
+        data-testid="add-metadata-extraction-path-button"
         startIcon={<AddAlt />}
         variant="outlined"
         size="small"

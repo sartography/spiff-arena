@@ -40,7 +40,7 @@ export default function ProcessGroupForm({
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]*[a-z0-9]$/);
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z.-]*[a-z0-9]$/);
   };
 
   const handleFormSubmission = (event: any) => {
@@ -115,7 +115,7 @@ export default function ProcessGroupForm({
     const textInputs = [
       <TextField
         id="process-group-display-name"
-        data-qa="process-group-display-name-input"
+        data-testid="process-group-display-name-input"
         name="display_name"
         error={displayNameInvalid}
         helperText={displayNameInvalid ? 'Display Name is required.' : ''}

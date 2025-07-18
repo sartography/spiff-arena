@@ -31,7 +31,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
       <SpiffTooltip title="Only show process instances for the current user">
         <Tab
           label="For Me"
-          data-qa="process-instance-list-for-me"
+          data-testid="process-instance-list-for-me"
           onClick={() => {
             navigate('/process-instances/for-me');
           }}
@@ -41,7 +41,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
         <SpiffTooltip title="Show process instances for all users">
           <Tab
             label="All"
-            data-qa="process-instance-list-all"
+            data-testid="process-instance-list-all"
             onClick={() => {
               navigate('/process-instances/all');
             }}
@@ -51,7 +51,7 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
       <SpiffTooltip title="Search for a process instance by id">
         <Tab
           label="Find By Id"
-          data-qa="process-instance-list-find-by-id"
+          data-testid="process-instance-list-find-by-id"
           onClick={() => {
             navigate('/process-instances/find-by-id');
           }}

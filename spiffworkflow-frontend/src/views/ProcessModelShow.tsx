@@ -237,7 +237,7 @@ export default function ProcessModelShow() {
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <SpiffTooltip title="Edit Process Model" placement="top">
               <IconButton
-                data-qa="edit-process-model-button"
+                data-testid="edit-process-model-button"
                 component="a"
                 href={`/process-models/${modifiedProcessModelId}/edit`}
               >
@@ -247,7 +247,7 @@ export default function ProcessModelShow() {
           </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
-              data-qa="delete-process-model-button"
+              data-testid="delete-process-model-button"
               renderIcon={<Delete />}
               iconDescription="Delete Process Model"
               hasIconOnly
@@ -264,7 +264,7 @@ export default function ProcessModelShow() {
             >
               <IconButton
                 color="primary"
-                data-qa="publish-process-model-button"
+                data-testid="publish-process-model-button"
                 onClick={publishProcessModel}
                 disabled={publishDisabled}
               >
@@ -302,7 +302,7 @@ export default function ProcessModelShow() {
           setShowFileUploadModal={setShowFileUploadModal}
         />
         {permissionsLoaded ? (
-          <span data-qa="process-model-show-permissions-loaded" />
+          <span data-testid="process-model-show-permissions-loaded" />
         ) : null}
       </>
     );

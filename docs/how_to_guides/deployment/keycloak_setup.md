@@ -92,3 +92,101 @@ By following these steps, you can successfully:
 ✔ Enable **Google-based authentication** for all users in a client’s domain.  
 
 This setup ensures a secure and efficient user authentication process within **Keycloak**, providing administrators with the ability to manage users effectively while allowing users to authenticate seamlessly using Google.  
+
+---
+
+## 3. API Authentication & Integration with Keycloak
+
+Now we provide guide for developers on how to authenticate with SpiffWorkflow using Keycloak, interact with backend API endpoints, and integrate these flows into a custom frontend or testing tool like Postman or curl.
+
+### Prerequisites
+
+Before proceeding, ensure the following:
+
+* The SpiffWorkflow backend is running and configured to use Keycloak for authentication.
+* A Keycloak realm (`spiffworkflow`) is already set up, with appropriate client and user configurations.
+* A valid Keycloak user has been created with access roles (e.g., `user-group`, `admin-group`).
+* If using the local setup:
+
+  * Keycloak runs on `localhost:7002`
+  * Backend runs on `localhost:7000`
+
+### Starting Keycloak & Backend (Local Setup)
+
+```bash
+cd spiffworkflow-backend
+
+# Start Keycloak server
+./keycloak/bin/start_keycloak
+
+# Run backend server configured to use Keycloak
+./bin/run_server_locally keycloak
+```
+
+> Keep both services running in separate terminals. Ensure the backend is correctly talking to Keycloak.
+
+### Acquiring a Bearer Token (Password Grant)
+
+To authenticate a user and get a valid access token, send a POST request to Keycloak’s token endpoint:
+
+```bash
+curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=spiff-frontend" \
+  -d "username=<user_email>" \
+  -d "password=<user_password>"
+```
+
+Alternatively, for local development:
+
+```bash
+KEYCLOAK_BASE_URL=http://localhost:7002 ./bin/get_token > /tmp/token
+```
+
+### Making API Requests to SpiffWorkflow
+
+Once you have an access token, use it to call protected endpoints:
+
+```bash
+curl http://localhost:7000/v1.0/process-groups \
+  -H "Authorization: Bearer $(cat /tmp/token)"
+```
+
+### Common SpiffWorkflow API Endpoints
+
+| Purpose                                  | Method & Endpoint                             |
+| ---------------------------------------- | --------------------------------------------- |
+| Get all tasks for the authenticated user | `GET /v1.0/tasks`                             |
+| List all accessible process groups       | `GET /v1.0/process-groups`                    |
+| Get all models in a group                | `GET /v1.0/process-models/<process_group_id>` |
+| Complete a task                          | `POST /v1.0/tasks/{task_id}/complete`         |
+| API documentation browser (Swagger UI)   | `GET /v1.0/ui`                                |
+
+> All endpoints must include a valid `Authorization: Bearer <token>` header.
+
+### Logging Out from Keycloak
+
+To revoke a session and log out a user via the Keycloak API:
+
+```bash
+curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/logout \
+  -d "client_id=spiff-frontend" \
+  -d "client_secret=<client_secret>" \
+  -d "refresh_token=<refresh_token>"
+```
+
+This invalidates the token and ends the session in Keycloak.
+
+### Troubleshooting
+
+| Issue                                  | Resolution                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `add_user_error` on login              | Ensure the user is created in the `spiffworkflow` realm, not the default `master`. Assign proper group roles. |
+| Token works but API returns empty data | Confirm user has been assigned to the correct group (e.g., `user-group`) in Keycloak.                         |
+| Postman shows missing `code=` field    | `code` is not required for password-based flow. Ignore or comment out related logic.                          |
+| Token not accepted by backend          | Ensure the token is sent as a `Bearer` in the `Authorization` header.                                         |
+| Logout doesn't work                    | Make sure you're using `refresh_token`, `client_id`, and `client_secret` correctly.                           |
+
+
+This flow enables secure API-based integration while retaining centralized identity control via Keycloak.

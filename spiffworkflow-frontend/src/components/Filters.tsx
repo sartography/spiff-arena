@@ -56,7 +56,7 @@ export default function Filters({
     elements.push(
       <SpiffTooltip title="Filter Options">
         <IconButton
-          data-qa="filter-section-expand-toggle"
+          data-testid="filter-section-expand-toggle"
           color="primary"
           aria-label="Filter Options"
           onClick={toggleShowFilterOptions}

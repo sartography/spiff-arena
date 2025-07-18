@@ -94,7 +94,7 @@ def main() -> None:
     app = create_app()
     end_time = time.time()
 
-    with app.app_context():
+    with app.app.app_context():
         current_app.logger.debug(f"data_migrations/run_all::create_app took {end_time - start_time} seconds")
         start_time = time.time()
         put_serializer_version_onto_numeric_track()
@@ -107,7 +107,7 @@ def main() -> None:
             run_version_1()
             # this will run while using the new per instance on demand data migration framework
             # run_version_2(process_instances)
-        if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        if app.app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
             ProcessInstanceFileDataMigrator.migrate_from_database_to_filesystem()
 
         end_time = time.time()

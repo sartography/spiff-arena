@@ -222,6 +222,3 @@ General path params:
 - **modified_process_model_identifier**: the process model identifier separated by colons - `:` - instead of slashes
 - **process_instance_id**: the id of the process instance to run on.
 
-```{tags} how_to_guide
-
-```

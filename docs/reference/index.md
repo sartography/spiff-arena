@@ -7,6 +7,7 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 bpmn/index
 glossary
 frequently_asked_questions
+spiff_flavored_bpmn
 wish_list
 permission_url
 how_to_contribute_to_the_documentation

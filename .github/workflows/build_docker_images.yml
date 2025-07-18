@@ -27,12 +27,14 @@ name: Build Docker Images
 #   curl -H "Authorization: Bearer $(echo -n $TOKEN | base64 -w0)" https://ghcr.io/v2/sartography/spiffworkflow-backend/tags/list | jq -r '.tags | sort_by(.)'
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - keycloak-realm-with-groups
       - fail-fast-off
       - newui-all-in
+      - rebuild-v1.0.0
     tags: [v*]
 
 jobs:
@@ -87,6 +89,8 @@ jobs:
             org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
+            type=raw,value=v1.0.0,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
             type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
             type=ref,event=tag,enable=true,format={{version}}
@@ -114,6 +118,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
+        # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
         uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: "${{ steps.full_tag.outputs.full_tag }}"

@@ -76,16 +76,18 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: uv Install
-        run: uv install
+        run: uv sync
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
       - name: Snyk Code test
         run: snyk code test --sarif > snyk-code.sarif || true
 
-      # checks library dependencies
-      - name: Snyk test
-        run: snyk test
+      # snyk does not currently support uv
+      #   https://github.com/astral-sh/uv/issues/11181
+      # # checks library dependencies
+      # - name: Snyk test
+      #   run: snyk test
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor

@@ -161,7 +161,11 @@ export default function ProcessModelCard({
       <CardActionArea>
         <CardContent>
           <Stack gap={1} sx={{ height: '100%' }}>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 700 }}
+              data-testid={`process-model-card-${model.display_name}`}
+            >
               {model.display_name}
             </Typography>
             <Typography

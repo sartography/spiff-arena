@@ -244,7 +244,7 @@ export default function TaskListTable({
     return (
       <TableCell>
         <Link
-          data-qa="process-instance-show-link-id"
+          data-testid="process-instance-show-link-id"
           to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
           title={`View process instance ${processInstanceTask.process_instance_id}`}
         >
@@ -269,7 +269,7 @@ export default function TaskListTable({
       rowElements.push(
         <TableCell>
           <Link
-            data-qa="process-model-show-link"
+            data-testid="process-model-show-link"
             to={`/process-models/${modifiedProcessModelIdentifier}`}
             title={processInstanceTask.process_model_identifier}
           >

@@ -439,10 +439,12 @@ def task_show(
 def task_submit(
     process_instance_id: int,
     task_guid: str,
-    body: dict[str, Any],
+    body: dict[str, Any] | None = None,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit"):
+        if body is None:
+            body = {}
         response_item = _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
         if "next_task_assigned_to_me" in response_item:
             response_item = response_item["next_task_assigned_to_me"]

@@ -2,7 +2,7 @@ import time
 
 from flask import Flask
 from flask import g
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
@@ -24,7 +24,7 @@ class TestMessageService(BaseTest):
     def test_messages_feb_24(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test messages between two different running processes using a single conversation.
@@ -69,7 +69,7 @@ class TestMessageService(BaseTest):
     def test_receive_message_will_have_correlation_keys(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -94,7 +94,7 @@ class TestMessageService(BaseTest):
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test messages between two different running processes using a single conversation.
@@ -170,7 +170,7 @@ class TestMessageService(BaseTest):
     def test_start_process_with_message_when_failure(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Assure we get a valid error when trying to start a process, and that process fails for some reason."""
@@ -206,7 +206,7 @@ class TestMessageService(BaseTest):
     def test_can_send_message_to_multiple_process_models(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
@@ -410,7 +410,7 @@ class TestMessageService(BaseTest):
     def test_correlate_can_handle_process_instance_already_locked(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)

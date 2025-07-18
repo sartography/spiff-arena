@@ -179,11 +179,11 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_toplevel_process_info              | Returns information about the currently running process.                                                                                                       |
 | get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
 | get_user_properties                    | Gets the user properties for the current user.                                                                                                                 |
+| get_user                    | Gets the user by username.                                                                                                                 |
 | markdown_file_download_link            | Returns a markdown format string for a file download link.                                                                                                     |
 | refresh_permissions                    | Adds permissions using a dictionary.                                                                                                                           |
 | set_user_properties                    | Sets given user properties on the current user.                                                                                                                |
 | times_executed_by_user                 | Returns the number of times the user has started an instance of the current process model.                                                                     |
 | user_has_started_instance              | Returns a boolean indicating if the user has started an instance of the current process model.                                                                 |
-
-```{tags} tutorial, reference, building_diagrams
-```
+| update_task_data_with_dictionary | Takes the value of a variable already present in task data and copies all of its key-value pairs into the root of task data. **Example**: update_task_data_with_dictionary(resp_order_start) will take all keys from resp_order_start and insert them into task data, allowing you to remove the original response variable.
+|

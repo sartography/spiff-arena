@@ -149,11 +149,11 @@ export default function ProcessModelTabs({
         aria-label="List of tabs"
       >
         <Tab value={0} label="About" />
-        <Tab value={1} label="Files" data-qa="process-model-files" />
+        <Tab value={1} label="Files" data-testid="process-model-files" />
         <Tab
           value={2}
           label="My process instances"
-          data-qa="process-instance-list-link"
+          data-testid="process-instance-list-link"
         />
       </Tabs>
       <TabPanel value={selectedTabIndex} index={0}>
