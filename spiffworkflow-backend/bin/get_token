@@ -3,7 +3,6 @@
 import base64
 import json
 import os
-import re
 import sys
 from typing import Any
 
@@ -31,13 +30,6 @@ openid_token_url = os.getenv("OPENID_TOKEN_URL")
 keycloak_base_url = os.getenv("KEYCLOAK_BASE_URL")
 if openid_token_url is None:
     if keycloak_base_url is not None:
-        if "spiffworkflow.org" in backend_base_url:
-            pattern = r".*api\.(\w+\.spiffworkflow.org).*"
-            match = re.search(pattern, backend_base_url)
-            if match is None:
-                raise Exception("Could not determine openid url based on backend url")
-            env_domain = match.group(1)
-            keycloak_base_url = "https://keycloak.${env_domain}"
         import urllib.parse
 
         token_path = "/protocol/openid-connect/token"  # noqa: S105
