@@ -1150,6 +1150,17 @@ paths:
       summary: Creates an process instance from a process model and returns the instance
       tags:
         - Process Instances
+      requestBody:
+        # this call does not actually need a body, but the lack of requestBody causes connexion
+        # to mess up and not pass bodies through where it's supposed to, such as a POST to /process-instances/reports.
+        # so add an optional one here to hopefully get us past that.
+        required: false
+        content:
+          application/json:
+            schema:
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "201":
           description: Workflow generated successfully
@@ -4070,8 +4081,7 @@ components:
     # it will fail validation and not pass the request to the controller. that is generally not desirable
     # until we take a closer look at the schemas in here.
     AwesomeUnspecifiedPayload:
-      # we know that task_submit submits no body at all, and None is not an object, as this so helpfully tells us
-      # type: "object"
+      type: "object"
       additionalProperties: {}
     ReportMetadata:
       properties:
