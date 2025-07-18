@@ -4,7 +4,6 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.secret_model import SecretModel
-from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.secret_service import SecretService
 from tests.spiffworkflow_backend.integration.test_secret_service import SecretServiceTestHelpers
@@ -18,24 +17,24 @@ class TestSecretsController(SecretServiceTestHelpers):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        secret_model = SecretModel(
-            key=self.test_key,
-            value=self.test_value,
-            user_id=with_super_admin_user.id,
-        )
-        data = SecretModelSchema().dump(secret_model)
+        secret_model = {
+            "key": self.test_key,
+            "value": self.test_value,
+            "user_id": with_super_admin_user.id,
+        }
         response = client.post(
             "/v1.0/secrets",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            json=data,
+            json=secret_model,
         )
+        assert response.status_code == 201
         assert response.json()
         secret: dict = response.json()
-        for key in ["key", "value", "user_id"]:
+        for key in ["key", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
-        assert SecretService._decrypt(secret["value"]) == self.test_value
         assert secret["user_id"] == with_super_admin_user.id
+        assert "value" not in response.json()
 
     def test_get_secret_api(
         self,
@@ -84,15 +83,13 @@ class TestSecretsController(SecretServiceTestHelpers):
         secret: SecretModel | None = SecretService.get_secret(self.test_key)
         assert secret
         assert SecretService._decrypt(secret.value) == self.test_value
-        secret_model = SecretModel(
-            key=self.test_key,
-            value="new_secret_value",
-            user_id=with_super_admin_user.id,
-        )
+        data = {
+            "value": "new_secret_value",
+        }
         response = client.put(
             f"/v1.0/secrets/{self.test_key}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
-            json=SecretModelSchema().dump(secret_model),
+            json=data,
         )
         assert response.status_code == 200
 

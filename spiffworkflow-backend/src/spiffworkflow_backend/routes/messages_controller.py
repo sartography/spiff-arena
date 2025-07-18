@@ -11,7 +11,6 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
@@ -100,7 +99,7 @@ def message_send(
     process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
     response_json = {
         "task_data": process_instance.get_data(),
-        "process_instance": ProcessInstanceModelSchema().dump(process_instance),
+        "process_instance": process_instance.serialized(),
     }
     return Response(
         json.dumps(response_json),

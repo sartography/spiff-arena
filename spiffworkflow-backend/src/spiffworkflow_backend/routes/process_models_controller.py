@@ -22,7 +22,6 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
@@ -103,7 +102,7 @@ def process_model_create(
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
     return Response(
-        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
+        json.dumps(process_model_info.to_dict()),
         status=201,
         mimetype="application/json",
     )
@@ -182,7 +181,7 @@ def process_model_update(
                 f"Failed to trigger metadata backfill for process model {process_model_identifier}: {str(ex)}"
             )
 
-    return ProcessModelInfoSchema().dump(process_model)
+    return process_model.to_dict()
 
 
 def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False) -> Any:
@@ -520,7 +519,7 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
     )
 
     return Response(
-        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
+        json.dumps(process_model_info.to_dict()),
         status=201,
         mimetype="application/json",
     )

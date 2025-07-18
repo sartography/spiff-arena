@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+from dataclasses import dataclass
 from typing import Any
 
-import marshmallow
 from flask_sqlalchemy.query import Query
-from marshmallow import INCLUDE
-from marshmallow import Schema
 from sqlalchemy import ForeignKey
 from sqlalchemy import desc
 from sqlalchemy.orm import relationship
@@ -222,64 +221,14 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             return {}
 
 
-class ProcessInstanceModelSchema(Schema):
-    class Meta:
-        model = ProcessInstanceModel
-        fields = [
-            "id",
-            "process_model_identifier",
-            "process_model_display_name",
-            "process_initiator_id",
-            "start_in_seconds",
-            "end_in_seconds",
-            "updated_at_in_seconds",
-            "created_at_in_seconds",
-            "status",
-            "bpmn_version_control_identifier",
-        ]
-
-    status = marshmallow.fields.Method("get_status", dump_only=True)
-
-    def get_status(self, obj: ProcessInstanceModel) -> str:
-        return obj.status
-
-
+@dataclass
 class ProcessInstanceApi:
-    def __init__(
-        self,
-        id: int,
-        status: str,
-        process_model_identifier: str,
-        process_model_display_name: str,
-        updated_at_in_seconds: int,
-    ) -> None:
-        self.id = id
-        self.status = status
-        self.process_model_identifier = process_model_identifier
-        self.process_model_display_name = process_model_display_name
-        self.updated_at_in_seconds = updated_at_in_seconds
+    id: int
+    status: str
+    process_model_identifier: str
+    process_model_display_name: str
+    updated_at_in_seconds: int
 
-
-class ProcessInstanceApiSchema(Schema):
-    class Meta:
-        model = ProcessInstanceApi
-        fields = [
-            "id",
-            "status",
-            "process_model_identifier",
-            "process_model_display_name",
-            "updated_at_in_seconds",
-        ]
-        unknown = INCLUDE
-
-    @marshmallow.post_load
-    def make_process_instance(self, data: dict[str, Any], **kwargs: dict) -> ProcessInstanceApi:
-        keys = [
-            "id",
-            "status",
-            "process_model_identifier",
-            "process_model_display_name",
-            "updated_at_in_seconds",
-        ]
-        filtered_fields = {key: data[key] for key in keys}
-        return ProcessInstanceApi(**filtered_fields)
+    def to_dict(self) -> dict:
+        """Serializes the ProcessInstanceApi object to a dictionary."""
+        return asdict(self)

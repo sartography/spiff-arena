@@ -29,10 +29,8 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
-from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
@@ -78,7 +76,7 @@ def process_instance_create(
     LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(process_instance.serialized()),
         status=201,
         mimetype="application/json",
     )
@@ -94,7 +92,7 @@ def process_instance_run(
     _process_instance_run(process_instance, force_run=force_run, execution_mode=execution_mode)
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
-    process_instance_api_dict = ProcessInstanceApiSchema().dump(process_instance_api)
+    process_instance_api_dict = process_instance_api.to_dict()
     process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(process_instance)
     return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
 
