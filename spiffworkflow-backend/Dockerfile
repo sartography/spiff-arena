@@ -48,7 +48,7 @@ RUN apt-get update \
   && apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 COPY . /app
-RUN uv sync --no-dev
+RUN uv sync --no-dev --frozen
 
 ######################## - FINAL
 
