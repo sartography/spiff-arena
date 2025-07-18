@@ -108,6 +108,22 @@ def _check_extension_api_configs(app: Flask) -> None:
         )
 
 
+def _check_metadata_backfill_requirements(app: Flask) -> None:
+    """Check that Celery is enabled if metadata backfill is enabled.
+
+    The process instance metadata backfill feature requires Celery to be enabled
+    since it runs as a background task to avoid impacting application performance.
+    """
+    if app.config.get("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED") and not app.config.get(
+        "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"
+    ):
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED is set to true but "
+            "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is set to false. "
+            "The metadata backfill feature requires Celery to be enabled."
+        )
+
+
 def _set_up_open_id_scopes(app: Flask) -> None:
     scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
     if os.environ.get("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE") is not None:
@@ -298,5 +314,6 @@ def setup_config(app: Flask) -> None:
     _set_up_tenant_specific_fields_as_list_of_strings(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
+    _check_metadata_backfill_requirements(app)
     _setup_cipher(app)
     _set_up_open_id_scopes(app)

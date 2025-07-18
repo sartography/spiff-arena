@@ -19,7 +19,7 @@ from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.error import PermissionsFileNotSetError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.helpers.api_version import remove_api_prefix
 from spiffworkflow_backend.interfaces import AddedPermissionDict
 from spiffworkflow_backend.interfaces import GroupPermissionsDict
 from spiffworkflow_backend.interfaces import UserToGroupDict
@@ -95,7 +95,7 @@ class AuthorizationService:
     @classmethod
     def has_permission(cls, principals: list[PrincipalModel], permission: str, target_uri: str) -> bool:
         principal_ids = [p.id for p in principals]
-        target_uri_normalized = target_uri.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(target_uri)
 
         permission_assignments = (
             PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
@@ -148,7 +148,7 @@ class AuthorizationService:
         cls, permission_assignments: list[PermissionAssignmentModel], permission: str, target_uri: str
     ) -> bool:
         uri_with_percent = re.sub(r"\*", "%", target_uri)
-        target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(uri_with_percent)
 
         matching_permission_assignments = []
         for permission_assignment in permission_assignments:
@@ -229,7 +229,7 @@ class AuthorizationService:
     @classmethod
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
-        target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(uri_with_percent)
         permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
