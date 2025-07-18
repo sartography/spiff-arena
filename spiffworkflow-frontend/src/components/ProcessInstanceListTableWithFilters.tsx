@@ -453,7 +453,7 @@ export default function ProcessInstanceListTableWithFilters({
       if (filtersEnabled) {
         // populate process model selection
         HttpService.makeCallToBackend({
-          path: `/process-models?per_page=1000&recursive=true&include_parent_groups=true`,
+          path: `/process-models?per_page=1500&recursive=true&include_parent_groups=true`,
           successCallback: processResultForProcessModels,
         });
       } else {
