@@ -28,6 +28,9 @@ export enum UiSchemaDisplayLocation {
 
   // Will appear in the user profile drop - top right menu with the logout button.
   user_profile_item = 'user_profile_item',
+  
+  // Will be loaded as a global CSS file for the entire application
+  css_global = 'css_global',
 }
 
 /**

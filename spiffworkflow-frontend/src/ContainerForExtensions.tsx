@@ -22,6 +22,7 @@ import { PermissionsToCheck, ProcessFile, ProcessModel } from './interfaces';
 import { usePermissionFetcher } from './hooks/PermissionService';
 import {
   ExtensionUiSchema,
+  UiSchemaDisplayLocation,
   UiSchemaUxElement,
 } from './extension_ui_schema_interfaces';
 import HttpService from './services/HttpService';
@@ -31,6 +32,7 @@ import Login from './views/Login';
 import useAPIError from './hooks/UseApiError';
 import ScrollToTop from './components/ScrollToTop';
 import { createSpiffTheme } from './assets/theme/SpiffTheme';
+import DynamicCSSInjection from './components/DynamicCSSInjection';
 
 const fadeIn = 'fadeIn';
 const fadeOutImmediate = 'fadeOutImmediate';
@@ -40,6 +42,8 @@ export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
+  
+  const [extensionCssFiles, setExtensionCssFiles] = useState<Array<{ content: string; id: string }>>([]); 
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -144,34 +148,56 @@ export default function ContainerForExtensions() {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
-      const eni: UiSchemaUxElement[] = processModels
-        .map((processModel: ProcessModel) => {
-          const extensionUiSchemaFile = processModel.files.find(
-            (file: ProcessFile) => file.name === 'extension_uischema.json',
-          );
-          if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
-            try {
-              const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-                extensionUiSchemaFile.file_contents,
-              );
-              if (
-                extensionUiSchema &&
-                extensionUiSchema.ux_elements &&
-                !extensionUiSchema.disabled
-              ) {
-                return extensionUiSchema.ux_elements;
-              }
-            } catch (jsonParseError: any) {
-              console.error(
-                `Unable to get navigation items for ${processModel.id}`,
-              );
+      const eni: UiSchemaUxElement[] = [];
+      const cssFiles: Array<{ content: string; id: string }> = [];
+      
+      processModels.forEach((processModel: ProcessModel) => {
+        const extensionUiSchemaFile = processModel.files.find(
+          (file: ProcessFile) => file.name === 'extension_uischema.json',
+        );
+        if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
+          try {
+            const extensionUiSchema: ExtensionUiSchema = JSON.parse(
+              extensionUiSchemaFile.file_contents,
+            );
+            if (
+              extensionUiSchema &&
+              extensionUiSchema.ux_elements &&
+              !extensionUiSchema.disabled
+            ) {
+              // Process ux elements and extract CSS elements
+              extensionUiSchema.ux_elements.forEach((element: UiSchemaUxElement) => {
+                if (element.display_location === UiSchemaDisplayLocation.css_global) {
+                  // Find the CSS file in the process model files
+                  const cssFile = processModel.files.find(
+                    (file: ProcessFile) => file.name === element.page
+                  );
+                  if (cssFile && cssFile.file_contents) {
+                    cssFiles.push({
+                      content: cssFile.file_contents,
+                      id: `${processModel.id}-${element.page}`.replace(/[^a-zA-Z0-9]/g, '-')
+                    });
+                  }
+                } else {
+                  // Normal UI element
+                  eni.push(element);
+                }
+              });
             }
+          } catch (jsonParseError: any) {
+            console.error(
+              `Unable to get navigation items for ${processModel.id}`,
+            );
           }
-          return [] as UiSchemaUxElement[];
-        })
-        .flat();
-      if (eni) {
+        }
+      });
+      
+      if (eni.length > 0) {
         setExtensionUxElements(eni);
+      }
+      
+      if (cssFiles.length > 0) {
+        setExtensionCssFiles(cssFiles);
       }
     };
 
@@ -240,6 +266,14 @@ export default function ContainerForExtensions() {
     <ThemeProvider theme={globalTheme}>
       <CssBaseline />
       <ScrollToTop />
+      {/* Inject any CSS files from extensions */}
+      {extensionCssFiles.map((cssFile) => (
+        <DynamicCSSInjection
+          key={cssFile.id}
+          cssContent={cssFile.content}
+          id={cssFile.id}
+        />
+      ))}
       <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
         <Container
           id="container-for-extensions-container"
