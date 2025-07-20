@@ -79,11 +79,11 @@ Extensions can include custom CSS files to style their components or even modify
 
 The CSS will be automatically loaded and applied when the extension is loaded. This allows you to:
 
-- Create consistent branding for your extensions
 - Customize the appearance of your extension pages
-- Override default styles when needed
+- Override default site styles when needed
 
-For best practices, use specific class names to avoid conflicts with other extensions or the main application.
+Use specific class names to avoid conflicts with other extensions or the main application.
+Be aware that site structure and style may change over time, so try to minimize customization to avoid future breakage.
 
 ## Use Cases
 

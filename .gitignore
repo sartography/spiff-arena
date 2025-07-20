@@ -15,3 +15,4 @@ UNKNOWN.egg-info/
 /spiffworkflow_docker_compose
 .DS_Store
 .claude
+/example-extensions
