@@ -1,4 +1,4 @@
-import { ArrowRightAlt, OpenInNew, Refresh } from '@mui/icons-material';
+import { ArrowRightAlt, OpenInNew, Refresh } from "@mui/icons-material";
 import {
   TableRow,
   Table,
@@ -10,11 +10,11 @@ import {
   TableSortLabel,
   Typography,
   IconButton,
-} from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import { useCallback, useEffect, useRef, useState } from "react";
+import "react-datepicker/dist/react-datepicker.css";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   getLastMilestoneFromProcessInstance,
@@ -22,7 +22,7 @@ import {
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
   titleizeString,
-} from '../helpers';
+} from "../helpers";
 
 import {
   PaginationObject,
@@ -32,17 +32,17 @@ import {
   ReportFilter,
   ReportMetadata,
   SpiffTableHeader,
-} from '../interfaces';
-import DateAndTimeService from '../services/DateAndTimeService';
-import HttpService from '../services/HttpService';
-import UserService from '../services/UserService';
-import PaginationForTable from './PaginationForTable';
-import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
+} from "../interfaces";
+import DateAndTimeService from "../services/DateAndTimeService";
+import HttpService from "../services/HttpService";
+import UserService from "../services/UserService";
+import PaginationForTable from "./PaginationForTable";
+import TableCellWithTimeAgoInWords from "./TableCellWithTimeAgoInWords";
 import {
   childrenForErrorObject,
   errorForDisplayFromString,
-} from './ErrorDisplay';
-import SpiffTooltip from './SpiffTooltip';
+} from "./ErrorDisplay";
+import SpiffTooltip from "./SpiffTooltip";
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -81,7 +81,7 @@ export default function ProcessInstanceListTable({
   showRefreshButton = false,
   tableHtmlId,
   textToShowIfEmpty,
-  variant = 'for-me',
+  variant = "for-me",
 }: OwnProps) {
   const navigate = useNavigate();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -99,13 +99,13 @@ export default function ProcessInstanceListTable({
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
-    variant === 'all'
-      ? '/newui/process-instances'
-      : '/newui/process-instances/for-me';
+    variant === "all"
+      ? "/newui/process-instances"
+      : "/newui/process-instances/for-me";
 
-  let processInstanceApiSearchPath = '/process-instances/for-me';
-  if (variant === 'all') {
-    processInstanceApiSearchPath = '/process-instances';
+  let processInstanceApiSearchPath = "/process-instances/for-me";
+  if (variant === "all") {
+    processInstanceApiSearchPath = "/process-instances";
   }
 
   const clearRefreshRef = useRef<any>(null);
@@ -166,7 +166,7 @@ export default function ProcessInstanceListTable({
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
-        httpMethod: 'POST',
+        httpMethod: "POST",
         failureCallback: stopRefreshing,
         onUnauthorized: stopRefreshing,
         postBody: {
@@ -245,17 +245,17 @@ export default function ProcessInstanceListTable({
   };
 
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
-    let fullUsernameString = '';
-    let shortUsernameString = '';
+    let fullUsernameString = "";
+    let shortUsernameString = "";
     if (processInstanceTask.potential_owner_usernames) {
       fullUsernameString = processInstanceTask.potential_owner_usernames;
       const usernames =
-        processInstanceTask.potential_owner_usernames.split(',');
+        processInstanceTask.potential_owner_usernames.split(",");
       const firstTwoUsernames = usernames.slice(0, 2);
       if (usernames.length > 2) {
-        firstTwoUsernames.push('...');
+        firstTwoUsernames.push("...");
       }
-      shortUsernameString = firstTwoUsernames.join(',');
+      shortUsernameString = firstTwoUsernames.join(",");
     }
     if (processInstanceTask.assigned_user_group_identifier) {
       fullUsernameString = processInstanceTask.assigned_user_group_identifier;
@@ -293,7 +293,7 @@ export default function ProcessInstanceListTable({
   };
 
   const formatProcessInstanceStatus = (_row: any, value: any) => {
-    return titleizeString((value || '').replaceAll('_', ' '));
+    return titleizeString((value || "").replaceAll("_", " "));
   };
 
   const formatDurationForDisplayForTable = (_row: any, value: any) => {
@@ -304,7 +304,7 @@ export default function ProcessInstanceListTable({
   };
 
   const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
-    return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || '-';
+    return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || "-";
   };
   const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
@@ -334,7 +334,7 @@ export default function ProcessInstanceListTable({
       : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
     const value = processInstance[columnAccessor];
 
-    if (columnAccessor === 'status') {
+    if (columnAccessor === "status") {
       return (
         <TableCell
           onClick={() => navigateToProcessInstance(processInstance)}
@@ -345,7 +345,7 @@ export default function ProcessInstanceListTable({
         </TableCell>
       );
     }
-    if (columnAccessor === 'updated_at_in_seconds') {
+    if (columnAccessor === "updated_at_in_seconds") {
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={processInstance.updated_at_in_seconds}
@@ -354,7 +354,7 @@ export default function ProcessInstanceListTable({
         />
       );
     }
-    if (columnAccessor === 'task_updated_at_in_seconds') {
+    if (columnAccessor === "task_updated_at_in_seconds") {
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={processInstance.task_updated_at_in_seconds || 0}
@@ -364,9 +364,9 @@ export default function ProcessInstanceListTable({
       );
     }
     let cellContent: any = null;
-    if (columnAccessor === 'process_model_display_name') {
+    if (columnAccessor === "process_model_display_name") {
       cellContent = formatter(processInstance, value);
-    } else if (columnAccessor === 'waiting_for') {
+    } else if (columnAccessor === "waiting_for") {
       cellContent = getWaitingForTableCellComponent(processInstance);
     } else {
       cellContent = formatter(processInstance, value);
@@ -387,8 +387,8 @@ export default function ProcessInstanceListTable({
     let headerTextElement = null;
     if (header) {
       headerTextElement = header.text;
-      if (header.text.includes('**')) {
-        const parts = header.text.split('**');
+      if (header.text.includes("**")) {
+        const parts = header.text.split("**");
         if (parts.length === 3) {
           headerTextElement = (
             <>
@@ -435,7 +435,7 @@ export default function ProcessInstanceListTable({
     let filterButtonLink = null;
     if (showLinkToReport && pagination && pagination.total) {
       filterButtonLink = (
-        <Grid style={{ textAlign: 'right' }} offset="auto">
+        <Grid style={{ textAlign: "right" }} offset="auto">
           <SpiffTooltip title="View Filterable List" placement="top">
             <IconButton
               data-testid="process-instance-list-link"
@@ -465,7 +465,7 @@ export default function ProcessInstanceListTable({
       return column.Header;
     });
     if (showActionsColumn) {
-      headers.push('Action');
+      headers.push("Action");
     }
 
     const rows = processInstances.map((processInstance: ProcessInstance) => {
@@ -479,7 +479,7 @@ export default function ProcessInstanceListTable({
         let hasAccessToCompleteTask = false;
         if (
           canCompleteAllTasks ||
-          (processInstance.potential_owner_usernames || '').match(regex)
+          (processInstance.potential_owner_usernames || "").match(regex)
         ) {
           hasAccessToCompleteTask = true;
         }
@@ -488,7 +488,7 @@ export default function ProcessInstanceListTable({
             <Button
               variant="contained"
               href={taskShowUrl}
-              style={{ width: '60px' }}
+              style={{ width: "60px" }}
               size="small"
             >
               Go
@@ -503,7 +503,7 @@ export default function ProcessInstanceListTable({
             <IconButton
               href={piLink}
               target="_blank"
-              style={{ width: '50px' }}
+              style={{ width: "50px" }}
               size="small"
             >
               <OpenInNew />
@@ -512,9 +512,9 @@ export default function ProcessInstanceListTable({
         );
 
         const statusesToExcludeTaskButton = [
-          'error',
-          'terminated',
-          'suspended',
+          "error",
+          "terminated",
+          "suspended",
         ];
         if (!(processInstance.status in statusesToExcludeTaskButton)) {
           currentRow.push(
@@ -528,15 +528,15 @@ export default function ProcessInstanceListTable({
         }
       }
 
-      const rowStyle = { cursor: 'pointer' };
-      let variantFromMetadata = 'all';
+      const rowStyle = { cursor: "pointer" };
+      let variantFromMetadata = "all";
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {
           if (
-            filter.field_name === 'with_relation_to_me' &&
+            filter.field_name === "with_relation_to_me" &&
             filter.field_value
           ) {
-            variantFromMetadata = 'for-me';
+            variantFromMetadata = "for-me";
           }
         });
       }
@@ -552,7 +552,7 @@ export default function ProcessInstanceListTable({
       );
     });
 
-    let tableProps: any = { size: 'lg' };
+    let tableProps: any = { size: "lg" };
     if (tableHtmlId) {
       tableProps = { ...tableProps, id: tableHtmlId };
     }
@@ -567,7 +567,7 @@ export default function ProcessInstanceListTable({
                 <TableCell
                   key={tableRowHeader}
                   title={
-                    tableRowHeader === 'Id' ? 'Process Instance Id' : undefined
+                    tableRowHeader === "Id" ? "Process Instance ID" : undefined
                   }
                 >
                   <TableSortLabel>{tableRowHeader}</TableSortLabel>
@@ -584,14 +584,14 @@ export default function ProcessInstanceListTable({
   const errors: string[] = [];
   if (additionalReportFilters && reportMetadata) {
     errors.push(
-      'Both reportMetadata and additionalReportFilters were provided. ' +
-        'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.',
+      "Both reportMetadata and additionalReportFilters were provided. " +
+        "It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.",
     );
   }
   if (reportIdentifier && reportMetadata) {
     errors.push(
-      'Both reportIdentifier and reportMetadata were provided. ' +
-        'You must use one or the other.',
+      "Both reportIdentifier and reportMetadata were provided. " +
+        "You must use one or the other.",
     );
   }
   if (errors.length > 0) {
@@ -600,7 +600,7 @@ export default function ProcessInstanceListTable({
         {tableTitleLine()}
         <Grid size={{ xs: 12 }}>
           {childrenForErrorObject(
-            errorForDisplayFromString(errors.join(' ::: ')),
+            errorForDisplayFromString(errors.join(" ::: ")),
           )}
         </Grid>
       </Grid>
