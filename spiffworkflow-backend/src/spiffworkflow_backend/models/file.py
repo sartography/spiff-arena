@@ -12,6 +12,7 @@ from spiffworkflow_backend.models.reference_cache import Reference
 
 class FileType(SpiffEnum):
     bpmn = "bpmn"
+    css = "css"
     csv = "csv"
     dmn = "dmn"
     doc = "doc"
@@ -37,6 +38,7 @@ class FileType(SpiffEnum):
 
 CONTENT_TYPES = {
     "bpmn": "text/xml",
+    "css": "text/css",
     "csv": "text/csv",
     "dmn": "text/xml",
     "doc": "application/msword",

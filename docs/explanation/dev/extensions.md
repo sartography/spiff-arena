@@ -46,6 +46,50 @@ In this case, that is just a single MarkdownRenderer, which defines how to conta
 An entirely new application feature with frontend and backend components can be implemented using an extension.
 [This TypeScript interface file](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-frontend/src/extension_ui_schema_interfaces.ts) codifies the configuration of the extension uischema.
 
+## Adding Custom CSS with Extensions
+
+Extensions can include custom CSS files to style their components or even modify global styling. To add custom CSS to your extension:
+
+1. Create a CSS file within your extension process model directory (e.g., `styles.css`)
+2. Specify the `css` display location and reference the CSS file in `location_specific_configs.css_file` in your `extension_uischema.json`:
+
+```json
+{
+  "version": "0.2",
+  "pages": {
+    "/your-page": {
+      "header": "Your Extension",
+      "components": []
+    }
+  },
+  "ux_elements": [
+    {
+      "label": "Your Extension",
+      "page": "/your-page",
+      "display_location": "primary_nav_item"
+    },
+    {
+      "label": "Custom Styling",
+      "page": "/your-page",
+      "display_location": "css",
+      "location_specific_configs": {
+        "css_file": "styles.css"
+      }
+    }
+  ]
+}
+```
+
+The CSS will be automatically loaded and applied when the extension is loaded.
+
+This feature allows you to:
+
+- Customize the appearance of your extension pages
+- Override default site styles when needed
+
+Use specific class names to avoid conflicts with other extensions or the main application.
+Be aware that site structure and style may change over time, so try to minimize customization to avoid future breakage.
+
 ## Use Cases
 
 If your organization has specific needs not catered to by the standard SpiffArena features, you can use extensions to add those features.
@@ -57,6 +101,7 @@ Here are some of the use cases already implemented by our users:
 - Incorporating arbitrary content into custom pages using markdown (as in the above example)
 - Creating and accessing tailor-made APIs
 - Rendering the output of these APIs using Jinja templates and markdown
+- Adding custom styling with CSS files
 
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
 When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](connector_proxy).
