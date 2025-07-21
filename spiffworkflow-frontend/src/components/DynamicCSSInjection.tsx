@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface DynamicCSSInjectionProps {
   cssContent: string;
@@ -12,10 +12,7 @@ interface DynamicCSSInjectionProps {
  * @param cssContent - The CSS content to inject
  * @param id - A unique identifier for the style element
  */
-const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({
-  cssContent,
-  id,
-}) => {
+function DynamicCSSInjection({ cssContent, id }: DynamicCSSInjectionProps) {
   const styleRef = useRef<HTMLStyleElement | null>(null);
 
   useEffect(() => {
@@ -43,6 +40,6 @@ const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({
 
   // This component doesn't render anything visible
   return null;
-};
+}
 
 export default DynamicCSSInjection;
