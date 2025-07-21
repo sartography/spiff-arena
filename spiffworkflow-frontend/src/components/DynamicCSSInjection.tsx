@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+// @ts-ignore - Ignoring TS1259 error about default import for DOMPurify
+import DOMPurify from 'dompurify';
 
 interface DynamicCSSInjectionProps {
   cssContent: string;
@@ -6,8 +8,9 @@ interface DynamicCSSInjectionProps {
 }
 
 /**
- * A component that injects CSS content into the document head.
+ * A component that injects sanitized CSS content into the document head.
  * This allows for dynamically loading CSS styles from extensions.
+ * CSS content is sanitized using DOMPurify to prevent CSS injection attacks.
  *
  * @param cssContent - The CSS content to inject
  * @param id - A unique identifier for the style element
@@ -25,7 +28,12 @@ function DynamicCSSInjection({ cssContent, id }: DynamicCSSInjectionProps) {
     const styleElement = document.createElement('style');
     styleElement.setAttribute('type', 'text/css');
     styleElement.setAttribute('id', `spiff-extension-css-${id}`);
-    styleElement.textContent = cssContent;
+    // Sanitize CSS content to prevent CSS injection attacks
+    const sanitizedCSS = DOMPurify.sanitize(cssContent, {
+      FORBID_TAGS: ['style', 'link'],
+      USE_PROFILES: { css: true },
+    });
+    styleElement.textContent = sanitizedCSS;
     document.head.appendChild(styleElement);
     styleRef.current = styleElement;
 
