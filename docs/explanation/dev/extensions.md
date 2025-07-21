@@ -59,7 +59,7 @@ Extensions can include custom CSS files to style their components or even modify
   "pages": {
     "/your-page": {
       "header": "Your Extension",
-      "components": [...]
+      "components": []
     }
   },
   "ux_elements": [
