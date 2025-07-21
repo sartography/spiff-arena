@@ -8,19 +8,22 @@ interface DynamicCSSInjectionProps {
 /**
  * A component that injects CSS content into the document head.
  * This allows for dynamically loading CSS styles from extensions.
- * 
+ *
  * @param cssContent - The CSS content to inject
  * @param id - A unique identifier for the style element
  */
-const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({ cssContent, id }) => {
+const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({
+  cssContent,
+  id,
+}) => {
   const styleRef = useRef<HTMLStyleElement | null>(null);
-  
+
   useEffect(() => {
     // Clean up any previous style element
     if (styleRef.current && document.head.contains(styleRef.current)) {
       document.head.removeChild(styleRef.current);
     }
-    
+
     // Create and inject new style element
     const styleElement = document.createElement('style');
     styleElement.setAttribute('type', 'text/css');
@@ -28,7 +31,7 @@ const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({ cssContent, i
     styleElement.textContent = cssContent;
     document.head.appendChild(styleElement);
     styleRef.current = styleElement;
-    
+
     // Clean up on unmount
     return () => {
       if (styleRef.current && document.head.contains(styleRef.current)) {
@@ -37,7 +40,7 @@ const DynamicCSSInjection: React.FC<DynamicCSSInjectionProps> = ({ cssContent, i
       }
     };
   }, [cssContent, id]);
-  
+
   // This component doesn't render anything visible
   return null;
 };

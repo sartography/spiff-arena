@@ -80,9 +80,9 @@ Extensions can include custom CSS files to style their components or even modify
 }
 ```
 
-The CSS will be automatically loaded and applied when the extension is loaded. 
+The CSS will be automatically loaded and applied when the extension is loaded.
 
-Note: You must specify the CSS file name using the `css_file` property within the `location_specific_configs` object. If this is not provided, it will fall back to using the `page` property for backward compatibility, but this is not recommended as it overloads the purpose of the `page` property.
+Note: You must specify the CSS file name using the `css_file` property within the `location_specific_configs` object.
 
 This feature allows you to:
 

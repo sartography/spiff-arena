@@ -42,8 +42,10 @@ export default function ContainerForExtensions() {
   const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
-  
-  const [extensionCssFiles, setExtensionCssFiles] = useState<Array<{ content: string; id: string }>>([]); 
+
+  const [extensionCssFiles, setExtensionCssFiles] = useState<
+    Array<{ content: string; id: string }>
+  >([]);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -150,7 +152,7 @@ export default function ContainerForExtensions() {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = [];
       const cssFiles: Array<{ content: string; id: string }> = [];
-      
+
       processModels.forEach((processModel: ProcessModel) => {
         const extensionUiSchemaFile = processModel.files.find(
           (file: ProcessFile) => file.name === 'extension_uischema.json',
@@ -166,24 +168,32 @@ export default function ContainerForExtensions() {
               !extensionUiSchema.disabled
             ) {
               // Process ux elements and extract CSS elements
-              extensionUiSchema.ux_elements.forEach((element: UiSchemaUxElement) => {
-                if (element.display_location === UiSchemaDisplayLocation.css) {
-                  // Find the CSS file in the process model files
-                  const cssFilename = element.location_specific_configs?.css_file || element.page;
-                  const cssFile = processModel.files.find(
-                    (file: ProcessFile) => file.name === cssFilename
-                  );
-                  if (cssFile && cssFile.file_contents) {
-                    cssFiles.push({
-                      content: cssFile.file_contents,
-                      id: `${processModel.id}-${cssFilename}`.replace(/[^a-zA-Z0-9]/g, '-')
-                    });
+              extensionUiSchema.ux_elements.forEach(
+                (element: UiSchemaUxElement) => {
+                  if (
+                    element.display_location === UiSchemaDisplayLocation.css
+                  ) {
+                    // Find the CSS file in the process model files
+                    const cssFilename =
+                      element.location_specific_configs?.css_file;
+                    const cssFile = processModel.files.find(
+                      (file: ProcessFile) => file.name === cssFilename,
+                    );
+                    if (cssFile && cssFile.file_contents) {
+                      cssFiles.push({
+                        content: cssFile.file_contents,
+                        id: `${processModel.id}-${cssFilename}`.replace(
+                          /[^a-zA-Z0-9]/g,
+                          '-',
+                        ),
+                      });
+                    }
+                  } else {
+                    // Normal UI element
+                    eni.push(element);
                   }
-                } else {
-                  // Normal UI element
-                  eni.push(element);
-                }
-              });
+                },
+              );
             }
           } catch (jsonParseError: any) {
             console.error(
@@ -192,11 +202,11 @@ export default function ContainerForExtensions() {
           }
         }
       });
-      
+
       if (eni.length > 0) {
         setExtensionUxElements(eni);
       }
-      
+
       if (cssFiles.length > 0) {
         setExtensionCssFiles(cssFiles);
       }
