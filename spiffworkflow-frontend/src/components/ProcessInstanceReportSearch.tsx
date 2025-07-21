@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Autocomplete, Grid, FormLabel, TextField } from '@mui/material';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -16,8 +17,9 @@ export default function ProcessInstanceReportSearch({
   onChange,
   selectedReportId,
   handleSetSelectedReportCallback,
-  titleText = 'Process instance perspectives',
+  titleText = undefined,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [processInstanceReports, setProcessInstanceReports] = useState<
     ProcessInstanceReport[] | null
   >(null);
@@ -64,7 +66,7 @@ export default function ProcessInstanceReportSearch({
     return (
       <Grid container spacing={2} style={{ paddingTop: '0px' }}>
         <Grid item xs={12} sm={6} md={12}>
-          <FormLabel>{titleText}</FormLabel>
+          <FormLabel>{titleText || t('process_perspectives')}</FormLabel>
           <Autocomplete
             onChange={(_, value) => onChange(value)}
             id="process-instance-report-select"
@@ -88,7 +90,7 @@ export default function ProcessInstanceReportSearch({
               <TextField
                 fullWidth
                 inputProps={params.inputProps}
-                placeholder="Choose a process instance perspective"
+                placeholder={t('choose_process_instance_perspective')}
                 slotProps={{
                   input: params.InputProps,
                   htmlInput: params.inputProps,

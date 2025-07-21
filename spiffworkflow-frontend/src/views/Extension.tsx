@@ -1,5 +1,6 @@
 import { createElement, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Editor } from '@monaco-editor/react';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessFile, ProcessModel } from '../interfaces';
@@ -34,6 +35,7 @@ export default function Extension({
   pageIdentifier,
   displayErrors = true,
 }: OwnProps) {
+  const { t } = useTranslation();
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -79,7 +81,7 @@ export default function Extension({
         if (value === undefined) {
           isValid = false;
           addError({
-            message: `Could not find a value for ${k} in form data.`,
+            message: t('form_no_value', { key: k }),
           });
         }
         return value;

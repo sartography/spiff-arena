@@ -8,6 +8,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import HttpService from '../services/HttpService';
 import { ProcessFile, TestCaseResult, TestCaseResults } from '../interfaces';
@@ -28,6 +29,7 @@ export default function ProcessModelTestRun({
   titleText,
   classNameForModal,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [testCaseResults, setTestCaseResults] =
     useState<TestCaseResults | null>(null);
   const [showTestCaseResultsModal, setShowTestCaseResultsModal] =
@@ -103,7 +105,7 @@ export default function ProcessModelTestRun({
           const errorForDisplay = errorForDisplayFromTestCaseErrorDetails(
             testCaseResult.test_case_error_details,
           );
-          const errorChildren = childrenForErrorObject(errorForDisplay);
+          const errorChildren = childrenForErrorObject(errorForDisplay, t);
           failingRows.push(
             <>
               <br />

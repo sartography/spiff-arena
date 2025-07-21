@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Upload, Edit, Delete } from '@mui/icons-material';
 import { Stack, IconButton, Typography } from '@mui/material';
 import { Can } from '@casl/react';
@@ -28,6 +29,7 @@ export default function ProcessModelShow() {
   const params = useParams();
   const { addError, removeError } = useAPIError();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [reloadModel, setReloadModel] = useState<boolean>(false);
@@ -194,7 +196,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessModelPublished(false)}
         >
           <a href={prUrl} target="_void()">
-            View the changes and create a Pull Request
+            {t('view_changes_create_pr')}
           </a>
         </Notification>
       );
@@ -222,7 +224,7 @@ export default function ProcessModelShow() {
         />
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            [t('process_groups'), '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -232,10 +234,10 @@ export default function ProcessModelShow() {
         {processModelPublishMessage()}
         <Stack direction="row" spacing={1}>
           <Typography variant="h2" component="h1">
-            Process Model: {processModel.display_name}
+            {t('process_model')}: {processModel.display_name}
           </Typography>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <SpiffTooltip title="Edit Process Model" placement="top">
+            <SpiffTooltip title={t('edit_process_model')} placement="top">
               <IconButton
                 data-testid="edit-process-model-button"
                 component="a"
@@ -249,11 +251,13 @@ export default function ProcessModelShow() {
             <ButtonWithConfirmation
               data-testid="delete-process-model-button"
               renderIcon={<Delete />}
-              iconDescription="Delete Process Model"
+              iconDescription={t('delete_process_model')}
               hasIconOnly
-              description={`Delete process model: ${processModel.display_name}`}
+              description={t('delete_process_model_confirm', {
+                processModelName: processModel.display_name,
+              })}
               onConfirmation={deleteProcessModel}
-              confirmButtonLabel="Delete"
+              confirmButtonLabel={t('delete')}
             />
           </Can>
           {!processModel.actions || processModel.actions.publish ? (
@@ -274,7 +278,7 @@ export default function ProcessModelShow() {
           ) : null}
           <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
             {hasTestCaseFiles ? (
-              <ProcessModelTestRun titleText="Run all BPMN unit tests for this process model" />
+              <ProcessModelTestRun titleText={t('run_bpmn_tests')} />
             ) : null}
           </Can>
         </Stack>

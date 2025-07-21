@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -25,6 +26,7 @@ export default function SecretList() {
 
   const [secrets, setSecrets] = useState([]);
   const [pagination, setPagination] = useState(null);
+  const { t } = useTranslation();
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -101,10 +103,10 @@ export default function SecretList() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>Secret Key</TableCell>
-              <TableCell>Creator</TableCell>
-              <TableCell>Delete</TableCell>
+              <TableCell>{t('id')}</TableCell>
+              <TableCell>{t('secret_key')}</TableCell>
+              <TableCell>{t('creator')}</TableCell>
+              <TableCell>{t('delete')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{rows}</TableBody>
@@ -126,7 +128,7 @@ export default function SecretList() {
         />
       );
     } else {
-      displayText = <p>No Secrets to Display</p>;
+      displayText = <p>{t('no_secrets_to_display')}</p>;
     }
     return displayText;
   };
@@ -134,14 +136,14 @@ export default function SecretList() {
   if (pagination) {
     return (
       <div>
-        <Typography variant="h1">Secrets</Typography>
+        <Typography variant="h1">{t('secrets')}</Typography>
         {SecretsDisplayArea()}
         <Button
           component={Link}
           variant="contained"
           to="/configuration/secrets/new"
         >
-          Add a secret
+          {t('add_a_secret')}
         </Button>
       </div>
     );
