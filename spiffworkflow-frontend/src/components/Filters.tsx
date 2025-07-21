@@ -4,6 +4,7 @@ import {
 } from '@mui/icons-material';
 import { Grid, IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
@@ -27,6 +28,7 @@ export default function Filters({
     setShowFilterOptions(!showFilterOptions);
   };
 
+  const { t } = useTranslation();
   const [copiedReportLinkToClipboard, setCopiedReportLinkToClipboard] =
     useState<boolean>(false);
 
@@ -42,11 +44,11 @@ export default function Filters({
     const elements = [];
     if (reportHash && showFilterOptions) {
       elements.push(
-        <SpiffTooltip title="Copy shareable link">
+        <SpiffTooltip title={t('copy_shareable_link')}>
           <IconButton
             onClick={copyReportLink}
             color="primary"
-            aria-label="Copy shareable link"
+            aria-label={t('copy_shareable_link')}
           >
             <LinkIcon />
           </IconButton>
@@ -54,11 +56,11 @@ export default function Filters({
       );
     }
     elements.push(
-      <SpiffTooltip title="Filter Options">
+      <SpiffTooltip title={t('filter_options')}>
         <IconButton
           data-testid="filter-section-expand-toggle"
           color="primary"
-          aria-label="Filter Options"
+          aria-label={t('filter_options')}
           onClick={toggleShowFilterOptions}
         >
           <FilterAltIcon />
@@ -71,7 +73,7 @@ export default function Filters({
           open={copiedReportLinkToClipboard}
           autoHideDuration={2000}
           onClose={() => setCopiedReportLinkToClipboard(false)}
-          message="Copied link to clipboard"
+          message={t('copied_link_to_clipboard')}
         />,
       );
     }

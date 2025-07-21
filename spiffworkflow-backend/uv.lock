@@ -797,19 +797,6 @@ wheels = [
 ]
 
 [[package]]
-name = "flask-marshmallow"
-version = "1.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "flask" },
-    { name = "marshmallow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/66/91/f3893613c3a388a643f8a96e1b08a17b863fcc03beb6f2a40bb224da7df7/flask_marshmallow-1.3.0.tar.gz", hash = "sha256:27a35d0ce5dcba161cc5f2f4764afbc2536c93fa439a793250b827835e3f3be6", size = 40852 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/cd/5b3d4103460766eb834f6deaf26a87a4735a0c9687f24163e07d1f3d7791/flask_marshmallow-1.3.0-py3-none-any.whl", hash = "sha256:c0a0644b46406851873ab41c1e8a7de3ef27fa69b00b89bf630f1696ec0813a0", size = 12174 },
-]
-
-[[package]]
 name = "flask-migrate"
 version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1293,31 +1280,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/03/81/763717b3448e5d3a3906f27ab2ffedc9a495e8077946f54b8033967d29fd/marshmallow-3.20.2.tar.gz", hash = "sha256:4c1daff273513dc5eb24b219a8035559dc573c8f322558ef85f5438ddd1236dd", size = 185043 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/57/e9/4368d49d3b462da16a3bac976487764a84dd85cef97232c7bd61f5bdedf3/marshmallow-3.20.2-py3-none-any.whl", hash = "sha256:c21d4b98fee747c130e6bc8f45c4b3199ea66bc00c12ee1f639f0aeca034d5e9", size = 49449 },
-]
-
-[[package]]
-name = "marshmallow-enum"
-version = "1.5.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "marshmallow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/8c/ceecdce57dfd37913143087fffd15f38562a94f0d22823e3c66eac0dca31/marshmallow-enum-1.5.1.tar.gz", hash = "sha256:38e697e11f45a8e64b4a1e664000897c659b60aa57bfa18d44e226a9920b6e58", size = 4013 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/59/ef3a3dc499be447098d4a89399beb869f813fee1b5a57d5d79dee2c1bf51/marshmallow_enum-1.5.1-py2.py3-none-any.whl", hash = "sha256:57161ab3dbfde4f57adeb12090f39592e992b9c86d206d02f6bd03ebec60f072", size = 4186 },
-]
-
-[[package]]
-name = "marshmallow-sqlalchemy"
-version = "1.4.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "marshmallow" },
-    { name = "sqlalchemy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1d/8c/861ed468b99773866d59e315a73a02538f503c99167d24b3b3f1c8e0242c/marshmallow_sqlalchemy-1.4.2.tar.gz", hash = "sha256:6410304bf98ec26ea35f3f9d3cee82e51fd093c434612add32a0bdcdb5668f7c", size = 51428 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/62/9d87301c861b9bded849082d5c5d306dcfd0c3c304b7ed70d2151caaa4da/marshmallow_sqlalchemy-1.4.2-py3-none-any.whl", hash = "sha256:65aee301c4601e76a2fdb02764a65c18913afba2a3506a326c625d13ab405b40", size = 16740 },
 ]
 
 [[package]]
@@ -2389,7 +2351,6 @@ dependencies = [
     { name = "flask-bcrypt" },
     { name = "flask-cors" },
     { name = "flask-jwt-extended" },
-    { name = "flask-marshmallow" },
     { name = "flask-migrate" },
     { name = "flask-restful" },
     { name = "flask-session" },
@@ -2397,9 +2358,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "lxml" },
-    { name = "marshmallow" },
-    { name = "marshmallow-enum" },
-    { name = "marshmallow-sqlalchemy" },
     { name = "mysqlclient" },
     { name = "prometheus-flask-exporter" },
     { name = "psycopg2" },
@@ -2462,7 +2420,6 @@ requires-dist = [
     { name = "flask-bcrypt", specifier = ">=0.7.1" },
     { name = "flask-cors", specifier = ">=3.0.10" },
     { name = "flask-jwt-extended", specifier = ">=4.7.1" },
-    { name = "flask-marshmallow", specifier = "==1.3.0" },
     { name = "flask-migrate", specifier = ">=4.0.0" },
     { name = "flask-restful", specifier = ">=0.3.9" },
     { name = "flask-session", specifier = ">=0.8.0" },
@@ -2470,9 +2427,6 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "lxml", specifier = ">=5.3.1" },
-    { name = "marshmallow", specifier = "==3.20.2" },
-    { name = "marshmallow-enum", specifier = ">=1.5.1" },
-    { name = "marshmallow-sqlalchemy", specifier = ">=1.4.2" },
     { name = "mysqlclient", specifier = ">=2.2.6" },
     { name = "prometheus-flask-exporter", specifier = ">=0.23.1" },
     { name = "psycopg2", specifier = ">=2.9.10,<2.10" },

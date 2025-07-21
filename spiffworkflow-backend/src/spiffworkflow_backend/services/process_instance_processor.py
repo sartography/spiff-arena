@@ -390,13 +390,22 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             if external_context:
                 methods.update(external_context)
 
+            # Debug logs for script execution
+            task_name = task.task_spec.bpmn_name if hasattr(task.task_spec, "bpmn_name") else task.task_spec.name
+            task_id = str(task.id)
+            current_app.logger.debug(f"SCRIPT TASK EXECUTION - START: {task_name} (ID: {task_id})")
+
             # do not run script if it is blank
             if script:
+                current_app.logger.debug(f"SCRIPT TASK EXECUTION - Running script for: {task_name} (ID: {task_id})")
                 super().execute(task, script, methods)
+                current_app.logger.debug(f"SCRIPT TASK EXECUTION - COMPLETED: {task_name} (ID: {task_id})")
             return True
         except WorkflowException as e:
+            current_app.logger.error(f"SCRIPT TASK EXECUTION - WORKFLOW EXCEPTION: {str(e)}")
             raise e
         except Exception as e:
+            current_app.logger.error(f"SCRIPT TASK EXECUTION - EXCEPTION: {str(e)}")
             raise self.create_task_exec_exception(task, script, e) from e
 
     def call_service(
@@ -1455,6 +1464,16 @@ class ProcessInstanceProcessor:
         should_schedule_waiting_timer_events: bool = True,
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
+        # Debug logs for engine steps execution
+        process_id = self.process_instance_model.id
+        current_status = self.process_instance_model.status
+        ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
+        waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
+
+        current_app.logger.debug(f"ENGINE STEPS - START: Process {process_id}, Status: {current_status}")
+        current_app.logger.debug(f"ENGINE STEPS - Ready tasks: {ready_tasks}")
+        current_app.logger.debug(f"ENGINE STEPS - Waiting tasks: {waiting_tasks}")
+
         self._add_bpmn_process_definitions(
             self.serialize(),
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
@@ -1494,6 +1513,17 @@ class ProcessInstanceProcessor:
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         self.check_all_tasks()
+
+        # Debug logs for engine steps completion
+        new_status = self.get_status().value
+        after_ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
+        after_waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
+
+        current_app.logger.debug(f"ENGINE STEPS - FINISH: Process {process_id}, New Status: {new_status}")
+        current_app.logger.debug(f"ENGINE STEPS - New Ready tasks: {after_ready_tasks}")
+        current_app.logger.debug(f"ENGINE STEPS - New Waiting tasks: {after_waiting_tasks}")
+        current_app.logger.debug(f"ENGINE STEPS - Task Runnability: {task_runnability}")
+
         return task_runnability
 
     @classmethod

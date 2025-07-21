@@ -94,7 +94,7 @@ def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
     page.get_by_role("button", name="Submit").click()
 
     # Verify form3 data and highlighting
-    heading = page.get_by_role("heading", name=re.compile(r"Process Instance Id:"))
+    heading = page.get_by_role("heading", name=re.compile(r"Process Instance ID:"))
     heading.wait_for(timeout=10000)
     page.locator('g[data-element-id="form3"]').click()
     expect(page.get_by_text('"form_num_1": 2')).to_be_visible()

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 test('renders home link', () => {
   // render(

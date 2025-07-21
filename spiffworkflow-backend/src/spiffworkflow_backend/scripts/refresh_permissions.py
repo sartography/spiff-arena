@@ -32,5 +32,25 @@ class RefreshPermissions(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
+        from flask import current_app
+
         group_info = args[0]
-        AuthorizationService.refresh_permissions(group_info, **kwargs)
+        current_app.logger.debug(f"SET PERMISSIONS - START: RefreshPermissions script executing with {len(group_info)} group(s)")
+
+        try:
+            for i, group in enumerate(group_info):
+                current_app.logger.debug(
+                    f"SET PERMISSIONS - Processing group {i + 1}/{len(group_info)}: {group.get('name', 'unknown')}"
+                )
+                group_name = group.get("name", "unknown")
+                num_permissions = len(group.get("permissions", []))
+                num_users = len(group.get("users", []))
+                current_app.logger.debug(
+                    f"SET PERMISSIONS - Group {group_name} has {num_permissions} permission(s) and {num_users} user(s)"
+                )
+
+            AuthorizationService.refresh_permissions(group_info, **kwargs)
+            current_app.logger.debug("SET PERMISSIONS - COMPLETED: RefreshPermissions script executed successfully")
+        except Exception as ex:
+            current_app.logger.error(f"SET PERMISSIONS - ERROR: Exception occurred: {str(ex)}")
+            raise

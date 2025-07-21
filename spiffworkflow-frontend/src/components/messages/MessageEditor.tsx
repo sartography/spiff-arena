@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CustomForm from '../CustomForm';
 import {
   ProcessGroup,
@@ -40,6 +41,7 @@ export function MessageEditor({
   const [displayNotSyncedMessage, setDisplayNotSyncedMessage] =
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const updateCorrelationPropertiesOnProcessGroup = useCallback(
     (currentMessagesForId: MessageDefinition, formData: any) => {
@@ -119,7 +121,7 @@ export function MessageEditor({
       } catch (e) {
         // TODO: display error in a tag like we normally do
         // eslint-disable-next-line no-alert
-        alert(`Invalid schema: ${e}`);
+        alert(t('invalid_schema_error', { error: e }));
         return;
       }
 
@@ -144,6 +146,7 @@ export function MessageEditor({
       modifiedProcessGroupIdentifier,
       processGroup,
       updateCorrelationPropertiesOnProcessGroup,
+      t,
     ],
   );
 
@@ -193,52 +196,46 @@ export function MessageEditor({
     properties: {
       processGroupIdentifier: {
         type: 'string',
-        title: 'Location',
+        title: t('location'),
         default: '/',
         pattern: '^[\\/\\w-]+$',
-        validationErrorMessage:
-          'must contain only alphanumeric characters, "/", underscores, or hyphens',
-        description:
-          'Only process models within this path will have access to this message.',
+        validationErrorMessage: t('location_validation_error'),
+        description: t('location_description'),
       },
       messageId: {
         type: 'string',
-        title: 'Message Name',
+        title: t('message_name'),
         pattern: '^[\\w-]+$',
-        validationErrorMessage:
-          'must contain only alphanumeric characters, underscores, or hyphens',
-        description:
-          'The mesage name should contain no spaces or special characters',
+        validationErrorMessage: t('message_name_validation_error'),
+        description: t('message_name_description'),
       },
       correlation_properties: {
         type: 'array',
-        title: 'Correlation Properties',
+        title: t('correlation_properties'),
         items: {
           type: 'object',
           required: ['id', 'retrievalExpression'],
           properties: {
             id: {
               type: 'string',
-              title: 'Property Name',
-              description: '',
+              title: t('property_name'),
+              description: t('property_name_description'),
               pattern: '^[\\w-]+$',
-              validationErrorMessage:
-                'The property name should contain no spaces or special characters',
+              validationErrorMessage: t('property_name_validation_error'),
             },
             retrievalExpression: {
               type: 'string',
-              title: 'Retrieval Expression',
-              description:
-                'This is how to extract the property from the body of the message',
+              title: t('retrieval_expression'),
+              description: t('retrieval_expression_description'),
             },
           },
         },
       },
       schema: {
         type: 'string',
-        title: 'Json Schema',
+        title: t('json_schema'),
         default: '{}',
-        description: 'The payload must conform to this schema if defined.',
+        description: t('json_schema_description_editor'),
       },
     },
   };
@@ -266,26 +263,23 @@ export function MessageEditor({
       <>
         {displaySaveMessageMessage ? (
           <Notification
-            title="Save successful"
+            title={t('save_success_title')}
             hideCloseButton
             timeout={4000}
             onClose={() => setDisplaySaveMessageMessage(false)}
           >
-            Message has been saved
+            {t('save_success_message')}
           </Notification>
         ) : null}
         {displayNotSyncedMessage && !displaySaveMessageMessage ? (
           <Notification
-            title="Please save the current message configuration"
+            title={t('save_warning_title')}
             type="warning"
             hideCloseButton
             timeout={4000}
             onClose={() => setDisplayNotSyncedMessage(false)}
           >
-            There is a difference between the message properties in this process
-            model and the shared message data stored with the process group.
-            Updating the message properties by saving is recommended to ensure
-            data consistency
+            {t('save_warning_message')}
           </Notification>
         ) : null}
         <CustomForm
@@ -297,7 +291,7 @@ export function MessageEditor({
           onSubmit={updateProcessGroupWithMessages}
           hideSubmitButton
           onChange={updateFormData}
-          submitButtonText="Save"
+          submitButtonText={t('save')}
           bpmnEvent={messageEvent}
         />
       </>

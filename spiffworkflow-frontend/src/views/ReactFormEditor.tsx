@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -29,6 +30,7 @@ import ActiveUsers from '../components/ActiveUsers';
 // end up diverging greatly
 
 export default function ReactFormEditor() {
+  const { t } = useTranslation();
   const params = useParams();
   const { addError, removeError } = useAPIError();
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -192,10 +194,10 @@ export default function ReactFormEditor() {
       <Modal open={showFileNameEditor} onClose={handleFileNameCancel}>
         <Box sx={{ p: 4, bgcolor: 'background.paper', boxShadow: 24 }}>
           <Typography variant="h6" component="h2">
-            Process Model File Name
+            {t('diagram_file_name_editor_title')}
           </Typography>
           <TextField
-            label="File Name"
+            label={t('file_name')}
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
             autoFocus
@@ -209,14 +211,14 @@ export default function ReactFormEditor() {
               variant="contained"
               color="primary"
             >
-              Save Changes
+              {t('save_changes')}
             </Button>
             <Button
               onClick={handleFileNameCancel}
               variant="outlined"
               color="secondary"
             >
-              Cancel
+              {t('cancel')}
             </Button>
           </ButtonGroup>
         </Box>
@@ -228,10 +230,10 @@ export default function ReactFormEditor() {
     if (displaySaveFileMessage) {
       return (
         <Notification
-          title="File Saved: "
+          title={t('file_saved_title')}
           onClose={() => setDisplaySaveFileMessage(false)}
         >
-          Changes to the file were saved.
+          {t('file_saved_message')}
         </Notification>
       );
     }
@@ -265,7 +267,7 @@ export default function ReactFormEditor() {
   // use a useRef and add the file name when it is available to avoid additional network calls to process-model-show when the breadcrumb re-renders due to file name changing.
   // without the useRef, it causes a network call (in Breadcrumb code) everytime a character is typed in the save as filename modal.
   const hotCrumbs = useRef<any[]>([
-    ['Process Groups', '/process-groups'],
+    [t('process_groups'), '/process-groups'],
     {
       entityToExplode: params.process_model_id || '',
       entityType: 'process-model-id',
@@ -284,10 +286,7 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
-        <h1>
-          Process Model File{processModelFile ? ': ' : ''}
-          {processModelFileName}
-        </h1>
+        <h1>{t('process_model_file', { fileName: processModelFileName })}</h1>
         {newFileNameBox()}
         {saveFileMessage()}
 
@@ -303,7 +302,7 @@ export default function ReactFormEditor() {
               color="primary"
               data-testid="file-save-button"
             >
-              Save
+              {t('save')}
             </Button>
           </Can>
           <Can
@@ -314,9 +313,11 @@ export default function ReactFormEditor() {
             {params.file_name ? (
               <ButtonWithConfirmation
                 data-testid="delete-process-model-file"
-                description={`Delete file ${params.file_name}?`}
+                description={t('delete_file_description', {
+                  file: params.file_name,
+                })}
                 onConfirmation={deleteFile}
-                buttonLabel="Delete"
+                buttonLabel={t('delete')}
               />
             ) : null}
           </Can>
@@ -336,7 +337,7 @@ export default function ReactFormEditor() {
                 color="primary"
                 data-testid="view-diagram-button"
               >
-                View Diagram
+                {t('diagram_view_diagram')}
               </Button>
             ) : null}
           </Can>
