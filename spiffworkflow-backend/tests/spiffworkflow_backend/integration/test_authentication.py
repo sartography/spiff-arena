@@ -3,8 +3,8 @@ import base64
 import re
 
 from flask.app import Flask
-from flask.testing import FlaskClient
 from pytest_mock.plugin import MockerFixture
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
@@ -30,23 +30,25 @@ class TestAuthentication(BaseTest):
     def test_properly_adds_user_to_groups_from_token_on_login(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
             group_one = UserService.find_or_create_group("group_one")
             assert group_one.source_is_open_id is False
 
-            user = self.find_or_create_user("testing@e.com")
-            user.email = "testing@e.com"
+            user = self.find_or_create_user("testing@example.com")
+            user.email = "testing@example.com"
             user.service = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+            user.service_id = f"service:{user.service}::service_id:{user.service_id}"
             db.session.add(user)
             db.session.commit()
 
             access_token = user.encode_auth_token(
                 {
                     "groups": ["group_one", "group_two"],
-                    "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                    "iss": user.service,
+                    "sub": user.service_id,
                     "aud": "spiffworkflow-backend",
                 }
             )
@@ -66,7 +68,8 @@ class TestAuthentication(BaseTest):
             access_token = user.encode_auth_token(
                 {
                     "groups": ["group_one"],
-                    "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                    "iss": user.service,
+                    "sub": user.service_id,
                     "aud": "spiffworkflow-backend",
                 }
             )
@@ -98,7 +101,7 @@ class TestAuthentication(BaseTest):
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -126,7 +129,7 @@ class TestAuthentication(BaseTest):
         self,
         app: Flask,
         mocker: MockerFixture,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
@@ -144,13 +147,15 @@ class TestAuthentication(BaseTest):
 
         assert class_method_mock.call_count == 1
         assert response.status_code == 302
-        assert response.location.startswith(auth_uri)
-        assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), response.location) is not None
+        assert response.has_redirect_location
+        redirect_location = response.headers["location"]
+        assert redirect_location.startswith(auth_uri)
+        assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), redirect_location) is not None
 
     def test_raises_error_if_invalid_redirect_url(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         redirect_url = "http://www.bad_url.com/test-redirect-dne"
@@ -158,13 +163,13 @@ class TestAuthentication(BaseTest):
             f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )
         assert response.status_code == 500
-        assert response.json is not None
-        assert response.json["message"].startswith("InvalidRedirectUrlError:")
+        assert response.json() is not None
+        assert response.json()["message"].startswith("InvalidRedirectUrlError:")
 
     def test_can_access_public_endpoints_and_get_token(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         group_info: list[GroupPermissionsDict] = [
@@ -184,9 +189,8 @@ class TestAuthentication(BaseTest):
 
         response = client.get(url)
         assert response.status_code == 200
-        headers_dict = dict(response.headers)
-        assert "Set-Cookie" in headers_dict
-        cookie = headers_dict["Set-Cookie"]
+        assert "Set-Cookie" in response.headers
+        cookie = response.headers["Set-Cookie"]
         cookie_split = cookie.split(";")
         access_token = [cookie for cookie in cookie_split if cookie.startswith("access_token=")][0]
         assert access_token is not None
@@ -200,8 +204,7 @@ class TestAuthentication(BaseTest):
         assert response.status_code == 200
 
         # make sure we do not create and set a new cookie with this request
-        headers_dict = dict(response.headers)
-        assert "Set-Cookie" not in headers_dict
+        assert "Set-Cookie" not in response.headers
 
         response = client.get(
             "/v1.0/process-groups",

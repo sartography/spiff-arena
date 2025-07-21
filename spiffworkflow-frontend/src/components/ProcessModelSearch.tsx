@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { ProcessGroupLite, ProcessModel } from '../interfaces';
@@ -15,7 +16,7 @@ export default function ProcessModelSearch({
   processModels,
   selectedItem,
   onChange,
-  titleText = 'Process',
+  titleText = undefined,
   truncateProcessModelDisplayName = false,
 }: OwnProps) {
   const getParentGroupsDisplayName = (processModel: ProcessModel) => {
@@ -63,11 +64,12 @@ export default function ProcessModelSearch({
     });
   };
 
+  const { t } = useTranslation();
   return (
     <Autocomplete
       onChange={(_, value) => onChange(value)}
       id="process-model-select"
-      data-qa="process-model-selection"
+      data-testid="process-model-selection"
       options={processModels}
       getOptionLabel={(processModel: ProcessModel) => {
         if (processModel) {
@@ -87,8 +89,8 @@ export default function ProcessModelSearch({
         <TextField
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
-          label={titleText}
-          placeholder="Choose a process model"
+          label={titleText || t('process_model')}
+          placeholder={t('choose_process_model')}
         />
       )}
       value={selectedItem || null}

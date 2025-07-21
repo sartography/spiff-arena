@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import TaskControls from '../components/TaskControls';
 import HttpService from '../services/HttpService';
 import { ProcessInstanceTask } from '../interfaces';
@@ -27,9 +28,12 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
   const [groupedTasks, setGroupedTasks] = useState<GroupedItems | null>(null);
   const [selectedGroupBy, setSelectedGroupBy] = useState<string | null>(null);
 
+  const { t } = useTranslation();
+  const responsiblePartyLabel = t('responsible_party');
+  const processGroupLabel = t('process_group');
   const groupByOptions = useMemo(
-    () => ['Responsible party', 'Process Group'],
-    [],
+    () => [responsiblePartyLabel, processGroupLabel],
+    [responsiblePartyLabel, processGroupLabel],
   );
 
   const responsiblePartyMeKey = 'spiff_synthetic_key_indicating_assigned_to_me';
@@ -64,7 +68,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
       }
       setSelectedGroupBy(groupBy);
 
-      if (groupBy === 'Process Group') {
+      if (groupBy === processGroupLabel) {
         const grouped = tasks.reduce(
           (acc: GroupedItems, task: ProcessInstanceTask) => {
             const processGroupIdentifier = task.process_model_identifier
@@ -85,7 +89,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         setSelectedGroupBy(null);
       } else {
         setSelectedGroupBy(groupBy);
-        if (groupBy === 'Responsible party') {
+        if (groupBy === responsiblePartyLabel) {
           const grouped = tasks.reduce(
             (acc: GroupedItems, task: ProcessInstanceTask) => {
               const key =
@@ -102,7 +106,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         }
       }
     },
-    [tasks],
+    [tasks, processGroupLabel, responsiblePartyLabel],
   );
 
   const taskTableElement = () => {
@@ -125,15 +129,15 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         const taskList = groupedTasks[groupName];
         const isMe = groupName === responsiblePartyMeKey;
         const isProcessGroup = selectedGroupBy === 'Process Group';
-        let headerText = 'Tasks for ';
+        let headerText = t('tasks_for');
         if (!isMe) {
           if (isProcessGroup) {
-            headerText = 'Tasks from process group: ';
+            headerText = t('tasks_from_process_group');
           } else {
-            headerText = 'Tasks for user group: ';
+            headerText = t('tasks_for_user_group');
           }
         }
-        const groupText = isMe ? 'me' : groupName;
+        const groupText = isMe ? t('me') : groupName;
         return (
           <Box key={groupName} sx={{ mb: 2 }}>
             <Typography variant="h4" sx={{ mb: 1 }}>
@@ -169,11 +173,11 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
             boxShadow: 1,
           }}
         >
-          <Typography variant="h1">Home</Typography>
+          <Typography variant="h1">{t('home')}</Typography>
         </Box>
       ) : (
         <Typography variant="h1" sx={{ mb: 2 }}>
-          Home
+          {t('home')}
         </Typography>
       )}
       <OnboardingView />
@@ -191,8 +195,10 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
             zIndex: 1300,
           }}
         >
-          <Typography variant="h6">Last Process Instance</Typography>
-          <Typography variant="body2">ID: {lastProcessInstanceId}</Typography>
+          <Typography variant="h6">{t('last_process_instance')}</Typography>
+          <Typography variant="body2">
+            {t('id_label')}: {lastProcessInstanceId}
+          </Typography>
         </Box>
       )}
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -9,7 +10,7 @@ import { IconButton } from '@mui/material';
 import SpiffTooltip from './SpiffTooltip';
 
 type OwnProps = {
-  'data-qa'?: string;
+  'data-testid'?: string;
   description?: string;
   buttonLabel?: string;
   onConfirmation: (..._args: any[]) => any;
@@ -26,7 +27,7 @@ export default function ButtonWithConfirmation({
   description,
   buttonLabel,
   onConfirmation,
-  'data-qa': dataQa,
+  'data-testid': dataTestid,
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
   kind = 'contained',
@@ -35,6 +36,7 @@ export default function ButtonWithConfirmation({
   hasIconOnly = false,
   classNameForModal,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
 
   const handleShowConfirmationPrompt = () => {
@@ -58,18 +60,20 @@ export default function ButtonWithConfirmation({
         aria-describedby="alert-dialog-description"
         className={classNameForModal}
       >
-        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {title || t('are_you_sure')}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            {description}
+            {description || null}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleConfirmationPromptCancel} color="primary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button onClick={handleConfirmation} color="primary" autoFocus>
-            {confirmButtonLabel}
+            {confirmButtonLabel || t('ok')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -81,7 +85,7 @@ export default function ButtonWithConfirmation({
       <>
         <SpiffTooltip title={iconDescription || ''} placement="top">
           <IconButton
-            data-qa={dataQa}
+            data-testid={dataTestid}
             onClick={handleShowConfirmationPrompt}
             aria-label={iconDescription || ''}
           >
@@ -95,7 +99,7 @@ export default function ButtonWithConfirmation({
   return (
     <>
       <Button
-        data-qa={dataQa}
+        data-testid={dataTestid}
         onClick={handleShowConfirmationPrompt}
         variant={kind}
         color="error"

@@ -1,7 +1,7 @@
 import os
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
@@ -12,7 +12,7 @@ class TestProcessCallers(BaseTest):
     def test_references_after_process_model_create(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -30,9 +30,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 4
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 4
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -40,14 +40,14 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1
 
     def test_references_after_process_model_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -72,9 +72,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -82,14 +82,14 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
     def test_references_after_process_group_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -114,9 +114,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -124,14 +124,14 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
     def test_references_after_process_file_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -156,9 +156,9 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 3
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 3
 
         response = client.get(
             "/v1.0/processes/callers/Level2",
@@ -166,14 +166,14 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 0
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 0
 
     def test_references_after_process_file_delete_and_upload(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -218,6 +218,6 @@ class TestProcessCallers(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
+        assert response.json() is not None
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1

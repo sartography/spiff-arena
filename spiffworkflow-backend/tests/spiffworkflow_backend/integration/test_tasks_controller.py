@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -23,7 +23,7 @@ class TestTasksController(BaseTest):
     def test_task_show(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -40,8 +40,8 @@ class TestTasksController(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -60,13 +60,13 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"] == "Green"
+        assert response.json() is not None
+        assert response.json()["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"] == "Green"
 
         # if you set this in task data:
         #   form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
         # you will get this ui schema:
-        assert response.json["form_ui_schema"] == {
+        assert response.json()["form_ui_schema"] == {
             "building": {"floor": {"ui:widget": "hidden"}},
             "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
@@ -74,7 +74,7 @@ class TestTasksController(BaseTest):
     def test_prepare_schema(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -109,24 +109,23 @@ class TestTasksController(BaseTest):
         self.logged_in_headers(with_super_admin_user)
         response = client.post(
             "/v1.0/tasks/prepare-form",
-            headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps(data),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=data,
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["form_schema"]["properties"]["favoriteFood"]["anyOf"] == [
+        assert response.json() is not None
+        assert response.json()["form_schema"]["properties"]["favoriteFood"]["anyOf"] == [
             {"enum": ["apples"], "title": "apples", "type": "string"},
             {"enum": ["oranges"], "title": "oranges", "type": "string"},
             {"enum": ["bananas"], "title": "bananas", "type": "string"},
         ]
-        assert response.json["form_schema"]["title"] == task_data["title"]
-        assert response.json["form_ui"] == {"DontShowMe": {"ui:widget": "hidden"}}
+        assert response.json()["form_schema"]["title"] == task_data["title"]
+        assert response.json()["form_ui"] == {"DontShowMe": {"ui:widget": "hidden"}}
 
     def test_interstitial_returns_process_instance_if_suspended_or_terminated(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -144,8 +143,8 @@ class TestTasksController(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         assert process_instance_id
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
@@ -176,7 +175,7 @@ class TestTasksController(BaseTest):
     def test_interstitial_page(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -195,8 +194,8 @@ class TestTasksController(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -230,7 +229,8 @@ class TestTasksController(BaseTest):
             headers=headers,
         )
 
-        assert response.json is not None
+        assert response.status_code == 200
+        assert response.json() is not None
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
         results = list(_dequeued_interstitial_stream(process_instance_id))
@@ -274,7 +274,7 @@ class TestTasksController(BaseTest):
     def test_correct_user_can_get_and_update_a_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -307,8 +307,8 @@ class TestTasksController(BaseTest):
         )
         assert response.status_code == 201
 
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(initiator_user),
@@ -320,18 +320,18 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(finance_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 0
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 0
 
         response = client.get(
             "/v1.0/tasks",
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
 
-        task_id = response.json["results"][0]["id"]
+        task_id = response.json()["results"][0]["id"]
         assert task_id is not None
 
         response = client.put(
@@ -339,8 +339,8 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(finance_user),
         )
         assert response.status_code == 500
-        assert response.json
-        assert "UserDoesNotHaveAccessToTaskError" in response.json["message"]
+        assert response.json()
+        assert "UserDoesNotHaveAccessToTaskError" in response.json()["message"]
 
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
@@ -353,21 +353,21 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 0
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 0
 
         response = client.get(
             "/v1.0/tasks",
             headers=self.logged_in_headers(finance_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
 
     def test_task_save_draft(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -387,8 +387,8 @@ class TestTasksController(BaseTest):
         )
         assert response.status_code == 201
 
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -400,19 +400,18 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
 
-        task_id = response.json["results"][0]["id"]
+        task_id = response.json()["results"][0]["id"]
         assert task_id is not None
 
         draft_data = {"HEY": "I'm draft"}
 
         response = client.post(
             f"/v1.0/tasks/{process_instance_id}/{task_id}/save-draft",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(draft_data),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=draft_data,
         )
         assert response.status_code == 200
 
@@ -421,14 +420,13 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["saved_form_data"] == draft_data
+        assert response.json() is not None
+        assert response.json()["saved_form_data"] == draft_data
 
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(draft_data),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=draft_data,
         )
         assert response.status_code == 200
 
@@ -438,14 +436,14 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["saved_form_data"] is None
-        assert response.json["data"]["HEY"] == draft_data["HEY"]
+        assert response.json() is not None
+        assert response.json()["saved_form_data"] is None
+        assert response.json()["data"]["HEY"] == draft_data["HEY"]
 
     def test_task_instance_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -473,17 +471,17 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.content_type == "application/json"
-        assert isinstance(response.json, list)
+        assert response.headers["content-type"] == "application/json"
+        assert isinstance(response.json(), list)
 
         expected_states = sorted(["COMPLETED", "COMPLETED", "MAYBE", "READY"])
-        actual_states = sorted([t["state"] for t in response.json])
+        actual_states = sorted([t["state"] for t in response.json()])
         assert actual_states == expected_states
 
     def test_task_instance_list_returns_only_for_same_bpmn_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -511,6 +509,6 @@ class TestTasksController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.content_type == "application/json"
-        assert isinstance(response.json, list)
-        assert len(response.json) == 1
+        assert response.headers["content-type"] == "application/json"
+        assert isinstance(response.json(), list)
+        assert len(response.json()) == 1

@@ -79,6 +79,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://loca
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED", default=False)
 
 # give a little overlap to ensure we do not miss items although the query will handle it either way
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_LOOKAHEAD_IN_SECONDS", default=301)
@@ -141,6 +142,11 @@ else:
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q")
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL")
 
+        # comma-separated list of issuer URLs to validate against
+        # This is useful for Azure Entra which has a server URL of
+        # https://login.microsoftonline.com/<tenant-id>/v2.0 but the iss url is https://sts.windows.net/<tenant-id>/
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS")
+
         # comma-separated list of client ids that can be successfully validated against.
         # useful for api users that will login to a different client on the same realm but from something external to backend.
         # Example:
@@ -159,6 +165,7 @@ else:
                 "client_id": "spiffworkflow-backend",
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
                 "additional_valid_client_ids": None,
+                "additional_valid_issuers": [],
             }
         ]
 
@@ -255,6 +262,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", defau
 
 # how many proxies are in front of this flask server (for use with ProxyFix)
 config_from_env("SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX", default=0)
+config_from_env("SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX")
 
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)

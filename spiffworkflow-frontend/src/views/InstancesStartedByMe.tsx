@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
 import TaskControls from '../components/TaskControls';
@@ -19,6 +20,7 @@ function InstancesStartedByMe({
   isMobile,
 }: InstancesStartedByMeProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // This feature doesn't work and is redundant since a user can use the process instances list page instead.
   // https://github.com/sartography/spiff-arena/issues/2250
@@ -59,12 +61,12 @@ function InstancesStartedByMe({
           }}
         >
           <Typography variant="h1" sx={{ fontSize: '1.5rem' }}>
-            Home
+            {t('home')}
           </Typography>
         </Box>
       ) : (
         <Typography variant="h1" sx={{ mb: 2 }}>
-          Home
+          {t('home')}
         </Typography>
       )}
       <HeaderTabs

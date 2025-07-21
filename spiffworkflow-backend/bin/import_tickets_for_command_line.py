@@ -13,7 +13,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 def main():
     """Main."""
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         process_model_identifier_ticket = "ticket"
         db.session.query(ProcessInstanceModel).filter(
             ProcessInstanceModel.process_model_identifier == process_model_identifier_ticket

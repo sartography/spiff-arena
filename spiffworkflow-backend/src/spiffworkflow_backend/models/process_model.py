@@ -1,14 +1,11 @@
 from __future__ import annotations
 
+import dataclasses
 import enum
 import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
-
-import marshmallow
-from marshmallow import Schema
-from marshmallow.decorators import post_load
 
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.file import File
@@ -83,6 +80,26 @@ class ProcessModelInfo:
 
         return identifier.replace("/", ":")
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the ProcessModelInfo object to a dictionary."""
+        data = dataclasses.asdict(self)
+        if self.files is not None:
+            data["files"] = [f.serialized() for f in self.files]
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ProcessModelInfo:
+        """Create a ProcessModelInfo object from a dictionary."""
+        data_copy = data.copy()
+        if "files" in data_copy and data_copy["files"] is not None:
+            data_copy["files"] = [File.from_dict(f) for f in data_copy["files"]]
+
+        # remove keys not in dataclass
+        known_fields = {f.name for f in dataclasses.fields(cls)}
+        filtered_data = {k: v for k, v in data_copy.items() if k in known_fields}
+
+        return cls(**filtered_data)
+
     def serialized(self) -> dict[str, Any]:
         file_objects = self.files
         dictionary = self.__dict__
@@ -93,27 +110,19 @@ class ProcessModelInfo:
             dictionary["files"] = serialized_files
         return dictionary
 
-
-class ProcessModelInfoSchema(Schema):
-    class Meta:
-        model = ProcessModelInfo
-
-    id = marshmallow.fields.String(required=True)
-    display_name = marshmallow.fields.String(required=True)
-    description = marshmallow.fields.String()
-    primary_file_name = marshmallow.fields.String(allow_none=True)
-    primary_process_id = marshmallow.fields.String(allow_none=True)
-    files = marshmallow.fields.List(marshmallow.fields.Nested("File"))
-    fault_or_suspend_on_exception = marshmallow.fields.String()
-    exception_notification_addresses = marshmallow.fields.List(marshmallow.fields.String)
-    metadata_extraction_paths = marshmallow.fields.List(
-        marshmallow.fields.Dict(
-            keys=marshmallow.fields.Str(required=False),
-            values=marshmallow.fields.Str(required=False),
-            required=False,
-        )
-    )
-
-    @post_load
-    def make_spec(self, data: dict[str, str | bool | int | NotificationType], **_: Any) -> ProcessModelInfo:
-        return ProcessModelInfo(**data)  # type: ignore
+    @classmethod
+    def extract_metadata(cls, task_data: dict[str, Any], metadata_extraction_paths: list[dict[str, str]]) -> dict[str, Any]:
+        current_metadata = {}
+        for metadata_extraction_path in metadata_extraction_paths:
+            key = metadata_extraction_path["key"]
+            path = metadata_extraction_path["path"]
+            path_segments = path.split(".")
+            data_for_key: dict[str, Any] | None = task_data
+            for path_segment in path_segments:
+                if path_segment in (data_for_key or {}):
+                    data_for_key = (data_for_key or {})[path_segment]
+                else:
+                    data_for_key = None
+                    break
+            current_metadata[key] = data_for_key
+        return current_metadata

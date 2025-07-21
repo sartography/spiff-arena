@@ -38,7 +38,6 @@ function setup_db_for_ci() {
   # Set environment variables
   export FLASK_INSTANCE_PATH="${script_dir}/../src/instance"
   export FLASK_SESSION_SECRET_KEY="e7711a3ba96c46c68e084a86952de16f"
-  export FLASK_APP="src/spiffworkflow_backend"
   export SPIFFWORKFLOW_BACKEND_ENV="unit_testing"
 
   # Check if SPIFFWORKFLOW_BACKEND_DATABASE_TYPE is set to "sqlite"
@@ -72,14 +71,8 @@ elif [[ "${session_type}" == "mypy" ]]; then
 
 elif [[ "${session_type}" == "safety" ]]; then
   # 72731 because flask-cors 5 actually fixes but safety just doesn't know: allows the Access-Control-Allow-Private-Network CORS header to be set to true by default
-  uv run safety check --full-report \
-    --ignore=70624 \
-    --ignore=70612 \
-    --ignore=71600 \
-    --ignore=71594 \
-    --ignore=73969 \
-    --ignore=73889 \
-    --ignore=72731
+  ##  --ignore=72731 # is the syntax if you want to ignore these
+  uv run safety check --full-report
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then

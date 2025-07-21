@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Switch, FormControlLabel } from '@mui/material';
 import FormattingService from '../services/FormattingService';
 import MarkdownRenderer from './MarkdownRenderer';
@@ -23,6 +24,7 @@ export default function InstructionsForEndUser({
   allowCollapse = false,
   className,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [collapsable, setCollapsable] = useState<boolean>(false);
   let instructions = defaultMessage;
@@ -86,7 +88,7 @@ export default function InstructionsForEndUser({
               color="primary"
             />
           }
-          label={collapsed ? 'Show More' : 'Show Less'}
+          label={collapsed ? t('show_more') : t('show_less')}
         />
       );
     }

@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from flask import current_app
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
@@ -204,7 +205,7 @@ class SpecFileService(FileSystemService):
                 permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
                     user=user,
                     permission_to_check="create",
-                    permission_base_uri="/v1.0/process-instances",
+                    permission_base_uri=f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances",
                     process_model_identifiers=process_model_identifiers,
                 )
                 unpermitted_process_model_identifiers = set(process_model_identifiers) - set(permitted_process_model_identifiers)

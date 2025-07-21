@@ -80,6 +80,7 @@ class AuthenticationOptionForApi(TypedDict):
 class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
     client_secret: str
+    additional_valid_issuers: NotRequired[list[str]]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -121,6 +122,13 @@ class AuthenticationService:
     @classmethod
     def valid_audiences(cls, authentication_identifier: str) -> list[str]:
         return [cls.client_id(authentication_identifier), "account"]
+
+    @classmethod
+    def valid_issuers(cls, authentication_identifier: str) -> list[str]:
+        auth_options = cls.authentication_option_for_identifier(authentication_identifier)
+        if "additional_valid_issuers" in auth_options:
+            return auth_options["additional_valid_issuers"]
+        return []
 
     @classmethod
     def server_url(cls, authentication_identifier: str, internal: bool = False) -> str:
@@ -269,7 +277,7 @@ class AuthenticationService:
 
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
-            redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
+            redirect_url = f"{self.get_backend_url()}{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/logout_return"
         request_url = (
             self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
             + f"?post_logout_redirect_uri={redirect_url}&"
@@ -294,7 +302,10 @@ class AuthenticationService:
 
     def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
-        login_return_path = url_for("/v1_0.spiffworkflow_backend_routes_authentication_controller_login_return")
+        login_return_path = url_for(
+            f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX'].replace('.', '_')}"
+            ".spiffworkflow_backend_routes_authentication_controller_login_return"
+        )
         redirect_url_to_use = f"{host_url}{login_return_path}"
         current_app.logger.debug(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
         return redirect_url_to_use
@@ -380,10 +391,11 @@ class AuthenticationService:
             overlapping_aud_values = [x for x in audience_array_in_token if x in valid_audience_values]
 
         internal_server_url = cls.server_url(authentication_identifier, internal=True)
-
+        additional_valid_issuer_urls = cls.valid_issuers(authentication_identifier)
         trusted_issuer_urls = [
             cls.server_url(authentication_identifier),
             UserModel.spiff_generated_jwt_issuer(),
+            *additional_valid_issuer_urls,
         ]
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER"]:

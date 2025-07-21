@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 // @ts-ignore
 import { Box, Typography } from '@mui/material';
@@ -23,13 +24,22 @@ export default function ProcessGroupEdit() {
     });
   }, [params.process_group_id]);
 
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (processGroup) {
+      setPageTitle([
+        t('editing_process_group', { name: processGroup.display_name }),
+      ]);
+    }
+  }, [processGroup, t]);
+
   if (processGroup) {
-    setPageTitle([`Editing ${processGroup.display_name}`]);
     return (
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            [t('process_groups'), '/process-groups'],
             {
               entityToExplode: processGroup,
               entityType: 'process-group',
@@ -38,7 +48,7 @@ export default function ProcessGroupEdit() {
           ]}
         />
         <Typography variant="h1">
-          Edit Process Group: {(processGroup as any).id}
+          {t('edit_process_group_with_id', { id: (processGroup as any).id })}
         </Typography>
         <Box mt={2}>
           <ProcessGroupForm

@@ -15,7 +15,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
 from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
@@ -208,7 +207,8 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     # state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     # state_dict["final_url"]
 
-    auth_token_object = AuthenticationService().get_auth_token_object(code, "/v1.0/login_api_return")
+    redirect_path = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/login_api_return"
+    auth_token_object = AuthenticationService().get_auth_token_object(code, redirect_path)
     access_token: str = auth_token_object["access_token"]
     if access_token is None:
         raise MissingAccessTokenError("Cannot find the access token for the request")
@@ -298,8 +298,9 @@ def _find_token_from_request(token: str | None) -> dict[str, str | None]:
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
     if not token and "access_token" in request.cookies:
-        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/") or request.path.startswith(
-            f"{V1_API_PATH_PREFIX}/extensions-get-data/"
+        api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
+        if request.path.startswith(f"{api_path_prefix}/process-data-file-download/") or request.path.startswith(
+            f"{api_path_prefix}/extensions-get-data/"
         ):
             token = request.cookies["access_token"]
 

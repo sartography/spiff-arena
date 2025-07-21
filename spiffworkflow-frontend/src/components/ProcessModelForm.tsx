@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -34,6 +35,7 @@ export default function ProcessModelForm({
   const [idHasBeenUpdatedByUser, setIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const navigateToProcessModel = (result: ProcessModel) => {
@@ -45,7 +47,7 @@ export default function ProcessModelForm({
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
-    return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
+    return identifierToCheck.match(/^[a-z0-9][0-9a-z.-]+[a-z0-9]$/);
   };
 
   const handleFormSubmission = (event: any) => {
@@ -111,7 +113,7 @@ export default function ProcessModelForm({
         <Grid size={{ xs: 3 }}>
           <TextField
             id={`process-model-metadata-extraction-path-key-${index}`}
-            label="Extraction Key"
+            label={t('extraction_key')}
             value={metadataExtractionPath.key}
             onChange={(event: any) => {
               const cep: MetadataExtractionPath[] =
@@ -127,7 +129,7 @@ export default function ProcessModelForm({
         <Grid size={{ xs: 6 }}>
           <TextField
             id={`process-model-metadata-extraction-path-${index}`}
-            label="Extraction Path"
+            label={t('extraction_path')}
             value={metadataExtractionPath.path}
             onChange={(event: any) => {
               const cep: MetadataExtractionPath[] =
@@ -141,9 +143,9 @@ export default function ProcessModelForm({
           />
         </Grid>
         <Grid size={{ xs: 1 }}>
-          <SpiffTooltip title="Remove Key">
+          <SpiffTooltip title={t('remove_key')}>
             <IconButton
-              aria-label="Remove Key"
+              aria-label={t('remove_key')}
               onClick={() => {
                 const cep: MetadataExtractionPath[] =
                   processModel.metadata_extraction_paths || [];
@@ -200,9 +202,9 @@ export default function ProcessModelForm({
           />
         </Grid>
         <Grid size={{ xs: 2 }}>
-          <SpiffTooltip title="Remove Address">
+          <SpiffTooltip title={t('remove_address')}>
             <IconButton
-              aria-label="Remove Address"
+              aria-label={t('remove_address')}
               onClick={() => {
                 const notificationAddresses: string[] =
                   processModel.exception_notification_addresses || [];
@@ -261,8 +263,8 @@ export default function ProcessModelForm({
         key="process-model-display-name"
         name="display_name"
         error={displayNameInvalid}
-        helperText={displayNameInvalid ? 'Display Name is required.' : ''}
-        label="Display Name*"
+        helperText={displayNameInvalid ? t('display_name_required') : ''}
+        label={t('display_name')}
         value={processModel.display_name}
         onChange={(event: any) => {
           onDisplayNameChanged(event.target.value);
@@ -280,11 +282,9 @@ export default function ProcessModelForm({
           name="id"
           error={identifierInvalid}
           helperText={
-            identifierInvalid
-              ? 'Identifier is required and must be all lowercase characters and hyphens.'
-              : ''
+            identifierInvalid ? t('identifier_validation_message') : ''
           }
-          label="Identifier*"
+          label={t('identifier')}
           value={processModel.id}
           onChange={(event: any) => {
             updateProcessModel({ id: event.target.value });
@@ -305,7 +305,7 @@ export default function ProcessModelForm({
         id="process-model-description"
         key="process-model-description"
         name="description"
-        label="Description"
+        label={t('description')}
         value={processModel.description}
         onChange={(event: any) =>
           updateProcessModel({ description: event.target.value })
@@ -320,39 +320,39 @@ export default function ProcessModelForm({
       <FormControl fullWidth>
         {/* we need to set labels in both places apparently so it displays when no option is selected */}
         <InputLabel id="notification-type-select-label">
-          Notification Type
+          {t('notification_type')}
         </InputLabel>
         <Select
           id="notification-type"
           key="notification-type"
           value={processModel.fault_or_suspend_on_exception}
           labelId="notification-type-select-label"
-          label="Notification Type"
+          label={t('notification_type')}
           onChange={(event: any) => {
             onNotificationTypeChanged(event.target.value);
           }}
           fullWidth
           sx={{ mb: 2 }}
         >
-          <MenuItem value="fault">Fault</MenuItem>
-          <MenuItem value="suspend">Suspend</MenuItem>
+          <MenuItem value="fault">{t('fault')}</MenuItem>
+          <MenuItem value="suspend">{t('suspend')}</MenuItem>
         </Select>
       </FormControl>,
     );
     textInputs.push(
       <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
-        Notification Addresses
+        {t('notification_addresses')}
       </Typography>,
     );
     textInputs.push(
       <Typography variant="body2" sx={{ mb: 2 }}>
-        You can provide one or more addresses to notify if this model fails.
+        {t('notification_addresses_help')}
       </Typography>,
     );
     textInputs.push(<>{notificationAddressFormArea()}</>);
     textInputs.push(
       <Button
-        data-qa="add-notification-address-button"
+        data-testid="add-notification-address-button"
         startIcon={<AddAlt />}
         variant="outlined"
         size="small"
@@ -361,25 +361,24 @@ export default function ProcessModelForm({
         }}
         sx={{ mt: 1, mb: 2 }}
       >
-        Add Notification Address
+        {t('add_notification_address')}
       </Button>,
     );
 
     textInputs.push(
       <Typography variant="h3" sx={{ mt: 2, mb: 1 }}>
-        Metadata Extractions
+        {t('metadata_extractions')}
       </Typography>,
     );
     textInputs.push(
       <Typography variant="body2" sx={{ mb: 2 }}>
-        You can provide one or more metadata extractions to pull data from your
-        process instances to provide quick access in searches and perspectives.
+        {t('metadata_extractions_help')}
       </Typography>,
     );
     textInputs.push(<>{metadataExtractionPathFormArea()}</>);
     textInputs.push(
       <Button
-        data-qa="add-metadata-extraction-path-button"
+        data-testid="add-metadata-extraction-path-button"
         startIcon={<AddAlt />}
         variant="outlined"
         size="small"
@@ -388,7 +387,7 @@ export default function ProcessModelForm({
         }}
         sx={{ mt: 1, mb: 2 }}
       >
-        Add Metadata Extraction Path
+        {t('add_metadata_extraction_path')}
       </Button>,
     );
 
@@ -400,7 +399,7 @@ export default function ProcessModelForm({
       <Grid container justifyContent="flex-start" sx={{ mt: 2 }}>
         <Grid>
           <Button variant="contained" type="submit">
-            Submit
+            {t('submit')}
           </Button>
         </Grid>
       </Grid>

@@ -6,7 +6,6 @@ import string
 from hashlib import sha256
 from typing import Any
 
-import connexion  # type: ignore
 import flask.wrappers
 from flask import current_app
 from flask import g
@@ -15,6 +14,7 @@ from flask import make_response
 from flask.wrappers import Response
 from werkzeug.datastructures import FileStorage
 
+from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_task import trigger_metadata_backfill
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
@@ -22,7 +22,6 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
@@ -103,7 +102,7 @@ def process_model_create(
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
     return Response(
-        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
+        json.dumps(process_model_info.to_dict()),
         status=201,
         mimetype="application/json",
     )
@@ -149,6 +148,11 @@ def process_model_update(
 
     process_model = _get_process_model(process_model_identifier)
 
+    # Store the original metadata extraction paths before any updates
+    original_metadata_extraction_paths = None
+    if "metadata_extraction_paths" in body_filtered:
+        original_metadata_extraction_paths = process_model.metadata_extraction_paths
+
     # FIXME: the logic to update the the process id would be better if it could go into the
     #   process model save method but this causes circular imports with SpecFileService.
     # All we really need this for is to get the process id from a bpmn file so maybe that could
@@ -166,7 +170,18 @@ def process_model_update(
         SpecFileService.update_file(process_model, process_model.primary_file_name, primary_file_contents)
 
     _commit_and_push_to_git(f"User: {g.user.username} updated process model {process_model_identifier}")
-    return ProcessModelInfoSchema().dump(process_model)
+
+    if "metadata_extraction_paths" in body_filtered:
+        try:
+            trigger_metadata_backfill(
+                process_model.id, original_metadata_extraction_paths, process_model.metadata_extraction_paths
+            )
+        except Exception as ex:
+            current_app.logger.error(
+                f"Failed to trigger metadata backfill for process model {process_model_identifier}: {str(ex)}"
+            )
+
+    return process_model.to_dict()
 
 
 def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False) -> Any:
@@ -504,14 +519,14 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
     )
 
     return Response(
-        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
+        json.dumps(process_model_info.to_dict()),
         status=201,
         mimetype="application/json",
     )
 
 
 def _get_file_from_request() -> FileStorage:
-    request_file: FileStorage | None = connexion.request.files.get("file")
+    request_file: FileStorage | None = flask.request.files.get("file")
     if not request_file:
         raise ApiError(
             error_code="no_file_given",

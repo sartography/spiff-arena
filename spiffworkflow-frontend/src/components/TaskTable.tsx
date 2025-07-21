@@ -101,10 +101,14 @@ export default function TaskTable({
     waitingFor: ReactElement | null,
     hasAccessToCompleteTask: boolean,
   ) => {
+    const processInstanceId = getProcessInstanceId(entry);
     return (
-      <TableRow key={entry.id}>
+      <TableRow
+        key={entry.id}
+        data-testid={`process-instance-row-${processInstanceId}`}
+      >
         <TableCell>
-          <Typography variant="body2">{getProcessInstanceId(entry)}</Typography>
+          <Typography variant="body2">{processInstanceId}</Typography>
         </TableCell>
         <TableCell>
           <Chip
@@ -220,9 +224,12 @@ export default function TaskTable({
     return null;
   }
 
-  const regex = new RegExp(
-    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
-  );
+  const ids = [
+    UserService.getPreferredUsername(),
+    UserService.getUserEmail(),
+    UserService.getUserName(),
+  ].filter(Boolean) as string[]; // remove null/undefined
+  const regex = new RegExp(`\\b(${ids.join('|')})\\b`);
 
   const records = entries.map((entry) => {
     if (

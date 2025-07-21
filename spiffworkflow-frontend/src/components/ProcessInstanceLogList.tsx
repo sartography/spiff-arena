@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ErrorOutline } from '@mui/icons-material';
 import {
   Table,
@@ -66,6 +67,7 @@ export default function ProcessInstanceLogList({
   processInstanceId,
 }: OwnProps) {
   const [clearAll, setClearAll] = useState<boolean>(false);
+  const { t } = useTranslation();
   const [processInstanceLogs, setProcessInstanceLogs] = useState<
     ProcessInstanceLogEntry[]
   >([]);
@@ -101,7 +103,7 @@ export default function ProcessInstanceLogList({
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/process-instances/${processModelId}`;
   }
-  const taskNameHeader = isEventsView ? 'Task name' : 'Milestone';
+  const taskNameHeader = isEventsView ? t('task_name') : t('milestone');
   const tableType = isEventsView ? 'events' : 'milestones';
   const paginationQueryParamPrefix = `log-list-${tableType}`;
 
@@ -190,7 +192,7 @@ export default function ProcessInstanceLogList({
 
   const errorEventModal = () => {
     if (eventForModal) {
-      const modalHeading = 'Event Error Details';
+      const modalHeading = t('event_error_details');
       let errorMessageTag = (
         <CircularProgress className="some-class" size={20} />
       );
@@ -199,7 +201,7 @@ export default function ProcessInstanceLogList({
           eventForModal,
           eventErrorDetails,
         );
-        const errorChildren = childrenForErrorObject(errorForDisplay);
+        const errorChildren = childrenForErrorObject(errorForDisplay, t);
         // eslint-disable-next-line react/jsx-no-useless-fragment, sonarjs/jsx-no-useless-fragment
         errorMessageTag = <>{errorChildren}</>;
       }
@@ -212,7 +214,7 @@ export default function ProcessInstanceLogList({
         >
           <Box sx={style}>
             <h2 id="modal-heading">{modalHeading}</h2>
-            <p id="modal-description">Error Details</p>
+            <p id="modal-description">{t('error_details')}</p>
             {errorMessageTag}
           </Box>
         </Modal>
@@ -237,7 +239,7 @@ export default function ProcessInstanceLogList({
         failureCallback: (error: any) => {
           const errorObject: ProcessInstanceEventErrorDetail = {
             id: 0,
-            message: `ERROR retrieving error details: ${error.message}`,
+            message: `${t('error_retrieving_error_details')}: ${error.message}`,
             stacktrace: [],
           };
           setEventErrorDetails(errorObject);
@@ -246,7 +248,7 @@ export default function ProcessInstanceLogList({
     } else {
       const notAuthorized: ProcessInstanceEventErrorDetail = {
         id: 0,
-        message: 'You are not authorized to view error details',
+        message: t('not_authorized_to_view_error_details'),
         stacktrace: [],
       };
       setEventErrorDetails(notAuthorized);
@@ -257,7 +259,7 @@ export default function ProcessInstanceLogList({
     if (
       ['process_instance_error', 'task_failed'].includes(logEntry.event_type)
     ) {
-      const errorTitle = 'Event has an error';
+      const errorTitle = t('event_has_error');
       const errorIcon = (
         <>
           &nbsp;
@@ -283,9 +285,9 @@ export default function ProcessInstanceLogList({
     let taskName = logEntry.task_definition_name;
     if (!taskName && !isEventsView) {
       if (logEntry.bpmn_task_type === 'StartEvent') {
-        taskName = 'Started';
+        taskName = t('started');
       } else if (logEntry.bpmn_task_type === 'EndEvent') {
-        taskName = 'Completed';
+        taskName = t('completed');
       }
     }
     const taskNameCell = <TableCell>{taskName}</TableCell>;
@@ -298,7 +300,7 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       tableRow.push(
         <>
-          <TableCell data-qa="paginated-entity-id">{logEntry.id}</TableCell>
+          <TableCell data-testid="paginated-entity-id">{logEntry.id}</TableCell>
           {bpmnProcessCell}
           {taskNameCell}
         </>,
@@ -338,9 +340,9 @@ export default function ProcessInstanceLogList({
         <TableCell>
           <Link
             reloadDocument
-            data-qa="process-instance-show-link"
+            data-testid="process-instance-show-link"
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
-            title="View state when task was completed"
+            title={t('view_state_when_task_was_completed')}
           >
             {DateAndTimeService.convertSecondsToFormattedDateTime(
               logEntry.timestamp,
@@ -365,30 +367,24 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       tableHeaders.push(
         <>
-          <TableCell>Id</TableCell>
-          <TableCell>Bpmn process</TableCell>
+          <TableCell>{t('id')}</TableCell>
+          <TableCell>{t('bpmn_process')}</TableCell>
           <TableCell>{taskNameHeader}</TableCell>
+          <TableCell>{t('task_identifier')}</TableCell>
+          <TableCell>{t('task_type')}</TableCell>
+          <TableCell>{t('event_type')}</TableCell>
+          <TableCell>{t('user')}</TableCell>
         </>,
       );
     } else {
       tableHeaders.push(
         <>
           <TableCell>{taskNameHeader}</TableCell>
-          <TableCell>Bpmn process</TableCell>
+          <TableCell>{t('bpmn_process')}</TableCell>
         </>,
       );
     }
-    if (isEventsView) {
-      tableHeaders.push(
-        <>
-          <TableCell>Task identifier</TableCell>
-          <TableCell>Task type</TableCell>
-          <TableCell>Event type</TableCell>
-          <TableCell>User</TableCell>
-        </>,
-      );
-    }
-    tableHeaders.push(<TableCell>Timestamp</TableCell>);
+    tableHeaders.push(<TableCell>{t('timestamp')}</TableCell>);
     return (
       <TableContainer>
         <Table size="medium">
@@ -454,11 +450,11 @@ export default function ProcessInstanceLogList({
           <Grid item md={4}>
             <FormControl fullWidth>
               <InputLabel id="task-identifier-filter-label">
-                Task identifier
+                {t('task_identifier')}
               </InputLabel>
               <Select
                 labelId="task-identifier-filter-label"
-                label="Task identifier"
+                label={t('task_identifier')}
                 id="task-identifier-filter"
                 value={searchParams.get('bpmn_identifier') || ''}
                 onChange={(event) => {
@@ -475,10 +471,12 @@ export default function ProcessInstanceLogList({
           </Grid>
           <Grid item md={4}>
             <FormControl fullWidth>
-              <InputLabel id="task-type-select-label">Task type</InputLabel>
+              <InputLabel id="task-type-select-label">
+                {t('task_type')}
+              </InputLabel>
               <Select
                 labelId="task-type-select-label"
-                label="Task type"
+                label={t('task_type')}
                 id="task-type-select"
                 value={searchParams.get('task_type') || ''}
                 onChange={(event) => {
@@ -495,10 +493,12 @@ export default function ProcessInstanceLogList({
           </Grid>
           <Grid item md={4}>
             <FormControl fullWidth>
-              <InputLabel id="event-type-select-label">Event type</InputLabel>
+              <InputLabel id="event-type-select-label">
+                {t('event_type')}
+              </InputLabel>
               <Select
                 labelId="event-type-select-label"
-                label="Event type"
+                label={t('event_type')}
                 id="event-type-select"
                 value={searchParams.get('event_type') || ''}
                 onChange={(event) => {
@@ -525,11 +525,11 @@ export default function ProcessInstanceLogList({
         <Grid container spacing={2} className="with-bottom-margin">
           <Grid item sm={4} md={4} lg={8}>
             <Button variant="outlined" onClick={resetFiltersAndRun}>
-              Reset
+              {t('reset')}
             </Button>
             {shouldDisplayClearButton && (
               <Button variant="outlined" onClick={clearFilters}>
-                Clear
+                {t('clear')}
               </Button>
             )}
           </Grid>
@@ -545,7 +545,7 @@ export default function ProcessInstanceLogList({
     paginationQueryParamPrefix,
   );
   if (clearAll) {
-    return <p>Page cleared 👍</p>;
+    return <p>{t('page_cleared')} 👍</p>;
   }
 
   return (
@@ -564,7 +564,7 @@ export default function ProcessInstanceLogList({
         pagination={pagination}
         tableToDisplay={buildTable()}
         paginationQueryParamPrefix={paginationQueryParamPrefix}
-        paginationDataQATag={`pagination-options-${tableType}`}
+        paginationDataTestidTag={`pagination-options-${tableType}`}
       />
     </>
   );

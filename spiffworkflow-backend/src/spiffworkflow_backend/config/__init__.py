@@ -1,5 +1,3 @@
-"""__init__.py."""
-
 import base64
 import logging
 import os
@@ -10,6 +8,7 @@ from urllib.parse import urlparse
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
 HTTP_REQUEST_TIMEOUT_SECONDS = 15
@@ -106,6 +105,22 @@ def _check_extension_api_configs(app: Flask) -> None:
         raise ConfigurationError(
             "SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED is set to true but"
             " SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX is an empty value."
+        )
+
+
+def _check_metadata_backfill_requirements(app: Flask) -> None:
+    """Check that Celery is enabled if metadata backfill is enabled.
+
+    The process instance metadata backfill feature requires Celery to be enabled
+    since it runs as a background task to avoid impacting application performance.
+    """
+    if app.config.get("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED") and not app.config.get(
+        "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"
+    ):
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED is set to true but "
+            "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is set to false. "
+            "The metadata backfill feature requires Celery to be enabled."
         )
 
 
@@ -252,9 +267,12 @@ def setup_config(app: Flask) -> None:
     )
 
     if app.config.get("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS") is None:
+        additional_valid_issuers_str = app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS")
+        additional_valid_issuers = additional_valid_issuers_str.split(",") if additional_valid_issuers_str else []
         app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"] = [
             {
                 "additional_valid_client_ids": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS"),
+                "additional_valid_issuers": additional_valid_issuers,
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
                 "identifier": "default",
@@ -278,10 +296,24 @@ def setup_config(app: Flask) -> None:
                 f"{app.config['SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH']}"
             )
 
+    base_path = V1_API_PATH_PREFIX
+    open_id_path = "/openid"
+    if app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"]:
+        if not app.config["SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX"].startswith("/"):
+            raise ConfigurationError(
+                "SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX must start with '/'. "
+                f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']} is invalid."
+            )
+        base_path = f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']}{base_path}"
+        open_id_path = f"{app.config['SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX']}{open_id_path}"
+    app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"] = base_path
+    app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PATH_PREFIX"] = open_id_path
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
+    _check_metadata_backfill_requirements(app)
     _setup_cipher(app)
     _set_up_open_id_scopes(app)

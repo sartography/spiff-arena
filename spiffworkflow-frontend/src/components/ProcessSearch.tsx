@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Autocomplete, TextField } from '@mui/material';
 import { ProcessReference } from '../interfaces';
 import { truncateString } from '../helpers';
@@ -15,9 +16,10 @@ export default function ProcessSearch({
   processes,
   selectedItem,
   onChange,
-  titleText = 'Process Search',
+  titleText,
   height = '50px',
 }: OwnProps) {
+  const { t } = useTranslation();
   const shouldFilter = (options: any) => {
     const { process, inputValue } = options;
     return (
@@ -33,7 +35,7 @@ export default function ProcessSearch({
       <div style={{ width: '100%', height }}>
         <Autocomplete
           id="process-model-select"
-          data-qa="process-model-selection"
+          data-testid="process-model-selection"
           options={processes}
           disablePortal
           value={selectedItem || null}
@@ -41,8 +43,8 @@ export default function ProcessSearch({
           renderInput={(params) => {
             return (
               <TextField
-                label={titleText}
-                placeholder="Choose a process"
+                label={titleText || t('process_search')}
+                placeholder={t('choose_a_process')}
                 variant="outlined"
                 fullWidth
                 slotProps={{

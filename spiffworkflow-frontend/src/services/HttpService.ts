@@ -183,6 +183,8 @@ backendCallProps) => {
           console.error(error.message);
         }
       } else if (
+        // NOTE: This can create an issue where if you have a bad cookie, you will not end up on the login page.
+        // We could remove the isLoggedIn check but uncertain if that will require logging in too often.
         !UserService.isLoggedIn() &&
         window.location.pathname !== '/login'
       ) {

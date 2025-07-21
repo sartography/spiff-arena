@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Grid,
@@ -69,6 +70,7 @@ export default function ProcessModelTabs({
   setShowFileUploadModal,
 }: ProcessModelTabsProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (!processModel) {
     return null;
@@ -78,50 +80,44 @@ export default function ProcessModelTabs({
   if (processModel.files.length === 0) {
     helpText = (
       <p className="no-results-message with-bottom-margin">
-        <strong>
-          **This process model does not have any files associated with it. Try
-          creating a bpmn file by selecting &quot;New BPMN File&quot; in the
-          dropdown below.**
-        </strong>
+        <strong>{t('process_model_no_files_help')}</strong>
       </p>
     );
   }
 
   const items = [
-    'Upload File',
-    'New BPMN File',
-    'New DMN File',
-    'New JSON File',
-    'New Markdown File',
+    'upload_file',
+    'new_bpmn_file',
+    'new_dmn_file',
+    'new_json_file',
+    'new_markdown_file',
   ];
 
   const addFileComponent = () => {
     return (
       <FormControl fullWidth>
-        <InputLabel id="add-file-select-label">Add File</InputLabel>
+        <InputLabel id="add-file-select-label">{t('add_file')}</InputLabel>
         <Select
           labelId="add-file-select-label"
-          label="Add File"
+          label={t('add_file')}
           onChange={(event) => {
             const selectedItem = event.target.value;
-            if (selectedItem === 'New BPMN File') {
+            if (selectedItem === 'new_bpmn_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
               );
-            } else if (selectedItem === 'Upload File') {
-              // Handled by parent component via prop
+            } else if (selectedItem === 'upload_file') {
               updateSelectedTab(1); // Switch to Files tab
-              // Open file upload modal (handled by parent)
               setShowFileUploadModal(true);
-            } else if (selectedItem === 'New DMN File') {
+            } else if (selectedItem === 'new_dmn_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
               );
-            } else if (selectedItem === 'New JSON File') {
+            } else if (selectedItem === 'new_json_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
               );
-            } else if (selectedItem === 'New Markdown File') {
+            } else if (selectedItem === 'new_markdown_file') {
               navigate(
                 `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
               );
@@ -131,7 +127,7 @@ export default function ProcessModelTabs({
         >
           {items.map((item) => (
             <MenuItem key={item} value={item}>
-              {item}
+              {t(item)}
             </MenuItem>
           ))}
         </Select>
@@ -148,12 +144,12 @@ export default function ProcessModelTabs({
         }}
         aria-label="List of tabs"
       >
-        <Tab value={0} label="About" />
-        <Tab value={1} label="Files" data-qa="process-model-files" />
+        <Tab value={0} label={t('about')} />
+        <Tab value={1} label={t('files')} data-testid="process-model-files" />
         <Tab
           value={2}
-          label="My process instances"
-          data-qa="process-instance-list-link"
+          label={t('my_process_instances')}
+          data-testid="process-instance-list-link"
         />
       </Tabs>
       <TabPanel value={selectedTabIndex} index={0}>
@@ -174,10 +170,11 @@ export default function ProcessModelTabs({
             >
               {helpText}
               <div className="with-bottom-margin">
-                Files
-                {processModel &&
-                  processModel.bpmn_version_control_identifier &&
-                  ` (revision ${processModel.bpmn_version_control_identifier})`}
+                {processModel && processModel.bpmn_version_control_identifier
+                  ? t('files_with_revision', {
+                      revision: processModel.bpmn_version_control_identifier,
+                    })
+                  : t('files')}
               </div>
               {addFileComponent()}
               <br />

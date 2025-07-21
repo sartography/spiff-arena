@@ -38,6 +38,7 @@ export default function HeaderTabs({
         <Tab
           label={t('workflows_created_by_me')}
           sx={{ textTransform: 'none' }}
+          data-testid="tab-workflows-created-by-me"
         />
       </Tabs>
       <Box

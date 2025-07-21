@@ -1,6 +1,6 @@
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -23,7 +23,7 @@ class SecretServiceTestHelpers(BaseTest):
     def add_test_secret(self, user: UserModel) -> SecretModel:
         return SecretService().add_secret(self.test_key, self.test_value, user.id)
 
-    def add_test_process(self, client: FlaskClient, user: UserModel) -> ProcessModelInfo:
+    def add_test_process(self, client: TestClient, user: UserModel) -> ProcessModelInfo:
         self.create_process_group_with_api(
             client,
             user,
@@ -93,7 +93,7 @@ class TestSecretService(SecretServiceTestHelpers):
     def test_update_secret(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -110,7 +110,7 @@ class TestSecretService(SecretServiceTestHelpers):
     def test_update_secret_bad_secret_fails(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -123,7 +123,7 @@ class TestSecretService(SecretServiceTestHelpers):
     def test_delete_secret(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -139,7 +139,7 @@ class TestSecretService(SecretServiceTestHelpers):
     def test_delete_secret_bad_secret_fails(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:

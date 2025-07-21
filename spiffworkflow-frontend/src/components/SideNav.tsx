@@ -33,6 +33,7 @@ import {
   Markunread,
   SettingsApplicationsSharp,
   Extension,
+  Flag,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +90,7 @@ function SideNav({
 
   const location = useLocation();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -138,9 +139,14 @@ function SideNav({
 
   // State for controlling the display of the user profile section
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const handlePersonIconClick = () => {
     setShowUserProfile(!showUserProfile);
+  };
+
+  const handleLanguageMenuClick = () => {
+    setShowLanguageMenu(!showLanguageMenu);
   };
 
   // Close user profile section when clicking outside
@@ -153,6 +159,13 @@ function SideNav({
         !element.closest('.person-icon')
       ) {
         setShowUserProfile(false);
+      }
+      if (
+        element &&
+        !element.closest('.language-menu') &&
+        !element.closest('.language-icon')
+      ) {
+        setShowLanguageMenu(false);
       }
     };
 
@@ -369,7 +382,7 @@ function SideNav({
                     {!isCollapsed && (
                       <ListItemText
                         primary={item.text}
-                        data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
+                        data-testid={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
                         primaryTypographyProps={{
                           fontSize: '0.875rem',
                           fontWeight:
@@ -427,6 +440,18 @@ function SideNav({
                 </IconButton>
               </SpiffTooltip>
             ) : null}
+            <SpiffTooltip
+              title={t('language')}
+              placement={isCollapsed ? 'right' : 'top'}
+            >
+              <IconButton
+                aria-label={t('language')}
+                onClick={handleLanguageMenuClick}
+                className="language-icon"
+              >
+                <Flag />
+              </IconButton>
+            </SpiffTooltip>
             {SPIFF_ENVIRONMENT && (
               <SpiffTooltip
                 title={t('environment')}
@@ -454,7 +479,7 @@ function SideNav({
             sx={{
               position: 'fixed',
               bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
-              left: 64,
+              left: 32,
               right: 'auto',
               width: 256,
               padding: 2,
@@ -487,6 +512,7 @@ function SideNav({
                 <hr />
                 <MuiLink
                   component="button"
+                  data-testid="sign-out-button"
                   onClick={() => UserService.doLogout()}
                   sx={{
                     display: 'flex',
@@ -500,6 +526,45 @@ function SideNav({
                 </MuiLink>
               </>
             )}
+          </Paper>
+        )}
+        {showLanguageMenu && (
+          <Paper
+            elevation={3}
+            className="language-menu"
+            sx={{
+              position: 'fixed',
+              bottom: isCollapsed ? 80 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
+              left: isCollapsed ? 32 : 96,
+              right: 'auto',
+              width: 128,
+              padding: 2,
+              zIndex: 1300,
+              bgcolor: 'background.paper',
+            }}
+          >
+            {Object.keys(i18n.store.data)
+              .sort()
+              .map((language) => (
+                <MuiLink
+                  key={language}
+                  component="button"
+                  onClick={() => {
+                    i18n.changeLanguage(language);
+                    setShowLanguageMenu(false);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    fontWeight:
+                      i18n.resolvedLanguage === language ? 'bold' : 'unset',
+                  }}
+                >
+                  {language}
+                </MuiLink>
+              ))}
           </Paper>
         )}
       </>

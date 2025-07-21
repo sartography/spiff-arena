@@ -1,6 +1,6 @@
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -18,7 +18,7 @@ class TestUpsearchControllerController(BaseTest):
     def test_return_upsearch_locations_for_path(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
         location: str,
@@ -29,5 +29,5 @@ class TestUpsearchControllerController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert "locations" in response.json
-        assert response.json["locations"] == expected
+        assert "locations" in response.json()
+        assert response.json()["locations"] == expected

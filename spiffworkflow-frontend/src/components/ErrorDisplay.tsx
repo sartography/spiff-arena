@@ -1,5 +1,6 @@
 import React, { SyntheticEvent } from 'react';
 import { Alert, AlertTitle } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useAPIError from '../hooks/UseApiError';
 import {
   ErrorForDisplay,
@@ -76,14 +77,15 @@ export const errorForDisplayFromTestCaseErrorDetails = (
   return errorForDisplay;
 };
 
-export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
+export const childrenForErrorObject = (
+  errorObject: ErrorForDisplay,
+  t: any,
+) => {
   let sentryLinkTag = null;
   if (errorObject.sentry_link) {
     sentryLinkTag = (
       <span>
-        {
-          ': Find details about this error here (it may take a moment to become available): '
-        }
+        {t('error_details_link_prefix')}
         <a href={errorObject.sentry_link} target="_blank" rel="noreferrer">
           {errorObject.sentry_link}
         </a>
@@ -94,38 +96,38 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   const message = (
     <div className={errorObject.messageClassName}>{errorObject.message}</div>
   );
-  const taskName = errorDetailDisplay(errorObject, 'task_name', 'Task Name');
-  const taskId = errorDetailDisplay(errorObject, 'task_id', 'Task ID');
-  const fileName = errorDetailDisplay(errorObject, 'file_name', 'File Name');
+  const taskName = errorDetailDisplay(errorObject, 'task_name', t('task_name'));
+  const taskId = errorDetailDisplay(errorObject, 'task_id', t('task_id'));
+  const fileName = errorDetailDisplay(errorObject, 'file_name', t('file_name'));
   const lineNumber = errorDetailDisplay(
     errorObject,
     'line_number',
-    'Line Number',
+    t('line_number'),
   );
-  const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
-  const taskType = errorDetailDisplay(errorObject, 'task_type', 'Task Type');
+  const errorLine = errorDetailDisplay(errorObject, 'error_line', t('context'));
+  const taskType = errorDetailDisplay(errorObject, 'task_type', t('task_type'));
   const outputData = errorDetailDisplay(
     errorObject,
     'output_data',
-    'Output Data',
+    t('output_data'),
   );
   const expectedData = errorDetailDisplay(
     errorObject,
     'expected_data',
-    'Expected Data',
+    t('expected_data'),
   );
   let codeTrace = null;
   if (errorObject.task_trace && errorObject.task_trace.length > 0) {
     codeTrace = (
       <div className="error_info">
-        <span className="error_title">Call Activity Trace:</span>
+        <span className="error_title">{t('call_activity_trace')}</span>
         {errorObject.task_trace.reverse().join(' -> ')}
       </div>
     );
   } else if (errorObject.stacktrace) {
     codeTrace = (
       <pre className="error_info">
-        <span className="error_title">Stacktrace:</span>
+        <span className="error_title">{t('stacktrace')}:</span>
         {errorObject.stacktrace.reverse().map((a) => (
           <>
             {a}
@@ -152,11 +154,15 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   ];
 };
 
-export function errorDisplayStateless(
-  errorObject: ErrorForDisplay,
-  onClose?: (event: SyntheticEvent) => void,
-) {
-  const title = 'Error:';
+export function ErrorDisplayStateless({
+  errorObject,
+  onClose,
+}: {
+  errorObject: ErrorForDisplay;
+  onClose?: (event: SyntheticEvent) => void;
+}) {
+  const { t } = useTranslation();
+  const title = t('error');
   const hideCloseButton = !onClose;
 
   return (
@@ -166,13 +172,13 @@ export function errorDisplayStateless(
       action={
         hideCloseButton ? null : (
           <button type="button" onClick={onClose}>
-            Close
+            {t('close')}
           </button>
         )
       }
     >
       <AlertTitle>{title}</AlertTitle>
-      {childrenForErrorObject(errorObject)}
+      {childrenForErrorObject(errorObject, t)}
     </Alert>
   );
 }
@@ -185,7 +191,12 @@ export default function ErrorDisplay() {
   let errorTag = null;
 
   if (errorObject) {
-    errorTag = errorDisplayStateless(errorObject, handleRemoveError);
+    errorTag = (
+      <ErrorDisplayStateless
+        errorObject={errorObject}
+        onClose={handleRemoveError}
+      />
+    );
   }
   return errorTag;
 }

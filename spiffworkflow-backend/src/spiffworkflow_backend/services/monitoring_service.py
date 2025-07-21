@@ -3,9 +3,9 @@ import os
 import sys
 from typing import Any
 
-import connexion  # type: ignore
 import flask.wrappers
 import sentry_sdk
+from connexion import FlaskApp
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import MethodNotAllowed
@@ -20,9 +20,9 @@ def get_version_info_data() -> dict[str, Any]:
     return version_info_data_dict
 
 
-def setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
+def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
-    app.config["PROMETHEUS_METRICS"] = metrics
+    connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
     version_info_data = get_version_info_data()
     if len(version_info_data) > 0:
         # prometheus does not allow periods in key names
@@ -43,9 +43,10 @@ def traces_sampler(sampling_context: Any) -> Any:
     #
     #     # tasks_controller.task_submit
     #     # this is the current pain point as of 31 jan 2023.
+    #     api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
     #     if path_info and (
-    #         (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
-    #         or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
+    #         (path_info.startswith(f"{api_path_prefix}/tasks/") and request_method == "PUT")
+    #         or (path_info.startswith(f"{api_path_prefix}/task-data/") and request_method == "GET")
     #     ):
     #         return 1
 

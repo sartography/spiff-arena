@@ -41,7 +41,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.reference_cache import ReferenceSchema
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -115,20 +114,20 @@ def process_list() -> Any:
     permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
         user=g.user,
         permission_to_check="create",
-        permission_base_uri="/v1.0/process-instances",
+        permission_base_uri=f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances",
         process_model_identifiers=process_model_identifiers,
     )
     permitted_references = []
     for spec_reference in references:
         if spec_reference.relative_location in permitted_process_model_identifiers:
             permitted_references.append(spec_reference)
-    return ReferenceSchema(many=True).dump(permitted_references)
+    return [s.to_dict() for s in permitted_references]
 
 
 # if we pass in bpmn_process_identifiers of [a], a is "called" and we want to find which processes are *callers* of a
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     references = ReferenceCacheService.get_reference_cache_entries_calling_process(bpmn_process_identifiers)
-    return ReferenceSchema(many=True).dump(references)
+    return [s.to_dict() for s in references]
 
 
 def _get_bpmn_process_with_data_object(
@@ -419,7 +418,8 @@ def _find_process_instance_for_me_or_raise(
         modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(
             process_instance.process_model_identifier
         )
-        target_uri = f"/v1.0/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
+        api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
+        target_uri = f"{api_path_prefix}/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
         has_permission = AuthorizationService.user_has_permission(
             user=g.user,
             permission="read",

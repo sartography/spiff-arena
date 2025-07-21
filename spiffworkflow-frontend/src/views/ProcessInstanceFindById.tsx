@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField, Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { isANumber, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
 import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 import { ProcessInstance } from '../interfaces';
 
 export default function ProcessInstanceFindById() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [processInstanceId, setProcessInstanceId] = useState<string>('');
   const [processInstanceIdValid, setProcessInstanceIdValid] =
@@ -56,9 +58,9 @@ export default function ProcessInstanceFindById() {
         id="process-instance-id-input"
         error={!processInstanceIdValid}
         helperText={
-          !processInstanceIdValid ? 'Process Instance Id must be a number.' : ''
+          !processInstanceIdValid ? t('process_id_must_be_a_number') : ''
         }
-        label="Process Instance Id*"
+        label={t('process_id')}
         value={processInstanceId}
         onChange={handleProcessInstanceIdChange}
         fullWidth
@@ -69,7 +71,7 @@ export default function ProcessInstanceFindById() {
   const formButtons = () => {
     return (
       <Button type="submit" variant="contained">
-        Submit
+        {t('submit')}
       </Button>
     );
   };

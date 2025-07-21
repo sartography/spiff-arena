@@ -17,7 +17,7 @@ def main() -> None:
     ####
 
     app = create_app()
-    start_apscheduler(app, BlockingScheduler)
+    start_apscheduler(app.app, BlockingScheduler)
 
 
 if __name__ == "__main__":

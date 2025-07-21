@@ -1,5 +1,5 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
 
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.script_unit_test_runner import PythonScriptContext
@@ -12,7 +12,7 @@ class TestScriptUnitTestRunner(BaseTest):
     def test_takes_data_and_returns_expected_result(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
@@ -43,7 +43,7 @@ class TestScriptUnitTestRunner(BaseTest):
     def test_fails_when_expected_output_does_not_match_actual_output(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
@@ -74,7 +74,7 @@ class TestScriptUnitTestRunner(BaseTest):
     def test_script_with_unit_tests_when_hey_is_passed_in(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
@@ -101,7 +101,7 @@ class TestScriptUnitTestRunner(BaseTest):
     def test_script_with_unit_tests_when_hey_is_not_passed_in(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
