@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Column, Grid } from '@carbon/react';
 import { Can } from '@casl/react';
 import { Edit } from '@carbon/icons-react';
@@ -19,6 +20,7 @@ export default function ProcessModelReadmeArea({
   targetUris,
   modifiedProcessModelId,
 }: ProcessModelReadmeAreaProps) {
+  const { t } = useTranslation();
   if (readmeFile) {
     return (
       <div className="readme-container">
@@ -36,7 +38,7 @@ export default function ProcessModelReadmeArea({
                 kind="ghost"
                 data-testid="process-model-readme-file-edit"
                 renderIcon={Edit}
-                iconDescription="Edit README.md"
+                iconDescription={t('edit_readme')}
                 hasIconOnly
                 href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
               />
@@ -52,7 +54,7 @@ export default function ProcessModelReadmeArea({
   }
   return (
     <>
-      <p>No README file found</p>
+      <p>{t('no_readme_file')}</p>
       <Can I="POST" a={targetUris.processModelFileCreatePath} ability={ability}>
         <Button
           className="with-top-margin"
@@ -60,7 +62,7 @@ export default function ProcessModelReadmeArea({
           href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
           size="md"
         >
-          Add README.md
+          {t('add_readme')}
         </Button>
       </Can>
     </>

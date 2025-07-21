@@ -12,6 +12,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   ButtonGroup,
@@ -88,6 +89,7 @@ function TabPanel(props: {
 }
 
 export default function ProcessModelEditDiagram() {
+  const { t } = useTranslation();
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
@@ -400,7 +402,9 @@ export default function ProcessModelEditDiagram() {
   const handleFileNameSave = (event: any) => {
     event.preventDefault();
     if (!newFileName) {
-      setProcessModelFileInvalidText('Process Model file name is required.');
+      setProcessModelFileInvalidText(
+        t('diagram_file_name_editor_error_required'),
+      );
       return;
     }
     setProcessModelFileInvalidText('');
@@ -418,12 +422,12 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Process Model File Name</h2>
+          <h2 id="modal-modal-title">{t('diagram_file_name_editor_title')}</h2>
           <Grid container spacing={2}>
             <Grid item xs={8}>
               <TextField
                 id="process_model_file_name"
-                label="File Name:"
+                label={t('diagram_file_name_editor_label')}
                 value={newFileName}
                 onChange={(e: any) => setNewFileName(e.target.value)}
                 error={!!processModelFileInvalidText}
@@ -438,8 +442,8 @@ export default function ProcessModelEditDiagram() {
             </Grid>
           </Grid>
           <ButtonGroup>
-            <Button onClick={handleFileNameSave}>Save Changes</Button>
-            <Button onClick={handleFileNameCancel}>Cancel</Button>
+            <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
+            <Button onClick={handleFileNameCancel}>{t('cancel')}</Button>
           </ButtonGroup>
         </Box>
       </Dialog>
@@ -713,7 +717,7 @@ export default function ProcessModelEditDiagram() {
       } catch (e) {
         setScriptUnitTestResult({
           result: false,
-          error: 'The JSON provided contains a formatting error.',
+          error: t('diagram_errors_json_formatting'),
         });
         return;
       }
@@ -737,13 +741,15 @@ export default function ProcessModelEditDiagram() {
     if (scriptUnitTestResult && scriptUnitTestResult.result === false) {
       let errorObject = '';
       if (scriptUnitTestResult.context) {
-        errorObject = 'Unexpected result. Please see the comparison below.';
+        errorObject = t('diagram_errors_unexpected_result');
       } else if (scriptUnitTestResult.line_number) {
-        errorObject = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
+        errorObject = t('diagram_errors_script_error_line', {
+          lineNumber: scriptUnitTestResult.line_number,
+        });
       } else {
-        errorObject = `Error encountered running the script. ${JSON.stringify(
-          scriptUnitTestResult.error,
-        )}`;
+        errorObject = t('diagram_errors_script_error_generic', {
+          errorMessage: JSON.stringify(scriptUnitTestResult.error),
+        });
       }
       let errorStringElement = <span>{errorObject}</span>;
 
@@ -848,7 +854,9 @@ export default function ProcessModelEditDiagram() {
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <p className="with-top-margin-for-unit-test-name">
-                Unit Test: {currentScriptUnitTest.id}
+                {t('diagram_script_editor_unit_test_title', {
+                  testId: currentScriptUnitTest.id,
+                })}
               </p>
             </Grid>
             <Grid item xs={6}>
@@ -879,7 +887,7 @@ export default function ProcessModelEditDiagram() {
           </Grid>
           <Grid container spacing={2}>
             <Grid item xs={6}>
-              <div>Input Json:</div>
+              <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
                 <Editor
                   height={500}
@@ -892,7 +900,9 @@ export default function ProcessModelEditDiagram() {
               </div>
             </Grid>
             <Grid item xs={6}>
-              <div>Expected Output Json:</div>
+              <div>
+                {t('diagram_script_editor_unit_test_expected_output_json')}
+              </div>
               <div>
                 <Editor
                   height={500}
@@ -937,10 +947,14 @@ export default function ProcessModelEditDiagram() {
         setScriptAssistQuery(scriptAssistValue);
         setScriptAssistError(null);
       } catch (error) {
-        setScriptAssistError(`Failed to process script assist query: ${error}`);
+        setScriptAssistError(
+          t('diagram_script_assist_error_processing', { error }),
+        );
       }
     } else {
-      setScriptAssistError('Please provide instructions for your script!');
+      setScriptAssistError(
+        t('diagram_script_assist_error_instructions_required'),
+      );
     }
   };
 
@@ -949,7 +963,7 @@ export default function ProcessModelEditDiagram() {
     return (
       <>
         <TextareaAutosize
-          placeholder="Ask Spiff AI"
+          placeholder={t('diagram_script_assist_placeholder')}
           minRows={20}
           value={scriptAssistValue}
           onChange={(e: any) => setScriptAssistValue(e.target.value)}
@@ -970,7 +984,7 @@ export default function ProcessModelEditDiagram() {
             onClick={() => handleProcessScriptAssist()}
             disabled={scriptAssistLoading}
           >
-            Ask Spiff AI
+            {t('diagram_script_assist_button')}
           </Button>
         </Stack>
       </>
@@ -994,10 +1008,10 @@ export default function ProcessModelEditDiagram() {
           {editorWindow()}
         </Grid>
         <Grid item xs={5}>
-          <Tooltip title="Use natural language to create your script. Hint: start basic and edit to tweak.">
+          <Tooltip title={t('diagram_script_assist_tooltip')}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Info fontSize="small" />
-              <span>Create a python script that...</span>
+              <span>{t('diagram_script_assist_hint')}</span>
             </Stack>
           </Tooltip>
           {scriptAssistWindow()}
@@ -1027,11 +1041,15 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Editing Script: {scriptName}</h2>
+          <h2 id="modal-modal-title">
+            {t('diagram_script_editor_title', { scriptName })}
+          </h2>
           <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
-            <Tab label="Script Editor" />
-            {scriptAssistEnabled && <Tab label="Script Assist" />}
-            <Tab label="Unit Tests" />
+            <Tab label={t('diagram_script_editor_tab_script_editor')} />
+            {scriptAssistEnabled && (
+              <Tab label={t('diagram_script_editor_tab_script_assist')} />
+            )}
+            <Tab label={t('diagram_script_editor_tab_unit_tests')} />
           </Tabs>
           <Box>
             <TabPanel value={scriptEditorTabValue} index={0}>
@@ -1046,7 +1064,7 @@ export default function ProcessModelEditDiagram() {
               {scriptUnitTestEditorElement()}
             </TabPanel>
           </Box>
-          <Button onClick={handleScriptEditorClose}>Close</Button>
+          <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );
@@ -1083,7 +1101,7 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Edit Markdown</h2>
+          <h2 id="modal-modal-title">{t('diagram_markdown_editor_title')}</h2>
           <div data-color-mode="light">
             <MDEditor
               height={500}
@@ -1095,7 +1113,7 @@ export default function ProcessModelEditDiagram() {
               }}
             />
           </div>
-          <Button onClick={handleMarkdownEditorClose}>Close</Button>
+          <Button onClick={handleMarkdownEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );
@@ -1132,8 +1150,8 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Message Editor</h2>
-          <p>Create or edit a message and manage its correlation properties</p>
+          <h2 id="modal-modal-title">{t('diagram_message_editor_title')}</h2>
+          <p>{t('diagram_message_editor_description')}</p>
           <div data-color-mode="light">
             <MessageEditor
               modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
@@ -1145,9 +1163,11 @@ export default function ProcessModelEditDiagram() {
               elementId={elementId}
             />
           </div>
-          <Button onClick={handleMessageEditorSave}>Save</Button>
+          <Button onClick={handleMessageEditorSave}>
+            {t('diagram_message_editor_save')}
+          </Button>
           <Button onClick={handleMessageEditorClose}>
-            Close (this does not save)
+            {t('diagram_message_editor_close')}
           </Button>
         </Box>
       </Dialog>
@@ -1182,12 +1202,14 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Select Process Model</h2>
+          <h2 id="modal-modal-title">
+            {t('diagram_process_model_selector_title')}
+          </h2>
           <ProcessSearch
             height="500px"
             onChange={processSearchOnClose}
             processes={processes}
-            titleText="Process model search"
+            titleText={t('diagram_process_model_selector_search_placeholder')}
           />
         </Box>
       </Dialog>
@@ -1327,7 +1349,9 @@ export default function ProcessModelEditDiagram() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">Edit JSON Schema</h2>
+          <h2 id="modal-modal-title">
+            {t('diagram_json_schema_editor_title')}
+          </h2>
           <ReactFormBuilder
             processModelId={params.process_model_id || ''}
             fileName={jsonSchemaFileName}
@@ -1342,7 +1366,7 @@ export default function ProcessModelEditDiagram() {
             )}
             pythonWorker={pythonWorker}
           />
-          <Button onClick={handleJsonSchemaEditorClose}>Close</Button>
+          <Button onClick={handleJsonSchemaEditorClose}>{t('close')}</Button>
         </Box>
       </Dialog>
     );
@@ -1437,12 +1461,12 @@ export default function ProcessModelEditDiagram() {
     if (displaySaveFileMessage) {
       return (
         <Notification
-          title="File Saved: "
+          title={t('file_saved_title')}
           onClose={() => setDisplaySaveFileMessage(false)}
           hideCloseButton
           timeout={3000}
         >
-          Changes to the file were saved.
+          {t('file_saved_message')}
         </Notification>
       );
     }
@@ -1454,12 +1478,12 @@ export default function ProcessModelEditDiagram() {
       return (
         <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
           <Notification
-            title="Unsaved changes."
+            title={t('diagram_notifications_unsaved_changes_title')}
             type="error"
             data-testid="process-model-file-changed"
             hideCloseButton
           >
-            Please save to avoid losing your work.
+            {t('diagram_notifications_unsaved_changes_message')}
           </Notification>
         </Can>
       );
@@ -1487,7 +1511,7 @@ export default function ProcessModelEditDiagram() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            [t('process_groups'), '/process-groups'],
             {
               entityToExplode: processModel,
               entityType: 'process-model',
@@ -1497,8 +1521,7 @@ export default function ProcessModelEditDiagram() {
           ]}
         />
         <h1>
-          Process Model File{processModelFile ? ': ' : ''}
-          {processModelFileName}
+          {t('process_model_file', { fileName: processModelFileName || '---' })}
         </h1>
 
         {pageModals()}

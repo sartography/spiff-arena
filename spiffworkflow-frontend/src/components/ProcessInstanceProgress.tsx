@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { CircularProgress } from '@mui/material';
 import {
@@ -36,6 +37,7 @@ export default function ProcessInstanceProgress({
   const [errorHasOccurred, setErrorHasOccurred] = useState<boolean>(false);
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const shouldRedirectToTask = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
@@ -128,7 +130,7 @@ export default function ProcessInstanceProgress({
     return (
       <InstructionsForEndUser
         taskInstructionForEndUser={taskInstructionForEndUser}
-        defaultMessage="There are no instructions or information for this task."
+        defaultMessage={t('no_instructions_for_task')}
       />
     );
   };

@@ -1,4 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   Table,
@@ -77,6 +78,7 @@ export default function TaskListTable({
   textToShowIfEmpty,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [formSubmissionTask, setFormSubmissionTask] = useState<Task | null>(
@@ -201,7 +203,7 @@ export default function TaskListTable({
               {TimeAgo.inWords(formSubmissionTask.end_in_seconds)}
               <div>
                 <Stack direction="row" spacing={2}>
-                  Guid: {formSubmissionTask.guid}
+                  {t('guid')}: {formSubmissionTask.guid}
                 </Stack>
               </div>
             </div>
@@ -306,7 +308,7 @@ export default function TaskListTable({
           disabled={!hasAccessToCompleteTask}
           size="small"
         >
-          Go
+          {t('go')}
         </Button>,
       );
     }
@@ -316,7 +318,7 @@ export default function TaskListTable({
           variant="contained"
           onClick={() => getFormSubmissionDataForTask(processInstanceTask)}
         >
-          View task
+          {t('view_task')}
         </Button>,
       );
     }
@@ -387,29 +389,29 @@ export default function TaskListTable({
   const getTableHeaders = () => {
     let tableHeaders = [];
     if (showProcessId) {
-      tableHeaders.push('Id');
+      tableHeaders.push(t('id'));
     }
     if (showProcessModelIdentifier) {
-      tableHeaders.push('Process');
+      tableHeaders.push(t('process'));
     }
-    tableHeaders.push('Task');
+    tableHeaders.push(t('task'));
     if (showStartedBy) {
-      tableHeaders.push('Started by');
+      tableHeaders.push(t('started_by'));
     }
     if (showWaitingOn) {
-      tableHeaders.push('Waiting for');
+      tableHeaders.push(t('waiting_for'));
     }
     if (showCompletedBy) {
-      tableHeaders.push('Completed by');
+      tableHeaders.push(t('completed_by'));
     }
     if (showDateStarted) {
-      tableHeaders.push('Date started');
+      tableHeaders.push(t('date_started'));
     }
     if (showLastUpdated) {
-      tableHeaders.push('Last updated');
+      tableHeaders.push(t('last_updated'));
     }
     if (showActionsColumn) {
-      tableHeaders = tableHeaders.concat(['Actions']);
+      tableHeaders = tableHeaders.concat([t('actions')]);
     }
     return tableHeaders;
   };

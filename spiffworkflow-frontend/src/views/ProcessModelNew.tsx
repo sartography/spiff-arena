@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material'; // Import MUI components
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { ProcessModel } from '../interfaces';
@@ -10,6 +11,7 @@ import {
 } from '../helpers';
 
 export default function ProcessModelNew() {
+  const { t } = useTranslation();
   const params = useParams();
   const [processModel, setProcessModel] = useState<ProcessModel>({
     id: '',
@@ -19,13 +21,16 @@ export default function ProcessModelNew() {
     primary_process_id: '',
     files: [],
   });
-  setPageTitle(['Add New Process Model']);
+
+  useEffect(() => {
+    setPageTitle([t('add_new_process_model')]);
+  }, [t]);
 
   return (
     <Box>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          [t('process_groups'), '/process-groups'],
           {
             entityToExplode: params.process_group_id || '',
             entityType: 'process-group-id',
@@ -33,7 +38,7 @@ export default function ProcessModelNew() {
           },
         ]}
       />
-      <Typography variant="h1">Add Process Model</Typography>
+      <Typography variant="h1">{t('add_process_model')}</Typography>
       <Box mt={2}>
         <ProcessModelForm
           mode="new"

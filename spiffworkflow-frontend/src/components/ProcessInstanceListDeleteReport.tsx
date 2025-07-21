@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -11,6 +12,7 @@ export default function ProcessInstanceListDeleteReport({
   onSuccess,
   processInstanceReportSelection,
 }: OwnProps) {
+  const { t } = useTranslation();
   const deleteProcessInstanceReport = () => {
     HttpService.makeCallToBackend({
       path: `/process-instances/reports/${processInstanceReportSelection.id}`,
@@ -21,9 +23,11 @@ export default function ProcessInstanceListDeleteReport({
 
   return (
     <ButtonWithConfirmation
-      description={`Delete Perspective ${processInstanceReportSelection.identifier}?`}
+      description={t('delete_perspective_confirmation', {
+        identifier: processInstanceReportSelection.identifier,
+      })}
       onConfirmation={deleteProcessInstanceReport}
-      buttonLabel="Delete"
+      buttonLabel={t('delete')}
     />
   );
 }

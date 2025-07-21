@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -35,6 +36,7 @@ export default function ButtonWithConfirmation({
   hasIconOnly = false,
   classNameForModal,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
 
   const handleShowConfirmationPrompt = () => {
@@ -58,18 +60,20 @@ export default function ButtonWithConfirmation({
         aria-describedby="alert-dialog-description"
         className={classNameForModal}
       >
-        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {title || t('are_you_sure')}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            {description}
+            {description || null}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleConfirmationPromptCancel} color="primary">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button onClick={handleConfirmation} color="primary" autoFocus>
-            {confirmButtonLabel}
+            {confirmButtonLabel || t('ok')}
           </Button>
         </DialogActions>
       </Dialog>
