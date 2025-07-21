@@ -225,6 +225,10 @@ class TaskService:
             task_model.start_in_seconds = start_and_end_times["start_in_seconds"]
             task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
+        # Set a completion time for error tasks
+        if task_model.state == "ERROR":
+            task_model.end_in_seconds = time.time()
+
         # let failed tasks raise and we will log the event then.
         # avoid creating events for the same state transition multiple times to avoid multiple cancelled events
         if (
