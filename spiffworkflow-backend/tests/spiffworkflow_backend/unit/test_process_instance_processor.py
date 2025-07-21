@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 import pytest
@@ -20,6 +21,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
+from spiffworkflow_backend.routes.tasks_controller import task_data_update
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -433,6 +435,45 @@ class TestProcessInstanceProcessor(BaseTest):
             task_guid=human_task_one.task_id, event_type=ProcessInstanceEventType.task_executed_manually.value
         ).first()
         assert task_event is not None
+
+    def test_properly_resets_process_on_error_tasks(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/script_with_error",
+            process_model_source_directory="script_with_error",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        with pytest.raises(WorkflowExecutionServiceError) as exc:
+            processor.do_engine_steps(save=True)
+            assert exc.task.task_spec.name == "script_with_error"
+
+        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_error", processor.bpmn_process_instance)
+        processor.suspend()
+        ProcessInstanceProcessor.reset_process(process_instance, str(task.id))
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        ready_tasks = processor.get_all_ready_or_waiting_tasks()
+        assert len(ready_tasks) == 1
+        assert ready_tasks[0].task_spec.name == "script_with_error"
+        updated_data = json.dumps({"n": ready_tasks[0].data["numbers"]})
+        task_data_update(
+            process_instance.id,
+            "test_group/script_with_error",
+            str(ready_tasks[0].id),
+            {"new_task_data": updated_data},
+        )
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.resume()
+        processor.do_engine_steps(save=True)
 
     def test_step_through_gateway(
         self,
