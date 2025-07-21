@@ -169,7 +169,7 @@ export default function ContainerForExtensions() {
               extensionUiSchema.ux_elements.forEach((element: UiSchemaUxElement) => {
                 if (element.display_location === UiSchemaDisplayLocation.css) {
                   // Find the CSS file in the process model files
-                  const cssFilename = element.css_file || element.page;
+                  const cssFilename = element.location_specific_configs?.css_file || element.page;
                   const cssFile = processModel.files.find(
                     (file: ProcessFile) => file.name === cssFilename
                   );

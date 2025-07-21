@@ -62,6 +62,12 @@ export interface UiSchemaLocationSpecificConfig {
    * Specifies which pages should cause the tab item to become highlighted.
    */
   highlight_on_tabs?: string[];
+  
+  /**
+   * Specifies the filename of the CSS file to use when using CSS display_location.
+   * This is the recommended approach for adding CSS.
+   */
+  css_file?: string;
 }
 
 // Primary ux element - decribes how the extension should be displayed and accessed from the web ui.
@@ -71,7 +77,6 @@ export interface UiSchemaUxElement {
   display_location: UiSchemaDisplayLocation;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
   tooltip?: string;
-  css_file?: string;
 }
 
 export interface UiSchemaForm {

@@ -70,9 +70,11 @@ Extensions can include custom CSS files to style their components or even modify
     },
     {
       "label": "Custom Styling",
-      "css_file": "styles.css",
       "page": "/your-page",
-      "display_location": "css"
+      "display_location": "css",
+      "location_specific_configs": {
+        "css_file": "styles.css"
+      }
     }
   ]
 }
@@ -80,7 +82,7 @@ Extensions can include custom CSS files to style their components or even modify
 
 The CSS will be automatically loaded and applied when the extension is loaded. 
 
-Note: You can use either the `css_file` property to specify the CSS file (recommended), or use the `page` property if `css_file` is not specified (for backward compatibility). The `css_file` property is preferred as it allows you to keep the `page` property for its intended navigation purpose.
+Note: You must specify the CSS file name using the `css_file` property within the `location_specific_configs` object. If this is not provided, it will fall back to using the `page` property for backward compatibility, but this is not recommended as it overloads the purpose of the `page` property.
 
 This feature allows you to:
 
