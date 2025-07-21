@@ -1,5 +1,4 @@
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

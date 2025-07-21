@@ -1,6 +1,7 @@
 from typing import Any
 
 from flask import current_app
+
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
@@ -22,7 +23,7 @@ class GetMarkdownFileDownloadLink(Script):
         **kwargs: Any,
     ) -> Any:
         # example input:
-        #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"  # noqa: B950,E501
+        #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"  # noqa: E501
         digest_reference = args[0]
         parts = digest_reference.split(";")
         digest = parts[2].split(",")[1][-64:]
@@ -35,7 +36,10 @@ class GetMarkdownFileDownloadLink(Script):
         if process_instance_id is None:
             raise self.get_proces_instance_id_is_missing_error("save_process_instance_metadata")
         url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
-        url += f"/v1.0/process-data-file-download/{modified_process_model_identifier}/" + f"{process_instance_id}/{digest}"
+        url += (
+            f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-data-file-download/{modified_process_model_identifier}/"
+            + f"{process_instance_id}/{digest}"
+        )
         link = f"[{label}]({url})"
 
         return link

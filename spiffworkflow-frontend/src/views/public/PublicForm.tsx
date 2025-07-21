@@ -1,6 +1,7 @@
 import { Box, CircularProgress, Grid } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import HttpService from '../../services/HttpService';
 import CustomForm from '../../components/CustomForm';
 import { recursivelyChangeNullAndUndefined } from '../../helpers';
@@ -8,7 +9,7 @@ import { ErrorForDisplay, PublicTask } from '../../interfaces';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
 import InstructionsForEndUser from '../../components/InstructionsForEndUser';
 import {
-  errorDisplayStateless,
+  ErrorDisplayStateless,
   errorForDisplayFromString,
 } from '../../components/ErrorDisplay';
 import Page404 from '../Page404';
@@ -23,6 +24,7 @@ export default function PublicForm() {
   const [publicTask, setPublicTask] = useState<PublicTask | null>(null);
   const [currentPageError, setCurrentPageError] =
     useState<ErrorForDisplay | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const taskGuid = params.task_guid;
@@ -41,7 +43,7 @@ export default function PublicForm() {
           setCurrentPageError(error);
         } else {
           setCurrentPageError(
-            errorForDisplayFromString('Error retrieving content.'),
+            errorForDisplayFromString(t('error_retrieving_content')),
           );
         }
         console.error(error);
@@ -51,6 +53,7 @@ export default function PublicForm() {
     params.modified_message_name,
     params.process_instance_id,
     params.task_guid,
+    t,
   ]);
 
   const processSubmitResult = (result: PublicTask) => {
@@ -60,7 +63,7 @@ export default function PublicForm() {
     if (result.confirmation_message_markdown) {
       setConfirmationMessage(result.confirmation_message_markdown);
     } else if (!result.form) {
-      setConfirmationMessage('Thank you!');
+      setConfirmationMessage(`${t('thank_you')}!`);
     }
   };
 
@@ -109,11 +112,11 @@ export default function PublicForm() {
       }
       return (
         <>
-          {errorDisplayStateless(currentPageError)}
+          <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
             Go to{' '}
-            <a href="/" data-qa="public-home-link">
-              Home
+            <a href="/" data-testid="public-home-link">
+              {t('home')}
             </a>
           </p>
         </>

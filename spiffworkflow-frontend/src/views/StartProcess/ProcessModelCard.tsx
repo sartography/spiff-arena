@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PointerEvent, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { getStorageValue } from '../../services/LocalStorageService';
@@ -48,6 +49,7 @@ export default function ProcessModelCard({
   onStartProcess?: () => void;
   onViewProcess?: () => void;
 }) {
+  const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -161,7 +163,11 @@ export default function ProcessModelCard({
       <CardActionArea>
         <CardContent>
           <Stack gap={1} sx={{ height: '100%' }}>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 700 }}
+              data-testid={`process-model-card-${model.display_name}`}
+            >
               {model.display_name}
             </Typography>
             <Typography
@@ -180,7 +186,7 @@ export default function ProcessModelCard({
           size="small"
           onClick={(e) => handleStartProcess(e as unknown as PointerEvent)}
         >
-          Start this process
+          {t('start_process')}
         </Button>
       </CardActions>
     </Card>

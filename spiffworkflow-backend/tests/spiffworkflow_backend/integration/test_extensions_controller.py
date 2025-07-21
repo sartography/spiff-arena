@@ -1,10 +1,9 @@
-import json
 import re
 
 from flask.app import Flask
-from flask.testing import FlaskClient
-from spiffworkflow_backend.models.user import UserModel
+from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -12,7 +11,7 @@ class TestExtensionsController(BaseTest):
     def test_basic_extension(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -27,9 +26,8 @@ class TestExtensionsController(BaseTest):
 
             response = client.post(
                 f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
-                headers=self.logged_in_headers(with_super_admin_user),
-                content_type="application/json",
-                data=json.dumps({"extension_input": {"OUR_AWESOME_INPUT": "the awesome value"}}),
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json={"extension_input": {"OUR_AWESOME_INPUT": "the awesome value"}},
             )
 
             expected_task_data = {
@@ -42,13 +40,13 @@ class TestExtensionsController(BaseTest):
                 }
             }
             assert response.status_code == 200
-            assert response.json is not None
-            assert response.json == expected_task_data
+            assert response.json() is not None
+            assert response.json() == expected_task_data
 
     def test_returns_403_if_extensions_not_enabled(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -66,13 +64,13 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 403
-            assert response.json
-            assert response.json["error_code"] == "extensions_api_not_enabled"
+            assert response.json()
+            assert response.json()["error_code"] == "extensions_api_not_enabled"
 
     def test_returns_403_if_process_model_does_not_match_configured_prefix(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -90,13 +88,13 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 403
-            assert response.json
-            assert response.json["error_code"] == "invalid_process_model_extension"
+            assert response.json()
+            assert response.json()["error_code"] == "invalid_process_model_extension"
 
     def test_extension_can_run_without_restriction(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -118,9 +116,9 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
 
-            assert response.json is not None
-            assert "task_data" in response.json
-            task_data = response.json["task_data"]
+            assert response.json() is not None
+            assert "task_data" in response.json()
+            task_data = response.json()["task_data"]
             assert "pi_json" in task_data
             assert "id" in task_data["pi_json"]
             assert re.match(r"^\d+$", str(task_data["pi_json"]["id"]))
@@ -128,7 +126,7 @@ class TestExtensionsController(BaseTest):
     def test_extension_data_get_can_return_proper_response(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -149,6 +147,6 @@ class TestExtensionsController(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 200
-            assert response.mimetype == "text/csv"
-            assert response.headers[0] == ("Content-disposition", "attachment; filename=metadata_export.csv")
+            assert response.headers["content-type"] == "text/csv; charset=utf-8"
+            assert response.headers["Content-disposition"] == "attachment; filename=metadata_export.csv"
             assert re.match(r"\d+", response.text)

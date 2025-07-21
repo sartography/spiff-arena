@@ -1,13 +1,13 @@
 from uuid import UUID
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -16,7 +16,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_detailed_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -46,8 +46,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:
@@ -70,7 +70,7 @@ class TestLoggingService(BaseTest):
     def test_logging_service_simple_logs(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -106,8 +106,8 @@ class TestLoggingService(BaseTest):
             headers=headers,
         )
         assert log_response.status_code == 200
-        assert log_response.json
-        logs: list = log_response.json["results"]
+        assert log_response.json()
+        logs: list = log_response.json()["results"]
         assert len(logs) == 4
 
         for log in logs:

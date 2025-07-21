@@ -1,9 +1,12 @@
 import Editor from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import HttpService from '../services/HttpService';
 
 export default function AuthenticationConfiguration() {
+  const { t } = useTranslation();
+
   const [authConfig, setAuthConfig] = useState('');
 
   useEffect(() => {
@@ -29,11 +32,11 @@ export default function AuthenticationConfiguration() {
   return (
     <>
       <Button variant="contained" onClick={() => saveAuthConfig()}>
-        Save
+        {t('save')}
       </Button>
       <br />
       <br />
-      <h2>Local Configuration</h2>
+      <h2>{t('local_configuration')}</h2>
       <br />
       <Editor
         height={600}

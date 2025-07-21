@@ -67,7 +67,7 @@ export default function ProcessModelSearch({
     <ComboBox
       onChange={onChange}
       id="process-model-select"
-      data-qa="process-model-selection"
+      data-testid="process-model-selection"
       items={processModels}
       itemToString={(processModel: ProcessModel) => {
         if (processModel) {

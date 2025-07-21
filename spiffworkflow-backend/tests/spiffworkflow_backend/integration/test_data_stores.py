@@ -1,8 +1,8 @@
 from flask import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.models.typeahead import TypeaheadModel
 from spiffworkflow_backend.models.user import UserModel
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -10,7 +10,7 @@ class TestDataStores(BaseTest):
     def load_data_store(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -31,8 +31,8 @@ class TestDataStores(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
-        assert response.json is not None
-        process_instance_id = response.json["id"]
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
 
         client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
@@ -42,7 +42,7 @@ class TestDataStores(BaseTest):
     def test_create_data_store_populates_db(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -54,7 +54,7 @@ class TestDataStores(BaseTest):
     def test_get_list_of_data_stores(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -62,11 +62,11 @@ class TestDataStores(BaseTest):
         It should be possible to get a list of the data store categories that are available.
         """
         results = client.get("/v1.0/data-stores", headers=self.logged_in_headers(with_super_admin_user))
-        assert results.json == []
+        assert results.json() == []
 
         self.load_data_store(app, client, with_db_and_bpmn_file_cleanup, with_super_admin_user)
         results = client.get("/v1.0/data-stores", headers=self.logged_in_headers(with_super_admin_user))
-        assert results.json == [
+        assert results.json() == [
             {"name": "albums", "type": "typeahead", "id": "albums", "clz": "TypeaheadDataStore"},
             {"name": "cereals", "type": "typeahead", "id": "cereals", "clz": "TypeaheadDataStore"},
         ]
@@ -74,7 +74,7 @@ class TestDataStores(BaseTest):
     def test_get_data_store_returns_paginated_results(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -90,10 +90,10 @@ class TestDataStores(BaseTest):
             "artist": "Pantera",
         }
 
-        assert response.json is not None
-        assert len(response.json["results"]) == 10
-        assert response.json["pagination"]["count"] == 10
-        assert response.json["pagination"]["total"] == 76
-        assert response.json["pagination"]["pages"] == 8
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 10
+        assert response.json()["pagination"]["count"] == 10
+        assert response.json()["pagination"]["total"] == 76
+        assert response.json()["pagination"]["pages"] == 8
 
-        assert expected_item_in_response in response.json["results"]
+        assert expected_item_in_response in response.json()["results"]

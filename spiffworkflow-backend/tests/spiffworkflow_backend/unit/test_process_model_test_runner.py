@@ -3,10 +3,10 @@ import os
 import pytest
 from flask import Flask
 from flask import current_app
+
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGivenError
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -124,9 +124,9 @@ class TestProcessModelTestRunner(BaseTest):
         process_model_test_runner.run()
 
         all_tests_expected_to_pass = parent_directory == "expected-to-pass"
-        assert (
-            process_model_test_runner.all_test_cases_passed() is all_tests_expected_to_pass
-        ), process_model_test_runner.failing_tests_formatted()
+        assert process_model_test_runner.all_test_cases_passed() is all_tests_expected_to_pass, (
+            process_model_test_runner.failing_tests_formatted()
+        )
         return process_model_test_runner
 
     def root_path(self) -> str:

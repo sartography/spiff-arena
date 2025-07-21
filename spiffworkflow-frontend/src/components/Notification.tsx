@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -22,7 +23,7 @@ type OwnProps = {
   allowTogglingFullMessage?: boolean;
   timeout?: number;
   withBottomMargin?: boolean;
-  'data-qa'?: string;
+  'data-testid'?: string;
 };
 
 export function Notification({
@@ -34,8 +35,9 @@ export function Notification({
   allowTogglingFullMessage = false,
   timeout,
   withBottomMargin = true,
-  'data-qa': dataQa,
+  'data-testid': dataTestid,
 }: OwnProps) {
+  const { t } = useTranslation();
   const [showMessage, setShowMessage] = useState<boolean>(
     !allowTogglingFullMessage,
   );
@@ -48,8 +50,8 @@ export function Notification({
   }
 
   const additionalProps: ObjectWithStringKeysAndValues = {};
-  if (dataQa) {
-    additionalProps['data-qa'] = dataQa;
+  if (dataTestid) {
+    additionalProps['data-testid'] = dataTestid;
   }
 
   return (
@@ -72,13 +74,13 @@ export function Notification({
                 size="small"
                 onClick={() => setShowMessage(!showMessage)}
               >
-                {showMessage ? 'Hide' : 'Details'}
+                {showMessage ? t('hide') : t('details')}
               </Button>
             )}
             {!hideCloseButton && (
               <IconButton
                 size="small"
-                aria-label="close"
+                aria-label={t('close')}
                 color="inherit"
                 onClick={(event) => {
                   if (onClose) {

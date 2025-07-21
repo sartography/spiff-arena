@@ -1,15 +1,14 @@
-import json
 import os
 
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -17,7 +16,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_add(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -30,15 +29,14 @@ class TestProcessGroupsController(BaseTest):
         )
         response = client.post(
             "/v1.0/process-groups",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(process_group.serialized()),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=process_group.serialized(),
         )
         assert response.status_code == 201
-        assert response.json
+        assert response.json()
 
         # Check what is returned
-        result = ProcessGroup(**response.json)
+        result = ProcessGroup(**response.json())
         assert result is not None
         assert result.display_name == "Another Test Category"
         assert result.id == "test"
@@ -53,7 +51,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_delete(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -81,7 +79,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_update(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -98,9 +96,8 @@ class TestProcessGroupsController(BaseTest):
 
         response = client.put(
             f"/v1.0/process-groups/{group_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(process_group.serialized()),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=process_group.serialized(),
         )
         assert response.status_code == 200
 
@@ -110,7 +107,7 @@ class TestProcessGroupsController(BaseTest):
     def test_process_group_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -125,49 +122,49 @@ class TestProcessGroupsController(BaseTest):
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 5
-        assert response.json["pagination"]["count"] == 5
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 5
+        assert response.json()["pagination"]["count"] == 5
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 1
 
         # get first page, one per page
         response = client.get(
             "/v1.0/process-groups?page=1&per_page=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_process_group_0"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "test_process_group_0"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 5
 
         # get second page, one per page
         response = client.get(
             "/v1.0/process-groups?page=2&per_page=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "test_process_group_1"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 5
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "test_process_group_1"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 5
 
         # get first page, 3 per page
         response = client.get(
             "/v1.0/process-groups?page=1&per_page=3",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.json is not None
-        assert len(response.json["results"]) == 3
-        assert response.json["results"][0]["id"] == "test_process_group_0"
-        assert response.json["results"][1]["id"] == "test_process_group_1"
-        assert response.json["results"][2]["id"] == "test_process_group_2"
-        assert response.json["pagination"]["count"] == 3
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 3
+        assert response.json()["results"][0]["id"] == "test_process_group_0"
+        assert response.json()["results"][1]["id"] == "test_process_group_1"
+        assert response.json()["results"][2]["id"] == "test_process_group_2"
+        assert response.json()["pagination"]["count"] == 3
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 2
 
         # get second page, 3 per page
         response = client.get(
@@ -175,18 +172,18 @@ class TestProcessGroupsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         # there should only be 2 left
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["id"] == "test_process_group_3"
-        assert response.json["results"][1]["id"] == "test_process_group_4"
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["total"] == 5
-        assert response.json["pagination"]["pages"] == 2
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2
+        assert response.json()["results"][0]["id"] == "test_process_group_3"
+        assert response.json()["results"][1]["id"] == "test_process_group_4"
+        assert response.json()["pagination"]["count"] == 2
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 2
 
     def test_process_group_list_when_none(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -195,13 +192,13 @@ class TestProcessGroupsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["results"] == []
+        assert response.json() is not None
+        assert response.json()["results"] == []
 
     def test_process_group_list_when_there_are_some(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -211,16 +208,16 @@ class TestProcessGroupsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 1
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 1
+        assert response.json()["pagination"]["pages"] == 1
 
     def test_process_group_list_when_user_has_resticted_access(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -238,28 +235,28 @@ class TestProcessGroupsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["total"] == 2
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 2
+        assert response.json()["pagination"]["count"] == 2
+        assert response.json()["pagination"]["total"] == 2
+        assert response.json()["pagination"]["pages"] == 1
 
         response = client.get(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user_one),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
-        assert response.json["results"][0]["id"] == "all_users"
-        assert response.json["pagination"]["count"] == 1
-        assert response.json["pagination"]["total"] == 1
-        assert response.json["pagination"]["pages"] == 1
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == "all_users"
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] == 1
+        assert response.json()["pagination"]["pages"] == 1
 
     def test_get_process_group_when_found(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -272,15 +269,15 @@ class TestProcessGroupsController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["id"] == process_group_id
-        assert response.json["process_models"] == []
-        assert response.json["parent_groups"] == []
+        assert response.json() is not None
+        assert response.json()["id"] == process_group_id
+        assert response.json()["process_models"] == []
+        assert response.json()["parent_groups"] == []
 
     def test_get_process_group_show_when_nested(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -306,9 +303,9 @@ class TestProcessGroupsController(BaseTest):
         )
 
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["id"] == "test_group_one/test_group_two"
-        assert response.json["parent_groups"] == [
+        assert response.json() is not None
+        assert response.json()["id"] == "test_group_one/test_group_two"
+        assert response.json()["parent_groups"] == [
             {
                 "display_name": "test_group_one",
                 "id": "test_group_one",

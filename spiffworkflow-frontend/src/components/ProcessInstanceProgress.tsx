@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { CircularProgress } from '@mui/material';
 import {
@@ -13,9 +14,10 @@ import HttpService from '../services/HttpService';
 import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {
-  errorDisplayStateless,
+  ErrorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
+import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
 
 type OwnProps = {
   processInstanceId: number;
@@ -35,6 +37,7 @@ export default function ProcessInstanceProgress({
   const [errorHasOccurred, setErrorHasOccurred] = useState<boolean>(false);
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const shouldRedirectToTask = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
@@ -75,7 +78,8 @@ export default function ProcessInstanceProgress({
         ) {
           navigate(processInstanceShowPageUrl);
         } else {
-          navigate('/');
+          const toUrl = getAndRemoveLastProcessInstanceRunLocation() ?? '/';
+          navigate(toUrl);
         }
       }
 
@@ -126,7 +130,7 @@ export default function ProcessInstanceProgress({
     return (
       <InstructionsForEndUser
         taskInstructionForEndUser={taskInstructionForEndUser}
-        defaultMessage="There are no instructions or information for this task."
+        defaultMessage={t('no_instructions_for_task')}
       />
     );
   };
@@ -135,7 +139,7 @@ export default function ProcessInstanceProgress({
     if (currentPageError) {
       return (
         <>
-          {errorDisplayStateless(currentPageError)}
+          <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
             Go to <a href={processInstanceShowPageUrl}>Process Instance</a>
           </p>

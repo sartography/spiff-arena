@@ -1,9 +1,9 @@
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -12,7 +12,7 @@ class TestRestrictedScriptEngine(BaseTest):
     def test_dot_notation_with_open_file(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -30,7 +30,7 @@ class TestRestrictedScriptEngine(BaseTest):
     def test_dot_notation_with_import_module(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(

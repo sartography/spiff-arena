@@ -13,9 +13,9 @@ if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]]; then
 fi
 
 # check if python package pytest-xdist is installed
-if ! poetry run python -c "import xdist" &>/dev/null; then
-  echo >&2 -e "ERROR: please install the python package pytest-xdist by running poetry install"
+if ! uv run python -c "import xdist" &>/dev/null; then
+  echo >&2 -e "ERROR: please install the python package pytest-xdist by running uv install"
   exit 1
 fi
 
-SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite poet test -n auto -x --random-order "$@"
+SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite uv run pytest -n auto -x --random-order "$@" tests/spiffworkflow_backend

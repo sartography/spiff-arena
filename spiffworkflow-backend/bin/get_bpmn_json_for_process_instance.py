@@ -9,7 +9,7 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 
 def main(process_instance_id: str) -> None:
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
         file_path = f"/var/tmp/{process_instance_id}_bpmn_json.json"  # noqa: S108

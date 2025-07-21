@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+png_files=$(find * -type f -name "*.png")
+for image in $png_files; do
+  if ! grep -qRE "\<$image\>" .; then
+    echo "removing: $image"
+    rm "$image"
+  fi
+done

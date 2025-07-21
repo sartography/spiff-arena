@@ -12,7 +12,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 def main(process_model_identifier: str, filepath: str, process_instance_id: int | None = None) -> None:
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         user = UserService.find_or_create_system_user()
         process_model = ProcessModelService.get_process_model(process_model_identifier.replace(":", "/"))
         if process_instance_id is not None:

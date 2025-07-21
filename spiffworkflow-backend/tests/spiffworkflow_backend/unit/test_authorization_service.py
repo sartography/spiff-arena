@@ -1,6 +1,7 @@
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -11,7 +12,6 @@ from spiffworkflow_backend.services.authorization_service import GroupPermission
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -55,7 +55,7 @@ class TestAuthorizationService(BaseTest):
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -92,7 +92,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_all_on_process_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = sorted(
@@ -153,7 +153,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_start_on_process_group(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = sorted(
@@ -186,7 +186,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_all_on_process_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = sorted(
@@ -243,7 +243,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_start_on_process_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = sorted(
@@ -276,7 +276,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_basic(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = self._expected_basic_permissions()
@@ -287,7 +287,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_support(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = self._expected_support_permissions()
@@ -298,7 +298,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_elevated(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = self._expected_elevated_permissions()
@@ -309,7 +309,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_all(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = [
@@ -325,7 +325,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_with_target_uri(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = [
@@ -341,7 +341,7 @@ class TestAuthorizationService(BaseTest):
     def test_granting_access_to_group_gives_access_to_group_and_subgroups(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
@@ -355,7 +355,7 @@ class TestAuthorizationService(BaseTest):
     def test_granting_access_to_subgroup_gives_access_to_subgroup_its_subgroups_and_even_show_for_its_parents(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
@@ -375,7 +375,7 @@ class TestAuthorizationService(BaseTest):
     def test_granting_access_to_model_gives_access_to_process_group_show_for_parent_groups_to_allow_navigating_to_model(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
@@ -389,7 +389,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_with_invalid_target_uri(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with pytest.raises(InvalidPermissionError):
@@ -398,7 +398,7 @@ class TestAuthorizationService(BaseTest):
     def test_explode_permissions_with_start_to_incorrect_target(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with pytest.raises(InvalidPermissionError):
@@ -407,7 +407,7 @@ class TestAuthorizationService(BaseTest):
     def test_can_refresh_permissions(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
@@ -581,7 +581,7 @@ class TestAuthorizationService(BaseTest):
     def test_can_refresh_permissions_with_regexes(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user_regex = "REGEX:^user_.*"
@@ -656,7 +656,7 @@ class TestAuthorizationService(BaseTest):
     def test_can_deny_access_with_permission(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
@@ -683,7 +683,7 @@ class TestAuthorizationService(BaseTest):
     def test_adds_and_removes_user_from_human_task_assignments_when_group_updates(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -770,7 +770,7 @@ class TestAuthorizationService(BaseTest):
     def test_user_can_complete_all_tasks_after_assignment(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -831,7 +831,7 @@ class TestAuthorizationService(BaseTest):
     def test_user_can_is_not_assigned_task_if_lane_owners_in_use(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -863,7 +863,7 @@ class TestAuthorizationService(BaseTest):
     def test_fails_if_wildcard_used_in_pm_pg_macros(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with pytest.raises(InvalidPermissionError):

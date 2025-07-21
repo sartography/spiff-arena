@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from flask import current_app
+
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.data_migrations.version_3 import Version3

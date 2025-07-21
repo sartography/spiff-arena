@@ -62,6 +62,3 @@ SpiffArena combines BPMN and Python to provide a powerful and configurable solut
 SpiffWorkflow is a Python library that simplifies complex business logic by using BPMN diagrams, allowing non-developers to make changes to application flows.
 It improves communication within teams, increases contributions, and adapts to changing requirements.
 Visual software development environments like SpiffWorkflow represent the future of solving complex problems.
-
-```{tags} tutorial, explanation
-```

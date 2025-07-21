@@ -1,4 +1,5 @@
 import { ArrowRightAlt, OpenInNew, Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import {
   TableRow,
   Table,
@@ -19,9 +20,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
+  getProcessStatus,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
-  titleizeString,
 } from '../helpers';
 
 import {
@@ -84,6 +85,7 @@ export default function ProcessInstanceListTable({
   variant = 'for-me',
 }: OwnProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [searchParams] = useSearchParams();
 
@@ -265,7 +267,7 @@ export default function ProcessInstanceListTable({
     processInstance: ProcessInstance,
     id: number,
   ) => {
-    return <span data-qa="paginated-entity-id">{id}</span>;
+    return <span data-testid="paginated-entity-id">{id}</span>;
   };
   const formatProcessModelIdentifier = (
     processInstance: ProcessInstance,
@@ -279,19 +281,14 @@ export default function ProcessInstanceListTable({
   ) => {
     return getProcessModelSpanTag(processInstance, identifier);
   };
-  const formatLastMilestone = (
-    processInstance: ProcessInstance,
-    value: any,
-  ) => {
-    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
-      processInstance,
-      value,
-    );
+  const formatLastMilestone = (processInstance: ProcessInstance) => {
+    const [valueToUse, truncatedValue] =
+      getLastMilestoneFromProcessInstance(processInstance);
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
 
   const formatProcessInstanceStatus = (_row: any, value: any) => {
-    return titleizeString((value || '').replaceAll('_', ' '));
+    return getProcessStatus(value);
   };
 
   const formatDurationForDisplayForTable = (_row: any, value: any) => {
@@ -337,7 +334,7 @@ export default function ProcessInstanceListTable({
         <TableCell
           onClick={() => navigateToProcessInstance(processInstance)}
           onKeyDown={() => navigateToProcessInstance(processInstance)}
-          data-qa={`process-instance-status-${value}`}
+          data-testid={`process-instance-status-${value}`}
         >
           {formatter(processInstance, value)}
         </TableCell>
@@ -374,7 +371,7 @@ export default function ProcessInstanceListTable({
         key={`td-${columnAccessor}-${processInstance.id}`}
         onClick={() => navigateToProcessInstance(processInstance)}
         onKeyDown={() => navigateToProcessInstance(processInstance)}
-        data-qa={`process-instance-show-link-${columnAccessor}`}
+        data-testid={`process-instance-show-link-${columnAccessor}`}
       >
         {cellContent}
       </TableCell>
@@ -409,9 +406,9 @@ export default function ProcessInstanceListTable({
           </Grid>
           {showRefreshButton ? (
             <Grid>
-              <SpiffTooltip title="Refresh data in the table">
+              <SpiffTooltip title={t('refresh_table_data')}>
                 <IconButton
-                  data-qa="refresh-process-instance-table"
+                  data-testid="refresh-process-instance-table"
                   onClick={() => getProcessInstances()}
                 >
                   <Refresh />
@@ -434,9 +431,9 @@ export default function ProcessInstanceListTable({
     if (showLinkToReport && pagination && pagination.total) {
       filterButtonLink = (
         <Grid style={{ textAlign: 'right' }} offset="auto">
-          <SpiffTooltip title="View Filterable List" placement="top">
+          <SpiffTooltip title={t('view_filterable_list')} placement="top">
             <IconButton
-              data-qa="process-instance-list-link"
+              data-testid="process-instance-list-link"
               onClick={() =>
                 navigate(`/process-instances?report_hash=${reportHash}`)
               }
@@ -463,7 +460,7 @@ export default function ProcessInstanceListTable({
       return column.Header;
     });
     if (showActionsColumn) {
-      headers.push('Action');
+      headers.push(t('action_column'));
     }
 
     const rows = processInstances.map((processInstance: ProcessInstance) => {
@@ -489,7 +486,7 @@ export default function ProcessInstanceListTable({
               style={{ width: '60px' }}
               size="small"
             >
-              Go
+              {t('go')}
             </Button>
           );
         }
@@ -563,7 +560,9 @@ export default function ProcessInstanceListTable({
                 <TableCell
                   key={tableRowHeader}
                   title={
-                    tableRowHeader === 'Id' ? 'Process Instance Id' : undefined
+                    tableRowHeader === 'Id'
+                      ? t('process_id_tooltip')
+                      : undefined
                   }
                 >
                   <TableSortLabel>{tableRowHeader}</TableSortLabel>
@@ -579,16 +578,10 @@ export default function ProcessInstanceListTable({
 
   const errors: string[] = [];
   if (additionalReportFilters && reportMetadata) {
-    errors.push(
-      'Both reportMetadata and additionalReportFilters were provided. ' +
-        'It is recommended to only use additionalReportFilters with reportIdentifier and to specify ALL filters in reportMetadata if not using reportIdentifier.',
-    );
+    errors.push(t('report_filter_conflict'));
   }
   if (reportIdentifier && reportMetadata) {
-    errors.push(
-      'Both reportIdentifier and reportMetadata were provided. ' +
-        'You must use one or the other.',
-    );
+    errors.push(t('report_identifier_conflict'));
   }
   if (errors.length > 0) {
     return (
@@ -597,6 +590,7 @@ export default function ProcessInstanceListTable({
         <Grid size={{ xs: 12 }}>
           {childrenForErrorObject(
             errorForDisplayFromString(errors.join(' ::: ')),
+            t,
           )}
         </Grid>
       </Grid>

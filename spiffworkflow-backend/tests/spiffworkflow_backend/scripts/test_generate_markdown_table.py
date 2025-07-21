@@ -1,7 +1,7 @@
 from flask import Flask
+
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.generate_markdown_table import GenerateMarkdownTable
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

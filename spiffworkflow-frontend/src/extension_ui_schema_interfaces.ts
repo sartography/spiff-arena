@@ -28,6 +28,9 @@ export enum UiSchemaDisplayLocation {
 
   // Will appear in the user profile drop - top right menu with the logout button.
   user_profile_item = 'user_profile_item',
+
+  // Will be loaded as a global CSS file for the entire application
+  css = 'css',
 }
 
 /**
@@ -59,6 +62,12 @@ export interface UiSchemaLocationSpecificConfig {
    * Specifies which pages should cause the tab item to become highlighted.
    */
   highlight_on_tabs?: string[];
+
+  /**
+   * Specifies the filename of the CSS file to use when using CSS display_location.
+   * This is the recommended approach for adding CSS.
+   */
+  css_file?: string;
 }
 
 // Primary ux element - decribes how the extension should be displayed and accessed from the web ui.

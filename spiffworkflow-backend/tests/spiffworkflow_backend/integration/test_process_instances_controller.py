@@ -1,13 +1,13 @@
 import os
 
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -16,7 +16,7 @@ class TestProcessInstancesController(BaseTest):
     def test_find_by_id(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -35,10 +35,10 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(user_one),
         )
         assert response.status_code == 200
-        assert response.json
-        assert "process_instance" in response.json
-        assert response.json["process_instance"]["id"] == process_instance.id
-        assert response.json["uri_type"] == "for-me"
+        assert response.json()
+        assert "process_instance" in response.json()
+        assert response.json()["process_instance"]["id"] == process_instance.id
+        assert response.json()["uri_type"] == "for-me"
 
         response = client.get(
             f"/v1.0/process-instances/find-by-id/{process_instance.id}",
@@ -51,15 +51,15 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
-        assert "process_instance" in response.json
-        assert response.json["process_instance"]["id"] == process_instance.id
-        assert response.json["uri_type"] is None
+        assert response.json()
+        assert "process_instance" in response.json()
+        assert response.json()["process_instance"]["id"] == process_instance.id
+        assert response.json()["uri_type"] is None
 
     def test_process_instance_migrate(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -102,7 +102,7 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
+        assert response.json() is not None
 
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
@@ -118,7 +118,7 @@ class TestProcessInstancesController(BaseTest):
     def test_process_instance_check_can_migrate(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -160,11 +160,11 @@ class TestProcessInstancesController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert response.json["can_migrate"] is True
-        assert response.json["process_instance_id"] == process_instance.id
-        assert response.json["current_bpmn_process_hash"] is not None
+        assert response.json() is not None
+        assert response.json()["can_migrate"] is True
+        assert response.json()["process_instance_id"] == process_instance.id
+        assert response.json()["current_bpmn_process_hash"] is not None
 
         # this can actually be None if the process model repo is not git at all
         # such as when running the docker container ci tests.
-        assert "current_git_revision" in response.json
+        assert "current_git_revision" in response.json()

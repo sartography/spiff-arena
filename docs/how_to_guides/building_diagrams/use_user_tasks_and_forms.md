@@ -75,17 +75,7 @@ The RJSF library is open source, free to use, and follows the principles of open
 Please note that while this guide provides a basic understanding of JSON Schema and RJSF, there is much more to explore.
 We encourage you to refer to the official [RJSF documentation](https://rjsf-team.github.io/react-jsonschema-form/docs/) for comprehensive details and advanced techniques.
 
-2. **Using Form Builder**
-
-An alternative approach to creating JSON code is to utilize the form builder feature, which allows you to easily create various fields without the need for writing JSON manually.
-
-However, it's important to note that the form builder may have certain limitations in terms of features and may not be as powerful as using the JSON editor directly.
-
-While the form builder provides convenience and simplicity, using the JSON editor offers greater flexibility and control over the form structure.
-
-![Image](/images/Form-Builder.png)
-
-3. **Creating Forms from BPMN Editor**
+2. **Creating Forms from BPMN Editor**
 
 To create forms inside the editor, we utilize user tasks within the BPMN file.
 Upon creating a new BPMN file, open it to access the editor.
@@ -110,14 +100,6 @@ Upon creating a new BPMN file, open it to access the editor.
 
 ![Form Editor](/images/Form_editor3.png)
 
-**Adding and Customizing Form Elements**
-
-You can add existing templates to add elements to your form, such as text areas, checkboxes, and date selectors.
-Each element can be further customized in the JSON schema and UI settings.
-For instance, you can set the UI widget correctly for each element, ensuring it appears as intended on the form.
-
-![Form Editor](/images/Form_editor4.png)
-
 ### SpiffArena react-jsonschema-form enhancements
 
 SpiffArena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
@@ -129,6 +111,7 @@ Dynamic enumerations allow you to provide users with a list of options (in a sel
 This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
 
 To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
+
 In a script task, that would look like this:
 ```python
 #python
@@ -166,7 +149,56 @@ Then use JSON like this (note the `options_from_task_data_var:fruits`) when defi
         }
     }
 ```
+#### Dynamic Array Fields from Task Data
 
+SpiffArena now supports dynamically generated array fields using data from the process instance. This allows developers to define array items (e.g., subfields of an object) at runtime using a task data variable.
+
+This feature is similar to Dynamic Enumerations but instead of supplying dropdown options, you're providing an array schema definition dynamically via a task variable.
+
+##### Example Use Case: Dynamically Defined Parcel ID Structure
+
+**JSON Schema**:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "parcelID": {
+      "title": "Parcel ID",
+      "type": "array",
+      "items": [
+        "options_from_task_data_var:parcelID_fields"
+      ]
+    }
+  }
+}
+```
+
+**Python Script Example**:
+
+```python
+parcelID_fields = [
+    {
+        "title": "Ward",
+        "type": "string",
+    },
+    {
+        "title": "Lot",
+        "type": "string",
+    },
+    {
+        "title": "Plot",
+        "type": "string",
+    },
+    {
+        "title": "Other Field",
+        "type": "string",
+    }
+]
+```
+
+* The variable `parcelID_fields` must be defined in Task Data before the form is rendered.
+* Each dictionary in the array should match the structure expected by JSON Schema Forms (e.g., with `title`, `type`, etc.).
 #### Checkbox Validation
 
 Checkbox validation ensures that checkboxes, especially required boolean fields, are properly validated.
@@ -583,50 +615,198 @@ Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
   }
 }
 ```
+
+
 ## Guest User Task
-The Guest User Task feature in SpiffArena allows users who are not logged into the system to complete specified human tasks. This functionality enhances accessibility and usability, enabling a broader range of users to interact with the process models without requiring an account.
+
+The **Guest User Task** feature in SpiffWorkflow enables non-logged-in users to complete designated **Manual** or **User Tasks** in a workflow. This improves accessibility and external engagement, allowing customers, applicants, vendors, or other third parties to participate in workflows without needing a Spiff account.
 
 ### Key Features
 
-- **Task Accessibility**: Allows guest users to complete tasks marked as "allow guest" in the process model.
-- **Direct Navigation**: Guests can access tasks via a constructed URL, eliminating the need for login credentials.
-- **Security Measures**: Guests are redirected to the login screen if they attempt to navigate away from the task page, ensuring secure access control.
+* **Task Accessibility**
+  Guest users can complete human tasks marked with the **"Guest can complete this task"** option in the process model.
 
-### Testing Instructions
+* **Direct Navigation via Link**
+  Guests access tasks through a dedicated public URL—no login or authentication is required.
 
-To verify the functionality of the Guest User Task feature, follow these steps:
+* **Secure Session Behavior**
+  If a guest attempts to navigate away from the assigned task, they are redirected to the login screen to protect access boundaries.
 
-1. **Create a Process Model**:
+* **Multiple URL Options**
+  Spiff supports:
 
-Design a process model that includes a manual or user task. Ensure you check the **"allow guest"** checkbox.
+  * Dynamic URL generation using the custom function `get_url_for_task_with_bpmn_identifier()`
+  * Manual URL construction using the process instance ID and task GUID
 
-![Guest user](/images/guest_user1.png)
+### Setup Instructions
 
-2. **Start the Process Model**:
+#### 1. Create a Process Model
 
-Initiate the process model using the same user account that created it.
+Design your process to include a **Manual** or **User Task**.
 
-3. **Access the Task GUID**:
+* In the task's properties, check the **Guest can complete this task** box
+* (Optional) Configure:
 
-Navigate to the process instance show page and retrieve the GUID of the human task.
+  * **Instructions** (shown before submission)
+  * **Guest confirmation** message (shown after submission)
+  * Both support **Markdown** and **Jinja**
 
-![Guest user](/images/guest_user2.png)
+![Simple guest-enabled process](/images/simple_guest_enabled_process.png)
 
-4. **Construct the Access URL**:
+#### 2. Start the Process with Incoming Payload
 
-Create a URL in this format:
-     ```
-     [domain]/public/tasks/[process_instance_id]/[task_guid]
-     ```
-     
-Replace `[domain]`, `[process_instance_id]`, and `[task_guid]` with appropriate values.
+For example, a contact form on a website could initiate a process and pass in data like:
 
-5. **Test as a Guest User**:
+```json
+{
+  "request": {
+    "name": "My Name",
+    "email": "user@domain.tld",
+    "followup": true
+  }
+}
+```
 
-Open an incognito or private browsing window (not logged into Spiff). Navigate to the constructed URL. Confirm that the guest user can complete the task.
-![Guest user](/images/guest_user3.png)
+This data becomes available in the process's **Task Data**.
 
-The Guest User Task feature improves usability for non-logged-in users by allowing them to complete designated tasks seamlessly. 
+![Task data payload](/images/Task_data_payload.png)
 
-```{tags} how_to_guide, building_diagrams
+
+#### 3. Extend the Process for Guest Access
+
+To send a link to the guest user:
+
+* Add a **Script Task** to build the link and email body
+* Add a **Service Task** (e.g., smtp/SendEmail) to send the email
+
+*Extended guest-enabled process:*
+
+![Expanded process flow](/images/Expanded_process_flow.png)
+
+#### 4. Generate the Guest Link
+
+**Option A: Using `get_url_for_task_with_bpmn_identifier()` (Recommended)**
+
+In the Script Task:
+
+```python
+# Get Guest Link URL
+guest_link_url = get_url_for_task_with_bpmn_identifier("Confirmation")
+
+# Create Email Body
+email_body = f"{request['name']}, thanks for your interest in SpiffWorks. Click this link to confirm your email: {guest_link_url}"
+```
+
+![Script to generate guest link and email body](/images/Script_to_generate_guest_link.png)
+
+Make sure the task's **BPMN ID** is set correctly:
+
+![Manual task configuration with ID](/images/manual_task_config_ID.png)
+
+**Option B: Manual URL Construction**
+
+Use this format:
+
+```
+[domain]/public/tasks/[process_instance_id]/[task_guid]
+```
+
+Replace:
+
+* `[domain]`: your Spiff base URL (e.g., spiffdemo.org)
+* `[process_instance_id]`: from the instance
+* `[task_guid]`: from the specific human task
+
+This method can be useful in test scripts, external systems, or fallback strategies.
+
+#### 5. Configure Email Delivery
+```{image} /images/Email_connector_configuration.png
+:alt: Email connector configuration
+:class: bg-primary mb-1
+:width: 230px
+:align: right
+```
+Use the `smtp/SendEmail` connector in a Service Task.
+
+Example setup:
+* **Operator ID**: `smtp/SendEmail`
+
+* **email\_subject**: `"SpiffWorks Confirmation"`
+
+* **email\_body**: the body from the previous Script Task
+
+* **email\_to**: `request["email"]`
+
+* **smtp\_host**, **smtp\_port**, **smtp\_user**,
+
+**smtp\_password**, **smtp\_starttls**: set per your SMTP provider (e.g., MailTrap)
+
+#### 6. Enable and Customize Guest Task
+
+In the Manual/User Task:
+
+* Enable: **Guest can complete this task**
+* Add Instructions (before submit):
+
+  ```jinja
+  {{ request["name"] }}, thanks for confirming your email address!
+  ```
+  ![Instructions customization](/images/Instructions_customization.png)
+* Add Guest Confirmation (after submit):
+
+  ```
+  We look forward to helping you find out more about SpiffWorks.
+  ```
+  ![Guest access](/images/Guest_access.png)
+
+### Example – "Be My Guest!" Flow
+
+This example demonstrates how guest options allow an external user to confirm their email.
+
+#### Process Steps
+
+1. **Message Start Event**: Receives name/email from a form
+2. **Script Task**: Builds guest URL and email body
+3. **Service Task**: Sends confirmation email to the guest
+4. **Manual Task**: Displays the confirmation screen to the guest
+5. **End Event**
+
+#### Email Sent to Guest
+
+```
+From: sales@spiff.works.com
+To: user@domain.tld
+Subject: SpiffWorks Confirmation
+
+My Name, thanks for your interest in SpiffWorks.
+Click this link to confirm your email:
+https://spiffdemo.org/public/tasks/4184/8287e493-b590-4be2-9900-68ad84fcc3d4
+```
+
+![Email preview](/images/Email_preview.png)
+
+#### Guest Experience
+
+**Before Submit:**
+
+![Guest task view before submission](/images/before_submission.png)
+
+**After Submit:**
+![Guest task view before submission](/images/after_submission.png)
+
+```
+
+To verify that guest task access works as expected:
+
+1. Start the process using a payload with email/name data
+2. Check that the guest link is generated and sent via email
+3. Open the guest URL in a **private/incognito** browser window
+4. Confirm:
+
+   * The task displays with instructions
+   * The task can be submitted
+   * The guest confirmation message appears
+
+```{admonition} Note:
+One guest link can allow multiple human tasks if they are sequential and marked for guest access. If a **Guest confirmation** message is present, it signals the end of guest interaction unless another link is sent. Combine with dynamic payloads and Jinja to customize experiences per user.
 ```

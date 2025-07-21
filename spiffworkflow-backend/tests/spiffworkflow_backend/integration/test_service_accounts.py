@@ -1,12 +1,10 @@
-import json
-
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.service_account_service import ServiceAccountService
 from spiffworkflow_backend.services.user_service import UserService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -14,7 +12,7 @@ class TestServiceAccounts(BaseTest):
     def test_can_create_a_service_account(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -40,18 +38,17 @@ class TestServiceAccounts(BaseTest):
         }
         response = client.post(
             "/v1.0/secrets",
-            content_type="application/json",
-            headers={"SpiffWorkflow-Api-Key": service_account.api_key},
-            data=json.dumps(post_body),
+            headers={"SpiffWorkflow-Api-Key": service_account.api_key, "Content-Type": "application/json"},
+            json=post_body,
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["key"] == post_body["key"]
+        assert response.json() is not None
+        assert response.json()["key"] == post_body["key"]
 
     def test_send_message_with_service_account(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -84,12 +81,27 @@ class TestServiceAccounts(BaseTest):
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
-            content_type="application/json",
-            headers={"SpiffWorkflow-Api-Key": service_account.api_key},
-            data=json.dumps(payload),
+            headers={"SpiffWorkflow-Api-Key": (service_account.api_key or ""), "Content-Type": "application/json"},
+            json=payload,
         )
         assert response.status_code == 200
 
         # It should be possible to delete the service account after starting a process.
         db.session.delete(service_account)
         db.session.commit()
+
+    def test_create_service_account_with_already_hashed_key(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        api_key_name = "test_hashed_key"
+        already_hashed = "already_hashed_secret"
+        service_account = ServiceAccountService.create_service_account(
+            api_key_name, with_super_admin_user, already_hashed_key=already_hashed
+        )
+        assert service_account is not None
+        assert service_account.api_key == already_hashed
+        assert service_account.api_key_hash == already_hashed

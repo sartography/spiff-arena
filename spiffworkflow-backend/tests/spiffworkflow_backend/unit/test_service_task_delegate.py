@@ -5,16 +5,16 @@ from unittest.mock import patch
 import pytest
 from flask.app import Flask
 from requests import Response
+from spiffworkflow_connector_command.command_interface import CommandResponseDict
+from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
+from sqlalchemy import and_
+
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
-from spiffworkflow_connector_command.command_interface import CommandResponseDict
-from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
-from sqlalchemy import and_
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -240,7 +240,7 @@ class TestServiceTaskDelegate(BaseTest):
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text
-        assert bool(
-            re.search(rf"\b{contains_message}\b", response_text)
-        ), f"Expected to find '{contains_message}' in: {response_text}"
+        assert bool(re.search(rf"\b{contains_message}\b", response_text)), (
+            f"Expected to find '{contains_message}' in: {response_text}"
+        )
         assert bool(re.search(rf"\b{status_code}\b", response_text)), f"Expected to find '{status_code}' in: {response_text}"

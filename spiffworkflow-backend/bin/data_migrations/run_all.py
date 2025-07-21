@@ -1,6 +1,8 @@
 import time
 
 from flask import current_app
+from sqlalchemy import update
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.data_migrations.process_instance_file_data_migrator import ProcessInstanceFileDataMigrator
 from spiffworkflow_backend.data_migrations.version_1_3 import VersionOneThree
@@ -8,7 +10,6 @@ from spiffworkflow_backend.data_migrations.version_2 import Version2
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from sqlalchemy import update
 
 
 # simple decorator to time the func
@@ -93,7 +94,7 @@ def main() -> None:
     app = create_app()
     end_time = time.time()
 
-    with app.app_context():
+    with app.app.app_context():
         current_app.logger.debug(f"data_migrations/run_all::create_app took {end_time - start_time} seconds")
         start_time = time.time()
         put_serializer_version_onto_numeric_track()
@@ -106,7 +107,7 @@ def main() -> None:
             run_version_1()
             # this will run while using the new per instance on demand data migration framework
             # run_version_2(process_instances)
-        if app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
+        if app.app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PATH"] is not None:
             ProcessInstanceFileDataMigrator.migrate_from_database_to_filesystem()
 
         end_time = time.time()

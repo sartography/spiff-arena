@@ -7,7 +7,6 @@ import yaml
 from flask import current_app
 from flask import g
 from flask import request
-from flask import scaffold
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import literal
@@ -20,7 +19,7 @@ from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.error import PermissionsFileNotSetError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.helpers.api_version import remove_api_prefix
 from spiffworkflow_backend.interfaces import AddedPermissionDict
 from spiffworkflow_backend.interfaces import GroupPermissionsDict
 from spiffworkflow_backend.interfaces import UserToGroupDict
@@ -96,7 +95,7 @@ class AuthorizationService:
     @classmethod
     def has_permission(cls, principals: list[PrincipalModel], permission: str, target_uri: str) -> bool:
         principal_ids = [p.id for p in principals]
-        target_uri_normalized = target_uri.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(target_uri)
 
         permission_assignments = (
             PermissionAssignmentModel.query.filter(PermissionAssignmentModel.principal_id.in_(principal_ids))
@@ -149,7 +148,7 @@ class AuthorizationService:
         cls, permission_assignments: list[PermissionAssignmentModel], permission: str, target_uri: str
     ) -> bool:
         uri_with_percent = re.sub(r"\*", "%", target_uri)
-        target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(uri_with_percent)
 
         matching_permission_assignments = []
         for permission_assignment in permission_assignments:
@@ -222,14 +221,6 @@ class AuthorizationService:
         return cls.has_permissions_and_all_permissions_permit(matching_permission_assignments)
 
     @classmethod
-    def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:
-        user_group_assignemnt = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).first()
-        if user_group_assignemnt is None:
-            user_group_assignemnt = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
-            db.session.add(user_group_assignemnt)
-            db.session.commit()
-
-    @classmethod
     def import_permissions_from_yaml_file(cls, user_model: UserModel | None = None) -> AddedPermissionDict:
         group_permissions = cls.parse_permissions_yaml_into_group_info()
         result = cls.add_permissions_from_group_permissions(group_permissions, user_model)
@@ -238,7 +229,7 @@ class AuthorizationService:
     @classmethod
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
-        target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
+        target_uri_normalized = remove_api_prefix(uri_with_percent)
         permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
@@ -303,6 +294,7 @@ class AuthorizationService:
             "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
             "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
             "spiffworkflow_backend.routes.webhooks_controller.webhook",
+            "flask.blueprints.send_static_file",
             # swagger api calls
             "connexion.apis.flask_api.console_ui_home",
             "connexion.apis.flask_api.console_ui_static_files",
@@ -328,7 +320,7 @@ class AuthorizationService:
         if (
             api_function_full_path
             and (api_function_full_path in cls.authentication_exclusion_list())
-            or (module == openid_blueprint or module == scaffold)  # don't check permissions for static assets
+            or module == openid_blueprint
         ):
             return True
 
@@ -448,12 +440,12 @@ class AuthorizationService:
         old_group_ids: set[int] = set()
         user_attributes = {}
 
-        if "email" in user_info:
+        if "preferred_username" in user_info:
+            user_attributes["username"] = user_info["preferred_username"]
+        elif "email" in user_info:
             user_attributes["username"] = user_info["email"]
-            user_attributes["email"] = user_info["email"]
-        else:  # we fall back to the sub, which may be very ugly.
-            fallback_username = user_info["sub"] + "@" + user_info["iss"]
-            user_attributes["username"] = fallback_username
+        else:
+            user_attributes["username"] = f"{user_info['sub']}@{user_info['iss']}"
 
         if "preferred_username" in user_info:
             user_attributes["display_name"] = user_info["preferred_username"]
@@ -462,6 +454,7 @@ class AuthorizationService:
         elif "name" in user_info:
             user_attributes["display_name"] = user_info["name"]
 
+        user_attributes["email"] = user_info.get("email")
         user_attributes["service"] = user_info["iss"]
         user_attributes["service_id"] = user_info["sub"]
 
@@ -482,7 +475,7 @@ class AuthorizationService:
         # example value for service: http://localhost:7002/realms/spiffworkflow (keycloak url)
         user_model = (
             UserModel.query.filter(UserModel.service == user_attributes["service"])
-            .filter(UserModel.username == user_attributes["username"])
+            .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
         if user_model is None:
@@ -864,6 +857,11 @@ class AuthorizationService:
         user_model: UserModel | None = None,
         group_permissions_only: bool = False,
     ) -> AddedPermissionDict:
+        count = len(group_permissions)
+        current_app.logger.debug(
+            f"ADD PERMISSIONS - START: Processing {count} group permissions, group_permissions_only={group_permissions_only}"
+        )
+
         unique_user_group_identifiers: set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
         waiting_user_group_assignments: list[UserGroupAssignmentWaitingModel] = []
@@ -872,60 +870,108 @@ class AuthorizationService:
         default_group = None
         default_group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
         if default_group_identifier:
+            current_app.logger.debug(f"ADD PERMISSIONS - Finding or creating default group: {default_group_identifier}")
             default_group = UserService.find_or_create_group(default_group_identifier)
             unique_user_group_identifiers.add(default_group_identifier)
 
-        for group in group_permissions:
+        for _group_index, group in enumerate(group_permissions):
             group_identifier = group["name"]
+            group_num = _group_index + 1
+            group_total = len(group_permissions)
+            current_app.logger.debug(f"ADD PERMISSIONS - Processing group {group_num}/{group_total}: {group_identifier}")
+
             UserService.find_or_create_group(group_identifier)
             if group_identifier == current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"]:
                 unique_user_group_identifiers.add(group_identifier)
+
             if not group_permissions_only:
-                for username in group["users"]:
-                    if user_model and username != user_model.username:
+                current_app.logger.debug(
+                    f"ADD PERMISSIONS - Processing {len(group['users'])} users for group: {group_identifier}"
+                )
+                for user_index, username_or_email in enumerate(group["users"]):
+                    if user_model and username_or_email not in [user_model.username, user_model.email]:
                         continue
-                    user_to_group_dict: UserToGroupDict = {
-                        "username": username,
-                        "group_identifier": group_identifier,
-                    }
-                    user_to_group_identifiers.append(user_to_group_dict)
+
+                    user_count = len(group["users"])
+                    user_num = user_index + 1
+                    current_app.logger.debug(
+                        f"ADD PERMISSIONS - Processing user {user_num}/{user_count}: "
+                        f"{username_or_email} for group: {group_identifier}"
+                    )
                     (wugam, new_user_to_group_identifiers) = UserService.add_user_to_group_or_add_to_waiting(
-                        username, group_identifier
+                        username_or_email, group_identifier
                     )
                     if wugam is not None:
                         waiting_user_group_assignments.append(wugam)
-                    if new_user_to_group_identifiers is not None:
-                        user_to_group_identifiers = user_to_group_identifiers + new_user_to_group_identifiers
+                        current_app.logger.debug(
+                            f"ADD PERMISSIONS - Added waiting group assignment for user: {username_or_email}, "
+                            f"group: {group_identifier}"
+                        )
+
+                    user_to_group_identifiers = user_to_group_identifiers + new_user_to_group_identifiers
                     unique_user_group_identifiers.add(group_identifier)
 
-        for group in group_permissions:
+        for _group_index, group in enumerate(group_permissions):
             group_identifier = group["name"]
             if user_model and group_identifier not in unique_user_group_identifiers:
+                current_app.logger.debug(
+                    f"ADD PERMISSIONS - Skipping permissions for group {group_identifier} - not in unique group identifiers"
+                )
                 continue
-            for permission in group["permissions"]:
+
+            current_app.logger.debug(
+                f"ADD PERMISSIONS - Processing {len(group['permissions'])} permissions for group: {group_identifier}"
+            )
+            for permission_index, permission in enumerate(group["permissions"]):
+                permission_count = len(group["permissions"])
+                permission_num = permission_index + 1
+                uri = permission["uri"]
+                actions = permission["actions"]
+                current_app.logger.debug(
+                    f"ADD PERMISSIONS - Processing permission {permission_num}/{permission_count} "
+                    f"for group: {group_identifier}, uri: {uri}, actions: {actions}"
+                )
+
                 for crud_op in permission["actions"]:
-                    permission_assignments.extend(
-                        cls.add_permission_from_uri_or_macro(
-                            group_identifier=group_identifier,
-                            target=permission["uri"],
-                            permission=crud_op,
-                        )
+                    current_app.logger.debug(
+                        f"ADD PERMISSIONS - Adding permission: {crud_op} on {permission['uri']} for group: {group_identifier}"
                     )
+                    new_permissions = cls.add_permission_from_uri_or_macro(
+                        group_identifier=group_identifier,
+                        target=permission["uri"],
+                        permission=crud_op,
+                    )
+                    current_app.logger.debug(f"ADD PERMISSIONS - Added {len(new_permissions)} permission assignments")
+                    permission_assignments.extend(new_permissions)
                     unique_user_group_identifiers.add(group_identifier)
 
         if not group_permissions_only and default_group is not None:
             if user_model:
-                cls.associate_user_with_group(user_model, default_group)
+                current_app.logger.debug(
+                    f"ADD PERMISSIONS - Adding user {user_model.username} to default group: {default_group_identifier}"
+                )
+                UserService.add_user_to_group(user_model, default_group)
             else:
-                for user in UserModel.query.filter(UserModel.username.not_in([SPIFF_GUEST_USER])).all():  # type: ignore
-                    cls.associate_user_with_group(user, default_group)
+                users = UserModel.query.filter(UserModel.username.not_in([SPIFF_GUEST_USER])).all()  # type: ignore
+                current_app.logger.debug(
+                    f"ADD PERMISSIONS - Adding {len(users)} users to default group: {default_group_identifier}"
+                )
+                for user in users:
+                    UserService.add_user_to_group(user, default_group)
 
-        return {
+        result: AddedPermissionDict = {
             "group_identifiers": unique_user_group_identifiers,
             "permission_assignments": permission_assignments,
             "user_to_group_identifiers": user_to_group_identifiers,
             "waiting_user_group_assignments": waiting_user_group_assignments,
         }
+
+        num_permissions = len(permission_assignments)
+        num_groups = len(unique_user_group_identifiers)
+        current_app.logger.debug(
+            f"ADD PERMISSIONS - COMPLETED: Added {num_permissions} permission assignments, {num_groups} unique group identifiers"
+        )
+        return result
 
     @classmethod
     def remove_old_permissions_from_added_permissions(
@@ -976,25 +1022,73 @@ class AuthorizationService:
     @classmethod
     def refresh_permissions(cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False) -> None:
         """Adds new permission assignments and deletes old ones."""
-        initial_permission_assignments = (
-            PermissionAssignmentModel.query.outerjoin(
-                PrincipalModel,
-                and_(PrincipalModel.id == PermissionAssignmentModel.principal_id, PrincipalModel.user_id.is_not(None)),
+        groups_count = len(group_permissions)
+        current_app.logger.debug(
+            f"AUTH SERVICE - REFRESH PERMISSIONS - START with {groups_count} group(s), "
+            f"group_permissions_only={group_permissions_only}"
+        )
+
+        try:
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Getting initial permission assignments")
+            initial_permission_assignments = (
+                PermissionAssignmentModel.query.outerjoin(
+                    PrincipalModel,
+                    and_(PrincipalModel.id == PermissionAssignmentModel.principal_id, PrincipalModel.user_id.is_not(None)),
+                )
+                .outerjoin(UserModel, UserModel.id == PrincipalModel.user_id)
+                .filter(or_(UserModel.id.is_(None), UserModel.service != SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE))  # type: ignore
+                .all()
             )
-            .outerjoin(UserModel, UserModel.id == PrincipalModel.user_id)
-            .filter(or_(UserModel.id.is_(None), UserModel.service != SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE))  # type: ignore
-            .all()
-        )
-        initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
-        initial_waiting_group_assignments = UserGroupAssignmentWaitingModel.query.all()
-        group_permissions = group_permissions + cls.parse_permissions_yaml_into_group_info()
-        added_permissions = cls.add_permissions_from_group_permissions(
-            group_permissions, group_permissions_only=group_permissions_only
-        )
-        cls.remove_old_permissions_from_added_permissions(
-            added_permissions,
-            initial_permission_assignments,
-            initial_user_to_group_assignments,
-            initial_waiting_group_assignments,
-            group_permissions_only=group_permissions_only,
-        )
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Found {len(initial_permission_assignments)} initial permission assignments"
+            )
+
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Getting initial user group assignments")
+            initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
+            count_assignments = len(initial_user_to_group_assignments)
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Found {count_assignments} initial user group assignments"
+            )
+
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Getting initial waiting group assignments")
+            initial_waiting_group_assignments = UserGroupAssignmentWaitingModel.query.all()
+            waiting_count = len(initial_waiting_group_assignments)
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Found {waiting_count} initial waiting group assignments"
+            )
+
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Parsing permissions from YAML file")
+            parsed_permissions = cls.parse_permissions_yaml_into_group_info()
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Parsed {len(parsed_permissions)} group permissions from YAML file"
+            )
+
+            group_permissions = group_permissions + parsed_permissions
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Total of {len(group_permissions)} group permissions to process"
+            )
+
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Adding permissions from group permissions")
+            added_permissions = cls.add_permissions_from_group_permissions(
+                group_permissions, group_permissions_only=group_permissions_only
+            )
+            perm_count = len(added_permissions["permission_assignments"])
+            group_count = len(added_permissions["group_identifiers"])
+            current_app.logger.debug(
+                f"AUTH SERVICE - REFRESH PERMISSIONS - Added permissions: {perm_count} permission "
+                f"assignments, {group_count} group identifiers"
+            )
+
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - Removing old permissions")
+            cls.remove_old_permissions_from_added_permissions(
+                added_permissions,
+                initial_permission_assignments,
+                initial_user_to_group_assignments,
+                initial_waiting_group_assignments,
+                group_permissions_only=group_permissions_only,
+            )
+            current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - COMPLETED successfully")
+
+        except Exception as ex:
+            current_app.logger.error(f"AUTH SERVICE - REFRESH PERMISSIONS - ERROR: {str(ex)}")
+            raise

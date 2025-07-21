@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { TablePagination } from '@mui/material';
 import { ChangeEvent, MouseEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PaginationObject } from '../interfaces';
 
 type OwnProps = {
@@ -11,7 +12,7 @@ type OwnProps = {
   tableToDisplay: any;
   paginationQueryParamPrefix?: string;
   paginationClassName?: string;
-  paginationDataQATag?: string;
+  paginationDataTestidTag?: string;
 };
 
 export default function PaginationForTable({
@@ -22,8 +23,9 @@ export default function PaginationForTable({
   tableToDisplay,
   paginationQueryParamPrefix,
   paginationClassName,
-  paginationDataQATag = 'pagination-options',
+  paginationDataTestidTag = 'pagination-options',
 }: OwnProps) {
+  const { t } = useTranslation();
   const PER_PAGE_OPTIONS = [2, 10, 50, 100];
   const [searchParams, setSearchParams] = useSearchParams();
   const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
@@ -60,7 +62,7 @@ export default function PaginationForTable({
         {tableToDisplay}
         <TablePagination
           className={paginationClassName}
-          data-qa={paginationDataQATag}
+          data-testid={paginationDataTestidTag}
           component="div"
           count={totalItems}
           page={page - 1}
@@ -68,9 +70,9 @@ export default function PaginationForTable({
           rowsPerPage={perPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={perPageOptions || PER_PAGE_OPTIONS}
-          labelRowsPerPage="Items per page:"
+          labelRowsPerPage={t('pagination_items_per_page')}
           labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} of ${count}`
+            t('pagination_display', { from, to, count })
           }
         />
       </>

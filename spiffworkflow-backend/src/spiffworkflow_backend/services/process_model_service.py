@@ -13,14 +13,13 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
+from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -42,9 +41,6 @@ class ProcessModelService(FileSystemService):
     Workflow Specification process_groups.
     We do this, so we can easily drop in a new configuration on the file system, and change all
     the workflow process_models at once, or manage those file in a git repository."""
-
-    GROUP_SCHEMA = ProcessGroupSchema()
-    PROCESS_MODEL_SCHEMA = ProcessModelInfoSchema()
 
     @classmethod
     def path_to_id(cls, path: str) -> str:
@@ -150,28 +146,14 @@ class ProcessModelService(FileSystemService):
             return {}
         if len(metadata_extraction_paths) <= 0:
             return {}
-
-        current_metadata = {}
-        for metadata_extraction_path in metadata_extraction_paths:
-            key = metadata_extraction_path["key"]
-            path = metadata_extraction_path["path"]
-            path_segments = path.split(".")
-            data_for_key: dict[str, Any] | None = current_data
-            for path_segment in path_segments:
-                if path_segment in (data_for_key or {}):
-                    data_for_key = (data_for_key or {})[path_segment]
-                else:
-                    data_for_key = None
-                    break
-            current_metadata[key] = data_for_key
-        return current_metadata
+        return process_model_info.__class__.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE))
-        json_data = cls.PROCESS_MODEL_SCHEMA.dump(process_model)
+        json_data = process_model.to_dict()
         for key in list(json_data.keys()):
             if key not in PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
                 del json_data[key]
@@ -224,6 +206,14 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     @classmethod
+    def get_process_model_files(cls, process_model: ProcessModelInfo) -> list[File]:
+        files = FileSystemService.get_sorted_files(process_model)
+        for f in files:
+            file_contents = FileSystemService.get_data(process_model, f.name)
+            f.file_contents = file_contents
+        return files
+
+    @classmethod
     def get_process_models(
         cls,
         process_group_id: str | None = None,
@@ -249,11 +239,7 @@ class ProcessModelService(FileSystemService):
             process_model = cls.get_process_model_from_path(file)
 
             if include_files:
-                files = FileSystemService.get_sorted_files(process_model)
-                for f in files:
-                    file_contents = FileSystemService.get_data(process_model, f.name)
-                    f.file_contents = file_contents
-                process_model.files = files
+                process_model.files = cls.get_process_model_files(process_model)
             process_models.append(process_model)
         process_models.sort()
         return process_models
@@ -280,14 +266,14 @@ class ProcessModelService(FileSystemService):
         process_model_identifiers = [p.id for p in process_models]
 
         permission_to_check = "read"
-        permission_base_uri = "/v1.0/process-models"
+        permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-models"
         extension_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX"]
         if filter_runnable_by_user:
             permission_to_check = "create"
-            permission_base_uri = "/v1.0/process-instances"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances"
         if filter_runnable_as_extension:
             permission_to_check = "create"
-            permission_base_uri = "/v1.0/extensions"
+            permission_base_uri = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/extensions"
             process_model_identifiers = [p.id.replace(f"{extension_prefix}/", "") for p in process_models]
 
         # these are the ones (identifiers, at least) you are allowed to start
@@ -616,11 +602,11 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:
         original_group_path = cls.full_path_from_id(original_process_group_id)
-        _, original_group_id = os.path.split(original_group_path)
-        new_root = os.path.join(FileSystemService.root_path(), new_location)
-        new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_root, original_group_id))
-        destination = shutil.move(original_group_path, new_group_path)
-        new_process_group = cls.get_process_group(destination)
+        _, original_base_group_id = os.path.split(original_group_path)
+        new_group_id = os.path.join(new_location, original_base_group_id)
+        new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_location))
+        shutil.move(original_group_path, new_group_path)
+        new_process_group = cls.get_process_group(new_group_id)
         return new_process_group
 
     @classmethod
@@ -693,7 +679,7 @@ class ProcessModelService(FileSystemService):
                 relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
                 data["id"] = cls.path_to_id(relative_path)
                 restricted_data = cls.restrict_dict(data)
-                process_group = ProcessGroup(**restricted_data)
+                process_group = ProcessGroup.from_dict(restricted_data)
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
@@ -705,7 +691,7 @@ class ProcessModelService(FileSystemService):
                 id="",
                 display_name=process_group_id,
             )
-            cls.write_json_file(cat_path, cls.GROUP_SCHEMA.dump(process_group))
+            cls.write_json_file(cat_path, process_group.serialized())
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 
@@ -779,7 +765,11 @@ class ProcessModelService(FileSystemService):
                 display_name=name,
                 description="",
             )
-            cls.write_json_file(json_file_path, cls.PROCESS_MODEL_SCHEMA.dump(process_model_info))
+            json_data = process_model_info.to_dict()
+            for key in list(json_data.keys()):
+                if key not in PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
+                    del json_data[key]
+            cls.write_json_file(json_file_path, json_data)
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info

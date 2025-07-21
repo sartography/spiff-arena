@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Alert, Box, CircularProgress } from '@mui/material';
 import { BACKEND_BASE_URL } from '../config';
@@ -9,6 +10,7 @@ import InstructionsForEndUser from './InstructionsForEndUser';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
 import { HUMAN_TASK_TYPES } from '../helpers';
+import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
 
 type OwnProps = {
   processInstanceId: number;
@@ -35,6 +37,7 @@ export default function ProcessInterstitial({
     useState<ProcessInstance | null>(null);
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { addError } = useAPIError();
 
   useEffect(() => {
@@ -107,8 +110,11 @@ export default function ProcessInterstitial({
           'lastProcessInstanceId',
           processInstanceId.toString(),
         );
-        navigate(processInstanceShowPageUrl);
-      }, 2000); // Adjust the timeout to match the CSS transition duration
+        const toUrl =
+          getAndRemoveLastProcessInstanceRunLocation() ??
+          processInstanceShowPageUrl;
+        navigate(toUrl);
+      }, 4000); // Adjust the timeout to match the CSS transition duration
     }
     return undefined;
   }, [
@@ -152,21 +158,20 @@ export default function ProcessInterstitial({
   ) => {
     if (['terminated', 'suspended'].includes(pi.status)) {
       return inlineMessage(
-        `Process ${pi.status}`,
-        `This process instance was ${pi.status} by an administrator. Please get in touch with them for more information.`,
+        t('process_status', { status: pi.status }),
+        t('process_status_message', { status: pi.status }),
         'warning',
       );
     }
     if (pi.status === 'error') {
-      let errMessage = `This process instance experienced an unexpected error and can not continue. Please get in touch with an administrator for more information and next steps. `;
-      if (myTask && myTask.error_message) {
+      let errMessage = t('process_error_msg');
+      if (myTask?.error_message) {
         errMessage = errMessage.concat(myTask.error_message);
       }
-      return inlineMessage(`Process Error`, errMessage, 'error');
+      return inlineMessage(t('process_error'), errMessage, 'error');
     }
     // Otherwise we are not started, waiting, complete, or user_input_required
-    const defaultMsg =
-      'There are no additional instructions or information for this process.';
+    const defaultMsg = t('no_additional_instructions');
     if (myTask) {
       return (
         <InstructionsForEndUser
@@ -176,7 +181,7 @@ export default function ProcessInterstitial({
         />
       );
     }
-    return inlineMessage(`Process Error`, defaultMsg, 'info');
+    return inlineMessage(t('process_error'), defaultMsg, 'info');
   };
 
   const userMessage = (myTask: ProcessInstanceTask) => {
@@ -185,45 +190,40 @@ export default function ProcessInterstitial({
     }
 
     if (!myTask.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)) {
-      let message = 'This next task is assigned to a different person or team.';
+      let message = t('task_assigned_different_person');
       if (myTask.assigned_user_group_identifier) {
-        message = `This next task is assigned to group: ${myTask.assigned_user_group_identifier}.`;
+        message = t('task_assigned_group', {
+          group: myTask.assigned_user_group_identifier,
+        });
       } else if (myTask.potential_owner_usernames) {
         let potentialOwnerArray = myTask.potential_owner_usernames.split(',');
         if (potentialOwnerArray.length > 2) {
           potentialOwnerArray = potentialOwnerArray.slice(0, 2).concat(['...']);
         }
-        message = `This next task is assigned to user(s): ${potentialOwnerArray.join(
-          ', ',
-        )}.`;
+        message = t('task_assigned_users', {
+          users: potentialOwnerArray.join(', '),
+        });
       }
 
-      return inlineMessage(
-        '',
-        `${message} There is no action for you to take at this time.`,
-      );
+      return inlineMessage('', `${message} ${t('no_action_required')}`);
     }
     if (shouldRedirectToTask(myTask)) {
-      return inlineMessage('', `Redirecting ...`);
+      return inlineMessage('', t('redirecting'));
     }
-    if (
-      myTask &&
-      myTask.can_complete &&
-      HUMAN_TASK_TYPES.includes(myTask.type)
-    ) {
+    if (myTask?.can_complete && HUMAN_TASK_TYPES.includes(myTask.type)) {
       return inlineMessage(
         '',
-        `The task "${myTask.title}" is ready for you to complete.`,
+        t('task_ready_for_completion', { taskTitle: myTask.title }),
       );
     }
     if (myTask.error_message) {
-      return inlineMessage('Error', myTask.error_message, 'error');
+      return inlineMessage(t('error'), myTask.error_message, 'error');
     }
     return (
       <div>
         <InstructionsForEndUser
           task={myTask}
-          defaultMessage="There are no additional instructions or information for this task."
+          defaultMessage={t('no_instructions_for_task')}
           allowCollapse={collapsableInstructions}
         />
       </div>
@@ -235,7 +235,10 @@ export default function ProcessInterstitial({
   if (state === 'CLOSED' && lastTask === null && allowRedirect) {
     // Favor redirecting to the process instance show page
     if (processInstance) {
-      navigate(processInstanceShowPageUrl);
+      const toUrl =
+        getAndRemoveLastProcessInstanceRunLocation() ??
+        processInstanceShowPageUrl;
+      navigate(toUrl);
     } else {
       const taskUrl = '/tasks';
       navigate(taskUrl);

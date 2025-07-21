@@ -6,10 +6,12 @@ t
 version_info.json
 .coverage*
 UNKNOWN.egg-info/
-process_models
+/process_models
 .ipynb_checkpoints
 .env*
 .cache
 .mypy_cache
 .aider*
 /spiffworkflow_docker_compose
+.DS_Store
+.claude

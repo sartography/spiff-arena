@@ -1,5 +1,6 @@
 // @ts-ignore
 import { Tabs, Tab } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { Can } from '@casl/react';
 import { useNavigate } from 'react-router-dom';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -12,6 +13,7 @@ type OwnProps = {
 };
 
 export default function ProcessInstanceListTabs({ variant }: OwnProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -27,31 +29,31 @@ export default function ProcessInstanceListTabs({ variant }: OwnProps) {
   }
 
   return (
-    <Tabs value={selectedTabIndex} aria-label="List of tabs">
-      <SpiffTooltip title="Only show process instances for the current user">
+    <Tabs value={selectedTabIndex} aria-label={t('list_of_tabs')}>
+      <SpiffTooltip title={t('tooltip_only_show_for_me')}>
         <Tab
-          label="For Me"
-          data-qa="process-instance-list-for-me"
+          label={t('for_me')}
+          data-testid="process-instance-list-for-me"
           onClick={() => {
             navigate('/process-instances/for-me');
           }}
         />
       </SpiffTooltip>
       <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
-        <SpiffTooltip title="Show process instances for all users">
+        <SpiffTooltip title={t('tooltip_show_for_all')}>
           <Tab
-            label="All"
-            data-qa="process-instance-list-all"
+            label={t('all')}
+            data-testid="process-instance-list-all"
             onClick={() => {
               navigate('/process-instances/all');
             }}
           />
         </SpiffTooltip>
       </Can>
-      <SpiffTooltip title="Search for a process instance by id">
+      <SpiffTooltip title={t('tooltip_search_by_id')}>
         <Tab
-          label="Find By Id"
-          data-qa="process-instance-list-find-by-id"
+          label={t('find_by_id')}
+          data-testid="process-instance-list-find-by-id"
           onClick={() => {
             navigate('/process-instances/find-by-id');
           }}

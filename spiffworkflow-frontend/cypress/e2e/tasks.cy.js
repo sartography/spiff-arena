@@ -125,7 +125,7 @@ describe('public_tasks', () => {
     cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
     cy.runPrimaryBpmnFile(false, false, false);
 
-    cy.get('[data-qa="metadata-value-first_task_url"] a')
+    cy.get('[data-testid="metadata-value-first_task_url"] a')
       .invoke('attr', 'href')
       .then((hrefValue) => {
         cy.logout();

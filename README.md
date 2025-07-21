@@ -17,13 +17,13 @@ If you have issues with the local dev setup, please consult [the troubleshooting
 There are three prerequisites for non-docker local development:
 
 1. python - [asdf-vm](https://asdf-vm.com) works well for installing this.
-2. poetry - `pip install poetry` works
+2. uv - 'pip install uv` works, but recommend standalone installer, see https://github.com/astral-sh/uv
 3. mysql - the app also supports postgres. and sqlite, if you are talking local dev).
 
 When these are installed, you are ready for:
 ```bash
     cd spiffworkflow-backend
-    poetry install
+    uv sync
     ./bin/recreate_db clean
     ./bin/run_server_locally
     ./bin/run_server_locally keycloak # if you want to use keycloak instead of the built-in openid server
@@ -46,7 +46,7 @@ You can start it like this:
 
     ./keycloak/bin/start_keycloak
 
-It'll be running on port 7002
+It'll be running on port 7002.
 If you want to log in to the keycloak admin console, it can be found at http://localhost:7002, and the creds are admin/admin (also logs you in to the app if running the frontend)
 
 ## Frontend Setup, local
@@ -85,7 +85,7 @@ Please refer to the [Makefile](Makefile) as the source of truth, but for a summa
 
 | Target | Action |
 |----|----|
-| dev-env | Builds the images, sets up the backend db and installs `npm` and `poetry` dependencies |
+| dev-env | Builds the images, sets up the backend db and installs `npm` and `uv` dependencies |
 | start-dev | Starts the frontend and backend servers, also stops them first if they were already running |
 | stop-dev | Stops the frontend and backend servers |
 | be-tests-par | Runs the backend unit tests in parallel |

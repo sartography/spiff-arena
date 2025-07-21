@@ -48,14 +48,11 @@ build-images:
 		--build-arg GROUP_NAME=$(GROUP_NAME) \
 		$(JUST)
 
-dev-env: stop-dev build-images poetry-i cp-poetry-i be-poetry-i be-db-clean fe-npm-i
+dev-env: stop-dev build-images uv-sync cp-poetry-i be-uv-sync be-db-clean fe-npm-i
 	@true
 
 start-dev: stop-dev
 	$(DOCKER_COMPOSE) up -d
-
-start-event-stream:
-	$(DOCKER_COMPOSE) up -d event-stream
 
 stop-dev:
 	$(DOCKER_COMPOSE) down
@@ -73,15 +70,12 @@ be-logs:
 	docker logs -f $(BACKEND_CONTAINER)
 
 be-mypy:
-	$(IN_BACKEND) poetry run mypy src tests
+	$(IN_BACKEND) uv run mypy src tests
 
-be-poetry-i:
-	$(IN_BACKEND) poetry install
+be-uv-sync:
+	$(IN_BACKEND) uv sync
 
-be-poetry-lock:
-	$(IN_BACKEND) poetry lock --no-update
-
-be-poetry-rm:
+be-venv-rm:
 	@if [ -d "$(BACKEND_CONTAINER)/.venv" ]; then \
 		rm -rf "$(BACKEND_CONTAINER)/.venv"; \
 	fi
@@ -97,10 +91,13 @@ be-sqlite:
 	$(IN_BACKEND) sqlite3 $(BACKEND_SQLITE_FILE)
 
 be-tests: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) uv run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
 be-tests-par: be-clear-log-file
-	$(IN_BACKEND) poetry run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+
+co-wheel:
+	$(IN_ARENA) uv build spiff-arena-common
 
 cp-sh:
 	$(IN_CONNECTOR_PROXY) /bin/bash
@@ -137,25 +134,19 @@ fe-sh:
 fe-unimported:
 	$(IN_FRONTEND) npx unimported
 
-git-debranch:
-	$(IN_ARENA) poetry run git-debranch
+uv-sync:
+	$(IN_ARENA) uv sync
 
-git-debranch-offline:
-	$(IN_ARENA) poetry run git-debranch --offline
-
-poetry-i:
-	$(IN_ARENA) poetry install --no-root
-
-poetry-rm:
+venv-rm:
 	@if [ -d ".venv" ]; then \
 		rm -rf ".venv"; \
 	fi
 
 pre-commit:
-	$(IN_ARENA) poetry run pre-commit run --verbose --all-files
+	$(IN_ARENA) uv run pre-commit run --verbose --all-files
 
 ruff:
-	$(IN_ARENA) poetry run ruff check --fix spiffworkflow-backend
+	$(IN_ARENA) uv run ruff check --fix spiffworkflow-backend spiff-arena-common
 
 run-pyl: fe-lint-fix ruff pre-commit be-mypy be-tests-par
 	@true
@@ -166,14 +157,12 @@ sh:
 take-ownership:
 	$(SUDO) chown -R $(ME) .
 
-include event-stream/demo.mk
-	
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-poetry-i be-poetry-lock be-poetry-rm \
+	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
+	co-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
-	git-debranch git-debranch-offline \
-	poetry-i poetry-rm pre-commit ruff run-pyl \
+	uv-sync venv-rm pre-commit ruff run-pyl \
 	take-ownership

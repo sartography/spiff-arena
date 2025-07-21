@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { TextField, Button, FormControl } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { ProcessModel } from '../interfaces';
@@ -9,6 +10,7 @@ import HttpService from '../services/HttpService';
 export default function ProcessModelNewExperimental() {
   const params = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [processModelDescriptiveText, setProcessModelDescriptiveText] =
     useState<string>('');
 
@@ -41,7 +43,7 @@ export default function ProcessModelNewExperimental() {
     <>
       <ProcessBreadcrumb
         hotCrumbs={[
-          ['Process Groups', '/process-groups'],
+          [t('process_groups'), '/process-groups'],
           {
             entityToExplode: params.process_group_id || '',
             entityType: 'process-group-id',
@@ -51,7 +53,7 @@ export default function ProcessModelNewExperimental() {
       />
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <h1 title={helperText} onClick={ohYeeeeaah} onKeyDown={ohYeeeeaah}>
-        Add Process Model
+        {t('add_process_model')}
       </h1>
       <FormControl component="form" onSubmit={handleFormSubmission}>
         <TextField
@@ -67,7 +69,7 @@ export default function ProcessModelNewExperimental() {
           variant="outlined"
         />
         <Button variant="contained" color="primary" type="submit">
-          Submit
+          {t('submit')}
         </Button>
       </FormControl>
     </>

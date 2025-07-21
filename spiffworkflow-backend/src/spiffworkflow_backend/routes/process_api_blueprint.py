@@ -41,7 +41,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.reference_cache import ReferenceSchema
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -56,6 +55,7 @@ from spiffworkflow_backend.services.reference_cache_service import ReferenceCach
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -114,20 +114,20 @@ def process_list() -> Any:
     permitted_process_model_identifiers = ProcessModelService.process_model_identifiers_with_permission_for_user(
         user=g.user,
         permission_to_check="create",
-        permission_base_uri="/v1.0/process-instances",
+        permission_base_uri=f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/process-instances",
         process_model_identifiers=process_model_identifiers,
     )
     permitted_references = []
     for spec_reference in references:
         if spec_reference.relative_location in permitted_process_model_identifiers:
             permitted_references.append(spec_reference)
-    return ReferenceSchema(many=True).dump(permitted_references)
+    return [s.to_dict() for s in permitted_references]
 
 
 # if we pass in bpmn_process_identifiers of [a], a is "called" and we want to find which processes are *callers* of a
 def process_caller_list(bpmn_process_identifiers: list[str]) -> Any:
     references = ReferenceCacheService.get_reference_cache_entries_calling_process(bpmn_process_identifiers)
-    return ReferenceSchema(many=True).dump(references)
+    return [s.to_dict() for s in references]
 
 
 def _get_bpmn_process_with_data_object(
@@ -418,7 +418,8 @@ def _find_process_instance_for_me_or_raise(
         modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(
             process_instance.process_model_identifier
         )
-        target_uri = f"/v1.0/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
+        api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
+        target_uri = f"{api_path_prefix}/process-instances/for-me/{modified_process_model_identifier}/{process_instance.id}"
         has_permission = AuthorizationService.user_has_permission(
             user=g.user,
             permission="read",
@@ -537,7 +538,7 @@ def _task_submit_shared(
         only_tasks_that_can_be_completed=True,
     )
 
-    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+    with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
             ProcessInstanceService.complete_form_task(
                 processor=processor,
@@ -688,7 +689,7 @@ def _get_task_model_for_request(
         all_processes = [i.identifier for i in refs]
         if task_process_identifier not in all_processes:
             top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
-            bpmn_file_full_path = ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+            bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
                 top_bpmn_process.bpmn_process_definition.bpmn_identifier
             )
             relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
@@ -755,7 +756,7 @@ def _get_task_model_for_request(
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict) -> None:
     for k, value in in_dict.items():
-        if "anyOf" == k:
+        if k in {"anyOf", "items"}:
             # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
             if isinstance(value, list):
                 if len(value) == 1:
@@ -814,6 +815,8 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict)
                                     )
 
                                     in_dict[k] = options_for_react_json_schema_form
+                                else:
+                                    in_dict[k] = select_options_from_task_data
         elif isinstance(value, dict):
             _update_form_schema_with_task_data_as_needed(value, task_data)
         elif isinstance(value, list):

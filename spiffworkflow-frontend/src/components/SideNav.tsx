@@ -33,8 +33,10 @@ import {
   Markunread,
   SettingsApplicationsSharp,
   Extension,
+  Flag,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import appVersionInfo from '../helpers/appVersionInfo';
 import {
   DARK_MODE_ENABLED,
@@ -88,6 +90,8 @@ function SideNav({
 
   const location = useLocation();
 
+  const { t, i18n } = useTranslation();
+
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.authenticationListPath]: ['GET'],
@@ -122,7 +126,7 @@ function SideNav({
   if (Object.keys(versionInfo).length) {
     aboutLinkElement = (
       <MuiLink component={Link} to="/about">
-        About
+        {t('about')}
       </MuiLink>
     );
   }
@@ -135,9 +139,14 @@ function SideNav({
 
   // State for controlling the display of the user profile section
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const handlePersonIconClick = () => {
     setShowUserProfile(!showUserProfile);
+  };
+
+  const handleLanguageMenuClick = () => {
+    setShowLanguageMenu(!showLanguageMenu);
   };
 
   // Close user profile section when clicking outside
@@ -151,6 +160,13 @@ function SideNav({
       ) {
         setShowUserProfile(false);
       }
+      if (
+        element &&
+        !element.closest('.language-menu') &&
+        !element.closest('.language-icon')
+      ) {
+        setShowLanguageMenu(false);
+      }
     };
 
     window.addEventListener('click', handleClickOutside);
@@ -161,52 +177,52 @@ function SideNav({
   }, []);
 
   const collapseOrExpandIcon = isCollapsed ? (
-    <SpiffTooltip title="Expand navigation" placement="right">
+    <SpiffTooltip title={t('expand_navigation')} placement="right">
       <ChevronRight data-testid="expand-primary-nav" />
     </SpiffTooltip>
   ) : (
-    <SpiffTooltip title="Collapse navigation" placement="bottom">
+    <SpiffTooltip title={t('collapse_navigation')} placement="bottom">
       <ChevronLeft data-testid="collapse-primary-nav" />
     </SpiffTooltip>
   );
 
   const navItems: NavItem[] = [
     {
-      text: 'HOME',
+      text: t('home'),
       icon: <Home />,
       route: '/',
       id: routeIdentifiers.HOME,
     },
     {
-      text: 'PROCESSES',
+      text: t('processes'),
       icon: <Schema />,
       route: '/process-groups',
       id: routeIdentifiers.PROCESSES,
       permissionRoutes: [targetUris.processGroupListPath],
     },
     {
-      text: 'PROCESS INSTANCES',
+      text: t('process_instances'),
       icon: <Timeline />,
       route: '/process-instances',
       id: routeIdentifiers.PROCESS_INSTANCES,
       permissionRoutes: [targetUris.processInstanceListForMePath],
     },
     {
-      text: 'DATA STORES',
+      text: t('data_stores'),
       icon: <Storage />,
       route: '/data-stores',
       id: routeIdentifiers.DATA_STORES,
       permissionRoutes: [targetUris.dataStoreListPath],
     },
     {
-      text: 'MESSAGES',
+      text: t('messages'),
       icon: <Markunread />,
       route: '/messages',
       id: routeIdentifiers.MESSAGES,
       permissionRoutes: [targetUris.messageInstanceListPath],
     },
     {
-      text: 'CONFIGURATION',
+      text: t('configuration'),
       icon: <SettingsApplicationsSharp />,
       route: '/configuration',
       id: routeIdentifiers.CONFIGURATION,
@@ -366,7 +382,7 @@ function SideNav({
                     {!isCollapsed && (
                       <ListItemText
                         primary={item.text}
-                        data-qa={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
+                        data-testid={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
                         primaryTypographyProps={{
                           fontSize: '0.875rem',
                           fontWeight:
@@ -403,11 +419,11 @@ function SideNav({
             }}
           >
             <SpiffTooltip
-              title="User Actions"
+              title={t('user_actions')}
               placement={isCollapsed ? 'right' : 'top'}
             >
               <IconButton
-                aria-label="User Actions"
+                aria-label={t('user_actions')}
                 onClick={handlePersonIconClick}
                 className="person-icon"
               >
@@ -416,7 +432,7 @@ function SideNav({
             </SpiffTooltip>
             {DARK_MODE_ENABLED ? (
               <SpiffTooltip
-                title="Toggle dark mode"
+                title={t('toggle_dark_mode')}
                 placement={isCollapsed ? 'right' : 'top'}
               >
                 <IconButton onClick={onToggleDarkMode}>
@@ -424,9 +440,21 @@ function SideNav({
                 </IconButton>
               </SpiffTooltip>
             ) : null}
+            <SpiffTooltip
+              title={t('language')}
+              placement={isCollapsed ? 'right' : 'top'}
+            >
+              <IconButton
+                aria-label={t('language')}
+                onClick={handleLanguageMenuClick}
+                className="language-icon"
+              >
+                <Flag />
+              </IconButton>
+            </SpiffTooltip>
             {SPIFF_ENVIRONMENT && (
               <SpiffTooltip
-                title="Environment"
+                title={t('environment')}
                 placement={isCollapsed ? 'right' : 'top'}
               >
                 {/* Use a Box to wrap the Chip and vertically align it */}
@@ -451,7 +479,7 @@ function SideNav({
             sx={{
               position: 'fixed',
               bottom: isCollapsed ? 100 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
-              left: 64,
+              left: 32,
               right: 'auto',
               width: 256,
               padding: 2,
@@ -472,7 +500,7 @@ function SideNav({
               target="_blank"
               rel="noreferrer"
             >
-              Documentation
+              {t('documentation')}
             </MuiLink>
             <ExtensionUxElementForDisplay
               displayLocation="user_profile_item"
@@ -484,6 +512,7 @@ function SideNav({
                 <hr />
                 <MuiLink
                   component="button"
+                  data-testid="sign-out-button"
                   onClick={() => UserService.doLogout()}
                   sx={{
                     display: 'flex',
@@ -493,10 +522,49 @@ function SideNav({
                   }}
                 >
                   <Logout />
-                  &nbsp;&nbsp;Sign out
+                  &nbsp;&nbsp;{t('sign_out')}
                 </MuiLink>
               </>
             )}
+          </Paper>
+        )}
+        {showLanguageMenu && (
+          <Paper
+            elevation={3}
+            className="language-menu"
+            sx={{
+              position: 'fixed',
+              bottom: isCollapsed ? 80 : 60, // if it's collapsed, make it a little higher so it doesn't overlap with the tooltip to the right of the icon
+              left: isCollapsed ? 32 : 96,
+              right: 'auto',
+              width: 128,
+              padding: 2,
+              zIndex: 1300,
+              bgcolor: 'background.paper',
+            }}
+          >
+            {Object.keys(i18n.store.data)
+              .sort()
+              .map((language) => (
+                <MuiLink
+                  key={language}
+                  component="button"
+                  onClick={() => {
+                    i18n.changeLanguage(language);
+                    setShowLanguageMenu(false);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    fontWeight:
+                      i18n.resolvedLanguage === language ? 'bold' : 'unset',
+                  }}
+                >
+                  {language}
+                </MuiLink>
+              ))}
           </Paper>
         )}
       </>

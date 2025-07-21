@@ -13,6 +13,7 @@ import {
   CardContent,
   Button,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Can } from '@casl/react';
 import { Subject } from 'rxjs';
@@ -78,6 +79,7 @@ export default function ProcessModelTreePage({
   setNavElementCallback,
   navigateToPage = false,
 }: OwnProps) {
+  const { t } = useTranslation();
   const params = useParams();
   const navigate = useNavigate();
   const { processGroups } = useProcessGroups({ processInfo: {} });
@@ -101,7 +103,7 @@ export default function ProcessModelTreePage({
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
-  const favoriteCrumb: Crumb = { id: 'favorites', displayName: 'Favorites' };
+  const favoriteCrumb: Crumb = { id: 'favorites', displayName: t('favorites') };
   const gridProps = {
     display: 'grid',
     gridGap: 20, // Spacing between cards
@@ -402,7 +404,7 @@ export default function ProcessModelTreePage({
   const handleSearch = useDebouncedCallback((search: string) => {
     // Indicate to user this is a search result.
     setCrumbs([
-      { id: search, displayName: `Searching for: ${search || '(all)'}` },
+      { id: search, displayName: `${t('search')}: ${search || '(all)'}` },
     ]);
     // Search the flattened items for the search term.
     const foundGroups = flatItems.filter((item: any) => {
@@ -452,7 +454,10 @@ export default function ProcessModelTreePage({
   const dataStoresForProcessGroup = dataStores.filter(
     (dataStore: DataStore) => {
       return (
-        currentProcessGroup && dataStore.location === currentProcessGroup.id
+        (currentProcessGroup &&
+          dataStore.location === currentProcessGroup.id) ||
+        (!currentProcessGroup &&
+          (!dataStore.location || dataStore.location === '/'))
       );
     },
   );
@@ -489,7 +494,7 @@ export default function ProcessModelTreePage({
   return (
     <Box id="process-model-tree-box" sx={{ margin: '0 auto', p: 0 }}>
       <Typography variant="h1" sx={{ mb: 2 }}>
-        Processes
+        {t('processes')}
       </Typography>
       <Container
         maxWidth={false}
@@ -553,7 +558,7 @@ export default function ProcessModelTreePage({
                       top: -1,
                     }}
                   />
-                  <Typography variant="caption">Favorites</Typography>
+                  <Typography variant="caption">{t('favorites')}</Typography>
                 </Stack>
               )}
             </Stack>
@@ -577,7 +582,7 @@ export default function ProcessModelTreePage({
                             e.preventDefault();
                             handleCrumbClick({
                               id: SPIFF_ID,
-                              displayName: 'Home',
+                              displayName: t('home'),
                             });
                           }}
                         >
@@ -588,6 +593,7 @@ export default function ProcessModelTreePage({
                           <Link
                             key={crumb.id}
                             href={`/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
+                            data-testid={`process-group-breadcrumb-${crumb.displayName}`}
                             onClick={(
                               e: React.MouseEvent<HTMLAnchorElement>,
                             ) => {
@@ -606,7 +612,7 @@ export default function ProcessModelTreePage({
                           ability={ability}
                         >
                           <IconButton
-                            data-qa="edit-process-group-button"
+                            data-testid="edit-process-group-button"
                             href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
                           >
                             <Edit />
@@ -618,13 +624,15 @@ export default function ProcessModelTreePage({
                           ability={ability}
                         >
                           <ButtonWithConfirmation
-                            data-qa="delete-process-group-button"
+                            data-testid="delete-process-group-button"
                             renderIcon={<Delete />}
-                            iconDescription="Delete Process Group"
+                            iconDescription={t('delete_process_group')}
                             hasIconOnly
-                            description={`Delete process group: ${currentProcessGroup.display_name}`}
+                            description={t('delete_process_group_with_name', {
+                              name: currentProcessGroup.display_name,
+                            })}
                             onConfirmation={deleteProcessGroup}
-                            confirmButtonLabel="Delete"
+                            confirmButtonLabel={t('delete')}
                           />
                         </Can>
                       </Box>
@@ -637,7 +645,7 @@ export default function ProcessModelTreePage({
                           e.preventDefault();
                           handleCrumbClick({
                             id: SPIFF_ID,
-                            displayName: 'Home',
+                            displayName: t('home'),
                           });
                         }}
                       >
@@ -675,7 +683,11 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>Process Models ({models.length})</Typography>
+                      <Typography>
+                        {t('process_models_with_count', {
+                          count: models.length,
+                        })}
+                      </Typography>
                       {currentProcessGroup && (
                         <Can
                           I="POST"
@@ -685,7 +697,7 @@ export default function ProcessModelTreePage({
                           <IconButton
                             size="small"
                             onClick={(e) => e.stopPropagation()}
-                            data-qa="add-process-model-button"
+                            data-testid="add-process-model-button"
                             href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
                           >
                             <Add />
@@ -735,7 +747,9 @@ export default function ProcessModelTreePage({
                         pr: 2,
                       }}
                     >
-                      <Typography>Process Groups ({groups?.length})</Typography>
+                      <Typography>
+                        {t('process_groups')} ({groups?.length})
+                      </Typography>
                       <Can
                         I="POST"
                         a={targetUris.processGroupListPath}
@@ -744,7 +758,7 @@ export default function ProcessModelTreePage({
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-group-button"
+                          data-testid="add-process-group-button"
                           href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />
@@ -784,12 +798,13 @@ export default function ProcessModelTreePage({
                         }}
                       >
                         <Typography>
-                          Data Stores ({dataStoresForProcessGroup?.length})
+                          {t('data_stores')} (
+                          {dataStoresForProcessGroup?.length})
                         </Typography>
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-qa="add-process-group-button"
+                          data-testid="add-process-group-button"
                           href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />

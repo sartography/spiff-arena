@@ -1,10 +1,10 @@
 from flask.app import Flask
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -12,7 +12,7 @@ class TestProcessInstanceEventsController(BaseTest):
     def test_process_instance_migration_event_list(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -33,8 +33,8 @@ class TestProcessInstanceEventsController(BaseTest):
                 migration_details={
                     "initial_git_revision": f"rev{ii}",
                     "initial_bpmn_process_hash": f"hash{ii}",
-                    "target_git_revision": f"rev{ii+1}",
-                    "target_bpmn_process_hash": f"hash{ii+1}",
+                    "target_git_revision": f"rev{ii + 1}",
+                    "target_bpmn_process_hash": f"hash{ii + 1}",
                 },
             )
         # add random event to ensure it does not come back from api
@@ -48,8 +48,8 @@ class TestProcessInstanceEventsController(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json
-        events = response.json["results"]
+        assert response.json()
+        events = response.json()["results"]
         assert len(events) == number_of_events
 
         # events are returned newest first so reverse order to make checking easier
@@ -57,6 +57,6 @@ class TestProcessInstanceEventsController(BaseTest):
         for ii in range(number_of_events):
             assert events[ii]["initial_git_revision"] == f"rev{ii}"
             assert events[ii]["initial_bpmn_process_hash"] == f"hash{ii}"
-            assert events[ii]["target_git_revision"] == f"rev{ii+1}"
-            assert events[ii]["target_bpmn_process_hash"] == f"hash{ii+1}"
+            assert events[ii]["target_git_revision"] == f"rev{ii + 1}"
+            assert events[ii]["target_bpmn_process_hash"] == f"hash{ii + 1}"
             assert events[ii]["username"] == with_super_admin_user.username

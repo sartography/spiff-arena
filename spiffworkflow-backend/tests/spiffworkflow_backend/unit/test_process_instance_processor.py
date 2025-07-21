@@ -3,9 +3,10 @@ from uuid import UUID
 import pytest
 from flask import g
 from flask.app import Flask
-from flask.testing import FlaskClient
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -23,7 +24,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -55,7 +55,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_sets_permission_correctly_on_human_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -113,7 +113,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -195,7 +195,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_load_up_processor_after_running_model_with_call_activities(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -219,7 +219,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_properly_resets_process_to_given_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -275,7 +275,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_properly_resets_process_to_given_task_with_call_activity(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -315,9 +315,9 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        assert (
-            len(process_instance.active_human_tasks) == 1
-        ), "expected 1 active human tasks after 2nd one is completed, as we have looped back around."
+        assert len(process_instance.active_human_tasks) == 1, (
+            "expected 1 active human tasks after 2nd one is completed, as we have looped back around."
+        )
 
         processor.suspend()
 
@@ -349,9 +349,9 @@ class TestProcessInstanceProcessor(BaseTest):
         # make sure we did not remove the data during the reset which can happen if include_task_data_for_completed_tasks is False
         assert top_level_subprocess_script_spiff_task.data == {"set_in_top_level_script": 1}
         processor.resume()
-        assert (
-            len(process_instance.human_tasks) == 2
-        ), "expected 2 human tasks after resume since resume does not do anything in that regard"
+        assert len(process_instance.human_tasks) == 2, (
+            "expected 2 human tasks after resume since resume does not do anything in that regard"
+        )
         started_spiff_tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.STARTED)
         assert len(started_spiff_tasks) == 1
         assert "top_level_subprocess" == started_spiff_tasks[0].task_spec.name
@@ -387,7 +387,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_properly_resets_process_on_tasks_with_boundary_events(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -437,7 +437,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_step_through_gateway(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -477,7 +477,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_properly_saves_tasks_when_running(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -695,7 +695,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -728,7 +728,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_it_can_loopback_to_previous_bpmn_task_with_gateway(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -757,7 +757,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_it_can_loopback_to_previous_bpmn_subprocess_with_gateway(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -796,7 +796,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_task_data_is_set_even_if_process_instance_errors_and_creates_task_failed_event(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -838,7 +838,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_complete_task_with_call_activity_after_manual_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -860,7 +860,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_store_instructions_for_end_user(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -905,7 +905,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_persist_given_bpmn_process_dict_when_imported_from_scratch(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -956,7 +956,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_persist_given_bpmn_process_dict_when_loaded_before(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -993,7 +993,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_returns_error_if_spiff_task_and_human_task_are_different(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -1015,7 +1015,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_run_multiinstance_tasks_with_human_task(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -1050,7 +1050,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_store_summary(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
@@ -1073,7 +1073,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_it_can_update_guids_in_bpmn_process_dict(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -1120,7 +1120,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_simple_call_activity_chain(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
@@ -1139,7 +1139,7 @@ class TestProcessInstanceProcessor(BaseTest):
     def test_can_terminate_instance_with_subprocess(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.create_process_group("test_group", "test_group")
@@ -1165,7 +1165,7 @@ class TestProcessInstanceProcessor(BaseTest):
     # def test_large_multiinstance(
     #     self,
     #     app: Flask,
-    #     client: FlaskClient,
+    #     client: TestClient,
     #     with_db_and_bpmn_file_cleanup: None,
     # ) -> None:
     #     import time

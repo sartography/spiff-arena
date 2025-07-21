@@ -1,14 +1,20 @@
 from collections.abc import Generator
 
+import flask
 import pytest
 from flask.app import Flask
-from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 
+from spiffworkflow_backend.services.feature_flag_service import FeatureFlagService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 @pytest.fixture()
 def no_feature_flags(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+    tld = app.config.get("THREAD_LOCAL_DATA")
+    if tld and hasattr(tld, "process_model_identifier"):
+        delattr(tld, "process_model_identifier")
+    if hasattr(flask.g, "feature_flags"):
+        delattr(flask.g, "feature_flags")
     yield
 
 
@@ -42,7 +48,7 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
             {},
             {"a/b/c": {"some_feature": False}},
@@ -54,7 +60,7 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
             {"some_feature": True},
             {"a/b/c": {"some_feature": False}},
@@ -66,9 +72,14 @@ class TestFeatureFlagService(BaseTest):
         app: Flask,
         no_feature_flags: None,
     ) -> None:
-        app.config.get("THREAD_LOCAL_DATA").process_model_identifier = "a/b/c"  # type: ignore
+        self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
             {"one_feature": False},
             {"a/b/c": {"two_feature": False}},
         )
         assert FeatureFlagService.feature_enabled("some_feature", True)
+
+    def _set_tld_process_model_identifier(self, app: Flask) -> None:
+        tld = app.config.get("THREAD_LOCAL_DATA")
+        assert tld
+        tld.process_model_identifier = "a/b/c"

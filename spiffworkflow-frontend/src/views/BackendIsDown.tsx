@@ -1,12 +1,11 @@
+import { useTranslation } from 'react-i18next';
+
 export default function BackendIsDown() {
+  const { t } = useTranslation();
   return (
     <div>
-      <h1>Server error</h1>
-      <p>
-        We are sorry, but our service is temporarily unavailable due to
-        technical difficulties. Please bear with us while we work to resolve the
-        issue. If the problem persists, please contact the site administrator.
-      </p>
+      <h1>{t('server_error_title')}</h1>
+      <p>{t('server_error_message')}</p>
     </div>
   );
 }

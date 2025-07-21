@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Avatar, Box } from '@mui/material'; // Import MUI components
+import { useTranslation } from 'react-i18next';
 
 import HttpService from '../services/HttpService';
 import { User } from '../interfaces';
@@ -21,6 +22,7 @@ async function sha256(message: string) {
 }
 
 export default function ActiveUsers() {
+  const { t } = useTranslation();
   // Handles getting and displaying active users.
   const [activeUsers, setActiveUsers] = useState<User[]>([]);
 
@@ -66,7 +68,7 @@ export default function ActiveUsers() {
   const au = activeUsers.map((activeUser: User) => {
     return (
       <Avatar
-        title={`${activeUser.username} is also viewing this page`}
+        title={t('also_viewing_this_page', { username: activeUser.username })}
         sx={{ bgcolor: 'primary.main', margin: 1 }} // MUI styling
       >
         {activeUser.username.charAt(0).toUpperCase()}

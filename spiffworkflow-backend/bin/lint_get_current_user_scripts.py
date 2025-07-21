@@ -3,6 +3,7 @@ import os
 from typing import NoReturn
 
 from lxml import etree
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 
@@ -35,7 +36,7 @@ def check_script_and_prescript_elements(tree, bpmn_file_path: str, root_path: st
         script = task.find("bpmn:script", namespaces=nsmap)
         if script is not None and script.text is not None and "get_current_user()" in script.text:
             relative_path = os.path.relpath(bpmn_file_path, root_path)
-            print(f'Found get_current_user() in script task {task.get("id")} of file {relative_path}')
+            print(f"Found get_current_user() in script task {task.get('id')} of file {relative_path}")
 
     # Check preScript elements for get_current_user() calls
     check_scripts_for_get_current_user(pre_scripts, bpmn_file_path, "preScript", root_path)
@@ -59,7 +60,7 @@ def check_scripts_for_get_current_user(scripts, bpmn_file_path: str, script_type
 
 def main() -> NoReturn:
     app = create_app()
-    with app.app_context():
+    with app.app.app_context():
         hot_dir = FileSystemService.root_path()
         # Search for BPMN files and check for get_current_user() calls in script tasks
         bpmn_files = glob.glob(os.path.expanduser(f"{hot_dir}/**/*.bpmn"), recursive=True)

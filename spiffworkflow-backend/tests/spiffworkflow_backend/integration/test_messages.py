@@ -1,15 +1,13 @@
-import json
-
 import pytest
 from flask import Flask
 from flask import g
-from flask.testing import FlaskClient
+from starlette.testclient import TestClient
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -17,7 +15,7 @@ class TestMessages(BaseTest):
     def test_message_from_api_into_running_process(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test sending a message to a running process via the API.
@@ -56,9 +54,8 @@ class TestMessages(BaseTest):
         )
 
         # The response's task data should also match up with the correlation keys.
-        response_json = response.json
-        assert response_json["task_data"]["po_number"] == 1001
-        assert response_json["task_data"]["customer_id"] == "Sartography"
+        assert response.json["task_data"]["po_number"] == 1001
+        assert response.json["task_data"]["customer_id"] == "Sartography"
 
         # There is no longer a waiting message
         waiting_messages = (
@@ -74,7 +71,7 @@ class TestMessages(BaseTest):
     def test_message_model_list_up_search(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -82,26 +79,24 @@ class TestMessages(BaseTest):
         DataSetupService.save_all_process_models()
         response = client.get(
             "/v1.0/message-models/examples:1-basic-concepts",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 4
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 4
 
         response = client.get(
             "/v1.0/message-models",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 0, "should not have access to messages defined in a sub directory"
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 0, "should not have access to messages defined in a sub directory"
 
     def test_process_group_update_syncs_message_models(
         self,
         app: Flask,
-        client: FlaskClient,
+        client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -109,12 +104,11 @@ class TestMessages(BaseTest):
 
         response = client.get(
             "/v1.0/message-models/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["messages"]) == 0
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 0
 
         process_group = {
             "admin": False,
@@ -153,22 +147,20 @@ class TestMessages(BaseTest):
 
         response = client.put(
             "/v1.0/process-groups/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(process_group),
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=process_group,
         )
         assert response.status_code == 200
 
         response = client.get(
             "/v1.0/message-models/bob",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200
-        assert response.json is not None
-        assert "messages" in response.json
+        assert response.json() is not None
+        assert "messages" in response.json()
 
-        messages = response.json["messages"]
+        messages = response.json()["messages"]
         expected_message_identifiers = {"table_seated", "order_ready", "end_of_day_receipts"}
         assert len(messages) == len(expected_message_identifiers)
 

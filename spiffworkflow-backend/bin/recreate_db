@@ -38,18 +38,18 @@ database_password=""
 databases_to_run_on="spiffworkflow_backend_local_development spiffworkflow_backend_unit_testing"
 database_name_from_uri=""
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "sqlite" ]]; then
-    if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
-      database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
-      database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
-      database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
-      database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
-      database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
-      database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
-      database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
-      if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
-        databases_to_run_on="$database_name_from_uri"
-      fi
+  if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
+    database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
+    database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
+    database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
+    database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
+    database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
+    database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
+    database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+    if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
+      databases_to_run_on="$database_name_from_uri"
     fi
+  fi
 fi
 
 database_host_args="-h $database_host -u $database_username"
@@ -61,7 +61,7 @@ if [[ -n "$database_password" ]]; then
 fi
 
 # uncomment this line to fix branching conflicts
-# poetry run flask db merge heads -m "merging heads"
+# uv run flask db merge heads -m "merging heads"
 
 function run_command_on_mysql_databases {
   local command="$1"
@@ -99,13 +99,25 @@ if [[ "${1:-}" == "clean" ]]; then
       echo ":: Removing stopped container - $container_name"
       docker rm $container_name
     fi
-    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
+    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
       docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-      sleep 4 # classy
+      echo "Waiting for PostgreSQL to be ready..."
+      max_attempts=30 # Wait for up to 30 seconds
+      attempt_num=1
+      until docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1" >/dev/null 2>&1; do
+        if [ "${attempt_num}" -ge "${max_attempts}" ]; then
+          echo >&2 "ERROR: PostgreSQL did not become ready after ${max_attempts} attempts."
+          exit 1
+        fi
+        echo "PostgreSQL not ready yet, waiting 1 second... (Attempt ${attempt_num}/${max_attempts})"
+        sleep 1
+        attempt_num=$((attempt_num + 1))
+      done
+      echo "PostgreSQL is ready."
     fi
-    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1"; then
+    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1" >/dev/null 2>&1; then
       # create other db. spiffworkflow_backend_unit_testing came with the docker run.
-      docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
+      docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
     fi
   fi
   tasks="$tasks upgrade"
@@ -122,12 +134,12 @@ if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
 fi
 
 for task in $tasks; do
-  SPIFFWORKFLOW_BACKEND_ENV=local_development FLASK_APP=src/spiffworkflow_backend poetry run flask db "$task"
+  SPIFFWORKFLOW_BACKEND_ENV=local_development uv run flask db "$task"
 done
 
 if [[ -z "$database_name_from_uri" ]] || [[ "$database_name_from_uri" == "spiffworkflow_backend_local_development" ]]; then
   hacked_up_uri=$(sed -E 's/spiffworkflow_backend_local_development$/spiffworkflow_backend_unit_testing/' <<<"${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}")
-  SPIFFWORKFLOW_BACKEND_DATABASE_URI="$hacked_up_uri" SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
+  SPIFFWORKFLOW_BACKEND_DATABASE_URI="$hacked_up_uri" SPIFFWORKFLOW_BACKEND_ENV=unit_testing uv run flask db upgrade
 fi
 
 # for ./bin/tests-par (parallel tests with xdist)

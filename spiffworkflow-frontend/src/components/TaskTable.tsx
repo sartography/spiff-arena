@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import SpiffTooltip from './SpiffTooltip';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import UserService from '../services/UserService';
@@ -33,7 +34,7 @@ export default function TaskTable({
   showNonActive = false,
 }: TaskTableProps) {
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const getProcessInstanceId = (
     entry: ProcessInstanceTask | ProcessInstance,
   ) => {
@@ -100,10 +101,14 @@ export default function TaskTable({
     waitingFor: ReactElement | null,
     hasAccessToCompleteTask: boolean,
   ) => {
+    const processInstanceId = getProcessInstanceId(entry);
     return (
-      <TableRow key={entry.id}>
+      <TableRow
+        key={entry.id}
+        data-testid={`process-instance-row-${processInstanceId}`}
+      >
         <TableCell>
-          <Typography variant="body2">{getProcessInstanceId(entry)}</Typography>
+          <Typography variant="body2">{processInstanceId}</Typography>
         </TableCell>
         <TableCell>
           <Chip
@@ -166,7 +171,7 @@ export default function TaskTable({
         <TableCell>{waitingFor}</TableCell>
         <TableCell>
           {hasAccessToCompleteTask ? (
-            <SpiffTooltip title="Complete task">
+            <SpiffTooltip title={t('complete_task')}>
               <IconButton onClick={() => handleRunTask(entry)}>
                 <PlayArrow />
               </IconButton>
@@ -192,13 +197,13 @@ export default function TaskTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>Task details</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Last milestone</TableCell>
-              <TableCell>Last updated</TableCell>
-              <TableCell>Waiting for</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>{t('id')}</TableCell>
+              <TableCell>{t('task_details')}</TableCell>
+              <TableCell>{t('created')}</TableCell>
+              <TableCell>{t('last_milestone')}</TableCell>
+              <TableCell>{t('last_updated')}</TableCell>
+              <TableCell>{t('waiting_for')}</TableCell>
+              <TableCell>{t('actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{records}</TableBody>{' '}
@@ -219,9 +224,12 @@ export default function TaskTable({
     return null;
   }
 
-  const regex = new RegExp(
-    `\\b(${UserService.getPreferredUsername()}|${UserService.getUserEmail()})\\b`,
-  );
+  const ids = [
+    UserService.getPreferredUsername(),
+    UserService.getUserEmail(),
+    UserService.getUserName(),
+  ].filter(Boolean) as string[]; // remove null/undefined
+  const regex = new RegExp(`\\b(${ids.join('|')})\\b`);
 
   const records = entries.map((entry) => {
     if (

@@ -1,4 +1,5 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -64,6 +65,7 @@ import {
   LOOP_TASK_TYPES,
   titleizeString,
   isURL,
+  getProcessStatus,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -179,6 +181,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
+  const { t } = useTranslation();
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -236,11 +239,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const keyboardShortcuts: KeyboardShortcuts = {
     'f,r,enter': {
       function: forceRunProcessInstance,
-      label: '[F]orce [r]un process instance',
+      label: t('force_run_process_instance'),
     },
     'd,enter': {
       function: shortcutLoadPrimaryFile,
-      label: 'View process model [d]iagram',
+      label: t('view_process_model_diagram'),
     },
   };
   const keyboardShortcutArea = useKeyboardShortcut(keyboardShortcuts);
@@ -445,7 +448,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <Link
         reloadDocument
-        data-qa="process-instance-step-link"
+        data-testid="process-instance-step-link"
         to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
       >
         {label}
@@ -480,10 +483,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!processInstance) {
       return null;
     }
-    let lastUpdatedTimeLabel = 'Updated';
+    let lastUpdatedTimeLabel = t('process_updated');
     let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
     if (processInstance.end_in_seconds) {
-      lastUpdatedTimeLabel = 'Completed';
+      lastUpdatedTimeLabel = t('process_completed');
       lastUpdatedTime = processInstance.end_in_seconds;
     }
     const lastUpdatedTimeTag = (
@@ -514,22 +517,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
-      getLastMilestoneFromProcessInstance(
-        processInstance,
-        processInstance.last_milestone_bpmn_name,
-      );
+      getLastMilestoneFromProcessInstance(processInstance);
 
     return (
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <dl>
             <Typography component="dt" variant="subtitle2">
-              Status:
+              {t('status')}:
             </Typography>
             <Typography component="dd" variant="body2">
               <Chip
-                label={`${processInstance.status}`}
+                label={getProcessStatus(processInstance)}
                 icon={statusIcon}
+                data-testid="process-instance-status-chip"
                 // color={statusColor}
                 size="small"
               />
@@ -537,7 +538,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </dl>
           <dl>
             <Typography component="dt" variant="subtitle2">
-              Started by:
+              {t('started_by')}:
             </Typography>
             <Typography component="dd" variant="body2">
               {' '}
@@ -547,11 +548,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {processInstance.process_model_with_diagram_identifier ? (
             <dl>
               <Typography component="dt" variant="subtitle2">
-                Current diagram:{' '}
+                {t('current_diagram')}:{' '}
               </Typography>
               <Typography component="dd" variant="body2">
                 <Link
-                  data-qa="go-to-current-diagram-process-model"
+                  data-testid="go-to-current-diagram-process-model"
                   to={`/process-models/${modifyProcessIdentifierForPathParam(
                     processInstance.process_model_with_diagram_identifier || '',
                   )}`}
@@ -563,7 +564,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           ) : null}
           <dl>
             <Typography component="dt" variant="subtitle2">
-              Started:
+              {t('started')}:
             </Typography>
             <Typography component="dd" variant="body2">
               {DateAndTimeService.convertSecondsToFormattedDateTime(
@@ -574,7 +575,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {lastUpdatedTimeTag}
           <dl>
             <Typography component="dt" variant="subtitle2">
-              Last milestone:
+              {t('last_milestone')}:
             </Typography>
             <Typography
               component="dd"
@@ -586,7 +587,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </dl>
           <dl>
             <Typography component="dt" variant="subtitle2">
-              Revision:
+              {t('revision')}:
             </Typography>
             <Typography component="dd" variant="body2">
               {processInstance.bpmn_version_control_identifier} (
@@ -608,7 +609,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                 <Typography
                   component="dd"
                   variant="body2"
-                  data-qa={`metadata-value-${processInstanceMetadata.key}`}
+                  data-testid={`metadata-value-${processInstanceMetadata.key}`}
                 >
                   {formatMetadataValue(
                     processInstanceMetadata.key,
@@ -645,11 +646,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return (
         <ButtonWithConfirmation
           renderIcon={<StopCircleOutlined />}
-          iconDescription="Terminate"
+          iconDescription={t('terminate_button')}
           hasIconOnly
-          description={`Terminate Process Instance: ${processInstance.id}`}
+          description={t('terminate_process_instance', {
+            id: processInstance.id,
+          })}
           onConfirmation={terminateProcessInstance}
-          confirmButtonLabel="Terminate"
+          confirmButtonLabel={t('terminate_button')}
         />
       );
     }
@@ -666,8 +669,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         .includes(processInstance.status)
     ) {
       return (
-        <SpiffTooltip title="Suspend" placement="top">
-          <IconButton onClick={suspendProcessInstance} aria-label="Suspend">
+        <SpiffTooltip title={t('suspend_tooltip')} placement="top">
+          <IconButton
+            onClick={suspendProcessInstance}
+            aria-label={t('suspend_tooltip')}
+          >
             <PauseOutlined />
           </IconButton>
         </SpiffTooltip>
@@ -678,10 +684,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const migrateButton = () => {
     if (processInstance && processInstance.status === 'suspended') {
       return (
-        <SpiffTooltip title="Migrate" placement="top">
+        <SpiffTooltip title={t('migrate')} placement="top">
           <IconButton
             onClick={navigateToProcessInstanceMigratePage}
-            aria-label="Migrate"
+            aria-label={t('migrate')}
           >
             <SyncAltOutlined />
           </IconButton>
@@ -693,10 +699,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const copyProcessInstanceShortLinkButton = () => {
     return (
-      <SpiffTooltip title="Copy shareable short link" placement="top">
+      <SpiffTooltip title={t('copy_shareable_link_tooltip')} placement="top">
         <IconButton
           onClick={copyProcessInstanceShortLink}
-          aria-label="Copy shareable short link"
+          aria-label={t('copy_shareable_link_tooltip')}
         >
           <LinkOutlined />
         </IconButton>
@@ -707,8 +713,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const resumeButton = () => {
     if (processInstance && processInstance.status === 'suspended') {
       return (
-        <SpiffTooltip title="Resume" placement="top">
-          <IconButton onClick={resumeProcessInstance} aria-label="Resume">
+        <SpiffTooltip title={t('resume')} placement="top">
+          <IconButton onClick={resumeProcessInstance} aria-label={t('resume')}>
             <PlayArrow />
           </IconButton>
         </SpiffTooltip>
@@ -724,13 +730,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       return (
         <ButtonWithConfirmation
-          data-qa="process-instance-delete"
+          data-testid="process-instance-delete"
           renderIcon={<DeleteOutlineOutlined />}
-          iconDescription="Delete"
+          iconDescription={t('delete')}
           hasIconOnly
-          description={`Delete Process Instance: ${processInstance.id}`}
+          description={t('delete_process_instance', { id: processInstance.id })}
           onConfirmation={deleteProcessInstance}
-          confirmButtonLabel="Delete"
+          confirmButtonLabel={t('delete')}
         />
       );
     }
@@ -797,7 +803,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (processDataToDisplay) {
       let bodyComponent = (
         <>
-          <p>Value:</p>
+          <p>{t('value')}:</p>
           <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
         </>
       );
@@ -808,6 +814,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               errorForDisplayFromString(
                 processDataToDisplay.process_data_value,
               ),
+              t,
             )}
           </>
         );
@@ -819,7 +826,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onClose={handleProcessDataDisplayClose}
         >
           <DialogTitle>
-            Data Object: {processDataToDisplay.process_data_identifier}
+            {t('process_data_object', {
+              identifier: processDataToDisplay.process_data_identifier,
+            })}
           </DialogTitle>
           <DialogContent>{bodyComponent}</DialogContent>
         </Dialog>
@@ -1019,7 +1028,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ];
     return (
       (task.state === 'WAITING' &&
-        subprocessTypes.filter((t) => t === task.typename).length > 0) ||
+        subprocessTypes.filter((type) => type === task.typename).length > 0) ||
       task.state === 'READY' ||
       (processInstance &&
         processInstance.status === 'suspended' &&
@@ -1045,7 +1054,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'waiting' &&
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
-      taskTypes.filter((t) => t === task.typename).length > 0 &&
+      taskTypes.filter((type) => type === task.typename).length > 0 &&
       task.state === 'WAITING' &&
       showingActiveTask()
     );
@@ -1200,10 +1209,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<RuleDraft />}
-          data-qa="create-script-unit-test-button"
+          data-testid="create-script-unit-test-button"
           onClick={createScriptUnitTest}
         >
-          Create Script Unit Test
+          {t('create_script_unit_test')}
         </Button>,
       );
     }
@@ -1224,7 +1233,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             handleCallActivityNavigate(task, event);
           }}
         >
-          View Call Activity Diagram
+          {t('view_call_activity_diagram')}
         </Button>,
       );
     }
@@ -1234,10 +1243,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Edit />}
-          data-qa="edit-task-data-button"
+          data-testid="edit-task-data-button"
           onClick={() => setEditingTaskData(true)}
         >
-          Edit Task Data
+          {t('edit_task_data')}
         </Button>,
       );
     }
@@ -1247,10 +1256,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           variant="outlined"
           startIcon={<UserFollow />}
           title="Allow an additional user to complete this task"
-          data-qa="add-potential-owners-button"
+          data-testid="add-potential-owners-button"
           onClick={() => setAddingPotentialOwners(true)}
         >
-          Assign user
+          {t('assign_user')}
         </Button>,
       );
     }
@@ -1259,20 +1268,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Play />}
-          data-qa="execute-task-complete-button"
+          data-testid="execute-task-complete-button"
           onClick={() => completeTask(true)}
         >
-          Execute Task
+          {t('execute_task')}
         </Button>,
       );
       buttons.push(
         <Button
           variant="outlined"
           startIcon={<SkipForward />}
-          data-qa="mark-task-complete-button"
+          data-testid="mark-task-complete-button"
           onClick={() => completeTask(false)}
         >
-          Skip Task
+          {t('skip_task')}
         </Button>,
       );
     }
@@ -1281,10 +1290,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Button
           variant="outlined"
           startIcon={<Send />}
-          data-qa="select-event-button"
+          data-testid="select-event-button"
           onClick={() => setSelectingEvent(true)}
         >
-          Send Event
+          {t('send_event')}
         </Button>,
       );
     }
@@ -1299,10 +1308,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           variant="outlined"
           startIcon={<Reset />}
           title={titleText}
-          data-qa="reset-process-button"
+          data-testid="reset-process-button"
           onClick={() => resetProcessInstance()}
         >
-          Reset Process Here
+          {t('reset_process_here')}
         </Button>,
       );
     }
@@ -1323,13 +1332,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       scrollEnabled = true;
       minimapEnabled = true;
     }
-    let taskDataHeader = 'Task data';
+    let taskDataHeader = t('task_data');
     let editorReadOnly = true;
     let taskDataHeaderClassName = 'with-half-rem-bottom-margin';
 
     if (editingTaskData) {
       editorReadOnly = false;
-      taskDataHeader = 'Edit task data';
+      taskDataHeader = t('edit_task_data_heading');
       taskDataHeaderClassName = 'task-data-details-header';
     }
 
@@ -1368,10 +1377,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const potentialOwnerSelector = () => {
     return (
       <Box>
-        <h3 className="task-data-details-header">Update task ownership</h3>
+        <h3 className="task-data-details-header">
+          {t('update_task_ownership')}
+        </h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
-            Select a user who should be allowed to complete this task
+            {t('select_user_to_complete_task')}
           </p>
           <UserSearch
             className="modal-dropdown"
@@ -1402,11 +1413,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return (
       <Box>
-        <h3 className="task-data-details-header">Choose event to send</h3>
+        <h3 className="task-data-details-header">
+          {t('choose_event_to_send')}
+        </h3>
         <div className="indented-content">
           <p className="explanatory-message with-tiny-bottom-margin">
-            Select an event to send. A message event will require a body as
-            well.
+            {t('select_event_description')}
           </p>
           <Select
             id="process-instance-select-event"
@@ -1457,7 +1469,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
     if (taskListToUse && taskToDisplay) {
-      const task = taskListToUse.find((t: Task) => t.guid === taskGuid);
+      const task = taskListToUse.find((task_: Task) => task_.guid === taskGuid);
       if (task) {
         // set to null right away to hopefully avoid using the incorrect task later
         setTaskToDisplay(null);
@@ -1540,7 +1552,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       accordionItems.push(
         <Accordion key="mi-task-instances">
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            Task instances ({taskInstancesToDisplay.length})
+            {t('task_instances')} ({taskInstancesToDisplay.length})
           </AccordionSummary>
           <AccordionDetails>
             {createButtonSetForTaskInstances()}
@@ -1557,9 +1569,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         accordionItems.push(
           <Accordion key={`mi-instance-${titleizeString(infoType)}`}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              {`${titleizeString(infoType)} instances for MI task (${
-                taskInstances.length
-              })`}
+              {t('mi_instances', { type: titleizeString(infoType) })} (
+              {taskInstances.length})
             </AccordionSummary>
             <AccordionDetails>{taskInstances}</AccordionDetails>
           </Accordion>,
@@ -1580,12 +1591,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           'undefined' &&
         taskToDisplay.state !== 'COMPLETED'
       ) {
-        text += `${taskToDisplay.runtime_info.iterations_remaining} remaining`;
+        text += t('remaining', {
+          count: taskToDisplay.runtime_info.iterations_remaining,
+        });
       }
       accordionItems.push(
         <Accordion key="mi-loop-iterations">
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            Loop iterations ({buttons.length})
+            {t('loop_iterations')} ({buttons.length})
           </AccordionSummary>
           <AccordionDetails>
             <div>{text}</div>
@@ -1606,29 +1619,29 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
 
-    let primaryButtonText = 'Close';
+    let primaryButtonText = t('close');
     let secondaryButtonText = null;
     let onRequestSubmit = handleTaskDataDisplayClose;
     let onSecondarySubmit = handleTaskDataDisplayClose;
     if (editingTaskData) {
-      primaryButtonText = 'Save';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = t('save');
+      secondaryButtonText = t('cancel');
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = saveTaskData;
     } else if (selectingEvent) {
-      primaryButtonText = 'Send';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = t('send_button');
+      secondaryButtonText = t('cancel');
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = sendEvent;
     } else if (addingPotentialOwners) {
-      primaryButtonText = 'Add';
-      secondaryButtonText = 'Cancel';
+      primaryButtonText = t('add_button');
+      secondaryButtonText = t('cancel');
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = addPotentialOwners;
     }
     if (taskToUse.runtime_info) {
       if (typeof taskToUse.runtime_info.instance !== 'undefined') {
-        secondaryButtonText = 'Return to MultiInstance Task';
+        secondaryButtonText = t('return_to_mi_task');
         onSecondarySubmit = () => {
           switchToTask(taskToUse.properties_json.parent, [
             ...(tasks || []),
@@ -1636,7 +1649,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           ]);
         };
       } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
-        secondaryButtonText = 'Return to Loop Task';
+        secondaryButtonText = t('return_to_loop_task');
         onSecondarySubmit = () => {
           switchToTask(taskToUse.properties_json.parent, [
             ...(tasks || []),
@@ -1726,7 +1739,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Notification
           onClose={() => setCopiedShortLinkToClipboard(false)}
           type="success"
-          title="Copied link to clipboard"
+          title={t('copied_link_to_clipboard')}
           timeout={3000}
           hideCloseButton
           withBottomMargin={false}
@@ -1747,20 +1760,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <p>
-              Viewing process instance at the time when{' '}
+              {t('viewing_process_instance_at_time_when')}{' '}
               <span title={title}>
                 <strong>
                   {taskToTimeTravelTo.bpmn_name ||
                     taskToTimeTravelTo.bpmn_identifier}
                 </strong>
               </span>{' '}
-              was active.{' '}
+              {t('was_active')}.{' '}
               <Link
                 reloadDocument
-                data-qa="process-instance-view-active-task-link"
+                data-testid="process-instance-view-active-task-link"
                 to={processInstanceShowPageBaseUrl}
               >
-                View current process instance state.
+                {t('view_current_process_instance_state')}.
               </Link>
             </p>
           </Grid>
@@ -1784,12 +1797,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           errorForDisplayFromString(
             processInstance.bpmn_xml_file_contents_retrieval_error || '',
           ),
+          t,
         )}
       </>
     );
     return processInstance.bpmn_xml_file_contents_retrieval_error ? (
       <Notification
-        title="Failed to load diagram"
+        title={t('failed_to_load_diagram')}
         type="error"
         hideCloseButton
         allowTogglingFullMessage
@@ -1832,15 +1846,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           value={selectedTaskTabSubTab}
           onChange={(_, newValue) => updateSelectedTaskTabSubTab(newValue)}
         >
-          <Tab label="Completed by me" />
-          <Tab label="All completed" />
+          <Tab label={t('completed_by_me_tab')} />
+          <Tab label={t('all_completed_tab')} />
         </Tabs>
         <Box>
           {selectedTaskTabSubTab === 0 ? (
             <TaskListTable
               apiPath={`/tasks/completed-by-me/${processInstance.id}`}
               paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="You have not completed any tasks for this process instance."
+              textToShowIfEmpty={t('no_completed_tasks_by_me')}
               shouldPaginateTable={false}
               showProcessModelIdentifier={false}
               showProcessId={false}
@@ -1857,7 +1871,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <TaskListTable
               apiPath={`/tasks/completed/${processInstance.id}`}
               paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty="There are no completed tasks for this process instance."
+              textToShowIfEmpty={t('no_completed_tasks')}
               shouldPaginateTable={false}
               showProcessModelIdentifier={false}
               showProcessId={false}
@@ -1901,11 +1915,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           value={selectedTabIndex}
           onChange={(_, newValue) => updateSelectedTab(newValue)}
         >
-          <Tab label="Diagram" />
-          <Tab label="Milestones" disabled={!canViewLogs} />
-          <Tab label="Events" disabled={!canViewLogs} />
-          <Tab label="Messages" disabled={!canViewMsgs} />
-          <Tab label="Tasks" />
+          <Tab label={t('diagram_tab')} />
+          <Tab label={t('milestones_tab')} disabled={!canViewLogs} />
+          <Tab label={t('events_tab')} disabled={!canViewLogs} />
+          <Tab label={t('messages')} disabled={!canViewMsgs} />
+          <Tab label={t('tasks_tab')} />
         </Tabs>
         <Box>
           {selectedTabIndex === 0 ? diagramArea() : null}
@@ -1937,13 +1951,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            [t('process_groups'), '/process-groups'],
             {
               entityToExplode: processModelId,
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Process Instance Id: ${processInstance.id}`],
+            [t('process_id_label', { id: processInstance.id })],
           ]}
         />
         {keyboardShortcutArea}
@@ -1957,7 +1971,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               mr: '1rem',
             }}
           >
-            Process Instance Id: {processInstance.id}
+            {t('process_id_label', { id: processInstance.id })}
           </Typography>
           {buttonIcons()}
         </Box>
@@ -1968,10 +1982,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <TaskListTable
           apiPath="/tasks"
           additionalParams={`process_instance_id=${processInstance.id}`}
-          tableTitle="Tasks I can complete"
-          tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+          tableTitle={t('tasks_i_can_complete')}
+          tableDescription={t('tasks_i_can_complete_description')}
           paginationClassName="with-large-bottom-margin"
-          textToShowIfEmpty="There are no tasks you can complete for this process instance."
+          textToShowIfEmpty={t('no_tasks_to_complete')}
           shouldPaginateTable={false}
           showProcessModelIdentifier={false}
           showProcessId={false}

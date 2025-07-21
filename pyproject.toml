@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "spiffworkflow-arena"
 version = "0.0.0"
 description = "Spiffworkflow Arena"
@@ -12,14 +12,16 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.13"
 
-[tool.poetry.dev-dependencies]
-pre-commit = "^3.7.1"
-pre-commit-hooks = "^4.6.0"
-ruff = "^0.5.5"
+[dependency-groups]
+dev = [
+    "pre-commit",
+    "pre-commit-hooks",
+    "ruff",
+]
 
-[tool.poetry.group.dev.dependencies]
-tomli = "^2.0.1"
-git-debranch = "^0.1.9"
+[tool.uv.workspace]
+members = [
+    "spiff-arena-common",
+]

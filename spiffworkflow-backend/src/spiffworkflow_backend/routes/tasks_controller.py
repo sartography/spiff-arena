@@ -34,7 +34,6 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import ProcessInstanceTaskDataCannotBeUpdatedError
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
@@ -287,7 +286,7 @@ def task_data_update(
             message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_guid}.",
         )
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(process_instance.serialized()),
         status=200,
         mimetype="application/json",
     )
@@ -339,7 +338,7 @@ def manual_complete_task(
             message=f"Could not complete Task {task_guid} in Instance {process_instance_id}",
         )
     return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        json.dumps(process_instance.serialized()),
         status=200,
         mimetype="application/json",
     )
@@ -439,10 +438,12 @@ def task_show(
 def task_submit(
     process_instance_id: int,
     task_guid: str,
-    body: dict[str, Any],
+    body: dict[str, Any] | None = None,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
+    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit"):
+        if body is None:
+            body = {}
         response_item = _task_submit_shared(process_instance_id, task_guid, body, execution_mode=execution_mode)
         if "next_task_assigned_to_me" in response_item:
             response_item = response_item["next_task_assigned_to_me"]

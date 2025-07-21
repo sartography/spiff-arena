@@ -118,7 +118,3 @@ With these permissions, access to the credit card data is denied to everyone, en
 
 By following these steps, SpiffWorkflow users can securely handle sensitive data within their processes.
 The combination of data objects, categorization, and precise permission settings ensures that sensitive information like credit card numbers is protected and accessible only to those with the necessary authorization.
-
-```{tags} reference, building_diagrams
-
-```

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ErrorOutline } from '@mui/icons-material';
 import {
   Table,
@@ -35,6 +36,7 @@ type OwnProps = {
 const paginationQueryParamPrefix = 'message-list';
 
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
+  const { t } = useTranslation();
   const [messageInstances, setMessageInstances] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [searchParams] = useSearchParams();
@@ -89,12 +91,15 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           aria-describedby="dialog-description"
         >
           <DialogTitle id="dialog-title">
-            Message {messageInstanceForModal.id} ({messageInstanceForModal.name}
-            ) {messageInstanceForModal.message_type} data:
+            {t('message_title', {
+              id: messageInstanceForModal.id,
+              name: messageInstanceForModal.name,
+              type: messageInstanceForModal.message_type,
+            })}
           </DialogTitle>
           <DialogContent>
             {failureCausePre}
-            <DialogContentText>Correlations:</DialogContentText>
+            <DialogContentText>{t('correlations')}:</DialogContentText>
             <pre>
               {JSON.stringify(
                 messageInstanceForModal.correlation_keys,
@@ -114,7 +119,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       let errorIcon = null;
       let errorTitle = null;
       if (row.failure_cause) {
-        errorTitle = 'Instance has an error';
+        errorTitle = t('instance_has_error');
         errorIcon = (
           <>
             &nbsp;
@@ -122,13 +127,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           </>
         );
       }
-      let processLink = <span>External Call</span>;
+      let processLink = <span>{t('external_call_label')}</span>;
       let instanceLink = <span />;
       if (row.process_instance_id != null) {
         processLink = FormatProcessModelDisplayName(row);
         instanceLink = (
           <Link
-            data-qa="process-instance-show-link"
+            data-testid="process-instance-show-link"
             to={`/process-instances/${modifyProcessIdentifierForPathParam(
               row.process_model_identifier,
             )}/${row.process_instance_id}`}
@@ -151,7 +156,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
                 variant="text"
                 onClick={() => setMessageInstanceForModal(row)}
               >
-                View
+                {t('view')}
                 {errorIcon}
               </Button>
             </SpiffTooltip>
@@ -170,15 +175,15 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>Process</TableCell>
-              <TableCell>Process instance</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Corresponding Message Instance</TableCell>
-              <TableCell>Details</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Created at</TableCell>
+              <TableCell>{t('message_id')}</TableCell>
+              <TableCell>{t('process_label')}</TableCell>
+              <TableCell>{t('process_label_instance')}</TableCell>
+              <TableCell>{t('name')}</TableCell>
+              <TableCell>{t('type')}</TableCell>
+              <TableCell>{t('corresponding_message_instance')}</TableCell>
+              <TableCell>{t('details_label')}</TableCell>
+              <TableCell>{t('status')}</TableCell>
+              <TableCell>{t('created_at_label')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{rows}</TableBody>
@@ -199,7 +204,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       breadcrumbElement = (
         <ProcessBreadcrumb
           hotCrumbs={[
-            ['Process Groups', '/process-groups'],
+            [t('process_groups'), '/process-groups'],
             {
               entityToExplode: searchParams.get('process_model_id') || '',
               entityType: 'process-model-id',
@@ -211,7 +216,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
                 'process_model_id',
               )}/${searchParams.get('process_instance_id')}`,
             ],
-            ['Messages'],
+            [t('messages_tab')],
           ]}
         />
       );

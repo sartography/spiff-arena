@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import dataclasses
 import os
 from dataclasses import dataclass
 from typing import Any
 
-from flask_marshmallow import Schema
-from marshmallow import INCLUDE
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
@@ -49,6 +48,18 @@ class Reference:
     called_element_ids: list  # The element ids of any called elements
 
     properties: dict
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Reference object to a dictionary."""
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Reference:
+        """Create a Reference object from a dictionary."""
+        # remove keys not in dataclass
+        known_fields = {f.name for f in dataclasses.fields(cls)}
+        filtered_data = {k: v for k, v in data.items() if k in known_fields}
+        return cls(**filtered_data)
 
     def prop_is_true(self, prop_name: str) -> bool:
         return prop_name in self.properties and self.properties[prop_name] is True
@@ -94,6 +105,17 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
         cascade="all, delete-orphan",
         single_parent=True,
     )
+
+    def to_dict(self) -> dict:
+        """Create a dictionary representation of a ReferenceCacheModel"""
+        return {
+            "identifier": self.identifier,
+            "display_name": self.display_name,
+            "relative_location": self.relative_location,
+            "type": self.type,
+            "file_name": self.file_name,
+            "properties": self.properties,
+        }
 
     def relative_path(self) -> str:
         return os.path.join(self.relative_location, self.file_name).replace("/", os.sep)
@@ -151,19 +173,3 @@ class ReferenceCacheModel(SpiffworkflowBaseDBModel):
     @validates("type")
     def validate_type(self, key: str, value: Any) -> Any:
         return self.validate_enum_field(key, value, ReferenceType)
-
-
-# SpecReferenceSchema
-class ReferenceSchema(Schema):
-    class Meta:
-        model = Reference
-        fields = [
-            "identifier",
-            "display_name",
-            "process_group_id",
-            "relative_location",
-            "type",
-            "file_name",
-            "properties",
-        ]
-        unknown = INCLUDE

@@ -1,8 +1,8 @@
 import hashlib
 
 from flask.app import Flask
-from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 

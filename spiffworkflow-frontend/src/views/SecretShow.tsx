@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Stack,
@@ -21,6 +22,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
 
 export default function SecretShow() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams();
 
@@ -84,7 +86,7 @@ export default function SecretShow() {
 
   const successNotificationComponent = (
     <Notification
-      title="Secret updated"
+      title={t('secret_updated')}
       onClose={() => setShowSuccessNotification(false)}
     />
   );
@@ -106,13 +108,15 @@ export default function SecretShow() {
     return (
       <>
         {showSuccessNotification && successNotificationComponent}
-        <h1>Secret Key: {secret.key}</h1>
+        <h1>
+          {t('secret_key')}: {secret.key}
+        </h1>
         <Stack direction="row" spacing={3}>
           <Can I="DELETE" a={targetUris.secretShowPath} ability={ability}>
             <ButtonWithConfirmation
-              description="Delete Secret?"
+              description={t('delete_secret_confirmation')}
               onConfirmation={deleteSecret}
-              buttonLabel="Delete"
+              buttonLabel={t('delete')}
             />
           </Can>
           <Can
@@ -130,7 +134,7 @@ export default function SecretShow() {
                     color="warning"
                     onClick={handleShowSecretValue}
                   >
-                    Retrieve secret value
+                    {t('retrieve_secret_value')}
                   </Button>
                 );
               }
@@ -142,7 +146,7 @@ export default function SecretShow() {
                     color="warning"
                     onClick={() => setDisplaySecretValue(true)}
                   >
-                    Edit secret value
+                    {t('edit_secret_value')}
                   </Button>
                 </Can>
               );
@@ -154,11 +158,11 @@ export default function SecretShow() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Key</TableCell>
+                  <TableCell>{t('key')}</TableCell>
                   {displaySecretValue && (
                     <>
-                      <TableCell>Value</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>{t('value')}</TableCell>
+                      <TableCell>{t('actions')}</TableCell>
                     </>
                   )}
                 </TableRow>
@@ -168,11 +172,11 @@ export default function SecretShow() {
                   <TableCell>{params.secret_identifier}</TableCell>
                   {displaySecretValue && (
                     <>
-                      <TableCell aria-label="Secret value">
+                      <TableCell aria-label={t('secret_value')}>
                         <TextField
                           id="secret_value"
                           name="secret_value"
-                          label="Secret value"
+                          label={t('secret_value')}
                           value={secret.value}
                           onChange={handleSecretValueChange}
                           disabled={
@@ -192,7 +196,7 @@ export default function SecretShow() {
                               color="warning"
                               onClick={updateSecretValue}
                             >
-                              Update Value
+                              {t('update_value_button')}
                             </Button>
                           )}
                         </Can>
