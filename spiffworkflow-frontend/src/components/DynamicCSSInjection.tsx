@@ -29,8 +29,10 @@ function DynamicCSSInjection({ cssContent, id }: DynamicCSSInjectionProps) {
     styleElement.setAttribute('type', 'text/css');
     styleElement.setAttribute('id', `spiff-extension-css-${id}`);
     // Sanitize CSS content to prevent CSS injection attacks
+    // DOMPurify supports CSS mode but TypeScript types don't reflect this
     const sanitizedCSS = DOMPurify.sanitize(cssContent, {
       FORBID_TAGS: ['style', 'link'],
+      // @ts-expect-error - CSS profile is supported by DOMPurify but not in its TypeScript definition
       USE_PROFILES: { css: true },
     });
     styleElement.textContent = sanitizedCSS;
