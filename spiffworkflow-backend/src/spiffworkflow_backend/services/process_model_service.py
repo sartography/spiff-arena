@@ -17,11 +17,9 @@ from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -43,9 +41,6 @@ class ProcessModelService(FileSystemService):
     Workflow Specification process_groups.
     We do this, so we can easily drop in a new configuration on the file system, and change all
     the workflow process_models at once, or manage those file in a git repository."""
-
-    GROUP_SCHEMA = ProcessGroupSchema()
-    PROCESS_MODEL_SCHEMA = ProcessModelInfoSchema()
 
     @classmethod
     def path_to_id(cls, path: str) -> str:
@@ -158,7 +153,7 @@ class ProcessModelService(FileSystemService):
         process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id_for_file_path()))
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE))
-        json_data = cls.PROCESS_MODEL_SCHEMA.dump(process_model)
+        json_data = process_model.to_dict()
         for key in list(json_data.keys()):
             if key not in PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
                 del json_data[key]
@@ -684,7 +679,7 @@ class ProcessModelService(FileSystemService):
                 relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
                 data["id"] = cls.path_to_id(relative_path)
                 restricted_data = cls.restrict_dict(data)
-                process_group = ProcessGroup(**restricted_data)
+                process_group = ProcessGroup.from_dict(restricted_data)
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
@@ -696,7 +691,7 @@ class ProcessModelService(FileSystemService):
                 id="",
                 display_name=process_group_id,
             )
-            cls.write_json_file(cat_path, cls.GROUP_SCHEMA.dump(process_group))
+            cls.write_json_file(cat_path, process_group.serialized())
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
 
@@ -770,7 +765,11 @@ class ProcessModelService(FileSystemService):
                 display_name=name,
                 description="",
             )
-            cls.write_json_file(json_file_path, cls.PROCESS_MODEL_SCHEMA.dump(process_model_info))
+            json_data = process_model_info.to_dict()
+            for key in list(json_data.keys()):
+                if key not in PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION:
+                    del json_data[key]
+            cls.write_json_file(json_file_path, json_data)
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info

@@ -22,7 +22,6 @@ from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import FilterValue
@@ -30,7 +29,6 @@ from spiffworkflow_backend.models.process_instance_report import ProcessInstance
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -163,7 +161,7 @@ class BaseTest:
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
-            json=ProcessGroupSchema().dump(process_group),
+            json=process_group.serialized(),
         )
         assert response.status_code == 201
         assert response.json() is not None
@@ -220,7 +218,7 @@ class BaseTest:
 
                 response = client.post(
                     f"/v1.0/process-models/{modified_process_group_id}",
-                    json=ProcessModelInfoSchema().dump(model),
+                    json=model.to_dict(),
                     headers=self.logged_in_headers(user, additional_headers={"Content-type": "application/json"}),
                 )
 
