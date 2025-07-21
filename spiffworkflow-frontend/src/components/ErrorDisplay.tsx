@@ -77,9 +77,11 @@ export const errorForDisplayFromTestCaseErrorDetails = (
   return errorForDisplay;
 };
 
-export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
+export const childrenForErrorObject = (
+  errorObject: ErrorForDisplay,
+  t: any,
+) => {
   let sentryLinkTag = null;
-  const { t } = useTranslation();
   if (errorObject.sentry_link) {
     sentryLinkTag = (
       <span>
@@ -152,10 +154,13 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   ];
 };
 
-export function errorDisplayStateless(
-  errorObject: ErrorForDisplay,
-  onClose?: (event: SyntheticEvent) => void,
-) {
+export function ErrorDisplayStateless({
+  errorObject,
+  onClose,
+}: {
+  errorObject: ErrorForDisplay;
+  onClose?: (event: SyntheticEvent) => void;
+}) {
   const { t } = useTranslation();
   const title = t('error');
   const hideCloseButton = !onClose;
@@ -173,7 +178,7 @@ export function errorDisplayStateless(
       }
     >
       <AlertTitle>{title}</AlertTitle>
-      {childrenForErrorObject(errorObject)}
+      {childrenForErrorObject(errorObject, t)}
     </Alert>
   );
 }
@@ -186,7 +191,12 @@ export default function ErrorDisplay() {
   let errorTag = null;
 
   if (errorObject) {
-    errorTag = errorDisplayStateless(errorObject, handleRemoveError);
+    errorTag = (
+      <ErrorDisplayStateless
+        errorObject={errorObject}
+        onClose={handleRemoveError}
+      />
+    );
   }
   return errorTag;
 }

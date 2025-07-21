@@ -590,6 +590,7 @@ export default function ProcessInstanceListTable({
         <Grid size={{ xs: 12 }}>
           {childrenForErrorObject(
             errorForDisplayFromString(errors.join(' ::: ')),
+            t,
           )}
         </Grid>
       </Grid>

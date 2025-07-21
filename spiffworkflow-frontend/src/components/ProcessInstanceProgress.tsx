@@ -14,7 +14,7 @@ import HttpService from '../services/HttpService';
 import DateAndTimeService from '../services/DateAndTimeService';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import {
-  errorDisplayStateless,
+  ErrorDisplayStateless,
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
 import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
@@ -139,7 +139,7 @@ export default function ProcessInstanceProgress({
     if (currentPageError) {
       return (
         <>
-          {errorDisplayStateless(currentPageError)}
+          <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
             Go to <a href={processInstanceShowPageUrl}>Process Instance</a>
           </p>

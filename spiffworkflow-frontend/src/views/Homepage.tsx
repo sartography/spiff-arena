@@ -106,7 +106,7 @@ function Homepage({ viewMode, setViewMode, isMobile }: HomepageProps) {
         }
       }
     },
-    [tasks],
+    [tasks, processGroupLabel, responsiblePartyLabel],
   );
 
   const taskTableElement = () => {

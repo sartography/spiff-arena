@@ -814,6 +814,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               errorForDisplayFromString(
                 processDataToDisplay.process_data_value,
               ),
+              t,
             )}
           </>
         );
@@ -1796,6 +1797,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           errorForDisplayFromString(
             processInstance.bpmn_xml_file_contents_retrieval_error || '',
           ),
+          t,
         )}
       </>
     );
