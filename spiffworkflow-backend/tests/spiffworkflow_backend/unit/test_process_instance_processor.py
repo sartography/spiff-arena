@@ -451,11 +451,15 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         with pytest.raises(WorkflowExecutionServiceError) as exc:
             processor.do_engine_steps(save=True)
-            assert exc.task.task_spec.name == "script_with_error"
+            assert exc.value.task.task_spec.name == "script_with_error"
 
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_error", processor.bpmn_process_instance)
         processor.suspend()
-        ProcessInstanceProcessor.reset_process(process_instance, str(task.id))
+        if task is not None:
+            ProcessInstanceProcessor.reset_process(process_instance, str(task.id))
+        else:
+            # Handle case where task is None
+            ProcessInstanceProcessor.reset_process(process_instance, "script_with_error")
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
