@@ -167,15 +167,16 @@ export default function ContainerForExtensions() {
             ) {
               // Process ux elements and extract CSS elements
               extensionUiSchema.ux_elements.forEach((element: UiSchemaUxElement) => {
-                if (element.display_location === UiSchemaDisplayLocation.css_global) {
+                if (element.display_location === UiSchemaDisplayLocation.css) {
                   // Find the CSS file in the process model files
+                  const cssFilename = element.css_file || element.page;
                   const cssFile = processModel.files.find(
-                    (file: ProcessFile) => file.name === element.page
+                    (file: ProcessFile) => file.name === cssFilename
                   );
                   if (cssFile && cssFile.file_contents) {
                     cssFiles.push({
                       content: cssFile.file_contents,
-                      id: `${processModel.id}-${element.page}`.replace(/[^a-zA-Z0-9]/g, '-')
+                      id: `${processModel.id}-${cssFilename}`.replace(/[^a-zA-Z0-9]/g, '-')
                     });
                   }
                 } else {

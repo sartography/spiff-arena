@@ -30,7 +30,7 @@ export enum UiSchemaDisplayLocation {
   user_profile_item = 'user_profile_item',
   
   // Will be loaded as a global CSS file for the entire application
-  css_global = 'css_global',
+  css = 'css',
 }
 
 /**
@@ -71,6 +71,7 @@ export interface UiSchemaUxElement {
   display_location: UiSchemaDisplayLocation;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
   tooltip?: string;
+  css_file?: string;
 }
 
 export interface UiSchemaForm {

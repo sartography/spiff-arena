@@ -51,7 +51,7 @@ An entirely new application feature with frontend and backend components can be 
 Extensions can include custom CSS files to style their components or even modify global styling. To add custom CSS to your extension:
 
 1. Create a CSS file within your extension process model directory (e.g., `styles.css`)
-2. Reference the CSS file in your `extension_uischema.json` using the `css_global` display location:
+2. Reference the CSS file in your `extension_uischema.json` using the `css` display location:
 
 ```json
 {
@@ -70,14 +70,19 @@ Extensions can include custom CSS files to style their components or even modify
     },
     {
       "label": "Custom Styling",
-      "page": "styles.css",
-      "display_location": "css_global"
+      "css_file": "styles.css",
+      "page": "/your-page",
+      "display_location": "css"
     }
   ]
 }
 ```
 
-The CSS will be automatically loaded and applied when the extension is loaded. This allows you to:
+The CSS will be automatically loaded and applied when the extension is loaded. 
+
+Note: You can use either the `css_file` property to specify the CSS file (recommended), or use the `page` property if `css_file` is not specified (for backward compatibility). The `css_file` property is preferred as it allows you to keep the `page` property for its intended navigation purpose.
+
+This feature allows you to:
 
 - Customize the appearance of your extension pages
 - Override default site styles when needed
