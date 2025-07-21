@@ -81,8 +81,10 @@ class ProcessGroup:
         if "process_groups" in data_copy and data_copy["process_groups"] is not None:
             data_copy["process_groups"] = [ProcessGroup.from_dict(pg) for pg in data_copy["process_groups"]]
 
+        # some process_group.json files have this set but we never want to load it from there and it causes unsupported key errors
+        omit_fields = ["sort_index"]
         known_fields = {f.name for f in dataclasses.fields(cls)}
-        filtered_data = {k: v for k, v in data_copy.items() if k in known_fields}
+        filtered_data = {k: v for k, v in data_copy.items() if k in known_fields and k not in omit_fields}
 
         return cls(**filtered_data)
 
