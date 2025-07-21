@@ -80,7 +80,7 @@ Extensions can include custom CSS files to style their components or even modify
 }
 ```
 
-The CSS will be automatically loaded and applied when the extension is loaded.
+The CSS will be automatically loaded, sanitized for security, and applied when the extension is loaded. The sanitization process removes potentially dangerous CSS constructs to prevent CSS injection attacks.
 
 This feature allows you to:
 
