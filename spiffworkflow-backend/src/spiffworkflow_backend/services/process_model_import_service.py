@@ -4,6 +4,7 @@ import json
 import re
 import time
 from typing import Any
+from typing import cast
 
 import requests
 from flask import current_app
@@ -88,16 +89,17 @@ class ProcessModelImportService:
 
         # Generate a timestamp for unique IDs
         timestamp = int(time.time())
-        
+
         # Add files to the process model with unique process IDs
-        for file_name, file_contents in files.items():
+        for file_name, file_content in files.items():
             # Make BPMN process IDs unique to avoid conflicts
+            file_content_to_save = file_content
             if file_name.endswith(".bpmn"):
                 # Modify BPMN files to have unique process IDs
-                file_contents = cls._make_bpmn_process_ids_unique(file_contents, timestamp)
-                
+                file_content_to_save = cls._make_bpmn_process_ids_unique(file_content, timestamp)
+
             # Add the file to the process model
-            SpecFileService.update_file(process_model, file_name, file_contents)
+            SpecFileService.update_file(process_model, file_name, file_content_to_save)
 
         # Update primary file and process ID if found
         if model_info.get("primary_file_name"):
@@ -236,15 +238,13 @@ class ProcessModelImportService:
             pass
 
         return None
-        
+
     @classmethod
     def _make_bpmn_process_ids_unique(cls, bpmn_content: bytes, timestamp: int) -> bytes:
         """Make all process IDs in BPMN content unique by appending a timestamp.
-        
         Args:
             bpmn_content: The original BPMN file content
             timestamp: A timestamp to append to process IDs
-            
         Returns:
             bytes: The modified BPMN content with unique process IDs
         """
@@ -253,13 +253,13 @@ class ProcessModelImportService:
             etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
             root = etree.fromstring(bpmn_content, parser=etree_xml_parser)  # noqa: S320
             ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
-            
+
             # Find all process elements
             process_elements = root.findall(".//bpmn:process", ns)
-            
+
             # Dictionary to store old ID -> new ID mappings
             id_mappings = {}
-            
+
             # Update process IDs
             for process_element in process_elements:
                 if "id" in process_element.attrib:
@@ -268,7 +268,7 @@ class ProcessModelImportService:
                         new_id = f"{old_id}_{timestamp}"
                         process_element.set("id", new_id)
                         id_mappings[old_id] = new_id
-            
+
             # Update any references to these IDs in callActivity elements
             call_activity_elements = root.findall(".//bpmn:callActivity", ns)
             for call_element in call_activity_elements:
@@ -276,10 +276,10 @@ class ProcessModelImportService:
                     called_element = call_element.get("calledElement")
                     if called_element and called_element in id_mappings:
                         call_element.set("calledElement", id_mappings[called_element])
-            
+
             # Return the modified XML
-            return etree.tostring(root, encoding="utf-8")
-            
+            return cast(bytes, etree.tostring(root, encoding="utf-8"))
+
         except etree.ParseError:
             # If parsing fails, return the original content
             return bpmn_content
