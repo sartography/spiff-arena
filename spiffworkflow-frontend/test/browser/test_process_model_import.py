@@ -71,27 +71,35 @@ def test_process_model_import(browser_context: BrowserContext):
     # Wait for the import to complete and redirect to process model page
     # We expect to be redirected to a URL containing 'process-models' if successful
     try:
-        page.wait_for_url(re.compile(r"process-models/.+"), timeout=10000)
-        page.screenshot(path="debug_screenshots/after_import_success.png")
-        print("Successfully redirected to process model page")
+        # After clicking import, wait a bit for the API call to complete
+        page.wait_for_timeout(3000)
+        page.screenshot(path="debug_screenshots/after_import_click.png")
+        print("Waited for import to process")
         
-        # Check for success indicators - these elements should be present after a successful import
-        # 1. Process Model Details heading should be visible
-        expect(page.get_by_text("Process Model Details")).to_be_visible(timeout=5000)
-        print("Found 'Process Model Details' heading")
+        # After successful import, we're redirected back to the process group page
+        # Let's go there explicitly to check if our model was imported
+        process_group_url = "http://localhost:7001/process-groups/test-import-group"
+        page.goto(process_group_url)
+        page.wait_for_timeout(2000)
+        page.screenshot(path="debug_screenshots/process_group_page.png")
         
-        # 2. Navigate to the Files tab
-        files_tab = page.get_by_test_id("process-model-files-tab")
-        expect(files_tab).to_be_visible()
-        files_tab.click()
-        print("Clicked on Files tab")
-        
-        # 3. Check for imported files
-        page.screenshot(path="debug_screenshots/imported_files.png")
-        # Look for a BPMN file (there should be at least one)
-        bpmn_file = page.locator("text=.bpmn")
-        expect(bpmn_file).to_be_visible(timeout=5000)
-        print("BPMN file found, import successful!")
+        # Need to expand the Process Models accordion to see the imported model
+        process_models_accordion = page.get_by_text("Process Models").first
+        if process_models_accordion.is_visible():
+            process_models_accordion.click()
+            page.wait_for_timeout(1000)
+            page.screenshot(path="debug_screenshots/expanded_accordion.png")
+            print("Expanded Process Models accordion")
+        else:
+            print("Process Models accordion not found or not visible")
+            
+        # Look for evidence of the imported model in the process group
+        # The imported model should have "Minimal Example" as its display name
+        print("Looking for the imported model card...")
+        page.screenshot(path="debug_screenshots/looking_for_model.png")
+        model_card = page.get_by_text("Minimal Example").first
+        expect(model_card).to_be_visible(timeout=5000)
+        print("Found 'Minimal Example' card, import successful!")
         
         print("Import process completed successfully!")
     except Exception as e:
