@@ -20,7 +20,7 @@ def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
     body = request.json
     if not body:
         raise ApiError("missing_request_body", "Request body is required", status_code=400)
-    
+
     repository_url = body.get("repository_url")
     if not repository_url:
         raise ApiError("missing_repository_url", "Repository URL is required", status_code=400)
@@ -31,10 +31,12 @@ def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
 
     # Unmodify process group ID (replace : with /)
     unmodified_process_group_id = modified_process_group_id.replace(":", "/")
-        
+
     # Process the import
     try:
-        process_model = ProcessModelImportService.import_from_github_url(url=repository_url, process_group_id=unmodified_process_group_id)
+        process_model = ProcessModelImportService.import_from_github_url(
+            url=repository_url, process_group_id=unmodified_process_group_id
+        )
 
         # Return the imported process model
         return {"process_model": process_model.to_dict(), "import_source": repository_url}, 201
