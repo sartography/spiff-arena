@@ -6,7 +6,9 @@ interface ProcessModelImportButtonProps {
   onClick: () => void;
 }
 
-export const ProcessModelImportButton = ({ onClick }: ProcessModelImportButtonProps) => {
+export function ProcessModelImportButton({
+  onClick,
+}: ProcessModelImportButtonProps) {
   return (
     <Button
       variant="contained"
@@ -18,4 +20,4 @@ export const ProcessModelImportButton = ({ onClick }: ProcessModelImportButtonPr
       Import from GitHub
     </Button>
   );
-};
+}

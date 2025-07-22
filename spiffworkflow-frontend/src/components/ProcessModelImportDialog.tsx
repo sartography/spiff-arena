@@ -22,12 +22,12 @@ interface ProcessModelImportDialogProps {
   onImportSuccess: (processModelId: string) => void;
 }
 
-export const ProcessModelImportDialog = ({
+export function ProcessModelImportDialog({
   open,
   onClose,
   processGroupId,
   onImportSuccess,
-}: ProcessModelImportDialogProps) => {
+}: ProcessModelImportDialogProps) {
   const [repositoryUrl, setRepositoryUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -39,18 +39,18 @@ export const ProcessModelImportDialog = ({
     if (!url || !url.startsWith('https://github.com/')) {
       return false;
     }
-    
+
     // Validate URL structure: owner/repo/tree|blob/branch/path
-    const parts = url.split("/");
+    const parts = url.split('/');
     if (parts.length < 7) {
       return false;
     }
-    
+
     // Check that the URL contains either /tree/ or /blob/
-    if (url.indexOf("/tree/") === -1 && url.indexOf("/blob/") === -1) {
+    if (url.indexOf('/tree/') === -1 && url.indexOf('/blob/') === -1) {
       return false;
     }
-    
+
     return true;
   };
 
@@ -65,7 +65,9 @@ export const ProcessModelImportDialog = ({
   };
 
   const handleImport = async () => {
-    if (!isValidUrl) return;
+    if (!isValidUrl) {
+      return;
+    }
 
     setIsImporting(true);
     setErrorMessage(null);
@@ -114,8 +116,8 @@ export const ProcessModelImportDialog = ({
             error={isValidUrl === false}
             helperText={
               isValidUrl === false
-                ? "Please enter a valid GitHub URL to a process model directory"
-                : "Example: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
+                ? 'Please enter a valid GitHub URL to a process model directory'
+                : 'Example: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example'
             }
             disabled={isImporting}
             data-testid="repository-url-input"
@@ -138,7 +140,9 @@ export const ProcessModelImportDialog = ({
           variant="contained"
           color="primary"
           disabled={!isValidUrl || isImporting}
-          startIcon={isImporting ? <CircularProgress size={20} /> : <GitHubIcon />}
+          startIcon={
+            isImporting ? <CircularProgress size={20} /> : <GitHubIcon />
+          }
           data-testid="import-button"
         >
           {isImporting ? 'Importing...' : 'Import Model'}
@@ -146,4 +150,4 @@ export const ProcessModelImportDialog = ({
       </DialogActions>
     </Dialog>
   );
-};
+}

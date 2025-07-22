@@ -713,7 +713,9 @@ export default function ProcessModelTreePage({
                             ability={ability}
                           >
                             <Box onClick={(e) => e.stopPropagation()}>
-                              <ProcessModelImportButton onClick={() => setImportDialogOpen(true)} />
+                              <ProcessModelImportButton
+                                onClick={() => setImportDialogOpen(true)}
+                              />
                             </Box>
                           </Can>
                         </Box>
@@ -845,7 +847,9 @@ export default function ProcessModelTreePage({
         <ProcessModelImportDialog
           open={importDialogOpen}
           onClose={() => setImportDialogOpen(false)}
-          processGroupId={modifyProcessIdentifierForPathParam(currentProcessGroup.id)}
+          processGroupId={modifyProcessIdentifierForPathParam(
+            currentProcessGroup.id,
+          )}
           onImportSuccess={(processModelId) => {
             // Reload the page to show the newly imported process model
             window.location.reload();
