@@ -46,7 +46,6 @@ import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
 import HttpService from '../../services/HttpService';
-import { ProcessModelImportButton } from '../../components/ProcessModelImportButton';
 import { ProcessModelImportDialog } from '../../components/ProcessModelImportDialog';
 import DataStoreCard from '../../components/DataStoreCard';
 
@@ -706,17 +705,6 @@ export default function ProcessModelTreePage({
                             >
                               <Add />
                             </IconButton>
-                          </Can>
-                          <Can
-                            I="POST"
-                            a={targetUris.processModelCreatePath}
-                            ability={ability}
-                          >
-                            <Box onClick={(e) => e.stopPropagation()}>
-                              <ProcessModelImportButton
-                                onClick={() => setImportDialogOpen(true)}
-                              />
-                            </Box>
                           </Can>
                         </Box>
                       )}
