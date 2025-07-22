@@ -422,7 +422,7 @@ def _process_instance_task_list(
                 status_code=400,
             )
 
-        if to_task_model.state != "COMPLETED":
+        if to_task_model.state not in ["COMPLETED", "ERROR"]:
             # TODO: find a better term for viewing at task state
             raise ApiError(
                 error_code="task_cannot_be_viewed_at",
@@ -534,7 +534,7 @@ def _process_instance_task_list(
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:
             end_in_seconds = float(task_model["end_in_seconds"]) if task_model["end_in_seconds"] is not None else None
-            if to_task_model.guid == task_model["guid"] and task_model["state"] == "COMPLETED":
+            if to_task_model.guid == task_model["guid"] and task_model["state"] in ["COMPLETED", "ERROR"]:
                 TaskService.reset_task_model_dict(task_model, state="READY")
             elif (
                 end_in_seconds is None or to_task_model.end_in_seconds is None or to_task_model.end_in_seconds < end_in_seconds

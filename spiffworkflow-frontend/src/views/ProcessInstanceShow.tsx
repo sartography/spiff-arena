@@ -1683,7 +1683,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </div>
           </div>
           {taskDisplayButtons(taskToUse)}
-          {taskToUse.state === 'COMPLETED' ? (
+          {taskToUse.state === 'COMPLETED' || taskToUse.state === 'ERROR' ? (
             <div className="indented-content">
               <Box display="flex" gap={2}>
                 {completionViewLink(
