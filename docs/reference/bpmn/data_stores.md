@@ -13,13 +13,18 @@ All of these mechanisms work well in SpiffWorkflow, so the choice will depend on
 
 ## Types of Data Store
 
-### KKV Data Store in BPMN
+1. {ref}`kkv-data-store`
+2. {ref}`json-data-store`
+3. {ref}`json-file-data-store`
+
+(kkv-data-store)=
+### KKV Data Store
 
 Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introducing an additional key layer.
 This structure enables more complex and hierarchical data storage solutions, making them particularly suited for BPMN (Business Process Model and Notation) processes that manage multifaceted data relationships.
 
 - **Structure**: A KKV data store organizes data into two levels of keys before reaching the actual value, e.g., `Genre -> Movie -> Attributes`.
-This structure is particularly beneficial for categorizing and accessing nested data efficiently.
+  This structure is particularly beneficial for categorizing and accessing nested data efficiently.
 
 - **Use Cases**: Ideal for scenarios requiring rich, structured data access within workflows, such as managing inventories, categorizing user profiles, or handling complex hierarchical data like the provided movies example.
 
@@ -32,49 +37,103 @@ Here's how to depict such interactions using a BPMN example focused on movie dat
 ### BPMN Example: Movie Data Management
 
 #### Process Overview
+
 ![KKV data_store](/images/DataStore_KKV.png)
 
 1. **Start Event**: Initiates the movie data management workflow.
 
 2. **Script Task: Populate Data Store**
-    - Uses a script to populate the "Movies" data store with detailed information about characters in various movies, demonstrating the KKV structure (Director -> Movie -> Character Attributes).
+
+   - Uses a script to populate the "Movies" data store with detailed information about characters in various movies, demonstrating the KKV structure (Director -> Movie -> Character Attributes).
 
 3. **Script Task: Extract Single Record**
-    - Retrieves specific movie details from the "Movies" data store.
-    - The KKV data store places a function pointer in task data when a read arrow is drawn from the data store.
-    This allows just reading data for a top-level/secondary key combination without loading all the data.
-    In this case, the read would look like `django = movies("Quentin Tarantino", "Django Unchained")`.
+
+   - Retrieves specific movie details from the "Movies" data store.
+   - The KKV data store places a function pointer in task data when a read arrow is drawn from the data store.
+     This allows just reading data for a top-level/secondary key combination without loading all the data.
+     In this case, the read would look like `django = movies("Quentin Tarantino", "Django Unchained")`.
 
 4. **Script Task: Insert A Single Record**
-    - Adds a new movie entry to the data store under a different key.
-    - Demonstrates adding an entry for a Wes Craven movie to the "Movies" data store, showcasing how new data can be structured and inserted.
-    - For a KKV, write the movies variable that will be read from task data and should be initialized to a new value that you intend to add or update:
 
-     ```python
-    movies = {
-    "Wes Craven": {
-        "Swamp Thing": 
-        [ {"name": "Dr. Alec Holland", "actor": "Ray Wise", "description": "whatever"}]
-    } }
-     ```
+   - Adds a new movie entry to the data store under a different key.
+   - Demonstrates adding an entry for a Wes Craven movie to the "Movies" data store, showcasing how new data can be structured and inserted.
+   - For a KKV, write the movies variable that will be read from task data and should be initialized to a new value that you intend to add or update:
+
+   ```python
+   movies = {
+   "Wes Craven": {
+      "Swamp Thing":
+      [ {"name": "Dr. Alec Holland", "actor": "Ray Wise", "description": "whatever"}]
+   } }
+   ```
 
 5. **End Event**: Marks the completion of the workflow.
-After running the process, you can view the new movie data in the data store:
-![KKV data_store](/images/DataStore_KKV_Store.png)
+   After running the process, you can view the new movie data in the data store:
+   ![KKV data_store](/images/DataStore_KKV_Store.png)
 
 #### Modeling Data Store Interactions
 
 - **Data Store Reference**: Each script task interacts with a "Movies" data store, specified in the task's properties.
-The data store's KKV nature is indicated, allowing for structured data access and manipulation.
+  The data store's KKV nature is indicated, allowing for structured data access and manipulation.
 
 - **Selection of Data Source**: In the properties section of the tasks, the "Movies" data store is selected as the data source, highlighting how BPMN tasks can be explicitly linked to specific data stores for operations.
 
+(json-data-store)=
 ### JSON Data Store
+
+JSON Data Stores are similar to KKV Data Stores however they are structured as json instead of a key-value pair.
+
+### BPMN Example: German Philosophers
+
+![JSON data_store](/images/JSON_data_store.png)
+
+1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
+
+2. **Script Task: Populate Data Store**
+
+   - Populates the german_philosophers variable with the intended json and then sends it to the Data Store with same name as the variable
+   - **Script**:
+
+   ```python
+    german_philosophers = [
+        {
+            "philosopher": "Immanuel Kant",
+            "works": [
+                "Critique of Pure Reason",
+                "Critique of Practical Reason",
+                "Critique of Judgment",
+                "Groundwork of the Metaphysics of Morals",
+            ],
+        },
+        {
+            "philosopher": "Georg Wilhelm Friedrich Hegel",
+            "works": ["Phenomenology of Spirit", "Science of Logic", "Philosophy of Right"],
+        },
+    ]
+   ```
+
+3. **Script Task: No-op**
+
+   - This is here so you can view the task data at this point
+
+4. **Manual Task: Show Data Store**
+
+   - Lists out the philosophers in a markdown table
+
+5. **Script Task: No-op2**
+   - This is here so you can view the task data at this point
+
+![JSON data_store_output](/images/JSON_data_store_output.png)
+
+By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
+
+(json-file-data-store)=
+### JSON File Data Store
 
 In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process.
 A JSON data store is a structured file or set of files that uses the JSON format to store data.
 
-#### JSON Data Store: Gatorade Flavors
+#### JSON File Data Store: Gatorade Flavors
 
 Before detailing the process flow, it's crucial to introduce the JSON data store structure used in this example:
 
@@ -103,60 +162,65 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 #### BPMN Example: Gatorade Flavors
 
-![JSON data_store](/images/JSON_data_store.png)
+![JSON file data_store](/images/JSON_file_data_store.png)
 
 1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
 
 2. **Script Task: Populate Dropdown List**
-    - Converts the Gatorade flavors from the JSON data store into a format suitable for a dropdown list.
-    - **Script**:
-     ```python
-     gator_select = []
-     for flavor in gatorade_flavors:
-         gator_select.append({
-             "label": flavor["name"],
-             "value": flavor["name"]
-         })
-     ```
-    This task creates an array `gator_select` with objects formatted for dropdown list usage from the `gatorade_flavors` array.
+
+   - Converts the Gatorade flavors from the JSON data store into a format suitable for a dropdown list.
+   - **Script**:
+
+   ```python
+   gator_select = []
+   for flavor in gatorade_flavors:
+       gator_select.append({
+           "label": flavor["name"],
+           "value": flavor["name"]
+       })
+   ```
+
+   This task creates an array `gator_select` with objects formatted for dropdown list usage from the `gatorade_flavors` array.
 
 3. **User Task: Select A Gatorade**
-    - Uses a dropdown list for users to select their Gatorade flavor.
-    - **Form Configuration**:
-     ```json
-     {
-       "title": "",
-       "description": "The dropdown list below is built from data read in from a JSON file.",
-       "type": "object",
-       "properties": {
-         "selected": {
-           "title": "Select your flavor of Gatorade",
-           "type": "string",
-           "anyOf": [
-             "options_from_task_data_var:gator_select"
-           ]
-         }
+
+   - Uses a dropdown list for users to select their Gatorade flavor.
+   - **Form Configuration**:
+
+   ```json
+   {
+     "title": "",
+     "description": "The dropdown list below is built from data read in from a JSON file.",
+     "type": "object",
+     "properties": {
+       "selected": {
+         "title": "Select your flavor of Gatorade",
+         "type": "string",
+         "anyOf": ["options_from_task_data_var:gator_select"]
        }
      }
-     ```
-     - The JSON schema defines the structure for the user form, sourcing options from the `gator_select` array.
+   }
+   ```
+
+   - The JSON schema defines the structure for the user form, sourcing options from the `gator_select` array.
 
 4. **Manual Task: View Gatorade Selection**
-    - **Pre-Script**: Matches the user-selected flavor to its full details in the `gatorade_flavors` array.
-     ```python
-     for flavor in gatorade_flavors:
-         if flavor["name"] == selected:
-             selected_flavor = flavor
-     ```
-    - Displays "You selected:", followed by the detailed description of the selected flavor.
+   - **Pre-Script**: Matches the user-selected flavor to its full details in the `gatorade_flavors` array.
+
+   ```python
+   for flavor in gatorade_flavors:
+       if flavor["name"] == selected:
+           selected_flavor = flavor
+   ```
+
+   - Displays "You selected:", followed by the detailed description of the selected flavor.
 
 **Output**:
 
-![JSON data_store](/images/JSON_Data_Store_1.png)
+![JSON file data_store](/images/JSON_File_Data_Store_1.png)
 
-![JSON data_store](/images/DataStore_JSON_Output.png)
+![JSON file data_store](/images/DataStore_JSON_File_Output.png)
 
 ```{admonition} Note
 ⚠  In the data store creation, you will see fields like 'Name' and 'Identifier'. If you are using script tasks that interacts with the data store, reference the `identifier` exactly as it is named in the data store configuration.
 ```
-By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
