@@ -77,6 +77,44 @@ The data store's KKV nature is indicated, allowing for structured data access an
 
 JSON Data Stores are similar to KKV Data Stores however they are structured as json instead of a key-value pair.
 
+### BPMN Example: German Philosophers
+
+![JSON data_store](/images/JSON_data_store.png)
+
+1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
+
+2. **Script Task: Populate Data Store**
+    - Populates the german_philosophers variable with the intended json and then sends it to the Data Store with same name as the variable
+    - **Script**:
+     ```python
+      german_philosophers = [
+          {
+              "philosopher": "Immanuel Kant",
+              "works": [
+                  "Critique of Pure Reason",
+                  "Critique of Practical Reason",
+                  "Critique of Judgment",
+                  "Groundwork of the Metaphysics of Morals",
+              ],
+          },
+          {
+              "philosopher": "Georg Wilhelm Friedrich Hegel",
+              "works": ["Phenomenology of Spirit", "Science of Logic", "Philosophy of Right"],
+          },
+      ]
+     ```
+
+3. **Script Task: No-op**
+    - This is here so you can view the task data at this point
+
+4. **Manual Task: Show Data Store**
+    - Lists out the philosophers in a markdown table
+
+5. **Script Task: No-op2**
+    - This is here so you can view the task data at this point
+
+![JSON data_store_output](/images/JSON_data_store_output.png)
+
 By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
 
 ### JSON File Data Store
@@ -113,7 +151,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 #### BPMN Example: Gatorade Flavors
 
-![JSON data_store](/images/JSON_data_store.png)
+![JSON file data_store](/images/JSON_file_data_store.png)
 
 1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
 
@@ -162,9 +200,9 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 **Output**:
 
-![JSON data_store](/images/JSON_Data_Store_1.png)
+![JSON file data_store](/images/JSON_File_Data_Store_2.png)
 
-![JSON data_store](/images/DataStore_JSON_Output.png)
+![JSON file data_store](/images/DataStore_JSON_File_Output.png)
 
 ```{admonition} Note
 ⚠  In the data store creation, you will see fields like 'Name' and 'Identifier'. If you are using script tasks that interacts with the data store, reference the `identifier` exactly as it is named in the data store configuration.
