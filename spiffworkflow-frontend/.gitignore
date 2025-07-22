@@ -38,3 +38,5 @@ cypress/downloads
 
 /cypress.env
 /screenshot*.png
+
+debug_screenshots

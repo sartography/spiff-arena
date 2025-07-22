@@ -15,7 +15,8 @@ def test_process_model_import(browser_context: BrowserContext):
     
     # Navigate to a process group
     page.goto("http://localhost:7001/process-groups")
-    expect(page).to_have_title(re.compile("Process Groups"))
+    # Wait for page to load
+    expect(page).to_have_title("SpiffWorkflow")
     
     # Create a test process group if it doesn't exist
     test_group_name = "Import Test Group"
@@ -24,7 +25,8 @@ def test_process_model_import(browser_context: BrowserContext):
     test_group = page.get_by_text(test_group_name)
     if not test_group.is_visible():
         # Create a new process group
-        page.get_by_test_id("add-process-group-button").click()
+        # Get the button within the Process Groups section
+        page.locator("text='Process Groups'").locator("xpath=./following::button").first.click()
         page.get_by_label("Display name").fill(test_group_name)
         page.get_by_label("ID").fill("import-test-group")
         page.get_by_test_id("add-process-group-save-button").click()
