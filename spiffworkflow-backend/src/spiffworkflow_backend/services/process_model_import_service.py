@@ -1,175 +1,43 @@
-# Process Model Import API Design
+"""ProcessModelImportService."""
+import re
+import time
+import json
+import xml.etree.ElementTree as ET
+import requests
+from flask import current_app
 
-This document outlines the design for the backend API endpoint that will support importing process models from GitHub URLs.
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.file import File
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_group_service import ProcessGroupService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
-## API Endpoint Specification
 
-### Import Process Model
+class ImportError(Exception):
+    """Base class for import-related exceptions."""
 
-**Endpoint:** `POST /process-models/{process_group_id}/import`
 
-**Purpose:** Import a process model from a GitHub URL into the specified process group.
+class InvalidGitHubUrlError(ImportError):
+    """Exception raised when a GitHub URL is invalid."""
 
-**URL Parameters:**
-- `process_group_id`: ID of the process group where the imported model should be placed
 
-**Request Body:**
-```json
-{
-  "repository_url": "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
-}
-```
+class GitHubRepositoryNotFoundError(ImportError):
+    """Exception raised when a GitHub repository is not found."""
 
-**Response:**
-```json
-{
-  "process_model": {
-    "id": "imported-process-model-id",
-    "display_name": "Imported Process Model",
-    "description": "Imported from GitHub repository",
-    "primary_file_name": "main.bpmn",
-    "primary_process_id": "process-id-from-bpmn",
-    "files": [
-      {"name": "process_model.json", "type": "json"},
-      {"name": "main.bpmn", "type": "bpmn"}
-    ]
-  },
-  "import_source": "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
-}
-```
 
-**Status Codes:**
-- 201: Successfully imported
-- 400: Invalid request (malformed URL, invalid format)
-- 404: Process group not found or GitHub repository not found
-- 500: Server error during import
+class InvalidProcessModelError(ImportError):
+    """Exception raised when a repository does not contain a valid process model."""
 
-## OpenAPI Specification Updates
 
-The following additions should be made to the `api.yml` file:
+class ProcessGroupNotFoundError(ImportError):
+    """Exception raised when a process group is not found."""
 
-```yaml
-paths:
-  /process-models/{process_group_id}/import:
-    post:
-      tags:
-        - Process Models
-      summary: Import a process model from a GitHub URL
-      description: Fetches process model files from a GitHub repository and imports them into the system
-      operationId: process_model_import
-      parameters:
-        - name: process_group_id
-          in: path
-          description: ID of the process group to import the model into
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - repository_url
-              properties:
-                repository_url:
-                  type: string
-                  description: The GitHub URL to the repository or directory containing the process model
-                  example: "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
-      responses:
-        '201':
-          description: Process model imported successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  process_model:
-                    $ref: '#/components/schemas/ProcessModel'
-                  import_source:
-                    type: string
-                    description: The source URL from which the model was imported
-        '400':
-          description: Invalid request (malformed URL, invalid format)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Process group not found or GitHub repository not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-```
 
-## Implementation Components
-
-### 1. Controller Function
-
-```python
-# Function will be mapped to POST /process-models/{process_group_id}/import in the OpenAPI spec
-def process_model_import(process_group_id):
-    """Import a process model from a GitHub URL."""
-    
-    # Get request data
-    body = request.json
-    repository_url = body.get("repository_url")
-    
-    # Validate the URL
-    if not repository_url or not _is_valid_github_url(repository_url):
-        raise ApiError(
-            "invalid_github_url", 
-            "The provided URL is not a valid GitHub repository URL", 
-            status_code=400
-        )
-    
-    # Process the import
-    try:
-        process_model = ProcessModelImportService.import_from_github_url(
-            repository_url, 
-            process_group_id
-        )
-        
-        # Return the imported process model
-        return {
-            "process_model": process_model.serialized(),
-            "import_source": repository_url
-        }, 201
-    
-    except ProcessGroupNotFoundError as ex:
-        raise ApiError(
-            "process_group_not_found", 
-            f"The specified process group was not found: {str(ex)}", 
-            status_code=404
-        )
-    except GitHubRepositoryNotFoundError as ex:
-        raise ApiError(
-            "github_repository_not_found", 
-            f"The specified GitHub repository was not found: {str(ex)}", 
-            status_code=404
-        )
-    except InvalidProcessModelError as ex:
-        raise ApiError(
-            "invalid_process_model", 
-            f"The repository does not contain a valid process model: {str(ex)}", 
-            status_code=400
-        )
-```
-
-### 2. ProcessModelImportService Class
-
-```python
 class ProcessModelImportService:
     """Service for importing process models from external sources."""
-    
+
     @classmethod
     def import_from_github_url(cls, url, process_group_id):
         """Import a process model from a GitHub URL.
@@ -407,36 +275,9 @@ class ProcessModelImportService:
         except Exception as ex:
             current_app.logger.warning(f"Failed to commit to Git: {str(ex)}")
             # Continue even if Git commit fails
-```
 
-### 3. Custom Exceptions
 
-```python
-class ImportError(Exception):
-    """Base class for import-related exceptions."""
-    pass
-
-class InvalidGitHubUrlError(ImportError):
-    """Exception raised when a GitHub URL is invalid."""
-    pass
-
-class GitHubRepositoryNotFoundError(ImportError):
-    """Exception raised when a GitHub repository is not found."""
-    pass
-
-class InvalidProcessModelError(ImportError):
-    """Exception raised when a repository does not contain a valid process model."""
-    pass
-
-class ProcessGroupNotFoundError(ImportError):
-    """Exception raised when a process group is not found."""
-    pass
-```
-
-## URL Validation Helper Function
-
-```python
-def _is_valid_github_url(url):
+def is_valid_github_url(url):
     """Check if a URL is a valid GitHub repository URL."""
     if not url:
         return False
@@ -455,87 +296,3 @@ def _is_valid_github_url(url):
         return False
     
     return True
-```
-
-## Request and Response JSON Schema
-
-### Import Request Schema
-```json
-{
-  "type": "object",
-  "required": ["repository_url"],
-  "properties": {
-    "repository_url": {
-      "type": "string",
-      "description": "The GitHub URL to the repository or directory containing the process model",
-      "pattern": "^https://github\\.com/[^/]+/[^/]+/(tree|blob)/[^/]+/.+$"
-    }
-  }
-}
-```
-
-### Import Response Schema
-```json
-{
-  "type": "object",
-  "required": ["process_model", "import_source"],
-  "properties": {
-    "process_model": {
-      "type": "object",
-      "required": ["id", "display_name"],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "display_name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "primary_file_name": {
-          "type": "string"
-        },
-        "primary_process_id": {
-          "type": "string"
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["name", "type"],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "import_source": {
-      "type": "string"
-    }
-  }
-}
-```
-
-## Testing Strategy
-
-1. **Unit Tests**
-   - Test URL parsing for different GitHub URL formats
-   - Test file fetching from GitHub with mocked responses
-   - Test process model info extraction from different file sets
-
-2. **Integration Tests**
-   - Test the full import flow with actual GitHub repositories
-   - Test error handling for various edge cases
-
-## Security Considerations
-
-1. Only access public GitHub repositories using the public API
-2. Validate and sanitize all external content before storing
-3. Ensure file size limits to prevent overloading the system
