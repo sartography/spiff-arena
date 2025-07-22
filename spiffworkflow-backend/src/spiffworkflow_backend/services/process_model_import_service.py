@@ -8,10 +8,8 @@ import requests
 from flask import current_app
 from lxml import etree  # type: ignore
 
-from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.process_group_service import ProcessGroupService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -56,7 +54,7 @@ class ProcessModelImportService:
             InvalidProcessModelError: If the repository does not contain a valid process model
         """
         # Check if process group exists
-        if not ProcessGroupService.process_group_exists(process_group_id):
+        if not ProcessModelService.get_process_group(process_group_id):
             raise ProcessGroupNotFoundError(f"Process group not found: {process_group_id}")
 
         # Parse GitHub URL to get repository info
@@ -74,7 +72,7 @@ class ProcessModelImportService:
         # Check for existing process model
         full_process_model_id = f"{process_group_id}/{model_id}"
         # If process model ID already exists, append timestamp to make it unique
-        if ProcessModelService.process_model_exists(full_process_model_id):
+        if ProcessModelService.is_process_model_identifier(full_process_model_id):
             model_id = f"{model_id}-{int(time.time())}"
             full_process_model_id = f"{process_group_id}/{model_id}"
 
@@ -89,8 +87,7 @@ class ProcessModelImportService:
 
         # Add files to the process model
         for file_name, file_contents in files.items():
-            file_data = File(name=file_name, content=file_contents, mimetype=cls._determine_mimetype(file_name))
-            SpecFileService.update_file(process_model.id, file_data)
+            SpecFileService.update_file(process_model, file_name, file_contents)
 
         # Update primary file and process ID if found
         if model_info.get("primary_file_name"):
@@ -99,7 +96,7 @@ class ProcessModelImportService:
         if model_info.get("primary_process_id"):
             process_model.primary_process_id = model_info.get("primary_process_id")
 
-        ProcessModelService.update_process_model(process_model)
+        ProcessModelService.update_process_model(process_model, {})
 
         # Commit changes to Git
         cls._commit_to_git(process_model.id, f"Imported process model from {url}")

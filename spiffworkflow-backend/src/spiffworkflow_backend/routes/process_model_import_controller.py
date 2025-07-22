@@ -29,7 +29,7 @@ def process_model_import(process_group_id):
         process_model = ProcessModelImportService.import_from_github_url(repository_url, process_group_id)
 
         # Return the imported process model
-        return {"process_model": process_model.serialized(), "import_source": repository_url}, 201
+        return {"process_model": process_model.to_dict(), "import_source": repository_url}, 201
 
     except ProcessGroupNotFoundError as ex:
         raise ApiError(
