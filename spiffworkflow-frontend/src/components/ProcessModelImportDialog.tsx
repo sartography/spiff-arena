@@ -74,7 +74,7 @@ export function ProcessModelImportDialog({
 
       HttpService.makeCallToBackend({
         httpMethod: 'POST',
-        path: `/process-models/${processGroupId}/import`,
+        path: `/process-model-import/${processGroupId}`,
         postBody: {
           repository_url: repositoryUrl,
         },

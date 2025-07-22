@@ -27,7 +27,7 @@ function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
 
-function run_pre_commmit() {
+function run_pre_commit() {
   uv run pre-commit run --verbose --all-files
 }
 
@@ -41,8 +41,8 @@ for react_project in "${react_projects[@]}"; do
 done
 
 if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "spiffworkflow-backend")" ]]; then
-  # rune_pre_commit only applies to spiffworkflow-backend at the moment
-  run_pre_commmit || run_pre_commmit
+  # run_pre_commit only applies to spiffworkflow-backend at the moment
+  run_pre_commit || run_pre_commit
 fi
 
 function clear_log_file() {

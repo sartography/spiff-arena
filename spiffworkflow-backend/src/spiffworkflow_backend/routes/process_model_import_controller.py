@@ -11,8 +11,8 @@ from spiffworkflow_backend.services.process_model_import_service import ProcessM
 from spiffworkflow_backend.services.process_model_import_service import is_valid_github_url
 
 
-# Function will be mapped to POST /process-models/{process_group_id}/import in the OpenAPI spec
-@process_api_blueprint.route("/process-models/<process_group_id>/import", methods=["POST"])
+# Function is mapped to POST /process-model-import/{modified_process_group_id} in the OpenAPI spec
+@process_api_blueprint.route("/process-model-import/<process_group_id>", methods=["POST"])
 def process_model_import(process_group_id: str) -> tuple[dict, int]:
     """Import a process model from a GitHub URL."""
 
