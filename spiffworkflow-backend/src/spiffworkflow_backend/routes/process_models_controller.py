@@ -35,6 +35,11 @@ from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportNotFoundError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_model_import_service import GitHubRepositoryNotFoundError
+from spiffworkflow_backend.services.process_model_import_service import InvalidGitHubUrlError
+from spiffworkflow_backend.services.process_model_import_service import InvalidProcessModelError
+from spiffworkflow_backend.services.process_model_import_service import ProcessGroupNotFoundError
+from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.process_model_test_generator_service import ProcessModelTestGeneratorService
@@ -636,3 +641,79 @@ def process_model_specs(
     WorkflowSpecService.get_spec(files, process_model)
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_model_import(
+    process_group_id: str,
+    body: dict[str, str],
+) -> flask.wrappers.Response:
+    """Import a process model from a GitHub URL.
+
+    Args:
+        process_group_id: The modified process group ID to import the model into
+        body: Request body containing repository_url
+
+    Returns:
+        flask.wrappers.Response: The response containing the imported process model
+    """
+    # Ensure body has required fields
+    if "repository_url" not in body:
+        raise ApiError(
+            error_code="missing_repository_url",
+            message="Repository URL is required",
+            status_code=400,
+        )
+
+    repository_url = body["repository_url"]
+
+    # Unmodify process group ID (replace : with /)
+    unmodified_process_group_id = _un_modify_modified_process_model_id(process_group_id)
+
+    try:
+        # Use the ProcessModelImportService to import the model
+        process_model = ProcessModelImportService.import_from_github_url(
+            url=repository_url,
+            process_group_id=unmodified_process_group_id,
+        )
+
+        # Return success response with created process model
+        return Response(
+            json.dumps(
+                {
+                    "process_model": process_model.to_dict(),
+                    "import_source": repository_url,
+                }
+            ),
+            status=201,
+            mimetype="application/json",
+        )
+    except ProcessGroupNotFoundError as ex:
+        raise ApiError(
+            error_code="process_group_not_found",
+            message=str(ex),
+            status_code=404,
+        ) from ex
+    except InvalidGitHubUrlError as ex:
+        raise ApiError(
+            error_code="invalid_github_url",
+            message=str(ex),
+            status_code=400,
+        ) from ex
+    except GitHubRepositoryNotFoundError as ex:
+        raise ApiError(
+            error_code="github_repository_not_found",
+            message=str(ex),
+            status_code=404,
+        ) from ex
+    except InvalidProcessModelError as ex:
+        raise ApiError(
+            error_code="invalid_process_model",
+            message=str(ex),
+            status_code=400,
+        ) from ex
+    except Exception as ex:
+        raise ApiError(
+            error_code="import_failed",
+            message=f"Failed to import process model: {str(ex)}",
+            status_code=500,
+        ) from ex

@@ -4,7 +4,7 @@
         - Process Models
       summary: Import a process model from a GitHub URL
       description: Fetches process model files from a GitHub repository and imports them into the system
-      operationId: spiffworkflow_backend.routes.process_model_import_controller.process_model_import
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_import
       parameters:
         - name: process_group_id
           in: path

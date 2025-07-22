@@ -34,7 +34,7 @@ export function ProcessModelImportDialog({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Validate URL when it changes
-  const validateGithubUrl = (url: string) => {
+  const validateGithubUrl = (url: string): boolean => {
     // Basic URL validation
     if (!url || !url.startsWith('https://github.com/')) {
       return false;
@@ -47,11 +47,7 @@ export function ProcessModelImportDialog({
     }
 
     // Check that the URL contains either /tree/ or /blob/
-    if (url.indexOf('/tree/') === -1 && url.indexOf('/blob/') === -1) {
-      return false;
-    }
-
-    return true;
+    return url.indexOf('/tree/') !== -1 || url.indexOf('/blob/') !== -1;
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {

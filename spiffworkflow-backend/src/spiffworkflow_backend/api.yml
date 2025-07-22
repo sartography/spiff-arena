@@ -622,7 +622,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
-                
+
   /process-model-import/{modified_process_group_id}:
     parameters:
       - name: modified_process_group_id
