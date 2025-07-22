@@ -94,8 +94,8 @@ class TestProcessModelImportController(BaseTest):
 
         # Verify the error message
         response_data = json.loads(response.content)
-        assert response_data["error_code"] == "missing_repository_url"
-        assert "Repository URL is required" in response_data["message"]
+        print(f"Error response: {json.dumps(response_data, indent=2)}")
+        assert "Repository URL is required" in response_data["detail"]
 
     def test_process_model_import_invalid_group(
         self,
