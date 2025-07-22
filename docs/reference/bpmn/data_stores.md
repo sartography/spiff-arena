@@ -13,6 +13,10 @@ All of these mechanisms work well in SpiffWorkflow, so the choice will depend on
 
 ## Types of Data Store
 
+1. [KKV Data Store in Bpmn](#kkv-data-store-in-bpmn)
+2. [JSON Data Store](#json-data-store)
+3. [JSON File Data Store](#json-file-data-store)
+
 ### KKV Data Store in BPMN
 
 Key-Key-Value (KKV) Data Stores extend the traditional key-value model by introducing an additional key layer.
@@ -71,10 +75,14 @@ The data store's KKV nature is indicated, allowing for structured data access an
 
 ### JSON Data Store
 
+JSON Data Stores are similar to KKV Data Stores however they are structured as json instead of a key-value pair.
+
+### JSON File Data Store
+
 In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process.
 A JSON data store is a structured file or set of files that uses the JSON format to store data.
 
-#### JSON Data Store: Gatorade Flavors
+#### JSON File Data Store: Gatorade Flavors
 
 Before detailing the process flow, it's crucial to introduce the JSON data store structure used in this example:
 
