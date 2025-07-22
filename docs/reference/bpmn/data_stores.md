@@ -77,6 +77,8 @@ The data store's KKV nature is indicated, allowing for structured data access an
 
 JSON Data Stores are similar to KKV Data Stores however they are structured as json instead of a key-value pair.
 
+By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
+
 ### JSON File Data Store
 
 In BPMN (Business Process Model and Notation), incorporating a JSON file as a data store offers a versatile method for managing structured data throughout a process.
@@ -167,4 +169,3 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 ```{admonition} Note
 ⚠  In the data store creation, you will see fields like 'Name' and 'Identifier'. If you are using script tasks that interacts with the data store, reference the `identifier` exactly as it is named in the data store configuration.
 ```
-By integrating a JSON data store within a BPMN process, workflows can dynamically manage and interact with structured data.
