@@ -12,8 +12,8 @@ from spiffworkflow_backend.services.process_model_import_service import is_valid
 
 
 # Function is mapped to POST /process-model-import/{modified_process_group_id} in the OpenAPI spec
-@process_api_blueprint.route("/process-model-import/<process_group_id>", methods=["POST"])
-def process_model_import(process_group_id: str) -> tuple[dict, int]:
+@process_api_blueprint.route("/process-model-import/<modified_process_group_id>", methods=["POST"])
+def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
     """Import a process model from a GitHub URL."""
 
     # Get request data
@@ -24,9 +24,12 @@ def process_model_import(process_group_id: str) -> tuple[dict, int]:
     if not repository_url or not is_valid_github_url(repository_url):
         raise ApiError("invalid_github_url", "The provided URL is not a valid GitHub repository URL", status_code=400)
 
+    # Unmodify process group ID (replace : with /)
+    unmodified_process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+        
     # Process the import
     try:
-        process_model = ProcessModelImportService.import_from_github_url(repository_url, process_group_id)
+        process_model = ProcessModelImportService.import_from_github_url(repository_url, unmodified_process_group_id)
 
         # Return the imported process model
         return {"process_model": process_model.to_dict(), "import_source": repository_url}, 201

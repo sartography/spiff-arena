@@ -1,3 +1,10 @@
+"""Tests for the process model import functionality.
+
+Note: These tests expect the backend service to be restarted after making changes
+to the API definitions. The tests will fail with 500 errors until the backend is
+restarted with the new API definitions.
+"""
+
 import json
 from unittest.mock import patch
 
@@ -46,22 +53,18 @@ class TestProcessModelImportController(BaseTest):
             )
 
             # Check the response status code
-            # When backend is restarted, this will return 201; before that, it will return 404
-            if response.status_code == 201:
-                # Verify the response data when endpoint is registered
-                response_data = json.loads(response.content)
-                assert "process_model" in response_data
-                assert response_data["process_model"]["id"] == f"{process_group_id}/imported_model"
-                assert response_data["process_model"]["display_name"] == "Imported Model"
-                assert response_data["process_model"]["description"] == "Imported from GitHub"
-                assert response_data["import_source"] == repository_url
+            assert response.status_code == 201
 
-                # Verify the service method was called correctly
-                mock_import.assert_called_once_with(url=repository_url, process_group_id=process_group_id)
-            else:
-                # Before backend restart, endpoint will not be registered yet (404)
-                # Or there may be an error in the implementation (500)
-                assert response.status_code in [404, 500]
+            # Verify the response data
+            response_data = json.loads(response.content)
+            assert "process_model" in response_data
+            assert response_data["process_model"]["id"] == f"{process_group_id}/imported_model"
+            assert response_data["process_model"]["display_name"] == "Imported Model"
+            assert response_data["process_model"]["description"] == "Imported from GitHub"
+            assert response_data["import_source"] == repository_url
+
+            # Verify the service method was called correctly
+            mock_import.assert_called_once_with(url=repository_url, process_group_id=process_group_id)
 
     def test_process_model_import_missing_url(
         self,
@@ -80,21 +83,19 @@ class TestProcessModelImportController(BaseTest):
 
         # Make a request to the import endpoint without a repository_url
         response = client.post(
-            f"/v1.0/process-models/{process_group_id}/import",
+            f"/v1.0/process-model-import/{process_group_id}",
             json={},
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
+        # Fix the URL to use the correct API endpoint
         # Check the response status code
-        # When backend is restarted, this will return 400; before that, it will return 404
-        if response.status_code == 400:
-            # Verify the error message when endpoint is registered
-            response_data = json.loads(response.content)
-            assert response_data["error_code"] == "missing_repository_url"
-            assert "Repository URL is required" in response_data["message"]
-        else:
-            # Before backend restart, endpoint will not be registered yet
-            assert response.status_code == 404
+        assert response.status_code == 400
+
+        # Verify the error message
+        response_data = json.loads(response.content)
+        assert response_data["error_code"] == "missing_repository_url"
+        assert "Repository URL is required" in response_data["message"]
 
     def test_process_model_import_invalid_group(
         self,
@@ -121,13 +122,9 @@ class TestProcessModelImportController(BaseTest):
             )
 
             # Check the response status code
-            # Either 404 (when the API is registered) or 500 (before restart)
-            assert response.status_code in [404, 500]
+            assert response.status_code == 404
 
-            # Only check the error message if we get a proper response
-            if response.status_code == 404:
-                response_data = json.loads(response.content)
-                if "error_code" in response_data:
-                    assert response_data["error_code"] == "process_group_not_found"
-                # Before endpoint registration, the response will be different
-                assert response.status_code == 404
+            # Verify the error message
+            response_data = json.loads(response.content)
+            assert "error_code" in response_data
+            assert response_data["error_code"] == "process_group_not_found"
