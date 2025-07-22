@@ -1,0 +1,58 @@
+  /process-models/{process_group_id}/import:
+    post:
+      tags:
+        - Process Models
+      summary: Import a process model from a GitHub URL
+      description: Fetches process model files from a GitHub repository and imports them into the system
+      operationId: spiffworkflow_backend.routes.process_model_import_controller.process_model_import
+      parameters:
+        - name: process_group_id
+          in: path
+          description: ID of the process group to import the model into
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - repository_url
+              properties:
+                repository_url:
+                  type: string
+                  description: The GitHub URL to the repository or directory containing the process model
+                  example: "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
+      responses:
+        '201':
+          description: Process model imported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  process_model:
+                    $ref: '#/components/schemas/ProcessModel'
+                  import_source:
+                    type: string
+                    description: The source URL from which the model was imported
+        '400':
+          description: Invalid request (malformed URL, invalid format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Process group not found or GitHub repository not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

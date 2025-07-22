@@ -46,6 +46,8 @@ import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
 import HttpService from '../../services/HttpService';
+import { ProcessModelImportButton } from '../../components/ProcessModelImportButton';
+import { ProcessModelImportDialog } from '../../components/ProcessModelImportDialog';
 import DataStoreCard from '../../components/DataStoreCard';
 
 const SPIFF_ID = 'spifftop';
@@ -100,6 +102,7 @@ export default function ProcessModelTreePage({
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   // const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [treeCollapsed] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
@@ -689,20 +692,31 @@ export default function ProcessModelTreePage({
                         })}
                       </Typography>
                       {currentProcessGroup && (
-                        <Can
-                          I="POST"
-                          a={targetUris.processModelCreatePath}
-                          ability={ability}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            data-testid="add-process-model-button"
-                            href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Can
+                            I="POST"
+                            a={targetUris.processModelCreatePath}
+                            ability={ability}
                           >
-                            <Add />
-                          </IconButton>
-                        </Can>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => e.stopPropagation()}
+                              data-testid="add-process-model-button"
+                              href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                            >
+                              <Add />
+                            </IconButton>
+                          </Can>
+                          <Can
+                            I="POST"
+                            a={targetUris.processModelCreatePath}
+                            ability={ability}
+                          >
+                            <Box onClick={(e) => e.stopPropagation()}>
+                              <ProcessModelImportButton onClick={() => setImportDialogOpen(true)} />
+                            </Box>
+                          </Can>
+                        </Box>
                       )}
                     </Box>
                   </AccordionSummary>
@@ -827,6 +841,17 @@ export default function ProcessModelTreePage({
           </Stack>
         </Stack>
       </Container>
+      {currentProcessGroup && (
+        <ProcessModelImportDialog
+          open={importDialogOpen}
+          onClose={() => setImportDialogOpen(false)}
+          processGroupId={modifyProcessIdentifierForPathParam(currentProcessGroup.id)}
+          onImportSuccess={(processModelId) => {
+            // Reload the page to show the newly imported process model
+            window.location.reload();
+          }}
+        />
+      )}
     </Box>
   );
 }
