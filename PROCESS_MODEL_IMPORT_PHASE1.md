@@ -17,9 +17,9 @@ Phase 1 focuses on importing process models from public GitHub repositories by p
 
 ### Import Process Flow
 
-1. User navigates to the process model creation area
-2. User clicks "Import from GitHub" button
-3. User enters a GitHub URL in a dialog
+1. User clicks the "Add" button to navigate to the process model creation page
+2. On the process model creation page, user sees an "Import from GitHub" option
+3. User enters a GitHub URL in the provided field
 4. User clicks Import
 5. System validates the URL, fetches files, and imports the process model
 6. On success, user is redirected to the newly created process model
@@ -27,11 +27,9 @@ Phase 1 focuses on importing process models from public GitHub repositories by p
 
 ### UI Components
 
-1. **Import Process Model Button** - Added near the "Create Process Model" button
-2. **Import Dialog** - A simple modal dialog containing:
-   - Text field for GitHub URL input
-   - Import button
-   - Cancel button
+1. **Import Option in Process Model New Page** - Added to the process model creation page
+2. **GitHub URL Field** - Field to enter the GitHub repository URL
+3. **Import Button** - Button to trigger the import process
 
 ## Backend Implementation
 
