@@ -13,7 +13,7 @@ from spiffworkflow_backend.services.process_model_import_service import is_valid
 
 # Function will be mapped to POST /process-models/{process_group_id}/import in the OpenAPI spec
 @process_api_blueprint.route("/process-models/<process_group_id>/import", methods=["POST"])
-def process_model_import(process_group_id):
+def process_model_import(process_group_id: str) -> tuple[dict, int]:
     """Import a process model from a GitHub URL."""
 
     # Get request data

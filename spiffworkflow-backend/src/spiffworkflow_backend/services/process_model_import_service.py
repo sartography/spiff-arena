@@ -3,6 +3,7 @@
 import json
 import re
 import time
+from typing import Any
 
 import requests
 from flask import current_app
@@ -38,7 +39,7 @@ class ProcessModelImportService:
     """Service for importing process models from external sources."""
 
     @classmethod
-    def import_from_github_url(cls, url, process_group_id):
+    def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
         """Import a process model from a GitHub URL.
 
         Args:
@@ -83,7 +84,7 @@ class ProcessModelImportService:
         process_model = ProcessModelInfo(id=full_process_model_id, display_name=display_name, description=description)
 
         # Add the process model to the system
-        process_model = ProcessModelService.add_process_model(process_model)
+        ProcessModelService.add_process_model(process_model)
 
         # Add files to the process model
         for file_name, file_contents in files.items():
@@ -104,7 +105,7 @@ class ProcessModelImportService:
         return process_model
 
     @classmethod
-    def _parse_github_url(cls, url):
+    def _parse_github_url(cls, url: str) -> dict[str, str]:
         """Parse a GitHub URL to extract repository information."""
         # Example URL: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example
 
@@ -119,7 +120,7 @@ class ProcessModelImportService:
         return {"owner": owner, "repo": repo, "branch": branch, "path": path, "type": "tree" if "/tree/" in url else "blob"}
 
     @classmethod
-    def _fetch_files_from_github(cls, repo_info):
+    def _fetch_files_from_github(cls, repo_info: dict[str, str]) -> dict[str, bytes]:
         """Fetch files from GitHub using the GitHub API."""
         # Construct GitHub API URL
         api_url = f"https://api.github.com/repos/{repo_info['owner']}/{repo_info['repo']}/contents/{repo_info['path']}?ref={repo_info['branch']}"
@@ -155,7 +156,7 @@ class ProcessModelImportService:
         return files
 
     @classmethod
-    def _download_file(cls, url):
+    def _download_file(cls, url: str) -> bytes:
         """Download a file from a URL."""
         response = requests.get(url, timeout=30)
         if response.status_code != 200:
@@ -164,7 +165,7 @@ class ProcessModelImportService:
         return response.content
 
     @classmethod
-    def _extract_process_model_info(cls, files):
+    def _extract_process_model_info(cls, files: dict[str, bytes]) -> dict[str, Any]:
         """Extract process model information from the files."""
         model_info = {}
 
@@ -208,7 +209,7 @@ class ProcessModelImportService:
         return model_info
 
     @classmethod
-    def _extract_process_id_from_bpmn(cls, bpmn_content):
+    def _extract_process_id_from_bpmn(cls, bpmn_content: bytes) -> str | None:
         """Extract the process ID from BPMN content."""
         try:
             # Use secure XML parser with entity resolution disabled
@@ -217,14 +218,15 @@ class ProcessModelImportService:
             ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
             process_elements = root.findall(".//bpmn:process", ns)
             if process_elements and "id" in process_elements[0].attrib:
-                return process_elements[0].get("id")
+                process_id = process_elements[0].get("id")
+                return str(process_id) if process_id is not None else None
         except etree.ParseError:
             pass
 
         return None
 
     @classmethod
-    def _generate_id_from_url(cls, url):
+    def _generate_id_from_url(cls, url: str) -> str:
         """Generate a process model ID from the GitHub URL."""
         # Extract the last part of the path
         path_parts = url.strip("/").split("/")
@@ -239,7 +241,7 @@ class ProcessModelImportService:
         return f"imported-model-{int(time.time())}"
 
     @classmethod
-    def _determine_mimetype(cls, file_name):
+    def _determine_mimetype(cls, file_name: str) -> str:
         """Determine the MIME type of a file based on its extension."""
         extension = file_name.split(".")[-1].lower()
         if extension == "bpmn":
@@ -254,7 +256,7 @@ class ProcessModelImportService:
             return "application/octet-stream"
 
     @classmethod
-    def _commit_to_git(cls, process_model_id, commit_message):
+    def _commit_to_git(cls, process_model_id: str, commit_message: str) -> None:
         """Commit changes to Git."""
         try:
             GitService.commit(process_model_id, commit_message)
@@ -263,7 +265,7 @@ class ProcessModelImportService:
             # Continue even if Git commit fails
 
 
-def is_valid_github_url(url):
+def is_valid_github_url(url: str) -> bool:
     """Check if a URL is a valid GitHub repository URL."""
     if not url:
         return False
