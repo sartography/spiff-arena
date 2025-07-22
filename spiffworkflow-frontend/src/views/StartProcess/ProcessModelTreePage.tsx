@@ -850,7 +850,7 @@ export default function ProcessModelTreePage({
           processGroupId={modifyProcessIdentifierForPathParam(
             currentProcessGroup.id,
           )}
-          onImportSuccess={() => {
+          onImportSuccess={(processModelId) => {
             // Reload the page to show the newly imported process model
             window.location.reload();
           }}

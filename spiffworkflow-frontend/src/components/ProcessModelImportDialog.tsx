@@ -69,18 +69,41 @@ export function ProcessModelImportDialog({
     setErrorMessage(null);
 
     try {
-      const result = await HttpService.makeCallToBackend({
-        method: 'POST',
-        url: `/process-models/${processGroupId}/import`,
-        data: {
+      console.log('Importing from URL:', repositoryUrl);
+      console.log('Process Group ID:', processGroupId);
+
+      HttpService.makeCallToBackend({
+        httpMethod: 'POST',
+        path: `/process-models/${processGroupId}/import`,
+        postBody: {
           repository_url: repositoryUrl,
         },
-      });
+        successCallback: (result) => {
+          console.log('Import API success response:', JSON.stringify(result));
 
-      onImportSuccess(result.data.process_model.id);
-      onClose();
-    } catch (error: any) {
-      setErrorMessage(error.response?.data?.message || 'Import failed');
+          if (result && result.process_model && result.process_model.id) {
+            const processModelId = result.process_model.id;
+            console.log(
+              'Successfully imported process model with ID:',
+              processModelId,
+            );
+            onImportSuccess(processModelId);
+          } else {
+            console.error(
+              'Import response missing expected data structure:',
+              result,
+            );
+            // Call with empty string if ID not available
+            console.log('Calling onImportSuccess with empty string');
+            onImportSuccess('');
+          }
+          onClose();
+        },
+        failureCallback: (error) => {
+          console.error('Import error:', error);
+          setErrorMessage(error?.message || 'Import failed');
+        },
+      });
     } finally {
       setIsImporting(false);
     }
