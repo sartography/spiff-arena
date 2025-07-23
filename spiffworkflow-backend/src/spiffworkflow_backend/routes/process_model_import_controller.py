@@ -3,7 +3,6 @@
 from flask import request
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
 from spiffworkflow_backend.services.process_model_import_service import GitHubRepositoryNotFoundError
 from spiffworkflow_backend.services.process_model_import_service import InvalidProcessModelError
 from spiffworkflow_backend.services.process_model_import_service import ProcessGroupNotFoundError
@@ -11,8 +10,6 @@ from spiffworkflow_backend.services.process_model_import_service import ProcessM
 from spiffworkflow_backend.services.process_model_import_service import is_valid_github_url
 
 
-# Function is mapped to POST /process-model-import/{modified_process_group_id} in the OpenAPI spec
-@process_api_blueprint.route("/process-model-import/<modified_process_group_id>", methods=["POST"])
 def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
     """Import a process model from a GitHub URL."""
 
