@@ -1,8 +1,6 @@
-import re
-from playwright.sync_api import expect, BrowserContext, Page
+from playwright.sync_api import expect, BrowserContext
 
 from helpers.login import login
-from helpers.playwright_setup import browser_context  # Import the fixture
 
 
 def test_process_model_import(browser_context: BrowserContext):
