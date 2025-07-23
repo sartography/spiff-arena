@@ -282,8 +282,10 @@ export default function ProcessInstanceListTable({
     return getProcessModelSpanTag(processInstance, identifier);
   };
   const formatLastMilestone = (processInstance: ProcessInstance) => {
-    const [valueToUse, truncatedValue] =
-      getLastMilestoneFromProcessInstance(processInstance);
+    const [valueToUse, truncatedValue] = getLastMilestoneFromProcessInstance(
+      processInstance,
+      processInstance.last_milestone_bpmn_name,
+    );
     return <span title={valueToUse}>{truncatedValue}</span>;
   };
 

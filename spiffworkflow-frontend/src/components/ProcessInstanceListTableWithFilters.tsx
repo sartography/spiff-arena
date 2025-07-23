@@ -1293,14 +1293,16 @@ export default function ProcessInstanceListTableWithFilters({
                   value={systemReport || ''}
                   onChange={(event) => {
                     const { value } = event.target;
-                    systemReportOptions.forEach((systemReportOption: string) => {
-                      insertOrUpdateFieldInReportMetadata(
-                        reportMetadata,
-                        systemReportOption,
-                        value === systemReportOption,
-                      );
-                      setSystemReport(value);
-                    });
+                    systemReportOptions.forEach(
+                      (systemReportOption: string) => {
+                        insertOrUpdateFieldInReportMetadata(
+                          reportMetadata,
+                          systemReportOption,
+                          value === systemReportOption,
+                        );
+                        setSystemReport(value);
+                      },
+                    );
                   }}
                 >
                   {['', ...systemReportOptions].map((option) => (
@@ -1314,13 +1316,15 @@ export default function ProcessInstanceListTableWithFilters({
                 <div style={{ marginLeft: '8px' }}>
                   <Button
                     onClick={() => {
-                      systemReportOptions.forEach((systemReportOption: string) => {
-                        insertOrUpdateFieldInReportMetadata(
-                          reportMetadata,
-                          systemReportOption,
-                          false,
-                        );
-                      });
+                      systemReportOptions.forEach(
+                        (systemReportOption: string) => {
+                          insertOrUpdateFieldInReportMetadata(
+                            reportMetadata,
+                            systemReportOption,
+                            false,
+                          );
+                        },
+                      );
                       setSystemReport(null);
                     }}
                     size="sm"
