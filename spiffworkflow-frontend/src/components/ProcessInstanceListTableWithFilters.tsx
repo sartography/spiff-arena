@@ -38,6 +38,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import {
@@ -1379,27 +1381,54 @@ export default function ProcessInstanceListTableWithFilters({
             </InputLabel>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexGrow: 1 }}>
-                <Select
-                  fullWidth
-                  label={t('last_milestone')}
-                  labelId="last-milestone-label"
-                  value={selectedLastMilestone || ''}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    insertOrUpdateFieldInReportMetadata(
-                      reportMetadata,
-                      'last_milestone_bpmn_name',
-                      value,
-                    );
-                    setSelectedLastMilestone(value);
-                  }}
-                >
-                  {lastMilestones.map((milestone) => (
-                    <MenuItem key={milestone} value={milestone}>
-                      {milestone}
-                    </MenuItem>
-                  ))}
-                </Select>
+                {lastMilestones.length > 5 ? (
+                  <Autocomplete
+                    disablePortal
+                    id="last-milestone-autocomplete"
+                    options={lastMilestones}
+                    value={selectedLastMilestone || null}
+                    renderInput={(params) => (
+                      <TextField
+                        // Need props spreading for Autocomplete to work
+                        // eslint-disable-next-line react/jsx-props-no-spreading
+                        {...params}
+                        label={t('last_milestone')}
+                        variant="outlined"
+                        fullWidth
+                      />
+                    )}
+                    onChange={(event, value) => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'last_milestone_bpmn_name',
+                        value || '',
+                      );
+                      setSelectedLastMilestone(value);
+                    }}
+                  />
+                ) : (
+                  <Select
+                    fullWidth
+                    label={t('last_milestone')}
+                    labelId="last-milestone-label"
+                    value={selectedLastMilestone || ''}
+                    onChange={(event) => {
+                      const { value } = event.target;
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'last_milestone_bpmn_name',
+                        value,
+                      );
+                      setSelectedLastMilestone(value);
+                    }}
+                  >
+                    {lastMilestones.map((milestone) => (
+                      <MenuItem key={milestone} value={milestone}>
+                        {milestone}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
               </div>
               {selectedLastMilestone && (
                 <div style={{ marginLeft: '8px' }}>

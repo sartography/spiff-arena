@@ -18,10 +18,16 @@ def test_last_milestone_filter(browser_context: BrowserContext):
     # Verify the last milestone dropdown is present
     expect(page.get_by_label("Last milestone")).to_be_visible()
     
-    # Select a milestone value from the dropdown
-    page.get_by_label("Last milestone").click()
-    # Select the first available milestone option
-    page.locator("li[role='option']").first.click()
+    # The UI could be showing either a dropdown (Select) or an autocomplete (if > 5 values)
+    # Try to interact with the element based on what's visible
+    last_milestone_element = page.get_by_label("Last milestone")
+    expect(last_milestone_element).to_be_visible()
+    last_milestone_element.click()
+    
+    # For both dropdown and autocomplete, the options are shown as li[role='option']
+    milestone_options = page.locator("li[role='option']")
+    expect(milestone_options.first).to_be_visible()
+    milestone_options.first.click()
     
     # Close the advanced options modal
     page.get_by_role("button", name="Close").click()
