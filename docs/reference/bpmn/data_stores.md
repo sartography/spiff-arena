@@ -87,7 +87,7 @@ JSON Data Stores are similar to KKV Data Stores however they are structured as j
 
 ![JSON data_store](/images/JSON_data_store.png)
 
-1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
+1. **Start Event**: Triggers the workflow.
 
 2. **Script Task: Populate Data Store**
 
@@ -164,7 +164,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
 
 ![JSON file data_store](/images/JSON_file_data_store.png)
 
-1. **Start Event**: Triggers the workflow for Gatorade flavor selection.
+1. **Start Event**: Triggers the workflow.
 
 2. **Script Task: Populate Dropdown List**
 
