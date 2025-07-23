@@ -73,6 +73,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
+    {"path": "/process-model-import", "relevant_permissions": ["create"]},
     {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
     {"path": "/process-model-tests/create", "relevant_permissions": ["create"]},
