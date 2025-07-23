@@ -689,20 +689,22 @@ export default function ProcessModelTreePage({
                         })}
                       </Typography>
                       {currentProcessGroup && (
-                        <Can
-                          I="POST"
-                          a={targetUris.processModelCreatePath}
-                          ability={ability}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            data-testid="add-process-model-button"
-                            href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Can
+                            I="POST"
+                            a={targetUris.processModelCreatePath}
+                            ability={ability}
                           >
-                            <Add />
-                          </IconButton>
-                        </Can>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => e.stopPropagation()}
+                              data-testid="add-process-model-button"
+                              href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                            >
+                              <Add />
+                            </IconButton>
+                          </Can>
+                        </Box>
                       )}
                     </Box>
                   </AccordionSummary>

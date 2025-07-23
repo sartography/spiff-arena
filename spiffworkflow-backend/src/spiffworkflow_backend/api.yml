@@ -623,6 +623,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
+  /process-model-import/{modified_process_group_id}:
+    parameters:
+      - name: modified_process_group_id
+        in: path
+        required: true
+        description: modified id of an existing process group
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_model_import_controller.process_model_import
+      summary: Import a process model from a GitHub URL
+      tags:
+        - Process Models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - repository_url
+              properties:
+                repository_url:
+                  type: string
+                  description: The GitHub URL to the repository or directory containing the process model
+                  example: "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
+      responses:
+        "201":
+          description: Process model imported successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  process_model:
+                    $ref: "#/components/schemas/ProcessModel"
+                  import_source:
+                    type: string
+                    description: The source URL from which the model was imported
+
   /process-model-tests/run/{modified_process_model_identifier}:
     parameters:
       - name: modified_process_model_identifier
