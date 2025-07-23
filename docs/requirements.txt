@@ -1,10 +1,10 @@
 alabaster==0.7.16
 appdirs==1.4.4
 astroid==3.2.4
-attrs==23.2.0
+attrs>=24.3.0
 Babel==2.15.0
 beautifulsoup4==4.12.3
-cattrs==23.2.3
+cattrs==25.1.1
 certifi==2024.7.4
 charset-normalizer==3.3.2
 click==8.1.7
