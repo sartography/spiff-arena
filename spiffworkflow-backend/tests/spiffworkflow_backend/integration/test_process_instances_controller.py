@@ -1,9 +1,9 @@
-from spiffworkflow_backend.models.db import db
 import os
 
 from flask.app import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
