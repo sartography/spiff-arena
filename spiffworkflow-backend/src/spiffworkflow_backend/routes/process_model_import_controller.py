@@ -7,7 +7,6 @@ from spiffworkflow_backend.services.process_model_import_service import GitHubRe
 from spiffworkflow_backend.services.process_model_import_service import InvalidProcessModelError
 from spiffworkflow_backend.services.process_model_import_service import ProcessGroupNotFoundError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
-from spiffworkflow_backend.services.process_model_import_service import is_valid_github_url
 
 
 def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
@@ -23,7 +22,7 @@ def process_model_import(modified_process_group_id: str) -> tuple[dict, int]:
         raise ApiError("missing_repository_url", "Repository URL is required", status_code=400)
 
     # Validate the URL
-    if not is_valid_github_url(repository_url):
+    if not ProcessModelImportService.is_valid_github_url(repository_url):
         raise ApiError("invalid_github_url", "The provided URL is not a valid GitHub repository URL", status_code=400)
 
     # Unmodify process group ID (replace : with /)

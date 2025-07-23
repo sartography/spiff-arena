@@ -323,7 +323,6 @@ class ProcessModelImportService:
             current_app.logger.warning(f"Failed to commit to Git: {str(ex)}")
             # Continue even if Git commit fails
 
-
     @classmethod
     def is_valid_github_url(cls, url: str) -> bool:
         """Check if a URL is a valid GitHub repository URL."""
