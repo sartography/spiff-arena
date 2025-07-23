@@ -463,23 +463,10 @@ export default function ProcessInstanceListTableWithFilters({
 
       // Fetch distinct milestone values for filtering
       HttpService.makeCallToBackend({
-        path: `/process-instances?per_page=1000`,
-        httpMethod: 'POST',
-        postBody: {
-          report_metadata: {
-            columns: [],
-            filter_by: [],
-            order_by: [],
-          },
-        },
-        successCallback: (processInstancesResult: any) => {
-          const uniqueMilestones = new Set<string>();
-          processInstancesResult.results.forEach((instance: any) => {
-            if (instance.last_milestone_bpmn_name) {
-              uniqueMilestones.add(instance.last_milestone_bpmn_name);
-            }
-          });
-          setLastMilestones(Array.from(uniqueMilestones).sort());
+        path: `/process-instances/unique-milestone-names`,
+        httpMethod: 'GET',
+        successCallback: (lastMilestoneArray: string[]) => {
+          setLastMilestones(lastMilestoneArray.sort());
         },
       });
 

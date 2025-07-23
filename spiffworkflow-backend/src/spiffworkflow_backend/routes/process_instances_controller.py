@@ -649,6 +649,12 @@ def send_bpmn_event(
         )
 
 
+def unique_milestone_name_list() -> Response:
+    results = ProcessInstanceModel.query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name).distinct().all()
+    values = [row[0] for row in results]
+    return make_response(jsonify(values), 200)
+
+
 def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
