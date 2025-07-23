@@ -1381,12 +1381,18 @@ export default function ProcessInstanceListTableWithFilters({
             </InputLabel>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexGrow: 1 }}>
-                {lastMilestones.length > 5 ? (
+                {lastMilestones.length > 3 ? (
                   <Autocomplete
                     disablePortal
                     id="last-milestone-autocomplete"
                     options={lastMilestones}
-                    value={selectedLastMilestone || null}
+                    value={selectedLastMilestone}
+                    getOptionLabel={(option) => option || ''}
+                    renderOption={(props, option) => (
+                      <li {...props} key={option}>
+                        {option}
+                      </li>
+                    )}
                     renderInput={(params) => (
                       <TextField
                         // Need props spreading for Autocomplete to work
