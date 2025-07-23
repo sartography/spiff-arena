@@ -538,7 +538,14 @@ export default function ProcessInstanceListTableWithFilters({
     fieldName: string,
     fieldValue: any,
   ) => {
-    if (fieldValue) {
+    // For milestone and user group, empty string means "remove the filter"
+    if (
+      fieldValue === '' &&
+      (fieldName === 'last_milestone_bpmn_name' ||
+        fieldName === 'user_group_identifier')
+    ) {
+      removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
+    } else if (fieldValue) {
       let existingReportFilter = getFilterByFromReportMetadata(
         fieldName,
         reportMetadataToUse,
@@ -1304,51 +1311,99 @@ export default function ProcessInstanceListTableWithFilters({
             <InputLabel id="user-group-label">
               {t('assigned_user_group')}
             </InputLabel>
-            <Select
-              label={t('assigned_user_group')}
-              labelId="user-group-label"
-              value={selectedUserGroup || ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                insertOrUpdateFieldInReportMetadata(
-                  reportMetadata,
-                  'user_group_identifier',
-                  value,
-                );
-                setSelectedUserGroup(value);
-              }}
-            >
-              {['', ...userGroups].map((group) => (
-                <MenuItem key={group} value={group}>
-                  {group}
-                </MenuItem>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                <Select
+                  fullWidth
+                  label={t('assigned_user_group')}
+                  labelId="user-group-label"
+                  value={selectedUserGroup || ''}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    insertOrUpdateFieldInReportMetadata(
+                      reportMetadata,
+                      'user_group_identifier',
+                      value,
+                    );
+                    setSelectedUserGroup(value);
+                  }}
+                >
+                  {userGroups.map((group) => (
+                    <MenuItem key={group} value={group}>
+                      {group}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+              {selectedUserGroup && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'user_group_identifier',
+                        '',
+                      );
+                      setSelectedUserGroup(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
           </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel id="last-milestone-label">
               {t('last_milestone')}
             </InputLabel>
-            <Select
-              label={t('last_milestone')}
-              labelId="last-milestone-label"
-              value={selectedLastMilestone || ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                insertOrUpdateFieldInReportMetadata(
-                  reportMetadata,
-                  'last_milestone_bpmn_name',
-                  value,
-                );
-                setSelectedLastMilestone(value);
-              }}
-            >
-              {['', ...lastMilestones].map((milestone) => (
-                <MenuItem key={milestone} value={milestone}>
-                  {milestone}
-                </MenuItem>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                <Select
+                  fullWidth
+                  label={t('last_milestone')}
+                  labelId="last-milestone-label"
+                  value={selectedLastMilestone || ''}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    insertOrUpdateFieldInReportMetadata(
+                      reportMetadata,
+                      'last_milestone_bpmn_name',
+                      value,
+                    );
+                    setSelectedLastMilestone(value);
+                  }}
+                >
+                  {lastMilestones.map((milestone) => (
+                    <MenuItem key={milestone} value={milestone}>
+                      {milestone}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+              {selectedLastMilestone && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'last_milestone_bpmn_name',
+                        '',
+                      );
+                      setSelectedLastMilestone(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
           </FormControl>
           <FormControlLabel
             control={
