@@ -478,10 +478,11 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
+        new_user = False
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             user_model = UserService().create_user(**user_attributes)
-            new_group_ids = {g.id for g in user_model.groups}
+            new_user = True
         else:
             # Update with the latest information
             user_db_model_changed = False
@@ -521,6 +522,9 @@ class AuthorizationService:
         # before the user signs in, because we won't know things like
         # the external service user identifier.
         cls.import_permissions_from_yaml_file(user_model)
+
+        if new_user:
+            new_group_ids.update({g.id for g in user_model.groups})
 
         if len(new_group_ids) > 0 or len(old_group_ids) > 0:
             UserService.update_human_task_assignments_for_user(
