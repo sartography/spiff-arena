@@ -8,8 +8,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import CloseIcon from '@mui/icons-material/Close';
-import AddIcon from '@mui/icons-material/Add';
+import { Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -36,7 +35,6 @@ import {
   Checkbox as MuiCheckbox,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   Select,
   MenuItem,
@@ -1224,15 +1222,16 @@ export default function ProcessInstanceListTableWithFilters({
               >
                 {truncateString(reportColumnLabel, 10)}
               </Button>
-              <IconButton
+              <Button
                 data-testid="remove-report-column"
-                aria-label={t('remove_column')}
+                renderIcon={Close}
+                iconDescription={t('remove_column')}
                 className={`button-tag-icon ${tagTypeClass}`}
-                size="small"
+                hasIconOnly
+                size="sm"
+                kind="ghost"
                 onClick={() => removeColumn(reportColumnForEditing)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
+              />
             </Tag>
           </Column>,
         );
@@ -1241,18 +1240,19 @@ export default function ProcessInstanceListTableWithFilters({
         <Grid narrow fullWidth className="filter-buttons">
           {tags}
           <Column md={1} lg={1} sm={1}>
-            <IconButton
+            <Button
               data-testid="add-column-button"
-              aria-label={t('column_options')}
+              renderIcon={AddAlt}
+              iconDescription={t('column_options')}
               className="with-tiny-top-margin"
-              size="small"
+              kind="ghost"
+              hasIconOnly
+              size="sm"
               onClick={() => {
                 setShowReportColumnForm(true);
                 setReportColumnFormMode('new');
               }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
+            />
           </Column>
         </Grid>
       );
@@ -1314,7 +1314,7 @@ export default function ProcessInstanceListTableWithFilters({
               </div>
               {systemReport && (
                 <div style={{ marginLeft: '8px' }}>
-                  <IconButton
+                  <Button
                     onClick={() => {
                       systemReportOptions.forEach(
                         (systemReportOption: string) => {
@@ -1327,11 +1327,12 @@ export default function ProcessInstanceListTableWithFilters({
                       );
                       setSystemReport(null);
                     }}
-                    size="small"
-                    aria-label={t('clear_filter')}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
                 </div>
               )}
             </div>
@@ -1366,7 +1367,7 @@ export default function ProcessInstanceListTableWithFilters({
               </div>
               {selectedUserGroup && (
                 <div style={{ marginLeft: '8px' }}>
-                  <IconButton
+                  <Button
                     onClick={() => {
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
@@ -1375,11 +1376,12 @@ export default function ProcessInstanceListTableWithFilters({
                       );
                       setSelectedUserGroup(null);
                     }}
-                    size="small"
-                    aria-label={t('clear_filter')}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
                 </div>
               )}
             </div>
@@ -1414,7 +1416,7 @@ export default function ProcessInstanceListTableWithFilters({
               </div>
               {selectedLastMilestone && (
                 <div style={{ marginLeft: '8px' }}>
-                  <IconButton
+                  <Button
                     onClick={() => {
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
@@ -1423,11 +1425,12 @@ export default function ProcessInstanceListTableWithFilters({
                       );
                       setSelectedLastMilestone(null);
                     }}
-                    size="small"
-                    aria-label={t('clear_filter')}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
                 </div>
               )}
             </div>
