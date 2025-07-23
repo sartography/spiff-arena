@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography, Stack } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -16,6 +16,7 @@ import {
 export default function ProcessModelNew() {
   const { t } = useTranslation();
   const params = useParams();
+  const navigate = useNavigate();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [processModel, setProcessModel] = useState<ProcessModel>({
     id: '',
@@ -67,8 +68,8 @@ export default function ProcessModelNew() {
           onClose={() => setImportDialogOpen(false)}
           processGroupId={params.process_group_id}
           onImportSuccess={(processModelId) => {
-            // Navigate to the imported process model
-            window.location.href = `/process-models/${modifyProcessIdentifierForPathParam(processModelId)}`;
+            // Navigate to the imported process model using React Router
+            navigate(`/process-models/${modifyProcessIdentifierForPathParam(processModelId)}`);
           }}
         />
       )}
