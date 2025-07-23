@@ -326,20 +326,9 @@ class ProcessModelImportService:
 
 def is_valid_github_url(url: str) -> bool:
     """Check if a URL is a valid GitHub repository URL."""
-    if not url:
+    try:
+        # Use the existing validation logic in _parse_github_url
+        ProcessModelImportService._parse_github_url(url)
+        return True
+    except InvalidGitHubUrlError:
         return False
-
-    # Basic URL validation
-    if not url.startswith("https://github.com/"):
-        return False
-
-    # Validate URL structure: owner/repo/tree|blob/branch/path
-    parts = url.split("/")
-    if len(parts) < 7:
-        return False
-
-    # Check that the URL contains either /tree/ or /blob/
-    if "/tree/" not in url and "/blob/" not in url:
-        return False
-
-    return True
