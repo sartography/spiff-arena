@@ -1284,28 +1284,54 @@ export default function ProcessInstanceListTableWithFilters({
             <InputLabel id="system-report-label">
               {t('system_report')}
             </InputLabel>
-            <Select
-              labelId="system-report-label"
-              label={t('system_report')}
-              value={systemReport || ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                systemReportOptions.forEach((systemReportOption: string) => {
-                  insertOrUpdateFieldInReportMetadata(
-                    reportMetadata,
-                    systemReportOption,
-                    value === systemReportOption,
-                  );
-                  setSystemReport(value);
-                });
-              }}
-            >
-              {['', ...systemReportOptions].map((option) => (
-                <MenuItem key={option} value={option}>
-                  {titleizeString(option)}
-                </MenuItem>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                <Select
+                  fullWidth
+                  labelId="system-report-label"
+                  label={t('system_report')}
+                  value={systemReport || ''}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    systemReportOptions.forEach((systemReportOption: string) => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        systemReportOption,
+                        value === systemReportOption,
+                      );
+                      setSystemReport(value);
+                    });
+                  }}
+                >
+                  {['', ...systemReportOptions].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {titleizeString(option)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+              {systemReport && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      systemReportOptions.forEach((systemReportOption: string) => {
+                        insertOrUpdateFieldInReportMetadata(
+                          reportMetadata,
+                          systemReportOption,
+                          false,
+                        );
+                      });
+                      setSystemReport(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
           </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel id="user-group-label">
