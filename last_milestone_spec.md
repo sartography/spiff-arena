@@ -1,5 +1,17 @@
-allow filtering process instances by last milestone. i tried just hacking a post (that fetches process instances like this, but of course our code doesn't support it):
+# Last Milestone Filter Specification
 
+## Overview
+This feature allows filtering process instances by their last milestone. This is useful for users who want to quickly find process instances that have reached a specific stage or milestone in their execution.
+
+## Backend Implementation
+The backend implementation adds support for filtering process instances by the `last_milestone_bpmn_name` field. This field is already part of the `ProcessInstanceModel` in the database.
+
+### Key Components:
+- **ProcessInstanceReportService**: Updated to support filtering by last milestone name
+- **FilterValue interface**: Supports the `last_milestone_bpmn_name` field in the filter configuration
+- **Unit Tests**: Added tests to verify the backend filtering works correctly
+
+### Example API Request:
 ```json
 {
   "report_metadata": {
@@ -7,51 +19,37 @@ allow filtering process instances by last milestone. i tried just hacking a post
       {
         "Header": "Id",
         "accessor": "id",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "Process",
         "accessor": "process_model_display_name",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "Start",
         "accessor": "start_in_seconds",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "End",
         "accessor": "end_in_seconds",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "Started by",
         "accessor": "process_initiator_username",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "Last milestone",
         "accessor": "last_milestone_bpmn_name",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       },
       {
         "Header": "Status",
         "accessor": "status",
-        "filterable": false,
-        "filter_field_value": "",
-        "filter_operator": ""
+        "filterable": false
       }
     ],
     "filter_by": [
@@ -79,8 +77,34 @@ allow filtering process instances by last milestone. i tried just hacking a post
 }
 ```
 
-the UX on the frontend also needs to support it.
-we should have a test in spiffworkflow-frontend/test/browser that proves that it works.
-those get run like cd spiffworkflow-frontend && HEADLESS=true pytest spiffworkflow-frontend/test/browser/test_login.py (you will make a new file)
-always run ./bin/run_pyl from the root of the repo as you make changes to make sure unit tests and lint are staying in a working state.
-feel free to flesh out this spec, add detail, add TODO items, etc.
+## Frontend Implementation
+The frontend implementation adds a dropdown in the advanced filter options to select a last milestone value for filtering process instances.
+
+### Key Components:
+- **ProcessInstanceListTableWithFilters**: Updated to include a last milestone dropdown in the advanced filters modal
+- **State Management**: Added state variables for selected milestone and available milestone values
+- **Data Fetching**: Added code to fetch unique milestone values from existing process instances
+- **UI Components**: Added a dropdown to select milestone values in the advanced options modal
+
+### How it Works:
+1. When loading the process instances page, the system fetches unique milestone values from existing process instances
+2. Users can access the last milestone filter in the advanced options modal
+3. When a milestone is selected, the filter is applied and process instances are filtered to show only those with the matching last milestone value
+4. The selected filter appears as a tag in the UI
+
+## Testing
+A browser test has been created to verify the last milestone filtering functionality:
+
+- File: `spiffworkflow-frontend/test/browser/test_last_milestone_filter.py`
+- The test verifies that:
+  - The last milestone dropdown appears in the advanced options modal
+  - A milestone can be selected from the dropdown
+  - The filter is applied correctly to display only matching process instances
+
+## Running Tests
+Tests can be run with:
+```bash
+cd spiffworkflow-frontend && HEADLESS=true pytest spiffworkflow-frontend/test/browser/test_last_milestone_filter.py
+```
+
+Always run `./bin/run_pyl` from the root of the repo to make sure unit tests and lint are staying in a working state.

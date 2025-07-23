@@ -224,6 +224,10 @@ export default function ProcessInstanceListTableWithFilters({
     null,
   );
   const [userGroups, setUserGroups] = useState<string[]>([]);
+  const [selectedLastMilestone, setSelectedLastMilestone] = useState<
+    string | null
+  >(null);
+  const [lastMilestones, setLastMilestones] = useState<string[]>([]);
   const systemReportOptions: string[] = useMemo(() => {
     return [
       'instances_with_tasks_waiting_for_me',
@@ -269,6 +273,7 @@ export default function ProcessInstanceListTableWithFilters({
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
     setSelectedUserGroup(null);
+    setSelectedLastMilestone(null);
     setStartFromDate('');
     setStartFromTime('');
     setStartToDate('');
@@ -343,6 +348,8 @@ export default function ProcessInstanceListTableWithFilters({
             setWithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
+          } else if (reportFilter.field_name === 'last_milestone_bpmn_name') {
+            setSelectedLastMilestone(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
             setSystemReport(reportFilter.field_name);
           } else if (reportFilter.field_name === 'process_model_identifier') {
@@ -453,6 +460,29 @@ export default function ProcessInstanceListTableWithFilters({
         },
       );
       setProcessStatusAllOptions(processStatusAllOptionsArray);
+
+      // Fetch distinct milestone values for filtering
+      HttpService.makeCallToBackend({
+        path: `/process-instances?per_page=1000`,
+        httpMethod: 'POST',
+        postBody: {
+          report_metadata: {
+            columns: [],
+            filter_by: [],
+            order_by: [],
+          },
+        },
+        successCallback: (processInstancesResult: any) => {
+          const uniqueMilestones = new Set<string>();
+          processInstancesResult.results.forEach((instance: any) => {
+            if (instance.last_milestone_bpmn_name) {
+              uniqueMilestones.add(instance.last_milestone_bpmn_name);
+            }
+          });
+          setLastMilestones(Array.from(uniqueMilestones).sort());
+        },
+      });
+
       getReportMetadataWithReportHash();
     }
     const checkFiltersAndRun = () => {
@@ -1291,6 +1321,31 @@ export default function ProcessInstanceListTableWithFilters({
               {['', ...userGroups].map((group) => (
                 <MenuItem key={group} value={group}>
                   {group}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="last-milestone-label">
+              {t('last_milestone')}
+            </InputLabel>
+            <Select
+              label={t('last_milestone')}
+              labelId="last-milestone-label"
+              value={selectedLastMilestone || ''}
+              onChange={(event) => {
+                const { value } = event.target;
+                insertOrUpdateFieldInReportMetadata(
+                  reportMetadata,
+                  'last_milestone_bpmn_name',
+                  value,
+                );
+                setSelectedLastMilestone(value);
+              }}
+            >
+              {['', ...lastMilestones].map((milestone) => (
+                <MenuItem key={milestone} value={milestone}>
+                  {milestone}
                 </MenuItem>
               ))}
             </Select>
