@@ -651,7 +651,7 @@ def send_bpmn_event(
 
 def unique_milestone_name_list() -> Response:
     results = ProcessInstanceModel.query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name).distinct().all()
-    values = [row[0] for row in results]
+    values = [row[0] for row in results if row[0] is not None and row[0] != ""]
     return make_response(jsonify(values), 200)
 
 
