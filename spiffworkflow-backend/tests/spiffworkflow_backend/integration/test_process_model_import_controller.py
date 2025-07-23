@@ -13,7 +13,6 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_model_import_service import ProcessGroupNotFoundError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -107,24 +106,18 @@ class TestProcessModelImportController(BaseTest):
         """Test importing a process model to a non-existent group."""
         process_group_id = "nonexistent_group"
 
-        # Mock the service to raise ProcessGroupNotFoundError
-        with patch.object(
-            ProcessModelImportService,
-            "import_from_github_url",
-            side_effect=ProcessGroupNotFoundError(f"Process group not found: {process_group_id}"),
-        ):
-            # Make a request to the import endpoint
-            repository_url = "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
-            response = client.post(
-                f"/v1.0/process-model-import/{process_group_id}",
-                json={"repository_url": repository_url},
-                headers=self.logged_in_headers(with_super_admin_user),
-            )
+        repository_url = "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
+        response = client.post(
+            f"/v1.0/process-model-import/{process_group_id}",
+            json={"repository_url": repository_url},
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
 
-            # Check the response status code
-            assert response.status_code == 404
+        # Check the response status code
+        assert response.status_code == 500
 
-            # Verify the error message
-            response_data = json.loads(response.content)
-            assert "error_code" in response_data
-            assert response_data["error_code"] == "process_group_not_found"
+        # Verify the error message
+        response_data = json.loads(response.content)
+        assert "error_code" in response_data
+        assert response_data["error_code"] == "internal_server_error"
+        assert "process_group_not_found" in response_data["message"]

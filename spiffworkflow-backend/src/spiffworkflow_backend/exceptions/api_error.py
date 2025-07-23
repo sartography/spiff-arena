@@ -295,7 +295,7 @@ def handle_exception(app: Flask, request: ConnexionRequest, exception: Exception
                 " there will be no backtrace. see api_error.py"
             )
 
-        error_code = "internal_server_error"
+        error_code = exception.error_code if hasattr(exception, "error_code") else "internal_server_error"
         status_code = 500
         if isinstance(exception, NotAuthorizedError | TokenNotProvidedError | TokenInvalidError):
             error_code = "not_authorized"
