@@ -104,18 +104,8 @@ export function ProcessModelImportDialog({
           setErrorMessage(error?.message || 'Import failed');
         },
       });
-    try {
-      workflowService.importProcessModel({
-        successCallback: (importedProcessModelId) => {
-          onImportSuccess(importedProcessModelId ?? '');
-          setIsImporting(false);
-        },
-        failureCallback: (error) => {
-          console.error('Import error:', error);
-          setErrorMessage(error?.message || 'Import failed');
-          setIsImporting(false);
-        },
-      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
