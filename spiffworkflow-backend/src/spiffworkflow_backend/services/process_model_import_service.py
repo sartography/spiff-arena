@@ -324,11 +324,11 @@ class ProcessModelImportService:
             # Continue even if Git commit fails
 
 
-def is_valid_github_url(url: str) -> bool:
-    """Check if a URL is a valid GitHub repository URL."""
-    try:
-        # Use the existing validation logic in _parse_github_url
-        ProcessModelImportService._parse_github_url(url)
-        return True
-    except InvalidGitHubUrlError:
-        return False
+    @classmethod
+    def is_valid_github_url(cls, url: str) -> bool:
+        """Check if a URL is a valid GitHub repository URL."""
+        try:
+            cls._parse_github_url(url)
+            return True
+        except InvalidGitHubUrlError:
+            return False
