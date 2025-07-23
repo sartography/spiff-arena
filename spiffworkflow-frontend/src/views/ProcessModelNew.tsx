@@ -69,7 +69,9 @@ export default function ProcessModelNew() {
           processGroupId={params.process_group_id}
           onImportSuccess={(processModelId) => {
             // Navigate to the imported process model using React Router
-            navigate(`/process-models/${modifyProcessIdentifierForPathParam(processModelId)}`);
+            navigate(
+              `/process-models/${modifyProcessIdentifierForPathParam(processModelId)}`,
+            );
           }}
         />
       )}
