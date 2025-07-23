@@ -12,16 +12,25 @@ def test_last_milestone_filter(browser_context: BrowserContext):
     # Navigate to the process instances page
     page.goto("http://localhost:7001/process-instances/all")
     
+    # Take screenshot of initial state before opening filters
+    page.screenshot(path="debug_screenshots/milestone-filter-before.png")
+    
     # Open the advanced options modal
     page.get_by_test_id("advanced-options-filters").click()
     
     # Verify the last milestone dropdown is present
     expect(page.get_by_label("Last milestone")).to_be_visible()
     
+    # Take screenshot of advanced options modal
+    page.screenshot(path="debug_screenshots/milestone-filter-modal-open.png")
+    
     # Select a milestone value from the dropdown
     page.get_by_label("Last milestone").click()
     # Select the first available milestone option
     page.locator("li[role='option']").first.click()
+    
+    # Take screenshot after selection
+    page.screenshot(path="debug_screenshots/milestone-filter-selected.png")
     
     # Close the advanced options modal
     page.get_by_role("button", name="Close").click()
@@ -30,6 +39,9 @@ def test_last_milestone_filter(browser_context: BrowserContext):
     # This assumes the milestone filter displays a tag with the selected milestone value
     milestone_filter_tag = page.get_by_test_id("filter-tag-last_milestone_bpmn_name")
     expect(milestone_filter_tag).to_be_visible()
+    
+    # Take screenshot of filtered results
+    page.screenshot(path="debug_screenshots/milestone-filter-applied.png")
     
     # Verify the process instances are filtered - check that all visible process instances
     # have the selected milestone value
