@@ -46,7 +46,6 @@ import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
 import HttpService from '../../services/HttpService';
-import { ProcessModelImportDialog } from '../../components/ProcessModelImportDialog';
 import DataStoreCard from '../../components/DataStoreCard';
 
 const SPIFF_ID = 'spifftop';
@@ -101,7 +100,6 @@ export default function ProcessModelTreePage({
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   // const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [treeCollapsed] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
@@ -831,19 +829,6 @@ export default function ProcessModelTreePage({
           </Stack>
         </Stack>
       </Container>
-      {currentProcessGroup && (
-        <ProcessModelImportDialog
-          open={importDialogOpen}
-          onClose={() => setImportDialogOpen(false)}
-          processGroupId={modifyProcessIdentifierForPathParam(
-            currentProcessGroup.id,
-          )}
-          onImportSuccess={(_processModelId) => {
-            // Reload the page to show the newly imported process model
-            window.location.reload();
-          }}
-        />
-      )}
     </Box>
   );
 }
