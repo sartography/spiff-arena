@@ -142,7 +142,7 @@ def test_process_model_import(browser_context: BrowserContext):
 
 if __name__ == "__main__":
     # For manual testing
-    import sys
+    from playwright.sync_api import sync_playwright
     from playwright.sync_api import sync_playwright
     
     with sync_playwright() as p:
