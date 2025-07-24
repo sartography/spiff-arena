@@ -22,7 +22,7 @@ def process_model_import(modified_process_group_id: str, body: dict) -> tuple[di
                 url=repository_url, process_group_id=unmodified_process_group_id
             )
         except Exception as ex:
-            raise ApiError("github_import_error", str(ex), status_code=500)
+            raise ApiError("github_import_error", str(ex), status_code=500) from ex
     elif ProcessModelImportService.is_model_alias(repository_url):
         try:
             process_model = ProcessModelImportService.import_from_model_alias(
@@ -30,14 +30,16 @@ def process_model_import(modified_process_group_id: str, body: dict) -> tuple[di
             )
             import_source_type = "marketplace"
         except ModelAliasNotFoundError as ex:
-            raise ApiError("model_alias_not_found", str(ex), status_code=404)
+            raise ApiError("model_alias_not_found", str(ex), status_code=404) from ex
         except ModelMarketplaceError as ex:
-            raise ApiError("marketplace_error", str(ex), status_code=500)
+            raise ApiError("marketplace_error", str(ex), status_code=500) from ex
     else:
         raise ApiError("invalid_import_source", "The provided value is not a valid GitHub URL or model alias", status_code=400)
 
-    _commit_and_push_to_git(
-        f"User: {g.user.username} imported process model from {import_source_type} ({repository_url}) into {unmodified_process_group_id}"
+    commit_message = (
+        f"User: {g.user.username} imported process model from {import_source_type} "
+        f"({repository_url}) into {unmodified_process_group_id}"
     )
+    _commit_and_push_to_git(commit_message)
 
     return {"process_model": process_model.to_dict(), "import_source": repository_url}, 201
