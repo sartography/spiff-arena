@@ -146,6 +146,8 @@ export default function ProcessInstanceListTableWithFilters({
     null,
   );
 
+  const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
+
   const [startFromDate, setStartFromDate] = useState<string>('');
   const [startToDate, setStartToDate] = useState<string>('');
   const [endFromDate, setEndFromDate] = useState<string>('');
@@ -1371,7 +1373,7 @@ export default function ProcessInstanceListTableWithFilters({
           <FormControl fullWidth margin="normal">
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexGrow: 1 }}>
-                {lastMilestones.length > 3 ? (
+                {lastMilestones.length > MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY ? (
                   <Autocomplete
                     disablePortal
                     id="last-milestone-autocomplete"
