@@ -229,6 +229,8 @@ jobs:
           pip install --constraint=.github/workflows/constraints.txt pip uv
           uv --version
       - name: uv sync
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SPIFF_ARENA_COMMON: "0.0.1"
         run: uv sync
       - name: run_pre_commit
         run: ./bin/run_pre_commit_in_ci

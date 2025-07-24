@@ -2,20 +2,23 @@ name: Dev Containers
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
+    env:
+      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SPIFF_ARENA_COMMON: "0.0.1"
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Create dev environment
-      run: make dev-env
-      
-    - name: Backend Unit tests
-      run: make be-tests-par
+      - name: Create dev environment
+        run: make dev-env
+
+      - name: Backend Unit tests
+        run: make be-tests-par
+
