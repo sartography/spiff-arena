@@ -300,7 +300,7 @@ export default function ProcessModelEditDiagram() {
       path,
       httpMethod,
       failureCallback: addError,
-      successCallback: (_result: any) => {},
+      successCallback: (_result: any) => { },
     });
   };
 
@@ -714,7 +714,8 @@ export default function ProcessModelEditDiagram() {
         expectedJson = JSON.parse(
           currentScriptUnitTest.expectedOutputJson.value,
         );
-      } catch (_e) {
+      } catch (e) {
+        const a = "HELO";
         setScriptUnitTestResult({
           result: false,
           error: t('diagram_errors_json_formatting'),

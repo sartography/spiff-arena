@@ -18,7 +18,6 @@ export default tseslint.config(
       es2021: true,
     },
     extends: [
-      'airbnb',
       'plugin:import/errors',
       'plugin:import/typescript',
       'plugin:import/warnings',
