@@ -35,6 +35,7 @@ export default tseslint.config(
       'plugin:prettier/recommended',
       'plugin:react-hooks/recommended',
       'plugin:react/recommended',
+      'plugin:sonarjs/recommended-legacy',
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
@@ -66,6 +67,7 @@ export default tseslint.config(
       'react/require-default-props': 'off',
       'import/prefer-default-export': 'off',
       'no-unused-vars': 'off',
+      'sonarjs/cognitive-complexity': 'off',
       'sonarjs/fixme-tag': 'off',
       'sonarjs/jsx-key': 'off',
       'sonarjs/no-commented-code': 'off',
@@ -73,7 +75,9 @@ export default tseslint.config(
       'sonarjs/no-ignored-exceptions': 'off',
       'sonarjs/no-nested-conditional': 'off',
       'sonarjs/no-nested-functions': 'off',
+      'sonarjs/no-unused-vars': 'off',
       'sonarjs/pseudo-random': 'off',
+      'sonarjs/regex-complexity': 'off',
       'sonarjs/slow-regex': 'off',
       'sonarjs/todo-tag': 'off',
       '@typescript-eslint/no-unused-vars': [
