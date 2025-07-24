@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     env:
-      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SPIFF_ARENA_COMMON: "0.0.1"
+      SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.1"
 
     runs-on: ubuntu-latest
 
@@ -21,4 +21,3 @@ jobs:
 
       - name: Backend Unit tests
         run: make be-tests-par
-
