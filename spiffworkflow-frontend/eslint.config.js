@@ -3,16 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import tseslint from 'typescript-eslint';
 
-import { defineConfig, globalIgnores } from 'eslint/config';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   resolvePluginsRelativeTo: __dirname,
-  // globalIgnores: ['src/rjsf/carbon_theme/**/*'],
-  // hey: 'DNE',
 });
 
 export default tseslint.config(
