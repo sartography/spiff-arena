@@ -553,7 +553,6 @@ export default function ProcessInstanceListTable({
 
     return (
       <TableContainer>
-        {}
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>
