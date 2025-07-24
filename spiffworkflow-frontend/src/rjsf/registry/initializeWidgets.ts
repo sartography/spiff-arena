@@ -1,3 +1,4 @@
+import React from 'react';
 import { initializeWidgetDiscovery } from './WidgetDiscovery';
 import { widgetRegistry } from './WidgetRegistry';
 import DateRangePickerWidget from '../custom_widgets/DateRangePicker/DateRangePickerWidget';
@@ -38,7 +39,7 @@ function registerCoreWidgets(): void {
 
   // Use withProps higher-order component like in the original CustomForm
   const customTypeaheadWidget = function TypeaheadWithTheme(props: any) {
-    return <TypeaheadWidget {...props} reactJsonSchemaFormTheme="mui" />;
+    return React.createElement(TypeaheadWidget, { ...props, reactJsonSchemaFormTheme: "mui" });
   };
 
   widgetRegistry.registerWidget({

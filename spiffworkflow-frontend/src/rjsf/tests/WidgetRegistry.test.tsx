@@ -8,7 +8,7 @@ import { WidgetRegistration, CustomWidgetProps } from '../interfaces/CustomWidge
 describe('Widget Registry', () => {
   // Create a simple test widget
   const TestWidget = (props: CustomWidgetProps) => {
-    return <div data-testid="test-widget">{props.label}</div>;
+    return React.createElement('div', { 'data-testid': 'test-widget' }, props.label);
   };
 
   // Clear registry before and after tests
@@ -53,7 +53,19 @@ describe('Widget Registry', () => {
 
     // Render the widget and check output
     if (widget) {
-      render(<widget id="test" value="" onChange={() => {}} label="Test Label" required={false} disabled={false} readonly={false} onBlur={() => {}} onFocus={() => {}} options={{}} formContext={{}} />);
+      render(React.createElement(widget, {
+        id: "test",
+        value: "",
+        onChange: () => {},
+        label: "Test Label",
+        required: false,
+        disabled: false,
+        readonly: false,
+        onBlur: () => {},
+        onFocus: () => {},
+        options: {},
+        formContext: {}
+      }));
       expect(screen.getByTestId('test-widget')).toHaveTextContent('Test Label');
     }
   });

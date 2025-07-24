@@ -183,25 +183,32 @@ export function SandboxedWidget({
   }, [widgetSource]);
 
   if (error) {
-    return (
-      <div className="widget-error" style={{ color: 'red', padding: '8px', border: '1px solid red' }}>
-        {error}
-      </div>
+    return React.createElement(
+      'div',
+      { 
+        className: "widget-error",
+        style: { color: 'red', padding: '8px', border: '1px solid red' } 
+      },
+      error
     );
   }
 
   if (!WidgetComponent) {
-    return <div>Loading widget...</div>;
+    return React.createElement('div', null, 'Loading widget...');
   }
 
   // Wrap component rendering in error boundary
   try {
-    return <WidgetComponent {...props} />;
+    return React.createElement(WidgetComponent, props);
   } catch (err) {
-    return (
-      <div className="widget-error" style={{ color: 'red', padding: '8px', border: '1px solid red' }}>
-        Error rendering widget: {err instanceof Error ? err.message : 'Unknown error'}
-      </div>
+    const errorMessage = `Error rendering widget: ${err instanceof Error ? err.message : 'Unknown error'}`;
+    return React.createElement(
+      'div',
+      { 
+        className: "widget-error",
+        style: { color: 'red', padding: '8px', border: '1px solid red' } 
+      },
+      errorMessage
     );
   }
 }
@@ -219,22 +226,29 @@ export function withSandbox(WidgetComponent: ComponentType<CustomWidgetProps>) {
     }, [props.id, props.value]);
 
     if (error) {
-      return (
-        <div className="widget-error" style={{ color: 'red', padding: '8px', border: '1px solid red' }}>
-          {error}
-        </div>
+      return React.createElement(
+        'div',
+        { 
+          className: "widget-error",
+          style: { color: 'red', padding: '8px', border: '1px solid red' } 
+        },
+        error
       );
     }
 
     // Wrap component rendering in error boundary
     try {
-      return <WidgetComponent {...props} />;
+      return React.createElement(WidgetComponent, props);
     } catch (err) {
-      setError(`Error rendering widget: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      return (
-        <div className="widget-error" style={{ color: 'red', padding: '8px', border: '1px solid red' }}>
-          {`Error rendering widget: ${err instanceof Error ? err.message : 'Unknown error'}`}
-        </div>
+      const errorMessage = `Error rendering widget: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMessage);
+      return React.createElement(
+        'div',
+        { 
+          className: "widget-error",
+          style: { color: 'red', padding: '8px', border: '1px solid red' } 
+        },
+        errorMessage
       );
     }
   };

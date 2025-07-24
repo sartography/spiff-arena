@@ -27,19 +27,19 @@ describe('Widget Sandbox', () => {
 
     if (component) {
       render(
-        <component
-          id="test"
-          label="Safe Widget"
-          value=""
-          onChange={() => {}}
-          required={false}
-          disabled={false}
-          readonly={false}
-          onBlur={() => {}}
-          onFocus={() => {}}
-          options={{}}
-          formContext={{}}
-        />
+        React.createElement(component, {
+          id: "test",
+          label: "Safe Widget",
+          value: "",
+          onChange: () => {},
+          required: false,
+          disabled: false,
+          readonly: false,
+          onBlur: () => {},
+          onFocus: () => {},
+          options: {},
+          formContext: {}
+        })
       );
 
       expect(screen.getByTestId('safe-widget')).toHaveTextContent('Safe Widget');
@@ -108,20 +108,20 @@ describe('Widget Sandbox', () => {
     `;
 
     render(
-      <SandboxedWidget
-        widgetSource={validCode}
-        id="test"
-        label="Sandboxed Widget"
-        value=""
-        onChange={() => {}}
-        required={false}
-        disabled={false}
-        readonly={false}
-        onBlur={() => {}}
-        onFocus={() => {}}
-        options={{}}
-        formContext={{}}
-      />
+      React.createElement(SandboxedWidget, {
+        widgetSource: validCode,
+        id: "test",
+        label: "Sandboxed Widget",
+        value: "",
+        onChange: () => {},
+        required: false,
+        disabled: false,
+        readonly: false,
+        onBlur: () => {},
+        onFocus: () => {},
+        options: {},
+        formContext: {}
+      })
     );
 
     // Initially shows loading
@@ -146,20 +146,20 @@ describe('Widget Sandbox', () => {
     `;
 
     render(
-      <SandboxedWidget
-        widgetSource={errorCode}
-        id="test"
-        label="Error Widget"
-        value=""
-        onChange={() => {}}
-        required={false}
-        disabled={false}
-        readonly={false}
-        onBlur={() => {}}
-        onFocus={() => {}}
-        options={{}}
-        formContext={{}}
-      />
+      React.createElement(SandboxedWidget, {
+        widgetSource: errorCode,
+        id: "test",
+        label: "Error Widget",
+        value: "",
+        onChange: () => {},
+        required: false,
+        disabled: false,
+        readonly: false,
+        onBlur: () => {},
+        onFocus: () => {},
+        options: {},
+        formContext: {}
+      })
     );
 
     // Wait for error message

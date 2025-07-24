@@ -1,4 +1,4 @@
-import { ComponentType, createContext, useContext } from 'react';
+import React, { ComponentType, createContext, useContext } from 'react';
 import { 
   WidgetRegistry as WidgetRegistryInterface, 
   WidgetRegistration,
@@ -106,8 +106,8 @@ export function useWidgetRegistry(): WidgetRegistryInterface {
  */
 export function WidgetRegistryProvider({ children }: { children: React.ReactNode }) {
   return (
-    <WidgetRegistryContext.Provider value={widgetRegistry}>
-      {children}
-    </WidgetRegistryContext.Provider>
+    React.createElement(WidgetRegistryContext.Provider, { value: widgetRegistry },
+      children
+    )
   );
 }
