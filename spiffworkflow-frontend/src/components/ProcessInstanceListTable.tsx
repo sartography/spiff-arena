@@ -151,7 +151,6 @@ export default function ProcessInstanceListTable({
       );
       let perPageToUse = perPage;
       if (perPageOptions && !perPageOptions.includes(perPageToUse)) {
-        // eslint-disable-next-line prefer-destructuring
         perPageToUse = perPageOptions[1];
       }
       if (additionalReportFilters) {
@@ -264,7 +263,7 @@ export default function ProcessInstanceListTable({
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
   const formatProcessInstanceId = (
-    processInstance: ProcessInstance,
+    _processInstance: ProcessInstance,
     id: number,
   ) => {
     return <span data-testid="paginated-entity-id">{id}</span>;
@@ -554,7 +553,7 @@ export default function ProcessInstanceListTable({
 
     return (
       <TableContainer>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        {}
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>
@@ -609,7 +608,6 @@ export default function ProcessInstanceListTable({
     );
     let perPageToUse = perPage;
     if (perPageOptions && !perPageOptions.includes(perPageToUse)) {
-      // eslint-disable-next-line prefer-destructuring
       perPageToUse = perPageOptions[1];
     }
     tableElement = (

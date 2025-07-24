@@ -51,7 +51,6 @@ export default function ProcessModelNewExperimental() {
           },
         ]}
       />
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <h1 title={helperText} onClick={ohYeeeeaah} onKeyDown={ohYeeeeaah}>
         {t('add_process_model')}
       </h1>

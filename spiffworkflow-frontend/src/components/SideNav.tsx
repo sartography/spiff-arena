@@ -76,7 +76,6 @@ const routeIdentifiers = {
   CONFIGURATION: 'configuration',
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({
   isCollapsed,
   onToggleCollapse,

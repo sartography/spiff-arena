@@ -18,7 +18,6 @@ interface TypeaheadArgs {
   reactJsonSchemaFormTheme?: string;
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TypeaheadWidget({
   id,
   onChange,

@@ -14,7 +14,6 @@ export default function TableCellWithTimeAgoInWords({
   onKeyDown = null,
 }: OwnProps) {
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <td
       title={
         DateAndTimeService.convertSecondsToFormattedDateTime(timeInSeconds) ||

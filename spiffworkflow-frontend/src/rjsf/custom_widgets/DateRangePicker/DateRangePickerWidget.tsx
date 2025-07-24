@@ -26,7 +26,6 @@ interface WidgetArgs {
 // use this pattern in schemaJson for that field:
 // "pattern": "\\d{4}-\\d{2}-\\d{2}:::\\d{4}-\\d{2}-\\d{2}"
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function DateRangePickerWidget({
   id,
   value,
@@ -76,19 +75,16 @@ export default function DateRangePickerWidget({
     let endDate = null;
     try {
       startDate = DateAndTimeService.convertStringToDate(startDateString);
-      // eslint-disable-next-line no-empty
-    } catch (rangeError) {}
+    } catch (_rangeError) {}
     try {
       endDate = DateAndTimeService.convertStringToDate(endDateString);
-      // eslint-disable-next-line no-empty
-    } catch (rangeError) {}
+    } catch (_rangeError) {}
 
     dateValue = [startDate, endDate];
   }
 
   const addDebouncedOnChangeDate = useDebouncedCallback(
     (fullObject: React.ChangeEvent<HTMLInputElement>) => {
-      // eslint-disable-next-line no-param-reassign
       fullObject.target.value =
         DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
           fullObject.target.value,

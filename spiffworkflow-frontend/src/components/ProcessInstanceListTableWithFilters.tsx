@@ -291,10 +291,7 @@ export default function ProcessInstanceListTableWithFilters({
   }, [reportMetadata]);
 
   const setReportMetadataFromReport = useCallback(
-    (
-      processInstanceReport: ProcessInstanceReport | null = null,
-      // eslint-disable-next-line sonarjs/cognitive-complexity
-    ) => {
+    (processInstanceReport: ProcessInstanceReport | null = null) => {
       let reportMetadataBodyToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -504,7 +501,7 @@ export default function ProcessInstanceListTableWithFilters({
     const filtersToKeep = reportMetadataToUse.filter_by.filter(
       (rf: ReportFilter) => rf.field_name !== fieldName,
     );
-    // eslint-disable-next-line no-param-reassign
+
     reportMetadataToUse.filter_by = filtersToKeep;
   };
 
@@ -701,8 +698,6 @@ export default function ProcessInstanceListTableWithFilters({
     onChangeTimeFunction: any,
     timeInvalid: boolean,
     setTimeInvalid: any,
-    // TODO: fix this to use an object instead and avoid max params issue
-    // eslint-disable-next-line sonarjs/sonar-max-params
   ) => {
     if (!reportMetadata) {
       return null;
@@ -897,7 +892,6 @@ export default function ProcessInstanceListTableWithFilters({
     reportColumnForEditing: ReportColumnForEditing,
   ) => {
     if (reportColumnForEditing.filter_operator) {
-      // eslint-disable-next-line prefer-destructuring
       return Object.entries(filterOperatorMappings).filter(([_key, value]) => {
         return value.id === reportColumnForEditing.filter_operator;
       })[0][1];
@@ -1043,7 +1037,6 @@ export default function ProcessInstanceListTableWithFilters({
     }
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1386,7 +1379,6 @@ export default function ProcessInstanceListTableWithFilters({
                     value={selectedLastMilestone}
                     getOptionLabel={(option) => option || ''}
                     renderOption={(props, option) => (
-                      // eslint-disable-next-line react/jsx-props-no-spreading
                       <li {...props} key={option}>
                         {option}
                       </li>
@@ -1394,14 +1386,14 @@ export default function ProcessInstanceListTableWithFilters({
                     renderInput={(params) => (
                       <TextField
                         // Need props spreading for Autocomplete to work
-                        // eslint-disable-next-line react/jsx-props-no-spreading
+
                         {...params}
                         label={t('last_milestone')}
                         variant="outlined"
                         fullWidth
                       />
                     )}
-                    onChange={(event, value) => {
+                    onChange={(_event, value) => {
                       insertOrUpdateFieldInReportMetadata(
                         reportMetadata,
                         'last_milestone_bpmn_name',

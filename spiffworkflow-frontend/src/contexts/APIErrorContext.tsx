@@ -8,7 +8,7 @@ type ErrorContextType = {
 };
 export const APIErrorContext = createContext<ErrorContextType>({
   error: null,
-  // eslint-disable-next-line no-unused-vars
+
   addError: () => {},
   removeError: () => {},
 });

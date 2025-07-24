@@ -3,20 +3,35 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import tseslint from 'typescript-eslint';
 
+import { defineConfig, globalIgnores } from 'eslint/config';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   resolvePluginsRelativeTo: __dirname,
+  // globalIgnores: ['src/rjsf/carbon_theme/**/*'],
+  // hey: 'DNE',
 });
 
 export default tseslint.config(
   ...compat.config({
+    settings: {
+      react: {
+        createClass: 'createReactClass', // Regex for Component Factory to use,
+        pragma: 'React', // Pragma to use, default to "React"
+        fragment: 'Fragment', // Fragment to use (may be a property of <pragma>), default to "Fragment"
+        version: 'detect', // React version. "detect" automatically picks the version you have installed.
+        defaultVersion: '', // Default React version to use when the version you have installed cannot be detected.
+        flowVersion: '0.53', // Flow version
+      },
+    },
     env: {
       browser: true,
       es2021: true,
     },
+    ignorePatterns: ['src/rjsf/carbon_theme/**/*'],
     extends: [
       'plugin:import/errors',
       'plugin:import/typescript',
@@ -24,7 +39,6 @@ export default tseslint.config(
       'plugin:prettier/recommended',
       'plugin:react-hooks/recommended',
       'plugin:react/recommended',
-      'plugin:sonarjs/recommended-legacy',
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
@@ -72,7 +86,7 @@ export default tseslint.config(
           args: 'all',
           argsIgnorePattern: '^_',
           caughtErrors: 'all',
-          caughtErrorsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '(^_|^e$)',
           destructuredArrayIgnorePattern: '^_',
           varsIgnorePattern: '^_',
           ignoreRestSiblings: true,

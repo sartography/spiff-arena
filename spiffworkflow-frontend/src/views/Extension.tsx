@@ -30,7 +30,6 @@ type OwnProps = {
   displayErrors?: boolean;
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Extension({
   pageIdentifier,
   displayErrors = true,
@@ -140,7 +139,6 @@ export default function Extension({
   );
 
   const setConfigsIfDesiredSchemaFile = useCallback(
-    // eslint-disable-next-line sonarjs/cognitive-complexity
     (extensionUiSchemaFile: ProcessFile | null, pm: ProcessModel) => {
       if (
         extensionUiSchemaFile &&
@@ -253,7 +251,6 @@ export default function Extension({
     pageComponent: UiSchemaPageComponent,
     formObject: any,
     event: any,
-    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     event.preventDefault();
 
@@ -312,7 +309,6 @@ export default function Extension({
     }
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const renderComponentArguments = (component: UiSchemaPageComponent) => {
     const argumentsForComponent: any = component.arguments;
     if (processModel && argumentsForComponent) {

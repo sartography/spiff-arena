@@ -38,7 +38,7 @@ import {
 } from '@mui/icons-material';
 
 import { Can } from '@casl/react';
-import Editor, { DiffEditor } from '@monaco-editor/react';
+import { Editor, DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -299,7 +299,7 @@ export default function ProcessModelEditDiagram() {
       path,
       httpMethod,
       failureCallback: addError,
-      successCallback: (_result: any) => { },
+      successCallback: (_result: any) => {},
     });
   };
 
