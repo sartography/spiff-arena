@@ -31,6 +31,9 @@ export enum UiSchemaDisplayLocation {
 
   // Will be loaded as a global CSS file for the entire application
   css = 'css',
+
+  // Will be loaded as a custom widget for forms
+  widget = 'widget',
 }
 
 /**
@@ -68,6 +71,31 @@ export interface UiSchemaLocationSpecificConfig {
    * This is the recommended approach for adding CSS.
    */
   css_file?: string;
+
+  /**
+   * Specifies the filename of the JavaScript file to use when using widget display_location.
+   * This file should export a React component as default export.
+   */
+  widget_file?: string;
+
+  /**
+   * Specifies the name to register the widget as.
+   * This name will be used in ui:widget in the form UI schema.
+   */
+  widget_name?: string;
+
+  /**
+   * Additional metadata for the widget such as description, version, etc.
+   */
+  widget_metadata?: {
+    displayName: string;
+    description: string;
+    version: string;
+    author?: string;
+    thumbnailUrl?: string;
+    documentationUrl?: string;
+    category?: string;
+  };
 }
 
 // Primary ux element - decribes how the extension should be displayed and accessed from the web ui.
@@ -212,6 +240,35 @@ export interface ExtensionUiSchema {
 
   // Disable the extension which is useful during development of an extension.
   disabled?: boolean;
+
+  /**
+   * Custom widgets provided by this extension
+   * These will be available in forms via ui:widget
+   */
+  widgets?: Array<{
+    /**
+     * The name to register the widget as (used in ui:widget)
+     */
+    name: string;
+    
+    /**
+     * The file containing the widget implementation
+     */
+    file: string;
+    
+    /**
+     * Metadata about the widget
+     */
+    metadata: {
+      displayName: string;
+      description: string;
+      version: string;
+      author?: string;
+      thumbnailUrl?: string;
+      documentationUrl?: string;
+      category?: string;
+    };
+  }>;
 }
 
 /** ********************************************
