@@ -12,7 +12,6 @@ export default function useProcessInstanceNavigate() {
 
   const handleProcessInstanceNavigation = (
     result: any,
-    processInstanceId: number,
     suffix: string | undefined,
   ) => {
     const processInstanceResult: ProcessInstance = result.process_instance;
@@ -35,7 +34,7 @@ export default function useProcessInstanceNavigate() {
     HttpService.makeCallToBackend({
       path: `/process-instances/find-by-id/${processInstanceId}`,
       successCallback: (result: any) =>
-        handleProcessInstanceNavigation(result, processInstanceId, suffix),
+        handleProcessInstanceNavigation(result, suffix),
     });
   };
 

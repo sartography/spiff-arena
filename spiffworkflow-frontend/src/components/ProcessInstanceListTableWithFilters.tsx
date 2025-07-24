@@ -38,6 +38,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
 import {
@@ -144,6 +146,8 @@ export default function ProcessInstanceListTableWithFilters({
     null,
   );
 
+  const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
+
   const [startFromDate, setStartFromDate] = useState<string>('');
   const [startToDate, setStartToDate] = useState<string>('');
   const [endFromDate, setEndFromDate] = useState<string>('');
@@ -224,6 +228,10 @@ export default function ProcessInstanceListTableWithFilters({
     null,
   );
   const [userGroups, setUserGroups] = useState<string[]>([]);
+  const [selectedLastMilestone, setSelectedLastMilestone] = useState<
+    string | null
+  >(null);
+  const [lastMilestones, setLastMilestones] = useState<string[]>([]);
   const systemReportOptions: string[] = useMemo(() => {
     return [
       'instances_with_tasks_waiting_for_me',
@@ -269,6 +277,7 @@ export default function ProcessInstanceListTableWithFilters({
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
     setSelectedUserGroup(null);
+    setSelectedLastMilestone(null);
     setStartFromDate('');
     setStartFromTime('');
     setStartToDate('');
@@ -284,10 +293,7 @@ export default function ProcessInstanceListTableWithFilters({
   }, [reportMetadata]);
 
   const setReportMetadataFromReport = useCallback(
-    (
-      processInstanceReport: ProcessInstanceReport | null = null,
-      // eslint-disable-next-line sonarjs/cognitive-complexity
-    ) => {
+    (processInstanceReport: ProcessInstanceReport | null = null) => {
       let reportMetadataBodyToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -343,6 +349,8 @@ export default function ProcessInstanceListTableWithFilters({
             setWithRelationToMe(reportFilter.field_value);
           } else if (reportFilter.field_name === 'user_group_identifier') {
             setSelectedUserGroup(reportFilter.field_value);
+          } else if (reportFilter.field_name === 'last_milestone_bpmn_name') {
+            setSelectedLastMilestone(reportFilter.field_value);
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
             setSystemReport(reportFilter.field_name);
           } else if (reportFilter.field_name === 'process_model_identifier') {
@@ -453,6 +461,16 @@ export default function ProcessInstanceListTableWithFilters({
         },
       );
       setProcessStatusAllOptions(processStatusAllOptionsArray);
+
+      // Fetch distinct milestone values for filtering
+      HttpService.makeCallToBackend({
+        path: `/process-instances/unique-milestone-names`,
+        httpMethod: 'GET',
+        successCallback: (lastMilestoneArray: string[]) => {
+          setLastMilestones(lastMilestoneArray.sort());
+        },
+      });
+
       getReportMetadataWithReportHash();
     }
     const checkFiltersAndRun = () => {
@@ -485,7 +503,7 @@ export default function ProcessInstanceListTableWithFilters({
     const filtersToKeep = reportMetadataToUse.filter_by.filter(
       (rf: ReportFilter) => rf.field_name !== fieldName,
     );
-    // eslint-disable-next-line no-param-reassign
+
     reportMetadataToUse.filter_by = filtersToKeep;
   };
 
@@ -508,7 +526,14 @@ export default function ProcessInstanceListTableWithFilters({
     fieldName: string,
     fieldValue: any,
   ) => {
-    if (fieldValue) {
+    // For milestone and user group, empty string means "remove the filter"
+    if (
+      fieldValue === '' &&
+      (fieldName === 'last_milestone_bpmn_name' ||
+        fieldName === 'user_group_identifier')
+    ) {
+      removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
+    } else if (fieldValue) {
       let existingReportFilter = getFilterByFromReportMetadata(
         fieldName,
         reportMetadataToUse,
@@ -675,8 +700,6 @@ export default function ProcessInstanceListTableWithFilters({
     onChangeTimeFunction: any,
     timeInvalid: boolean,
     setTimeInvalid: any,
-    // TODO: fix this to use an object instead and avoid max params issue
-    // eslint-disable-next-line sonarjs/sonar-max-params
   ) => {
     if (!reportMetadata) {
       return null;
@@ -871,7 +894,6 @@ export default function ProcessInstanceListTableWithFilters({
     reportColumnForEditing: ReportColumnForEditing,
   ) => {
     if (reportColumnForEditing.filter_operator) {
-      // eslint-disable-next-line prefer-destructuring
       return Object.entries(filterOperatorMappings).filter(([_key, value]) => {
         return value.id === reportColumnForEditing.filter_operator;
       })[0][1];
@@ -1017,7 +1039,6 @@ export default function ProcessInstanceListTableWithFilters({
     }
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -1247,53 +1268,191 @@ export default function ProcessInstanceListTableWithFilters({
             <InputLabel id="system-report-label">
               {t('system_report')}
             </InputLabel>
-            <Select
-              labelId="system-report-label"
-              label={t('system_report')}
-              value={systemReport || ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                systemReportOptions.forEach((systemReportOption: string) => {
-                  insertOrUpdateFieldInReportMetadata(
-                    reportMetadata,
-                    systemReportOption,
-                    value === systemReportOption,
-                  );
-                  setSystemReport(value);
-                });
-              }}
-            >
-              {['', ...systemReportOptions].map((option) => (
-                <MenuItem key={option} value={option}>
-                  {titleizeString(option)}
-                </MenuItem>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                <Select
+                  fullWidth
+                  labelId="system-report-label"
+                  label={t('system_report')}
+                  value={systemReport || ''}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    systemReportOptions.forEach(
+                      (systemReportOption: string) => {
+                        insertOrUpdateFieldInReportMetadata(
+                          reportMetadata,
+                          systemReportOption,
+                          value === systemReportOption,
+                        );
+                        setSystemReport(value);
+                      },
+                    );
+                  }}
+                >
+                  {['', ...systemReportOptions].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {titleizeString(option)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+              {systemReport && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      systemReportOptions.forEach(
+                        (systemReportOption: string) => {
+                          insertOrUpdateFieldInReportMetadata(
+                            reportMetadata,
+                            systemReportOption,
+                            false,
+                          );
+                        },
+                      );
+                      setSystemReport(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
           </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel id="user-group-label">
               {t('assigned_user_group')}
             </InputLabel>
-            <Select
-              label={t('assigned_user_group')}
-              labelId="user-group-label"
-              value={selectedUserGroup || ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                insertOrUpdateFieldInReportMetadata(
-                  reportMetadata,
-                  'user_group_identifier',
-                  value,
-                );
-                setSelectedUserGroup(value);
-              }}
-            >
-              {['', ...userGroups].map((group) => (
-                <MenuItem key={group} value={group}>
-                  {group}
-                </MenuItem>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                <Select
+                  fullWidth
+                  label={t('assigned_user_group')}
+                  labelId="user-group-label"
+                  value={selectedUserGroup || ''}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    insertOrUpdateFieldInReportMetadata(
+                      reportMetadata,
+                      'user_group_identifier',
+                      value,
+                    );
+                    setSelectedUserGroup(value);
+                  }}
+                >
+                  {userGroups.map((group) => (
+                    <MenuItem key={group} value={group}>
+                      {group}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+              {selectedUserGroup && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'user_group_identifier',
+                        '',
+                      );
+                      setSelectedUserGroup(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexGrow: 1 }}>
+                {lastMilestones.length > MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY ? (
+                  <Autocomplete
+                    disablePortal
+                    id="last-milestone-autocomplete"
+                    options={lastMilestones}
+                    value={selectedLastMilestone}
+                    getOptionLabel={(option) => option || ''}
+                    renderOption={(props, option) => (
+                      <li {...props} key={option}>
+                        {option}
+                      </li>
+                    )}
+                    renderInput={(params) => (
+                      <TextField
+                        // Need props spreading for Autocomplete to work
+
+                        {...params}
+                        label={t('last_milestone')}
+                        variant="outlined"
+                        fullWidth
+                      />
+                    )}
+                    onChange={(_event, value) => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'last_milestone_bpmn_name',
+                        value || '',
+                      );
+                      setSelectedLastMilestone(value);
+                    }}
+                  />
+                ) : (
+                  <>
+                    <InputLabel id="last-milestone-label">
+                      {t('last_milestone')}
+                    </InputLabel>
+                    <Select
+                      fullWidth
+                      label={t('last_milestone')}
+                      labelId="last-milestone-label"
+                      value={selectedLastMilestone || ''}
+                      onChange={(event) => {
+                        const { value } = event.target;
+                        insertOrUpdateFieldInReportMetadata(
+                          reportMetadata,
+                          'last_milestone_bpmn_name',
+                          value,
+                        );
+                        setSelectedLastMilestone(value);
+                      }}
+                    >
+                      {lastMilestones.map((milestone) => (
+                        <MenuItem key={milestone} value={milestone}>
+                          {milestone}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </>
+                )}
+              </div>
+              {selectedLastMilestone && (
+                <div style={{ marginLeft: '8px' }}>
+                  <Button
+                    onClick={() => {
+                      insertOrUpdateFieldInReportMetadata(
+                        reportMetadata,
+                        'last_milestone_bpmn_name',
+                        '',
+                      );
+                      setSelectedLastMilestone(null);
+                    }}
+                    size="sm"
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={Close}
+                    iconDescription={t('clear_filter')}
+                  />
+                </div>
+              )}
+            </div>
           </FormControl>
           <FormControlLabel
             control={

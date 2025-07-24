@@ -17,7 +17,6 @@ export default function MarkdownRenderer(props: any) {
       data-color-mode={isDark ? 'dark' : 'light'}
       className={wrapperClassName}
     >
-      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
       <MDEditor.Markdown {...{ ...propsToUse, ...{ source: newMarkdown } }} />
     </div>
   );

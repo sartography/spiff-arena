@@ -1,4 +1,4 @@
-import Editor from '@monaco-editor/react';
+import { Editor } from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';

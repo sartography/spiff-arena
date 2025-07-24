@@ -10,6 +10,7 @@ import fi from './locales/fi/translation.json';
 import ptPT from './locales/pt_pt/translation.json';
 import csCZ from './locales/cs_cz/translation.json';
 
+// eslint-disable-next-line import/no-named-as-default-member
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)

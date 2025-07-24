@@ -18,7 +18,6 @@ function SubmitButton(props: SubmitButtonProps) {
     <Button
       className="react-json-schema-form-submit-button"
       type="submit"
-      // eslint-disable-next-line react/jsx-props-no-spreading
       {...submitButtonProps}
     >
       {submitText}

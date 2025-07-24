@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable unused-imports/no-unused-vars */
 import MDEditor from '@uiw/react-md-editor';
 import React, { useCallback } from 'react';
 
@@ -16,7 +14,6 @@ interface WidgetArgs {
   label?: string;
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function MarkDownFieldWidget({
   id,
   value,

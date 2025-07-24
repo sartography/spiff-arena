@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Editor, { loader } from '@monaco-editor/react';
+import { Editor, loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
 // @ts-ignore
-// eslint-disable-next-line import/no-extraneous-dependencies
+
 import merge from 'lodash/merge';
 
 import {
@@ -115,29 +115,29 @@ export default function ReactFormBuilder({
     }
 
     // TODO: when we use this in more than one place we will need a better dispatching mechanism
-    // eslint-disable-next-line no-param-reassign
-    pythonWorker.onmessage = async (e: any) => {
-      if (e.data.type !== 'didJinjaForm') {
-        console.log('unknown python worker response: ', e);
+
+    pythonWorker.onmessage = async (error: any) => {
+      if (error.data.type !== 'didJinjaForm') {
+        console.log('unknown python worker response: ', error);
         return;
       }
 
-      if (e.data.err) {
-        setErrorMessage(e.data.err);
+      if (error.data.err) {
+        setErrorMessage(error.data.err);
         return;
       }
 
       try {
-        const schema = JSON.parse(e.data.strSchema);
+        const schema = JSON.parse(error.data.strSchema);
         setPostJsonSchema(schema);
-      } catch (err) {
+      } catch (e) {
         setErrorMessage('Please check the Json Schema for errors.');
         return;
       }
       try {
-        const ui = JSON.parse(e.data.strUI);
+        const ui = JSON.parse(error.data.strUI);
         setPostJsonUI(ui);
-      } catch (err) {
+      } catch (e) {
         setErrorMessage('Please check the UI Settings for errors.');
         return;
       }
@@ -262,7 +262,7 @@ export default function ReactFormBuilder({
     500,
   );
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedIndex(newValue);
   };
 

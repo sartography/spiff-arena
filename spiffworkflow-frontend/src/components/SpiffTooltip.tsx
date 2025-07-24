@@ -13,7 +13,6 @@ export default function SpiffTooltip({ title, children, placement }: OwnProps) {
       title={title}
       arrow
       enterDelay={500}
-      // eslint-disable-next-line react/jsx-props-no-spreading
       {...(placement ? { placement } : {})}
       PopperProps={{ style: { zIndex: 9999 } }}
     >

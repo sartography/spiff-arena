@@ -143,7 +143,6 @@ const useKeyboardShortcut = (
     return () => {
       window.removeEventListener('keydown', keydownListener);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keydownListener]);
 
   return openKeyboardShortcutHelpControl();

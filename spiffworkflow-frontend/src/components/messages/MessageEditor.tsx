@@ -120,7 +120,7 @@ export function MessageEditor({
         updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
       } catch (e) {
         // TODO: display error in a tag like we normally do
-        // eslint-disable-next-line no-alert
+
         alert(t('invalid_schema_error', { error: e }));
         return;
       }

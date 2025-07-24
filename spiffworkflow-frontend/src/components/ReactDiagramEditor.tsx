@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import BpmnViewer from 'bpmn-js/lib/Viewer';
 import {
@@ -198,7 +197,7 @@ export default function ReactDiagramEditor({
           r.property === 'bpmn:loopDataInputRef' ||
           r.property === 'bpmn:loopDataOutputRef',
       );
-      // eslint-disable-next-line no-underscore-dangle
+
       const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
         'bpmn:ItemAwareElement',
       );
@@ -207,7 +206,7 @@ export default function ReactDiagramEditor({
           id: ref.id,
           name: ref.id ? typeof ref.name === 'undefined' : ref.name,
         };
-        const elem = diagramModelerToUse._moddle.create(desc, props); // eslint-disable-line no-underscore-dangle
+        const elem = diagramModelerToUse._moddle.create(desc, props);
         elem.$parent = ref.element;
         ref.element.set(ref.property, elem);
       });

@@ -60,7 +60,6 @@ export function Notification({
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       autoHideDuration={timeout}
       onClose={onClose}
-      // eslint-disable-next-line react/jsx-props-no-spreading
       {...additionalProps}
     >
       <Alert

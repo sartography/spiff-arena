@@ -30,7 +30,6 @@ import { matchNumberRegex } from '../../../helpers';
 //      "ui:field": "numeric-range"
 //    }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function NumericRangeField({
   id,
   schema,

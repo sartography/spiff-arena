@@ -22,7 +22,7 @@ export default function SpiffTabs({ tabs }: OwnProps) {
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, tabs]);
 
-  const handleTabChange = (event: ChangeEvent<{}>, newValue: number) => {
+  const handleTabChange = (_event: ChangeEvent<{}>, newValue: number) => {
     navigate(tabs[newValue].path);
   };
 

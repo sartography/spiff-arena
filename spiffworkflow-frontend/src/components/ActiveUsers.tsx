@@ -56,7 +56,6 @@ export default function ActiveUsers() {
       updateActiveUsers,
       unregisterUser,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
   // activeUsers is supposed to be an array, but it is based on the response body

@@ -1,7 +1,5 @@
 // @ts-nocheck
-/* eslint-disable no-restricted-globals */
 
-// eslint-disable-next-line no-undef
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
 
 const pyodideInitialLoad = (async () => {
@@ -10,13 +8,12 @@ const pyodideInitialLoad = (async () => {
 
   {
     const start = Date.now();
-    // eslint-disable-next-line no-undef
+
     const pyodide = await loadPyodide({ fullStdLib: false });
     await pyodide.loadPackage('micropip');
     const micropip = pyodide.pyimport('micropip');
     await micropip.install(['Jinja2==3.1.6', 'spiff-arena-common==0.1.0']);
 
-    // eslint-disable-next-line no-undef
     self.pyodide = pyodide;
 
     const end = Date.now();

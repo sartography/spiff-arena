@@ -55,7 +55,6 @@ const withProps = <P extends object>(
   customProps: Partial<P>,
 ) =>
   function CustomComponent(props: P) {
-    // eslint-disable-next-line react/jsx-props-no-spreading
     return <Component {...props} {...customProps} />;
   };
 
@@ -131,7 +130,6 @@ export default function CustomForm({
     //    field:[field_name_to_use]:[start or end]
     //
     // defaults to "start" in all cases
-    // eslint-disable-next-line sonarjs/sonar-no-unused-vars
     const [_, fieldIdentifierToCompareWith, startOrEnd] = dateCheck.split(':');
     if (!(fieldIdentifierToCompareWith in formDataToCheck)) {
       errors[propertyKey].addError(
@@ -181,7 +179,6 @@ export default function CustomForm({
         );
       }
       // best NOT to merge this with nested if statement in case we add more or move code around
-      // eslint-disable-next-line sonarjs/no-collapsible-if
     } else if (checkType === 'maximum') {
       if (dateStringToCompareWith < formattedDateString) {
         errors[propertyKey].addError(
@@ -208,7 +205,6 @@ export default function CustomForm({
             errors[propertyKey].addError('must be today or after');
           }
           // best NOT to merge this with nested if statement in case we add more or move code around
-          // eslint-disable-next-line sonarjs/no-collapsible-if
         } else if (checkType === 'maximum') {
           if (dateTodayString < formattedDateString) {
             errors[propertyKey].addError('must be today or before');
@@ -316,7 +312,6 @@ export default function CustomForm({
     errors: any,
     jsonSchema: any,
     _uiSchemaPassedIn?: any,
-    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     if (
       jsonSchema.required &&
@@ -401,7 +396,6 @@ export default function CustomForm({
     formDataToCheck: any,
     errors: any,
     uiSchemaPassedIn?: any,
-    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     // if the jsonSchema has an items attribute then assume the element itself
     // doesn't have a custom validation but it's children could so use that
@@ -577,6 +571,5 @@ export default function CustomForm({
     omitExtraData: true,
   };
 
-  // eslint-disable-next-line react/jsx-props-no-spreading
   return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
 }

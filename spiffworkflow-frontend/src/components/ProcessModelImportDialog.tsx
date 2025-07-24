@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import HttpService from '../services/HttpService';
+import { ProcessModel } from '../interfaces';
 
 interface ProcessModelImportDialogProps {
   open: boolean;
@@ -78,7 +79,7 @@ export function ProcessModelImportDialog({
         postBody: {
           repository_url: repositoryUrl,
         },
-        successCallback: (result) => {
+        successCallback: (result: { process_model: ProcessModel }) => {
           console.log('Import API success response:', JSON.stringify(result));
 
           if (result && result.process_model && result.process_model.id) {
@@ -99,7 +100,7 @@ export function ProcessModelImportDialog({
           }
           onClose();
         },
-        failureCallback: (error) => {
+        failureCallback: (error: any) => {
           console.error('Import error:', error);
           setErrorMessage(error?.message || 'Import failed');
         },

@@ -53,9 +53,9 @@ export default function UserSearch({
 
   return (
     <Autocomplete
-      onInputChange={(event, value) => addDebouncedSearchUser(value)}
+      onInputChange={(_event, value) => addDebouncedSearchUser(value)}
       className={className}
-      onChange={(event, value) => {
+      onChange={(_event, value) => {
         onSelectedUser(value);
       }}
       id="user-search"
@@ -64,7 +64,6 @@ export default function UserSearch({
       getOptionLabel={(option: User) => option.username || ''}
       renderInput={(params) => (
         <TextField
-          // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
           label={label}
           placeholder={t('enter_username')}

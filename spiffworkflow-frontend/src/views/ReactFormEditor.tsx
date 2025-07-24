@@ -1,8 +1,6 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Editor from '@monaco-editor/react';
+import { Editor } from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,

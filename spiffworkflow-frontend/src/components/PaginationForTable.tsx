@@ -33,7 +33,7 @@ export default function PaginationForTable({
     : '';
 
   const updateRows = (
-    event: MouseEvent<HTMLButtonElement> | null,
+    _event: MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
     searchParams.set(

@@ -1,6 +1,6 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Editor from '@monaco-editor/react';
+import { Editor } from '@monaco-editor/react';
 import {
   useParams,
   useNavigate,
@@ -1890,7 +1890,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const getTabs = () => {
     if (!processInstance) {
       return null;
