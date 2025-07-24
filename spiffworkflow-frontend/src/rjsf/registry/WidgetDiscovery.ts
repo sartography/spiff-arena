@@ -1,7 +1,6 @@
 import { widgetRegistry } from './WidgetRegistry';
 import { evaluateWidgetCode, withSandbox } from '../sandbox/WidgetSandbox';
 import { ExternalWidgetSource, WidgetRegistration } from '../interfaces/CustomWidgetInterfaces';
-import HttpService from '../../services/HttpService';
 
 /**
  * Interface for widget files processed from extensions
@@ -21,73 +20,22 @@ export class WidgetDiscovery {
   private extensionWidgetCache: Record<string, ExternalWidgetSource> = {};
 
   /**
-   * Loads widgets from all available extensions
-   * @returns Promise that resolves when all widgets are loaded
+   * Method kept for backward compatibility
+   * Instead, we rely on ContainerForExtensions to load widgets
+   * @deprecated Use processWidgetFiles instead
    */
   async loadWidgetsFromExtensions(): Promise<void> {
-    try {
-      // Make API call to get list of extensions with custom widgets
-      const response = await this.fetchExtensionWidgets();
-      
-      if (!response || !Array.isArray(response.extensions)) {
-        console.warn('No extensions with widgets found or invalid response format');
-        return;
-      }
-      
-      // Clear existing extension widgets before loading new ones
-      widgetRegistry.clearExtensionWidgets();
-      
-      // Process each extension
-      await Promise.all(
-        response.extensions.map(ext => this.loadWidgetsFromExtension(ext.id))
-      );
-      
-      console.log(`Loaded ${Object.keys(this.extensionWidgetCache).length} extension widgets`);
-    } catch (error) {
-      console.error('Error loading widgets from extensions:', error);
-    }
+    console.log('loadWidgetsFromExtensions is deprecated - widgets are loaded directly by ContainerForExtensions');
+    return Promise.resolve();
   }
 
   /**
-   * Loads widgets from a specific extension
-   * @param extensionId The ID of the extension to load widgets from
-   * @returns Promise that resolves when all widgets from the extension are loaded
+   * Method kept for backward compatibility
+   * @deprecated Use processWidgetFiles instead
    */
   async loadWidgetsFromExtension(extensionId: string): Promise<void> {
-    try {
-      // Get list of widget files in this extension
-      const widgetFiles = await this.fetchExtensionWidgetFiles(extensionId);
-      
-      if (!widgetFiles || !Array.isArray(widgetFiles.files)) {
-        console.warn(`No widget files found for extension ${extensionId}`);
-        return;
-      }
-      
-      // Process each widget file
-      await Promise.all(
-        widgetFiles.files.map(async (file) => {
-          try {
-            // Fetch widget source code
-            const widgetSource = await this.fetchWidgetSource(extensionId, file.name);
-            if (!widgetSource) {
-              console.warn(`Failed to load widget source for ${extensionId}/${file.name}`);
-              return;
-            }
-            
-            // Cache the widget source
-            const cacheKey = `${extensionId}:${file.name}`;
-            this.extensionWidgetCache[cacheKey] = widgetSource;
-            
-            // Evaluate and register widget
-            await this.evaluateAndRegisterWidget(widgetSource, extensionId);
-          } catch (err) {
-            console.error(`Error processing widget ${file.name} from extension ${extensionId}:`, err);
-          }
-        })
-      );
-    } catch (error) {
-      console.error(`Error loading widgets from extension ${extensionId}:`, error);
-    }
+    console.log(`loadWidgetsFromExtension is deprecated for ${extensionId}`);
+    return Promise.resolve();
   }
 
   /**
@@ -122,50 +70,7 @@ export class WidgetDiscovery {
     console.log(`Registered widget ${registration.name} from extension ${extensionId}`);
   }
 
-  /**
-   * Makes API call to fetch all extensions with custom widgets
-   * @returns Promise that resolves with the extension list response
-   */
-  private async fetchExtensionWidgets(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      HttpService.makeCallToBackend({
-        path: '/extensions-with-custom-widgets',
-        successCallback: resolve,
-        failureCallback: reject,
-      });
-    });
-  }
-
-  /**
-   * Makes API call to fetch widget files for a specific extension
-   * @param extensionId The ID of the extension
-   * @returns Promise that resolves with the widget files response
-   */
-  private async fetchExtensionWidgetFiles(extensionId: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      HttpService.makeCallToBackend({
-        path: `/extension/${extensionId}/widget-files`,
-        successCallback: resolve,
-        failureCallback: reject,
-      });
-    });
-  }
-
-  /**
-   * Makes API call to fetch widget source code
-   * @param extensionId The ID of the extension
-   * @param fileName The name of the widget file
-   * @returns Promise that resolves with the widget source code response
-   */
-  private async fetchWidgetSource(extensionId: string, fileName: string): Promise<ExternalWidgetSource | null> {
-    return new Promise((resolve, reject) => {
-      HttpService.makeCallToBackend({
-        path: `/extension/${extensionId}/widget-file/${fileName}`,
-        successCallback: resolve,
-        failureCallback: reject,
-      });
-    });
-  }
+  // These API methods have been removed as we now get widget data directly from ContainerForExtensions
 
   /**
    * Gets a widget from the cache by extension ID and file name
@@ -227,7 +132,9 @@ export const widgetDiscovery = new WidgetDiscovery();
 /**
  * Initialize widget discovery system
  * This should be called during application startup
+ * Note: We don't need to load widgets here anymore as they are loaded by ContainerForExtensions
  */
 export async function initializeWidgetDiscovery(): Promise<void> {
-  await widgetDiscovery.loadWidgetsFromExtensions();
+  // Widget loading is handled by ContainerForExtensions
+  return Promise.resolve();
 }
