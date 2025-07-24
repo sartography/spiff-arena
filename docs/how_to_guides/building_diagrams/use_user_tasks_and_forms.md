@@ -490,6 +490,44 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 
 ![rjsf markdown](/images/rsjf_markdown.png)
 
+### Rating Widget
+
+SpiffArena supports custom widgets to extend form capabilities. For example, a custom rating widget can be used to capture user ratings.
+
+To use a custom widget like `my-rating-widget`, you need to define a schema for the data and a UI schema to specify the widget.
+
+#### JSON Schema Example
+
+This schema defines a `my_rating` field of type `number` and makes it required. The custom widget will show an asterisk (`*`) for required fields.
+
+```json
+{
+  "title": "Rating Widget Example",
+  "type": "object",
+  "required": ["my_rating"],
+  "properties": {
+    "my_rating": {
+      "type": "number",
+      "title": "Please provide a rating"
+    }
+  }
+}
+```
+
+#### UI Schema Example
+
+This UI schema tells the form to use the `my-rating-widget` for the `my_rating` field.
+
+```json
+{
+  "my_rating": {
+    "ui:widget": "my-rating-widget"
+  }
+}
+```
+
+This assumes that the `my-rating-widget` has been registered within the SpiffArena frontend.
+
 #### Numeric Range Field
 
 #### Overview

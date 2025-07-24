@@ -103,47 +103,62 @@ export async function evaluateWidgetCode(
   ]);
 
   try {
-    // Create a secure evaluation environment
+    // Add some debugging to help identify what's wrong with the widget code
+    console.debug('Evaluating widget code:', sanitizedCode.substring(0, 100) + '...');
+    
+    // Create a secure evaluation environment with better error context
     const secureEval = new Function(
       'React',
       'allowedImports',
       `
         "use strict";
-        // Create a secure module environment
-        const module = { exports: {} };
-        const require = (moduleName) => {
-          if (!allowedImports[moduleName]) {
-            throw new Error(\`Import of module \${moduleName} is not allowed\`);
-          }
-          return allowedImports[moduleName];
-        };
-        
-        // Define commonly used React hooks for convenience
-        const { 
-          useState, useEffect, useRef, useCallback, 
-          useMemo, useContext, useReducer 
-        } = React;
-        
-        // Execute the widget code
-        ${sanitizedCode}
-        
-        // Return the exported component
-        return module.exports.default || module.exports;
+        try {
+          // Create a secure module environment
+          const module = { exports: {} };
+          const require = (moduleName) => {
+            if (!allowedImports[moduleName]) {
+              throw new Error(\`Import of module \${moduleName} is not allowed\`);
+            }
+            return allowedImports[moduleName];
+          };
+          
+          // Define commonly used React hooks for convenience
+          const { 
+            useState, useEffect, useRef, useCallback, 
+            useMemo, useContext, useReducer 
+          } = React;
+          
+          // Execute the widget code
+          ${sanitizedCode}
+          
+          // Return the exported component
+          return module.exports && (module.exports.default || module.exports);
+        } catch (innerError) {
+          // Provide more context about where in the code the error occurred
+          throw new Error(\`Widget code error: \${innerError.message}\`);
+        }
       `
     );
     
     // Execute the code in the sandbox
     const WidgetComponent = secureEval(React, ALLOWED_IMPORTS);
     
+    // Check if the module exported anything
+    if (!WidgetComponent) {
+      console.error('Widget code did not export anything. Make sure it uses module.exports correctly.');
+      return null;
+    }
+    
     // Verify that the result is a valid component
     if (typeof WidgetComponent !== 'function') {
-      console.error('Widget code did not export a valid React component function');
+      console.error('Widget code did not export a valid React component function. Received:', typeof WidgetComponent);
       return null;
     }
     
     return WidgetComponent as ComponentType<CustomWidgetProps>;
   } catch (error) {
     console.error('Error evaluating widget code:', error);
+    console.error('Widget source code snippet:', sanitizedCode.substring(0, 300) + '...');
     return null;
   }
 }

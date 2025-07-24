@@ -71,6 +71,7 @@ Widget files are JavaScript (.js) files that export a React component.
 **Important**: 
 - Files must use CommonJS module syntax with `module.exports` (not ES6 import/export)
 - Use `require()` to import React and other libraries inside your component function, not at the top level
+- Use `React.createElement()` instead of JSX syntax - JSX will cause errors
 - Don't include external dependencies - use only allowed libraries (React, MUI, Carbon)
 
 Here's a basic template:
@@ -80,19 +81,23 @@ Here's a basic template:
 module.exports = {
   default: function RatingWidget(props) {
     const React = require('react');
-    const { Rating, Typography, Box } = require('@mui/material');
+    const mui = require('@mui/material');
     
     const { id, value, onChange, label } = props;
     
-    return (
-      <Box>
-        <Typography>{label}</Typography>
-        <Rating
-          id={id}
-          value={value || 0}
-          onChange={(event, newValue) => onChange(newValue)}
-        />
-      </Box>
+    // IMPORTANT: Use React.createElement instead of JSX
+    return React.createElement(
+      mui.Box,
+      null,
+      [
+        React.createElement(mui.Typography, { key: 'label' }, label),
+        React.createElement(mui.Rating, { 
+          key: 'rating',
+          id: id, 
+          value: value || 0,
+          onChange: (event, newValue) => onChange(newValue)
+        })
+      ]
     );
   }
 };
@@ -174,19 +179,23 @@ module.exports = {
   default: function RatingWidget(props) {
     const React = require('react');
     const { useState } = React;
-    const { Box, Rating, Typography } = require('@mui/material');
+    const mui = require('@mui/material');
     
     const { id, value, onChange, label, required } = props;
     
-    return (
-      <Box>
-        <Typography>{label}{required ? ' *' : ''}</Typography>
-        <Rating
-          id={id}
-          value={value || 0}
-          onChange={(event, newValue) => onChange(newValue)}
-        />
-      </Box>
+    // Always use React.createElement instead of JSX
+    return React.createElement(
+      mui.Box,
+      null,
+      [
+        React.createElement(mui.Typography, { key: 'label' }, label + (required ? ' *' : '')),
+        React.createElement(mui.Rating, { 
+          key: 'rating',
+          id: id, 
+          value: value || 0,
+          onChange: (event, newValue) => onChange(newValue)
+        })
+      ]
     );
   }
 };
@@ -199,7 +208,7 @@ module.exports = {
   default: function AutocompleteWidget(props) {
     const React = require('react');
     const { useState, useEffect } = React;
-    const { Autocomplete, TextField, CircularProgress } = require('@mui/material');
+    const mui = require('@mui/material');
     
     const { id, value, onChange, options, label } = props;
     const [inputValue, setInputValue] = useState('');
@@ -222,33 +231,41 @@ module.exports = {
       }
     }, [inputValue]);
     
-    return (
-      <Autocomplete
-        id={id}
-        value={value}
-        onChange={(event, newValue) => onChange(newValue)}
-        inputValue={inputValue}
-        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
-        options={suggestions}
-        getOptionLabel={(option) => option?.label || ''}
-        loading={loading}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label={label}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-      />
-    );
+    // Create the render input function without JSX
+    const renderInput = function(params) {
+      const endAdornment = React.createElement(
+        React.Fragment,
+        null,
+        [
+          loading && React.createElement(mui.CircularProgress, { key: 'progress', color: 'inherit', size: 20 }),
+          params.InputProps.endAdornment
+        ].filter(Boolean)
+      );
+      
+      const inputProps = {
+        ...params.InputProps,
+        endAdornment: endAdornment
+      };
+      
+      return React.createElement(mui.TextField, {
+        ...params,
+        label: label,
+        InputProps: inputProps
+      });
+    };
+    
+    // Create the Autocomplete component with React.createElement
+    return React.createElement(mui.Autocomplete, {
+      id: id,
+      value: value,
+      onChange: (event, newValue) => onChange(newValue),
+      inputValue: inputValue,
+      onInputChange: (event, newInputValue) => setInputValue(newInputValue),
+      options: suggestions,
+      getOptionLabel: (option) => option?.label || '',
+      loading: loading,
+      renderInput: renderInput
+    });
   }
 };
 ```

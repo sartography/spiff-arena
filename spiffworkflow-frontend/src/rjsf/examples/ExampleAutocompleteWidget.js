@@ -12,7 +12,7 @@ module.exports = {
     const { useState, useEffect, useRef } = React;
     
     // MUI components
-    const { Autocomplete, TextField, CircularProgress, Box, FormHelperText } = require('@mui/material');
+    const mui = require('@mui/material');
     
     // State for options, loading state, and input value
     const [inputValue, setInputValue] = useState('');
@@ -33,7 +33,7 @@ module.exports = {
     };
     
     // Function to fetch suggestions
-    const fetchSuggestions = async (searchText) => {
+    const fetchSuggestions = async function(searchText) {
       if (searchText.length < config.minSearchLength) {
         setSuggestions([]);
         return;
@@ -50,9 +50,9 @@ module.exports = {
         
         // Create some mock data based on the search term
         const mockData = [
-          { [config.valueField]: `${searchText}-1`, [config.labelField]: `${searchText} Option 1` },
-          { [config.valueField]: `${searchText}-2`, [config.labelField]: `${searchText} Option 2` },
-          { [config.valueField]: `${searchText}-3`, [config.labelField]: `${searchText} Option 3` },
+          { [config.valueField]: searchText + '-1', [config.labelField]: searchText + ' Option 1' },
+          { [config.valueField]: searchText + '-2', [config.labelField]: searchText + ' Option 2' },
+          { [config.valueField]: searchText + '-3', [config.labelField]: searchText + ' Option 3' },
         ];
         
         setSuggestions(mockData);
@@ -65,16 +65,16 @@ module.exports = {
     };
     
     // Debounced search
-    useEffect(() => {
+    useEffect(function() {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       
-      timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = setTimeout(function() {
         fetchSuggestions(inputValue);
       }, config.debounceMs);
       
-      return () => {
+      return function() {
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
@@ -82,7 +82,7 @@ module.exports = {
     }, [inputValue]);
     
     // Update selectedOption when value changes from outside
-    useEffect(() => {
+    useEffect(function() {
       if (value) {
         // If value is an object with the expected structure
         if (typeof value === 'object' && value !== null) {
@@ -91,15 +91,17 @@ module.exports = {
         // If value is just the ID/value part
         else if (typeof value === 'string' || typeof value === 'number') {
           // Try to find in suggestions, or create a placeholder object
-          const found = suggestions.find(item => item[config.valueField] === value);
+          const found = suggestions.find(function(item) {
+            return item[config.valueField] === value;
+          });
           if (found) {
             setSelectedOption(found);
           } else {
             // Create a placeholder with just the ID
-            setSelectedOption({
-              [config.valueField]: value,
-              [config.labelField]: `ID: ${value}`,
-            });
+            const placeholder = {};
+            placeholder[config.valueField] = value;
+            placeholder[config.labelField] = 'ID: ' + value;
+            setSelectedOption(placeholder);
             
             // Optionally fetch the details for this ID
             // fetchItemDetails(value);
@@ -113,48 +115,85 @@ module.exports = {
     // Check if there are validation errors
     const hasError = rawErrors && rawErrors.length > 0;
     
-    return (
-      <Box sx={{ mb: 2, mt: 1, width: '100%' }}>
-        <Autocomplete
-          id={id}
-          value={selectedOption}
-          onChange={(event, newValue) => {
-            setSelectedOption(newValue);
-            onChange(newValue);
-          }}
-          inputValue={inputValue}
-          onInputChange={(event, newInputValue) => {
-            setInputValue(newInputValue);
-          }}
-          options={suggestions}
-          getOptionLabel={(option) => option ? option[config.labelField] : ''}
-          loading={loading}
-          disabled={disabled || readonly}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              placeholder={config.placeholder}
-              required={required}
-              error={hasError}
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
-        />
-        {hasError && (
-          <FormHelperText error>
-            {rawErrors.join(', ')}
-          </FormHelperText>
-        )}
-      </Box>
+    // Create the renderInput function that would normally be passed as JSX
+    const renderInput = function(params) {
+      // Create the endAdornment with loading indicator if needed
+      const loadingIndicator = loading ? 
+        React.createElement(mui.CircularProgress, { 
+          key: 'progress',
+          color: 'inherit', 
+          size: 20 
+        }) : null;
+      
+      // Combine the loading indicator with the existing endAdornment
+      const endAdornment = React.createElement(
+        React.Fragment,
+        null,
+        [loadingIndicator, params.InputProps.endAdornment].filter(Boolean)
+      );
+      
+      // Create the InputProps object
+      const inputProps = {
+        ...params.InputProps,
+        endAdornment: endAdornment
+      };
+      
+      // Return the TextField
+      return React.createElement(
+        mui.TextField,
+        {
+          ...params,
+          label: label,
+          placeholder: config.placeholder,
+          required: required,
+          error: hasError,
+          InputProps: inputProps
+        }
+      );
+    };
+    
+    // Create error message if needed
+    const errorMessage = hasError ? 
+      React.createElement(
+        mui.FormHelperText,
+        { 
+          key: 'error-message',
+          error: true 
+        },
+        rawErrors.join(', ')
+      ) : null;
+    
+    // Create the Autocomplete component
+    const autocomplete = React.createElement(
+      mui.Autocomplete,
+      {
+        id: id,
+        value: selectedOption,
+        onChange: function(event, newValue) {
+          setSelectedOption(newValue);
+          onChange(newValue);
+        },
+        inputValue: inputValue,
+        onInputChange: function(event, newInputValue) {
+          setInputValue(newInputValue);
+        },
+        options: suggestions,
+        getOptionLabel: function(option) {
+          return option ? option[config.labelField] : '';
+        },
+        loading: loading,
+        disabled: disabled || readonly,
+        renderInput: renderInput
+      }
+    );
+    
+    // Return the final component wrapped in a Box
+    return React.createElement(
+      mui.Box,
+      { 
+        sx: { mb: 2, mt: 1, width: '100%' } 
+      },
+      [autocomplete, errorMessage].filter(Boolean)
     );
   }
 };
