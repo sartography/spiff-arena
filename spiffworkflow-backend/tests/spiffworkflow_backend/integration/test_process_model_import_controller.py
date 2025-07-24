@@ -122,7 +122,7 @@ class TestProcessModelImportController(BaseTest):
         assert "error_code" in response_data
         assert response_data["error_code"] == "internal_server_error"
         assert "process_group_not_found" in response_data["message"]
-        
+
     def test_process_model_import_from_model_alias(
         self,
         app: Flask,
@@ -147,8 +147,10 @@ class TestProcessModelImportController(BaseTest):
             primary_file_name="timer-events.bpmn",
         )
 
-        with patch.object(ProcessModelImportService, "is_model_alias", return_value=True), \
-             patch.object(ProcessModelImportService, "import_from_model_alias", return_value=mock_process_model) as mock_import:
+        with (
+            patch.object(ProcessModelImportService, "is_model_alias", return_value=True),
+            patch.object(ProcessModelImportService, "import_from_model_alias", return_value=mock_process_model) as mock_import,
+        ):
             # Make a request to the import endpoint with a model alias
             model_alias = "timer-events"
             response = client.post(
@@ -170,29 +172,29 @@ class TestProcessModelImportController(BaseTest):
 
             # Verify the service method was called correctly
             mock_import.assert_called_once_with(alias=model_alias, process_group_id=process_group_id)
-            
+
     def test_is_model_alias(self) -> None:
         """Test the is_model_alias method."""
         # Valid model aliases
         assert ProcessModelImportService.is_model_alias("timer-events") is True
         assert ProcessModelImportService.is_model_alias("simple_example") is True
         assert ProcessModelImportService.is_model_alias("example123") is True
-        
+
         # Invalid model aliases
         assert ProcessModelImportService.is_model_alias("https://github.com/example") is False
         assert ProcessModelImportService.is_model_alias("example with spaces") is False
         assert ProcessModelImportService.is_model_alias("example/with/slashes") is False
-        
+
     def test_get_marketplace_url(self) -> None:
         """Test the get_marketplace_url method."""
         # Save the original environment variable value
         original_url = os.environ.get("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL")
-        
+
         try:
             # Set a custom URL
             os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"] = "https://custom-marketplace.example.com"
             assert ProcessModelImportService.get_marketplace_url() == "https://custom-marketplace.example.com"
-            
+
             # Remove the environment variable to test the default value
             if "SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL" in os.environ:
                 del os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"]
