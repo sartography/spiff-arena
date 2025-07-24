@@ -81,7 +81,7 @@ export async function evaluateWidgetCode(
     /\bWebSocket\b/g,
     /\bIndexedDB\b/g,
     /\brequest\b/g,
-    /\brequire\b/g,
+    // We allow require because we provide a sandboxed version
     /\bimport\(/g, // Dynamic imports
     /\bprocess\b/g,
     /\b__dirname\b/g,

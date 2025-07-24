@@ -66,7 +66,14 @@ Alternatively, you can use the UX Elements approach:
 
 ## Creating a Widget File
 
-Widget files are JavaScript files that export a React component. Here's a basic template:
+Widget files are JavaScript (.js) files that export a React component.
+
+**Important**: 
+- Files must use CommonJS module syntax with `module.exports` (not ES6 import/export)
+- Use `require()` to import React and other libraries inside your component function, not at the top level
+- Don't include external dependencies - use only allowed libraries (React, MUI, Carbon)
+
+Here's a basic template:
 
 ```javascript
 // rating_widget.js
