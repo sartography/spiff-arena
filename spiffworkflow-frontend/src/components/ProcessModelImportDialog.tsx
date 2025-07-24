@@ -11,8 +11,12 @@ import {
   Box,
   Alert,
   InputAdornment,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import TagIcon from '@mui/icons-material/LocalOffer';
+import DownloadIcon from '@mui/icons-material/Download';
 import HttpService from '../services/HttpService';
 
 interface ProcessModelImportDialogProps {
@@ -28,12 +32,21 @@ export function ProcessModelImportDialog({
   processGroupId,
   onImportSuccess,
 }: ProcessModelImportDialogProps) {
-  const [repositoryUrl, setRepositoryUrl] = useState('');
-  const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
+  const [importSource, setImportSource] = useState('');
+  const [isValid, setIsValid] = useState<boolean | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [importType, setImportType] = useState<'github' | 'marketplace'>('github');
 
-  // Validate URL when it changes
+  // Validate input based on selected import type
+  const validateInput = (value: string): boolean => {
+    if (importType === 'github') {
+      return validateGithubUrl(value);
+    } else {
+      return validateModelAlias(value);
+    }
+  };
+
   const validateGithubUrl = (url: string): boolean => {
     // Basic URL validation
     if (!url || !url.startsWith('https://github.com/')) {
@@ -49,19 +62,30 @@ export function ProcessModelImportDialog({
     // Check that the URL contains either /tree/ or /blob/
     return url.indexOf('/tree/') !== -1 || url.indexOf('/blob/') !== -1;
   };
+  
+  const validateModelAlias = (alias: string): boolean => {
+    // Model alias should be a simple string with only alphanumeric characters, hyphens, and underscores
+    return /^[a-zA-Z0-9_-]+$/.test(alias);
+  };
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setRepositoryUrl(url);
-    if (!url || url.length < 10) {
-      setIsValidUrl(null);
+  const handleSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setImportSource(value);
+    if (!value || value.length < 3) {
+      setIsValid(null);
     } else {
-      setIsValidUrl(validateGithubUrl(url));
+      setIsValid(validateInput(value));
     }
+  };
+  
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'github' | 'marketplace') => {
+    setImportType(newValue);
+    setImportSource('');
+    setIsValid(null);
   };
 
   const handleImport = async () => {
-    if (!isValidUrl) {
+    if (!isValid) {
       return;
     }
 
@@ -69,14 +93,14 @@ export function ProcessModelImportDialog({
     setErrorMessage(null);
 
     try {
-      console.log('Importing from URL:', repositoryUrl);
+      console.log('Importing from source:', importSource);
       console.log('Process Group ID:', processGroupId);
 
       HttpService.makeCallToBackend({
         httpMethod: 'POST',
         path: `/process-model-import/${processGroupId}`,
         postBody: {
-          repository_url: repositoryUrl,
+          repository_url: importSource,
         },
         successCallback: (result) => {
           console.log('Import API success response:', JSON.stringify(result));
@@ -111,36 +135,92 @@ export function ProcessModelImportDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Import Process Model from GitHub</DialogTitle>
+      <DialogTitle>Import Process Model</DialogTitle>
       <DialogContent>
+        <Box sx={{ width: '100%', mb: 2 }}>
+          <Tabs
+            value={importType}
+            onChange={handleTabChange}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+          >
+            <Tab 
+              value="github" 
+              label="GitHub Repository" 
+              icon={<GitHubIcon />}
+              iconPosition="start"
+            />
+            <Tab 
+              value="marketplace" 
+              label="Model Marketplace" 
+              icon={<TagIcon />}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
         <Box sx={{ my: 2 }}>
-          <Typography variant="body1" gutterBottom>
-            Enter the GitHub URL of a process model to import:
-          </Typography>
-          <TextField
-            fullWidth
-            label="GitHub Repository URL"
-            variant="outlined"
-            value={repositoryUrl}
-            onChange={handleUrlChange}
-            placeholder="https://github.com/owner/repo/tree/branch/path/to/model"
-            margin="normal"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <GitHubIcon />
-                </InputAdornment>
-              ),
-            }}
-            error={isValidUrl === false}
-            helperText={
-              isValidUrl === false
-                ? 'Please enter a valid GitHub URL to a process model directory'
-                : 'Example: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example'
-            }
-            disabled={isImporting}
-            data-testid="repository-url-input"
-          />
+          {importType === 'github' ? (
+            <>
+              <Typography variant="body1" gutterBottom>
+                Enter the GitHub URL of a process model to import:
+              </Typography>
+              <TextField
+                fullWidth
+                label="GitHub Repository URL"
+                variant="outlined"
+                value={importSource}
+                onChange={handleSourceChange}
+                placeholder="https://github.com/owner/repo/tree/branch/path/to/model"
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <GitHubIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                error={isValid === false}
+                helperText={
+                  isValid === false
+                    ? 'Please enter a valid GitHub URL to a process model directory'
+                    : 'Example: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example'
+                }
+                disabled={isImporting}
+                data-testid="repository-url-input"
+              />
+            </>
+          ) : (
+            <>
+              <Typography variant="body1" gutterBottom>
+                Enter the model alias to import from the marketplace:
+              </Typography>
+              <TextField
+                fullWidth
+                label="Model Alias"
+                variant="outlined"
+                value={importSource}
+                onChange={handleSourceChange}
+                placeholder="timer-events"
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <TagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                error={isValid === false}
+                helperText={
+                  isValid === false
+                    ? 'Please enter a valid model alias (only letters, numbers, hyphens, and underscores)'
+                    : 'Example: timer-events'
+                }
+                disabled={isImporting}
+                data-testid="model-alias-input"
+              />
+            </>
+          )}
 
           {/* Error message display */}
           {errorMessage && (
@@ -158,9 +238,9 @@ export function ProcessModelImportDialog({
           onClick={handleImport}
           variant="contained"
           color="primary"
-          disabled={!isValidUrl || isImporting}
+          disabled={!isValid || isImporting}
           startIcon={
-            isImporting ? <CircularProgress size={20} /> : <GitHubIcon />
+            isImporting ? <CircularProgress size={20} /> : <DownloadIcon />
           }
           data-testid="import-button"
         >

@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -32,6 +33,18 @@ class GitHubRepositoryNotFoundError(ImportError):
 
 class InvalidProcessModelError(ImportError):
     """Exception raised when a repository does not contain a valid process model."""
+
+
+class InvalidModelAliasError(ImportError):
+    """Exception raised when a model alias is invalid."""
+
+
+class ModelAliasNotFoundError(ImportError):
+    """Exception raised when a model with the specified alias is not found."""
+
+
+class ModelMarketplaceError(ImportError):
+    """Exception raised when there are issues communicating with the model marketplace."""
 
 
 class ProcessModelImportService:
@@ -236,3 +249,140 @@ class ProcessModelImportService:
             return True
         except InvalidGitHubUrlError:
             return False
+            
+    @classmethod
+    def is_model_alias(cls, text: str) -> bool:
+        """Check if the given text is a model alias (not a URL).
+        
+        A model alias is a simple string without URL-specific characters.
+        """
+        # If it has URL-like characters, it's not an alias
+        if text.startswith(('http://', 'https://')):
+            return False
+        
+        # If it contains slashes, colons, or other URL characters, it's probably not an alias
+        if re.search(r'[/:?&=]', text):
+            return False
+            
+        # Check for valid alias format (alphanumeric with hyphens, underscores)
+        return bool(re.match(r'^[a-zA-Z0-9_-]+$', text))
+        
+    @classmethod
+    def get_marketplace_url(cls) -> str:
+        """Get the configured marketplace URL."""
+        return os.environ.get('SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL', 'http://127.0.0.1:8000')
+        
+    @classmethod
+    def import_from_model_alias(cls, alias: str, process_group_id: str) -> ProcessModelInfo:
+        """Import a process model from a marketplace model alias.
+        
+        Args:
+            alias: The model alias to import
+            process_group_id: The ID of the process group to import into
+            
+        Returns:
+            ProcessModelInfo: The imported process model
+            
+        Raises:
+            ModelAliasNotFoundError: If the model with the specified alias was not found
+            ModelMarketplaceError: If there are issues communicating with the marketplace
+        """
+        process_group = ProcessModelService.get_process_group(process_group_id)
+        
+        # Fetch model data from marketplace
+        files = cls._fetch_files_from_marketplace(alias)
+        model_info = cls._extract_process_model_info(files)
+        
+        # Use the alias as model_id if not provided in model_info
+        model_id = model_info.get("id") or alias
+        full_process_model_id = f"{process_group.id}/{model_id}"
+        
+        if ProcessModelService.is_process_model_identifier(full_process_model_id):
+            model_id = f"{model_id}-{int(time.time())}"
+            full_process_model_id = f"{process_group.id}/{model_id}"
+            
+        display_name = model_info.get("display_name", model_id.replace("-", " ").title())
+        description = model_info.get("description", f"Imported from marketplace: {alias}")
+        process_model = ProcessModelInfo(id=full_process_model_id, display_name=display_name, description=description)
+        ProcessModelService.add_process_model(process_model)
+        
+        timestamp = int(time.time())
+        for file_name, file_content in files.items():
+            # Make BPMN process IDs unique to avoid conflicts
+            file_content_to_save = file_content
+            if file_name.endswith(".bpmn"):
+                file_content_to_save = cls._make_bpmn_process_ids_unique(file_content, timestamp)
+            SpecFileService.update_file(process_model, file_name, file_content_to_save)
+            
+        if model_info.get("primary_file_name"):
+            process_model.primary_file_name = model_info.get("primary_file_name")
+            
+        if model_info.get("primary_process_id"):
+            original_primary_process_id = model_info.get("primary_process_id")
+            updated_primary_process_id = f"{original_primary_process_id}_{timestamp}" if original_primary_process_id else None
+            process_model.primary_process_id = updated_primary_process_id
+            
+        ProcessModelService.update_process_model(process_model, {})
+        
+        return process_model
+        
+    @classmethod
+    def _fetch_files_from_marketplace(cls, alias: str) -> dict[str, bytes]:
+        """Fetch process model files from the model marketplace.
+        
+        Args:
+            alias: The model alias to fetch
+            
+        Returns:
+            dict[str, bytes]: A dictionary mapping file names to file contents
+            
+        Raises:
+            ModelAliasNotFoundError: If the model with the specified alias was not found
+            ModelMarketplaceError: If there are issues communicating with the marketplace
+        """
+        marketplace_url = cls.get_marketplace_url()
+        api_url = f"{marketplace_url}/api/models/{alias}?include_files=true"
+        
+        try:
+            response = requests.get(api_url, timeout=30)
+            if response.status_code == 404:
+                raise ModelAliasNotFoundError(
+                    message=f"Model with alias '{alias}' not found in the marketplace", 
+                    error_code="model_alias_not_found_error"
+                )
+            elif response.status_code != 200:
+                raise ModelMarketplaceError(
+                    message=f"Marketplace API error: {response.status_code}", 
+                    error_code="model_marketplace_error"
+                )
+                
+            data = response.json()
+            if not data or "included" not in data:
+                raise ModelMarketplaceError(
+                    message="Invalid response format from marketplace API", 
+                    error_code="invalid_marketplace_response"
+                )
+                
+            files = {}
+            # Extract files from the marketplace response
+            for item in data.get("included", []):
+                if item.get("type") == "process-model-files" and "attributes" in item:
+                    attrs = item["attributes"]
+                    if "file_name" in attrs and "content" in attrs:
+                        file_name = attrs["file_name"]
+                        file_content = attrs["content"].encode("utf-8")
+                        files[file_name] = file_content
+                        
+            if not files:
+                raise InvalidProcessModelError(
+                    message="No files found in the marketplace response", 
+                    error_code="invalid_process_model"
+                )
+                
+            return files
+                
+        except requests.RequestException as ex:
+            raise ModelMarketplaceError(
+                message=f"Error connecting to marketplace: {str(ex)}", 
+                error_code="marketplace_connection_error"
+            ) from ex
