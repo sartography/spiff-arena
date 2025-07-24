@@ -714,7 +714,7 @@ export default function ProcessModelEditDiagram() {
         expectedJson = JSON.parse(
           currentScriptUnitTest.expectedOutputJson.value,
         );
-      } catch (e) {
+      } catch (_e) {
         setScriptUnitTestResult({
           result: false,
           error: t('diagram_errors_json_formatting'),
