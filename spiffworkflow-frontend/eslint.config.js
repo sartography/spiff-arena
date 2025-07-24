@@ -34,13 +34,7 @@ export default tseslint.config(
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
-    plugins: [
-      '@typescript-eslint',
-      'react',
-      'react-hooks',
-      'sonarjs',
-      'unused-imports',
-    ],
+    plugins: ['@typescript-eslint', 'react', 'react-hooks', 'sonarjs'],
     rules: {
       // according to https://github.com/typescript-eslint/typescript-eslint/issues/2621, You should turn off the eslint core rule and turn on the typescript-eslint rule
       // but not sure which of the above "extends" statements is maybe bringing in eslint core
@@ -72,22 +66,16 @@ export default tseslint.config(
       'sonarjs/pseudo-random': 'off',
       'sonarjs/slow-regex': 'off',
       'sonarjs/todo-tag': 'off',
-      'unused-imports/no-unused-imports': 'error',
-      'unused-imports/no-unused-vars': [
-        'warn',
-        {
-          vars: 'all',
-          varsIgnorePattern: '^_',
-          args: 'after-used',
-          argsIgnorePattern: '^_',
-        },
-      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          destructuredArrayIgnorePattern: '^_',
-          varsIgnorePattern: '_',
+          args: 'all',
           argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
         },
       ],
       'import/extensions': [
@@ -110,5 +98,5 @@ export default tseslint.config(
         },
       },
     ],
-  })
+  }),
 );
