@@ -1,6 +1,7 @@
 # Base image to share ENV vars that activate VENV.
 FROM python:3.12.1-slim-bookworm AS base
 
+ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
