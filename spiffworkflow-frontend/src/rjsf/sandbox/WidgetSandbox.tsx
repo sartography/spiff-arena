@@ -1,38 +1,78 @@
 import React, { ComponentType, useEffect, useState, useRef } from 'react';
 import DOMPurify from 'dompurify';
-import { CustomWidgetProps, ExternalWidgetSource } from '../interfaces/CustomWidgetInterfaces';
+import {
+  CustomWidgetProps,
+  ExternalWidgetSource,
+} from '../interfaces/CustomWidgetInterfaces';
 
 // Allowed imports that extension widgets can use
 const ALLOWED_IMPORTS = {
-  'react': React,
+  react: React,
   '@mui/material': {}, // We'll populate this with only specific components
   '@carbon/react': {}, // We'll populate this with only specific components
 };
 
 // Allowed Material UI components
 const ALLOWED_MUI_COMPONENTS = [
-  'Button', 'TextField', 'Select', 'MenuItem', 'FormControl', 
-  'InputLabel', 'FormHelperText', 'Checkbox', 'Radio', 'RadioGroup',
-  'FormControlLabel', 'Switch', 'Slider', 'Typography', 'Box', 'Grid',
-  'Paper', 'Card', 'CardContent', 'CardActions', 'Divider',
+  'Button',
+  'TextField',
+  'Select',
+  'MenuItem',
+  'FormControl',
+  'InputLabel',
+  'FormHelperText',
+  'Checkbox',
+  'Radio',
+  'RadioGroup',
+  'FormControlLabel',
+  'Switch',
+  'Slider',
+  'Typography',
+  'Box',
+  'Grid',
+  'Paper',
+  'Card',
+  'CardContent',
+  'CardActions',
+  'Divider',
 ];
 
 // Allowed Carbon components
 const ALLOWED_CARBON_COMPONENTS = [
-  'Button', 'TextInput', 'Select', 'SelectItem', 'ComboBox', 
-  'FormGroup', 'Checkbox', 'RadioButton', 'RadioButtonGroup',
-  'Toggle', 'Slider', 'Tag', 'InlineLoading', 
+  'Button',
+  'TextInput',
+  'Select',
+  'SelectItem',
+  'ComboBox',
+  'FormGroup',
+  'Checkbox',
+  'RadioButton',
+  'RadioButtonGroup',
+  'Toggle',
+  'Slider',
+  'Tag',
+  'InlineLoading',
 ];
 
 // Load allowed MUI components dynamically to avoid importing entire library
 async function loadAllowedMuiComponents() {
   try {
     const mui = await import('@mui/material');
-    ALLOWED_MUI_COMPONENTS.forEach(componentName => {
+
+    // Add the entire mui object to allowed imports
+    ALLOWED_IMPORTS['@mui/material'] = mui;
+
+    // Also add individual components for backward compatibility
+    ALLOWED_MUI_COMPONENTS.forEach((componentName) => {
       if (mui[componentName as keyof typeof mui]) {
-        ALLOWED_IMPORTS['@mui/material'][componentName] = mui[componentName as keyof typeof mui];
+        ALLOWED_IMPORTS['@mui/material'][componentName] =
+          mui[componentName as keyof typeof mui];
+      } else {
+        console.warn(`MUI component not found: ${componentName}`);
       }
     });
+
+    console.log('MUI components loaded successfully');
   } catch (error) {
     console.error('Failed to load MUI components:', error);
   }
@@ -42,11 +82,21 @@ async function loadAllowedMuiComponents() {
 async function loadAllowedCarbonComponents() {
   try {
     const carbon = await import('@carbon/react');
-    ALLOWED_CARBON_COMPONENTS.forEach(componentName => {
+
+    // Add the entire carbon object to allowed imports
+    ALLOWED_IMPORTS['@carbon/react'] = carbon;
+
+    // Also add individual components for backward compatibility
+    ALLOWED_CARBON_COMPONENTS.forEach((componentName) => {
       if (carbon[componentName as keyof typeof carbon]) {
-        ALLOWED_IMPORTS['@carbon/react'][componentName] = carbon[componentName as keyof typeof carbon];
+        ALLOWED_IMPORTS['@carbon/react'][componentName] =
+          carbon[componentName as keyof typeof carbon];
+      } else {
+        console.warn(`Carbon component not found: ${componentName}`);
       }
     });
+
+    console.log('Carbon components loaded successfully');
   } catch (error) {
     console.error('Failed to load Carbon components:', error);
   }
@@ -58,20 +108,20 @@ async function loadAllowedCarbonComponents() {
  * @returns A React component that renders the custom widget
  */
 export async function evaluateWidgetCode(
-  sourceCode: string
+  sourceCode: string,
 ): Promise<ComponentType<CustomWidgetProps> | null> {
   // Sanitize source code with DOMPurify
   const sanitizedCode = DOMPurify.sanitize(sourceCode);
-  
+
   // Check if the source code attempts to access disallowed objects
   const disallowedPatterns = [
-    /\bdocument\b/g, 
-    /\bwindow\b/g, 
-    /\bglobal\b/g, 
-    /\beval\b/g, 
-    /\bFunction\(/g, 
+    /\bdocument\b/g,
+    /\bwindow\b/g,
+    /\bglobal\b/g,
+    /\beval\b/g,
+    /\bFunction\(/g,
     /\bnew Function\b/g,
-    /\blocalStorage\b/g, 
+    /\blocalStorage\b/g,
     /\bsessionStorage\b/g,
     /\bfetch\b/g,
     /\bXMLHttpRequest\b/g,
@@ -85,7 +135,7 @@ export async function evaluateWidgetCode(
     /\bimport\(/g, // Dynamic imports
     /\bprocess\b/g,
     /\b__dirname\b/g,
-    /\b__filename\b/g
+    /\b__filename\b/g,
   ];
 
   // Check for disallowed patterns
@@ -99,13 +149,16 @@ export async function evaluateWidgetCode(
   // Load allowed component libraries
   await Promise.all([
     loadAllowedMuiComponents(),
-    loadAllowedCarbonComponents()
+    loadAllowedCarbonComponents(),
   ]);
 
   try {
     // Add some debugging to help identify what's wrong with the widget code
-    console.debug('Evaluating widget code:', sanitizedCode.substring(0, 100) + '...');
-    
+    console.debug(
+      'Evaluating widget code:',
+      sanitizedCode.substring(0, 100) + '...',
+    );
+
     // Create a secure evaluation environment with better error context
     const secureEval = new Function(
       'React',
@@ -137,28 +190,36 @@ export async function evaluateWidgetCode(
           // Provide more context about where in the code the error occurred
           throw new Error(\`Widget code error: \${innerError.message}\`);
         }
-      `
+      `,
     );
-    
+
     // Execute the code in the sandbox
     const WidgetComponent = secureEval(React, ALLOWED_IMPORTS);
-    
+
     // Check if the module exported anything
     if (!WidgetComponent) {
-      console.error('Widget code did not export anything. Make sure it uses module.exports correctly.');
+      console.error(
+        'Widget code did not export anything. Make sure it uses module.exports correctly.',
+      );
       return null;
     }
-    
+
     // Verify that the result is a valid component
     if (typeof WidgetComponent !== 'function') {
-      console.error('Widget code did not export a valid React component function. Received:', typeof WidgetComponent);
+      console.error(
+        'Widget code did not export a valid React component function. Received:',
+        typeof WidgetComponent,
+      );
       return null;
     }
-    
+
     return WidgetComponent as ComponentType<CustomWidgetProps>;
   } catch (error) {
     console.error('Error evaluating widget code:', error);
-    console.error('Widget source code snippet:', sanitizedCode.substring(0, 300) + '...');
+    console.error(
+      'Widget source code snippet:',
+      sanitizedCode.substring(0, 300) + '...',
+    );
     return null;
   }
 }
@@ -170,14 +231,15 @@ export function SandboxedWidget({
   widgetSource,
   ...props
 }: CustomWidgetProps & { widgetSource: string }) {
-  const [WidgetComponent, setWidgetComponent] = useState<ComponentType<CustomWidgetProps> | null>(null);
+  const [WidgetComponent, setWidgetComponent] =
+    useState<ComponentType<CustomWidgetProps> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMounted = useRef(true);
 
   useEffect(() => {
     // Load the component
     evaluateWidgetCode(widgetSource)
-      .then(component => {
+      .then((component) => {
         if (isMounted.current) {
           setWidgetComponent(component);
           if (!component) {
@@ -185,7 +247,7 @@ export function SandboxedWidget({
           }
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (isMounted.current) {
           console.error('Error loading widget:', err);
           setError(`Widget error: ${err.message}`);
@@ -200,11 +262,11 @@ export function SandboxedWidget({
   if (error) {
     return React.createElement(
       'div',
-      { 
-        className: "widget-error",
-        style: { color: 'red', padding: '8px', border: '1px solid red' } 
+      {
+        className: 'widget-error',
+        style: { color: 'red', padding: '8px', border: '1px solid red' },
       },
-      error
+      error,
     );
   }
 
@@ -219,11 +281,11 @@ export function SandboxedWidget({
     const errorMessage = `Error rendering widget: ${err instanceof Error ? err.message : 'Unknown error'}`;
     return React.createElement(
       'div',
-      { 
-        className: "widget-error",
-        style: { color: 'red', padding: '8px', border: '1px solid red' } 
+      {
+        className: 'widget-error',
+        style: { color: 'red', padding: '8px', border: '1px solid red' },
       },
-      errorMessage
+      errorMessage,
     );
   }
 }
@@ -234,7 +296,7 @@ export function SandboxedWidget({
 export function withSandbox(WidgetComponent: ComponentType<CustomWidgetProps>) {
   return function SandboxedComponent(props: CustomWidgetProps) {
     const [error, setError] = useState<string | null>(null);
-    
+
     // Reset error when props change
     useEffect(() => {
       setError(null);
@@ -243,11 +305,11 @@ export function withSandbox(WidgetComponent: ComponentType<CustomWidgetProps>) {
     if (error) {
       return React.createElement(
         'div',
-        { 
-          className: "widget-error",
-          style: { color: 'red', padding: '8px', border: '1px solid red' } 
+        {
+          className: 'widget-error',
+          style: { color: 'red', padding: '8px', border: '1px solid red' },
         },
-        error
+        error,
       );
     }
 
@@ -259,11 +321,11 @@ export function withSandbox(WidgetComponent: ComponentType<CustomWidgetProps>) {
       setError(errorMessage);
       return React.createElement(
         'div',
-        { 
-          className: "widget-error",
-          style: { color: 'red', padding: '8px', border: '1px solid red' } 
+        {
+          className: 'widget-error',
+          style: { color: 'red', padding: '8px', border: '1px solid red' },
         },
-        errorMessage
+        errorMessage,
       );
     }
   };

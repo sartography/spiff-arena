@@ -15,7 +15,7 @@ const queryClient = new QueryClient();
 
 export default function App() {
   const ability = defineAbility(() => {});
-  
+
   // Initialize the widget system when the app loads
   React.useEffect(() => {
     // Initialize widgets on component mount
@@ -23,7 +23,7 @@ export default function App() {
       console.error('Failed to initialize widget system:', error);
     });
   }, []);
-  
+
   const routeComponents = () => {
     return [
       { path: 'public/*', element: <PublicRoutes /> },

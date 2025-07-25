@@ -1,8 +1,8 @@
 import React, { ComponentType, createContext, useContext } from 'react';
-import { 
-  WidgetRegistry as WidgetRegistryInterface, 
+import {
+  WidgetRegistry as WidgetRegistryInterface,
   WidgetRegistration,
-  CustomWidgetProps
+  CustomWidgetProps,
 } from '../interfaces/CustomWidgetInterfaces';
 
 /**
@@ -19,9 +19,11 @@ class WidgetRegistryImpl implements WidgetRegistryInterface {
    */
   registerWidget(registration: WidgetRegistration): void {
     if (this.widgets[registration.name]) {
-      console.warn(`Widget '${registration.name}' is already registered. It will be overwritten.`);
+      console.warn(
+        `Widget '${registration.name}' is already registered. It will be overwritten.`,
+      );
     }
-    
+
     this.widgets[registration.name] = registration;
   }
 
@@ -70,15 +72,17 @@ class WidgetRegistryImpl implements WidgetRegistryInterface {
   clearExtensionWidgets(extensionId?: string): void {
     if (extensionId) {
       // Remove only widgets from the specified extension
-      Object.keys(this.widgets).forEach(name => {
-        if (this.widgets[name].source === 'extension' && 
-            this.widgets[name].extensionId === extensionId) {
+      Object.keys(this.widgets).forEach((name) => {
+        if (
+          this.widgets[name].source === 'extension' &&
+          this.widgets[name].extensionId === extensionId
+        ) {
           delete this.widgets[name];
         }
       });
     } else {
       // Remove all extension widgets
-      Object.keys(this.widgets).forEach(name => {
+      Object.keys(this.widgets).forEach((name) => {
         if (this.widgets[name].source === 'extension') {
           delete this.widgets[name];
         }
@@ -91,7 +95,8 @@ class WidgetRegistryImpl implements WidgetRegistryInterface {
 export const widgetRegistry = new WidgetRegistryImpl();
 
 // Create React context for the registry
-export const WidgetRegistryContext = createContext<WidgetRegistryInterface>(widgetRegistry);
+export const WidgetRegistryContext =
+  createContext<WidgetRegistryInterface>(widgetRegistry);
 
 /**
  * Hook to access the widget registry in React components
@@ -104,10 +109,14 @@ export function useWidgetRegistry(): WidgetRegistryInterface {
 /**
  * Provider component to make the registry available in the React tree
  */
-export function WidgetRegistryProvider({ children }: { children: React.ReactNode }) {
-  return (
-    React.createElement(WidgetRegistryContext.Provider, { value: widgetRegistry },
-      children
-    )
+export function WidgetRegistryProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return React.createElement(
+    WidgetRegistryContext.Provider,
+    { value: widgetRegistry },
+    children,
   );
 }

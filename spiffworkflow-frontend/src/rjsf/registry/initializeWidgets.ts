@@ -39,7 +39,10 @@ function registerCoreWidgets(): void {
 
   // Use withProps higher-order component like in the original CustomForm
   const customTypeaheadWidget = function TypeaheadWithTheme(props: any) {
-    return React.createElement(TypeaheadWidget, { ...props, reactJsonSchemaFormTheme: "mui" });
+    return React.createElement(TypeaheadWidget, {
+      ...props,
+      reactJsonSchemaFormTheme: 'mui',
+    });
   };
 
   widgetRegistry.registerWidget({
@@ -63,9 +66,9 @@ function registerCoreWidgets(): void {
 export async function initializeWidgets(): Promise<void> {
   // Register core widgets
   registerCoreWidgets();
-  
+
   // Load extension widgets
   await initializeWidgetDiscovery();
-  
+
   console.log('Widget system initialized successfully');
 }

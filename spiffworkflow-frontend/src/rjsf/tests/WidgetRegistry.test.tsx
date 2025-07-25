@@ -3,19 +3,26 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { widgetRegistry } from '../registry/WidgetRegistry';
-import { WidgetRegistration, CustomWidgetProps } from '../interfaces/CustomWidgetInterfaces';
+import {
+  WidgetRegistration,
+  CustomWidgetProps,
+} from '../interfaces/CustomWidgetInterfaces';
 
 describe('Widget Registry', () => {
   // Create a simple test widget
   const TestWidget = (props: CustomWidgetProps) => {
-    return React.createElement('div', { 'data-testid': 'test-widget' }, props.label);
+    return React.createElement(
+      'div',
+      { 'data-testid': 'test-widget' },
+      props.label,
+    );
   };
 
   // Clear registry before and after tests
   beforeEach(() => {
     // Clear any existing widgets
     const widgets = widgetRegistry.getAllWidgets();
-    Object.keys(widgets).forEach(name => {
+    Object.keys(widgets).forEach((name) => {
       widgetRegistry.unregisterWidget(name);
     });
   });
@@ -23,7 +30,7 @@ describe('Widget Registry', () => {
   afterEach(() => {
     // Clear any widgets created during tests
     const widgets = widgetRegistry.getAllWidgets();
-    Object.keys(widgets).forEach(name => {
+    Object.keys(widgets).forEach((name) => {
       widgetRegistry.unregisterWidget(name);
     });
   });
@@ -53,19 +60,21 @@ describe('Widget Registry', () => {
 
     // Render the widget and check output
     if (widget) {
-      render(React.createElement(widget, {
-        id: "test",
-        value: "",
-        onChange: () => {},
-        label: "Test Label",
-        required: false,
-        disabled: false,
-        readonly: false,
-        onBlur: () => {},
-        onFocus: () => {},
-        options: {},
-        formContext: {}
-      }));
+      render(
+        React.createElement(widget, {
+          id: 'test',
+          value: '',
+          onChange: () => {},
+          label: 'Test Label',
+          required: false,
+          disabled: false,
+          readonly: false,
+          onBlur: () => {},
+          onFocus: () => {},
+          options: {},
+          formContext: {},
+        }),
+      );
       expect(screen.getByTestId('test-widget')).toHaveTextContent('Test Label');
     }
   });

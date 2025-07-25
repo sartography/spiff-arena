@@ -28,9 +28,9 @@ describe('Widget Sandbox', () => {
     if (component) {
       render(
         React.createElement(component, {
-          id: "test",
-          label: "Safe Widget",
-          value: "",
+          id: 'test',
+          label: 'Safe Widget',
+          value: '',
           onChange: () => {},
           required: false,
           disabled: false,
@@ -38,11 +38,13 @@ describe('Widget Sandbox', () => {
           onBlur: () => {},
           onFocus: () => {},
           options: {},
-          formContext: {}
-        })
+          formContext: {},
+        }),
       );
 
-      expect(screen.getByTestId('safe-widget')).toHaveTextContent('Safe Widget');
+      expect(screen.getByTestId('safe-widget')).toHaveTextContent(
+        'Safe Widget',
+      );
     }
   });
 
@@ -110,9 +112,9 @@ describe('Widget Sandbox', () => {
     render(
       React.createElement(SandboxedWidget, {
         widgetSource: validCode,
-        id: "test",
-        label: "Sandboxed Widget",
-        value: "",
+        id: 'test',
+        label: 'Sandboxed Widget',
+        value: '',
         onChange: () => {},
         required: false,
         disabled: false,
@@ -120,8 +122,8 @@ describe('Widget Sandbox', () => {
         onBlur: () => {},
         onFocus: () => {},
         options: {},
-        formContext: {}
-      })
+        formContext: {},
+      }),
     );
 
     // Initially shows loading
@@ -148,9 +150,9 @@ describe('Widget Sandbox', () => {
     render(
       React.createElement(SandboxedWidget, {
         widgetSource: errorCode,
-        id: "test",
-        label: "Error Widget",
-        value: "",
+        id: 'test',
+        label: 'Error Widget',
+        value: '',
         onChange: () => {},
         required: false,
         disabled: false,
@@ -158,8 +160,8 @@ describe('Widget Sandbox', () => {
         onBlur: () => {},
         onFocus: () => {},
         options: {},
-        formContext: {}
-      })
+        formContext: {},
+      }),
     );
 
     // Wait for error message

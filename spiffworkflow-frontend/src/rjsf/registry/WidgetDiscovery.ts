@@ -1,6 +1,9 @@
 import { widgetRegistry } from './WidgetRegistry';
 import { evaluateWidgetCode, withSandbox } from '../sandbox/WidgetSandbox';
-import { ExternalWidgetSource, WidgetRegistration } from '../interfaces/CustomWidgetInterfaces';
+import {
+  ExternalWidgetSource,
+  WidgetRegistration,
+} from '../interfaces/CustomWidgetInterfaces';
 
 /**
  * Interface for widget files processed from extensions
@@ -25,7 +28,9 @@ export class WidgetDiscovery {
    * @deprecated Use processWidgetFiles instead
    */
   async loadWidgetsFromExtensions(): Promise<void> {
-    console.log('loadWidgetsFromExtensions is deprecated - widgets are loaded directly by ContainerForExtensions');
+    console.log(
+      'loadWidgetsFromExtensions is deprecated - widgets are loaded directly by ContainerForExtensions',
+    );
     return Promise.resolve();
   }
 
@@ -45,19 +50,21 @@ export class WidgetDiscovery {
    */
   private async evaluateAndRegisterWidget(
     widgetSource: ExternalWidgetSource,
-    extensionId: string
+    extensionId: string,
   ): Promise<void> {
     // Evaluate the widget code in the sandbox
     const widgetComponent = await evaluateWidgetCode(widgetSource.sourceCode);
-    
+
     if (!widgetComponent) {
-      console.error(`Failed to evaluate widget code for ${widgetSource.registration.name}`);
+      console.error(
+        `Failed to evaluate widget code for ${widgetSource.registration.name}`,
+      );
       return;
     }
-    
+
     // Wrap the widget component in a sandbox for runtime protection
     const sandboxedWidget = withSandbox(widgetComponent);
-    
+
     // Register the widget with the registry
     const registration: WidgetRegistration = {
       ...widgetSource.registration,
@@ -65,9 +72,11 @@ export class WidgetDiscovery {
       source: 'extension',
       extensionId,
     };
-    
+
     widgetRegistry.registerWidget(registration);
-    console.log(`Registered widget ${registration.name} from extension ${extensionId}`);
+    console.log(
+      `Registered widget ${registration.name} from extension ${extensionId}`,
+    );
   }
 
   // These API methods have been removed as we now get widget data directly from ContainerForExtensions
@@ -78,11 +87,14 @@ export class WidgetDiscovery {
    * @param fileName The name of the widget file
    * @returns The widget source if found, null otherwise
    */
-  getWidgetFromCache(extensionId: string, fileName: string): ExternalWidgetSource | null {
+  getWidgetFromCache(
+    extensionId: string,
+    fileName: string,
+  ): ExternalWidgetSource | null {
     const cacheKey = `${extensionId}:${fileName}`;
     return this.extensionWidgetCache[cacheKey] || null;
   }
-  
+
   /**
    * Processes widget files directly from the ContainerForExtensions component
    * @param widgetFiles Array of widget files to process
@@ -91,7 +103,7 @@ export class WidgetDiscovery {
     try {
       // Clear existing extension widgets before loading new ones
       widgetRegistry.clearExtensionWidgets();
-      
+
       // Process each widget file
       await Promise.all(
         widgetFiles.map(async (widgetFile) => {
@@ -103,23 +115,28 @@ export class WidgetDiscovery {
                 name: widgetFile.name,
                 metadata: widgetFile.metadata,
                 source: 'extension',
-                extensionId: widgetFile.processModelId
-              }
+                extensionId: widgetFile.processModelId,
+              },
             };
-            
+
             // Cache the widget source
             const cacheKey = `${widgetFile.processModelId}:${widgetFile.id}`;
             this.extensionWidgetCache[cacheKey] = widgetSource;
-            
+
             // Evaluate and register widget
-            await this.evaluateAndRegisterWidget(widgetSource, widgetFile.processModelId);
+            await this.evaluateAndRegisterWidget(
+              widgetSource,
+              widgetFile.processModelId,
+            );
           } catch (err) {
             console.error(`Error processing widget ${widgetFile.name}:`, err);
           }
-        })
+        }),
       );
-      
-      console.log(`Processed ${widgetFiles.length} widget files from extensions`);
+
+      console.log(
+        `Processed ${widgetFiles.length} widget files from extensions`,
+      );
     } catch (error) {
       console.error('Error processing widget files:', error);
     }

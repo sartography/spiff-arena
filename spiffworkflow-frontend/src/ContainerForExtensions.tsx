@@ -160,18 +160,21 @@ export default function ContainerForExtensions() {
         console.error('Failed to refresh extension widgets:', error);
       }
     };
-    
+
     // Attach this to the extensions load event
     const handleExtensionsLoaded = () => {
       refreshWidgets();
     };
-    
+
     // Add an event listener for extension loading
     window.addEventListener('spiff:extensions-loaded', handleExtensionsLoaded);
-    
+
     return () => {
       // Remove the event listener when component unmounts
-      window.removeEventListener('spiff:extensions-loaded', handleExtensionsLoaded);
+      window.removeEventListener(
+        'spiff:extensions-loaded',
+        handleExtensionsLoaded,
+      );
     };
   }, []);
 
@@ -179,14 +182,14 @@ export default function ContainerForExtensions() {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = [];
       const cssFiles: Array<{ content: string; id: string }> = [];
-      const widgetFiles: Array<{ 
-        content: string; 
+      const widgetFiles: Array<{
+        content: string;
         id: string;
-        name: string; 
+        name: string;
         metadata: any;
         processModelId: string;
       }> = [];
-      
+
       // Dispatch event that extensions are loaded (for widget system)
       window.dispatchEvent(new CustomEvent('spiff:extensions-loaded'));
 
@@ -199,92 +202,96 @@ export default function ContainerForExtensions() {
             const extensionUiSchema: ExtensionUiSchema = JSON.parse(
               extensionUiSchemaFile.file_contents,
             );
-            if (
-              extensionUiSchema &&
-              !extensionUiSchema.disabled
-            ) {
+            if (extensionUiSchema && !extensionUiSchema.disabled) {
               // Process custom widgets defined in the extension schema
-              if (extensionUiSchema.widgets && extensionUiSchema.widgets.length > 0) {
-                extensionUiSchema.widgets.forEach(widgetConfig => {
+              if (
+                extensionUiSchema.widgets &&
+                extensionUiSchema.widgets.length > 0
+              ) {
+                extensionUiSchema.widgets.forEach((widgetConfig) => {
                   // Find the widget file in the process model files
                   const widgetFile = processModel.files.find(
-                    (file: ProcessFile) => file.name === widgetConfig.file
+                    (file: ProcessFile) => file.name === widgetConfig.file,
                   );
-                  
+
                   if (widgetFile && widgetFile.file_contents) {
                     widgetFiles.push({
                       content: widgetFile.file_contents,
-                      id: `${processModel.id}-${widgetConfig.file}`.replace(/[^a-zA-Z0-9]/g, '-'),
+                      id: `${processModel.id}-${widgetConfig.file}`.replace(
+                        /[^a-zA-Z0-9]/g,
+                        '-',
+                      ),
                       name: widgetConfig.name,
                       metadata: widgetConfig.metadata,
-                      processModelId: processModel.id
+                      processModelId: processModel.id,
                     });
                   }
                 });
               }
-              
+
               // Process UI elements if they exist
               if (extensionUiSchema.ux_elements) {
-              // Process ux elements and extract CSS and widget elements
-              extensionUiSchema.ux_elements.forEach(
-                (element: UiSchemaUxElement) => {
-                  if (
-                    element.display_location === UiSchemaDisplayLocation.css
-                  ) {
-                    // Find the CSS file in the process model files
-                    const cssFilename =
-                      element.location_specific_configs?.css_file;
-                    const cssFile = processModel.files.find(
-                      (file: ProcessFile) => file.name === cssFilename,
-                    );
-                    if (cssFile && cssFile.file_contents) {
-                      cssFiles.push({
-                        content: cssFile.file_contents,
-                        id: `${processModel.id}-${cssFilename}`.replace(
-                          /[^a-zA-Z0-9]/g,
-                          '-',
-                        ),
-                      });
-                    }
-                  } else if (
-                    element.display_location === UiSchemaDisplayLocation.widget
-                  ) {
-                    // Find the widget file in the process model files
-                    const widgetFilename =
-                      element.location_specific_configs?.widget_file;
-                    const widgetName =
-                      element.location_specific_configs?.widget_name;
-                    const widgetMetadata =
-                      element.location_specific_configs?.widget_metadata;
-                      
-                    if (widgetFilename && widgetName) {
-                      const widgetFile = processModel.files.find(
-                        (file: ProcessFile) => file.name === widgetFilename,
+                // Process ux elements and extract CSS and widget elements
+                extensionUiSchema.ux_elements.forEach(
+                  (element: UiSchemaUxElement) => {
+                    if (
+                      element.display_location === UiSchemaDisplayLocation.css
+                    ) {
+                      // Find the CSS file in the process model files
+                      const cssFilename =
+                        element.location_specific_configs?.css_file;
+                      const cssFile = processModel.files.find(
+                        (file: ProcessFile) => file.name === cssFilename,
                       );
-                      if (widgetFile && widgetFile.file_contents) {
-                        widgetFiles.push({
-                          content: widgetFile.file_contents,
-                          id: `${processModel.id}-${widgetFilename}`.replace(
+                      if (cssFile && cssFile.file_contents) {
+                        cssFiles.push({
+                          content: cssFile.file_contents,
+                          id: `${processModel.id}-${cssFilename}`.replace(
                             /[^a-zA-Z0-9]/g,
                             '-',
                           ),
-                          name: widgetName,
-                          metadata: widgetMetadata || {
-                            displayName: widgetName,
-                            description: `Widget: ${widgetName}`,
-                            version: '1.0.0',
-                            author: 'Extension',
-                          },
-                          processModelId: processModel.id,
                         });
                       }
+                    } else if (
+                      element.display_location ===
+                      UiSchemaDisplayLocation.widget
+                    ) {
+                      // Find the widget file in the process model files
+                      const widgetFilename =
+                        element.location_specific_configs?.widget_file;
+                      const widgetName =
+                        element.location_specific_configs?.widget_name;
+                      const widgetMetadata =
+                        element.location_specific_configs?.widget_metadata;
+
+                      if (widgetFilename && widgetName) {
+                        const widgetFile = processModel.files.find(
+                          (file: ProcessFile) => file.name === widgetFilename,
+                        );
+                        if (widgetFile && widgetFile.file_contents) {
+                          widgetFiles.push({
+                            content: widgetFile.file_contents,
+                            id: `${processModel.id}-${widgetFilename}`.replace(
+                              /[^a-zA-Z0-9]/g,
+                              '-',
+                            ),
+                            name: widgetName,
+                            metadata: widgetMetadata || {
+                              displayName: widgetName,
+                              description: `Widget: ${widgetName}`,
+                              version: '1.0.0',
+                              author: 'Extension',
+                            },
+                            processModelId: processModel.id,
+                          });
+                        }
+                      }
+                    } else {
+                      // Normal UI element
+                      eni.push(element);
                     }
-                  } else {
-                    // Normal UI element
-                    eni.push(element);
-                  }
-                },
-              );
+                  },
+                );
               }
             }
           } catch (_jsonParseError: any) {
@@ -302,7 +309,7 @@ export default function ContainerForExtensions() {
       if (cssFiles.length > 0) {
         setExtensionCssFiles(cssFiles);
       }
-      
+
       // Store widget files in a dedicated property for the widget system to use
       if (widgetFiles.length > 0) {
         // Pass widget files to the widget discovery system

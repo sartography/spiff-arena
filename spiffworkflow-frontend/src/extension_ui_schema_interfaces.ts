@@ -250,12 +250,12 @@ export interface ExtensionUiSchema {
      * The name to register the widget as (used in ui:widget)
      */
     name: string;
-    
+
     /**
      * The file containing the widget implementation
      */
     file: string;
-    
+
     /**
      * Metadata about the widget
      */
