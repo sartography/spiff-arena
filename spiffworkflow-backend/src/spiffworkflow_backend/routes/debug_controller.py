@@ -7,8 +7,11 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
+from sqlalchemy import func
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.monitoring_service import get_version_info_data
 
@@ -34,6 +37,59 @@ def url_info() -> Response:
         },
         200,
     )
+
+
+def system_info() -> Response:
+    """Returns system information for diagnostics."""
+    import os
+    import platform
+    import sys
+
+    system_info = {
+        "platform": platform.platform(),
+        "python_version": sys.version,
+        "processor": platform.processor(),
+        "cpu_count": os.cpu_count(),
+        "environment": {
+            k: v
+            for k, v in os.environ.items()
+            if not k.lower().startswith(("secret", "password", "token", "key"))
+            and not any(sensitive in k.lower() for sensitive in ["auth", "credential"])
+        },
+        "config": {
+            k: v
+            for k, v in current_app.config.items()
+            if not k.upper().startswith(("SECRET", "PASSWORD", "TOKEN", "KEY"))
+            and not any(sensitive in k.upper() for sensitive in ["AUTH", "CREDENTIAL"])
+            and not isinstance(v, complex)
+        },
+    }
+
+    return make_response(jsonify(system_info), 200)
+
+
+def process_instance_with_most_tasks() -> Response:
+    """Returns the process instance ID with the most tasks and the count of those tasks."""
+    result = (
+        db.session.query(TaskModel.process_instance_id, func.count(TaskModel.guid).label("task_count"))
+        .group_by(TaskModel.process_instance_id)
+        .order_by(func.count(TaskModel.guid).desc())
+        .first()
+    )
+
+    if result:
+        process_instance_id, task_count = result
+        return make_response(
+            jsonify(
+                {
+                    "process_instance_id": process_instance_id,
+                    "task_count": task_count,
+                }
+            ),
+            200,
+        )
+    else:
+        return make_response(jsonify({"message": "No process instances with tasks found"}), 404)
 
 
 def celery_backend_results(

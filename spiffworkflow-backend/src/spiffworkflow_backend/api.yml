@@ -272,6 +272,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /debug/system-info:
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.system_info
+      summary: Returns system information for diagnostics
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns system information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /debug/process-instance-with-most-tasks:
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks
+      summary: Returns the process instance with the most tasks and the count
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns process instance ID and task count.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /debug/celery-backend-results/{process_instance_id}:
     parameters:
       - name: process_instance_id
