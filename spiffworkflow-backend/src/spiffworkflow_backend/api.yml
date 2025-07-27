@@ -272,19 +272,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /debug/system-info:
-    get:
-      operationId: spiffworkflow_backend.routes.debug_controller.system_info
-      summary: Returns system information for diagnostics
-      tags:
-        - Status
-      responses:
-        "200":
-          description: Returns system information.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
 
   /debug/process-instance-with-most-tasks:
     get:

@@ -39,35 +39,6 @@ def url_info() -> Response:
     )
 
 
-def system_info() -> Response:
-    """Returns system information for diagnostics."""
-    import os
-    import platform
-    import sys
-
-    system_info = {
-        "platform": platform.platform(),
-        "python_version": sys.version,
-        "processor": platform.processor(),
-        "cpu_count": os.cpu_count(),
-        "environment": {
-            k: v
-            for k, v in os.environ.items()
-            if not k.lower().startswith(("secret", "password", "token", "key"))
-            and not any(sensitive in k.lower() for sensitive in ["auth", "credential"])
-        },
-        "config": {
-            k: v
-            for k, v in current_app.config.items()
-            if not k.upper().startswith(("SECRET", "PASSWORD", "TOKEN", "KEY"))
-            and not any(sensitive in k.upper() for sensitive in ["AUTH", "CREDENTIAL"])
-            and not isinstance(v, complex)
-        },
-    }
-
-    return make_response(jsonify(system_info), 200)
-
-
 def process_instance_with_most_tasks() -> Response:
     """Returns the process instance ID with the most tasks and the count of those tasks."""
     result = (
