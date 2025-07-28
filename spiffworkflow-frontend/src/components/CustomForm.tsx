@@ -90,33 +90,12 @@ export default function CustomForm({
     reactJsonSchemaFormTheme,
   });
 
-  // Get the widget registry
   const widgetRegistry = useWidgetRegistry();
 
-  // Combine built-in widgets with extension widgets
   const rjsfWidgets = useMemo(() => {
-    const builtInWidgets = {
-      'date-range': DateRangePickerWidget,
-      markdown: MarkDownFieldWidget,
-      typeahead: customTypeaheadWidget,
-    };
-
-    // Get all widgets from registry
     const registeredWidgets = widgetRegistry.getAllWidgets();
-
-    // Create a combined widget map
-    const combinedWidgets: Record<string, any> = { ...builtInWidgets };
-
-    // Add all registered widgets from extensions
+    const combinedWidgets: Record<string, any> = {};
     Object.entries(registeredWidgets).forEach(([name, registration]) => {
-      // Skip if a built-in widget with same name exists (prevent overrides)
-      if (builtInWidgets[name]) {
-        console.warn(
-          `Extension widget '${name}' conflicts with built-in widget. Built-in widget will be used.`,
-        );
-        return;
-      }
-
       combinedWidgets[name] = registration.component;
     });
 
