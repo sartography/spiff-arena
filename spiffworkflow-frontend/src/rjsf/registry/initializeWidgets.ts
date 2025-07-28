@@ -4,7 +4,6 @@ import { widgetRegistry } from './WidgetRegistry';
 import DateRangePickerWidget from '../custom_widgets/DateRangePicker/DateRangePickerWidget';
 import MarkDownFieldWidget from '../custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import TypeaheadWidget from '../custom_widgets/TypeaheadWidget/TypeaheadWidget';
-import { withSandbox } from '../sandbox/WidgetSandbox';
 
 /**
  * Register core widgets with the registry

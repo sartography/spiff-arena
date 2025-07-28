@@ -1,9 +1,6 @@
 import React, { ComponentType, useEffect, useState, useRef } from 'react';
 import DOMPurify from 'dompurify';
-import {
-  CustomWidgetProps,
-  ExternalWidgetSource,
-} from '../interfaces/CustomWidgetInterfaces';
+import { CustomWidgetProps } from '../interfaces/CustomWidgetInterfaces';
 
 // Allowed imports that extension widgets can use
 const ALLOWED_IMPORTS = {
@@ -115,6 +112,7 @@ export async function evaluateWidgetCode(
     );
 
     // Create a secure evaluation environment with better error context
+    // eslint-disable-next-line sonarjs/code-eval
     const secureEval = new Function(
       'React',
       'allowedImports',

@@ -6,7 +6,6 @@ module.exports = {
   default: function SimpleRatingWidget(props) {
     // Get React from the sandbox environment
     var React = require('react');
-    var useState = React.useState;
 
     // Extract props
     var id = props.id;
@@ -26,7 +25,7 @@ module.exports = {
     var currentValue = typeof value === 'number' ? value : 0;
 
     // Handle value change
-    function handleChange(event, newValue) {
+    function handleChange(_event, newValue) {
       onChange(newValue);
     }
 

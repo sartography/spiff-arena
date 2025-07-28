@@ -182,7 +182,10 @@ export default function ContainerForExtensions() {
                   if (widgetFile && widgetFile.file_contents) {
                     widgetFiles.push({
                       content: widgetFile.file_contents,
-                      id: `${processModel.id}-${widgetConfig.file}`.replace(/[^a-zA-Z0-9]/g, '-',),
+                      id: `${processModel.id}-${widgetConfig.file}`.replace(
+                        /[^a-zA-Z0-9]/g,
+                        '-',
+                      ),
                       name: widgetConfig.name,
                       processModelId: processModel.id,
                     });

@@ -112,6 +112,7 @@ module.exports = {
           }
         };
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [inputValue],
     );
 
@@ -146,6 +147,7 @@ module.exports = {
           setSelectedOption(null);
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [value, suggestions],
     );
 
@@ -204,12 +206,12 @@ module.exports = {
     var autocomplete = React.createElement(mui.Autocomplete, {
       id: id,
       value: selectedOption,
-      onChange: function (event, newValue) {
+      onChange: function (_event, newValue) {
         setSelectedOption(newValue);
         onChange(newValue);
       },
       inputValue: inputValue,
-      onInputChange: function (event, newInputValue) {
+      onInputChange: function (_event, newInputValue) {
         setInputValue(newInputValue);
       },
       options: suggestions,

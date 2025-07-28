@@ -31,9 +31,6 @@ export enum UiSchemaDisplayLocation {
 
   // Will be loaded as a global CSS file for the entire application
   css = 'css',
-
-  // Will be loaded as a custom widget for forms
-  widget = 'widget',
 }
 
 /**

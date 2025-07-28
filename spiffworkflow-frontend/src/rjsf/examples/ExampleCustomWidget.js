@@ -30,12 +30,12 @@ module.exports = {
     var currentValue = typeof value === 'number' ? value : 0;
 
     // Handle value change
-    var handleChange = function (event, newValue) {
+    var handleChange = function (_event, newValue) {
       onChange(newValue);
     };
 
     // Handle mouse hover
-    var handleHoverChange = function (event, newHover) {
+    var handleHoverChange = function (_event, newHover) {
       setHover(newHover);
     };
 
