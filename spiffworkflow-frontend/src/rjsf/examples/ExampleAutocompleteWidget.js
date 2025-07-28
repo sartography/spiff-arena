@@ -7,43 +7,51 @@ module.exports = {
    * This demonstrates more complex widget behavior with data fetching
    */
   default: function AutocompleteWidget(props) {
-    const {
-      id,
-      value,
-      onChange,
-      label,
-      required,
-      disabled,
-      readonly,
-      rawErrors,
-      options,
-    } = props;
-    const React = require('react');
-    const { useState, useEffect, useRef } = React;
+    var id = props.id;
+    var value = props.value;
+    var onChange = props.onChange;
+    var label = props.label;
+    var required = props.required;
+    var disabled = props.disabled;
+    var readonly = props.readonly;
+    var rawErrors = props.rawErrors;
+    var options = props.options;
+    var React = require('react');
+    var useState = React.useState;
+    var useEffect = React.useEffect;
+    var useRef = React.useRef;
 
     // MUI components
-    const mui = require('@mui/material');
+    var mui = require('@mui/material');
 
     // State for options, loading state, and input value
-    const [inputValue, setInputValue] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const timeoutRef = useRef(null);
+    var inputValueState = useState('');
+    var inputValue = inputValueState[0];
+    var setInputValue = inputValueState[1];
+    var suggestionsState = useState([]);
+    var suggestions = suggestionsState[0];
+    var setSuggestions = suggestionsState[1];
+    var loadingState = useState(false);
+    var loading = loadingState[0];
+    var setLoading = loadingState[1];
+    var selectedOptionState = useState(null);
+    var selectedOption = selectedOptionState[0];
+    var setSelectedOption = selectedOptionState[1];
+    var timeoutRef = useRef(null);
 
     // Configuration options with defaults
-    const config = {
-      minSearchLength: options?.minSearchLength || 2,
-      debounceMs: options?.debounceMs || 300,
-      labelField: options?.labelField || 'label',
-      valueField: options?.valueField || 'value',
+    var config = {
+      minSearchLength: (options && options.minSearchLength) || 2,
+      debounceMs: (options && options.debounceMs) || 300,
+      labelField: (options && options.labelField) || 'label',
+      valueField: (options && options.valueField) || 'value',
       // This is a mock endpoint - in a real widget, this would be configured via options
-      apiEndpoint: options?.apiEndpoint || '/api/autocomplete',
-      placeholder: options?.placeholder || 'Type to search...',
+      apiEndpoint: (options && options.apiEndpoint) || '/api/autocomplete',
+      placeholder: (options && options.placeholder) || 'Type to search...',
     };
 
     // Function to fetch suggestions
-    const fetchSuggestions = async function (searchText) {
+    var fetchSuggestions = function (searchText) {
       if (searchText.length < config.minSearchLength) {
         setSuggestions([]);
         return;
@@ -51,36 +59,40 @@ module.exports = {
 
       setLoading(true);
 
-      try {
-        // This is a mock implementation that simulates an API call
-        // In a real widget, we would make an actual API call to the endpoint
+      // This is a mock implementation that simulates an API call
+      // In a real widget, we would make an actual API call to the endpoint
 
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+      // Simulate API delay
+      new Promise(function (resolve) {
+        setTimeout(resolve, 500);
+      })
+        .then(function () {
+          // Create some mock data based on the search term
+          var mockData = [];
+          var item1 = {};
+          item1[config.valueField] = searchText + '-1';
+          item1[config.labelField] = searchText + ' Option 1';
+          mockData.push(item1);
 
-        // Create some mock data based on the search term
-        const mockData = [
-          {
-            [config.valueField]: searchText + '-1',
-            [config.labelField]: searchText + ' Option 1',
-          },
-          {
-            [config.valueField]: searchText + '-2',
-            [config.labelField]: searchText + ' Option 2',
-          },
-          {
-            [config.valueField]: searchText + '-3',
-            [config.labelField]: searchText + ' Option 3',
-          },
-        ];
+          var item2 = {};
+          item2[config.valueField] = searchText + '-2';
+          item2[config.labelField] = searchText + ' Option 2';
+          mockData.push(item2);
 
-        setSuggestions(mockData);
-      } catch (error) {
-        console.error('Error fetching autocomplete suggestions:', error);
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
+          var item3 = {};
+          item3[config.valueField] = searchText + '-3';
+          item3[config.labelField] = searchText + ' Option 3';
+          mockData.push(item3);
+
+          setSuggestions(mockData);
+        })
+        .catch(function (error) {
+          console.error('Error fetching autocomplete suggestions:', error);
+          setSuggestions([]);
+        })
+        .then(function () {
+          setLoading(false);
+        });
     };
 
     // Debounced search
@@ -114,14 +126,14 @@ module.exports = {
           // If value is just the ID/value part
           else if (typeof value === 'string' || typeof value === 'number') {
             // Try to find in suggestions, or create a placeholder object
-            const found = suggestions.find(function (item) {
+            var found = suggestions.find(function (item) {
               return item[config.valueField] === value;
             });
             if (found) {
               setSelectedOption(found);
             } else {
               // Create a placeholder with just the ID
-              const placeholder = {};
+              var placeholder = {};
               placeholder[config.valueField] = value;
               placeholder[config.labelField] = 'ID: ' + value;
               setSelectedOption(placeholder);
@@ -138,12 +150,12 @@ module.exports = {
     );
 
     // Check if there are validation errors
-    const hasError = rawErrors && rawErrors.length > 0;
+    var hasError = rawErrors && rawErrors.length > 0;
 
     // Create the renderInput function that would normally be passed as JSX
-    const renderInput = function (params) {
+    var renderInput = function (params) {
       // Create the endAdornment with loading indicator if needed
-      const loadingIndicator = loading
+      var loadingIndicator = loading
         ? React.createElement(mui.CircularProgress, {
             key: 'progress',
             color: 'inherit',
@@ -152,31 +164,32 @@ module.exports = {
         : null;
 
       // Combine the loading indicator with the existing endAdornment
-      const endAdornment = React.createElement(
+      var endAdornment = React.createElement(
         React.Fragment,
         null,
         [loadingIndicator, params.InputProps.endAdornment].filter(Boolean),
       );
 
       // Create the InputProps object
-      const inputProps = {
-        ...params.InputProps,
+      var inputProps = Object.assign({}, params.InputProps, {
         endAdornment: endAdornment,
-      };
+      });
 
       // Return the TextField
-      return React.createElement(mui.TextField, {
-        ...params,
-        label: label,
-        placeholder: config.placeholder,
-        required: required,
-        error: hasError,
-        InputProps: inputProps,
-      });
+      return React.createElement(
+        mui.TextField,
+        Object.assign({}, params, {
+          label: label,
+          placeholder: config.placeholder,
+          required: required,
+          error: hasError,
+          InputProps: inputProps,
+        }),
+      );
     };
 
     // Create error message if needed
-    const errorMessage = hasError
+    var errorMessage = hasError
       ? React.createElement(
           mui.FormHelperText,
           {
@@ -188,7 +201,7 @@ module.exports = {
       : null;
 
     // Create the Autocomplete component
-    const autocomplete = React.createElement(mui.Autocomplete, {
+    var autocomplete = React.createElement(mui.Autocomplete, {
       id: id,
       value: selectedOption,
       onChange: function (event, newValue) {

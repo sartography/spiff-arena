@@ -9,7 +9,6 @@ import {
 const ALLOWED_IMPORTS = {
   react: React,
   '@mui/material': {}, // We'll populate this with only specific components
-  '@carbon/react': {}, // We'll populate this with only specific components
 };
 
 // Allowed Material UI components
@@ -37,30 +36,13 @@ const ALLOWED_MUI_COMPONENTS = [
   'Divider',
 ];
 
-// Allowed Carbon components
-const ALLOWED_CARBON_COMPONENTS = [
-  'Button',
-  'TextInput',
-  'Select',
-  'SelectItem',
-  'ComboBox',
-  'FormGroup',
-  'Checkbox',
-  'RadioButton',
-  'RadioButtonGroup',
-  'Toggle',
-  'Slider',
-  'Tag',
-  'InlineLoading',
-];
-
 // Load allowed MUI components dynamically to avoid importing entire library
 async function loadAllowedMuiComponents() {
   try {
     const mui = await import('@mui/material');
 
-    // Add the entire mui object to allowed imports
-    ALLOWED_IMPORTS['@mui/material'] = mui;
+    // Create a mutable copy of the MUI module to avoid read-only errors
+    ALLOWED_IMPORTS['@mui/material'] = { ...mui };
 
     // Also add individual components for backward compatibility
     ALLOWED_MUI_COMPONENTS.forEach((componentName) => {
@@ -75,30 +57,6 @@ async function loadAllowedMuiComponents() {
     console.log('MUI components loaded successfully');
   } catch (error) {
     console.error('Failed to load MUI components:', error);
-  }
-}
-
-// Load allowed Carbon components dynamically
-async function loadAllowedCarbonComponents() {
-  try {
-    const carbon = await import('@carbon/react');
-
-    // Add the entire carbon object to allowed imports
-    ALLOWED_IMPORTS['@carbon/react'] = carbon;
-
-    // Also add individual components for backward compatibility
-    ALLOWED_CARBON_COMPONENTS.forEach((componentName) => {
-      if (carbon[componentName as keyof typeof carbon]) {
-        ALLOWED_IMPORTS['@carbon/react'][componentName] =
-          carbon[componentName as keyof typeof carbon];
-      } else {
-        console.warn(`Carbon component not found: ${componentName}`);
-      }
-    });
-
-    console.log('Carbon components loaded successfully');
-  } catch (error) {
-    console.error('Failed to load Carbon components:', error);
   }
 }
 
@@ -133,7 +91,7 @@ export async function evaluateWidgetCode(
     /\brequest\b/g,
     // We allow require because we provide a sandboxed version
     /\bimport\(/g, // Dynamic imports
-    /\bprocess\b/g,
+    /\bprocess\./g,
     /\b__dirname\b/g,
     /\b__filename\b/g,
   ];
@@ -147,10 +105,7 @@ export async function evaluateWidgetCode(
   }
 
   // Load allowed component libraries
-  await Promise.all([
-    loadAllowedMuiComponents(),
-    loadAllowedCarbonComponents(),
-  ]);
+  await loadAllowedMuiComponents();
 
   try {
     // Add some debugging to help identify what's wrong with the widget code
@@ -168,18 +123,12 @@ export async function evaluateWidgetCode(
         try {
           // Create a secure module environment
           const module = { exports: {} };
-          const require = (moduleName) => {
+          function require(moduleName) {
             if (!allowedImports[moduleName]) {
               throw new Error(\`Import of module \${moduleName} is not allowed\`);
             }
             return allowedImports[moduleName];
-          };
-          
-          // Define commonly used React hooks for convenience
-          const { 
-            useState, useEffect, useRef, useCallback, 
-            useMemo, useContext, useReducer 
-          } = React;
+          }
           
           // Execute the widget code
           ${sanitizedCode}

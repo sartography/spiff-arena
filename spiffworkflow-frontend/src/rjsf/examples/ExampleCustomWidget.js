@@ -7,40 +7,40 @@ module.exports = {
    * This demonstrates how to create a custom widget using the extension system
    */
   default: function RatingWidget(props) {
-    const {
-      id,
-      value,
-      onChange,
-      label,
-      required,
-      disabled,
-      readonly,
-      rawErrors,
-    } = props;
-    const React = require('react');
-    const { useState } = React;
+    var id = props.id;
+    var value = props.value;
+    var onChange = props.onChange;
+    var label = props.label;
+    var required = props.required;
+    var disabled = props.disabled;
+    var readonly = props.readonly;
+    var rawErrors = props.rawErrors;
+    var React = require('react');
+    var useState = React.useState;
 
     // MUI components
-    const mui = require('@mui/material');
+    var mui = require('@mui/material');
 
     // State for hover value
-    const [hover, setHover] = useState(-1);
+    var hoverState = useState(-1);
+    var hover = hoverState[0];
+    var setHover = hoverState[1];
 
     // Default to 0 if value is undefined
-    const currentValue = typeof value === 'number' ? value : 0;
+    var currentValue = typeof value === 'number' ? value : 0;
 
     // Handle value change
-    const handleChange = function (event, newValue) {
+    var handleChange = function (event, newValue) {
       onChange(newValue);
     };
 
     // Handle mouse hover
-    const handleHoverChange = function (event, newHover) {
+    var handleHoverChange = function (event, newHover) {
       setHover(newHover);
     };
 
     // Labels for the rating values
-    const labels = {
+    var labels = {
       1: 'Poor',
       2: 'Fair',
       3: 'Average',
@@ -49,10 +49,10 @@ module.exports = {
     };
 
     // Check if there are validation errors
-    const hasError = rawErrors && rawErrors.length > 0;
+    var hasError = rawErrors && rawErrors.length > 0;
 
     // Create the label component
-    const labelComponent = React.createElement(
+    var labelComponent = React.createElement(
       mui.Typography,
       {
         key: 'label',
@@ -67,7 +67,7 @@ module.exports = {
     );
 
     // Create the rating component
-    const ratingComponent = React.createElement(mui.Rating, {
+    var ratingComponent = React.createElement(mui.Rating, {
       key: 'rating',
       id: id,
       name: id,
@@ -80,7 +80,7 @@ module.exports = {
     });
 
     // Create the label display component if needed
-    const labelDisplay =
+    var labelDisplay =
       value !== null
         ? React.createElement(
             mui.Box,
@@ -93,7 +93,7 @@ module.exports = {
         : null;
 
     // Create the rating container
-    const ratingContainer = React.createElement(
+    var ratingContainer = React.createElement(
       mui.Box,
       {
         key: 'rating-container',
@@ -103,7 +103,7 @@ module.exports = {
     );
 
     // Create error message if needed
-    const errorMessage = hasError
+    var errorMessage = hasError
       ? React.createElement(
           mui.FormHelperText,
           {
