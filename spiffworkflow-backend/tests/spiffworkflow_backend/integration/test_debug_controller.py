@@ -64,7 +64,6 @@ class TestDebugController(BaseTest):
             "/v1.0/debug/process-instance-with-most-tasks",
         )
 
-        # Now that we've added the endpoint to the auth exclusion list, it should always return 200
         assert response.status_code == 200
 
         # Verify response format
