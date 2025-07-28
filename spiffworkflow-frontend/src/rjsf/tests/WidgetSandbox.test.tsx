@@ -39,6 +39,8 @@ describe('Widget Sandbox', () => {
           onFocus: () => {},
           options: {},
           formContext: {},
+          schema: {},
+          uiSchema: {},
         }),
       );
 
@@ -123,6 +125,8 @@ describe('Widget Sandbox', () => {
         onFocus: () => {},
         options: {},
         formContext: {},
+        schema: {},
+        uiSchema: {},
       }),
     );
 
@@ -161,6 +165,8 @@ describe('Widget Sandbox', () => {
         onFocus: () => {},
         options: {},
         formContext: {},
+        schema: {},
+        uiSchema: {},
       }),
     );
 

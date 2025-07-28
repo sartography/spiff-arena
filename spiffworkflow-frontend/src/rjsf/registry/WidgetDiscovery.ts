@@ -12,7 +12,6 @@ export interface WidgetFile {
   content: string;
   id: string;
   name: string;
-  metadata: any;
   processModelId: string;
 }
 
@@ -91,7 +90,6 @@ export class WidgetDiscovery {
               sourceCode: widgetFile.content,
               registration: {
                 name: widgetFile.name,
-                metadata: widgetFile.metadata,
                 source: 'extension',
                 extensionId: widgetFile.processModelId,
               },

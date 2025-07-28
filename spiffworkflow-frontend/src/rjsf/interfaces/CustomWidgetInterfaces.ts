@@ -34,26 +34,6 @@ export interface WidgetRegistration {
   // The actual widget component
   component: ComponentType<CustomWidgetProps>;
 
-  // Metadata about the widget for documentation
-  metadata: {
-    displayName: string;
-    description: string;
-    version: string;
-    author: string;
-
-    // Optional thumbnail URL for the widget in a registry UI
-    thumbnailUrl?: string;
-
-    // Optional documentation URL
-    documentationUrl?: string;
-
-    // List of allowed props that this widget can use
-    allowedProps?: string[];
-
-    // Category for organizing widgets
-    category?: string;
-  };
-
   // Source of the widget (core, extension, user)
   source: 'core' | 'extension' | 'user';
 

@@ -13,26 +13,12 @@ function registerCoreWidgets(): void {
   widgetRegistry.registerWidget({
     name: 'date-range',
     component: DateRangePickerWidget,
-    metadata: {
-      displayName: 'Date Range Picker',
-      description: 'A widget for selecting a range of dates',
-      version: '1.0.0',
-      author: 'SpiffWorkflow',
-      category: 'core',
-    },
     source: 'core',
   });
 
   widgetRegistry.registerWidget({
     name: 'markdown',
     component: MarkDownFieldWidget,
-    metadata: {
-      displayName: 'Markdown Editor',
-      description: 'A widget for editing markdown content',
-      version: '1.0.0',
-      author: 'SpiffWorkflow',
-      category: 'core',
-    },
     source: 'core',
   });
 
@@ -47,13 +33,6 @@ function registerCoreWidgets(): void {
   widgetRegistry.registerWidget({
     name: 'typeahead',
     component: customTypeaheadWidget,
-    metadata: {
-      displayName: 'Typeahead',
-      description: 'A widget for typeahead search functionality',
-      version: '1.0.0',
-      author: 'SpiffWorkflow',
-      category: 'core',
-    },
     source: 'core',
   });
 }

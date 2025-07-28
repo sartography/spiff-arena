@@ -40,12 +40,6 @@ describe('Widget Registry', () => {
     const registration: WidgetRegistration = {
       name: 'test-widget',
       component: TestWidget,
-      metadata: {
-        displayName: 'Test Widget',
-        description: 'A widget for testing',
-        version: '1.0.0',
-        author: 'Test Author',
-      },
       source: 'core',
     };
 
@@ -73,6 +67,8 @@ describe('Widget Registry', () => {
           onFocus: () => {},
           options: {},
           formContext: {},
+          schema: {},
+          uiSchema: {},
         }),
       );
       expect(screen.getByTestId('test-widget')).toHaveTextContent('Test Label');
@@ -89,12 +85,6 @@ describe('Widget Registry', () => {
     const registration: WidgetRegistration = {
       name: 'test-widget-to-remove',
       component: TestWidget,
-      metadata: {
-        displayName: 'Test Widget',
-        description: 'A widget for testing',
-        version: '1.0.0',
-        author: 'Test Author',
-      },
       source: 'core',
     };
 
@@ -111,12 +101,6 @@ describe('Widget Registry', () => {
     widgetRegistry.registerWidget({
       name: 'core-widget',
       component: TestWidget,
-      metadata: {
-        displayName: 'Core Widget',
-        description: 'A core widget',
-        version: '1.0.0',
-        author: 'Core Author',
-      },
       source: 'core',
     });
 
@@ -124,12 +108,6 @@ describe('Widget Registry', () => {
     widgetRegistry.registerWidget({
       name: 'ext1-widget',
       component: TestWidget,
-      metadata: {
-        displayName: 'Ext1 Widget',
-        description: 'An extension widget',
-        version: '1.0.0',
-        author: 'Ext Author',
-      },
       source: 'extension',
       extensionId: 'ext1',
     });
@@ -137,12 +115,6 @@ describe('Widget Registry', () => {
     widgetRegistry.registerWidget({
       name: 'ext2-widget',
       component: TestWidget,
-      metadata: {
-        displayName: 'Ext2 Widget',
-        description: 'Another extension widget',
-        version: '1.0.0',
-        author: 'Ext Author',
-      },
       source: 'extension',
       extensionId: 'ext2',
     });

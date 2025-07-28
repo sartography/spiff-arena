@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify';
 import { CustomWidgetProps } from '../interfaces/CustomWidgetInterfaces';
 
 // Allowed imports that extension widgets can use
-const ALLOWED_IMPORTS = {
+const ALLOWED_IMPORTS: Record<any, any> = {
   react: React,
   '@mui/material': {}, // We'll populate this with only specific components
 };
