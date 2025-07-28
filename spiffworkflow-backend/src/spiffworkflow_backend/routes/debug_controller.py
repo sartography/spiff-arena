@@ -7,8 +7,11 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
+from sqlalchemy import func
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.monitoring_service import get_version_info_data
 
@@ -34,6 +37,30 @@ def url_info() -> Response:
         },
         200,
     )
+
+
+def process_instance_with_most_tasks() -> Response:
+    """Returns the process instance ID with the most tasks and the count of those tasks."""
+    result = (
+        db.session.query(TaskModel.process_instance_id, func.count(TaskModel.guid).label("task_count"))
+        .group_by(TaskModel.process_instance_id)
+        .order_by(func.count(TaskModel.guid).desc())
+        .first()
+    )
+
+    if result:
+        process_instance_id, task_count = result
+        return make_response(
+            jsonify(
+                {
+                    "process_instance_id": process_instance_id,
+                    "task_count": task_count,
+                }
+            ),
+            200,
+        )
+    else:
+        return make_response(jsonify({"message": "No process instances with tasks found"}), 404)
 
 
 def celery_backend_results(

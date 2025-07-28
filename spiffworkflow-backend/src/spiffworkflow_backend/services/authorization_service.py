@@ -289,6 +289,7 @@ class AuthorizationService:
             "spiffworkflow_backend.routes.authentication_controller.logout_return",
             "spiffworkflow_backend.routes.debug_controller.test_raise_error",
             "spiffworkflow_backend.routes.debug_controller.url_info",
+            "spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks",
             "spiffworkflow_backend.routes.health_controller.status",
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
