@@ -148,36 +148,6 @@ export default function ContainerForExtensions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // Load extension widgets when extensions are loaded or updated
-  useEffect(() => {
-    // This will be called when extensions are loaded or refreshed
-    const refreshWidgets = async () => {
-      try {
-        // Load extension widgets from the server
-        await widgetDiscovery.loadWidgetsFromExtensions();
-        console.log('Extension widgets refreshed successfully');
-      } catch (error) {
-        console.error('Failed to refresh extension widgets:', error);
-      }
-    };
-
-    // Attach this to the extensions load event
-    const handleExtensionsLoaded = () => {
-      refreshWidgets();
-    };
-
-    // Add an event listener for extension loading
-    window.addEventListener('spiff:extensions-loaded', handleExtensionsLoaded);
-
-    return () => {
-      // Remove the event listener when component unmounts
-      window.removeEventListener(
-        'spiff:extensions-loaded',
-        handleExtensionsLoaded,
-      );
-    };
-  }, []);
-
   useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = [];
@@ -186,13 +156,8 @@ export default function ContainerForExtensions() {
         content: string;
         id: string;
         name: string;
-        metadata: any;
         processModelId: string;
       }> = [];
-
-      // Dispatch event that extensions are loaded (for widget system)
-      window.dispatchEvent(new CustomEvent('spiff:extensions-loaded'));
-
       processModels.forEach((processModel: ProcessModel) => {
         const extensionUiSchemaFile = processModel.files.find(
           (file: ProcessFile) => file.name === 'extension_uischema.json',
@@ -217,12 +182,8 @@ export default function ContainerForExtensions() {
                   if (widgetFile && widgetFile.file_contents) {
                     widgetFiles.push({
                       content: widgetFile.file_contents,
-                      id: `${processModel.id}-${widgetConfig.file}`.replace(
-                        /[^a-zA-Z0-9]/g,
-                        '-',
-                      ),
+                      id: `${processModel.id}-${widgetConfig.file}`.replace(/[^a-zA-Z0-9]/g, '-',),
                       name: widgetConfig.name,
-                      metadata: widgetConfig.metadata,
                       processModelId: processModel.id,
                     });
                   }
@@ -251,40 +212,6 @@ export default function ContainerForExtensions() {
                             '-',
                           ),
                         });
-                      }
-                    } else if (
-                      element.display_location ===
-                      UiSchemaDisplayLocation.widget
-                    ) {
-                      // Find the widget file in the process model files
-                      const widgetFilename =
-                        element.location_specific_configs?.widget_file;
-                      const widgetName =
-                        element.location_specific_configs?.widget_name;
-                      const widgetMetadata =
-                        element.location_specific_configs?.widget_metadata;
-
-                      if (widgetFilename && widgetName) {
-                        const widgetFile = processModel.files.find(
-                          (file: ProcessFile) => file.name === widgetFilename,
-                        );
-                        if (widgetFile && widgetFile.file_contents) {
-                          widgetFiles.push({
-                            content: widgetFile.file_contents,
-                            id: `${processModel.id}-${widgetFilename}`.replace(
-                              /[^a-zA-Z0-9]/g,
-                              '-',
-                            ),
-                            name: widgetName,
-                            metadata: widgetMetadata || {
-                              displayName: widgetName,
-                              description: `Widget: ${widgetName}`,
-                              version: '1.0.0',
-                              author: 'Extension',
-                            },
-                            processModelId: processModel.id,
-                          });
-                        }
                       }
                     } else {
                       // Normal UI element

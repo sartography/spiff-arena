@@ -21,28 +21,6 @@ export interface WidgetFile {
  */
 export class WidgetDiscovery {
   private extensionWidgetCache: Record<string, ExternalWidgetSource> = {};
-
-  /**
-   * Method kept for backward compatibility
-   * Instead, we rely on ContainerForExtensions to load widgets
-   * @deprecated Use processWidgetFiles instead
-   */
-  async loadWidgetsFromExtensions(): Promise<void> {
-    console.log(
-      'loadWidgetsFromExtensions is deprecated - widgets are loaded directly by ContainerForExtensions',
-    );
-    return Promise.resolve();
-  }
-
-  /**
-   * Method kept for backward compatibility
-   * @deprecated Use processWidgetFiles instead
-   */
-  async loadWidgetsFromExtension(extensionId: string): Promise<void> {
-    console.log(`loadWidgetsFromExtension is deprecated for ${extensionId}`);
-    return Promise.resolve();
-  }
-
   /**
    * Evaluates widget source code and registers it with the registry
    * @param widgetSource The source code and metadata of the widget

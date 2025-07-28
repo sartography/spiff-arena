@@ -71,31 +71,6 @@ export interface UiSchemaLocationSpecificConfig {
    * This is the recommended approach for adding CSS.
    */
   css_file?: string;
-
-  /**
-   * Specifies the filename of the JavaScript file to use when using widget display_location.
-   * This file should export a React component as default export.
-   */
-  widget_file?: string;
-
-  /**
-   * Specifies the name to register the widget as.
-   * This name will be used in ui:widget in the form UI schema.
-   */
-  widget_name?: string;
-
-  /**
-   * Additional metadata for the widget such as description, version, etc.
-   */
-  widget_metadata?: {
-    displayName: string;
-    description: string;
-    version: string;
-    author?: string;
-    thumbnailUrl?: string;
-    documentationUrl?: string;
-    category?: string;
-  };
 }
 
 // Primary ux element - decribes how the extension should be displayed and accessed from the web ui.
@@ -255,19 +230,6 @@ export interface ExtensionUiSchema {
      * The file containing the widget implementation
      */
     file: string;
-
-    /**
-     * Metadata about the widget
-     */
-    metadata: {
-      displayName: string;
-      description: string;
-      version: string;
-      author?: string;
-      thumbnailUrl?: string;
-      documentationUrl?: string;
-      category?: string;
-    };
   }>;
 }
 
