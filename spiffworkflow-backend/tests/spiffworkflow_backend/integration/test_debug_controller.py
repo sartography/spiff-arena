@@ -66,7 +66,6 @@ class TestDebugController(BaseTest):
 
         assert response.status_code == 200
 
-        # Verify response format
         assert "process_instance_id" in response.json()
         assert "task_count" in response.json()
 
