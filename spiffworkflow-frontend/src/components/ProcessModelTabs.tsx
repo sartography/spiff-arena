@@ -139,7 +139,7 @@ export default function ProcessModelTabs({
     <>
       <Tabs
         value={selectedTabIndex}
-        onChange={(event, newValue) => {
+        onChange={(_event, newValue) => {
           updateSelectedTab(newValue);
         }}
         aria-label="List of tabs"

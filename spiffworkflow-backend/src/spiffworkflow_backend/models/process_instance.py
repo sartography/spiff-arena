@@ -104,7 +104,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_version_control_type: str | None = db.Column(db.String(50))
     # this could also be a blank string for older instances since we were putting blank strings in here as well
     bpmn_version_control_identifier: str | None = db.Column(db.String(255))
-    last_milestone_bpmn_name: str | None = db.Column(db.String(255))
+    last_milestone_bpmn_name: str | None = db.Column(db.String(255), index=True)
 
     bpmn_xml_file_contents: str | None = None
     bpmn_xml_file_contents_retrieval_error: str | None = None

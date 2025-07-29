@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import { BACKEND_BASE_URL } from '../config';
 import { objectIsEmpty } from '../helpers';
 import UserService from './UserService';
@@ -93,8 +92,7 @@ const makeCallToBackend = ({
   httpMethod = 'GET',
   extraHeaders = {},
   postBody = {},
-}: // eslint-disable-next-line sonarjs/cognitive-complexity
-backendCallProps) => {
+}: backendCallProps) => {
   const headers = getBasicHeaders();
 
   if (!objectIsEmpty(extraHeaders)) {
@@ -132,7 +130,7 @@ backendCallProps) => {
         return { response, text: result };
       });
     })
-    // eslint-disable-next-line sonarjs/cognitive-complexity
+
     .then((result: any) => {
       let jsonResult = null;
       try {
@@ -156,7 +154,7 @@ backendCallProps) => {
           window.location.href = '/public/sign-out';
         } else {
           // Hopefully we can make this service a hook and use the error message context directly
-          // eslint-disable-next-line no-alert
+
           alert(jsonResult.message);
         }
       } else if (!result.response.ok) {
@@ -168,7 +166,7 @@ backendCallProps) => {
             message = jsonResult.message;
           }
           console.error(message);
-          // eslint-disable-next-line no-alert
+
           alert(message);
         }
       } else {

@@ -341,7 +341,6 @@ export default function ProcessModelTreePage({
     if (clickStream) {
       clickStream.subscribe(handleClickStream);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clickStream]);
 
   /** Tree calls back here so we can imperatively rework groups etc. */

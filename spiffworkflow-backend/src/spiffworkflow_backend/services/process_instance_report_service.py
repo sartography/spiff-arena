@@ -611,6 +611,11 @@ class ProcessInstanceReportService:
             if initiator:
                 process_initiator_id = initiator.id
             process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
+
+        for value in cls.check_filter_value(filters, "last_milestone_bpmn_name"):
+            if value:
+                process_instance_query = process_instance_query.filter(ProcessInstanceModel.last_milestone_bpmn_name == value)
+
         return process_instance_query
 
     @classmethod

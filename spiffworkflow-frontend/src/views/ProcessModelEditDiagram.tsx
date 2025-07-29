@@ -38,7 +38,7 @@ import {
 } from '@mui/icons-material';
 
 import { Can } from '@casl/react';
-import Editor, { DiffEditor } from '@monaco-editor/react';
+import { Editor, DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -80,7 +80,6 @@ function TabPanel(props: {
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
-      // eslint-disable-next-line react/jsx-props-no-spreading
       {...other}
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
@@ -501,7 +500,6 @@ export default function ProcessModelEditDiagram() {
 
   const onJsonSchemaFilesRequested = useCallback(
     (event: any) => {
-      // eslint-disable-next-line sonarjs/slow-regex
       const re = /.*[-.]schema.json/;
       if (processModel?.files) {
         const jsonFiles = processModel.files.filter((f) => f.name.match(re));
@@ -714,7 +712,7 @@ export default function ProcessModelEditDiagram() {
         expectedJson = JSON.parse(
           currentScriptUnitTest.expectedOutputJson.value,
         );
-      } catch (e) {
+      } catch (_) {
         setScriptUnitTestResult({
           result: false,
           error: t('diagram_errors_json_formatting'),
@@ -845,7 +843,7 @@ export default function ProcessModelEditDiagram() {
           null,
           '  ',
         );
-      } catch (e) {
+      } catch (_) {
         // Attemping to format the json failed -- it's invalid.
       }
 
@@ -1021,7 +1019,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const scriptEditorAndTests = () => {
-    const handleTabChange = (event: SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
       setScriptEditorTabValue(newValue);
     };
 
@@ -1087,7 +1085,6 @@ export default function ProcessModelEditDiagram() {
   };
 
   const markdownEditorTextArea = (props: any) => {
-    // eslint-disable-next-line react/jsx-props-no-spreading
     return <TextareaAutosize {...props} />;
   };
 

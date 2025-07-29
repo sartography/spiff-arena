@@ -79,7 +79,6 @@ export default function ProcessBreadcrumb({ hotCrumbs }: OwnProps) {
     );
   };
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   const hotCrumbElement = () => {
     if (hotCrumbs) {
       const leadingCrumbLinks = hotCrumbs.map(

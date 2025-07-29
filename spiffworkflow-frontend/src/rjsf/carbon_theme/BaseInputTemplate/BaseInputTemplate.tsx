@@ -195,7 +195,6 @@ export default function BaseInputTemplate<
           onFocus={_onFocus}
           enableCounter={enableCounter}
           maxCount={maxCount}
-          // eslint-disable-next-line react/jsx-props-no-spreading
           {...inputProps}
         />
         {Array.isArray(schema.examples) && (

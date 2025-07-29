@@ -67,7 +67,7 @@ if (!backendBaseUrl) {
     if (spiffEnvironment === '') {
       // using destructuring on an array where we only want the first element
       // seems super confusing for non-javascript devs to read so let's NOT do that.
-      // eslint-disable-next-line prefer-destructuring
+
       spiffEnvironment = hostname.split('.')[0];
     }
   }

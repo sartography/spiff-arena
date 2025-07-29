@@ -147,7 +147,6 @@ export default function ContainerForExtensions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = [];
@@ -195,7 +194,7 @@ export default function ContainerForExtensions() {
                 },
               );
             }
-          } catch (jsonParseError: any) {
+          } catch (_jsonParseError: any) {
             console.error(
               `Unable to get navigation items for ${processModel.id}`,
             );

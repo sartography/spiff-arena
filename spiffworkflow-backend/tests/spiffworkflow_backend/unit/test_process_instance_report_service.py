@@ -353,3 +353,75 @@ class TestProcessInstanceReportService(BaseTest):
         assert process_instance_created_by_user_one_two.id in process_instance_ids_in_results
         assert process_instance_created_by_user_one_three.id in process_instance_ids_in_results
         assert process_instance_created_by_user_two_one.id in process_instance_ids_in_results
+
+    def test_can_filter_by_last_milestone(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_id = "runs_without_input/sample"
+        bpmn_file_location = "sample"
+        process_model = load_test_spec(
+            process_model_id,
+            process_model_source_directory=bpmn_file_location,
+        )
+        user = self.find_or_create_user()
+
+        # Create process instances with different last milestones
+        process_instance_1 = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user
+        )
+        process_instance_1.last_milestone_bpmn_name = "Milestone A"
+
+        process_instance_2 = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user
+        )
+        process_instance_2.last_milestone_bpmn_name = "Milestone B"
+
+        process_instance_3 = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user
+        )
+        process_instance_3.last_milestone_bpmn_name = "Milestone A"
+
+        process_instance_4 = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user
+        )
+        process_instance_4.last_milestone_bpmn_name = "Milestone C"
+
+        db.session.commit()
+
+        # Filter by Milestone A
+        report_metadata: ReportMetadata = {
+            "columns": [],
+            "filter_by": [
+                {"field_name": "last_milestone_bpmn_name", "field_value": "Milestone A", "operator": "equals"},
+            ],
+            "order_by": [],
+        }
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_metadata=report_metadata,
+            user=user,
+        )
+
+        # Should return only process instances with Milestone A
+        assert len(response_json["results"]) == 2
+        process_instance_ids = [r["id"] for r in response_json["results"]]
+        assert process_instance_1.id in process_instance_ids
+        assert process_instance_3.id in process_instance_ids
+        assert process_instance_2.id not in process_instance_ids
+        assert process_instance_4.id not in process_instance_ids
+
+        # Test with a different milestone
+        report_metadata["filter_by"] = [
+            {"field_name": "last_milestone_bpmn_name", "field_value": "Milestone B", "operator": "equals"},
+        ]
+
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_metadata=report_metadata,
+            user=user,
+        )
+
+        # Should return only process instance 2
+        assert len(response_json["results"]) == 1
+        assert response_json["results"][0]["id"] == process_instance_2.id
