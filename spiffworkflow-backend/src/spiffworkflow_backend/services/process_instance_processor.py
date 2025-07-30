@@ -141,7 +141,6 @@ def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
 
 
 # This number is a little arbitrary but seems like a good number.
-# We know 700,000 does take the system.
 MAX_PROCESS_INSTANCE_TASK_COUNT = 20000
 
 
