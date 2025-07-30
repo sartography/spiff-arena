@@ -149,8 +149,8 @@ class ProcessInstanceTaskCountExceededError(Exception):
     """This error is raised if too many tasks were generated.
 
     Too many tasks is defined as enough tasks to take down the system such as 700,000.
-    These tasks will probably mostly be future tasks generated from multiple parallel gateways
-    but the system is unable to load and run them safely.
+    These tasks will generally be predicted tasks that are never actually run and just bloat the instance.
+    These are largely created when using multiple parallel gateways and current recommended fix is to put in subprocesses.
     """
 
 
