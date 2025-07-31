@@ -140,6 +140,19 @@ def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
         raise ImportError(f"Import not allowed: {name}", name=name)
 
 
+# This number is a little arbitrary but seems like a good number.
+MAX_PROCESS_INSTANCE_TASK_COUNT = 20000
+
+
+class ProcessInstanceTaskCountExceededError(Exception):
+    """This error is raised if too many tasks were generated.
+
+    Too many tasks is defined as enough tasks to take down the system such as 700,000.
+    These tasks will generally be predicted tasks that are never actually run and just bloat the instance.
+    These are largely created when using multiple parallel gateways and current recommended fix is to put in subprocesses.
+    """
+
+
 class ProcessInstanceProcessorError(Exception):
     pass
 
@@ -1474,6 +1487,8 @@ class ProcessInstanceProcessor:
         current_app.logger.debug(f"ENGINE STEPS - Ready tasks: {ready_tasks}")
         current_app.logger.debug(f"ENGINE STEPS - Waiting tasks: {waiting_tasks}")
 
+        self.raise_on_high_process_instance_count()
+
         self._add_bpmn_process_definitions(
             self.serialize(),
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
@@ -1525,6 +1540,16 @@ class ProcessInstanceProcessor:
         current_app.logger.debug(f"ENGINE STEPS - Task Runnability: {task_runnability}")
 
         return task_runnability
+
+    def raise_on_high_process_instance_count(self) -> None:
+        all_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.ANY_MASK)
+        if len(all_tasks) > MAX_PROCESS_INSTANCE_TASK_COUNT:
+            msg = (
+                f"Number of tasks generated for process instance exceeds safe count - {MAX_PROCESS_INSTANCE_TASK_COUNT}. "
+                "This can usually happen if using numerous parallel gateway pairs. "
+                "Try embedding each pair in a subprocess to reduce the number of tasks."
+            )
+            raise ProcessInstanceTaskCountExceededError(msg)
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
