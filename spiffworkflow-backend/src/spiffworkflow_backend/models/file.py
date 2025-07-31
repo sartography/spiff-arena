@@ -35,6 +35,7 @@ class FileType(SpiffEnum):
     xlsx = "xlsx"
     xml = "xml"
     zip = "zip"
+    tsx = "tsx"
 
 
 CONTENT_TYPES = {
@@ -62,6 +63,7 @@ CONTENT_TYPES = {
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "xml": "application/xml",
     "zip": "application/zip",
+    "tsx": "application/javascript",
 }
 
 

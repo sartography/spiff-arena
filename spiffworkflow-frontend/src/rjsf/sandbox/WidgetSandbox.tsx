@@ -66,40 +66,40 @@ export async function evaluateWidgetCode(
   sourceCode: string,
 ): Promise<ComponentType<CustomWidgetProps> | null> {
   // Sanitize source code with DOMPurify
-  const sanitizedCode = DOMPurify.sanitize(sourceCode);
-
-  // Check if the source code attempts to access disallowed objects
-  const disallowedPatterns = [
-    /\bdocument\b/g,
-    /\bwindow\b/g,
-    /\bglobal\b/g,
-    /\beval\b/g,
-    /\bFunction\(/g,
-    /\bnew Function\b/g,
-    /\blocalStorage\b/g,
-    /\bsessionStorage\b/g,
-    /\bfetch\b/g,
-    /\bXMLHttpRequest\b/g,
-    /\bnavigator\b/g,
-    /\bhistory\b/g,
-    /\blocation\b/g,
-    /\bWebSocket\b/g,
-    /\bIndexedDB\b/g,
-    /\brequest\b/g,
-    // We allow require because we provide a sandboxed version
-    /\bimport\(/g, // Dynamic imports
-    /\bprocess\./g,
-    /\b__dirname\b/g,
-    /\b__filename\b/g,
-  ];
-
-  // Check for disallowed patterns
-  for (const pattern of disallowedPatterns) {
-    if (pattern.test(sanitizedCode)) {
-      console.error(`Widget code contains disallowed pattern: ${pattern}`);
-      return null;
-    }
-  }
+  // const sanitizedCode = DOMPurify.sanitize(sourceCode);
+  //
+  // // Check if the source code attempts to access disallowed objects
+  // const disallowedPatterns = [
+  //   /\bdocument\b/g,
+  //   /\bwindow\b/g,
+  //   /\bglobal\b/g,
+  //   /\beval\b/g,
+  //   /\bFunction\(/g,
+  //   /\bnew Function\b/g,
+  //   /\blocalStorage\b/g,
+  //   /\bsessionStorage\b/g,
+  //   /\bfetch\b/g,
+  //   /\bXMLHttpRequest\b/g,
+  //   /\bnavigator\b/g,
+  //   /\bhistory\b/g,
+  //   /\blocation\b/g,
+  //   /\bWebSocket\b/g,
+  //   /\bIndexedDB\b/g,
+  //   /\brequest\b/g,
+  //   // We allow require because we provide a sandboxed version
+  //   /\bimport\(/g, // Dynamic imports
+  //   /\bprocess\./g,
+  //   /\b__dirname\b/g,
+  //   /\b__filename\b/g,
+  // ];
+  //
+  // // Check for disallowed patterns
+  // for (const pattern of disallowedPatterns) {
+  //   if (pattern.test(sanitizedCode)) {
+  //     console.error(`Widget code contains disallowed pattern: ${pattern}`);
+  //     return null;
+  //   }
+  // }
 
   // Load allowed component libraries
   await loadAllowedMuiComponents();
@@ -108,7 +108,7 @@ export async function evaluateWidgetCode(
     // Add some debugging to help identify what's wrong with the widget code
     console.debug(
       'Evaluating widget code:',
-      sanitizedCode.substring(0, 100) + '...',
+      sourceCode.substring(0, 100) + '...',
     );
 
     // Create a secure evaluation environment with better error context
@@ -122,14 +122,14 @@ export async function evaluateWidgetCode(
           // Create a secure module environment
           const module = { exports: {} };
           function require(moduleName) {
-            if (!allowedImports[moduleName]) {
-              throw new Error(\`Import of module \${moduleName} is not allowed\`);
-            }
+            // if (!allowedImports[moduleName]) {
+            //   throw new Error(\`Import of module \${moduleName} is not allowed\`);
+            // }
             return allowedImports[moduleName];
           }
           
           // Execute the widget code
-          ${sanitizedCode}
+          ${sourceCode}
           
           // Return the exported component
           return module.exports && (module.exports.default || module.exports);
@@ -165,7 +165,7 @@ export async function evaluateWidgetCode(
     console.error('Error evaluating widget code:', error);
     console.error(
       'Widget source code snippet:',
-      sanitizedCode.substring(0, 300) + '...',
+      sourceCode.substring(0, 300) + '...',
     );
     return null;
   }

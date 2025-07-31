@@ -242,6 +242,7 @@ export default function ContainerForExtensions() {
 
       // Store widget files in a dedicated property for the widget system to use
       if (widgetFiles.length > 0) {
+        console.log("WIDGET FILES", widgetFiles)
         // Pass widget files to the widget discovery system
         widgetDiscovery.processWidgetFiles(widgetFiles);
       }

@@ -4,6 +4,7 @@ import { widgetRegistry } from './WidgetRegistry';
 import DateRangePickerWidget from '../custom_widgets/DateRangePicker/DateRangePickerWidget';
 import MarkDownFieldWidget from '../custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import TypeaheadWidget from '../custom_widgets/TypeaheadWidget/TypeaheadWidget';
+// import RatingWidgetNew from '../custom_widgets/NewWidget';
 
 /**
  * Register core widgets with the registry
@@ -21,6 +22,12 @@ function registerCoreWidgets(): void {
     component: MarkDownFieldWidget,
     source: 'core',
   });
+
+  // widgetRegistry.registerWidget({
+  //   name: 'newwidget',
+  //   component: RatingWidgetNew,
+  //   source: 'core',
+  // });
 
   // Use withProps higher-order component like in the original CustomForm
   const customTypeaheadWidget = function TypeaheadWithTheme(props: any) {

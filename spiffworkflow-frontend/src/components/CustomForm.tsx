@@ -79,6 +79,7 @@ export default function CustomForm({
 
   const rjsfWidgets = useMemo(() => {
     const registeredWidgets = widgetRegistry.getAllWidgets();
+    console.log("ALL", registeredWidgets)
     const combinedWidgets: Record<string, any> = {};
     Object.entries(registeredWidgets).forEach(([name, registration]) => {
       combinedWidgets[name] = registration.component;
@@ -543,6 +544,7 @@ export default function CustomForm({
     );
   }
 
+  console.log("WIDGETRSFS", rjsfWidgets)
   const formProps = {
     id,
     key,
