@@ -179,6 +179,9 @@ class JsonFormatter(logging.Formatter):
         if record.stack_info:
             message_dict["stack_info"] = self.formatStack(record.stack_info)
 
+        if record.__dict__.get("extras"):
+            message_dict = {**record.__dict__["extras"], **message_dict}
+
         return json.dumps(message_dict, default=str)
 
 
