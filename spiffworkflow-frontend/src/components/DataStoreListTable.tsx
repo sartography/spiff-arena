@@ -121,7 +121,7 @@ export default function DataStoreListTable() {
 
   const getFullDataStoreId = (ds: DataStore) => {
     const location = ds.location ? `${ds.location}/` : '';
-    return `${ds.type}:${location}${ds.id}`
+    return `${ds.type}:${location}${ds.id}`;
   };
 
   const { page, perPage } = getPageInfoFromSearchParams(
@@ -157,7 +157,10 @@ export default function DataStoreListTable() {
           }}
         >
           {dataStores.map((ds) => (
-            <MenuItem key={getFullDataStoreId(ds)} value={getFullDataStoreId(ds)}>
+            <MenuItem
+              key={getFullDataStoreId(ds)}
+              value={getFullDataStoreId(ds)}
+            >
               {`${ds.name} (${ds.type}${locationDescription(ds)})`}
             </MenuItem>
           ))}
