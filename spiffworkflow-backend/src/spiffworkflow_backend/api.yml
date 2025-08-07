@@ -272,7 +272,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-
   /debug/process-instance-with-most-tasks:
     get:
       operationId: spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks
@@ -3578,7 +3577,7 @@ components:
         pages:
           type: integer
           description: Total number of pages
-    
+
     ReportColumn:
       properties:
         Header:
@@ -4238,41 +4237,6 @@ components:
     AwesomeUnspecifiedPayload:
       type: "object"
       additionalProperties: {}
-    ReportMetadata:
-      properties:
-        columns:
-          type: array
-          nullable: false
-          $ref: "#/components/schemas/ReportMetadataColumn"
-        filter_by:
-          type: array
-          nullable: false
-          $ref: "#/components/schemas/FilterValue"
-        order_by:
-          type: array
-          nullable: false
-    ReportMetadataColumn:
-      properties:
-        Header:
-          type: string
-          nullable: false
-        accessor:
-          type: string
-          nullable: false
-        fiilterable:
-          type: boolean
-          nullable: true
-    FilterValue:
-      properties:
-        field_name:
-          type: string
-          nullable: false
-        field_value:
-          type: string
-          nullable: false
-        fiilterable:
-          type: string
-          nullable: false
 
     ServiceAccountRequest:
       properties:
