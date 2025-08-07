@@ -153,7 +153,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
         if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
             if decoded_token and "error" not in decoded_token:
                 user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
-                g.user = user_model.id
+                g.user = user_model
                 g.token = auth_token_object["id_token"]
                 if "refresh_token" in auth_token_object:
                     AuthenticationService.store_refresh_token(user_model.id, auth_token_object["refresh_token"])
@@ -162,6 +162,8 @@ def login_return(code: str, state: str, session_state: str = "") -> Response | N
                 tld.new_access_token = auth_token_object["id_token"]
                 tld.new_id_token = auth_token_object["id_token"]
                 tld.new_authentication_identifier = authentication_identifier
+                if current_app.config.get("SPIFFWORKFLOW_BACKEND_LOG_LOGIN_LOGOUT"):
+                    current_app.logger.info(f"User successfully logged in: {g.user.username}")
                 return redirect(redirect_url)
 
         # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
@@ -220,6 +222,15 @@ def logout(id_token: str, authentication_identifier: str, redirect_url: str | No
     if redirect_url is None:
         redirect_url = ""
     AuthenticationService.set_user_has_logged_out()
+
+    if current_app.config.get("SPIFFWORKFLOW_BACKEND_LOG_LOGIN_LOGOUT"):
+        try:
+            decoded_token = _get_decoded_token(id_token)
+            user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
+            current_app.logger.info(f"User successfully logged out: {user_model.username}")
+        except Exception:  # noqa: S110
+            # we only want this from logging user on logout so do not error if decoding fails
+            pass
 
     if backend_only:
         return redirect(redirect_url)
