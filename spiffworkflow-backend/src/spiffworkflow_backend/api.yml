@@ -1731,7 +1731,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ReportColumn"
+                  $ref: "#/components/schemas/ReportMetadataColumn"
 
   /process-instances/report-metadata:
     parameters:
@@ -3567,6 +3567,7 @@ components:
 
   schemas:
     Pagination:
+      type: object
       properties:
         count:
           type: integer
@@ -3578,7 +3579,8 @@ components:
           type: integer
           description: Total number of pages
 
-    ReportColumn:
+    ReportMetadataColumn:
+      type: object
       properties:
         Header:
           type: string
@@ -3590,28 +3592,35 @@ components:
           type: boolean
           description: Whether this column can be filtered
 
-    ReportFilter:
+    ReportMetadataFilter:
+      type: object
       properties:
         field_name:
           type: string
           description: Name of the field to filter on
         field_value:
           description: Value to filter with (can be string, number, boolean)
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: integer
         operator:
           type: string
           description: Comparison operator to use (equals, contains, etc.)
 
     ReportMetadata:
+      type: object
       properties:
         columns:
           type: array
           items:
-            $ref: "#/components/schemas/ReportColumn"
+            $ref: "#/components/schemas/ReportMetadataColumn"
           description: Columns to display in the report
         filter_by:
           type: array
           items:
-            $ref: "#/components/schemas/ReportFilter"
+            $ref: "#/components/schemas/ReportMetadataFilter"
           description: Filters to apply to the report data
         order_by:
           type: array
