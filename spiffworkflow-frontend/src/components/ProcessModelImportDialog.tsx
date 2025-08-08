@@ -37,7 +37,9 @@ export function ProcessModelImportDialog({
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [importType, setImportType] = useState<'github' | 'marketplace'>('github');
+  const [importType, setImportType] = useState<'github' | 'marketplace'>(
+    'github',
+  );
 
   // Validate input based on selected import type
   const validateInput = (value: string): boolean => {
@@ -63,7 +65,7 @@ export function ProcessModelImportDialog({
     // Check that the URL contains either /tree/ or /blob/
     return url.indexOf('/tree/') !== -1 || url.indexOf('/blob/') !== -1;
   };
-  
+
   const validateModelAlias = (alias: string): boolean => {
     // Model alias should be a simple string with only alphanumeric characters, hyphens, and underscores
     return /^[a-zA-Z0-9_-]+$/.test(alias);
@@ -78,8 +80,11 @@ export function ProcessModelImportDialog({
       setIsValid(validateInput(value));
     }
   };
-  
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'github' | 'marketplace') => {
+
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: 'github' | 'marketplace',
+  ) => {
     setImportType(newValue);
     setImportSource('');
     setIsValid(null);
@@ -146,15 +151,15 @@ export function ProcessModelImportDialog({
             textColor="primary"
             variant="fullWidth"
           >
-            <Tab 
-              value="github" 
-              label="GitHub Repository" 
+            <Tab
+              value="github"
+              label="GitHub Repository"
               icon={<GitHubIcon />}
               iconPosition="start"
             />
-            <Tab 
-              value="marketplace" 
-              label="Model Marketplace" 
+            <Tab
+              value="marketplace"
+              label="Model Marketplace"
               icon={<TagIcon />}
               iconPosition="start"
             />
