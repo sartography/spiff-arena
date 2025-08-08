@@ -272,7 +272,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-
   /debug/process-instance-with-most-tasks:
     get:
       operationId: spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks
@@ -1009,16 +1008,31 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessInstanceReport"
+              type: object
+              properties:
+                report_metadata:
+                  $ref: "#/components/schemas/ReportMetadata"
+              required:
+                - report_metadata
       responses:
         "200":
-          description: Workflow.
+          description: Process instances matching the report criteria.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Workflow"
+                type: object
+                properties:
+                  report_metadata:
+                    $ref: "#/components/schemas/ReportMetadata"
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Workflow"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                  report_hash:
+                    type: string
+                    description: Hash reference for this report metadata
 
   /process-instances:
     parameters:
@@ -1051,16 +1065,31 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessInstanceReport"
+              type: object
+              properties:
+                report_metadata:
+                  $ref: "#/components/schemas/ReportMetadata"
+              required:
+                - report_metadata
       responses:
         "200":
-          description: Workflow.
+          description: Process instances matching the report criteria.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Workflow"
+                type: object
+                properties:
+                  report_metadata:
+                    $ref: "#/components/schemas/ReportMetadata"
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Workflow"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                  report_hash:
+                    type: string
+                    description: Hash reference for this report metadata
 
   /extensions:
     get:
@@ -1696,13 +1725,13 @@ paths:
         - Process Instances
       responses:
         "200":
-          description: Workflow.
+          description: Available columns for process instance reports.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Workflow"
+                  $ref: "#/components/schemas/ReportMetadataColumn"
 
   /process-instances/report-metadata:
     parameters:
@@ -1731,13 +1760,11 @@ paths:
         - Process Instances
       responses:
         "200":
-          description: Workflow.
+          description: Returns the report metadata.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/ProcessInstanceReport"
 
   /process-instances/reports/{report_id}:
     parameters:
@@ -3539,6 +3566,64 @@ components:
       x-tokenInfoFunc: spiffworkflow_backend.routes.authentication_controller.get_scope
 
   schemas:
+    Pagination:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Number of items on current page
+        total:
+          type: integer
+          description: Total number of items
+        pages:
+          type: integer
+          description: Total number of pages
+
+    ReportMetadataColumn:
+      type: object
+      properties:
+        Header:
+          type: string
+          description: Display name for the column
+        accessor:
+          type: string
+          description: Field name or key to access the data
+        filterable:
+          type: boolean
+          description: Whether this column can be filtered
+
+    ReportMetadataFilter:
+      type: object
+      properties:
+        field_name:
+          type: string
+          description: Name of the field to filter on
+        field_value:
+          description: Value to filter with (can be string, number, boolean, or null)
+          nullable: true
+          # The type is intentionally not defined to allow any type
+        operator:
+          type: string
+          description: Comparison operator to use (equals, contains, etc.)
+
+    ReportMetadata:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportMetadataColumn"
+          description: Columns to display in the report
+        filter_by:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportMetadataFilter"
+          description: Filters to apply to the report data
+        order_by:
+          type: array
+          items:
+            type: string
+          description: Fields to sort by, prefix with '-' for descending order
     OkTrue:
       properties:
         ok:
@@ -4139,56 +4224,25 @@ components:
         id:
           type: number
           nullable: true
+          description: Unique identifier of the report
         identifier:
           type: string
           nullable: true
+          description: String identifier for the report
         name:
           type: string
           nullable: true
+          description: Display name of the report
         report_metadata:
           nullable: false
           $ref: "#/components/schemas/ReportMetadata"
+          description: Metadata defining the report structure
     # if we pass a payload and give it a field of the wrong type (say we pass a field with value null and it wants a string)
     # it will fail validation and not pass the request to the controller. that is generally not desirable
     # until we take a closer look at the schemas in here.
     AwesomeUnspecifiedPayload:
       type: "object"
       additionalProperties: {}
-    ReportMetadata:
-      properties:
-        columns:
-          type: array
-          nullable: false
-          $ref: "#/components/schemas/ReportMetadataColumn"
-        filter_by:
-          type: array
-          nullable: false
-          $ref: "#/components/schemas/FilterValue"
-        order_by:
-          type: array
-          nullable: false
-    ReportMetadataColumn:
-      properties:
-        Header:
-          type: string
-          nullable: false
-        accessor:
-          type: string
-          nullable: false
-        fiilterable:
-          type: boolean
-          nullable: true
-    FilterValue:
-      properties:
-        field_name:
-          type: string
-          nullable: false
-        field_value:
-          type: string
-          nullable: false
-        fiilterable:
-          type: string
-          nullable: false
 
     ServiceAccountRequest:
       properties:

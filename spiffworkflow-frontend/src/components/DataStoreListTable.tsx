@@ -119,6 +119,11 @@ export default function DataStoreListTable() {
     return ds.location ? ` @ ${ds.location}` : '';
   };
 
+  const getFullDataStoreId = (ds: DataStore) => {
+    const location = ds.location ? `${ds.location}/` : '';
+    return `${ds.type}:${location}${ds.id}`;
+  };
+
   const { page, perPage } = getPageInfoFromSearchParams(
     searchParams,
     10,
@@ -135,10 +140,10 @@ export default function DataStoreListTable() {
           labelId="data-store-dropdown-label"
           label={t('select_data_store')}
           id="data-store-dropdown"
-          value={dataStore ? dataStore.id : ''}
+          value={dataStore ? getFullDataStoreId(dataStore) : ''}
           onChange={(event) => {
             const selectedDataStore = dataStores.find(
-              (ds) => ds.id === event.target.value,
+              (ds) => getFullDataStoreId(ds) === event.target.value,
             );
             if (selectedDataStore) {
               setDataStore(selectedDataStore);
@@ -152,7 +157,10 @@ export default function DataStoreListTable() {
           }}
         >
           {dataStores.map((ds) => (
-            <MenuItem key={ds.id} value={ds.id}>
+            <MenuItem
+              key={getFullDataStoreId(ds)}
+              value={getFullDataStoreId(ds)}
+            >
               {`${ds.name} (${ds.type}${locationDescription(ds)})`}
             </MenuItem>
           ))}
