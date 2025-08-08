@@ -3599,12 +3599,9 @@ components:
           type: string
           description: Name of the field to filter on
         field_value:
-          description: Value to filter with (can be string, number, boolean)
-          oneOf:
-            - type: string
-            - type: number
-            - type: boolean
-            - type: integer
+          description: Value to filter with (can be string, number, boolean, or null)
+          nullable: true
+          # The type is intentionally not defined to allow any type
         operator:
           type: string
           description: Comparison operator to use (equals, contains, etc.)
