@@ -103,7 +103,7 @@ config_from_env(
 )
 
 ### model marketplace
-config_from_env("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", default="http://127.0.0.1:8000")
+config_from_env("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", default="https://model-marketplace.spiff.works")
 
 ### database
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", default="mysql")  # can also be sqlite, postgres
