@@ -20,7 +20,9 @@ from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -200,6 +202,13 @@ class MessageService:
         with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
             processor_receive = ProcessInstanceProcessor(receiving_process_instance)
             cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+
+        log_extras = {
+            "milestone": "Started",
+            "process_model_identifier": message_triggerable_process_model.process_model_identifier,
+            "process_instance_id": receiving_process_instance.id,
+        }
+        LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
         execution_strategy_name = None
         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
