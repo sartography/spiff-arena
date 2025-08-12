@@ -11,7 +11,7 @@ click==8.1.7
 colorama==0.4.6
 esbonio==0.16.4
 furo==2024.8.6
-idna==3.7
+idna==3.10
 imagesize==1.4.1
 Jinja2==3.1.4
 lazy-object-proxy==1.10.0
