@@ -8,8 +8,16 @@ on:
     branches:
       - main
       - "hotfix/**"
+    paths:
+      - spiffworkflow-backend/**
+      - spiffworkflow-frontend/**
+      - .github/workflows/tests.yml
 
   pull_request:
+    paths:
+      - spiffworkflow-backend/**
+      - spiffworkflow-frontend/**
+      - .github/workflows/tests.yml
 
 defaults:
   run:
