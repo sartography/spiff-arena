@@ -54,7 +54,7 @@
     "rxjs": "^7.8.1",
     "typescript": "^5.0.0",
     "use-debounce": "^10.0.1",
-    "vite": "^5.3.5",
+    "vite": "^7.1.3",
     "vite-plugin-svgr": "^4.3.0",
     "vite-tsconfig-paths": "^4.3.2"
   },
