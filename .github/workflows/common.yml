@@ -7,9 +7,7 @@ on:
       - .github/workflows/constraints.txt
   push:
     paths:
-      - spiff-arena-common/**
-      - .github/workflows/common.yml
-      - .github/workflows/constraints.txt
+      - spiff-arena-common/pyproject.toml
     branches:
       - main
 
