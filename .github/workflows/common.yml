@@ -4,10 +4,10 @@ on:
     paths:
       - spiff-arena-common/**
       - .github/workflows/common.yml
+      - .github/workflows/constraints.txt
   push:
     paths:
-      - spiff-arena-common/**
-      - .github/workflows/common.yml
+      - spiff-arena-common/pyproject.toml
     branches:
       - main
 
