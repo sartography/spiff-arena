@@ -16,6 +16,6 @@ jobs:
 
     - name: Create dev environment
       run: make dev-env
-      
+
     - name: Backend Unit tests
       run: make be-tests-par

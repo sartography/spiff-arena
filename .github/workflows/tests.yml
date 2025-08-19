@@ -12,12 +12,16 @@ on:
       - spiffworkflow-backend/**
       - spiffworkflow-frontend/**
       - .github/workflows/tests.yml
+      - .github/workflows/constraints.txt
 
   pull_request:
+    branches:
+      - main
     paths:
       - spiffworkflow-backend/**
       - spiffworkflow-frontend/**
       - .github/workflows/tests.yml
+      - .github/workflows/constraints.txt
 
 defaults:
   run:
