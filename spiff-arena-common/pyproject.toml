@@ -4,10 +4,11 @@ version = "0.1.2"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
-dependencies = [
-	"Jinja2",
-	"SpiffWorkflow",
-]
+
+#dependencies = [
+#	"Jinja2",
+#	"SpiffWorkflow",
+#]
 
 [build-system]
 requires = ["hatchling"]
