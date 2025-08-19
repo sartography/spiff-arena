@@ -1,11 +1,11 @@
 [project]
 name = "spiff-arena-common"
-version = "0.1.1"
+version = "0.1.2"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
 dependencies = [
-	"Jinja2 >= 3.1.6",
+	"Jinja2",
 	"SpiffWorkflow",
 ]
 
