@@ -25,7 +25,7 @@ To grant a user admin access for adding/managing users:
 
 ![Image](/images/Keycloak_setup3.png)
 
-- Open the user’s profile and go to the **Role Mapping** tab.Add the following roles:  
+- Open the user’s profile and go to the **Role Mapping** tab. Add the following roles:  
    - `view-users`  
    - `manage-users`  
    
@@ -176,7 +176,7 @@ To revoke a session and log out a user via the Keycloak API:
 
 ```bash
 curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/logout \
-  -d "client_id=spiff-frontend" \
+  -d "client_id=spiffworkflow-frontend" \
   -d "client_secret=<client_secret>" \
   -d "refresh_token=<refresh_token>"
 ```
