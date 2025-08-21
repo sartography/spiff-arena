@@ -872,3 +872,84 @@ class TestAuthorizationService(BaseTest):
             AuthorizationService.explode_permissions("all", "PM:/some-process-group/*")
         with pytest.raises(InvalidPermissionError):
             AuthorizationService.explode_permissions("all", "PG:/some-process-group/*")
+
+    def test_oidc_user_gets_permissions_from_yaml_group_with_no_users(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Create a test YAML file with an empty users list for a group
+        import os
+        import tempfile
+
+        temp_yaml_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        try:
+            yaml_content = """
+            users:
+              admin:
+                service: local_open_id
+                email: admin@example.com
+                password: admin
+                preferred_username: admin
+
+            groups:
+              admin:
+                users: [admin@example.com]
+              # This group has no explicitly listed users, but our OIDC user belongs to it
+              /admin:
+                users: []
+              testing:
+                users: []
+
+            permissions:
+              # Admin permissions
+              admin:
+                groups: [admin, /admin]
+                allowed_permissions: [all]
+                uri: /*
+            """
+            temp_yaml_file.write(yaml_content)
+            temp_yaml_file.close()
+
+            # Mock the permissions file path
+            app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] = temp_yaml_file.name
+            # Set OIDC as the authority for user groups
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+                # Create an OIDC user with the /admin group
+                oidc_user = AuthorizationService.create_user_from_sign_in(
+                    {
+                        "username": "oidc_admin",
+                        "sub": "oidc_admin",
+                        "iss": "https://test.stuff",
+                        "email": "oidc_admin@example.com",
+                        "groups": ["/admin"],
+                    }
+                )
+
+                # Check if the user is in the /admin group
+                group_identifiers = [g.identifier for g in oidc_user.groups]
+                assert "/admin" in group_identifiers
+
+                # Verify the user has admin permissions from the /admin group in YAML
+                self.assert_user_has_permission(oidc_user, "create", "/whatever/path")
+                self.assert_user_has_permission(oidc_user, "read", "/process-groups/any-group")
+                self.assert_user_has_permission(oidc_user, "update", "/process-models/any-model")
+
+                # Create a user that's not in any special group as a control
+                regular_user = AuthorizationService.create_user_from_sign_in(
+                    {
+                        "username": "regular_user",
+                        "sub": "regular_user",
+                        "iss": "https://test.stuff",
+                        "email": "regular_user@example.com",
+                        "groups": [],
+                    }
+                )
+
+                # This user should NOT have admin permissions
+                self.assert_user_has_permission(regular_user, "create", "/whatever/path", expected_result=False)
+        finally:
+            # Clean up the temp file
+            os.unlink(temp_yaml_file.name)
