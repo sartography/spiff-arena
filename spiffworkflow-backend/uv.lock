@@ -507,7 +507,7 @@ wheels = [
 
 [[package]]
 name = "connexion"
-version = "3.2.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
@@ -522,9 +522,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/82/59/ab5e70ecc78d2dca582e240cb7fd0fd61f5f0ec6813813824ad55d67948d/connexion-3.2.0.tar.gz", hash = "sha256:0715d4a0393437aa2a48c144756360f9b5292635a05fd15c38cbbaf04ef5acb9", size = 86417, upload-time = "2025-01-08T09:13:52.579Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/74/a6d4aa579c8afc9acb0f9cefc1ae2f1da1564cd5b244bdd434407081535f/connexion-3.1.0.tar.gz", hash = "sha256:66a44580991f53955b6e409a84fa9fa65c7ca4db52dc217b49cd35c201066083", size = 88189 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/9d/2313b80ccb92b30944371b577be1d3ca3d1729305e52a2da62477c3ad701/connexion-3.2.0-py3-none-any.whl", hash = "sha256:905950337d40f526fb4f2eed3b15fc15d8c367625921ab9442954a025d3e03b3", size = 113388, upload-time = "2025-01-08T09:13:49.688Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/55/e943e94b123b72e181c26a20205639f1f680578dd78deef903b1349994ae/connexion-3.1.0-py3-none-any.whl", hash = "sha256:e92b6d0412eb54b3b69f2516b93d982a06b0e23f6d5c1ab94257c55d365f63ce", size = 113099 },
 ]
 
 [package.optional-dependencies]
@@ -734,9 +734,9 @@ dependencies = [
     { name = "markupsafe" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/6d/cfe3c0fcc5e477df242b98bfe186a4c34357b4847e87ecaef04507332dab/flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87", size = 720160, upload-time = "2025-08-19T21:03:21.205Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/6d/cfe3c0fcc5e477df242b98bfe186a4c34357b4847e87ecaef04507332dab/flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87", size = 720160 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/f9/7f9263c5695f4bd0023734af91bedb2ff8209e8de6ead162f35d8dc762fd/flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c", size = 103308, upload-time = "2025-08-19T21:03:19.499Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/f9/7f9263c5695f4bd0023734af91bedb2ff8209e8de6ead162f35d8dc762fd/flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c", size = 103308 },
 ]
 
 [package.optional-dependencies]
@@ -2413,7 +2413,7 @@ requires-dist = [
     { name = "celery", extras = ["redis", "sqs"], specifier = ">=5.4.0" },
     { name = "celery-stubs", specifier = ">=0.1.3" },
     { name = "chardet", specifier = ">=5.2.0" },
-    { name = "connexion", extras = ["swagger-ui", "flask", "uvicorn"], specifier = ">=3" },
+    { name = "connexion", extras = ["swagger-ui", "flask", "uvicorn"], specifier = "==3.1" },
     { name = "cryptography", specifier = ">=44.0" },
     { name = "dateparser", specifier = ">=1.2.0" },
     { name = "flask", specifier = "==3.1.2" },
