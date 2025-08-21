@@ -49,7 +49,7 @@ https://keycloak-civitos.spiff.works/admin/spiffworkflow/console/#/spiffworkflow
 
 For localhost, it would be:
 ```
-https://localhost:7002/admin/[REALM_NAME]/console
+http://localhost:7002/admin/[REALM_NAME]/console
 ```
 
 ## **2. Allowing Everyone from Your Domain to Log into an Instance**  
@@ -138,7 +138,7 @@ To authenticate a user and get a valid access token, send a POST request to Keyc
 curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
-  -d "client_id=spiff-frontend" \
+  -d "client_id=spiffworkflow-frontend" \
   -d "username=<user_email>" \
   -d "password=<user_password>"
 ```
