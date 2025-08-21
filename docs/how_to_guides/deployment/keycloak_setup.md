@@ -47,6 +47,11 @@ For a client named **Civitos**, the URL would be:
 https://keycloak-civitos.spiff.works/admin/spiffworkflow/console/#/spiffworkflow/users
 ```
 
+For localhost, it would be:
+```
+https://localhost:7002/admin/[REALM_NAME]/console
+```
+
 ## **2. Allowing Everyone from Your Domain to Log into an Instance**  
 *(This example covers **Google as an Identity Provider**, but similar steps can be followed for other providers.)*  
 

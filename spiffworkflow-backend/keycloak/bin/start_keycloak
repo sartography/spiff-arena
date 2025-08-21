@@ -82,15 +82,21 @@ spiff_subdomain="for-local-dev.spiffworkflow.org"
 perl -pi -e "s/replace-me-with-spiff-backend-host-and-path/${spiff_subdomain}/g" "$file_path"
 
 wait_for_keycloak_to_be_up
+# turn off SSL first
+if [ "${TURN_OFF_SSL:-}" == "true" ]; then
+  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+  echo 'turned off SSL requirement'
+fi
+# add spiffworkflow-local realm
 token=$(curl --fail -s -X POST "http://localhost:7002/realms/master/protocol/openid-connect/token" -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=password&client_id=admin-cli&username=admin&password=admin' | jq -r .access_token)
 curl --fail -s -X POST "http://localhost:7002/admin/realms" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data "@$file_path" -v
 echo 'imported realms'
 
+# finally turn off ssl for spiffworkflow-local realm
 if [ "${TURN_OFF_SSL:-}" == "true" ]; then
-  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
-  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/${realm_name} -s sslRequired=NONE
-  echo 'turned off SSL requirement'
+  echo 'turned off SSL requirement for realm'
 fi
 
 docker stop keycloak
