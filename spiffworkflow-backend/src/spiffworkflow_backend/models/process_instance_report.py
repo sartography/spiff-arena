@@ -66,6 +66,9 @@ class Reversor:
     def __lt__(self, other: Any) -> Any:
         return other.obj < self.obj
 
+    def __hash__(self) -> Any:
+        return hash(self.obj)
+
 
 @dataclass
 class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
