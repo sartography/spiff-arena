@@ -173,10 +173,7 @@ def hydrate_workflow(specs, state):
     return workflow
 
 def lazy_load_tasks(workflow):
-    return get_tasks(
-        workflow,
-        TaskFilter(TaskState.DEFINITE_MASK | TaskState.FINISHED_MASK, spec_class=CallActivity),
-    )
+    return get_tasks(workflow, TaskFilter(spec_class=CallActivity))
 
 def missing_lazy_load_specs(workflow):
     for t in lazy_load_tasks(workflow):
