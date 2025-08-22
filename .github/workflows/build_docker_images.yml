@@ -64,7 +64,7 @@ jobs:
       security-events: write # Required for uploading Trivy scan results to GitHub Security
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -166,7 +166,7 @@ jobs:
     needs: [create_docker_images]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Apps
         run: ./bin/run_arena_with_docker_compose
       - name: wait_for_backend
