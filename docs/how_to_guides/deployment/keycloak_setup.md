@@ -2,7 +2,10 @@
 
 Keycloak is an open-source identity and access management solution that provides authentication, authorization, and user management features. 
 
-This guide outlines the steps to configure Keycloak for a client, including **granting admin privileges** within a realm and **allowing users to log in using Google authentication**.  
+This guide outlines the steps to configure Keycloak for a client, including **granting admin privileges** within a realm and **allowing users to log in using Google authentication**.
+
+**NOTE** If running spiffworkflow and keycloak through docker compose, you may need to set "SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS" in the backend to contain the appropriate localhost domain for keycloak.
+Otherwise, backend will talk to keycloak with a docker compose network host and the web client will use localhost and that will invalidate the token.
 
 ## **1. Super Admin Tasks: Allowing Realm User Management**  
 
