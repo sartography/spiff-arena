@@ -522,9 +522,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/74/a6d4aa579c8afc9acb0f9cefc1ae2f1da1564cd5b244bdd434407081535f/connexion-3.1.0.tar.gz", hash = "sha256:66a44580991f53955b6e409a84fa9fa65c7ca4db52dc217b49cd35c201066083", size = 88189 }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/74/a6d4aa579c8afc9acb0f9cefc1ae2f1da1564cd5b244bdd434407081535f/connexion-3.1.0.tar.gz", hash = "sha256:66a44580991f53955b6e409a84fa9fa65c7ca4db52dc217b49cd35c201066083", size = 88189, upload-time = "2024-05-27T11:45:13.866Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/55/e943e94b123b72e181c26a20205639f1f680578dd78deef903b1349994ae/connexion-3.1.0-py3-none-any.whl", hash = "sha256:e92b6d0412eb54b3b69f2516b93d982a06b0e23f6d5c1ab94257c55d365f63ce", size = 113099 },
+    { url = "https://files.pythonhosted.org/packages/1e/55/e943e94b123b72e181c26a20205639f1f680578dd78deef903b1349994ae/connexion-3.1.0-py3-none-any.whl", hash = "sha256:e92b6d0412eb54b3b69f2516b93d982a06b0e23f6d5c1ab94257c55d365f63ce", size = 113099, upload-time = "2024-05-27T11:45:10.99Z" },
 ]
 
 [package.optional-dependencies]
@@ -734,9 +734,9 @@ dependencies = [
     { name = "markupsafe" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/6d/cfe3c0fcc5e477df242b98bfe186a4c34357b4847e87ecaef04507332dab/flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87", size = 720160 }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/6d/cfe3c0fcc5e477df242b98bfe186a4c34357b4847e87ecaef04507332dab/flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87", size = 720160, upload-time = "2025-08-19T21:03:21.205Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/f9/7f9263c5695f4bd0023734af91bedb2ff8209e8de6ead162f35d8dc762fd/flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c", size = 103308 },
+    { url = "https://files.pythonhosted.org/packages/ec/f9/7f9263c5695f4bd0023734af91bedb2ff8209e8de6ead162f35d8dc762fd/flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c", size = 103308, upload-time = "2025-08-19T21:03:19.499Z" },
 ]
 
 [package.optional-dependencies]
