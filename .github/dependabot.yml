@@ -29,8 +29,6 @@ updates:
       interval: daily
     open-pull-requests-limit: 1
     ignore:
-      - dependency-name: "gunicorn"
-        versions: ["22.0.0"]
       - dependency-name: "connexion"
         versions: ["3.2.0"]
 
