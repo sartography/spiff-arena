@@ -63,6 +63,9 @@ class ProcessModelInfo:
             return True
         return False
 
+    def __hash__(self) -> Any:
+        return hash(self)
+
     # for use with os.path.join so it can work on windows
     # NOTE: in APIs, ids should always have forward slashes, even in windows.
     # this is because we have to store ids in the database, and we want the same
