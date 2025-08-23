@@ -6,6 +6,8 @@ export default function LoginHandler() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is logged in and token is valid
+    // This will redirect to login if token is expired
     if (!UserService.isLoggedIn()) {
       navigate(`/login?original_url=${UserService.getCurrentLocation()}`);
     }
