@@ -3,22 +3,22 @@ users:
     service: local_open_id
     email: admin@example.com
     password: admin
-    preferred_username: Admin
+    preferred_username: admin
   nelson:
     service: local_open_id
     email: nelson@example.com
     password: nelson
-    preferred_username: Nelson
+    preferred_username: nelson
   malala:
     service: local_open_id
     email: malala@example.com
     password: malala
-    preferred_username: Malala
+    preferred_username: malala
   oskar:
     service: local_open_id
     email: oskar@example.com
     password: oskar
-    preferred_username: Oskar
+    preferred_username: oskar
 
 groups:
   admin:
