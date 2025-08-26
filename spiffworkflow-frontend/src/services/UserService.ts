@@ -33,6 +33,16 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
   );
 };
 
+const redirectToLogin = (from?: string, replace: boolean = true) => {
+  const encodedUrl = from || getCurrentLocation();
+  const loginUrl = `/login?original_url=${encodedUrl}`;
+  if (replace) {
+    window.location.replace(loginUrl);
+  } else {
+    window.location.href = loginUrl;
+  }
+};
+
 const checkPathForTaskShowParams = (
   redirectUrl: string = window.location.href,
 ) => {
@@ -72,7 +82,7 @@ const doLogin = (
   redirectUrl?: string | null,
 ) => {
   const taskShowParams = checkPathForTaskShowParams(redirectUrl || undefined);
-  const loginParams = [`redirect_url=${redirectUrl || getCurrentLocation()}`];
+  const loginParams = [`redirect_url=${encodeURIComponent(redirectUrl || getCurrentLocation())}`];
   if (taskShowParams) {
     loginParams.push(
       `process_instance_id=${taskShowParams.process_instance_id}`,
@@ -176,6 +186,7 @@ const UserService = {
   getUserName,
   isLoggedIn,
   isPublicUser,
+  redirectToLogin,
 };
 
 export default UserService;
