@@ -184,7 +184,7 @@ const makeCallToBackend = ({
         // The block is for authentication errors.
         // If we're already on the login page, do nothing.
         // Otherwise, redirect to login page.
-        window.location.href = `/login?original_url=${UserService.getCurrentLocation()}`;
+        UserService.redirectToLogin();
       }
     });
 };
