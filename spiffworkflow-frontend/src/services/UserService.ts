@@ -33,14 +33,10 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
   );
 };
 
-const redirectToLogin = (from?: string, replace: boolean = true) => {
-  const encodedUrl = from || getCurrentLocation();
+const redirectToLogin = () => {
+  const encodedUrl = getCurrentLocation();
   const loginUrl = `/login?original_url=${encodedUrl}`;
-  if (replace) {
-    window.location.replace(loginUrl);
-  } else {
-    window.location.href = loginUrl;
-  }
+  window.location.replace(loginUrl);
 };
 
 const checkPathForTaskShowParams = (
