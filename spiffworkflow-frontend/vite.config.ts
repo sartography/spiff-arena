@@ -51,4 +51,12 @@ export default defineConfig({
     },
     preserveSymlinks: true,
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // carbon creates this warning and it's not worth fixing
+        silenceDeprecations: ['mixed-decls'],
+      },
+    }
+  }
 });
