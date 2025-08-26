@@ -21,6 +21,7 @@ from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -60,6 +61,7 @@ class MessageService:
             message_type=MessageTypes.receive.value,
         ).all()
         message_instance_receive: MessageInstanceModel | None = None
+        receiving_process_instance: ProcessInstanceModel | None = None
         processor_receive = None
         try:
             for message_instance in available_receive_messages:
@@ -166,6 +168,8 @@ class MessageService:
                     raise exception from save_exception
             else:
                 db.session.commit()
+            if receiving_process_instance:
+                ErrorHandlingService.handle_error(receiving_process_instance, exception)
             if isinstance(exception, SpiffWorkflowException):
                 exception.add_note("The process instance encountered an error and failed after starting.")
             raise exception

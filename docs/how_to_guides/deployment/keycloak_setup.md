@@ -2,7 +2,10 @@
 
 Keycloak is an open-source identity and access management solution that provides authentication, authorization, and user management features. 
 
-This guide outlines the steps to configure Keycloak for a client, including **granting admin privileges** within a realm and **allowing users to log in using Google authentication**.  
+This guide outlines the steps to configure Keycloak for a client, including **granting admin privileges** within a realm and **allowing users to log in using Google authentication**.
+
+**NOTE** If running spiffworkflow and keycloak through docker compose, you may need to set "SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS" in the backend to contain the appropriate localhost domain for keycloak.
+Otherwise, backend will talk to keycloak with a docker compose network host and the web client will use localhost and that will invalidate the token.
 
 ## **1. Super Admin Tasks: Allowing Realm User Management**  
 
@@ -25,7 +28,7 @@ To grant a user admin access for adding/managing users:
 
 ![Image](/images/Keycloak_setup3.png)
 
-- Open the user’s profile and go to the **Role Mapping** tab.Add the following roles:  
+- Open the user’s profile and go to the **Role Mapping** tab. Add the following roles:  
    - `view-users`  
    - `manage-users`  
    
@@ -45,6 +48,11 @@ https://keycloak-[CLIENT'S DOMAIN].spiff.works/admin/[REALM_NAME]/console
 For a client named **Civitos**, the URL would be:  
 ```
 https://keycloak-civitos.spiff.works/admin/spiffworkflow/console/#/spiffworkflow/users
+```
+
+For localhost, it would be:
+```
+http://localhost:7002/admin/[REALM_NAME]/console
 ```
 
 ## **2. Allowing Everyone from Your Domain to Log into an Instance**  
@@ -133,7 +141,7 @@ To authenticate a user and get a valid access token, send a POST request to Keyc
 curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
-  -d "client_id=spiff-frontend" \
+  -d "client_id=spiffworkflow-frontend" \
   -d "username=<user_email>" \
   -d "password=<user_password>"
 ```
@@ -171,7 +179,7 @@ To revoke a session and log out a user via the Keycloak API:
 
 ```bash
 curl -X POST https://keycloak-[client].spiff.works/realms/spiffworkflow/protocol/openid-connect/logout \
-  -d "client_id=spiff-frontend" \
+  -d "client_id=spiffworkflow-frontend" \
   -d "client_secret=<client_secret>" \
   -d "refresh_token=<refresh_token>"
 ```

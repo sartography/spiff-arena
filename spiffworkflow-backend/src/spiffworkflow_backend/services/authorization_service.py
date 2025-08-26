@@ -919,7 +919,21 @@ class AuthorizationService:
 
         for _group_index, group in enumerate(group_permissions):
             group_identifier = group["name"]
-            if user_model and group_identifier not in unique_user_group_identifiers:
+
+            # If we have a user_model, check if they are already a member of this group
+            # or if this group is in the unique_user_group_identifiers set
+            user_is_member_of_group = False
+            if user_model:
+                # Check if user is already a member of this group (especially via OIDC)
+                if any(g.identifier == group_identifier for g in user_model.groups):
+                    user_is_member_of_group = True
+                    # Make sure this group is in unique_user_group_identifiers
+                    unique_user_group_identifiers.add(group_identifier)
+                    current_app.logger.debug(
+                        f"ADD PERMISSIONS - User {user_model.username} is already a member of group {group_identifier}"
+                    )
+
+            if user_model and not user_is_member_of_group and group_identifier not in unique_user_group_identifiers:
                 current_app.logger.debug(
                     f"ADD PERMISSIONS - Skipping permissions for group {group_identifier} - not in unique group identifiers"
                 )
