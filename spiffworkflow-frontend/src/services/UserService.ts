@@ -78,7 +78,9 @@ const doLogin = (
   redirectUrl?: string | null,
 ) => {
   const taskShowParams = checkPathForTaskShowParams(redirectUrl || undefined);
-  const loginParams = [`redirect_url=${encodeURIComponent(redirectUrl || getCurrentLocation())}`];
+  const loginParams = [
+    `redirect_url=${encodeURIComponent(redirectUrl || getCurrentLocation())}`,
+  ];
   if (taskShowParams) {
     loginParams.push(
       `process_instance_id=${taskShowParams.process_instance_id}`,
