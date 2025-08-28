@@ -26,7 +26,7 @@
     "@types/jest": "^29.5.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.1",
-    "@uiw/react-md-editor": "^4.0.5",
+    "@uiw/react-md-editor": "^4.0.8",
     "ajv-errors": "^3.0.0",
     "bpmn-js": "^17.9.1",
     "bpmn-js-cli": "^2.4.0",
