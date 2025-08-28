@@ -212,6 +212,22 @@ export interface ExtensionUiSchema {
 
   // Disable the extension which is useful during development of an extension.
   disabled?: boolean;
+
+  /**
+   * Custom widgets provided by this extension
+   * These will be available in forms via ui:widget
+   */
+  widgets?: Array<{
+    /**
+     * The name to register the widget as (used in ui:widget)
+     */
+    name: string;
+
+    /**
+     * The file containing the widget implementation
+     */
+    file: string;
+  }>;
 }
 
 /** ********************************************

@@ -15,6 +15,7 @@ import React, { ReactElement, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorBoundaryFallback } from './ErrorBoundaryFallack';
 import SideNav from './components/SideNav';
+import { widgetDiscovery } from './rjsf/registry/WidgetDiscovery';
 
 import Extension from './views/Extension';
 import { useUriListForPermissions } from './hooks/UriListForPermissions';
@@ -151,7 +152,12 @@ export default function ContainerForExtensions() {
     const processExtensionResult = (processModels: ProcessModel[]) => {
       const eni: UiSchemaUxElement[] = [];
       const cssFiles: Array<{ content: string; id: string }> = [];
-
+      const widgetFiles: Array<{
+        content: string;
+        id: string;
+        name: string;
+        processModelId: string;
+      }> = [];
       processModels.forEach((processModel: ProcessModel) => {
         const extensionUiSchemaFile = processModel.files.find(
           (file: ProcessFile) => file.name === 'extension_uischema.json',
@@ -161,38 +167,62 @@ export default function ContainerForExtensions() {
             const extensionUiSchema: ExtensionUiSchema = JSON.parse(
               extensionUiSchemaFile.file_contents,
             );
-            if (
-              extensionUiSchema &&
-              extensionUiSchema.ux_elements &&
-              !extensionUiSchema.disabled
-            ) {
-              // Process ux elements and extract CSS elements
-              extensionUiSchema.ux_elements.forEach(
-                (element: UiSchemaUxElement) => {
-                  if (
-                    element.display_location === UiSchemaDisplayLocation.css
-                  ) {
-                    // Find the CSS file in the process model files
-                    const cssFilename =
-                      element.location_specific_configs?.css_file;
-                    const cssFile = processModel.files.find(
-                      (file: ProcessFile) => file.name === cssFilename,
-                    );
-                    if (cssFile && cssFile.file_contents) {
-                      cssFiles.push({
-                        content: cssFile.file_contents,
-                        id: `${processModel.id}-${cssFilename}`.replace(
-                          /[^a-zA-Z0-9]/g,
-                          '-',
-                        ),
-                      });
-                    }
-                  } else {
-                    // Normal UI element
-                    eni.push(element);
+            if (extensionUiSchema && !extensionUiSchema.disabled) {
+              // Process custom widgets defined in the extension schema
+              if (
+                extensionUiSchema.widgets &&
+                extensionUiSchema.widgets.length > 0
+              ) {
+                extensionUiSchema.widgets.forEach((widgetConfig) => {
+                  // Find the widget file in the process model files
+                  const widgetFile = processModel.files.find(
+                    (file: ProcessFile) => file.name === widgetConfig.file,
+                  );
+
+                  if (widgetFile && widgetFile.file_contents) {
+                    widgetFiles.push({
+                      content: widgetFile.file_contents,
+                      id: `${processModel.id}-${widgetConfig.file}`.replace(
+                        /[^a-zA-Z0-9]/g,
+                        '-',
+                      ),
+                      name: widgetConfig.name,
+                      processModelId: processModel.id,
+                    });
                   }
-                },
-              );
+                });
+              }
+
+              // Process UI elements if they exist
+              if (extensionUiSchema.ux_elements) {
+                // Process ux elements and extract CSS and widget elements
+                extensionUiSchema.ux_elements.forEach(
+                  (element: UiSchemaUxElement) => {
+                    if (
+                      element.display_location === UiSchemaDisplayLocation.css
+                    ) {
+                      // Find the CSS file in the process model files
+                      const cssFilename =
+                        element.location_specific_configs?.css_file;
+                      const cssFile = processModel.files.find(
+                        (file: ProcessFile) => file.name === cssFilename,
+                      );
+                      if (cssFile && cssFile.file_contents) {
+                        cssFiles.push({
+                          content: cssFile.file_contents,
+                          id: `${processModel.id}-${cssFilename}`.replace(
+                            /[^a-zA-Z0-9]/g,
+                            '-',
+                          ),
+                        });
+                      }
+                    } else {
+                      // Normal UI element
+                      eni.push(element);
+                    }
+                  },
+                );
+              }
             }
           } catch (_jsonParseError: any) {
             console.error(
@@ -208,6 +238,12 @@ export default function ContainerForExtensions() {
 
       if (cssFiles.length > 0) {
         setExtensionCssFiles(cssFiles);
+      }
+
+      // Store widget files in a dedicated property for the widget system to use
+      if (widgetFiles.length > 0) {
+        // Pass widget files to the widget discovery system
+        widgetDiscovery.processWidgetFiles(widgetFiles);
       }
     };
 

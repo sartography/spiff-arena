@@ -2,17 +2,15 @@ import validator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
-import { ComponentType, ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@mui/material';
 import { Form as MuiForm } from '@rjsf/mui';
 import { DATE_RANGE_DELIMITER } from '../config';
-import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRangePickerWidget';
-import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
-import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
+import { useWidgetRegistry } from '../rjsf/registry/WidgetRegistry';
 
 ajvErrors(validator.ajv);
 
@@ -50,14 +48,6 @@ type OwnProps = {
   bpmnEvent?: any;
 };
 
-const withProps = <P extends object>(
-  Component: ComponentType<P>,
-  customProps: Partial<P>,
-) =>
-  function CustomComponent(props: P) {
-    return <Component {...props} {...customProps} />;
-  };
-
 export default function CustomForm({
   id,
   key,
@@ -85,16 +75,17 @@ export default function CustomForm({
     }
   }
 
-  const customTypeaheadWidget = withProps(TypeaheadWidget, {
-    reactJsonSchemaFormTheme,
-  });
+  const widgetRegistry = useWidgetRegistry();
 
-  // set in uiSchema using the "ui:widget" key for a property
-  const rjsfWidgets = {
-    'date-range': DateRangePickerWidget,
-    markdown: MarkDownFieldWidget,
-    typeahead: customTypeaheadWidget,
-  };
+  const rjsfWidgets = useMemo(() => {
+    const registeredWidgets = widgetRegistry.getAllWidgets();
+    const combinedWidgets: Record<string, any> = {};
+    Object.entries(registeredWidgets).forEach(([name, registration]) => {
+      combinedWidgets[name] = registration.component;
+    });
+
+    return combinedWidgets;
+  }, [widgetRegistry]);
 
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
