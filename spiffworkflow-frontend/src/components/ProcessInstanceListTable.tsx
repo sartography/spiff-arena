@@ -327,7 +327,7 @@ export default function ProcessInstanceListTable({
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
       ? displayTypeFormatters[column.display_type]
-      : (reportColumnFormatters[columnAccessor] ?? defaultFormatter);
+      : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
     const value = processInstance[columnAccessor];
 
     if (columnAccessor === 'status') {
