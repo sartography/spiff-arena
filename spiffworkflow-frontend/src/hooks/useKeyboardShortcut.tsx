@@ -3,6 +3,12 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import { KeyboardShortcuts } from '../interfaces';
 
 export const overrideSystemHandling = (e: KeyboardEvent) => {
@@ -47,40 +53,96 @@ const useKeyboardShortcut = (
   const numberOfKeysToKeep = Math.max(...lengthsOfShortcutKeys);
 
   const openKeyboardShortcutHelpControl = useCallback(() => {
-    const keyboardShortcutList = shortcutKeys.map((key: string) => {
-      return (
-        <p>
-          <div className="shortcut-description">
-            {keyboardShortcuts[key].label}:{' '}
-          </div>
-          <div className="shortcut-key-group">
-            {key.split(',').map((keyString) => (
-              <span className="shortcut-key">{keyString}</span>
-            ))}
-          </div>
-        </p>
-      );
-    });
+    const keyboardShortcutList = shortcutKeys.map(
+      (key: string, index: number) => {
+        return (
+          <Box
+            key={index}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              py: 1,
+              borderBottom:
+                index < shortcutKeys.length - 1 ? '1px solid #eee' : 'none',
+            }}
+          >
+            <Typography variant="body1">
+              {keyboardShortcuts[key].label}
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              {key.split(',').map((keyString, keyIndex) => (
+                <Chip
+                  key={keyIndex}
+                  label={keyString}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                    textTransform: 'capitalize',
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        );
+      },
+    );
 
     return (
       <Dialog
         open={helpControlOpen}
         onClose={() => setHelpControlOpen(false)}
         maxWidth="sm"
+        fullWidth
       >
-        <DialogTitle>Keyboard shortcuts</DialogTitle>
-        <DialogContent>
-          <p>
-            <div className="shortcut-description">
-              Open keyboard shortcut help control:
-            </div>
-            <div className="shortcut-key-group">
-              <span className="shortcut-key">Shift</span>
-              <span className="shortcut-key">?</span>
-            </div>
-          </p>
+        <DialogTitle>
+          <Typography variant="h6" component="div">
+            Keyboard Shortcuts
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                py: 1,
+                borderBottom: '1px solid #eee',
+              }}
+            >
+              <Typography variant="body1">
+                Open keyboard shortcut help
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Chip
+                  label="Shift"
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                  }}
+                />
+                <Chip
+                  label="?"
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                  }}
+                />
+              </Stack>
+            </Box>
+          </Box>
           {keyboardShortcutList}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHelpControlOpen(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     );
   }, [keyboardShortcuts, helpControlOpen, shortcutKeys]);
