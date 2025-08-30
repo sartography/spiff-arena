@@ -36,6 +36,12 @@ const useKeyboardShortcut = (
   keyboardShortcuts: KeyboardShortcuts,
   userOptions?: any,
 ) => {
+  // Shared styling for key chips
+  const keyChipSx = { 
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    textTransform: 'none'
+  };
   let options = DEFAULT_OPTIONS;
   if (userOptions) {
     options = { ...options, ...userOptions };
@@ -48,40 +54,36 @@ const useKeyboardShortcut = (
 
   const shortcutKeys = Object.keys(keyboardShortcuts);
   const lengthsOfShortcutKeys = shortcutKeys.map(
-    (shortcutKey: string) => shortcutKey.length,
+    (shortcutKey: string) => shortcutKey.split(',').length,
   );
   const numberOfKeysToKeep = Math.max(...lengthsOfShortcutKeys);
 
   const openKeyboardShortcutHelpControl = useCallback(() => {
     const keyboardShortcutList = shortcutKeys.map(
-      (key: string, index: number) => {
+      (shortcut: string, index: number) => {
         return (
           <Box
-            key={index}
+            key={shortcut}
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               py: 1,
               borderBottom:
-                index < shortcutKeys.length - 1 ? '1px solid #eee' : 'none',
+                index < shortcutKeys.length - 1 ? (theme) => `1px solid ${theme.palette.divider}` : 'none',
             }}
           >
             <Typography variant="body1">
-              {keyboardShortcuts[key].label}
+              {keyboardShortcuts[shortcut].label}
             </Typography>
             <Stack direction="row" spacing={1}>
-              {key.split(',').map((keyString, keyIndex) => (
+              {shortcut.split(',').map((part) => (
                 <Chip
-                  key={keyIndex}
-                  label={keyString}
+                  key={`${shortcut}:${part}`}
+                  label={part}
                   size="small"
                   variant="outlined"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                    textTransform: 'capitalize',
-                  }}
+                  sx={keyChipSx}
                 />
               ))}
             </Stack>
@@ -96,13 +98,15 @@ const useKeyboardShortcut = (
         onClose={() => setHelpControlOpen(false)}
         maxWidth="sm"
         fullWidth
+        scroll="paper"
+        aria-labelledby="keyboard-shortcuts-title"
       >
-        <DialogTitle>
-          <Typography variant="h6" component="div">
+        <DialogTitle id="keyboard-shortcuts-title">
+          <Typography variant="h6" component="h2">
             Keyboard Shortcuts
           </Typography>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ maxHeight: '70vh' }}>
           <Box sx={{ mb: 2 }}>
             <Box
               sx={{
@@ -110,7 +114,7 @@ const useKeyboardShortcut = (
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 py: 1,
-                borderBottom: '1px solid #eee',
+                borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
               }}
             >
               <Typography variant="body1">
@@ -121,19 +125,13 @@ const useKeyboardShortcut = (
                   label="Shift"
                   size="small"
                   variant="outlined"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                  }}
+                  sx={keyChipSx}
                 />
                 <Chip
                   label="?"
                   size="small"
                   variant="outlined"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                  }}
+                  sx={keyChipSx}
                 />
               </Stack>
             </Box>
@@ -141,7 +139,7 @@ const useKeyboardShortcut = (
           {keyboardShortcutList}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setHelpControlOpen(false)}>Close</Button>
+          <Button autoFocus onClick={() => setHelpControlOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     );
