@@ -180,13 +180,11 @@ const makeCallToBackend = ({
         } else {
           console.error(error.message);
         }
-      } else if (
-        // NOTE: This can create an issue where if you have a bad cookie, you will not end up on the login page.
-        // We could remove the isLoggedIn check but uncertain if that will require logging in too often.
-        !UserService.isLoggedIn() &&
-        window.location.pathname !== '/login'
-      ) {
-        window.location.href = `/login?original_url=${UserService.getCurrentLocation()}`;
+      } else if (window.location.pathname !== '/login') {
+        // The block is for authentication errors.
+        // If we're already on the login page, do nothing.
+        // Otherwise, redirect to login page.
+        UserService.redirectToLogin();
       }
     });
 };
