@@ -325,6 +325,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def __init__(self, use_restricted_script_engine: bool = True) -> None:
         default_globals = {
             "_strptime": _strptime,
+            "all": all,
             "dateparser": dateparser,
             "datetime": datetime,
             "decimal": decimal,
