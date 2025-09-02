@@ -131,6 +131,11 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
 
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE", default="implicit_grant_type") ## alternatively, use "private_key_jwt" to use the values below
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES", default="")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE", default="")
+
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
 # server hosted by spiffworkflow-backend

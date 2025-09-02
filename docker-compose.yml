@@ -46,14 +46,25 @@ services:
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: "sqlite:////app/db_volume/db.sqlite3"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
       SPIFFWORKFLOW_BACKEND_LOG_LEVEL: "DEBUG"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
+
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "urn:gov:gsa:openidconnect.profiles:sp:sso:gsa:tts-pic-demo"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: ""
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://idp.int.identitysandbox.gov/"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS: "https://idp.int.identitysandbox.gov/"
+
       SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
       SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP: "true"
       SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
       SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
+
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: "put-pem-string-with-newlines-here"
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
