@@ -1,5 +1,5 @@
 // from https://raw.githubusercontent.com/arthurtyukayev/use-keyboard-shortcut/develop/lib/useKeyboardShortcut.js
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -37,11 +37,13 @@ const useKeyboardShortcut = (
   userOptions?: any,
 ) => {
   // Shared styling for key chips
-  const keyChipSx = { 
-    fontFamily: 'monospace',
-    fontWeight: 'bold',
-    textTransform: 'none'
-  };
+  const keyChipSx = useMemo(() => {
+    return {
+      fontFamily: 'monospace',
+      fontWeight: 'bold',
+      textTransform: 'none',
+    };
+  }, []);
   let options = DEFAULT_OPTIONS;
   if (userOptions) {
     options = { ...options, ...userOptions };
@@ -70,7 +72,9 @@ const useKeyboardShortcut = (
               alignItems: 'center',
               py: 1,
               borderBottom:
-                index < shortcutKeys.length - 1 ? (theme) => `1px solid ${theme.palette.divider}` : 'none',
+                index < shortcutKeys.length - 1
+                  ? (theme) => `1px solid ${theme.palette.divider}`
+                  : 'none',
             }}
           >
             <Typography variant="body1">
@@ -139,11 +143,13 @@ const useKeyboardShortcut = (
           {keyboardShortcutList}
         </DialogContent>
         <DialogActions>
-          <Button autoFocus onClick={() => setHelpControlOpen(false)}>Close</Button>
+          <Button autoFocus onClick={() => setHelpControlOpen(false)}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     );
-  }, [keyboardShortcuts, helpControlOpen, shortcutKeys]);
+  }, [keyboardShortcuts, helpControlOpen, shortcutKeys, keyChipSx]);
 
   const keydownListener = useCallback(
     (keydownEvent: KeyboardEvent) => {
