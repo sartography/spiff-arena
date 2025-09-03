@@ -280,11 +280,20 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/logout_return"
-        request_url = (
-            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-            + f"?post_logout_redirect_uri={redirect_url}&"
-            + f"id_token_hint={id_token}"
-        )
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE"] == "private_key_jwt":
+
+            request_url = (
+                self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
+                + f"?post_logout_redirect_uri={redirect_url}&"
+                + f"client_id={self.client_id(authentication_identifier)}"
+            )
+
+        else:
+            request_url = (
+                self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
+                + f"?post_logout_redirect_uri={redirect_url}&"
+                + f"id_token_hint={id_token}"
+            )
 
         return redirect(request_url)
 
