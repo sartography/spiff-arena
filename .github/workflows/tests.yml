@@ -135,10 +135,10 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5.3.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.python }}
 
@@ -178,7 +178,7 @@ jobs:
       #   run: ./bin/recreate_db clean rmall
 
       - name: Setup Mysql
-        uses: mirromutth/mysql-action@v1.1
+        uses: mirromutth/mysql-action@de1fba8b3f90ce8db80f663a7043be3cf3231248 # v1.1
         with:
           host port: 3306
           container port: 3306
@@ -206,8 +206,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v4"
-        # this action doesn't seem to respect working-directory so include working-directory value in path
+        uses: "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" # v4.6.2
         with:
           name: coverage-data
           path: "spiffworkflow-backend/.coverage.*"
@@ -222,7 +221,7 @@ jobs:
       #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" # v4.6.2
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
@@ -234,9 +233,9 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Set up Python
-        uses: actions/setup-python@v5.3.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: "3.12"
       - name: Install uv
@@ -259,9 +258,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Checkout Samples
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -278,13 +277,13 @@ jobs:
     needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.3.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: "3.11"
 
@@ -320,8 +319,7 @@ jobs:
         uses: codecov/codecov-action@v5.5.1
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v5.0.0
-        # thought about just skipping dependabot
+        uses: sonarsource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5.0.0
         # if: ${{ github.actor != 'dependabot[bot]' }}
         # but figured all pull requests seems better, since none of them will have access to sonarcloud.
         # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
@@ -343,7 +341,7 @@ jobs:
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
       - name: Upload PR number as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: pr_number
@@ -362,7 +360,7 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Development Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -383,7 +381,7 @@ jobs:
         # if: ${{ github.event_name != 'pull_request' }}
         # so just skip everything but main
         if: github.ref_name == 'main'
-        uses: sonarsource/sonarcloud-github-action@v5.0.0
+        uses: sonarsource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5.0.0
         with:
           projectBaseDir: spiffworkflow-frontend
         env:
