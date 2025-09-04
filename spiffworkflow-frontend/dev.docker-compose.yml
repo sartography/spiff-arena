@@ -9,6 +9,6 @@ services:
       HOST: "0.0.0.0"
       PORT: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
       XDG_CACHE_HOME: "/app/.cache"
-      VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL: "http://localhost:9999"
+      #VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL: "http://localhost:9999"
     volumes:
       - ./spiffworkflow-frontend:/app
