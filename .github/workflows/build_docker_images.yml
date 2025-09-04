@@ -36,6 +36,7 @@ on:
       - newui-all-in
       - rebuild-v1.0.0
       - support-using-subdir-of-bpmn-spec-repo
+      - login-gov-signin-flow
     tags: [v*]
 
 jobs:
