@@ -387,7 +387,7 @@ class AuthenticationService:
             data["client_assertion_type"] = client_assertion_type
             data["client_assertion"] = client_assertion
         else:
-            headers['Authorization'] = f"Basic {backend_basic_auth.decode('utf-8')}",
+            headers['Authorization'] = f"Basic {backend_basic_auth.decode('utf-8')}"
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
