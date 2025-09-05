@@ -245,13 +245,16 @@ config_from_env("SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", d
 config_from_env("SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS", default="300")
 
 ### other
-config_from_env("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT", default=True)
 config_from_env(
     "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID",
     default="Message_SystemMessageNotification",
 )
 # check all tasks listed as child tasks are saved to the database
 config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
+
+# When set to False, this will use the initiator for all task assignments.
+# This is useful when using arena with api keys only and doing task assignment in a differnt system.
+config_from_env("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT", default=True)
 
 ### for documentation only
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
