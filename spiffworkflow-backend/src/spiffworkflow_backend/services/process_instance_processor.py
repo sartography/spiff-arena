@@ -958,7 +958,7 @@ class ProcessInstanceProcessor:
         task_spec = task.task_spec
         task_lane = "process_initiator"
 
-        if current_app.config.get("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT") != False:
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT") is not False:
             if task_spec.lane is not None and task_spec.lane != "":
                 task_lane = task_spec.lane
 
