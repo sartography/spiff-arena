@@ -644,8 +644,9 @@ def process_model_milestone_list(
     """Returns milestones for a process model.
 
     Milestones are defined as:
-    1. IntermediateThrowEvents
-    2. StartEvents or EndEvents that have a bpmn_name or are part of a process with a full_process_model_hash
+    1. IntermediateThrowEvents (all are considered milestones)
+    2. StartEvents that have a bpmn_name
+    3. EndEvents that have a bpmn_name
     """
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)

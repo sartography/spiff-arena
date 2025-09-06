@@ -342,8 +342,9 @@ class SpecFileService(FileSystemService):
         """Extracts milestone events from BPMN files.
 
         Milestones are defined as:
-        1. IntermediateThrowEvents
-        2. StartEvents or EndEvents that have a bpmn_name
+        1. IntermediateThrowEvents (all are considered milestones)
+        2. StartEvents that have a bpmn_name
+        3. EndEvents that have a bpmn_name
 
         Args:
             process_model_info: The process model info object
