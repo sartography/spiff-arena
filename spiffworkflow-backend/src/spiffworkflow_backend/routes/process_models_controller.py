@@ -638,7 +638,7 @@ def process_model_specs(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_model_milestones(
+def process_model_milestone_list(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Returns milestones for a process model.

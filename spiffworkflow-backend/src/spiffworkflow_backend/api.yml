@@ -1880,7 +1880,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_milestones
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_milestone_list
       summary: Returns milestones for a process model
       tags:
         - Process Model Specs

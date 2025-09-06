@@ -13,14 +13,14 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 class TestProcessModelMilestones(BaseTest):
 
-    def test_process_model_milestones(
+    def test_process_model_milestone_list(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test the process_model_milestones endpoint."""
+        """Test the process_model_milestone_list endpoint."""
         # Create a mock process model
         process_model_id = "test_group/test_model"
         process_model = ProcessModelInfo(
