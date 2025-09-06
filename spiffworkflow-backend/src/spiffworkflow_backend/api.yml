@@ -1862,7 +1862,7 @@ paths:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_specs
       summary: Returns process model specs
       tags:
-        - Process Model Specs
+        - Process Models
       responses:
         "200":
           description: Returns the spec requested.
@@ -1883,7 +1883,7 @@ paths:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_milestone_list
       summary: Returns milestones for a process model
       tags:
-        - Process Model Specs
+        - Process Models
       responses:
         "200":
           description: Returns the milestones for the process model.
