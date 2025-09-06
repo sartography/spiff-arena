@@ -652,7 +652,7 @@ def process_model_milestone_list(
 
     files = ProcessModelService.get_process_model_files(process_model)
     WorkflowSpecService.get_spec(files, process_model)
-    
+
     # Extract milestones from the BPMN files using the service
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
