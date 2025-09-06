@@ -93,7 +93,11 @@ class TestProcessModelMilestones(BaseTest):
 
             # Verify the expected milestones
             assert len(milestones) == 3
-
+            
+            # Verify exact milestone names in order
+            milestone_names = [m["name"] for m in milestones]
+            assert milestone_names == ["Start", "Ready for approvals", "End"]
+            
             # Find and verify the StartEvent milestone
             start_milestone = next((m for m in milestones if m["bpmn_identifier"] == "StartEvent_1"), None)
             assert start_milestone is not None
