@@ -652,47 +652,8 @@ def process_model_milestone_list(
 
     files = ProcessModelService.get_process_model_files(process_model)
     WorkflowSpecService.get_spec(files, process_model)
-
-    # Collect milestone tasks from BPMN definitions
-    milestones = []
-
-    # Get all bpmn files
-    bpmn_files = [file for file in files if file.type == FileType.bpmn.value]
-    for file in bpmn_files:
-        file_contents = SpecFileService.get_data(process_model, file.name)
-        bpmn_etree = SpecFileService.get_etree_from_xml_bytes(file_contents)
-
-        # Namespace for BPMN XML
-        ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
-
-        # Find StartEvents
-        for start_event in bpmn_etree.xpath("//bpmn:startEvent", namespaces=ns):
-            name = start_event.get("name")
-            if name:  # Only include named start events as milestones
-                milestone = {
-                    "name": name,
-                    "bpmn_identifier": start_event.get("id"),
-                    "bpmn_name": name,
-                    "task_type": "StartEvent",
-                }
-                milestones.append(milestone)
-
-        # Find EndEvents
-        for end_event in bpmn_etree.xpath("//bpmn:endEvent", namespaces=ns):
-            name = end_event.get("name")
-            if name:  # Only include named end events as milestones
-                milestone = {"name": name, "bpmn_identifier": end_event.get("id"), "bpmn_name": name, "task_type": "EndEvent"}
-                milestones.append(milestone)
-
-        # Find IntermediateThrowEvents
-        for throw_event in bpmn_etree.xpath("//bpmn:intermediateThrowEvent", namespaces=ns):
-            name = throw_event.get("name")
-            milestone = {
-                "name": name if name else throw_event.get("id"),
-                "bpmn_identifier": throw_event.get("id"),
-                "bpmn_name": name,
-                "task_type": "IntermediateThrowEvent",
-            }
-            milestones.append(milestone)
+    
+    # Extract milestones from the BPMN files using the service
+    milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return Response(json.dumps({"milestones": milestones}), status=200, mimetype="application/json")
