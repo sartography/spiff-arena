@@ -647,7 +647,7 @@ def process_model_milestone_list(
     1. IntermediateThrowEvents
     2. StartEvents or EndEvents that have a bpmn_name or are part of a process with a full_process_model_hash
     """
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
