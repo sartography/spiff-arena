@@ -99,68 +99,6 @@ class SpecFileService(FileSystemService):
         is_primary = False
         messages = {}
         correlations = {}
-
-    @classmethod
-    def extract_milestones_from_bpmn_files(cls, process_model_info: ProcessModelInfo, files: list[File]) -> list[dict[str, Any]]:
-        """Extracts milestone events from BPMN files.
-
-        Milestones are defined as:
-        1. IntermediateThrowEvents
-        2. StartEvents or EndEvents that have a bpmn_name
-
-        Args:
-            process_model_info: The process model info object
-            files: List of files to process
-
-        Returns:
-            A list of milestone dictionaries with name, bpmn_identifier, bpmn_name, and task_type
-        """
-        milestones = []
-        bpmn_files = [file for file in files if file.type == FileType.bpmn.value]
-
-        for file in bpmn_files:
-            file_contents = cls.get_data(process_model_info, file.name)
-            bpmn_etree = cls.get_etree_from_xml_bytes(file_contents)
-
-            # Namespace for BPMN XML
-            ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
-
-            # Find StartEvents
-            for start_event in bpmn_etree.xpath("//bpmn:startEvent", namespaces=ns):
-                name = start_event.get("name")
-                if name:  # Only include named start events as milestones
-                    milestone = {
-                        "name": name,
-                        "bpmn_identifier": start_event.get("id"),
-                        "bpmn_name": name,
-                        "task_type": "StartEvent",
-                    }
-                    milestones.append(milestone)
-
-            # Find EndEvents
-            for end_event in bpmn_etree.xpath("//bpmn:endEvent", namespaces=ns):
-                name = end_event.get("name")
-                if name:  # Only include named end events as milestones
-                    milestone = {
-                        "name": name,
-                        "bpmn_identifier": end_event.get("id"),
-                        "bpmn_name": name,
-                        "task_type": "EndEvent",
-                    }
-                    milestones.append(milestone)
-
-            # Find IntermediateThrowEvents
-            for throw_event in bpmn_etree.xpath("//bpmn:intermediateThrowEvent", namespaces=ns):
-                name = throw_event.get("name")
-                milestone = {
-                    "name": name if name else throw_event.get("id"),
-                    "bpmn_identifier": throw_event.get("id"),
-                    "bpmn_name": name,
-                    "task_type": "IntermediateThrowEvent",
-                }
-                milestones.append(milestone)
-
-        return milestones
         start_messages = []
         called_element_ids = []
         if file_type.value == FileType.bpmn.value:
@@ -398,3 +336,65 @@ class SpecFileService(FileSystemService):
                 current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
+
+    @classmethod
+    def extract_milestones_from_bpmn_files(cls, process_model_info: ProcessModelInfo, files: list[File]) -> list[dict[str, Any]]:
+        """Extracts milestone events from BPMN files.
+
+        Milestones are defined as:
+        1. IntermediateThrowEvents
+        2. StartEvents or EndEvents that have a bpmn_name
+
+        Args:
+            process_model_info: The process model info object
+            files: List of files to process
+
+        Returns:
+            A list of milestone dictionaries with name, bpmn_identifier, bpmn_name, and task_type
+        """
+        milestones = []
+        bpmn_files = [file for file in files if file.type == FileType.bpmn.value]
+
+        for file in bpmn_files:
+            file_contents = cls.get_data(process_model_info, file.name)
+            bpmn_etree = cls.get_etree_from_xml_bytes(file_contents)
+
+            # Namespace for BPMN XML
+            ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+
+            # Find StartEvents
+            for start_event in bpmn_etree.xpath("//bpmn:startEvent", namespaces=ns):
+                name = start_event.get("name")
+                if name:  # Only include named start events as milestones
+                    milestone = {
+                        "name": name,
+                        "bpmn_identifier": start_event.get("id"),
+                        "bpmn_name": name,
+                        "task_type": "StartEvent",
+                    }
+                    milestones.append(milestone)
+
+            # Find EndEvents
+            for end_event in bpmn_etree.xpath("//bpmn:endEvent", namespaces=ns):
+                name = end_event.get("name")
+                if name:  # Only include named end events as milestones
+                    milestone = {
+                        "name": name,
+                        "bpmn_identifier": end_event.get("id"),
+                        "bpmn_name": name,
+                        "task_type": "EndEvent",
+                    }
+                    milestones.append(milestone)
+
+            # Find IntermediateThrowEvents
+            for throw_event in bpmn_etree.xpath("//bpmn:intermediateThrowEvent", namespaces=ns):
+                name = throw_event.get("name")
+                milestone = {
+                    "name": name if name else throw_event.get("id"),
+                    "bpmn_identifier": throw_event.get("id"),
+                    "bpmn_name": name,
+                    "task_type": "IntermediateThrowEvent",
+                }
+                milestones.append(milestone)
+
+        return milestones
