@@ -399,6 +399,9 @@ class SpecFileService(FileSystemService):
         2. StartEvents that have a bpmn_name
         3. EndEvents that have a bpmn_name
 
+        Milestones are returned in a specific order: start events first, followed by intermediate events,
+        and finally end events.
+
         Args:
             process_model_info: The process model info object
             files: List of files to process
@@ -406,7 +409,9 @@ class SpecFileService(FileSystemService):
         Returns:
             A list of milestone dictionaries with name, bpmn_identifier, bpmn_name, and task_type
         """
-        milestones = []
+        start_milestones = []
+        intermediate_milestones = []
+        end_milestones = []
         bpmn_files = [file for file in files if file.type == FileType.bpmn.value]
 
         # Define event types we're interested in
@@ -419,13 +424,19 @@ class SpecFileService(FileSystemService):
             # Extract all events of the specified types
             events = cls.extract_events_from_bpmn_file(bpmn_etree, event_types)
 
-            # Filter only milestone events
+            # Filter only milestone events and sort them by type
             for event in events:
                 ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
                 # Convert back to BPMN XML element type format (lowercase first letter)
                 bpmn_type = event["task_type"][0].lower() + event["task_type"][1:]
                 event_elements = bpmn_etree.xpath(f"//bpmn:{bpmn_type}[@id='{event['bpmn_identifier']}']", namespaces=ns)
                 if event_elements and cls.is_milestone_event(event_elements[0], bpmn_type):
-                    milestones.append(event)
+                    if bpmn_type == "startEvent":
+                        start_milestones.append(event)
+                    elif bpmn_type == "intermediateThrowEvent":
+                        intermediate_milestones.append(event)
+                    elif bpmn_type == "endEvent":
+                        end_milestones.append(event)
 
-        return milestones
+        # Combine all milestones in the desired order
+        return start_milestones + intermediate_milestones + end_milestones
