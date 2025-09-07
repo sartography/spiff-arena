@@ -7,7 +7,6 @@ This is just here to make local development, testing, and demonstration easier.
 """
 
 import base64
-import json
 import math
 import time
 from typing import Any
@@ -19,11 +18,13 @@ from flask import Blueprint
 from flask import current_app
 from flask import jsonify
 from flask import make_response
-from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from werkzeug.wrappers import Response
+from flask.wrappers import Response
+
+# Properly typed redirect function that returns flask.wrappers.Response
+from werkzeug.utils import redirect
 
 from spiffworkflow_backend.config.openid.rsa_keys import OpenIdConfigsForDevOnly
 
@@ -103,12 +104,12 @@ def form_submit() -> Any:
 
 
 @openid_blueprint.route("/token", methods=["POST"])
-def token() -> Response | dict:
+def token() -> Response | dict[str, str]:
     """Url that will return a valid token, given the super secret sauce."""
     code = request.values.get("code")
 
     if code is None:
-        return Response(json.dumps({"error": "missing_code_value_in_token_request"}), status=400, mimetype="application/json")
+        return make_response(jsonify({"error": "missing_code_value_in_token_request"}), 400)
 
     """We just stuffed the user name on the front of the code, so grab it."""
     user_name, secret_hash = code.split(":")
@@ -147,14 +148,16 @@ def token() -> Response | dict:
         "id_token": id_token,
         "refresh_token": id_token,
     }
-    return response
+    return make_response(jsonify(response), 200)
 
 
 @openid_blueprint.route("/end_session", methods=["GET"])
 def end_session() -> Response:
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
     request.args.get("id_token_hint")
-    return redirect(redirect_url)
+    response = redirect(redirect_url)
+    # Convert werkzeug response to flask response
+    return make_response(response.get_data(), response.status_code, response.headers)
 
 
 @openid_blueprint.route("/jwks", methods=["GET"])

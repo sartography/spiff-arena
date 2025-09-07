@@ -1,14 +1,13 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
-import json
-
 import flask.wrappers
 import werkzeug
 from flask import current_app
 from flask import g
+from flask import jsonify
+from flask import make_response
 from flask import redirect
 from flask import request
-from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.authentication_controller import verify_token
@@ -19,7 +18,7 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskServi
 
 def service_task_list() -> flask.wrappers.Response:
     available_connectors = ServiceTaskService.available_connectors()
-    return Response(json.dumps(available_connectors), status=200, mimetype="application/json")
+    return make_response(jsonify(available_connectors), 200)
 
 
 def authentication_list() -> flask.wrappers.Response:
@@ -34,18 +33,18 @@ def authentication_list() -> flask.wrappers.Response:
         "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}{api_path_prefix}/authentication_callback",
     }
 
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
+    return make_response(jsonify(response_json), 200)
 
 
 def authentication_configuration() -> flask.wrappers.Response:
     config = OAuthService.authentication_configuration()
 
-    return Response(json.dumps(config), status=200, mimetype="application/json")
+    return make_response(jsonify(config), 200)
 
 
 def authentication_configuration_update(body: dict) -> flask.wrappers.Response:
     OAuthService.update_authentication_configuration(body)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def authentication_begin(

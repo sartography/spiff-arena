@@ -70,11 +70,11 @@ def secret_create(body: dict) -> Response:
 def secret_update(key: str, body: dict) -> Response:
     """Update secret."""
     SecretService().update_secret(key, body["value"], g.user.id)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def secret_delete(key: str) -> Response:
     """Delete secret."""
     current_user = UserService.current_user()
     SecretService.delete_secret(key, current_user.id)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
