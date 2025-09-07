@@ -81,7 +81,7 @@ class TestProcessModelMilestones(BaseTest):
             # Call the endpoint
             headers = self.logged_in_headers(with_super_admin_user)
             modified_process_model_id = process_model_id.replace("/", ":")
-            response = client.get(f"/v1.0/process-model-milestones/{modified_process_model_id}", headers=headers)
+            response = client.get(f"/v1.0/process-models/{modified_process_model_id}/milestones", headers=headers)
 
             # Verify the response
             assert response.status_code == 200
