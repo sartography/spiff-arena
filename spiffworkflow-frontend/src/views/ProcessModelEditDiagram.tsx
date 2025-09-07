@@ -1282,11 +1282,20 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchJsonSchemaEditor = useCallback(
     (_element: any, fileName: string, eventBus: any) => {
+      const url = import.meta.env.VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL;
+      if (url) {
+        window.open(
+          `${url}?processModelId=${params.process_model_id || ''}&fileName=${fileName || ''}`,
+          '_blank',
+        );
+        return;
+      }
+
       setFileEventBus(eventBus);
       setJsonSchemaFileName(fileName);
       setShowJsonSchemaEditor(true);
     },
-    [],
+    [params.process_model_id],
   );
 
   const addNewFileIfNotExist = () => {
