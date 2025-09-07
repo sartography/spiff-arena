@@ -28,6 +28,7 @@ import {
 import HttpService from './services/HttpService';
 import BaseRoutes from './views/BaseRoutes';
 import BackendIsDown from './views/BackendIsDown';
+import FrontendAccessDenied from './views/FrontendAccessDenied';
 import Login from './views/Login';
 import useAPIError from './hooks/UseApiError';
 import ScrollToTop from './components/ScrollToTop';
@@ -39,6 +40,7 @@ const fadeOutImmediate = 'fadeOutImmediate';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
+  const [canAccessFrontend, setCanAccessFrontend] = useState<boolean>(true);
   const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
@@ -211,8 +213,14 @@ export default function ContainerForExtensions() {
       }
     };
 
-    const getExtensions = () => {
+    const getExtensions = (response: any) => {
       setBackendIsUp(true);
+      
+      // Check if user has access to frontend
+      if (response.can_access_frontend !== undefined) {
+        setCanAccessFrontend(response.can_access_frontend);
+      }
+      
       if (!permissionsLoaded) {
         return;
       }
@@ -262,14 +270,21 @@ export default function ContainerForExtensions() {
     return [<BackendIsDown key="backendIsDownPage" />];
   };
 
+  const frontendAccessDeniedPage = () => {
+    return [<FrontendAccessDenied key="frontendAccessDeniedPage" />];
+  };
+
   const innerComponents = () => {
     if (backendIsUp === null) {
       return [];
     }
-    if (backendIsUp) {
-      return routeComponents();
+    if (!backendIsUp) {
+      return backendIsDownPage();
     }
-    return backendIsDownPage();
+    if (!canAccessFrontend) {
+      return frontendAccessDeniedPage();
+    }
+    return routeComponents();
   };
 
   return (

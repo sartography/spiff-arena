@@ -594,6 +594,9 @@ class AuthorizationService:
         permissions_to_assign: list[PermissionToAssign] = []
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/active-users/*"))
 
+        # Default permission to access frontend
+        # permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/frontend-access"))
+
         # gets lists of instances (we use a POST with a json body because there are complex filters, hence the create)
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instances/for-me"))
         # view individual instances that require my attention
