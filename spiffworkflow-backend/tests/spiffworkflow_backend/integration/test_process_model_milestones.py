@@ -1,4 +1,3 @@
-import json
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -85,7 +84,7 @@ class TestProcessModelMilestones(BaseTest):
 
             # Verify the response
             assert response.status_code == 200
-            data = json.loads(response.content)
+            data = response.json()
 
             # Check that the response contains milestones
             assert "milestones" in data
