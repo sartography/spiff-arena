@@ -1,5 +1,4 @@
-from flask import current_app, request
-from flask import g, make_response
+from flask import current_app, make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
