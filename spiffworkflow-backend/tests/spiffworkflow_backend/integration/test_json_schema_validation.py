@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -18,7 +16,7 @@ class TestJsonSchemaValidation(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test that valid data passes validation when enabled."""
-        with patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA": True}):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", True):
             process_group_id = "test_group"
             process_model_id = "simple_form"
             process_model = self.create_group_and_model_with_bpmn(
@@ -65,7 +63,7 @@ class TestJsonSchemaValidation(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test that invalid data is rejected when validation is enabled."""
-        with patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA": True}):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", True):
             process_group_id = "test_group"
             process_model_id = "simple_form"
             process_model = self.create_group_and_model_with_bpmn(
@@ -114,7 +112,7 @@ class TestJsonSchemaValidation(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test that invalid data is accepted when validation is disabled."""
-        with patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA": False}):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", False):
             process_group_id = "test_group"
             process_model_id = "simple_form"
             process_model = self.create_group_and_model_with_bpmn(
