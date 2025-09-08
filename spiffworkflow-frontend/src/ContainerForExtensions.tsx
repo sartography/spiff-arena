@@ -57,7 +57,7 @@ export default function ContainerForExtensions() {
     permissionRequestData,
   );
 
-  const { removeError: _removeError } = useAPIError();
+  const { removeError } = useAPIError();
 
   const location = useLocation();
 
@@ -109,7 +109,7 @@ export default function ContainerForExtensions() {
   }, []);
   // never carry an error message across to a different path
   useEffect(() => {
-    _removeError();
+    removeError();
     // if we include the removeError function to the dependency array of this useEffect, it causes
     // an infinite loop where the page with the error adds the error,
     // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
