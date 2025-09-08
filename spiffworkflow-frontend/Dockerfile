@@ -43,12 +43,14 @@ RUN ./bin/build
 # Use nginx as the base image
 FROM nginx:1.27.5-bookworm
 
+# 3.40.1-2+deb12u2 is to fix https://avd.aquasec.com/nvd/2025/cve-2025-6965/
 RUN apt-get update \
   && apt-get clean -y \
   && apt-get install -y -q \
   libkrb5support0 \
   libexpat1 \
   libaom3 \
+  3.40.1-2+deb12u2 \
   && rm -rf /var/lib/apt/lists/*
 
 # Remove default nginx configuration
