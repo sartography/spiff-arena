@@ -39,7 +39,7 @@ def celery_task_process_instance_update_notifier_run(
     worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
     current_app.logger.info(worker_intro_log_message)
 
-    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_UPDATE_PROCESS_MODEL"])
+    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_UPDATE_NOTIFIER_PROCESS_MODEL"])
     data = {
         "update_type": update_type,
         "updated_process_instance_id": updated_process_instance_id,
