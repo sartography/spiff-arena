@@ -102,6 +102,9 @@ config_from_env(
     default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
 )
 
+### model marketplace
+config_from_env("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", default="https://model-marketplace.spiff.works")
+
 ### database
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", default="mysql")  # can also be sqlite, postgres
 # Overide above with specific sqlalchymy connection string.
