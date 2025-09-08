@@ -202,7 +202,7 @@
   "form_render_error_title": "Failed to render form",
   "frontend_version_information": "Frontend version information",
   "frontend_access_denied_title": "Access Denied",
-  "frontend_access_denied_message": "You do not have permission to access the SpiffWorkflow frontend. Please contact your administrator for access.",
+  "frontend_access_denied_message": "You don't have permission to access this application. Please contact your administrator.",
   "go": "Go",
   "group_by": "Group by",
   "groups": "Groups",
