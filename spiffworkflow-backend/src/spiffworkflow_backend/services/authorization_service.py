@@ -668,6 +668,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/extensions/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/extensions-get-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/frontend-access"))
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))
@@ -678,6 +679,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-data/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instance-events/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/task-data/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
 
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))

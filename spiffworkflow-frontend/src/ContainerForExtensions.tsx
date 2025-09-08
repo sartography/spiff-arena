@@ -57,7 +57,7 @@ export default function ContainerForExtensions() {
     permissionRequestData,
   );
 
-  const { removeError } = useAPIError();
+  const { removeError: _removeError } = useAPIError();
 
   const location = useLocation();
 
@@ -109,7 +109,7 @@ export default function ContainerForExtensions() {
   }, []);
   // never carry an error message across to a different path
   useEffect(() => {
-    removeError();
+    _removeError();
     // if we include the removeError function to the dependency array of this useEffect, it causes
     // an infinite loop where the page with the error adds the error,
     // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
@@ -139,15 +139,6 @@ export default function ContainerForExtensions() {
       setIsNavCollapsed(false);
     }
   }, [isMobile]);
-
-  // never carry an error message across to a different path
-  useEffect(() => {
-    removeError();
-    // if we include the removeError function to the dependency array of this useEffect, it causes
-    // an infinite loop where the page with the error adds the error,
-    // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
 
   useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
@@ -213,14 +204,15 @@ export default function ContainerForExtensions() {
       }
     };
 
-    const getExtensions = (response: any) => {
+    type HealthStatus = { ok: boolean; can_access_frontend?: boolean };
+    const getExtensions = (response: HealthStatus) => {
       setBackendIsUp(true);
-      
+
       // Check if user has access to frontend
       if (response.can_access_frontend !== undefined) {
         setCanAccessFrontend(response.can_access_frontend);
       }
-      
+
       if (!permissionsLoaded) {
         return;
       }

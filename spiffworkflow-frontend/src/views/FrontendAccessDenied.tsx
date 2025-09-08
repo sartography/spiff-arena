@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { setPageTitle } from '../helpers';
 
 export default function FrontendAccessDenied() {
-  const { t } = useTranslation();
-  
+  const { t, i18n } = useTranslation();
+
   useEffect(() => {
     setPageTitle([t('frontend_access_denied_title')]);
-  }, [t]);
-  
+  }, [i18n.language, t]);
+
   return (
-    <Box sx={{ mt: 2, mb: 4, mx: 2 }}>
+    <Box data-testid="frontend-access-denied" sx={{ mt: 2, mb: 4, mx: 2 }}>
       <Typography variant="h1" sx={{ mb: 2 }}>
         {t('frontend_access_denied_title')}
       </Typography>

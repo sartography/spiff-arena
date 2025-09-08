@@ -500,6 +500,7 @@ class TestAuthorizationService(BaseTest):
                 ("/connector-proxy/typeahead/*", "read"),
                 ("/debug/version-info", "read"),
                 ("/extensions", "read"),
+                ("/frontend-access", "read"),
                 ("/onboarding", "read"),
                 ("/process-groups", "read"),
                 ("/process-instances/find-by-id/*", "read"),
@@ -541,6 +542,7 @@ class TestAuthorizationService(BaseTest):
                 ("/event-error-details/*", "read"),
                 ("/extensions-get-data/*", "read"),
                 ("/extensions/*", "create"),
+                ("/frontend-access", "read"),
                 ("/logs/*", "read"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
@@ -561,6 +563,7 @@ class TestAuthorizationService(BaseTest):
                 ("/task-complete/*", "create"),
                 ("/task-data/*", "update"),
                 ("/task-data/*", "read"),
+                ("/users/search", "read"),
             ]
         )
 
