@@ -75,11 +75,7 @@ def process_instance_create(
     }
     LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
-    return Response(
-        json.dumps(process_instance.serialized()),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_instance.serialized()), 201)
 
 
 def process_instance_run(
@@ -94,7 +90,7 @@ def process_instance_run(
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = process_instance_api.to_dict()
     process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(process_instance)
-    return Response(json.dumps(process_instance_api_dict), status=200, mimetype="application/json")
+    return make_response(jsonify(process_instance_api_dict), 200)
 
 
 def process_instance_terminate(
@@ -115,7 +111,7 @@ def process_instance_terminate(
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_suspend(
@@ -135,7 +131,7 @@ def process_instance_suspend(
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_resume(
@@ -158,7 +154,7 @@ def process_instance_resume(
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_list_for_me(
@@ -278,7 +274,7 @@ def process_instance_delete(process_instance_id: int, modified_process_model_ide
     db.session.query(ProcessInstanceQueueModel).filter_by(process_instance_id=process_instance.id).delete()
     db.session.delete(process_instance)
     db.session.commit()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_report_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
@@ -317,7 +313,7 @@ def process_instance_report_update(
     process_instance_report.report_metadata = body["report_metadata"]
     db.session.commit()
 
-    return make_response(jsonify(process_instance_report), 201)
+    return make_response(jsonify(process_instance_report), 200)
 
 
 def process_instance_report_delete(
@@ -337,7 +333,7 @@ def process_instance_report_delete(
     db.session.delete(process_instance_report)
     db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_task_list_without_task_data_for_me(
@@ -553,7 +549,7 @@ def process_instance_reset(
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_check_can_migrate(
@@ -575,11 +571,7 @@ def process_instance_check_can_migrate(
     except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
         return_dict["can_migrate"] = False
         return_dict["exception_class"] = exception.__class__.__name__
-    return Response(
-        json.dumps(return_dict),
-        status=200,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(return_dict), 200)
 
 
 def process_instance_migrate(
@@ -595,7 +587,7 @@ def process_instance_migrate(
     ProcessInstanceService.migrate_process_instance(
         process_instance, user=g.user, target_bpmn_process_hash=target_bpmn_process_hash
     )
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_instance_find_by_id(

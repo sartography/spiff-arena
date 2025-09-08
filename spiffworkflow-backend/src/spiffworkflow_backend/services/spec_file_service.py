@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime
 from typing import TYPE_CHECKING
+from typing import Any
 
 from flask import current_app
 from lxml import etree  # type: ignore
@@ -335,3 +336,70 @@ class SpecFileService(FileSystemService):
                 current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
+
+    @staticmethod
+    def is_milestone_event(event_element: etree.Element, event_type: str) -> bool:
+        """Determines if an event element is a milestone.
+
+        Milestones are defined as:
+        1. IntermediateThrowEvents (all are considered milestones)
+        2. StartEvents that have a bpmn_name
+        3. EndEvents that have a bpmn_name
+        """
+        if event_type == "intermediateThrowEvent":
+            return True
+        elif event_type in ["startEvent", "endEvent"]:
+            return event_element.get("name") is not None and event_element.get("name") != ""
+        return False
+
+    @classmethod
+    def extract_events_from_bpmn_file(cls, bpmn_etree: etree.Element, event_types: list[str]) -> list[dict[str, Any]]:
+        events = []
+        ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+
+        for event_type in event_types:
+            for event in bpmn_etree.xpath(f"//bpmn:{event_type}", namespaces=ns):
+                name = event.get("name")
+                event_id = event.get("id")
+                task_type = event_type[0].upper() + event_type[1:]
+                event_info = {
+                    "name": name if name else event_id,
+                    "bpmn_identifier": event_id,
+                    "bpmn_name": name,
+                    "task_type": task_type,
+                }
+                events.append(event_info)
+
+        return events
+
+    @classmethod
+    def extract_milestones_from_bpmn_files(cls, process_model_info: ProcessModelInfo, files: list[File]) -> list[dict[str, Any]]:
+        start_milestones = []
+        intermediate_milestones = []
+        end_milestones = []
+        bpmn_files = [file for file in files if file.type == FileType.bpmn.value]
+
+        event_types = ["startEvent", "endEvent", "intermediateThrowEvent"]
+
+        for file in bpmn_files:
+            file_contents = cls.get_data(process_model_info, file.name)
+            bpmn_etree = cls.get_etree_from_xml_bytes(file_contents)
+
+            events = cls.extract_events_from_bpmn_file(bpmn_etree, event_types)
+
+            for event in events:
+                ns = {"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+                bpmn_type = event["task_type"][0].lower() + event["task_type"][1:]
+                event_elements = bpmn_etree.xpath(f"//bpmn:{bpmn_type}[@id='{event['bpmn_identifier']}']", namespaces=ns)
+                if event_elements and cls.is_milestone_event(event_elements[0], bpmn_type):
+                    return_event = event
+                    return_event["file"] = file.name
+                    if bpmn_type == "startEvent":
+                        start_milestones.append(return_event)
+                    elif bpmn_type == "intermediateThrowEvent":
+                        intermediate_milestones.append(return_event)
+                    elif bpmn_type == "endEvent":
+                        end_milestones.append(return_event)
+
+        # Combine all milestones in the desired order
+        return start_milestones + intermediate_milestones + end_milestones
