@@ -325,6 +325,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def __init__(self, use_restricted_script_engine: bool = True) -> None:
         default_globals = {
             "_strptime": _strptime,
+            "all": all,
             "dateparser": dateparser,
             "datetime": datetime,
             "decimal": decimal,
@@ -956,8 +957,10 @@ class ProcessInstanceProcessor:
     def get_potential_owners_from_task(self, task: SpiffTask) -> PotentialOwnerIdList:
         task_spec = task.task_spec
         task_lane = "process_initiator"
-        if task_spec.lane is not None and task_spec.lane != "":
-            task_lane = task_spec.lane
+
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT") is not False:
+            if task_spec.lane is not None and task_spec.lane != "":
+                task_lane = task_spec.lane
 
         potential_owners: list[PotentialOwner] = []
         lane_assignment_id = None

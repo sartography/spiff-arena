@@ -1862,7 +1862,7 @@ paths:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_specs
       summary: Returns process model specs
       tags:
-        - Process Model Specs
+        - Process Models
       responses:
         "200":
           description: Returns the spec requested.
@@ -1870,6 +1870,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{modified_process_model_identifier}/milestones:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_milestone_list
+      summary: Returns milestones for a process model
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Returns the milestones for the process model.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  milestones:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        bpmn_identifier:
+                          type: string
+                        bpmn_name:
+                          type: string
+                          nullable: true
+                        file:
+                          type: string
+                        task_type:
+                          type: string
 
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:

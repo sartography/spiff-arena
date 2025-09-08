@@ -1,16 +1,14 @@
-from playwright.sync_api import expect, BrowserContext
+import time
+from playwright.sync_api import Page, expect
 
 from helpers.login import login, logout
-from helpers.playwright_setup import browser_context  # Import the fixture
 
 
-def test_login(browser_context: BrowserContext):
-    page = browser_context.new_page()
+def test_login(page: Page) -> None:
     login(page, "admin", "admin")
 
 
-def test_logout(browser_context: BrowserContext):
-    page = browser_context.new_page()
+def test_logout(page: Page) -> None:
     login(page, "admin", "admin")
     logout(page)
     expect(

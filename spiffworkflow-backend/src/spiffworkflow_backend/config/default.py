@@ -255,6 +255,10 @@ config_from_env(
 # check all tasks listed as child tasks are saved to the database
 config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 
+# When set to False, this will use the initiator for all task assignments.
+# This is useful when using arena with api keys only and doing task assignment in a differnt system.
+config_from_env("SPIFFWORKFLOW_BACKEND_USE_LANES_FOR_TASK_ASSIGNMENT", default=True)
+
 ### for documentation only
 # we load the CustomBpmnScriptEngine at import time, where we do not have access to current_app,
 # so instead of using config, we use os.environ directly over there.
@@ -275,3 +279,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=
 config_from_env("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE", default="openid profile email")
 
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS", default=False)
+
+### task validation
+config_from_env("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", default=False)
