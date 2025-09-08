@@ -201,6 +201,8 @@
   "form_render_error_message": "O formulário não pôde ser construído com o esquema, interface do usuário e dados atuais. Por favor, tente corrigir o problema e tente novamente.",
   "form_render_error_title": "Erro ao renderizar formulário",
   "frontend_version_information": "Informação da versão do frontend",
+  "frontend_access_denied_title": "Acesso Negado",
+  "frontend_access_denied_message": "Você não tem permissão para acessar esta aplicação. Entre em contato com o administrador.",
   "go": "Ir",
   "group_by": "Agrupar por",
   "groups": "Grupos",

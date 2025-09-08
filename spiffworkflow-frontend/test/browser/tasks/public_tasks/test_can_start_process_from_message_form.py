@@ -1,16 +1,14 @@
 import sys
 import os
 import pytest
-from playwright.sync_api import expect, Page, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login
 from helpers.debug import print_page_details
-from helpers.playwright_setup import browser_context  # Import the fixture
 
 
-def test_can_start_process_from_message_form(browser_context: BrowserContext):
+def test_can_start_process_from_message_form(page: Page):
     """Tests starting a process via a public message form."""
-    page = browser_context.new_page()
     page.goto("http://localhost:7001/public/misc:bounty_start_multiple_forms")
 
     # 3. Enter first name, submit

@@ -201,6 +201,8 @@
   "form_render_error_message": "Formulář se nepodařilo sestavit s aktuálním schématem, uživatelským rozhraním a daty. Opravte prosím problém a zkuste to znovu.",
   "form_render_error_title": "Chyba při vykreslování formuláře",
   "frontend_version_information": "Informace o verzi frontendu",
+  "frontend_access_denied_title": "Přístup odepřen",
+  "frontend_access_denied_message": "Nemáte oprávnění k přístupu k této aplikaci. Kontaktujte prosím svého správce.",
   "go": "Přejít",
   "group_by": "Seskupit podle",
   "groups": "Skupiny",

@@ -201,6 +201,8 @@
   "form_render_error_message": "无法使用当前的架构、UI 和数据构建表单。请尝试更正问题并重试。",
   "form_render_error_title": "渲染表单失败",
   "frontend_version_information": "前端版本信息",
+  "frontend_access_denied_title": "访问被拒绝",
+  "frontend_access_denied_message": "您没有权限访问此应用程序。请联系您的管理员。",
   "go": "前往",
   "group_by": "分组依据",
   "groups": "组",
