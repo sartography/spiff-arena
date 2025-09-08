@@ -563,7 +563,6 @@ class TestAuthorizationService(BaseTest):
                 ("/task-complete/*", "create"),
                 ("/task-data/*", "update"),
                 ("/task-data/*", "read"),
-                ("/users/search", "read"),
             ]
         )
 
