@@ -704,7 +704,8 @@ class ProcessInstanceService:
         # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
         if (
             current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", False)
-            and spiff_task.task_spec.typename == "UserTask"
+            and hasattr(spiff_task.task_spec, "__class__")
+            and spiff_task.task_spec.__class__.__name__ == "UserTask"
             and hasattr(spiff_task.task_spec, "extensions")
             and "properties" in spiff_task.task_spec.extensions
             and "formJsonSchemaFilename" in spiff_task.task_spec.extensions["properties"]
