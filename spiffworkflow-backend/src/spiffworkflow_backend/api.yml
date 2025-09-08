@@ -1904,6 +1904,8 @@ paths:
                         bpmn_name:
                           type: string
                           nullable: true
+                        file:
+                          type: string
                         task_type:
                           type: string
 

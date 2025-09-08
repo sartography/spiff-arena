@@ -632,20 +632,11 @@ def process_model_specs(
 def process_model_milestone_list(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    """Returns milestones for a process model.
-
-    Milestones are defined as:
-    1. IntermediateThrowEvents (all are considered milestones)
-    2. StartEvents that have a bpmn_name
-    3. EndEvents that have a bpmn_name
-    """
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
     WorkflowSpecService.get_spec(files, process_model)
-
-    # Extract milestones from the BPMN files using the service
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return make_response(jsonify({"milestones": milestones}), 200)
