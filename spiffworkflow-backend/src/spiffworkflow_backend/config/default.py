@@ -276,3 +276,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=
 config_from_env("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE", default="openid profile email")
 
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS", default=False)
+
+### task validation
+config_from_env("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", default=False)
