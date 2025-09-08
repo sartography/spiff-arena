@@ -65,6 +65,7 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -386,6 +387,14 @@ class ProcessInstanceService:
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         if commit_db:
             db.session.commit()
+
+        log_extras = {
+            "milestone": "Started",
+            "process_model_identifier": process_model_identifier,
+            "process_instance_id": process_instance_model.id,
+        }
+        LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
+
         return process_instance_model
 
     @classmethod
