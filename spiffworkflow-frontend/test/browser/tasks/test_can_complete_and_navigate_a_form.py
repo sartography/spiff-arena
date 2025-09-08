@@ -1,8 +1,7 @@
 import re
-from playwright.sync_api import expect, Page, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 from helpers.debug import print_page_details
 
 
@@ -44,8 +43,7 @@ def submit_input_into_form_field(
     submit_btn.click()
 
 
-def test_can_complete_and_navigate_a_form(browser_context: BrowserContext):
-    page = browser_context.new_page()
+def test_can_complete_and_navigate_a_form(page: Page):
     # 1. Log in
     login(page, "admin", "admin")
 

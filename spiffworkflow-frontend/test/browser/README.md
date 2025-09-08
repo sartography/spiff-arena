@@ -2,10 +2,10 @@
 
 To run:
 
-    cd ~/projects/github/sartography/spiff-arena/spiffworkflow-frontend/test/browser && HEADLESS=false pytest . --headed --slowmo=1000
+    cd ~/projects/github/sartography/spiff-arena/spiffworkflow-frontend/test/browser
 
-    uv run pytest test/browser --headed --slowmo=1000
+    # defaults
+    uv run pytest
 
-Maybe we can get this work at some point:
-
-    uv run pytest test/browser --headed slowmo 1000
+    # headed browser and slowmo for people to watch
+    uv run pytest --headed --slowmo 1000

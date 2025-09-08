@@ -1,8 +1,7 @@
 import re
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 
 
 def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
@@ -37,11 +36,10 @@ def update_bpmn_python_script(page, python_script, element_id="process_script"):
     page.get_by_test_id("process-model-file-save-button").click()
 
 
-def test_can_create_and_modify(browser_context: BrowserContext):
+def test_can_create_and_modify(page: Page):
     """
     Test that a user can create a new process instance, modify DMN and BPMN files, and restore originals.
     """
-    page = browser_context.new_page()
 
     # 1. Log in
     login(page, "admin", "admin")

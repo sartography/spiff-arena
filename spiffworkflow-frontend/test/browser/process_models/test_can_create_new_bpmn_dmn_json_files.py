@@ -1,17 +1,15 @@
 import uuid
 import re
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 
 
-def test_can_create_new_bpmn_dmn_json_files(browser_context: BrowserContext):
+def test_can_create_new_bpmn_dmn_json_files(page: Page):
     """
     Test that a user can create new BPMN, DMN, and JSON files in a process model via direct URLs,
     verifies they appear in the Files tab listing, and deletes the model.
     """
-    page = browser_context.new_page()
     # 1. Log in
     login(page, "admin", "admin")
 
