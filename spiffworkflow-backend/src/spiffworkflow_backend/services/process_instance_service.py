@@ -12,6 +12,7 @@ from typing import Any
 from urllib.parse import unquote
 from uuid import UUID
 
+import jsonschema
 import sentry_sdk
 from flask import current_app
 from flask import g
@@ -699,6 +700,58 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> None:
         AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), user)
+
+        # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
+        if (
+            current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", False)
+            and hasattr(spiff_task.task_spec, "__class__")
+            and spiff_task.task_spec.__class__.__name__ == "UserTask"
+            and hasattr(spiff_task.task_spec, "extensions")
+            and "properties" in spiff_task.task_spec.extensions
+            and "formJsonSchemaFilename" in spiff_task.task_spec.extensions["properties"]
+        ):
+            # The form_schema should already be associated with the task through the task_show endpoint
+            # and passed as part of the task model's form_schema property
+            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+            if task_model is not None:
+                form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
+
+                # Try to get the task's form schema
+                from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
+
+                process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+                form_schema = _prepare_form_data(
+                    form_file=form_schema_file_name,
+                    process_model=process_model,
+                    task_model=task_model,
+                    revision=process_instance.bpmn_version_control_identifier,
+                )
+
+                # Validate data against the JSON schema
+                try:
+                    jsonschema.validate(
+                        instance=data,
+                        schema=form_schema,
+                        format_checker=jsonschema.FormatChecker(),
+                    )
+                except jsonschema.exceptions.ValidationError as validation_error:
+                    # Provide a detailed error message
+                    error_message = f"Task data validation failed: {validation_error.message}"
+                    if validation_error.path:
+                        error_message += f" at path: {'.'.join(str(p) for p in validation_error.path)}"
+
+                    # Raise API error with validation details
+                    raise ApiError(
+                        error_code="task_data_validation_error", message=error_message, status_code=400
+                    ) from validation_error
+                except (jsonschema.exceptions.SchemaError, TypeError) as error:
+                    # Handle other errors without trying to access .message or .path
+                    error_message = f"Task data validation failed: {str(error)}"
+
+                    # Raise API error with validation details
+                    raise ApiError(error_code="task_data_validation_error", message=error_message, status_code=400) from error
+
+        # Process file data and merge form data
         cls.save_file_data_and_replace_with_digest_references(
             data,
             process_instance.id,
