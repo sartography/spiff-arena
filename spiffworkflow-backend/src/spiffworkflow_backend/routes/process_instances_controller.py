@@ -89,7 +89,7 @@ def process_instance_run(
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
     process_instance_api_dict = process_instance_api.to_dict()
-    process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model(process_instance)
+    process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model()
     return make_response(jsonify(process_instance_api_dict), 200)
 
 

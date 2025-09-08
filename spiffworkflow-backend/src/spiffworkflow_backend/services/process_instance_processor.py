@@ -51,6 +51,9 @@ from SpiffWorkflow.util.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import or_
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_update_notifier_if_appropriate,
+)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
@@ -1261,6 +1264,7 @@ class ProcessInstanceProcessor:
             for at in human_tasks:
                 at.completed = True
                 db.session.add(at)
+            queue_process_instance_update_notifier_if_appropriate(self.process_instance_model, "human_task_available")
         db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:

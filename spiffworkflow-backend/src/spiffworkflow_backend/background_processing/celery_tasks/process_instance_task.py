@@ -1,3 +1,5 @@
+from typing import Any
+
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
@@ -10,6 +12,7 @@ from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -17,15 +20,49 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
-ten_minutes = 60 * 10
+TEN_MINUTES = 60 * 10
 
 
 class SpiffCeleryWorkerError(Exception):
     pass
 
 
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+def celery_task_process_instance_update_notifier_run(
+    self: Any,
+    updated_process_instance_id: int,
+    process_model_identifier: str,
+    update_type: str,
+) -> dict:
+    celery_task_id = self.request.id
+    logger_prefix = f"celery_task_process_instance_update_notifier_run[{celery_task_id}]"
+    worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
+    current_app.logger.info(worker_intro_log_message)
+
+    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_UPDATE_PROCESS_MODEL"])
+    data = {
+        "update_type": update_type,
+        "updated_process_instance_id": updated_process_instance_id,
+        "process_model_identifier": process_model_identifier,
+    }
+    try:
+        ProcessInstanceService.create_and_run_process_instance(
+            process_model=process_model,
+            persistence_level="none",
+            data_to_inject=data,
+        )
+    except Exception as exception:
+        error_message = (
+            f"{logger_prefix}: Error notifying about updating process_instance {updated_process_instance_id}. {str(exception)}"
+        )
+        current_app.logger.error(error_message)
+        raise SpiffCeleryWorkerError(error_message) from exception
+
+    return {**{"ok": True}, **data}
+
+
 # ignore types so we can use self and get the celery task id from self.request.id.
-@shared_task(ignore_result=False, time_limit=ten_minutes, bind=True)
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
 def celery_task_process_instance_run(self, process_instance_id: int, task_guid: str | None = None) -> dict:  # type: ignore
     proc_index = current_process().index
 

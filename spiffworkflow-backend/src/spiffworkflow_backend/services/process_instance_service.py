@@ -777,7 +777,7 @@ class ProcessInstanceService:
         processor.complete_task(spiff_task, human_task, user=user)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
-        if should_queue_process_instance(processor.process_instance_model, execution_mode):
+        if should_queue_process_instance(execution_mode):
             processor.bpmn_process_instance.refresh_waiting_tasks()
             tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
             JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
