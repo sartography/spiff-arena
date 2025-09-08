@@ -5,7 +5,6 @@ to the API definitions. The tests will fail with 500 errors until the backend is
 restarted with the new API definitions.
 """
 
-import os
 from unittest.mock import patch
 
 from flask.app import Flask
@@ -184,23 +183,9 @@ class TestProcessModelImportController(BaseTest):
         assert ProcessModelImportService.is_model_alias("example with spaces") is False
         assert ProcessModelImportService.is_model_alias("example/with/slashes") is False
 
-    def test_get_marketplace_url(self) -> None:
-        """Test the get_marketplace_url method."""
-        # Save the original environment variable value
-        original_url = os.environ.get("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL")
-
-        try:
-            # Set a custom URL
-            os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"] = "https://custom-marketplace.example.com"
+    def test_get_marketplace_url(self, app: Flask) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", "https://custom-marketplace.example.com"):
             assert ProcessModelImportService.get_marketplace_url() == "https://custom-marketplace.example.com"
 
-            # Remove the environment variable to test the default value
-            if "SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL" in os.environ:
-                del os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"]
-            assert ProcessModelImportService.get_marketplace_url() == "http://127.0.0.1:8000"
-        finally:
-            # Restore the original value
-            if original_url is not None:
-                os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"] = original_url
-            elif "SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL" in os.environ:
-                del os.environ["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"]
+        # default
+        assert ProcessModelImportService.get_marketplace_url() == "https://model-marketplace.spiff.works"

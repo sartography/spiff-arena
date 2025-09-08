@@ -1,5 +1,4 @@
 import json
-import os
 import re
 import time
 from dataclasses import dataclass
@@ -270,7 +269,7 @@ class ProcessModelImportService:
     @classmethod
     def get_marketplace_url(cls) -> str:
         """Get the configured marketplace URL."""
-        return os.environ.get("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", "http://127.0.0.1:8000")
+        return str(current_app.config["SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL"])
 
     @classmethod
     def import_from_model_alias(cls, alias: str, process_group_id: str) -> ProcessModelInfo:
