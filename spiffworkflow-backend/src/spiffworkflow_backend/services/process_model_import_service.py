@@ -48,23 +48,8 @@ class ModelMarketplaceError(ImportError):
 
 
 class ProcessModelImportService:
-    """Service for importing process models from external sources."""
-
     @classmethod
     def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
-        """Import a process model from a GitHub URL.
-
-        Args:
-            url: The GitHub URL to import from
-            process_group_id: The ID of the process group to import into
-
-        Returns:
-            ProcessModelInfo: The imported process model
-
-        Raises:
-            GitHubRepositoryNotFoundError: If the GitHub repository was not found
-            InvalidProcessModelError: If the repository does not contain a valid process model
-        """
         process_group = ProcessModelService.get_process_group(process_group_id)
 
         repo_info = cls._parse_github_url(url)
@@ -159,20 +144,17 @@ class ProcessModelImportService:
 
     @classmethod
     def _extract_process_model_info(cls, files: dict[str, bytes]) -> dict[str, Any]:
-        """Extract process model information from the files."""
         model_info = {}
 
         if "process_model.json" in files:
             model_info = json.loads(files["process_model.json"].decode("utf-8"))
 
-        # Look for BPMN files to determine primary file if not in JSON
         if "primary_file_name" not in model_info:
             for file_name in files.keys():
                 if file_name.endswith(".bpmn"):
                     model_info["primary_file_name"] = file_name
                     break
 
-        # Extract process ID from BPMN if available
         if "primary_file_name" in model_info and "primary_process_id" not in model_info:
             primary_file_name = model_info["primary_file_name"]
             if primary_file_name in files:
@@ -203,13 +185,7 @@ class ProcessModelImportService:
 
     @classmethod
     def _make_bpmn_process_ids_unique(cls, bpmn_content: bytes, timestamp: int) -> bytes:
-        """Make all process IDs in BPMN content unique by appending a timestamp.
-        Args:
-            bpmn_content: The original BPMN file content
-            timestamp: A timestamp to append to process IDs
-        Returns:
-            bytes: The modified BPMN content with unique process IDs
-        """
+        """Make all process IDs in BPMN content unique by appending a timestamp."""
         try:
             etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
             root = etree.fromstring(bpmn_content, parser=etree_xml_parser)  # noqa: S320
@@ -223,7 +199,6 @@ class ProcessModelImportService:
                         new_id = f"{old_id}_{timestamp}"
                         process_element.set("id", new_id)
 
-            # Return the modified XML
             return cast(bytes, etree.tostring(root, encoding="utf-8"))
 
         except etree.ParseError:
@@ -231,7 +206,6 @@ class ProcessModelImportService:
 
     @classmethod
     def _generate_id_from_url(cls, url: str) -> str:
-        """Generate a process model ID from the GitHub URL."""
         # Example URL: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example
         path_parts = url.strip("/").split("/")
         if path_parts:
@@ -256,7 +230,6 @@ class ProcessModelImportService:
 
         A model alias is a simple string without URL-specific characters.
         """
-        # If it has URL-like characters, it's not an alias
         if text.startswith(("http://", "https://")):
             return False
 
@@ -269,31 +242,15 @@ class ProcessModelImportService:
 
     @classmethod
     def get_marketplace_url(cls) -> str:
-        """Get the configured marketplace URL."""
         return os.environ.get("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", "http://127.0.0.1:8000")
 
     @classmethod
     def import_from_model_alias(cls, alias: str, process_group_id: str) -> ProcessModelInfo:
-        """Import a process model from a marketplace model alias.
-
-        Args:
-            alias: The model alias to import
-            process_group_id: The ID of the process group to import into
-
-        Returns:
-            ProcessModelInfo: The imported process model
-
-        Raises:
-            ModelAliasNotFoundError: If the model with the specified alias was not found
-            ModelMarketplaceError: If there are issues communicating with the marketplace
-        """
         process_group = ProcessModelService.get_process_group(process_group_id)
 
-        # Fetch model data from marketplace
         files = cls._fetch_files_from_marketplace(alias)
         model_info = cls._extract_process_model_info(files)
 
-        # Use the alias as model_id if not provided in model_info
         model_id = model_info.get("id") or alias
         full_process_model_id = f"{process_group.id}/{model_id}"
 
@@ -328,18 +285,6 @@ class ProcessModelImportService:
 
     @classmethod
     def _fetch_files_from_marketplace(cls, alias: str) -> dict[str, bytes]:
-        """Fetch process model files from the model marketplace.
-
-        Args:
-            alias: The model alias to fetch
-
-        Returns:
-            dict[str, bytes]: A dictionary mapping file names to file contents
-
-        Raises:
-            ModelAliasNotFoundError: If the model with the specified alias was not found
-            ModelMarketplaceError: If there are issues communicating with the marketplace
-        """
         marketplace_url = cls.get_marketplace_url()
         api_url = f"{marketplace_url}/api/models/{alias}?include_files=true"
 
