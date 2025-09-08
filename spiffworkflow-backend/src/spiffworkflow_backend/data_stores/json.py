@@ -1,6 +1,6 @@
 from typing import Any
 
-import jsonschema  # type: ignore
+import jsonschema
 from SpiffWorkflow.bpmn.serializer.helpers import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore

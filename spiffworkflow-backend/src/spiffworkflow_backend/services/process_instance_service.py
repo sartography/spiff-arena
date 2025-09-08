@@ -716,35 +716,31 @@ class ProcessInstanceService:
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
                 # Try to get the task's form schema
+                from spiffworkflow_backend.exceptions.api_error import ApiError
                 from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
                 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
+                process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+                form_schema = _prepare_form_data(
+                    form_file=form_schema_file_name,
+                    process_model=process_model,
+                    task_model=task_model,
+                    revision=process_instance.bpmn_version_control_identifier,
+                )
+
+                # Validate data against the JSON schema
                 try:
-                    process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
-                    form_schema = _prepare_form_data(
-                        form_file=form_schema_file_name,
-                        process_model=process_model,
-                        task_model=task_model,
-                        revision=process_instance.bpmn_version_control_identifier,
-                    )
+                    jsonschema.validate(instance=data, schema=form_schema)
+                except jsonschema.exceptions.ValidationError as validation_error:
+                    # Provide a detailed error message
+                    error_message = f"Task data validation failed: {validation_error.message}"
+                    if validation_error.path:
+                        error_message += f" at path: {'.'.join(str(p) for p in validation_error.path)}"
 
-                    try:
-                        # Validate data against the JSON schema
-                        jsonschema.validate(instance=data, schema=form_schema)
-                    except jsonschema.exceptions.ValidationError as validation_error:
-                        # Provide a detailed error message
-                        error_message = f"Task data validation failed: {validation_error.message}"
-                        if validation_error.path:
-                            error_message += f" at path: {'.'.join(str(p) for p in validation_error.path)}"
-
-                        # Raise API error with validation details
-                        from spiffworkflow_backend.exceptions.api_error import ApiError
-
-                        raise ApiError(error_code="task_data_validation_error", message=error_message, status_code=400)
-                except Exception as ex:
-                    # Log schema validation failure but don't prevent task completion
-                    # This is to handle cases where schema might not be available
-                    current_app.logger.warning(f"Failed to validate task data against schema for task {spiff_task.id}: {str(ex)}")
+                    # Raise API error with validation details
+                    raise ApiError(
+                        error_code="task_data_validation_error", message=error_message, status_code=400
+                    ) from validation_error
 
         # Process file data and merge form data
         cls.save_file_data_and_replace_with_digest_references(

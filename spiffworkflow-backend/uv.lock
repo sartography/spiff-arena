@@ -2384,6 +2384,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "sqlalchemy-stubs" },
     { name = "starlette" },
+    { name = "types-jsonschema" },
     { name = "typing-extensions" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "uvicorn-worker" },
@@ -2409,6 +2410,7 @@ dev = [
     { name = "types-authlib" },
     { name = "types-dateparser" },
     { name = "types-flask" },
+    { name = "types-jsonschema" },
     { name = "types-pytz" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
@@ -2453,6 +2455,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.31" },
     { name = "sqlalchemy-stubs", git = "https://github.com/burnettk/sqlalchemy-stubs.git?branch=scoped-session-delete" },
     { name = "starlette", specifier = ">=0.47.2" },
+    { name = "types-jsonschema", specifier = ">=4.25.1.20250822" },
     { name = "typing-extensions", specifier = ">=4.12.2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.1" },
     { name = "uvicorn-worker", specifier = ">=0.3.0" },
@@ -2478,6 +2481,7 @@ dev = [
     { name = "types-authlib", specifier = ">=1.5.0.20250608" },
     { name = "types-dateparser", specifier = ">=1.2.0.20250208" },
     { name = "types-flask", specifier = ">=1.1.6" },
+    { name = "types-jsonschema", specifier = ">=4.25.1.20250822" },
     { name = "types-pytz", specifier = ">=2024.2.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
     { name = "types-requests", specifier = ">=2.32.0" },
@@ -2735,6 +2739,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/46/c4/b82309bfed8195de7997672deac301bd6f5bd5cbb6a3e392b7fe780d7852/types-Jinja2-2.11.9.tar.gz", hash = "sha256:dbdc74a40aba7aed520b7e4d89e8f0fe4286518494208b35123bcf084d4b8c81", size = 13302, upload-time = "2021-11-26T06:21:17.496Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/b0/e79d84748f1d34304f13191424348a719c3febaa3493835370fe9528e1e6/types_Jinja2-2.11.9-py3-none-any.whl", hash = "sha256:60a1e21e8296979db32f9374d8a239af4cb541ff66447bb915d8ad398f9c63b2", size = 18190, upload-time = "2021-11-26T06:21:16.18Z" },
+]
+
+[[package]]
+name = "types-jsonschema"
+version = "4.25.1.20250822"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "referencing" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/7f/369b54dad6eb6b5adc1fb1c53edbed18e6c32cbc600357135308902fdbdc/types_jsonschema-4.25.1.20250822.tar.gz", hash = "sha256:aac69ed4b23f49aaceb7fcb834141d61b9e4e6a7f6008cb2f0d3b831dfa8464a", size = 15628, upload-time = "2025-08-22T03:04:18.293Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/3d/bc1d171f032fcf63cedd4ade241f3f4e66d7e3bb53ee1da3c8f2f043eb0b/types_jsonschema-4.25.1.20250822-py3-none-any.whl", hash = "sha256:f82c2d7fa1ce1c0b84ba1de4ed6798469768188884db04e66421913a4e181294", size = 15923, upload-time = "2025-08-22T03:04:17.346Z" },
 ]
 
 [[package]]
