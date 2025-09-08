@@ -1197,6 +1197,7 @@ class ProcessInstanceProcessor:
                     "metadata": metadata,
                 }
                 LoggingService.log_event(ProcessInstanceEventType.process_instance_completed.value, log_extras)
+                queue_process_instance_event_notifier_if_appropriate(self.process_instance_model, "process_instance_complete")
 
         db.session.add(self.process_instance_model)
 
