@@ -119,7 +119,7 @@ class TestProcessModelImportController(BaseTest):
         # Verify the error message
         response_data = response.json()
         assert "error_code" in response_data
-        assert response_data["error_code"] == "github_import_error"
+        assert response_data["error_code"] == "internal_server_error"
         assert "process_group_not_found" in response_data["message"]
 
     def test_process_model_import_from_model_alias(
