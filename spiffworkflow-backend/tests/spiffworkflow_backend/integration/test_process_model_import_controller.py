@@ -5,7 +5,6 @@ to the API definitions. The tests will fail with 500 errors until the backend is
 restarted with the new API definitions.
 """
 
-import json
 from unittest.mock import patch
 
 from flask.app import Flask
@@ -55,7 +54,7 @@ class TestProcessModelImportController(BaseTest):
             assert response.status_code == 201
 
             # Verify the response data
-            response_data = json.loads(response.content)
+            response_data = response.json()
             assert "process_model" in response_data
             assert response_data["process_model"]["id"] == f"{process_group_id}/imported_model"
             assert response_data["process_model"]["display_name"] == "Imported Model"
@@ -92,7 +91,7 @@ class TestProcessModelImportController(BaseTest):
         assert response.status_code == 400
 
         # Verify the error message
-        response_data = json.loads(response.content)
+        response_data = response.json()
         assert response_data["title"] == "Bad Request"
         assert "'repository_url' is a required property" in response_data["detail"]
 
@@ -117,7 +116,7 @@ class TestProcessModelImportController(BaseTest):
         assert response.status_code == 500
 
         # Verify the error message
-        response_data = json.loads(response.content)
+        response_data = response.json()
         assert "error_code" in response_data
         assert response_data["error_code"] == "internal_server_error"
         assert "process_group_not_found" in response_data["message"]

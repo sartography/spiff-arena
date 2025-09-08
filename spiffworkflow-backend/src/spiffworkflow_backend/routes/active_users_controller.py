@@ -1,4 +1,3 @@
-import json
 import time
 
 import flask.wrappers
@@ -56,4 +55,4 @@ def active_user_unregister(last_visited_identifier: str) -> flask.wrappers.Respo
         db.session.delete(active_user)
         db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
