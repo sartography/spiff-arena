@@ -1,7 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
-import json
-
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -25,7 +23,7 @@ def secret_show_value(key: str) -> Response:
     secret_as_dict = secret.to_dict()
     secret_as_dict["value"] = SecretService._decrypt(secret.value)
 
-    return make_response(secret_as_dict, 200)
+    return make_response(jsonify(secret_as_dict), 200)
 
 
 def secret_list(
@@ -60,11 +58,7 @@ def secret_list(
 def secret_create(body: dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
-    return Response(
-        json.dumps(secret_model.to_dict()),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(secret_model.to_dict()), 201)
 
 
 def secret_update(key: str, body: dict) -> Response:

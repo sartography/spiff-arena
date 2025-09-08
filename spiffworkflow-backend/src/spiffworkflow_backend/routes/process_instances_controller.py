@@ -75,11 +75,7 @@ def process_instance_create(
     }
     LoggingService.log_event(ProcessInstanceEventType.process_instance_created.value, log_extras)
 
-    return Response(
-        json.dumps(process_instance.serialized()),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_instance.serialized()), 201)
 
 
 def process_instance_run(
@@ -317,7 +313,7 @@ def process_instance_report_update(
     process_instance_report.report_metadata = body["report_metadata"]
     db.session.commit()
 
-    return make_response(jsonify(process_instance_report), 201)
+    return make_response(jsonify(process_instance_report), 200)
 
 
 def process_instance_report_delete(
@@ -575,11 +571,7 @@ def process_instance_check_can_migrate(
     except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
         return_dict["can_migrate"] = False
         return_dict["exception_class"] = exception.__class__.__name__
-    return Response(
-        json.dumps(return_dict),
-        status=200,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(return_dict), 200)
 
 
 def process_instance_migrate(

@@ -18,13 +18,11 @@ from flask import Blueprint
 from flask import current_app
 from flask import jsonify
 from flask import make_response
+from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
 from flask.wrappers import Response
-
-# Properly typed redirect function that returns flask.wrappers.Response
-from werkzeug.utils import redirect
 
 from spiffworkflow_backend.config.openid.rsa_keys import OpenIdConfigsForDevOnly
 
@@ -104,7 +102,7 @@ def form_submit() -> Any:
 
 
 @openid_blueprint.route("/token", methods=["POST"])
-def token() -> Response | dict[str, str]:
+def token() -> Response:
     """Url that will return a valid token, given the super secret sauce."""
     code = request.values.get("code")
 
@@ -156,7 +154,6 @@ def end_session() -> Response:
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
     request.args.get("id_token_hint")
     response = redirect(redirect_url)
-    # Convert werkzeug response to flask response
     return make_response(response.get_data(), response.status_code, response.headers)
 
 
