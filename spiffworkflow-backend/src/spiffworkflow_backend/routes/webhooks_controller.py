@@ -1,6 +1,6 @@
-import json
-
 from flask import current_app
+from flask import jsonify
+from flask import make_response
 from flask import request
 from flask.wrappers import Response
 
@@ -24,7 +24,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 def github_webhook_receive(body: dict) -> Response:
     _enforce_github_auth()
     result = GitService.handle_web_hook(body)
-    return Response(json.dumps({"git_pull": result}), status=200, mimetype="application/json")
+    return make_response(jsonify({"git_pull": result}), 200)
 
 
 def webhook(body: dict) -> Response:
@@ -51,7 +51,7 @@ def webhook(body: dict) -> Response:
     # ensure we commit the message instances
     db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def _enforce_github_auth() -> None:
