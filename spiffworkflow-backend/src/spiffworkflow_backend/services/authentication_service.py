@@ -92,28 +92,6 @@ class AuthenticationService:
     JSON_WEB_KEYSET_CACHE: dict[str, JWKSConfigs] = {}
 
     @classmethod
-    def get_current_user_from_request(cls) -> UserModel | None:
-        """Gets the current user from the request using token information.
-
-        Returns:
-            UserModel | None: The current user or None if no user could be found or token is invalid.
-        """
-        # Import functions here to avoid circular import
-        from spiffworkflow_backend.routes.authentication_controller import _find_token_from_request
-        from spiffworkflow_backend.routes.authentication_controller import _get_decoded_token
-        from spiffworkflow_backend.routes.authentication_controller import _get_user_model_from_token
-
-        try:
-            token_info = _find_token_from_request(None)
-            if token_info["token"] is not None:
-                decoded_token = _get_decoded_token(token_info["token"])
-                user = _get_user_model_from_token(decoded_token)
-                return user
-        except Exception as e:
-            current_app.logger.warning(f"Error getting current user from request: {str(e)}")
-        return None
-
-    @classmethod
     def authentication_options_for_api(cls) -> list[AuthenticationOptionForApi]:
         # ensure we remove sensitive info such as client secret from the config before sending it back
         configs: list[AuthenticationOptionForApi] = []
