@@ -1,13 +1,9 @@
-from unittest.mock import MagicMock
-from unittest.mock import patch
-
 from flask.app import Flask
 from starlette.testclient import TestClient
 
-from spiffworkflow_backend.models.file import FileType
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelMilestones(BaseTest):
@@ -18,83 +14,33 @@ class TestProcessModelMilestones(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        process_model_id = "test_group/test_model"
-        process_model = ProcessModelInfo(
-            id=process_model_id,
-            display_name="Test Model",
-            description="A test model",
+        process_model = load_test_spec(
+            "test_group/test-last-milestone",
+            process_model_source_directory="test-last-milestone",
         )
 
-        bpmn_content = b"""<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
-  <bpmn:process id="Process_1">
-    <bpmn:startEvent id="StartEvent_1" name="Start">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:task id="Task_1" name="Task 1">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="IntermediateThrowEvent_1" />
-    <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_1" name="Ready for approvals">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-      <bpmn:outgoing>Flow_3</bpmn:outgoing>
-    </bpmn:intermediateThrowEvent>
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="IntermediateThrowEvent_1" targetRef="Task_2" />
-    <bpmn:task id="Task_2" name="Task 2">
-      <bpmn:incoming>Flow_3</bpmn:incoming>
-      <bpmn:outgoing>Flow_4</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_2" targetRef="EndEvent_1" />
-    <bpmn:endEvent id="EndEvent_1" name="End">
-      <bpmn:incoming>Flow_4</bpmn:incoming>
-    </bpmn:endEvent>
-  </bpmn:process>
-</bpmn:definitions>"""
+        headers = self.logged_in_headers(with_super_admin_user)
+        modified_process_model_id = process_model.modified_process_model_identifier()
+        response = client.get(f"/v1.0/process-models/{modified_process_model_id}/milestones", headers=headers)
 
-        with (
-            patch("spiffworkflow_backend.routes.process_models_controller._get_process_model") as mock_get_process_model,
-            patch(
-                "spiffworkflow_backend.services.process_model_service.ProcessModelService.get_process_model_files"
-            ) as mock_get_files,
-            patch("spiffworkflow_backend.services.spec_file_service.SpecFileService.get_data") as mock_get_data,
-            patch("spiffworkflow_backend.services.workflow_spec_service.WorkflowSpecService.get_spec") as mock_get_spec,
-        ):
-            mock_get_process_model.return_value = process_model
+        assert response.status_code == 200
+        data = response.json()
+        assert "milestones" in data
+        milestones = data["milestones"]
+        assert len(milestones) == 3
 
-            mock_file = MagicMock()
-            mock_file.type = FileType.bpmn.value
-            mock_file.name = "test.bpmn"
-            mock_get_files.return_value = [mock_file]
+        start_milestone = milestones[0]
+        assert start_milestone is not None
+        assert start_milestone["name"] == "Start"
+        assert start_milestone["file"] == "test_last_milestone_call_activity.bpmn"
+        assert start_milestone["task_type"] == "StartEvent"
 
-            mock_get_data.return_value = bpmn_content
-            mock_get_spec.return_value = None
+        intermediate_milestone = milestones[1]
+        assert intermediate_milestone is not None
+        assert intermediate_milestone["name"] == "In Call Activity"
+        assert intermediate_milestone["task_type"] == "IntermediateThrowEvent"
 
-            headers = self.logged_in_headers(with_super_admin_user)
-            modified_process_model_id = process_model_id.replace("/", ":")
-            response = client.get(f"/v1.0/process-models/{modified_process_model_id}/milestones", headers=headers)
-
-            assert response.status_code == 200
-            data = response.json()
-            assert "milestones" in data
-            milestones = data["milestones"]
-            assert len(milestones) == 3
-            milestone_names = [m["name"] for m in milestones]
-            assert milestone_names == ["Start", "Ready for approvals", "End"]
-
-            start_milestone = next((m for m in milestones if m["bpmn_identifier"] == "StartEvent_1"), None)
-            assert start_milestone is not None
-            assert start_milestone["name"] == "Start"
-            assert start_milestone["file"] == "test.bpmn"
-            assert start_milestone["task_type"] == "StartEvent"
-
-            intermediate_milestone = next((m for m in milestones if m["bpmn_identifier"] == "IntermediateThrowEvent_1"), None)
-            assert intermediate_milestone is not None
-            assert intermediate_milestone["name"] == "Ready for approvals"
-            assert intermediate_milestone["task_type"] == "IntermediateThrowEvent"
-
-            end_milestone = next((m for m in milestones if m["bpmn_identifier"] == "EndEvent_1"), None)
-            assert end_milestone is not None
-            assert end_milestone["name"] == "End"
-            assert end_milestone["task_type"] == "EndEvent"
+        end_milestone = milestones[2]
+        assert end_milestone is not None
+        assert end_milestone["name"] == "Done with call activity"
+        assert end_milestone["task_type"] == "EndEvent"
