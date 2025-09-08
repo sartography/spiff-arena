@@ -1,4 +1,4 @@
-from flask.app import Flask
+from flask import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.user import UserModel
@@ -33,24 +33,29 @@ class TestJsonSchemaValidation(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             process_instance_id = response.json()["id"]
-            client.post(
+            run_response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
+            assert run_response.status_code == 200
 
             # Get task
             response = client.get(
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            task = response.json()["results"][0]
+            assert response.status_code == 200
+            tasks_json = response.json()
+            assert tasks_json.get("results"), tasks_json
+            tasks = tasks_json["results"]
+            task = next((t for t in tasks if t.get("process_instance_id") == process_instance_id), tasks[0])
             task_id = task["id"]
 
             # Submit valid data
             valid_data = {"name": "Test User", "department": "IT"}
             response = client.put(
                 f"/v1.0/tasks/{process_instance_id}/{task_id}",
-                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                headers=self.logged_in_headers(with_super_admin_user),
                 json=valid_data,
             )
             assert response.status_code == 200
@@ -80,29 +85,35 @@ class TestJsonSchemaValidation(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             process_instance_id = response.json()["id"]
-            client.post(
+            run_response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
+            assert run_response.status_code == 200
 
             # Get task
             response = client.get(
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            task = response.json()["results"][0]
+            assert response.status_code == 200
+            tasks_json = response.json()
+            assert tasks_json.get("results"), tasks_json
+            tasks = tasks_json["results"]
+            task = next((t for t in tasks if t.get("process_instance_id") == process_instance_id), tasks[0])
             task_id = task["id"]
 
             # Submit invalid data - missing required name field
             invalid_data = {"department": "IT"}
             response = client.put(
                 f"/v1.0/tasks/{process_instance_id}/{task_id}",
-                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                headers=self.logged_in_headers(with_super_admin_user),
                 json=invalid_data,
             )
             assert response.status_code == 400
             assert "task_data_validation_error" in response.json()["error_code"]
             assert "required" in response.json()["message"].lower()
+            assert "name" in response.json()["message"].lower()
 
     def test_json_schema_validation_disabled(
         self,
@@ -129,24 +140,29 @@ class TestJsonSchemaValidation(BaseTest):
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             process_instance_id = response.json()["id"]
-            client.post(
+            run_response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
+            assert run_response.status_code == 200
 
             # Get task
             response = client.get(
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            task = response.json()["results"][0]
+            assert response.status_code == 200
+            tasks_json = response.json()
+            assert tasks_json.get("results"), tasks_json
+            tasks = tasks_json["results"]
+            task = next((t for t in tasks if t.get("process_instance_id") == process_instance_id), tasks[0])
             task_id = task["id"]
 
             # Submit invalid data - missing required field should still work
             invalid_data = {"department": "IT"}
             response = client.put(
                 f"/v1.0/tasks/{process_instance_id}/{task_id}",
-                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                headers=self.logged_in_headers(with_super_admin_user),
                 json=invalid_data,
             )
             assert response.status_code == 200

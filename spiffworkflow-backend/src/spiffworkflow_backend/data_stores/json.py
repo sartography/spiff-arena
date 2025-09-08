@@ -81,12 +81,17 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
 
         data = my_task.data[self.bpmn_id]
 
-        try:
-            jsonschema.validate(instance=data, schema=model.schema)
-        except jsonschema.exceptions.ValidationError as e:
-            raise DataStoreWriteError(
-                f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
-            ) from e
+        if model.schema:
+            try:
+                jsonschema.validate(
+                    instance=data,
+                    schema=model.schema,
+                    format_checker=jsonschema.FormatChecker(),
+                )
+            except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError, TypeError) as e:
+                raise DataStoreWriteError(
+                    f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
+                ) from e
 
         model.data = data
 

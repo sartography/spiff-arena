@@ -65,7 +65,6 @@ dependencies = [
     "authlib>=1.6.0",
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
-    "types-jsonschema>=4.25.1.20250822",
 ]
 
 [dependency-groups]
