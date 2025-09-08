@@ -162,7 +162,7 @@ class TestProcessModelImportController(BaseTest):
             assert response.status_code == 201
 
             # Verify the response data
-            response_data = json.loads(response.content)
+            response_data = response.json()
             assert "process_model" in response_data
             assert response_data["process_model"]["id"] == f"{process_group_id}/timer_events"
             assert response_data["process_model"]["display_name"] == "Timer Events"
