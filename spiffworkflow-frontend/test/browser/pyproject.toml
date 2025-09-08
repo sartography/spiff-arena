@@ -9,8 +9,6 @@ dependencies = [
 
 [tool.pytest.ini_options]
 # Specify the test paths relative to this pyproject.toml
-testpaths = [
-    "tests/browser",
-]
+testpaths = ["."]
 # You can add other pytest options here, for example:
 # addopts = "--headed --browser=chromium"
