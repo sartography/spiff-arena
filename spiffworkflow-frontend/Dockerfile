@@ -23,7 +23,6 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 
 
 ######################## - SETUP
-
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
@@ -43,6 +42,9 @@ RUN ./bin/build
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
 FROM nginx:1.29.1-alpine-slim
+
+# we sort of love bash too much to use sh
+RUN apk add --no-cache bash
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
