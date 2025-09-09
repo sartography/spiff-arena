@@ -41,15 +41,19 @@ def celery_task_process_instance_event_notifier_run(
 
     process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL"])
     data = {
-        "event_type": event_type,
-        "updated_process_instance_id": updated_process_instance_id,
-        "process_model_identifier": process_model_identifier,
+        "post_body": {
+            "event_type": event_type,
+            "data": {
+                "process_instance_id": updated_process_instance_id,
+                "process_model_identifier": process_model_identifier,
+            },
+        }
     }
     try:
         ProcessInstanceService.create_and_run_process_instance(
             process_model=process_model,
-            persistence_level="none",
             data_to_inject=data,
+            persistence_level="none",
         )
     except Exception as exception:
         error_message = (
