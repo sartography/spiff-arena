@@ -576,7 +576,7 @@ def _task_submit_shared(
 
     if processor.next_task():
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-        task.process_model_uses_queued_execution = queue_enabled_for_process_model(process_instance)
+        task.process_model_uses_queued_execution = queue_enabled_for_process_model()
         return {"next_task": task}
 
     # next_task always returns something, even if the instance is complete, so we never get here

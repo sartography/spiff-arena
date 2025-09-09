@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:22.3.0-bookworm-slim AS base
+FROM node:24.7.0-trixie-slim AS base
 
 RUN mkdir /app
 
@@ -19,7 +19,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # this matches total memory on spiffworkflow-demo
-ENV NODE_OPTIONS=--max_old_space_size=2048
+ENV NODE_OPTIONS=--max_old_space_size=4096
 
 
 ######################## - SETUP
@@ -41,15 +41,8 @@ RUN ./bin/build
 ######################## - FINAL
 
 # Use nginx as the base image
-FROM nginx:1.27.5-bookworm
-
-RUN apt-get update \
-  && apt-get clean -y \
-  && apt-get install -y -q \
-  libkrb5support0 \
-  libexpat1 \
-  libaom3 \
-  && rm -rf /var/lib/apt/lists/*
+# FROM nginx:1.29.1-bookworm
+FROM nginx:1.29.1-alpine-slim
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*

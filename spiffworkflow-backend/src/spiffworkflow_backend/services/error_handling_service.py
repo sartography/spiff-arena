@@ -11,8 +11,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 class ErrorHandlingService:
-    MESSAGE_NAME = "SystemErrorMessage"
-
     @classmethod
     def handle_error(cls, process_instance: ProcessInstanceModel, error: Exception) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
@@ -89,7 +87,7 @@ class ErrorHandlingService:
 
         message_instance = MessageInstanceModel(
             message_type="send",
-            name=ErrorHandlingService.MESSAGE_NAME,
+            name=str(current_app.config.get("SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_MESSAGE_NAME")),
             payload=message_payload,
             user_id=user_id,
         )
