@@ -41,7 +41,7 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29.1-alpine-slim
+FROM nginx:1.29.1-alpine-perl
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
