@@ -1,6 +1,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import _strptime  # type: ignore
+import calendar
 import copy
 import decimal
 import json
@@ -326,6 +327,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals = {
             "_strptime": _strptime,
             "all": all,
+            "calendar": calendar,
             "dateparser": dateparser,
             "datetime": datetime,
             "decimal": decimal,
