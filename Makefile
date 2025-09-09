@@ -18,16 +18,21 @@ FRONTEND_DEV_OVERLAY ?= spiffworkflow-frontend/dev.docker-compose.yml
 CONNECTOR_PROXY_CONTAINER ?= spiffworkflow-connector
 CONNECTOR_PROXY_DEV_OVERLAY ?= connector-proxy-demo/dev.docker-compose.yml
 
+ASYNC_HTTP_CONNECTOR_PROXY_CONTAINER ?= async-http-connector-proxy
+ASYNC_HTTP_CONNECTOR_PROXY_DEV_OVERLAY ?= async-http-connector-proxy/dev.docker-compose.yml
+
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
 	-f $(FRONTEND_DEV_OVERLAY) \
 	-f $(CONNECTOR_PROXY_DEV_OVERLAY) \
+	-f $(ASYNC_HTTP_CONNECTOR_PROXY_DEV_OVERLAY) \
 	-f $(ARENA_DEV_OVERLAY)
 
 DOCKER_COMPOSE ?= RUN_AS=$(ME) docker compose $(YML_FILES)
 IN_ARENA ?= $(DOCKER_COMPOSE) run --rm $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run --rm $(BACKEND_CONTAINER)
 IN_CONNECTOR_PROXY ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_CONTAINER)
+IN_ASYNC_HTTP_CONNECTOR_PROXY ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run --rm $(FRONTEND_CONTAINER)
 
 SPIFFWORKFLOW_BACKEND_ENV ?= local_development
@@ -56,6 +61,12 @@ start-dev: stop-dev
 
 stop-dev:
 	$(DOCKER_COMPOSE) down
+
+ahcp-sh:
+	$(IN_ASYNC_HTTP_CONNECTOR_PROXY) /bin/bash
+
+ahcp-logs:
+	docker logs -f $(ASYNC_HTTP_CONNECTOR_PROXY_CONTAINER)
 
 be-clear-log-file:
 	$(IN_BACKEND) rm -f log/unit_testing.log
@@ -159,10 +170,11 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
+	ahcp-logs ahcp-sh \
 	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	co-wheel \
-	cp-logs cp-poetry-i cp-poetry-lock \
+	cp-logs cp-poetry-i cp-poetry-lock cp-sh \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	uv-sync venv-rm pre-commit ruff run-pyl \
 	take-ownership

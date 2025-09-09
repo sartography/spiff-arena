@@ -1,7 +1,7 @@
 services:
-  acp:
+  async-http-connector-proxy:
     build:
-      context: .
+      context: async-http-connector-proxy
       dockerfile: dev.Dockerfile
     user: "${RUN_AS}"
     environment:

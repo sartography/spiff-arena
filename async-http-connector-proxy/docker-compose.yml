@@ -1,11 +1,11 @@
 services:
-  acp:
+  async-http-connector-proxy:
     build:
-      context: .
+      context: async-http-connector-proxy
       dockerfile: Dockerfile
     environment:
       HOST: "0.0.0.0"
-      PORT: "${ACP_PORT:-8200}"
+      PORT: "${ASYNC_HTTP_CONNECTOR_PROXY_PORT:-8200}"
       XDG_CACHE_HOME: "/app/.cache"
     ports:
-      - "${ACP_PORT:-8200}:${ACP_PORT:-8200}/tcp"
+      - "${ASYNC_HTTP_CONNECTOR_PROXY_PORT:-8200}:${ASYNC_HTTP_CONNECTOR_PROXY_PORT:-8200}/tcp"
