@@ -3,7 +3,7 @@ import time
 from flask import Flask
 from pytest_mock.plugin import MockerFixture
 
-from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_EVENT_NOTIFIER
+from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
@@ -141,16 +141,14 @@ class TestBackgroundProcessingService(BaseTest):
             assert len(future_tasks) == 1
             assert future_tasks[0].archived_for_process_instance_status is False
 
-    def test_queues_process_instance_event_notifier_when_new_human_task(
+    def test_queues_event_notifier_when_new_human_task(
         self,
         app: Flask,
         mocker: MockerFixture,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-            with self.app_config_mock(
-                app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL", "SOME PROCESS MODEL"
-            ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL", "SOME PROCESS MODEL"):
                 mock = mocker.patch("celery.current_app.send_task")
                 process_model = load_test_spec(
                     process_model_id="group/multiinstance_manual_task",
@@ -160,21 +158,19 @@ class TestBackgroundProcessingService(BaseTest):
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.do_engine_steps(save=True)
                 mock.assert_called_with(
-                    CELERY_TASK_PROCESS_INSTANCE_EVENT_NOTIFIER,
+                    CELERY_TASK_EVENT_NOTIFIER,
                     (process_instance.id, process_instance.process_model_identifier, "human_task_available"),
                 )
                 assert mock.call_count == 1
 
-    def test_queues_process_instance_event_notifier_when_complete(
+    def test_queues_event_notifier_when_complete(
         self,
         app: Flask,
         mocker: MockerFixture,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-            with self.app_config_mock(
-                app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL", "SOME PROCESS MODEL"
-            ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL", "SOME PROCESS MODEL"):
                 mock = mocker.patch("celery.current_app.send_task")
                 process_model = load_test_spec(
                     "test_group/sample",
@@ -186,7 +182,7 @@ class TestBackgroundProcessingService(BaseTest):
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.do_engine_steps(save=True)
                 mock.assert_called_with(
-                    CELERY_TASK_PROCESS_INSTANCE_EVENT_NOTIFIER,
+                    CELERY_TASK_EVENT_NOTIFIER,
                     (process_instance.id, process_instance.process_model_identifier, "process_instance_complete"),
                 )
                 assert mock.call_count == 1
