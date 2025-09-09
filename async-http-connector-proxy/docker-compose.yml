@@ -1,0 +1,11 @@
+services:
+  acp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "${ACP_PORT:-8200}"
+      XDG_CACHE_HOME: "/app/.cache"
+    ports:
+      - "${ACP_PORT:-8200}:${ACP_PORT:-8200}/tcp"

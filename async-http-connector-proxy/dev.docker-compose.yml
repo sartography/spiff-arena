@@ -1,0 +1,15 @@
+services:
+  acp:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
+    environment:
+      HOME: "/app"
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - 8200:8200/tcp
+    volumes:
+      - .:/app
