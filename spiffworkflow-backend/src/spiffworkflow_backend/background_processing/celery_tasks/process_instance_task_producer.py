@@ -3,7 +3,7 @@ import time
 import celery
 from flask import current_app
 
-from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_EVENT_NOTIFIER
+from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
@@ -86,15 +86,15 @@ def queue_process_instance_if_appropriate(
     return False
 
 
-def queue_process_instance_event_notifier_if_appropriate(updated_process_instance: ProcessInstanceModel, event_type: str) -> bool:
+def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanceModel, event_type: str) -> bool:
     if (
         queue_enabled_for_process_model()
-        and current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL"]
-        and current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL"]
+        and current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+        and current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
         != updated_process_instance.process_model_identifier
     ):
         async_result = celery.current_app.send_task(
-            CELERY_TASK_PROCESS_INSTANCE_EVENT_NOTIFIER,
+            CELERY_TASK_EVENT_NOTIFIER,
             (updated_process_instance.id, updated_process_instance.process_model_identifier, event_type),
         )
         current_app.logger.info(f"Queueing process instance ({updated_process_instance.id}) for celery ({async_result.task_id})")

@@ -312,6 +312,6 @@ def setup_config(app: Flask) -> None:
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
     _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED")
-    _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL")
+    _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL")
     _setup_cipher(app)
     _set_up_open_id_scopes(app)

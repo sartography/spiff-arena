@@ -53,7 +53,7 @@ from sqlalchemy import and_
 from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_event_notifier_if_appropriate,
+    queue_event_notifier_if_appropriate,
 )
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
@@ -1199,7 +1199,7 @@ class ProcessInstanceProcessor:
                     "metadata": metadata,
                 }
                 LoggingService.log_event(ProcessInstanceEventType.process_instance_completed.value, log_extras)
-                queue_process_instance_event_notifier_if_appropriate(self.process_instance_model, "process_instance_complete")
+                queue_event_notifier_if_appropriate(self.process_instance_model, "process_instance_complete")
 
         db.session.add(self.process_instance_model)
 
@@ -1268,7 +1268,7 @@ class ProcessInstanceProcessor:
                         db.session.add(human_task_user)
 
         if len(new_humna_tasks) > 0:
-            queue_process_instance_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
+            queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
 
         if len(initial_human_tasks) > 0:
             for at in initial_human_tasks:

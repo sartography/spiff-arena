@@ -254,7 +254,7 @@ config_from_env(
 )
 # process model to run when a process instance has been updated.
 # currently only supported when running with celery.
-config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL")
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL")
 # check all tasks listed as child tasks are saved to the database
 config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 

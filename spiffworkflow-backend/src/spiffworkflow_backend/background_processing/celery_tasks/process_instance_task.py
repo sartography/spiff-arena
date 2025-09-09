@@ -28,18 +28,18 @@ class SpiffCeleryWorkerError(Exception):
 
 
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
-def celery_task_process_instance_event_notifier_run(
+def celery_task_event_notifier_run(
     self: Any,
     updated_process_instance_id: int,
     process_model_identifier: str,
     event_type: str,
 ) -> dict:
     celery_task_id = self.request.id
-    logger_prefix = f"celery_task_process_instance_event_notifier_run[{celery_task_id}]"
+    logger_prefix = f"celery_task_event_notifier_run[{celery_task_id}]"
     worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
     current_app.logger.info(worker_intro_log_message)
 
-    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_EVENT_NOTIFIER_PROCESS_MODEL"])
+    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"])
     data = {
         "post_body": {
             "event_type": event_type,
