@@ -1,0 +1,5 @@
+falcon==4.0.2
+granian[reload]==2.3.1
+httpx==0.28.1
+orjson==3.10.18
+pyinstrument==5.0.2
