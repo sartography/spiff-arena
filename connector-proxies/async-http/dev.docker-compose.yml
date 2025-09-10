@@ -1,5 +1,5 @@
 services:
-  async-http-connector-proxy:
+  connector-proxy-async-http:
     build:
       context: connector-proxies/async-http
       dockerfile: dev.Dockerfile
