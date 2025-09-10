@@ -12,4 +12,4 @@ services:
     ports:
       - 8200:8200/tcp
     volumes:
-      - .:/app
+      - ./async-http-connector-proxy:/app
