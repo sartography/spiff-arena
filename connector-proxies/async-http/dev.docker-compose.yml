@@ -1,7 +1,7 @@
 services:
   async-http-connector-proxy:
     build:
-      context: async-http-connector-proxy
+      context: connector-proxies/async-http
       dockerfile: dev.Dockerfile
     user: "${RUN_AS}"
     environment:
@@ -12,4 +12,4 @@ services:
     ports:
       - 8200:8200/tcp
     volumes:
-      - ./async-http-connector-proxy:/app
+      - ./connector-proxies/async-http:/app

@@ -19,7 +19,7 @@ CONNECTOR_PROXY_CONTAINER ?= spiffworkflow-connector
 CONNECTOR_PROXY_DEV_OVERLAY ?= connector-proxy-demo/dev.docker-compose.yml
 
 ASYNC_HTTP_CONNECTOR_PROXY_CONTAINER ?= async-http-connector-proxy
-ASYNC_HTTP_CONNECTOR_PROXY_DEV_OVERLAY ?= async-http-connector-proxy/dev.docker-compose.yml
+ASYNC_HTTP_CONNECTOR_PROXY_DEV_OVERLAY ?= connector-proxies/async-http/dev.docker-compose.yml
 
 YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
