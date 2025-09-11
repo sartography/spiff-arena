@@ -520,16 +520,7 @@ class TestTasksController(BaseTest):
         # Verify lane information is present in the API response
         task = response.json()["results"][0]
         assert "lane_name" in task
-        assert task["lane_name"] is not None
-
-        # Verify lane matches expected value from BPMN
-        if task["lane_name"] == "Process Initiator":
-            assert task["lane_name"] == "Process Initiator"
-        else:
-            assert task["lane_name"] == "Finance Team"
-
-        # Individual task endpoint doesn't return lane_name directly, it returns the task details
-        # The lane_name is available in the list endpoints, which is sufficient for API usage
+        assert task["lane_name"] == "Process Initiator"
 
     def test_task_instance_list_returns_only_for_same_bpmn_process(
         self,
