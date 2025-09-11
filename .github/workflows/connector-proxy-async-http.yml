@@ -3,10 +3,10 @@ on:
   push:
     paths:
       - connector-proxies/async-http/**
+      - .github/workflows/connector-proxy-async-http.yml
     branches:
       - main
       - deploy
-      - .github/workflows/connector-proxy-async-http.yml
 jobs:
   deploy:
     name: Deploy Connector Proxy - Async Http
