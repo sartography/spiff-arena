@@ -517,14 +517,12 @@ class TestTasksController(BaseTest):
         assert response.json() is not None
         assert len(response.json()["results"]) > 0
 
-        # Verify lane_name is present in the API response
+        # Verify lane information is present in the API response
         task = response.json()["results"][0]
         assert "lane_name" in task
         assert task["lane_name"] is not None
 
-        # Verify lane_name is present and matches expected value from BPMN
-        task = response.json()["results"][0]
-        assert "lane_name" in task
+        # Verify lane matches expected value from BPMN
         if task["lane_name"] == "Process Initiator":
             assert task["lane_name"] == "Process Initiator"
         else:

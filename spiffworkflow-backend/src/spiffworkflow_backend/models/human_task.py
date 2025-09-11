@@ -93,7 +93,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
             new_task.bpmn_process_identifier = task.bpmn_process_identifier
 
         if hasattr(task, "lane_name") and task.lane_name:
-            new_task.lane_name = task.lane_name
+            new_task.lane = task.lane_name
 
         # human tasks only have status when getting the list on the home page
         # and it comes from the process_instance. it should not be confused with task_status.
