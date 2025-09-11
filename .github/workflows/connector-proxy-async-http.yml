@@ -6,7 +6,6 @@ on:
       - .github/workflows/connector-proxy-async-http.yml
     branches:
       - main
-      - deploy
 jobs:
   deploy:
     name: Deploy Connector Proxy - Async Http
