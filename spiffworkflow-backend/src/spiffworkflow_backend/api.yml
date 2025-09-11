@@ -3969,6 +3969,8 @@ components:
           type: number
         process_name:
           type: string
+        lane_name:
+          type: string
         properties:
           type: object
       example:
