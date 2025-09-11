@@ -51,6 +51,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))
     bpmn_process_identifier: str = db.Column(db.String(255))
+    lane_name: str | None = db.Column(db.String(255))
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     human_task_users = relationship("HumanTaskUserModel", cascade="delete")
@@ -90,6 +91,9 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
             new_task.process_group_identifier = task.process_group_identifier
         if hasattr(task, "bpmn_process_identifier"):
             new_task.bpmn_process_identifier = task.bpmn_process_identifier
+
+        if hasattr(task, "lane_name") and task.lane_name:
+            new_task.lane_name = task.lane_name
 
         # human tasks only have status when getting the list on the home page
         # and it comes from the process_instance. it should not be confused with task_status.

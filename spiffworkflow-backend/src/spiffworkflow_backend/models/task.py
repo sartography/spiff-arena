@@ -163,6 +163,7 @@ class Task:
     assigned_user_group_identifier: str | None = None
     potential_owner_usernames: str | None = None
     process_model_uses_queued_execution: bool | None = None
+    lane_name: str | None = None
 
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
@@ -200,6 +201,7 @@ class Task:
             "assigned_user_group_identifier": self.assigned_user_group_identifier,
             "potential_owner_usernames": self.potential_owner_usernames,
             "process_model_uses_queued_execution": self.process_model_uses_queued_execution,
+            "lane_name": self.lane_name,
         }
 
     @classmethod

@@ -878,6 +878,7 @@ def _get_tasks(
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
+            HumanTaskModel.lane_name,
             potential_owner_usernames_from_group_concat_or_similar,
         )
         .order_by(desc(HumanTaskModel.id))  # type: ignore
