@@ -858,6 +858,7 @@ def _get_tasks(
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
     group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")  # type: ignore
+    lane_name_column = HumanTaskModel.lane_name
     if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
         process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
             "process_model_identifier"
@@ -865,6 +866,7 @@ def _get_tasks(
         process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")
         user_username_column = func.max(UserModel.username).label("process_initiator_username")
         group_identifier_column = func.max(GroupModel.identifier).label("assigned_user_group_identifier")
+        lane_name_column = func.max(HumanTaskModel.lane_name).label("lane_name")
 
     human_tasks = (
         human_tasks_query.add_columns(
@@ -878,7 +880,7 @@ def _get_tasks(
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
-            HumanTaskModel.lane_name,
+            lane_name_column,
             potential_owner_usernames_from_group_concat_or_similar,
         )
         .order_by(desc(HumanTaskModel.id))  # type: ignore

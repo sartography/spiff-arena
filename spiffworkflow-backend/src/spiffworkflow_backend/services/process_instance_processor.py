@@ -1257,7 +1257,7 @@ class ProcessInstanceProcessor:
                         task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                         task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
-                        lane_name=ready_or_waiting_task.task_spec.lane,
+                        lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
                     )
                     db.session.add(human_task)
                     new_humna_tasks.append(human_task)
