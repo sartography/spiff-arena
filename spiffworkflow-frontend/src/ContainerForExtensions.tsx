@@ -73,7 +73,10 @@ export default function ContainerForExtensions() {
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
 
-  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(() => {
+    const stored = localStorage.getItem('isNavCollapsed');
+    return stored ? JSON.parse(stored) : false;
+  });
 
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
   const [isSideNavVisible, setIsSideNavVisible] = useState<boolean>(!isMobile);
@@ -82,12 +85,16 @@ export default function ContainerForExtensions() {
     if (isMobile) {
       setIsSideNavVisible(!isSideNavVisible);
     } else {
-      setIsNavCollapsed(!isNavCollapsed);
+      const newCollapsedState = !isNavCollapsed;
+      setIsNavCollapsed(newCollapsedState);
+      localStorage.setItem('isNavCollapsed', JSON.stringify(newCollapsedState));
     }
     if (isMobile) {
       setIsSideNavVisible(!isSideNavVisible);
     } else {
-      setIsNavCollapsed(!isNavCollapsed);
+      const newCollapsedState = !isNavCollapsed;
+      setIsNavCollapsed(newCollapsedState);
+      localStorage.setItem('isNavCollapsed', JSON.stringify(newCollapsedState));
     }
   };
 
@@ -136,7 +143,6 @@ export default function ContainerForExtensions() {
       setIsSideNavVisible(false);
     } else {
       setIsSideNavVisible(true);
-      setIsNavCollapsed(false);
     }
   }, [isMobile]);
 
