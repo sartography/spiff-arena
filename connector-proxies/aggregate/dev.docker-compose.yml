@@ -9,3 +9,4 @@ services:
       - 8300:80/tcp
     volumes:
       - ./connector-proxies/aggregate/nginx/conf.d:/etc/nginx/conf.d
+      - ./connector-proxies/aggregate/static:/app/static
