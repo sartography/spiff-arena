@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import cookie from 'cookie';
+import * as cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
