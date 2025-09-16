@@ -39,12 +39,44 @@ const extract = data => {
   return { commands, redirects };
 };
 
-const write = async ({ commands }) => {
-  fs.writeFile('static/standard/v1/commands.json',
-    JSON.stringify(commands),
-    e => console.log(e ?? 'Wrote commands.json')
-  );
+const nginxConf = redirects => {
+  return [
+`
+server {
+  listen 80;
+  server_name localhost;
+  root /app/static;
+
+  location = /standard/v1/commands {
+    try_files $uri $uri.json =404;
+  }
+`,
+...redirects.map(({ id, connectorProxy }) => `
+  location = /standard/v1/do/${id} {
+    return 307 ${connectorProxy}/v1/do/${id};
+  }
+`),
+`
 }
+`
+  ].join("\n");
+};
+/*
+-  location = /standard/v1/do/http/GetRequest {
+-    return 307 https://acp-bitter-fog-6526.fly.dev/v1/do/http/GetRequest;
+-  }
+
+*/
+const prep = ({ commands, redirects }) => {
+  return {
+    'static/standard/v1/commands.json': JSON.stringify(commands),
+    'nginx/conf.d/default.conf': nginxConf(redirects),
+  };
+};
+
+const write = async data => {
+  Object.entries(data).forEach(([k, v]) => fs.writeFile(k, v, e => console.log(e ?? `Wrote ${k}`)));
+};
 
 (async () => {
   Promise.all(
@@ -56,5 +88,6 @@ const write = async ({ commands }) => {
   .then(Object.fromEntries)
   .then(munge)
   .then(extract)
+  .then(prep)
   .then(write);
 })();
