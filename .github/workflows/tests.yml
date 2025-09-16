@@ -306,7 +306,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v5.0.0
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
