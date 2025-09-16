@@ -28,6 +28,7 @@ import {
 import HttpService from './services/HttpService';
 import BaseRoutes from './views/BaseRoutes';
 import BackendIsDown from './views/BackendIsDown';
+import FrontendAccessDenied from './views/FrontendAccessDenied';
 import Login from './views/Login';
 import useAPIError from './hooks/UseApiError';
 import ScrollToTop from './components/ScrollToTop';
@@ -39,6 +40,7 @@ const fadeOutImmediate = 'fadeOutImmediate';
 
 export default function ContainerForExtensions() {
   const [backendIsUp, setBackendIsUp] = useState<boolean | null>(null);
+  const [canAccessFrontend, setCanAccessFrontend] = useState<boolean>(true);
   const [extensionUxElements, setExtensionUxElements] = useState<
     UiSchemaUxElement[] | null
   >(null);
@@ -71,7 +73,10 @@ export default function ContainerForExtensions() {
   const [additionalNavElement, setAdditionalNavElement] =
     useState<ReactElement | null>(null);
 
-  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(() => {
+    const stored = localStorage.getItem('isNavCollapsed');
+    return stored ? JSON.parse(stored) : false;
+  });
 
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
   const [isSideNavVisible, setIsSideNavVisible] = useState<boolean>(!isMobile);
@@ -80,12 +85,16 @@ export default function ContainerForExtensions() {
     if (isMobile) {
       setIsSideNavVisible(!isSideNavVisible);
     } else {
-      setIsNavCollapsed(!isNavCollapsed);
+      const newCollapsedState = !isNavCollapsed;
+      setIsNavCollapsed(newCollapsedState);
+      localStorage.setItem('isNavCollapsed', JSON.stringify(newCollapsedState));
     }
     if (isMobile) {
       setIsSideNavVisible(!isSideNavVisible);
     } else {
-      setIsNavCollapsed(!isNavCollapsed);
+      const newCollapsedState = !isNavCollapsed;
+      setIsNavCollapsed(newCollapsedState);
+      localStorage.setItem('isNavCollapsed', JSON.stringify(newCollapsedState));
     }
   };
 
@@ -134,18 +143,8 @@ export default function ContainerForExtensions() {
       setIsSideNavVisible(false);
     } else {
       setIsSideNavVisible(true);
-      setIsNavCollapsed(false);
     }
   }, [isMobile]);
-
-  // never carry an error message across to a different path
-  useEffect(() => {
-    removeError();
-    // if we include the removeError function to the dependency array of this useEffect, it causes
-    // an infinite loop where the page with the error adds the error,
-    // then this runs and it removes the error, etc. it is ok not to include it here, i think, because it never changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
 
   useEffect(() => {
     const processExtensionResult = (processModels: ProcessModel[]) => {
@@ -211,8 +210,15 @@ export default function ContainerForExtensions() {
       }
     };
 
-    const getExtensions = () => {
+    type HealthStatus = { ok: boolean; can_access_frontend?: boolean };
+    const getExtensions = (response: HealthStatus) => {
       setBackendIsUp(true);
+
+      // Check if user has access to frontend
+      if (response.can_access_frontend !== undefined) {
+        setCanAccessFrontend(response.can_access_frontend);
+      }
+
       if (!permissionsLoaded) {
         return;
       }
@@ -262,14 +268,21 @@ export default function ContainerForExtensions() {
     return [<BackendIsDown key="backendIsDownPage" />];
   };
 
+  const frontendAccessDeniedPage = () => {
+    return [<FrontendAccessDenied key="frontendAccessDeniedPage" />];
+  };
+
   const innerComponents = () => {
     if (backendIsUp === null) {
       return [];
     }
-    if (backendIsUp) {
-      return routeComponents();
+    if (!backendIsUp) {
+      return backendIsDownPage();
     }
-    return backendIsDownPage();
+    if (!canAccessFrontend) {
+      return frontendAccessDeniedPage();
+    }
+    return routeComponents();
   };
 
   return (

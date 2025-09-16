@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
+import DownloadIcon from '@mui/icons-material/Download';
 
 interface ProcessModelImportButtonProps {
   onClick: () => void;
@@ -13,11 +13,11 @@ export function ProcessModelImportButton({
     <Button
       variant="contained"
       color="primary"
-      startIcon={<GitHubIcon />}
+      startIcon={<DownloadIcon />}
       onClick={onClick}
       data-testid="process-model-import-button"
     >
-      Import from GitHub
+      Import Process Model
     </Button>
   );
 }

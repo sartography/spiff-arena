@@ -1,0 +1,15 @@
+services:
+  connector-proxy-async-http:
+    build:
+      context: connector-proxies/async-http
+      dockerfile: dev.Dockerfile
+    user: "${RUN_AS}"
+    environment:
+      HOME: "/app"
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - 8200:8200/tcp
+    volumes:
+      - ./connector-proxies/async-http:/app

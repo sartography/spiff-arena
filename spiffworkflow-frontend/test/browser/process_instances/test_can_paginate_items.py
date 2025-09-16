@@ -1,17 +1,15 @@
 import re
 import pytest
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 from helpers.debug import print_page_details
 
 
-def test_can_paginate_items(browser_context: BrowserContext):
+def test_can_paginate_items(page: Page):
     """
     Test that process instance list supports pagination controls (forward/backward paging).
     """
-    page = browser_context.new_page()
 
     # 1. Log in
     login(page, "admin", "admin")

@@ -1,10 +1,10 @@
-import json
 from typing import Any
 from typing import Final
 
 import flask.wrappers
 from flask import Blueprint
-from flask import Response
+from flask import jsonify
+from flask import make_response
 from flask import request
 from sqlalchemy.exc import IntegrityError
 
@@ -76,7 +76,7 @@ def delete_user(username: str) -> flask.wrappers.Response:
     db.session.delete(user)
     db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=204, mimetype=APPLICATION_JSON)
+    return make_response(jsonify({"ok": True}), 200)
 
 
 @user_blueprint.route("/group/<group_name>", methods=["GET"])
@@ -98,7 +98,7 @@ def create_group(group_name: str) -> flask.wrappers.Response:
         raise (ApiError(error_code="integrity_error", message=repr(exception), status_code=500)) from exception
     db.session.commit()
 
-    return Response(json.dumps({"id": group.id}), status=201, mimetype=APPLICATION_JSON)
+    return make_response(jsonify({"id": group.id}), 201)
 
 
 @user_blueprint.route("/group/<group_name>", methods=["DELETE"])
@@ -116,7 +116,7 @@ def delete_group(group_name: str) -> flask.wrappers.Response:
     db.session.delete(group)
     db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=204, mimetype=APPLICATION_JSON)
+    return make_response(jsonify({"ok": True}), 200)
 
 
 @user_blueprint.route("/assign_user_to_group", methods=["POST"])
@@ -138,11 +138,7 @@ def assign_user_to_group() -> flask.wrappers.Response:
     db.session.add(user_group_assignment)
     db.session.commit()
 
-    return Response(
-        json.dumps({"id": user_group_assignment.id}),
-        status=201,
-        mimetype=APPLICATION_JSON,
-    )
+    return make_response(jsonify({"id": user_group_assignment.id}), 201)
 
 
 @user_blueprint.route("/remove_user_from_group", methods=["POST"])
@@ -163,11 +159,7 @@ def remove_user_from_group() -> flask.wrappers.Response:
     db.session.delete(user_group_assignment)
     db.session.commit()
 
-    return Response(
-        json.dumps({"ok": True}),
-        status=204,
-        mimetype=APPLICATION_JSON,
-    )
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def get_value_from_request_json(key: str) -> Any:
