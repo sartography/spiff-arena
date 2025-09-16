@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.12.1-slim-bookworm AS base
+FROM python:3.13.7-slim-trixie AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/venv

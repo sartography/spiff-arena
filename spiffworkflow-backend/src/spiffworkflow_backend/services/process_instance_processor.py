@@ -1,6 +1,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import _strptime  # type: ignore
+import calendar
 import copy
 import decimal
 import json
@@ -51,6 +52,9 @@ from SpiffWorkflow.util.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import or_
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_event_notifier_if_appropriate,
+)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
@@ -326,6 +330,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals = {
             "_strptime": _strptime,
             "all": all,
+            "calendar": calendar,
             "dateparser": dateparser,
             "datetime": datetime,
             "decimal": decimal,
@@ -1194,10 +1199,14 @@ class ProcessInstanceProcessor:
                     "metadata": metadata,
                 }
                 LoggingService.log_event(ProcessInstanceEventType.process_instance_completed.value, log_extras)
+                queue_event_notifier_if_appropriate(self.process_instance_model, "process_instance_complete")
 
         db.session.add(self.process_instance_model)
 
-        human_tasks = HumanTaskModel.query.filter_by(process_instance_id=self.process_instance_model.id, completed=False).all()
+        new_humna_tasks = []
+        initial_human_tasks = HumanTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id, completed=False
+        ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
         self.store_metadata(metadata)
@@ -1224,10 +1233,10 @@ class ProcessInstanceProcessor:
                         ui_form_file_name = properties["formUiSchemaFilename"]
 
                 human_task = None
-                for at in human_tasks:
+                for at in initial_human_tasks:
                     if at.task_id == str(ready_or_waiting_task.id):
                         human_task = at
-                        human_tasks.remove(at)
+                        initial_human_tasks.remove(at)
 
                 if human_task is None:
                     task_guid = str(ready_or_waiting_task.id)
@@ -1250,6 +1259,7 @@ class ProcessInstanceProcessor:
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
                     db.session.add(human_task)
+                    new_humna_tasks.append(human_task)
 
                     for potential_owner in potential_owner_hash["potential_owners"]:
                         human_task_user = HumanTaskUserModel(
@@ -1257,8 +1267,11 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-        if len(human_tasks) > 0:
-            for at in human_tasks:
+        if len(new_humna_tasks) > 0:
+            queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
+
+        if len(initial_human_tasks) > 0:
+            for at in initial_human_tasks:
                 at.completed = True
                 db.session.add(at)
         db.session.commit()

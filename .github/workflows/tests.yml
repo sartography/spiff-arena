@@ -54,6 +54,12 @@ jobs:
               upload_coverage: true,
             }
           - {
+              python: "3.13.7",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
+            }
+          - {
               python: "3.11",
               os: "ubuntu-latest",
               session: "tests",
@@ -364,7 +370,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: 24.x
       - run: npm install
       - run: npm run lint
       - run: npm test

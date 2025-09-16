@@ -102,6 +102,9 @@ config_from_env(
     default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
 )
 
+### model marketplace
+config_from_env("SPIFFWORKFLOW_BACKEND_MODEL_MARKETPLACE_URL", default="https://model-marketplace.spiff.works")
+
 ### database
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", default="mysql")  # can also be sqlite, postgres
 # Overide above with specific sqlalchymy connection string.
@@ -246,9 +249,12 @@ config_from_env("SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS", d
 
 ### other
 config_from_env(
-    "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID",
-    default="Message_SystemMessageNotification",
+    "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_MESSAGE_NAME",
+    default="SystemErrorMessage",
 )
+# process model to run when a process instance has been updated.
+# currently only supported when running with celery.
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL")
 # check all tasks listed as child tasks are saved to the database
 config_from_env("SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY", default=False)
 
@@ -276,3 +282,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=
 config_from_env("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE", default="openid profile email")
 
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS", default=False)
+
+### task validation
+config_from_env("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", default=False)

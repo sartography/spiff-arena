@@ -27,9 +27,10 @@ if [[ -z "${REALM_NAME:-}" ]]; then
   REALM_NAME=spiffworkflow
 fi
 
-access_token=$("${script_dir}/get_token" "$username" "$password" "$REALM_NAME" || echo '')
+access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$REALM_NAME" || echo '')
 if [[ -z "$access_token" || "$access_token" == "null" ]]; then
   >&2 echo "ERROR: failed to get access token for '$username'"
+  exit 1
 else
 
   echo "access_token: ${access_token}"

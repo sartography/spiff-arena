@@ -134,7 +134,7 @@ class MessageService:
                         processor_receive.save()
                     else:
                         db.session.commit()
-                if should_queue_process_instance(receiving_process_instance, execution_mode=execution_mode):
+                if should_queue_process_instance(execution_mode=execution_mode):
                     queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
                 return message_instance_receive
 
@@ -259,7 +259,7 @@ class MessageService:
         processor_receive_to_use.bpmn_process_instance.send_event(bpmn_event)
         execution_strategy_name = None
 
-        if should_queue_process_instance(receiving_process_instance, execution_mode=execution_mode):
+        if should_queue_process_instance(execution_mode=execution_mode):
             # even if we are queueing, we ran a "send_event" call up above, and it updated some tasks.
             # we need to serialize these task updates to the db. do_engine_steps with save does that.
             processor_receive_to_use.do_engine_steps(

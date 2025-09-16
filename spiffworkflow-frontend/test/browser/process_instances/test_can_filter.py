@@ -1,10 +1,9 @@
 import re
 import pytest
 from datetime import datetime, timedelta
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 from helpers.debug import print_page_details
 
 
@@ -13,11 +12,10 @@ def titleize(status: str) -> str:
     return " ".join([word.capitalize() for word in status.split("_")])
 
 
-def test_can_filter(browser_context: BrowserContext):
+def test_can_filter(page: Page):
     """
     Test that users can filter process instances by status and date, and see correct filtered results.
     """
-    page = browser_context.new_page()
 
     # 1. Log in
     login(page, "admin", "admin")

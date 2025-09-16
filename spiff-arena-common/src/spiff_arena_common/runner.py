@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 import logging
@@ -79,6 +80,7 @@ class CustomEnvironment(TaskDataEnvironment):
     def __init__(self):
         # TODO: would be nice to get these from the client so we don't have to code change for globals
         super().__init__(environment_globals={
+            "calendar": calendar,
             "datetime": datetime.datetime,
             "json": json,
             "time": time,

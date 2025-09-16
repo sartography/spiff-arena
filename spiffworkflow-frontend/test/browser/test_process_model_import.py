@@ -1,14 +1,12 @@
 import uuid
 import re
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 
 
-def test_process_model_import(browser_context: BrowserContext):
+def test_process_model_import(page: Page):
     """Test importing a process model from GitHub."""
-    page = browser_context.new_page()
 
     # 1. Login as admin
     login(page, "admin", "admin")

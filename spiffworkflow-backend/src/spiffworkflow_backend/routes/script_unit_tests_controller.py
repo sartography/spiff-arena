@@ -8,7 +8,6 @@ import flask.wrappers
 from flask import current_app
 from flask import jsonify
 from flask import make_response
-from flask.wrappers import Response
 from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 
@@ -88,7 +87,7 @@ def script_unit_test_create(modified_process_model_identifier: str, body: dict[s
     unit_test_elements.append(unit_test_element)
     SpecFileService.update_file(process_model, file.name, etree.tostring(bpmn_etree_element))
 
-    return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 202)
 
 
 def script_unit_test_run(modified_process_model_identifier: str, body: dict[str, str | bool | int]) -> flask.wrappers.Response:
