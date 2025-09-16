@@ -78,9 +78,11 @@ if [[ "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" == "true" ]]; then
   ./bin/clone_process_models
 fi
 
-# ensure that the Process Models Directory is initialized as a git repo
-log_info "Running git init"
-git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
+if ! git status >/dev/null 2>&1; then
+  # ensure that the Process Models Directory is initialized as a git repo
+  log_info "Running git init"
+  git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
+fi
 
 # # VersionOneThree and the process_instance_file_data db => filesystem migration have run on all necessary environments,
 # so commenting out run_all.py.
