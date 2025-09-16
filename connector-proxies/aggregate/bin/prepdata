@@ -51,7 +51,7 @@ server {
     try_files $uri $uri.json =404;
   }
 `,
-...redirects.map(({ id, connectorProxy }) => `
+  ...redirects.map(({ id, connectorProxy }) => `
   location = /standard/v1/do/${id} {
     return 307 ${connectorProxy}/v1/do/${id};
   }
@@ -61,12 +61,7 @@ server {
 `
   ].join("\n");
 };
-/*
--  location = /standard/v1/do/http/GetRequest {
--    return 307 https://acp-bitter-fog-6526.fly.dev/v1/do/http/GetRequest;
--  }
 
-*/
 const prep = ({ commands, redirects }) => {
   return {
     'static/standard/v1/commands.json': JSON.stringify(commands),
