@@ -64,12 +64,17 @@ services:
       SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: "put-pem-string-with-newlines-here"
+      # Use a mounted file for the private key
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE: "/run/secrets/private-key.pem"
+      # Alternatively, provide the PEM as a string (beware of quoting issues with newlines and don't commit secrets to source control!)
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: "put-pem-string-with-newlines-here"
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
       - ${SPIFFWORKFLOW_BACKEND_LOCAL_BPMN_SPEC_DIR:-./process_models}:/app/process_models
       - spiffworkflow_backend_db:/app/db_volume
+      - ./private-key.pem:/run/secrets/private-key.pem:ro
+
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
       interval: 10s

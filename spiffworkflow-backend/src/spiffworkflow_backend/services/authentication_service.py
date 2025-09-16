@@ -312,10 +312,10 @@ class AuthenticationService:
         return state
 
     def create_client_assertion(self, client_id, token_url):
-        private_key_data = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING"]
+        private_key_data = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM"]
 
         if not private_key_data:
-            raise ValueError("No private key found in the environment variable")
+            raise ValueError("No private key available (provide SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_[FILE|STRING])")
 
         private_key = load_pem_private_key(
             private_key_data.encode("utf-8"), password=None, backend=default_backend()

@@ -25,3 +25,4 @@ node_modules
 /process.json
 /spiffworkflow_backend.svg
 /.venv
+/private-key.pem

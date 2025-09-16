@@ -133,6 +133,28 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,
 
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE", default="implicit_grant_type") ## alternatively, use "private_key_jwt" to use the values below
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING")
+# Precedence: explicit string env var overrides file-based secret. If both set, string wins.
+# Always store actual PEM content (never the file path) in SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM.
+_raw_pem_string = environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING")
+_pem_file_path = environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE")
+
+_pem_content: str | None = None
+if _raw_pem_string:
+    _pem_content = _raw_pem_string
+elif _pem_file_path:
+    try:
+        with open(_pem_file_path, "r", encoding="utf-8") as f:
+            _pem_content = f.read().strip()
+    except FileNotFoundError:
+        current_app.logger.error(
+            "SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE was set but file not found: %s", _pem_file_path
+        )
+    except Exception as e:  # pragma: no cover - defensive
+        current_app.logger.error(
+            "Error reading SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE (%s): %s", _pem_file_path, str(e)
+        )
+
+SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM = _pem_content
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES", default="")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE", default="")
 
