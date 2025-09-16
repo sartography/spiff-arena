@@ -1,6 +1,5 @@
 from typing import Any
 
-import jsonschema  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers import BpmnConverter  # type: ignore
 from SpiffWorkflow.bpmn.specs.data_spec import BpmnDataStoreSpecification  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -159,12 +158,7 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
                     db.session.delete(model)
                     continue
 
-                try:
-                    jsonschema.validate(instance=value, schema=store_model.schema)
-                except jsonschema.exceptions.ValidationError as e:
-                    raise DataStoreWriteError(
-                        f"Attempting to write data that does not match the provided schema for '{self.bpmn_id}': {e}"
-                    ) from e
+                self.__class__.validate_schema(store_model, value)
 
                 if model is None:
                     model = KKVDataStoreEntryModel(

@@ -201,6 +201,8 @@
   "form_render_error_message": "Lomaketta ei voitu rakentaa nykyisellä kaaviolla, käyttöliittymällä ja tiedoilla. Korjaa ongelma ja yritä uudelleen.",
   "form_render_error_title": "Lomakkeen renderöintivirhe",
   "frontend_version_information": "Frontend-versiotiedot",
+  "frontend_access_denied_title": "Pääsy estetty",
+  "frontend_access_denied_message": "Sinulla ei ole oikeutta käyttää tätä sovellusta. Ota yhteyttä järjestelmänvalvojaan.",
   "go": "Siirry",
   "group_by": "Ryhmittele",
   "groups": "Ryhmät",

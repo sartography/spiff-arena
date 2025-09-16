@@ -1,8 +1,14 @@
 // from https://raw.githubusercontent.com/arthurtyukayev/use-keyboard-shortcut/develop/lib/useKeyboardShortcut.js
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import { KeyboardShortcuts } from '../interfaces';
 
 export const overrideSystemHandling = (e: KeyboardEvent) => {
@@ -30,6 +36,14 @@ const useKeyboardShortcut = (
   keyboardShortcuts: KeyboardShortcuts,
   userOptions?: any,
 ) => {
+  // Shared styling for key chips
+  const keyChipSx = useMemo(() => {
+    return {
+      fontFamily: 'monospace',
+      fontWeight: 'bold',
+      textTransform: 'none',
+    };
+  }, []);
   let options = DEFAULT_OPTIONS;
   if (userOptions) {
     options = { ...options, ...userOptions };
@@ -42,48 +56,100 @@ const useKeyboardShortcut = (
 
   const shortcutKeys = Object.keys(keyboardShortcuts);
   const lengthsOfShortcutKeys = shortcutKeys.map(
-    (shortcutKey: string) => shortcutKey.length,
+    (shortcutKey: string) => shortcutKey.split(',').length,
   );
   const numberOfKeysToKeep = Math.max(...lengthsOfShortcutKeys);
 
   const openKeyboardShortcutHelpControl = useCallback(() => {
-    const keyboardShortcutList = shortcutKeys.map((key: string) => {
-      return (
-        <p>
-          <div className="shortcut-description">
-            {keyboardShortcuts[key].label}:{' '}
-          </div>
-          <div className="shortcut-key-group">
-            {key.split(',').map((keyString) => (
-              <span className="shortcut-key">{keyString}</span>
-            ))}
-          </div>
-        </p>
-      );
-    });
+    const keyboardShortcutList = shortcutKeys.map(
+      (shortcut: string, index: number) => {
+        return (
+          <Box
+            key={shortcut}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              py: 1,
+              borderBottom:
+                index < shortcutKeys.length - 1
+                  ? (theme) => `1px solid ${theme.palette.divider}`
+                  : 'none',
+            }}
+          >
+            <Typography variant="body1">
+              {keyboardShortcuts[shortcut].label}
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              {shortcut.split(',').map((part) => (
+                <Chip
+                  key={`${shortcut}:${part}`}
+                  label={part}
+                  size="small"
+                  variant="outlined"
+                  sx={keyChipSx}
+                />
+              ))}
+            </Stack>
+          </Box>
+        );
+      },
+    );
 
     return (
       <Dialog
         open={helpControlOpen}
         onClose={() => setHelpControlOpen(false)}
         maxWidth="sm"
+        fullWidth
+        scroll="paper"
+        aria-labelledby="keyboard-shortcuts-title"
       >
-        <DialogTitle>Keyboard shortcuts</DialogTitle>
-        <DialogContent>
-          <p>
-            <div className="shortcut-description">
-              Open keyboard shortcut help control:
-            </div>
-            <div className="shortcut-key-group">
-              <span className="shortcut-key">Shift</span>
-              <span className="shortcut-key">?</span>
-            </div>
-          </p>
+        <DialogTitle id="keyboard-shortcuts-title">
+          <Typography variant="h6" component="h2">
+            Keyboard Shortcuts
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers sx={{ maxHeight: '70vh' }}>
+          <Box sx={{ mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                py: 1,
+                borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              <Typography variant="body1">
+                Open keyboard shortcut help
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Chip
+                  label="Shift"
+                  size="small"
+                  variant="outlined"
+                  sx={keyChipSx}
+                />
+                <Chip
+                  label="?"
+                  size="small"
+                  variant="outlined"
+                  sx={keyChipSx}
+                />
+              </Stack>
+            </Box>
+          </Box>
           {keyboardShortcutList}
         </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={() => setHelpControlOpen(false)}>
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
     );
-  }, [keyboardShortcuts, helpControlOpen, shortcutKeys]);
+  }, [keyboardShortcuts, helpControlOpen, shortcutKeys, keyChipSx]);
 
   const keydownListener = useCallback(
     (keydownEvent: KeyboardEvent) => {

@@ -11,7 +11,6 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask.wrappers import Response
 from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_task import trigger_metadata_backfill
@@ -101,11 +100,7 @@ def process_model_create(
     SpecFileService.update_file(process_model_info, f"{process_model_id_for_bpmn_file}.bpmn", contents.encode())
 
     _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
-    return Response(
-        json.dumps(process_model_info.to_dict()),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_model_info.to_dict()), 201)
 
 
 def process_model_delete(
@@ -127,7 +122,7 @@ def process_model_delete(
         ) from exception
 
     _commit_and_push_to_git(f"User: {g.user.username} deleted process model {process_model_identifier}")
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_model_update(
@@ -241,7 +236,7 @@ def process_model_publish(modified_process_model_identifier: str, branch_to_upda
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
     pr_url = GitService().publish(process_model_identifier, branch_to_update)
     data = {"ok": True, "pr_url": pr_url}
-    return Response(json.dumps(data), status=200, mimetype="application/json")
+    return make_response(jsonify(data), 200)
 
 
 def process_model_list(
@@ -323,7 +318,7 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
         ) from exception
 
     _commit_and_push_to_git(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_model_file_create(
@@ -518,11 +513,7 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
         report_metadata=default_report_metadata,
     )
 
-    return Response(
-        json.dumps(process_model_info.to_dict()),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_model_info.to_dict()), 201)
 
 
 def _get_file_from_request() -> FileStorage:
@@ -635,4 +626,17 @@ def process_model_specs(
     files = ProcessModelService.get_process_model_files(process_model)
     WorkflowSpecService.get_spec(files, process_model)
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
+
+
+def process_model_milestone_list(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
+
+    files = ProcessModelService.get_process_model_files(process_model)
+    WorkflowSpecService.get_spec(files, process_model)
+    milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
+
+    return make_response(jsonify({"milestones": milestones}), 200)

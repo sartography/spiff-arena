@@ -1,8 +1,7 @@
 import pytest
-from playwright.sync_api import expect, Page, BrowserContext
+from playwright.sync_api import expect, Page
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
-from helpers.playwright_setup import browser_context
 
 PROCESS_GROUP = "Shared Resources"
 PROCESS_MODEL = "task-with-guest-form"
@@ -55,8 +54,7 @@ def complete_guest_task_flow(page: Page, task_url: str):
     expect(page.get_by_text("You are done. Yay!", exact=False)).to_be_visible()
 
 
-def test_can_complete_guest_task(browser_context: BrowserContext):
-    page = browser_context.new_page()
+def test_can_complete_guest_task(page: Page):
     # Start process and get link
     public_task_url = start_process_and_get_public_link(page)
     # Logout as admin
