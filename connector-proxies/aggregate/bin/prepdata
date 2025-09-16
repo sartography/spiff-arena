@@ -31,13 +31,15 @@ const munge = data => {
   return { uniqueIdsByConnector, commandsByUniqueId };
 };
 
-const extractCommands = data => {
-  const commands = Object.values(data.commandsByUniqueId).map(({ id, parameters }) => ({ id, parameters }));
+const extract = data => {
+  const values = Object.values(data.commandsByUniqueId);
+  const commands = values.map(({ id, parameters }) => ({ id, parameters }));
+  const redirects = values.map(({ id, connectorProxy }) => ({ id, connectorProxy }));
 
-  return { commands, data };
+  return { commands, redirects };
 };
 
-const writeCommands = async ({ commands }) => {
+const write = async ({ commands }) => {
   fs.writeFile('static/standard/v1/commands.json',
     JSON.stringify(commands),
     e => console.log(e ?? 'Wrote commands.json')
@@ -53,6 +55,6 @@ const writeCommands = async ({ commands }) => {
   )
   .then(Object.fromEntries)
   .then(munge)
-  .then(extractCommands)
-  .then(writeCommands);
+  .then(extract)
+  .then(write);
 })();
