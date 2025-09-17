@@ -62,12 +62,17 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
+        from sqlalchemy.dialects import mysql
+
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
             on_duplicate_key_stmt = None
             if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
                 insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
                 on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(hash=insert_stmt.inserted.hash)
+                print("IN JSON")
+                print(on_duplicate_key_stmt.compile(dialect=mysql.dialect()))
+
             else:
                 insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
                 on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["hash"])

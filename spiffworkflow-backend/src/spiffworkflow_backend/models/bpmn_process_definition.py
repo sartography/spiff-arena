@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from sqlalchemy.dialects import mysql
+import copy
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from flask import current_app
+
 from dataclasses import dataclass
 
 from sqlalchemy import UniqueConstraint
@@ -52,3 +58,22 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     @classmethod
     def keys_for_full_process_model_hash(cls) -> list[str]:
         return ["spec", "subprocess_specs", "serializer_version"]
+
+    @classmethod
+    def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> None:
+        new_stuff = copy.copy(bpmn_process_definition_dict)
+        del new_stuff["full_process_model_hash"]
+        on_duplicate_key_stmt = None
+        print("HEYYYYYYYYY")
+        if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
+            insert_stmt = mysql_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
+            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_stuff)
+            print("IN BPMN")
+            print(on_duplicate_key_stmt.compile(dialect=mysql.dialect()))
+            # on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
+            #     full_process_model_hash=insert_stmt.inserted.full_process_model_hash
+            # )
+        else:
+            insert_stmt = postgres_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
+            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["full_process_model_hash"])
+        db.session.execute(on_duplicate_key_stmt)

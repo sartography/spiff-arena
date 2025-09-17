@@ -1070,15 +1070,16 @@ class ProcessInstanceProcessor:
 
         if bpmn_process_definition is None:
             task_specs = process_bpmn_properties.pop("task_specs")
-            bpmn_process_definition = BpmnProcessDefinitionModel(
-                single_process_hash=single_process_hash,
-                full_process_model_hash=full_process_model_hash,
-                bpmn_identifier=process_bpmn_identifier,
-                bpmn_name=process_bpmn_name,
-                properties_json=process_bpmn_properties,
-            )
+            bpmn_process_definition_dict = {
+                "single_process_hash": single_process_hash,
+                "full_process_model_hash": full_process_model_hash,
+                "bpmn_identifier": process_bpmn_identifier,
+                "bpmn_name": process_bpmn_name,
+                "properties_json": process_bpmn_properties,
+            }
+            bpmn_process_definition = BpmnProcessDefinitionModel(**bpmn_process_definition_dict)
             process_bpmn_properties["task_specs"] = task_specs
-            db.session.add(bpmn_process_definition)
+            # BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 bpmn_process_definition.bpmn_identifier,
@@ -1177,11 +1178,20 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
+        print("HOOOOOOOOOOOOOOOOOO")
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
             f"the_status: {self.process_instance_model.status} for instance {self.process_instance_model.id}"
         )
+        bpmn_process_definition_dict = {
+            "single_process_hash": self.process_instance_model.bpmn_process_definition.single_process_hash,
+            "full_process_model_hash": self.process_instance_model.bpmn_process_definition.full_process_model_hash,
+            "bpmn_identifier": self.process_instance_model.bpmn_process_definition.bpmn_identifier,
+            "bpmn_name": self.process_instance_model.bpmn_process_definition.bpmn_name,
+            "properties_json": self.process_instance_model.bpmn_process_definition.properties_json,
+        }
+        BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
 
         if self.process_instance_model.start_in_seconds is None:
             self.process_instance_model.start_in_seconds = round(time.time())
