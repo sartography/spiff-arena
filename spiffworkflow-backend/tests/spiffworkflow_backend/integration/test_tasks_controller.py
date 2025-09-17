@@ -478,6 +478,50 @@ class TestTasksController(BaseTest):
         actual_states = sorted([t["state"] for t in response.json()])
         assert actual_states == expected_states
 
+    def test_lane_name_in_api(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "finance"
+        process_model_id = "model_with_lanes"
+        bpmn_file_name = "lanes.bpmn"
+        bpmn_file_location = "model_with_lanes"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.status_code == 201
+        process_instance_id = response.json()["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=headers,
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/v1.0/tasks",
+            headers=headers,
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert len(response.json()["results"]) > 0
+
+        # Verify lane information is present in the API response
+        task = response.json()["results"][0]
+        assert "lane_name" in task
+        assert task["lane_name"] == "Process Initiator"
+
     def test_task_instance_list_returns_only_for_same_bpmn_process(
         self,
         app: Flask,
