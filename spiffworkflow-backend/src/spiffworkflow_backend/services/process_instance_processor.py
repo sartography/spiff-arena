@@ -443,9 +443,6 @@ SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMappi
 class ProcessInstanceProcessor:
     _default_script_engine = CustomBpmnScriptEngine()
 
-    wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
-    _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
-
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
 
     # __init__ calls these helpers:
@@ -509,7 +506,7 @@ class ProcessInstanceProcessor:
             (
                 bpmn_process_spec,
                 subprocesses,
-            ) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
+            ) = BpmnProcessService.get_process_model_and_subprocesses(
                 process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
             )
 
@@ -562,7 +559,7 @@ class ProcessInstanceProcessor:
 
         task_service = TaskService(
             process_instance=process_instance_model,
-            serializer=cls._serializer,
+            serializer=BpmnProcessService._serializer,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
             force_update_definitions=True,
             task_model_mapping=task_model_mapping,
@@ -585,7 +582,7 @@ class ProcessInstanceProcessor:
     @classmethod
     def initialize_bpmn_process_instance(cls, bpmn_process_dict: dict) -> BpmnWorkflow:
         process_copy = copy.deepcopy(bpmn_process_dict)
-        bpmn_process_instance = cls._serializer.from_dict(process_copy)
+        bpmn_process_instance = BpmnProcessService._serializer.from_dict(process_copy)
         bpmn_process_instance.script_engine = cls._default_script_engine
         return bpmn_process_instance
 
@@ -606,28 +603,11 @@ class ProcessInstanceProcessor:
         return (task_model_mapping, bpmn_subprocess_mapping)
 
     @classmethod
-    def get_process_model_and_subprocesses(
-        cls,
-        process_model_identifier: str,
-        process_id_to_run: str | None = None,
-    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
-        process_model_info = ProcessModelService.get_process_model(process_model_identifier)
-        if process_model_info is None:
-            raise (
-                ApiError(
-                    "process_model_not_found",
-                    f"The given process model was not found: {process_model_identifier}.",
-                )
-            )
-        spec_files = FileSystemService.get_files(process_model_info)
-        return WorkflowSpecService.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
-
-    @classmethod
     def get_bpmn_process_instance_from_process_model(cls, process_model_identifier: str) -> BpmnWorkflow:
-        (bpmn_process_spec, subprocesses) = cls.get_process_model_and_subprocesses(
+        (bpmn_process_spec, subprocesses) = BpmnProcessService.get_process_model_and_subprocesses(
             process_model_identifier,
         )
-        bpmn_process_instance = cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
         cls.set_script_engine(bpmn_process_instance)
         return bpmn_process_instance
 
@@ -802,17 +782,6 @@ class ProcessInstanceProcessor:
         return current_user
 
     @staticmethod
-    def get_bpmn_process_instance_from_workflow_spec(
-        spec: BpmnProcessSpec,
-        subprocesses: IdToBpmnProcessSpecMapping | None = None,
-    ) -> BpmnWorkflow:
-        bpmn_process_instance = BpmnWorkflow(
-            spec,
-            subprocess_specs=subprocesses,
-        )
-        return bpmn_process_instance
-
-    @staticmethod
     def __get_bpmn_process_instance(
         process_instance_model: ProcessInstanceModel,
         task_model_mapping: dict[str, TaskModel],
@@ -844,14 +813,14 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                bpmn_process_instance = ProcessInstanceProcessor._serializer.from_dict(process_copy)
+                bpmn_process_instance = BpmnProcessService._serializer.from_dict(process_copy)
                 bpmn_process_instance.get_tasks()
             except Exception as err:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
-            bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
+            bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
 
         return (
             bpmn_process_instance,
@@ -1074,13 +1043,13 @@ class ProcessInstanceProcessor:
         """Get a serialized version of a task spec."""
         # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
         # Not sure why mypy accepts this but whatever.
-        result: dict = self._serializer.to_dict(task_spec)
+        result: dict = BpmnProcessService._serializer.to_dict(task_spec)
         return result
 
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
-        event_definition = self._serializer.from_dict(event_data)
+        event_definition = BpmnProcessService._serializer.from_dict(event_data)
         bpmn_event = BpmnEvent(
             event_definition=event_definition,
             payload=payload,
@@ -1118,7 +1087,7 @@ class ProcessInstanceProcessor:
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
             task_model_delegate = TaskModelSavingDelegate(
-                serializer=self._serializer,
+                serializer=BpmnProcessService._serializer,
                 process_instance=self.process_instance_model,
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
@@ -1128,7 +1097,7 @@ class ProcessInstanceProcessor:
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
             process_instance=self.process_instance_model,
-            serializer=self._serializer,
+            serializer=BpmnProcessService._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             task_model_mapping=self.task_model_mapping,
@@ -1163,7 +1132,7 @@ class ProcessInstanceProcessor:
 
         task_service = TaskService(
             process_instance=processor.process_instance_model,
-            serializer=processor._serializer,
+            serializer=BpmnProcessService._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
             task_model_mapping=processor.task_model_mapping,
             bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
@@ -1306,7 +1275,7 @@ class ProcessInstanceProcessor:
             )
 
         task_model_delegate = TaskModelSavingDelegate(
-            serializer=self._serializer,
+            serializer=BpmnProcessService._serializer,
             process_instance=self.process_instance_model,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
@@ -1405,7 +1374,7 @@ class ProcessInstanceProcessor:
         if serialize_script_engine_state:
             self._script_engine.environment.preserve_state(self.bpmn_process_instance)
 
-        result = self._serializer.to_dict(self.bpmn_process_instance)
+        result = BpmnProcessService._serializer.to_dict(self.bpmn_process_instance)
 
         if not serialize_script_engine_state and "data" in result:
             self._script_engine.environment.pop_state(result["data"])
@@ -1531,7 +1500,7 @@ class ProcessInstanceProcessor:
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
-            serializer=self._serializer,
+            serializer=BpmnProcessService._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             run_started_at=run_started_at,
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
@@ -1661,7 +1630,7 @@ class ProcessInstanceProcessor:
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
-            serializer=self._serializer,
+            serializer=BpmnProcessService._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             task_model_mapping=self.task_model_mapping,

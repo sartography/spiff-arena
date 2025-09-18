@@ -1,3 +1,14 @@
+import time
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
+from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -6,8 +17,33 @@ import json
 from hashlib import sha256
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 
+# STEP 1:
+# if not process_instance_model.spiffworkflow_fully_initialized():
+#     (
+#         bpmn_process_spec,
+#         subprocesses,
+#     ) = BpmnProcessService.get_process_model_and_subprocesses(
+#         process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
+#     )
+#
+# STEP 2:
+# bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
+#
+# STEP 3:
+# bpmn_definition_to_task_definitions_mappings: dict = {}
+# process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+#     BpmnProcessService.serialize(bpmn_process_instance),
+#     bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+# )
+#
+# STEP 4:
+# BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
+
 
 class BpmnProcessService:
+    wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
+    _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
+
     @classmethod
     def _store_bpmn_process_definition(
         cls,
@@ -225,3 +261,73 @@ class BpmnProcessService:
         if input_string is None:
             return None
         return input_string[:max_length]
+
+    @classmethod
+    def get_process_model_and_subprocesses(
+        cls,
+        process_model_identifier: str,
+        process_id_to_run: str | None = None,
+    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
+        process_model_info = ProcessModelService.get_process_model(process_model_identifier)
+        if process_model_info is None:
+            raise (
+                ApiError(
+                    "process_model_not_found",
+                    f"The given process model was not found: {process_model_identifier}.",
+                )
+            )
+        spec_files = FileSystemService.get_files(process_model_info)
+        return WorkflowSpecService.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
+
+    @staticmethod
+    def get_bpmn_process_instance_from_workflow_spec(
+        spec: BpmnProcessSpec,
+        subprocesses: IdToBpmnProcessSpecMapping | None = None,
+    ) -> BpmnWorkflow:
+        bpmn_process_instance = BpmnWorkflow(
+            spec,
+            subprocess_specs=subprocesses,
+        )
+        return bpmn_process_instance
+
+    @classmethod
+    def serialize(cls, bpmn_process_instance: BpmnWorkflow) -> dict:
+        return BpmnProcessService._serializer.to_dict(bpmn_process_instance)
+
+    @classmethod
+    def save_to_database(bpmn_definition_to_task_definitions_mappings: dict):
+        for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+            bpmn_process_definition = entity["bpmn_process_definition"]
+            bpd_id = 0
+            if bpmn_process_definition.id is None:
+                bpmn_process_definition_dict = {
+                    "single_process_hash": bpmn_process_definition.single_process_hash,
+                    "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
+                    "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
+                    "bpmn_name": bpmn_process_definition.bpmn_name,
+                    "properties_json": bpmn_process_definition.properties_json,
+                    "updated_at_in_seconds": round(time.time()),
+                    "created_at_in_seconds": round(time.time()),
+                }
+                result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+                db.session.commit()
+                bpd_id = result.inserted_primary_key[0]
+                if bpd_id == 0:
+                    bpdm = BpmnProcessDefinitionModel.query.filter_by(
+                        full_process_model_hash=bpmn_process_definition.full_process_model_hash
+                    ).first()
+                    bpd_id = bpdm.id
+
+            for identifier, definition in entity.items():
+                if definition.id is None and identifier != "bpmn_process_definition":
+                    task_definition_dict = {
+                        "bpmn_process_definition_id": bpd_id,
+                        "bpmn_identifier": definition.bpmn_identifier,
+                        "bpmn_name": definition.bpmn_name,
+                        "properties_json": definition.properties_json,
+                        "typename": definition.typename,
+                        "updated_at_in_seconds": round(time.time()),
+                        "created_at_in_seconds": round(time.time()),
+                    }
+                    TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+            db.session.commit()
