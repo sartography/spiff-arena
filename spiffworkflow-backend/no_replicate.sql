@@ -1,0 +1,1 @@
+INSERT INTO bpmn_process_definition (single_process_hash, full_process_model_hash, bpmn_identifier, bpmn_name, properties_json) VALUES ('zzz', 'bbb', 'proc2', 'Other Process', '{}') ON DUPLICATE KEY UPDATE single_process_hash = 'zzz', bpmn_identifier = 'proc2', bpmn_name = 'Other Process', properties_json = '{}', full_process_model_hash = 'bbb';
