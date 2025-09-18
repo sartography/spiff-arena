@@ -330,7 +330,7 @@ class BpmnProcessService:
         return BpmnProcessService._serializer.to_dict(bpmn_process_instance)
 
     @classmethod
-    def save_to_database(bpmn_definition_to_task_definitions_mappings: dict):
+    def save_to_database(cls, bpmn_definition_to_task_definitions_mappings: dict) -> None:
         for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
             bpmn_process_definition = entity["bpmn_process_definition"]
             bpd_id = 0
