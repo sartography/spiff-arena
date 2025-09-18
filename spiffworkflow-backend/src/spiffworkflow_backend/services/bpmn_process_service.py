@@ -1,21 +1,56 @@
-import time
-from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
-from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
-from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
-from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 import json
+import time
 from hashlib import sha256
+
+from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
+
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
+from spiffworkflow_backend.data_stores.json import JSONDataStore
+from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
+from spiffworkflow_backend.data_stores.json import JSONFileDataStore
+from spiffworkflow_backend.data_stores.json import JSONFileDataStoreConverter
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
+from spiffworkflow_backend.data_stores.kkv import KKVDataStoreConverter
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
+from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.service_task_service import CustomServiceTask
+from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
+from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+from spiffworkflow_backend.specs.start_event import StartEvent
+
+SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
+
+
+# this custom converter is just so we use 'ServiceTask' as the typename in the serialization
+# rather than 'CustomServiceTask'
+class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
+    def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
+        super().__init__(target_class, registry, typename)
+
+
+SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
+del SPIFF_CONFIG[ServiceTask]
+
+SPIFF_CONFIG[StartEvent] = EventConverter
+SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
+SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
+SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
+SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 
 # STEP 1:
 # if not process_instance_model.spiffworkflow_fully_initialized():

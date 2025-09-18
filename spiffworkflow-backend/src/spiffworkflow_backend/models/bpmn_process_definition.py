@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from sqlalchemy.dialects import mysql
 import copy
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from flask import current_app
-
 from dataclasses import dataclass
 
+from flask import current_app
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects import mysql
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db

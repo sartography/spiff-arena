@@ -1,13 +1,13 @@
 from __future__ import annotations
-import copy
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from flask import current_app
 
+import copy
 from dataclasses import dataclass
 
+from flask import current_app
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel

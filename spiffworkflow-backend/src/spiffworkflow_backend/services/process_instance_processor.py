@@ -15,7 +15,6 @@ from collections.abc import Callable
 from contextlib import suppress
 from datetime import datetime
 from datetime import timedelta
-from hashlib import sha256
 from typing import Any
 from typing import NewType
 from uuid import UUID
@@ -30,21 +29,14 @@ from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
 from SpiffWorkflow.bpmn.script_engine import TaskDataEnvironment
-from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
-from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
 # fix for StandardLoopTask
-from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskIterator  # type: ignore
@@ -56,21 +48,12 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
     queue_event_notifier_if_appropriate,
 )
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
-from spiffworkflow_backend.data_stores.json import JSONDataStore
-from spiffworkflow_backend.data_stores.json import JSONDataStoreConverter
-from spiffworkflow_backend.data_stores.json import JSONFileDataStore
-from spiffworkflow_backend.data_stores.json import JSONFileDataStoreConverter
-from spiffworkflow_backend.data_stores.kkv import KKVDataStore
-from spiffworkflow_backend.data_stores.kkv import KKVDataStoreConverter
-from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
-from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStoreConverter
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.interfaces import PotentialOwner
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 
 # noqa: F401
 from spiffworkflow_backend.models.db import db
@@ -88,17 +71,14 @@ from spiffworkflow_backend.models.process_instance_metadata import ProcessInstan
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.service_task_service import CustomServiceTask
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
@@ -111,28 +91,6 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskRunnab
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
-from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
-from spiffworkflow_backend.specs.start_event import StartEvent
-
-SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
-
-
-# this custom converter is just so we use 'ServiceTask' as the typename in the serialization
-# rather than 'CustomServiceTask'
-class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
-    def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
-        super().__init__(target_class, registry, typename)
-
-
-SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
-del SPIFF_CONFIG[ServiceTask]
-
-SPIFF_CONFIG[StartEvent] = EventConverter
-SPIFF_CONFIG[JSONDataStore] = JSONDataStoreConverter
-SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
-SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
-SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
-
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
