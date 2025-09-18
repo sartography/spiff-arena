@@ -1070,16 +1070,27 @@ class ProcessInstanceProcessor:
 
         if bpmn_process_definition is None:
             task_specs = process_bpmn_properties.pop("task_specs")
-            bpmn_process_definition_dict = {
-                "single_process_hash": single_process_hash,
-                "full_process_model_hash": full_process_model_hash,
-                "bpmn_identifier": process_bpmn_identifier,
-                "bpmn_name": process_bpmn_name,
-                "properties_json": process_bpmn_properties,
-            }
-            bpmn_process_definition = BpmnProcessDefinitionModel(**bpmn_process_definition_dict)
+            # bpmn_process_definition_dict = {
+            #     "single_process_hash": single_process_hash,
+            #     "full_process_model_hash": full_process_model_hash,
+            #     "bpmn_identifier": process_bpmn_identifier,
+            #     "bpmn_name": process_bpmn_name,
+            #     "properties_json": process_bpmn_properties,
+            # }
+            print("WE ADD STUFF?")
+            # bpmn_process_definition = BpmnProcessDefinitionModel(**bpmn_process_definition_dict)
+            bpmn_process_definition = BpmnProcessDefinitionModel(
+                single_process_hash=single_process_hash,
+                full_process_model_hash=full_process_model_hash,
+                bpmn_identifier=process_bpmn_identifier,
+                bpmn_name=process_bpmn_name,
+                properties_json=process_bpmn_properties,
+            )
+            print("WE DONE ADD")
+
             process_bpmn_properties["task_specs"] = task_specs
-            # BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+            # # BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+            # # db.session.add(bpmn_process_definition)
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 bpmn_process_definition.bpmn_identifier,
@@ -1096,40 +1107,40 @@ class ProcessInstanceProcessor:
                     properties_json=task_bpmn_properties,
                     typename=task_bpmn_properties["typename"],
                 )
-                db.session.add(task_definition)
+                # db.session.add(task_definition)
                 if store_bpmn_definition_mappings:
                     cls._update_bpmn_definition_mappings(
                         bpmn_definition_to_task_definitions_mappings,
                         process_bpmn_identifier,
                         task_definition=task_definition,
                     )
-        elif store_bpmn_definition_mappings:
-            # this should only ever happen when new process instances use a pre-existing bpmn process definitions
-            # otherwise this should get populated on processor initialization
-            cls._update_bpmn_definition_mappings(
-                bpmn_definition_to_task_definitions_mappings,
-                process_bpmn_identifier,
-                bpmn_process_definition=bpmn_process_definition,
-            )
-            task_definitions = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=bpmn_process_definition.id).all()
-            for task_definition in task_definitions:
-                cls._update_bpmn_definition_mappings(
-                    bpmn_definition_to_task_definitions_mappings,
-                    process_bpmn_identifier,
-                    task_definition=task_definition,
-                )
+        # elif store_bpmn_definition_mappings:
+        #     # this should only ever happen when new process instances use a pre-existing bpmn process definitions
+        #     # otherwise this should get populated on processor initialization
+        #     cls._update_bpmn_definition_mappings(
+        #         bpmn_definition_to_task_definitions_mappings,
+        #         process_bpmn_identifier,
+        #         bpmn_process_definition=bpmn_process_definition,
+        #     )
+        #     task_definitions = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=bpmn_process_definition.id).all()
+        #     for task_definition in task_definitions:
+        #         cls._update_bpmn_definition_mappings(
+        #             bpmn_definition_to_task_definitions_mappings,
+        #             process_bpmn_identifier,
+        #             task_definition=task_definition,
+        #         )
 
-        if bpmn_process_definition_parent is not None:
-            bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
-                bpmn_process_definition_child_id=bpmn_process_definition.id,
-            ).first()
-            if bpmn_process_definition_relationship is None:
-                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
-                    bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
-                    bpmn_process_definition_child_id=bpmn_process_definition.id,
-                )
-                db.session.add(bpmn_process_definition_relationship)
+        # if bpmn_process_definition_parent is not None:
+        #     bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
+        #         bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
+        #         bpmn_process_definition_child_id=bpmn_process_definition.id,
+        #     ).first()
+        #     if bpmn_process_definition_relationship is None:
+        #         bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
+        #             bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
+        #             bpmn_process_definition_child_id=bpmn_process_definition.id,
+        #         )
+        #         db.session.add(bpmn_process_definition_relationship)
         return bpmn_process_definition
 
     @classmethod
@@ -1161,13 +1172,48 @@ class ProcessInstanceProcessor:
             store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             full_bpmn_spec_dict=bpmn_spec_dict,
         )
-        for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
-            cls._store_bpmn_process_definition(
-                process_bpmn_properties,
-                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-                bpmn_process_definition_parent=bpmn_process_definition_parent,
-                store_bpmn_definition_mappings=store_bpmn_definition_mappings,
-            )
+        # for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+        #     bpmn_process_definition = entity["bpmn_process_definition"]
+        #     bpd_id = 0
+        #     if bpmn_process_definition.id is None:
+        #         bpmn_process_definition_dict = {
+        #             "single_process_hash": bpmn_process_definition.single_process_hash,
+        #             "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
+        #             "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
+        #             "bpmn_name": bpmn_process_definition.bpmn_name,
+        #             "properties_json": bpmn_process_definition.properties_json,
+        #             "updated_at_in_seconds": round(time.time()),
+        #             "created_at_in_seconds": round(time.time()),
+        #         }
+        #         result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+        #         db.session.commit()
+        #         bpd_id = result.inserted_primary_key[0]
+        #         if bpd_id == 0:
+        #             bpdm = BpmnProcessDefinitionModel.query.filter_by(
+        #                 full_process_model_hash=bpmn_process_definition.full_process_model_hash
+        #             ).first()
+        #             bpd_id = bpdm.id
+        #
+        #     for identifier, definition in entity.items():
+        #         if definition.id is None and identifier != "bpmn_process_definition":
+        #             task_definition_dict = {
+        #                 "bpmn_process_definition_id": bpd_id,
+        #                 "bpmn_identifier": definition.bpmn_identifier,
+        #                 "bpmn_name": definition.bpmn_name,
+        #                 "properties_json": definition.properties_json,
+        #                 "typename": definition.typename,
+        #                 "updated_at_in_seconds": round(time.time()),
+        #                 "created_at_in_seconds": round(time.time()),
+        #             }
+        #             TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+        #     db.session.commit()
+        # for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
+        #     cls._store_bpmn_process_definition(
+        #         process_bpmn_properties,
+        #         bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        #         bpmn_process_definition_parent=bpmn_process_definition_parent,
+        #         store_bpmn_definition_mappings=store_bpmn_definition_mappings,
+        #     )
         process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
     @classmethod
@@ -1178,20 +1224,21 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        print("HOOOOOOOOOOOOOOOOOO")
+        print(f"{self.process_instance_model.id}: HOOOOOOOOOOOOOOOOOO")
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
             f"the_status: {self.process_instance_model.status} for instance {self.process_instance_model.id}"
         )
-        bpmn_process_definition_dict = {
-            "single_process_hash": self.process_instance_model.bpmn_process_definition.single_process_hash,
-            "full_process_model_hash": self.process_instance_model.bpmn_process_definition.full_process_model_hash,
-            "bpmn_identifier": self.process_instance_model.bpmn_process_definition.bpmn_identifier,
-            "bpmn_name": self.process_instance_model.bpmn_process_definition.bpmn_name,
-            "properties_json": self.process_instance_model.bpmn_process_definition.properties_json,
-        }
-        BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+        # bpmn_process_definition_dict = {
+        #     "single_process_hash": self.process_instance_model.bpmn_process_definition.single_process_hash,
+        #     "full_process_model_hash": self.process_instance_model.bpmn_process_definition.full_process_model_hash,
+        #     "bpmn_identifier": self.process_instance_model.bpmn_process_definition.bpmn_identifier,
+        #     "bpmn_name": self.process_instance_model.bpmn_process_definition.bpmn_name,
+        #     "properties_json": self.process_instance_model.bpmn_process_definition.properties_json,
+        # }
+        # BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+        # db.session.add(self.process_instance_model.bpmn_process_definition)
 
         if self.process_instance_model.start_in_seconds is None:
             self.process_instance_model.start_in_seconds = round(time.time())
@@ -1285,7 +1332,10 @@ class ProcessInstanceProcessor:
             for at in initial_human_tasks:
                 at.completed = True
                 db.session.add(at)
+
+        print(f"{self.process_instance_model.id}: WE COMMITTING")
         db.session.commit()
+        print(f"{self.process_instance_model.id}: WE DONE COMMITTING")
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
         """Get a serialized version of a task spec."""
@@ -1505,22 +1555,24 @@ class ProcessInstanceProcessor:
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
         # Debug logs for engine steps execution
-        process_id = self.process_instance_model.id
+        process_instance_id = self.process_instance_model.id
         current_status = self.process_instance_model.status
         ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
         waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
 
-        current_app.logger.debug(f"ENGINE STEPS - START: Process {process_id}, Status: {current_status}")
+        current_app.logger.debug(f"ENGINE STEPS - START: Process Instance {process_instance_id}, Status: {current_status}")
         current_app.logger.debug(f"ENGINE STEPS - Ready tasks: {ready_tasks}")
         current_app.logger.debug(f"ENGINE STEPS - Waiting tasks: {waiting_tasks}")
 
         self.raise_on_high_process_instance_count()
 
-        self._add_bpmn_process_definitions(
-            self.serialize(),
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            process_instance_model=self.process_instance_model,
-        )
+        # print(f"{self.process_instance_model.id}: WE ATTEMPT ADD DEFS")
+        # self._add_bpmn_process_definitions(
+        #     self.serialize(),
+        #     bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        #     process_instance_model=self.process_instance_model,
+        # )
+        # print(f"{self.process_instance_model.id}: WE DONE ADD DEFS")
 
         task_model_delegate = TaskModelSavingDelegate(
             serializer=self._serializer,
@@ -1546,6 +1598,7 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
+        print(f"{self.process_instance_model.id}: WE RUN")
         task_runnability = execution_service.run_and_save(
             exit_at,
             save,
@@ -1553,15 +1606,21 @@ class ProcessInstanceProcessor:
             # profile=True,
             needs_dequeue=needs_dequeue,
         )
+        print(f"{self.process_instance_model.id}: WE DONE RUN")
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
+        print(f"{self.process_instance_model.id}: HERE1")
         self.check_all_tasks()
+        print(f"{self.process_instance_model.id}: HERE2")
 
         # Debug logs for engine steps completion
         new_status = self.get_status().value
+        print(f"{self.process_instance_model.id}: HERE3")
         after_ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
+        print(f"{self.process_instance_model.id}: HERE4")
         after_waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
+        print(f"{self.process_instance_model.id}: HERE5")
 
-        current_app.logger.debug(f"ENGINE STEPS - FINISH: Process {process_id}, New Status: {new_status}")
+        current_app.logger.debug(f"ENGINE STEPS - FINISH: Process Instance {process_instance_id}, New Status: {new_status}")
         current_app.logger.debug(f"ENGINE STEPS - New Ready tasks: {after_ready_tasks}")
         current_app.logger.debug(f"ENGINE STEPS - New Waiting tasks: {after_waiting_tasks}")
         current_app.logger.debug(f"ENGINE STEPS - Task Runnability: {task_runnability}")

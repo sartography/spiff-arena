@@ -1,3 +1,6 @@
+import time
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+import traceback
 from typing import Any
 
 from flask import current_app
@@ -20,6 +23,7 @@ from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
@@ -154,11 +158,11 @@ class MessageService:
             # db.session.rollback() # don't try to roll this back.  The message failed, and we need to know why.
             message_instance_send.status = "failed"
             message_instance_send.failure_cause = str(exception)
-            db.session.add(message_instance_send)
+            # db.session.add(message_instance_send)
             if message_instance_receive:
                 message_instance_receive.status = "failed"
                 message_instance_receive.failure_cause = str(exception)
-                db.session.add(message_instance_receive)
+                # db.session.add(message_instance_receive)
             if processor_receive is not None:
                 # We may not be able to save here, this can raise a new exception.
                 try:
@@ -167,7 +171,8 @@ class MessageService:
                     db.session.commit()
                     raise exception from save_exception
             else:
-                db.session.commit()
+                print("HERE WE ARE", str(exception))
+                # db.session.commit()
             if receiving_process_instance:
                 ErrorHandlingService.handle_error(receiving_process_instance, exception)
             if isinstance(exception, SpiffWorkflowException):
@@ -203,7 +208,53 @@ class MessageService:
         )
         with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
             processor_receive = ProcessInstanceProcessor(receiving_process_instance)
-            cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+            # cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+            processor_receive._add_bpmn_process_definitions(
+                processor_receive.serialize(),
+                bpmn_definition_to_task_definitions_mappings=processor_receive.bpmn_definition_to_task_definitions_mappings,
+                process_instance_model=processor_receive.process_instance_model,
+            )
+            # print(
+            #     receiving_process_instance.id,
+            #     "MAPPING",
+            #     processor_receive.bpmn_definition_to_task_definitions_mappings["Test_message_start_event_5arl359"].keys(),
+            # )
+            for _bpmn_process_identifier, entity in processor_receive.bpmn_definition_to_task_definitions_mappings.items():
+                bpmn_process_definition = entity["bpmn_process_definition"]
+                bpd_id = 0
+                if bpmn_process_definition.id is None:
+                    bpmn_process_definition_dict = {
+                        "single_process_hash": bpmn_process_definition.single_process_hash,
+                        "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
+                        "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
+                        "bpmn_name": bpmn_process_definition.bpmn_name,
+                        "properties_json": bpmn_process_definition.properties_json,
+                        "updated_at_in_seconds": round(time.time()),
+                        "created_at_in_seconds": round(time.time()),
+                    }
+                    result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+                    db.session.commit()
+                    bpd_id = result.inserted_primary_key[0]
+                    if bpd_id == 0:
+                        bpdm = BpmnProcessDefinitionModel.query.filter_by(
+                            full_process_model_hash=bpmn_process_definition.full_process_model_hash
+                        ).first()
+                        bpd_id = bpdm.id
+
+                for identifier, definition in entity.items():
+                    if definition.id is None and identifier != "bpmn_process_definition":
+                        task_definition_dict = {
+                            "bpmn_process_definition_id": bpd_id,
+                            "bpmn_identifier": definition.bpmn_identifier,
+                            "bpmn_name": definition.bpmn_name,
+                            "properties_json": definition.properties_json,
+                            "typename": definition.typename,
+                            "updated_at_in_seconds": round(time.time()),
+                            "created_at_in_seconds": round(time.time()),
+                        }
+                        TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+                db.session.commit()
+        raise Exception("WE MADE IT")
 
         execution_strategy_name = None
         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
@@ -333,8 +384,9 @@ class MessageService:
         try:
             receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
         except Exception as e:
+            print("HERE WE ARE AGAIN", str(e))
             db.session.delete(message_instance)
-            db.session.commit()
+            # db.session.commit()
             raise e
         if not receiver_message:
             db.session.delete(message_instance)

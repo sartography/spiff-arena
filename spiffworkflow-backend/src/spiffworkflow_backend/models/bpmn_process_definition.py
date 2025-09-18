@@ -8,7 +8,7 @@ from flask import current_app
 
 from dataclasses import dataclass
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, text
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -64,7 +64,6 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         new_stuff = copy.copy(bpmn_process_definition_dict)
         del new_stuff["full_process_model_hash"]
         on_duplicate_key_stmt = None
-        print("HEYYYYYYYYY")
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
             insert_stmt = mysql_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
             on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_stuff)
@@ -76,4 +75,4 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         else:
             insert_stmt = postgres_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["full_process_model_hash"])
-        db.session.execute(on_duplicate_key_stmt)
+        return db.session.execute(on_duplicate_key_stmt)
