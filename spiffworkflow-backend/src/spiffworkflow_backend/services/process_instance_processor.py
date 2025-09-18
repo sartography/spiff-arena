@@ -1299,10 +1299,11 @@ class ProcessInstanceProcessor:
 
         self.raise_on_high_process_instance_count()
 
-        self.process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
-            self.serialize(),
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-        )
+        if self.process_instance_model.bpmn_process is None:
+            self.process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+                self.serialize(),
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            )
 
         task_model_delegate = TaskModelSavingDelegate(
             serializer=self._serializer,
