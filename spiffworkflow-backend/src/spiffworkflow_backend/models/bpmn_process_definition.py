@@ -60,8 +60,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> None:
-        new_stuff = copy.copy(bpmn_process_definition_dict)
-        del new_stuff["full_process_model_hash"]
+        new_stuff = {"bpmn_identifier": bpmn_process_definition_dict["bpmn_identifier"]}
         on_duplicate_key_stmt = None
         print("HEYYYYYYYYY")
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
@@ -75,4 +74,4 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         else:
             insert_stmt = postgres_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["full_process_model_hash"])
-        db.session.execute(on_duplicate_key_stmt)
+        return db.session.execute(on_duplicate_key_stmt)

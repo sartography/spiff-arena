@@ -61,6 +61,7 @@ from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -137,6 +138,8 @@ class ProcessInstanceService:
         except GitCommandError as ex:
             git_revision_error = ex
             current_git_revision = None
+        print("SESSION STUFF 4", db.session.new)
+        BpmnProcessService.persist_bpmn_process_definition(process_model.id)
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator_id=user.id,

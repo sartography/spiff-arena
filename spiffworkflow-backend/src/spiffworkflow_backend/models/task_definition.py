@@ -45,9 +45,7 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def insert_or_update_record(cls, task_definition_dict: dict) -> None:
-        new_stuff = copy.copy(task_definition_dict)
-        del new_stuff["bpmn_process_definition_id"]
-        del new_stuff["bpmn_identifier"]
+        new_stuff = {"bpmn_identifier": task_definition_dict["bpmn_identifier"]}
         on_duplicate_key_stmt = None
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
             insert_stmt = mysql_insert(TaskDefinitionModel).values(task_definition_dict)
