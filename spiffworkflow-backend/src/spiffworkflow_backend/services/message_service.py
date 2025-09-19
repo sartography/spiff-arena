@@ -151,7 +151,6 @@ class MessageService:
                 return None
 
         except Exception as exception:
-            raise exception
             # db.session.rollback() # don't try to roll this back.  The message failed, and we need to know why.
             message_instance_send.status = "failed"
             message_instance_send.failure_cause = str(exception)
@@ -199,7 +198,6 @@ class MessageService:
         execution_mode: str | None = None,
     ) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor]:
         """Start up a process instance, so it is ready to catch the event."""
-        print(message_instance_send.id, "SESSION STUFF 3", db.session.new)
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier, user, commit_db=False
         )
@@ -331,18 +329,11 @@ class MessageService:
             user_id=g.user.id,
         )
         db.session.add(message_instance)
-        print(message_instance.id, "SESSION STUFF 1", db.session.new)
         db.session.commit()
-        print(message_instance.id, "SESSION STUFF 2", db.session.new)
         try:
             receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
         except Exception as e:
-            raise e
-            # print(message_instance.id, "SESSION STUFF", db.session.new)
-            try:
-                db.session.commit()
-            except Exception:
-                pass
+            db.session.commit()
             raise e
         if not receiver_message:
             db.session.delete(message_instance)

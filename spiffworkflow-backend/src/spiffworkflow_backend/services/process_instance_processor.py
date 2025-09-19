@@ -509,6 +509,19 @@ class ProcessInstanceProcessor:
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
+        BpmnProcessService.save_to_database(
+            bpmn_definition_to_task_definitions_mappings,
+            bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
+        )
+
+        # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
+        # is to load them so we can get the db id's.
+        # We could potentially do this at save time by recreating the mappings var after getting the new id.
+        bpmn_definition_to_task_definitions_mappings = {}
+        process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+            bpmn_process_dict,
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        )
 
         if bpmn_process_instance is None:
             bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
@@ -752,6 +765,7 @@ class ProcessInstanceProcessor:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.spiffworkflow_fully_initialized():
+            print("WE INITI")
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -771,13 +785,17 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
+                print("HERE STUFF AGAIN 2", len(process_copy["subprocesses"].keys()))
                 bpmn_process_instance = BpmnProcessService._serializer.from_dict(process_copy)
+                print("HERE STUFF AGAIN 3", bpmn_process_instance.subprocesses)
+                # print("HERE STUFF AGAIN 4", process_copy["subprocesses"])
                 bpmn_process_instance.get_tasks()
             except Exception as err:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
+            print("WE LOAD NEW")
             bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
 
         return (
@@ -888,7 +906,6 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        print("HOOOOOOOOOOOOOOOOOO")
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from dataclasses import dataclass
 
 from flask import current_app
@@ -55,4 +54,4 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(
                 index_elements=["bpmn_process_definition_id", "bpmn_identifier"]
             )
-        db.session.execute(on_duplicate_key_stmt)
+        return db.session.execute(on_duplicate_key_stmt)

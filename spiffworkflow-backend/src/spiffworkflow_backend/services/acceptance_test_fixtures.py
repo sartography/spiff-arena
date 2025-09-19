@@ -26,7 +26,7 @@ def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     process_instances = []
     for i in range(len(statuses)):
         process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            test_process_model_id, user
+            test_process_model_id, user, load_bpmn_process_model=False
         )
         process_instance.status = statuses[i]
         process_instance.start_in_seconds = current_time - (3600 * i)

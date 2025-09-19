@@ -1,4 +1,3 @@
-from sqlalchemy.exc import OperationalError
 import json
 import time
 from hashlib import sha256
@@ -26,7 +25,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -34,8 +32,6 @@ from spiffworkflow_backend.services.service_task_service import CustomServiceTas
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 from spiffworkflow_backend.specs.start_event import StartEvent
-
-SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 
 
 # this custom converter is just so we use 'ServiceTask' as the typename in the serialization
@@ -45,6 +41,7 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
         super().__init__(target_class, registry, typename)
 
 
+SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
 del SPIFF_CONFIG[ServiceTask]
 
@@ -69,24 +66,20 @@ class BpmnProcessService:
         bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
 
         bpmn_definition_to_task_definitions_mappings: dict = {}
-        BpmnProcessService._add_bpmn_process_definitions(
+        bpmn_process_definition_parent = BpmnProcessService._add_bpmn_process_definitions(
             BpmnProcessService.serialize(bpmn_process_instance),
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
 
-        BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
-        # try:
-        #     BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
-        # except OperationalError:
-        #     time.sleep(1)
-        #     BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
+        BpmnProcessService.save_to_database(
+            bpmn_definition_to_task_definitions_mappings, bpmn_process_definition_parent=bpmn_process_definition_parent
+        )
 
     @classmethod
     def _store_bpmn_process_definition(
         cls,
         process_bpmn_properties: dict,
         bpmn_definition_to_task_definitions_mappings: dict,
-        bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
         store_bpmn_definition_mappings: bool = False,
         full_bpmn_spec_dict: dict | None = None,
     ) -> BpmnProcessDefinitionModel:
@@ -152,18 +145,6 @@ class BpmnProcessService:
                     process_bpmn_identifier,
                     task_definition=task_definition,
                 )
-
-        # if bpmn_process_definition_parent is not None:
-        #     bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-        #         bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
-        #         bpmn_process_definition_child_id=bpmn_process_definition.id,
-        #     ).first()
-        #     if bpmn_process_definition_relationship is None:
-        #         bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
-        #             bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
-        #             bpmn_process_definition_child_id=bpmn_process_definition.id,
-        #         )
-        #         db.session.add(bpmn_process_definition_relationship)
         return bpmn_process_definition
 
     @classmethod
@@ -195,7 +176,6 @@ class BpmnProcessService:
             cls._store_bpmn_process_definition(
                 process_bpmn_properties,
                 bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-                bpmn_process_definition_parent=bpmn_process_definition_parent,
                 store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             )
         return bpmn_process_definition_parent
@@ -262,6 +242,7 @@ class BpmnProcessService:
         )
 
         bpmn_subprocess_definition_bpmn_identifiers = {}
+        print("WE SET DEF DICT")
         for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
@@ -330,7 +311,13 @@ class BpmnProcessService:
         return BpmnProcessService._serializer.to_dict(bpmn_process_instance)
 
     @classmethod
-    def save_to_database(cls, bpmn_definition_to_task_definitions_mappings: dict) -> None:
+    def save_to_database(
+        cls,
+        bpmn_definition_to_task_definitions_mappings: dict,
+        bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
+    ) -> None:
+        parent_id = None
+        subprocess_ids = []
         for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
             bpmn_process_definition = entity["bpmn_process_definition"]
             bpd_id = 0
@@ -353,6 +340,12 @@ class BpmnProcessService:
                     ).first()
                     bpd_id = bpdm.id
 
+                if bpmn_process_definition_parent is not None:
+                    if bpmn_process_definition_parent.bpmn_identifier == bpmn_process_definition_dict["bpmn_identifier"]:
+                        parent_id = bpd_id
+                    else:
+                        subprocess_ids.append(bpd_id)
+
             for identifier, definition in entity.items():
                 if definition.id is None and identifier != "bpmn_process_definition":
                     task_definition_dict = {
@@ -364,5 +357,25 @@ class BpmnProcessService:
                         "updated_at_in_seconds": round(time.time()),
                         "created_at_in_seconds": round(time.time()),
                     }
-                    TaskDefinitionModel.insert_or_update_record(task_definition_dict)
-            db.session.commit()
+                    result = TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+                    # def_id = result.inserted_primary_key[0]
+                    # if def_id == 0:
+                    #     tdm = TaskDefinitionModel.query.filter_by(
+                    #         full_process_model_hash=bpmn_process_definition.full_process_model_hash
+                    #     ).first()
+                    #     def_id = tdm.id
+                    # definition.id = def_id
+
+        for bpd_id in subprocess_ids:
+            bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
+                bpmn_process_definition_parent_id=parent_id,
+                bpmn_process_definition_child_id=bpd_id,
+            ).first()
+            if bpmn_process_definition_relationship is None:
+                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
+                    bpmn_process_definition_parent_id=parent_id,
+                    bpmn_process_definition_child_id=bpd_id,
+                )
+                db.session.add(bpmn_process_definition_relationship)
+
+        db.session.commit()

@@ -1,3 +1,4 @@
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 import copy
 import datetime
 import os
@@ -345,6 +346,7 @@ class BaseTest:
         if user is None:
             user = self.find_or_create_user()
 
+        BpmnProcessService.persist_bpmn_process_definition(process_model.id)
         current_time = round(time.time())
         start_in_seconds = None
         end_in_seconds = None

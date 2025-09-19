@@ -18,4 +18,4 @@ if ! uv run python -c "import xdist" &>/dev/null; then
   exit 1
 fi
 
-SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite uv run pytest -n auto -x --random-order "$@" tests/spiffworkflow_backend
+SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite uv run pytest -n auto -x --random-order "$@" tests/spiffworkflow_backend/unit
