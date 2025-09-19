@@ -505,14 +505,17 @@ class ProcessInstanceProcessor:
         store_process_instance_events: bool = True,
         bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> None:
-        process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
-            bpmn_process_dict,
-            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        process_instance_model.bpmn_process_definition = BpmnProcessService.persist_bpmn_process_definition(
+            process_instance_model.process_model_identifier
         )
-        BpmnProcessService.save_to_database(
-            bpmn_definition_to_task_definitions_mappings,
-            bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
-        )
+        # process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+        #     bpmn_process_dict,
+        #     bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        # )
+        # BpmnProcessService.save_to_database(
+        #     bpmn_definition_to_task_definitions_mappings,
+        #     bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
+        # )
 
         # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
@@ -715,6 +718,7 @@ class ProcessInstanceProcessor:
                         TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"])  # type: ignore
                     )
                 bpmn_subprocesses = bpmn_subprocesses_query.all()
+                print("OUR SUBS", bpmn_subprocesses)
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
                     subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier

@@ -57,12 +57,13 @@ class BpmnProcessService:
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
 
     @classmethod
-    def persist_bpmn_process_definition(cls, process_model_identifier: str) -> None:
+    def persist_bpmn_process_definition(cls, process_model_identifier: str) -> BpmnProcessDefinitionModel:
         (
             bpmn_process_spec,
             subprocesses,
         ) = BpmnProcessService.get_process_model_and_subprocesses(process_model_identifier)
 
+        print("OUR SUB", subprocesses)
         bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
 
         bpmn_definition_to_task_definitions_mappings: dict = {}
@@ -74,6 +75,7 @@ class BpmnProcessService:
         BpmnProcessService.save_to_database(
             bpmn_definition_to_task_definitions_mappings, bpmn_process_definition_parent=bpmn_process_definition_parent
         )
+        return bpmn_process_definition_parent
 
     @classmethod
     def _store_bpmn_process_definition(
@@ -244,6 +246,7 @@ class BpmnProcessService:
         bpmn_subprocess_definition_bpmn_identifiers = {}
         print("WE SET DEF DICT")
         for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
+            print("WE HAVE DEF", bpmn_process_definition)
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 bpmn_subprocess_definition.bpmn_identifier,
