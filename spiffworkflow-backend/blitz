@@ -43,29 +43,28 @@ BPMN_PROCESS_IDS_COMMA_SEP=$(echo "$BPMN_PROCESS_IDS" | tr ' ' ',' | tr '\n' ','
 TASK_DEFINITION_IDS=$(mysql -u"$DB_USER" "$DB_NAME" -sN -e "SELECT id FROM task_definition WHERE bpmn_process_definition_id IN ($BPMN_DEF_IDS_COMMA_SEP);")
 TASK_DEFINITION_IDS_COMMA_SEP=$(echo "$TASK_DEFINITION_IDS" | tr ' ' ',' | tr '\n' ',' | sed -E 's/,*$//g')
 
-# --- 2. Execute Deletions in Dependency Order ---
+# --- 2. Construct and Execute Deletions in Dependency Order ---
 
-echo "Disabling foreign key checks and starting transaction..."
-mysql -u"$DB_USER" "$DB_NAME" -e "SET FOREIGN_KEY_CHECKS=0;"
-mysql -u"$DB_USER" "$DB_NAME" -e "START TRANSACTION;"
+echo "Constructing SQL deletion statements..."
 
-echo "Deleting related records..."
+SQL_STATEMENTS="
+SET FOREIGN_KEY_CHECKS=0;
+START TRANSACTION;
 
-# 2.1. Tables depending on task GUIDs
-echo "  - Deleting from future_task..."
-mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM future_task;"
-echo "  - Deleting from task_instructions_for_end_user..."
-mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM task_instructions_for_end_user;"
+-- 2.1. Tables depending on task GUIDs
+DELETE FROM future_task;
+DELETE FROM task_instructions_for_end_user;
+"
 
 # 2.2. Tables depending on human_task IDs (which depend on process_instance_ids and task_guids)
 if [ -n "$PROCESS_INSTANCE_IDS" ]; then
   HUMAN_TASK_IDS=$(mysql -u"$DB_USER" "$DB_NAME" -sN -e "SELECT id FROM human_task WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);")
   HUMAN_TASK_IDS_COMMA_SEP=$(echo "$HUMAN_TASK_IDS" | tr ' ' ',' | tr '\n' ',' | sed -E 's/,*$//g')
   if [ -n "$HUMAN_TASK_IDS" ]; then
-    echo "  - Deleting from human_task_user..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM human_task_user WHERE human_task_id IN ($HUMAN_TASK_IDS_COMMA_SEP);"
-    echo "  - Deleting from human_task..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM human_task WHERE id IN ($HUMAN_TASK_IDS_COMMA_SEP);"
+    SQL_STATEMENTS+="
+DELETE FROM human_task_user WHERE human_task_id IN ($HUMAN_TASK_IDS_COMMA_SEP);
+DELETE FROM human_task WHERE id IN ($HUMAN_TASK_IDS_COMMA_SEP);
+"
   fi
 fi
 
@@ -74,10 +73,10 @@ if [ -n "$PROCESS_INSTANCE_IDS" ]; then
   MESSAGE_INSTANCE_IDS=$(mysql -u"$DB_USER" "$DB_NAME" -sN -e "SELECT id FROM message_instance WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);")
   MESSAGE_INSTANCE_IDS_COMMA_SEP=$(echo "$MESSAGE_INSTANCE_IDS" | tr ' ' ',' | tr '\n' ',' | sed -E 's/,*$//g')
   if [ -n "$MESSAGE_INSTANCE_IDS" ]; then
-    echo "  - Deleting from message_instance_correlation_rule..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM message_instance_correlation_rule WHERE message_instance_id IN ($MESSAGE_INSTANCE_IDS_COMMA_SEP);"
-    echo "  - Deleting from message_instance..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM message_instance WHERE id IN ($MESSAGE_INSTANCE_IDS_COMMA_SEP);"
+    SQL_STATEMENTS+="
+DELETE FROM message_instance_correlation_rule WHERE message_instance_id IN ($MESSAGE_INSTANCE_IDS_COMMA_SEP);
+DELETE FROM message_instance WHERE id IN ($MESSAGE_INSTANCE_IDS_COMMA_SEP);
+"
   fi
 fi
 
@@ -86,63 +85,70 @@ if [ -n "$PROCESS_INSTANCE_IDS" ]; then
   PROCESS_INSTANCE_EVENT_IDS=$(mysql -u"$DB_USER" "$DB_NAME" -sN -e "SELECT id FROM process_instance_event WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);")
   PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP=$(echo "$PROCESS_INSTANCE_EVENT_IDS" | tr ' ' ',' | tr '\n' ',' | sed -E 's/,*$//g')
   if [ -n "$PROCESS_INSTANCE_EVENT_IDS" ]; then
-    echo "  - Deleting from process_instance_error_detail..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_error_detail WHERE process_instance_event_id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);"
-    echo "  - Deleting from process_instance_migration_detail..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_migration_detail WHERE process_instance_event_id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);"
-    echo "  - Deleting from process_instance_event..."
-    mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_event WHERE id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);"
+    SQL_STATEMENTS+="
+DELETE FROM process_instance_error_detail WHERE process_instance_event_id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);
+DELETE FROM process_instance_migration_detail WHERE process_instance_event_id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);
+DELETE FROM process_instance_event WHERE id IN ($PROCESS_INSTANCE_EVENT_IDS_COMMA_SEP);
+"
   fi
 fi
 
 # 2.5. Other tables depending on process_instance IDs
 if [ -n "$PROCESS_INSTANCE_IDS" ]; then
-  echo "  - Deleting from process_instance_file_data..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_file_data WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);"
-  echo "  - Deleting from process_instance_metadata..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_metadata WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);"
-  echo "  - Deleting from process_instance_queue..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance_queue WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);"
-  echo "  - Deleting from task_draft_data..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM task_draft_data WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM process_instance_file_data WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);
+DELETE FROM process_instance_metadata WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);
+DELETE FROM process_instance_queue WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);
+DELETE FROM task_draft_data WHERE process_instance_id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);
+"
 fi
 
 # 2.6. Delete tasks
-echo "  - Deleting from task..."
-mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM task;"
+SQL_STATEMENTS+="
+DELETE FROM task;
+"
 
 # 2.7. Delete process instances
 if [ -n "$PROCESS_INSTANCE_IDS" ]; then
-  echo "  - Deleting from process_instance..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM process_instance WHERE id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM process_instance WHERE id IN ($PROCESS_INSTANCE_IDS_COMMA_SEP);
+"
 fi
 
 # 2.8. Delete bpmn_process records
 if [ -n "$BPMN_PROCESS_IDS" ]; then
-  echo "  - Deleting from bpmn_process..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM bpmn_process WHERE id IN ($BPMN_PROCESS_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM bpmn_process WHERE id IN ($BPMN_PROCESS_IDS_COMMA_SEP);
+"
 fi
 
 # 2.9. Delete task definitions
 if [ -n "$TASK_DEFINITION_IDS" ]; then
-  echo "  - Deleting from task_definition..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM task_definition WHERE id IN ($TASK_DEFINITION_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM task_definition WHERE id IN ($TASK_DEFINITION_IDS_COMMA_SEP);
+"
 fi
 
 # 2.10. Delete bpmn_process_definition_relationship records
 if [ -n "$BPMN_DEF_IDS" ]; then
-  echo "  - Deleting from bpmn_process_definition_relationship..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM bpmn_process_definition_relationship WHERE bpmn_process_definition_parent_id IN ($BPMN_DEF_IDS_COMMA_SEP) OR bpmn_process_definition_child_id IN ($BPMN_DEF_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM bpmn_process_definition_relationship WHERE bpmn_process_definition_parent_id IN ($BPMN_DEF_IDS_COMMA_SEP) OR bpmn_process_definition_child_id IN ($BPMN_DEF_IDS_COMMA_SEP);
+"
 fi
 
 # 2.11. Finally, delete the bpmn_process_definition records themselves
 if [ -n "$BPMN_DEF_IDS" ]; then
-  echo "  - Deleting from bpmn_process_definition..."
-  mysql -u"$DB_USER" "$DB_NAME" -e "DELETE FROM bpmn_process_definition WHERE id IN ($BPMN_DEF_IDS_COMMA_SEP);"
+  SQL_STATEMENTS+="
+DELETE FROM bpmn_process_definition WHERE id IN ($BPMN_DEF_IDS_COMMA_SEP);
+"
 fi
 
-echo "Committing transaction and re-enabling foreign key checks..."
-mysql -u"$DB_USER" "$DB_NAME" -e "COMMIT;"
-mysql -u"$DB_USER" "$DB_NAME" -e "SET FOREIGN_KEY_CHECKS=1;"
+SQL_STATEMENTS+="
+COMMIT;
+SET FOREIGN_KEY_CHECKS=1;
+"
+
+echo "Executing all deletion statements in a single transaction..."
+mysql -u"$DB_USER" "$DB_NAME" -e "$SQL_STATEMENTS"
 
 echo "Deletion process completed successfully."
