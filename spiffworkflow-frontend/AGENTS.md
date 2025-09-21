@@ -2,24 +2,21 @@
 
 This document provides instructions for AI agents working in the `spiffworkflow-frontend` directory.
 
-This is a React application built with Vite and using `bun` as the package manager.
+This is a React application built with Vite and using `npm` as the package manager.
 
 ## Environment Setup
 
-1.  **Install `bun`:**
-    If you don't have `bun` installed, you will need to install it first. Follow the instructions at https://bun.sh/docs/installation.
-
-2.  **Install Dependencies:**
+1.  **Install Dependencies:**
     From the `spiffworkflow-frontend` directory, run:
     ```bash
-    bun install
+    npm install
     ```
 
 ## Development
 
 -   **Run the development server:**
     ```bash
-    bun start
+    npm start
     ```
     This will start the Vite development server.
 
@@ -27,23 +24,25 @@ This is a React application built with Vite and using `bun` as the package manag
 
 -   **Build for production:**
     ```bash
-    bun run build
+    npm run build
     ```
 
 ## Testing and Linting
 
 -   **Run unit tests:**
     ```bash
-    bun test
+    npm test
     ```
 
 -   **Run linter:**
     ```bash
-    bun run lint
+    npm run lint
     ```
 
--   **Run Cypress E2E tests:**
-    There is no explicit script in `package.json` for Cypress, but you can use the script in the `bin` directory:
-    ```bash
-    ./bin/run_cypress_tests_locally
-    ```
+## Playwright E2E Tests
+
+This project contains Playwright tests for end-to-end testing. These tests require both the frontend and backend to be running.
+
+-   **Location:** The tests are located in the `spiffworkflow-frontend/test/browser` directory.
+-   **Setup:** The test environment requires Python and its own set of dependencies. A `README.md` file in the test directory contains setup instructions. A setup script `agent_playwright_setup.sh` is also available at the root of the repository to automate the setup of the full testing environment.
+-   **Running tests:** Playwright tests can be run if requested by the user.

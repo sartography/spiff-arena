@@ -41,11 +41,11 @@ Setting up the development environment requires several manual steps. A fully au
 -   **Run a single backend test file:**
     From the `spiffworkflow-backend` directory, run:
     ```bash
-    poet tests/spiffworkflow_backend/integration/test_process_model_milestones.py
+    poetry run pytest tests/spiffworkflow_backend/integration/test_process_model_milestones.py
     ```
 
 -   **Run a single backend test function:**
     From the `spiffworkflow-backend` directory, run:
     ```bash
-    poet test_process_instance_list_filter
+    poetry run pytest -k test_process_instance_list_filter
     ```
