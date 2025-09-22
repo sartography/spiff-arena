@@ -181,8 +181,8 @@ class ProcessInstanceService:
                 process_instance.process_model_identifier,
             )
             full_bpmn_spec_dict = {
-                "spec": BpmnProcessService._serializer.to_dict(target_bpmn_process_spec),
-                "subprocess_specs": BpmnProcessService._serializer.to_dict(target_subprocess_specs),
+                "spec": BpmnProcessService.serializer.to_dict(target_bpmn_process_spec),
+                "subprocess_specs": BpmnProcessService.serializer.to_dict(target_subprocess_specs),
             }
             target_bpmn_process_hash = sha256(json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")).hexdigest()
         else:
@@ -198,8 +198,8 @@ class ProcessInstanceService:
                 bpmn_subprocess_mapping={},
             )
             process_copy = copy.deepcopy(full_bpmn_process_dict)
-            target_bpmn_process_spec = BpmnProcessService._serializer.from_dict(process_copy["spec"])
-            target_subprocess_specs = BpmnProcessService._serializer.from_dict(process_copy["subprocess_specs"])
+            target_bpmn_process_spec = BpmnProcessService.serializer.from_dict(process_copy["spec"])
+            target_subprocess_specs = BpmnProcessService.serializer.from_dict(process_copy["subprocess_specs"])
 
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         if target_bpmn_process_hash == initial_bpmn_process_hash:
@@ -212,7 +212,7 @@ class ProcessInstanceService:
 
         # tasks that were in the old workflow and are in the new one as well
         top_level_bpmn_process_diff, subprocesses_diffs = diff_workflow(
-            BpmnProcessService._serializer.registry,
+            BpmnProcessService.serializer.registry,
             processor.bpmn_process_instance,
             target_bpmn_process_spec,
             target_subprocess_specs,

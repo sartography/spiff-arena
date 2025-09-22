@@ -56,7 +56,7 @@ SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 
 class BpmnProcessService:
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
-    _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
+    serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
 
     @classmethod
     def persist_bpmn_process_definition(cls, process_model_identifier: str) -> BpmnProcessDefinitionModel:
@@ -217,7 +217,7 @@ class BpmnProcessService:
 
     @classmethod
     def serialize(cls, bpmn_process_instance: BpmnWorkflow) -> dict:
-        return BpmnProcessService._serializer.to_dict(bpmn_process_instance)  # type: ignore
+        return BpmnProcessService.serializer.to_dict(bpmn_process_instance)  # type: ignore
 
     @classmethod
     def save_to_database(

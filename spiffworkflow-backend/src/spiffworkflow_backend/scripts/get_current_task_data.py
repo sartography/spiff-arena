@@ -17,5 +17,5 @@ class GetCurrentTaskData(Script):
         """
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        task_dict = BpmnProcessService._serializer.to_dict(script_attributes_context.task)
+        task_dict = BpmnProcessService.serializer.to_dict(script_attributes_context.task)
         return task_dict["data"]

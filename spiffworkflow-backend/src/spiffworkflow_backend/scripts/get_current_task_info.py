@@ -15,6 +15,6 @@ class GetCurrentTaskInfo(Script):
         return """Returns the information about the current task."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        task_dict = BpmnProcessService._serializer.to_dict(script_attributes_context.task)
+        task_dict = BpmnProcessService.serializer.to_dict(script_attributes_context.task)
         task_dict.pop("data")
         return task_dict
