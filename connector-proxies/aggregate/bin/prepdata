@@ -13,9 +13,7 @@ const munge = data => {
   var uniqueIdsByConnector = {};
   var commandsByUniqueId = {};
 
-  for (const [connectorProxy, actions] of Object.entries(data)) {
-    const verified = connectorProxy.includes('.spiffcrm.');
-    
+  for (const [connectorProxy, actions] of data) {
     for (const {id, parameters} of actions) {
       const [connector, command] = id.split('/');
       const uniqueId = crypto.randomUUID();
@@ -25,7 +23,7 @@ const munge = data => {
         ...[uniqueId],
       ];
 
-      commandsByUniqueId[uniqueId] = { id, parameters, command, connectorProxy, verified };
+      commandsByUniqueId[uniqueId] = { id, parameters, command, connectorProxy };
     }
   }
   
@@ -81,7 +79,6 @@ const write = async data => {
       .then(json => [url, json])
     )
   )
-  .then(Object.fromEntries)
   .then(munge)
   .then(extract)
   .then(prep)
