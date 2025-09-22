@@ -30,15 +30,6 @@ else
       UVICORN_LOG_LEVEL=debug
     fi
 
-    echo "HERE"
-    set -x
-    # this line blocks
-    # exec uv run uvicorn spiff_web_server:connexion_app \
-    #   \
-    #   --host "0.0.0.0" \
-    #   --port "$PORT" \
-    #   --workers "5" \
-    #   --log-level "$UVICORN_LOG_LEVEL" # --reload \
     exec uv run uvicorn spiff_web_server:connexion_app \
       --reload \
       --host "0.0.0.0" \

@@ -237,5 +237,5 @@ class TestProcessInstanceMigrator(BaseTest):
         bpmn_process_dict_version_3_after_import = processor.serialize(serialize_script_engine_state=False)
         self.round_last_state_change(bpmn_process_dict_before_import)
         self.round_last_state_change(bpmn_process_dict_version_3_after_import)
-        # assert bpmn_process_dict_version_3_after_import == bpmn_process_dict_before_import
+        assert bpmn_process_dict_version_3_after_import == bpmn_process_dict_before_import
         return (process_instance, bpmn_process_dict_before_import)

@@ -198,7 +198,6 @@ class TestMessageService(BaseTest):
             user_id=user.id,
         )
         g.user = user
-        # MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
         try:
             MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
         except WorkflowExecutionServiceError as e:
