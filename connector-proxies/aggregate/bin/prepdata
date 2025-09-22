@@ -15,6 +15,8 @@ const munge = data => {
 
   for (const [connectorProxy, actions] of data) {
     for (const {id, parameters} of actions) {
+      if (config[connectorProxy].not?.test(id)) continue;
+      
       const [connector, command] = id.split('/');
       const uniqueId = crypto.randomUUID();
 
