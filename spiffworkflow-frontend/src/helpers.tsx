@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
@@ -255,11 +254,11 @@ export const isANumber = (str: string | number | null) => {
 };
 
 export const encodeBase64 = (data: string) => {
-  return Buffer.from(data).toString('base64');
+  return btoa(data);
 };
 
 export const decodeBase64 = (data: string) => {
-  return Buffer.from(data, 'base64').toString('ascii');
+  return atob(data);
 };
 
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
