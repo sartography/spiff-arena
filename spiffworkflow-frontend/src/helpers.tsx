@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
@@ -252,14 +250,6 @@ export const isANumber = (str: string | number | null) => {
     return false;
   }
   return /^\d+(\.\d+)?$/.test(str.toString());
-};
-
-export const encodeBase64 = (data: string) => {
-  return Buffer.from(data).toString('base64');
-};
-
-export const decodeBase64 = (data: string) => {
-  return Buffer.from(data, 'base64').toString('ascii');
 };
 
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
