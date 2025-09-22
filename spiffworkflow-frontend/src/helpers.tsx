@@ -1,4 +1,3 @@
-
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
@@ -251,14 +250,6 @@ export const isANumber = (str: string | number | null) => {
     return false;
   }
   return /^\d+(\.\d+)?$/.test(str.toString());
-};
-
-export const encodeBase64 = (data: string) => {
-  return btoa(data);
-};
-
-export const decodeBase64 = (data: string) => {
-  return atob(data);
 };
 
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
