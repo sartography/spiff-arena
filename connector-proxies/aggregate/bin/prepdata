@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const config = {
   "https://connector-proxy-v1.fly.dev": { not: /^http\// },
-  "https://l3m.fly.dev/": {},
+  "https://l3m.fly.dev": {},
   "https://acp-bitter-fog-6526.fly.dev": {},
   "https://connector-rand.jon-herron.workers.dev": {},
 };
