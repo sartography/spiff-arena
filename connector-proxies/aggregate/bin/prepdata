@@ -2,20 +2,21 @@
 
 const fs = require('fs');
 
-const connectorProxies = [
-  "https://l3m.fly.dev/",
-  "https://acp-bitter-fog-6526.fly.dev",
-  "https://connector-rand.jon-herron.workers.dev",
-];
+const config = {
+  "https://connector-proxy-v1.fly.dev": { not: /^http\// },
+  "https://l3m.fly.dev": {},
+  "https://acp-bitter-fog-6526.fly.dev": {},
+  "https://connector-rand.jon-herron.workers.dev": {},
+};
 
 const munge = data => {
   var uniqueIdsByConnector = {};
   var commandsByUniqueId = {};
 
-  for (const [connectorProxy, actions] of Object.entries(data)) {
-    const verified = connectorProxy.includes('.spiffcrm.');
-    
+  for (const [connectorProxy, actions] of data) {
     for (const {id, parameters} of actions) {
+      if (config[connectorProxy].not?.test(id)) continue;
+      
       const [connector, command] = id.split('/');
       const uniqueId = crypto.randomUUID();
 
@@ -24,7 +25,7 @@ const munge = data => {
         ...[uniqueId],
       ];
 
-      commandsByUniqueId[uniqueId] = { id, parameters, command, connectorProxy, verified };
+      commandsByUniqueId[uniqueId] = { id, parameters, command, connectorProxy };
     }
   }
   
@@ -75,12 +76,11 @@ const write = async data => {
 
 (async () => {
   Promise.all(
-    connectorProxies.map(url => fetch(new URL('/v1/commands', url))
+    Object.keys(config).map(url => fetch(new URL('/v1/commands', url))
       .then(resp => resp.json())
       .then(json => [url, json])
     )
   )
-  .then(Object.fromEntries)
   .then(munge)
   .then(extract)
   .then(prep)
