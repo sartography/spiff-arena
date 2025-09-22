@@ -1,3 +1,4 @@
+import copy
 import json
 import time
 from hashlib import sha256
@@ -215,7 +216,7 @@ class BpmnProcessService:
             bpmn_process_definition=bpmn_process_definition,
         )
         task_definitions = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=bpmn_process_definition.id).all()
-        bpmn_process_definition_dict: dict = bpmn_process_definition.properties_json
+        bpmn_process_definition_dict: dict = copy.deepcopy(bpmn_process_definition.properties_json)
         bpmn_process_definition_dict["task_specs"] = {}
         for task_definition in task_definitions:
             bpmn_process_definition_dict["task_specs"][task_definition.bpmn_identifier] = task_definition.properties_json
@@ -334,7 +335,8 @@ class BpmnProcessService:
                 }
                 result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
                 db.session.commit()
-                bpd_id = result.inserted_primary_key[0]
+                if result and result.inserted_primary_key is not None:
+                    bpd_id = result.inserted_primary_key[0]
             if bpd_id == 0:
                 bpdm = BpmnProcessDefinitionModel.query.filter(
                     and_(
