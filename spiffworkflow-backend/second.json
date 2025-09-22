@@ -1,0 +1,168 @@
+{
+  "name": "Process_top_level",
+  "description": "Top Level Process",
+  "file": "main.bpmn",
+  "task_specs": {
+    "End": {
+      "name": "End",
+      "description": "BPMN Task",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["Process_top_level.EndJoin"],
+      "outputs": [],
+      "bpmn_id": null,
+      "bpmn_name": null,
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "typename": "SimpleBpmnTask"
+    },
+    "Event_1swh8gs": {
+      "name": "Event_1swh8gs",
+      "description": "Default End Event",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["top_call_activity"],
+      "outputs": ["Process_top_level.EndJoin"],
+      "bpmn_id": "Event_1swh8gs",
+      "bpmn_name": null,
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "event_definition": {
+        "description": "Default",
+        "name": null,
+        "typename": "NoneEventDefinition"
+      },
+      "typename": "EndEvent",
+      "extensions": {}
+    },
+    "Process_top_level.EndJoin": {
+      "name": "Process_top_level.EndJoin",
+      "description": "BPMN Task",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["Event_1swh8gs"],
+      "outputs": ["End"],
+      "bpmn_id": null,
+      "bpmn_name": null,
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "typename": "_EndJoin"
+    },
+    "Start": {
+      "name": "Start",
+      "description": "BPMN Task",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": [],
+      "outputs": ["StartEvent_1"],
+      "bpmn_id": null,
+      "bpmn_name": null,
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "typename": "BpmnStartTask"
+    },
+    "StartEvent_1": {
+      "name": "StartEvent_1",
+      "description": "Default Start Event",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["Start"],
+      "outputs": ["top_script_task"],
+      "bpmn_id": "StartEvent_1",
+      "bpmn_name": null,
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "event_definition": {
+        "description": "Default",
+        "name": null,
+        "typename": "NoneEventDefinition"
+      },
+      "typename": "StartEvent",
+      "extensions": {}
+    },
+    "top_call_activity": {
+      "name": "top_call_activity",
+      "description": "Call Activity",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["top_script_task"],
+      "outputs": ["Event_1swh8gs"],
+      "bpmn_id": "top_call_activity",
+      "bpmn_name": "Top Call Activity",
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [],
+      "io_specification": null,
+      "prescript": null,
+      "postscript": null,
+      "spec": "Process_sub_level",
+      "typename": "CallActivity",
+      "extensions": {}
+    },
+    "top_script_task": {
+      "name": "top_script_task",
+      "description": "Script Task",
+      "manual": false,
+      "lookahead": 2,
+      "inputs": ["StartEvent_1"],
+      "outputs": ["top_call_activity"],
+      "bpmn_id": "top_script_task",
+      "bpmn_name": "Top Script Task",
+      "lane": null,
+      "documentation": null,
+      "data_input_associations": [],
+      "data_output_associations": [
+        {
+          "bpmn_id": "top_level_data_object",
+          "bpmn_name": "top_level_data_object",
+          "category": null,
+          "typename": "DataObject"
+        }
+      ],
+      "io_specification": null,
+      "prescript": null,
+      "postscript": null,
+      "script": "top_level_data_object = \"a\"\ntop_level_var = \"b\"",
+      "typename": "ScriptTask",
+      "extensions": {
+        "serviceTaskOperator": {
+          "name": "http/GetRequestV2",
+          "parameters": {
+            "url": {
+              "type": "str",
+              "value": "\"http://localhost:7000/v1.0/status\""
+            }
+          },
+          "resultVariable": "the_response"
+        }
+      }
+    }
+  },
+  "io_specification": null,
+  "data_objects": {
+    "top_level_data_object": {
+      "bpmn_id": "top_level_data_object",
+      "bpmn_name": "top_level_data_object",
+      "category": null,
+      "typename": "DataObject"
+    }
+  },
+  "correlation_keys": {},
+  "typename": "BpmnProcessSpec"
+}

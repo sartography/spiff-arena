@@ -505,26 +505,25 @@ class ProcessInstanceProcessor:
         store_process_instance_events: bool = True,
         bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> None:
-        process_instance_model.bpmn_process_definition = BpmnProcessService.persist_bpmn_process_definition(
-            process_instance_model.process_model_identifier
-        )
-        # process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
-        #     bpmn_process_dict,
-        #     bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-        # )
-        # BpmnProcessService.save_to_database(
-        #     bpmn_definition_to_task_definitions_mappings,
-        #     bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
-        # )
-
         # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
         # We could potentially do this at save time by recreating the mappings var after getting the new id.
-        bpmn_definition_to_task_definitions_mappings = {}
+        print("INIT SAVE")
         process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
+        BpmnProcessService.save_to_database(
+            bpmn_definition_to_task_definitions_mappings,
+            bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
+        )
+        bpmn_definition_to_task_definitions_mappings = {}
+        print("INIT LOAD")
+        process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+            bpmn_process_dict,
+            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+        )
+        print("DONE")
 
         if bpmn_process_instance is None:
             bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
@@ -690,6 +689,7 @@ class ProcessInstanceProcessor:
             "subprocess_specs": {},
             "subprocesses": {},
         }
+
         if bpmn_process_definition is not None:
             spiff_bpmn_process_dict["spec"] = BpmnProcessService._get_definition_dict_for_bpmn_process_definition(
                 bpmn_process_definition,
@@ -718,7 +718,7 @@ class ProcessInstanceProcessor:
                         TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"])  # type: ignore
                     )
                 bpmn_subprocesses = bpmn_subprocesses_query.all()
-                print("OUR SUBS", bpmn_subprocesses)
+                # print("OUR SUBS", bpmn_subprocesses)
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
                     subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
@@ -789,9 +789,9 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                print("HERE STUFF AGAIN 2", len(process_copy["subprocesses"].keys()))
+                # print("HERE STUFF AGAIN 2", process_copy["subprocesses"])
                 bpmn_process_instance = BpmnProcessService._serializer.from_dict(process_copy)
-                print("HERE STUFF AGAIN 3", bpmn_process_instance.subprocesses)
+                # print("HERE STUFF AGAIN 3", bpmn_process_instance.subprocesses)
                 # print("HERE STUFF AGAIN 4", process_copy["subprocesses"])
                 bpmn_process_instance.get_tasks()
             except Exception as err:

@@ -11,6 +11,7 @@ from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter  # typ
 from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
+from sqlalchemy import and_
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
@@ -58,13 +59,15 @@ class BpmnProcessService:
 
     @classmethod
     def persist_bpmn_process_definition(cls, process_model_identifier: str) -> BpmnProcessDefinitionModel:
+        # print("PM ID", process_model_identifier)
         (
             bpmn_process_spec,
             subprocesses,
         ) = BpmnProcessService.get_process_model_and_subprocesses(process_model_identifier)
 
-        print("OUR SUB", subprocesses)
+        # print("\n\nOUR SUB", subprocesses["call_activity_sub_process"].data_objects)
         bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        # print("INSTANCE", bpmn_process_instance.subprocess_specs["call_activity_sub_process"].data_objects)
 
         bpmn_definition_to_task_definitions_mappings: dict = {}
         bpmn_process_definition_parent = BpmnProcessService._add_bpmn_process_definitions(
@@ -100,6 +103,8 @@ class BpmnProcessService:
             bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(single_process_hash=single_process_hash).first()
 
         if bpmn_process_definition is None:
+            print("\n\nWE NO EXIST", process_bpmn_properties["name"])
+            # print("DATA OBJECT", json.dumps(process_bpmn_properties))
             task_specs = process_bpmn_properties.pop("task_specs")
             bpmn_process_definition_dict = {
                 "single_process_hash": single_process_hash,
@@ -133,6 +138,8 @@ class BpmnProcessService:
                         task_definition=task_definition,
                     )
         elif store_bpmn_definition_mappings:
+            print("WE EXIST", bpmn_process_definition.bpmn_identifier)
+            # print("WE EXIST", json.dumps(bpmn_process_definition.properties_json))
             # this should only ever happen when new process instances use a pre-existing bpmn process definitions
             # otherwise this should get populated on processor initialization
             cls._update_bpmn_definition_mappings(
@@ -175,6 +182,8 @@ class BpmnProcessService:
             full_bpmn_spec_dict=bpmn_spec_dict,
         )
         for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
+            print("IN LOOP", process_bpmn_properties["name"])
+            print("IN LOOP", process_bpmn_properties["data_objects"])
             cls._store_bpmn_process_definition(
                 process_bpmn_properties,
                 bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
@@ -244,9 +253,9 @@ class BpmnProcessService:
         )
 
         bpmn_subprocess_definition_bpmn_identifiers = {}
-        print("WE SET DEF DICT")
+        # print("WE SET DEF DICT")
         for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
-            print("WE HAVE DEF", bpmn_process_definition)
+            # print("WE HAVE DEF", bpmn_process_definition)
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 bpmn_subprocess_definition.bpmn_identifier,
@@ -321,8 +330,10 @@ class BpmnProcessService:
     ) -> None:
         parent_id = None
         subprocess_ids = []
+        print("PARENT", bpmn_process_definition_parent)
         for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
             bpmn_process_definition = entity["bpmn_process_definition"]
+            print("ADDING", _bpmn_process_identifier)
             bpd_id = 0
             if bpmn_process_definition.id is None:
                 bpmn_process_definition_dict = {
@@ -337,17 +348,21 @@ class BpmnProcessService:
                 result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
                 db.session.commit()
                 bpd_id = result.inserted_primary_key[0]
-                if bpd_id == 0:
-                    bpdm = BpmnProcessDefinitionModel.query.filter_by(
-                        full_process_model_hash=bpmn_process_definition.full_process_model_hash
-                    ).first()
-                    bpd_id = bpdm.id
+            if bpd_id == 0:
+                bpdm = BpmnProcessDefinitionModel.query.filter(
+                    and_(
+                        BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
+                        BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
+                    )
+                ).first()
+                bpd_id = bpdm.id
 
-                if bpmn_process_definition_parent is not None:
-                    if bpmn_process_definition_parent.bpmn_identifier == bpmn_process_definition_dict["bpmn_identifier"]:
-                        parent_id = bpd_id
-                    else:
-                        subprocess_ids.append(bpd_id)
+            if bpmn_process_definition_parent is not None:
+                if bpmn_process_definition_parent.bpmn_identifier == _bpmn_process_identifier:
+                    print("OUR PARENT", _bpmn_process_identifier)
+                    parent_id = bpd_id
+                else:
+                    subprocess_ids.append(bpd_id)
 
             for identifier, definition in entity.items():
                 if definition.id is None and identifier != "bpmn_process_definition":

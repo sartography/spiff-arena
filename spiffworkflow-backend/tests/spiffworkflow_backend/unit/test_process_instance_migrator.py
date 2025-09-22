@@ -123,52 +123,52 @@ class TestProcessInstanceMigrator(BaseTest):
         (process_instance, bpmn_process_dict_version_4_from_spiff) = self._import_bpmn_json_for_test(
             app, "bpmn_process_instance_data_objects_version_3.json", process_model
         )
-        # bpmn_process_cache_version_3 = {
-        #     "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
-        #     "bpmn_process_id": process_instance.bpmn_process_id,
-        # }
-        #
-        # process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
-        # pi_events_count_before = len(process_instance_events)
-        # Version4.run(process_instance)
-        # update_data_objects(bpmn_process_dict_version_4_from_spiff)
-        # process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        # processor = ProcessInstanceProcessor(
-        #     process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
-        # )
-        # bpmn_process_dict_version_4 = processor.serialize(serialize_script_engine_state=False)
-        # self.round_last_state_change(bpmn_process_dict_version_4)
-        # self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
-        # assert bpmn_process_dict_version_4 == bpmn_process_dict_version_4_from_spiff
-        #
-        # bpmn_process_cache_version_4 = {
-        #     "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
-        #     "bpmn_process_id": process_instance.bpmn_process_id,
-        # }
-        # assert (
-        #     bpmn_process_cache_version_4["bpmn_process_definition_id"]
-        #     != bpmn_process_cache_version_3["bpmn_process_definition_id"]
-        # )
-        # assert bpmn_process_cache_version_4["bpmn_process_id"] == bpmn_process_cache_version_3["bpmn_process_id"]
-        # assert (
-        #     process_instance.bpmn_process.bpmn_process_definition_id == bpmn_process_cache_version_4["bpmn_process_definition_id"]
-        # )
-        #
-        # bpmn_processes = BpmnProcessModel.query.filter(
-        #     or_(
-        #         BpmnProcessModel.id == process_instance.bpmn_process_id,
-        #         BpmnProcessModel.top_level_process_id == process_instance.bpmn_process_id,
-        #     )
-        # ).all()
-        # assert len(bpmn_processes) == 3
-        #
-        # for bpmn_process in bpmn_processes:
-        #     for task_model in bpmn_process.tasks:
-        #         assert task_model.task_definition.bpmn_process_definition_id == bpmn_process.bpmn_process_definition_id
-        #
-        # process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
-        # pi_events_count_after = len(process_instance_events)
-        # assert pi_events_count_before == pi_events_count_after
+        bpmn_process_cache_version_3 = {
+            "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
+            "bpmn_process_id": process_instance.bpmn_process_id,
+        }
+
+        process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
+        pi_events_count_before = len(process_instance_events)
+        Version4.run(process_instance)
+        update_data_objects(bpmn_process_dict_version_4_from_spiff)
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(
+            process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
+        )
+        bpmn_process_dict_version_4 = processor.serialize(serialize_script_engine_state=False)
+        self.round_last_state_change(bpmn_process_dict_version_4)
+        self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
+        assert bpmn_process_dict_version_4 == bpmn_process_dict_version_4_from_spiff
+
+        bpmn_process_cache_version_4 = {
+            "bpmn_process_definition_id": process_instance.bpmn_process_definition_id,
+            "bpmn_process_id": process_instance.bpmn_process_id,
+        }
+        assert (
+            bpmn_process_cache_version_4["bpmn_process_definition_id"]
+            != bpmn_process_cache_version_3["bpmn_process_definition_id"]
+        )
+        assert bpmn_process_cache_version_4["bpmn_process_id"] == bpmn_process_cache_version_3["bpmn_process_id"]
+        assert (
+            process_instance.bpmn_process.bpmn_process_definition_id == bpmn_process_cache_version_4["bpmn_process_definition_id"]
+        )
+
+        bpmn_processes = BpmnProcessModel.query.filter(
+            or_(
+                BpmnProcessModel.id == process_instance.bpmn_process_id,
+                BpmnProcessModel.top_level_process_id == process_instance.bpmn_process_id,
+            )
+        ).all()
+        assert len(bpmn_processes) == 3
+
+        for bpmn_process in bpmn_processes:
+            for task_model in bpmn_process.tasks:
+                assert task_model.task_definition.bpmn_process_definition_id == bpmn_process.bpmn_process_definition_id
+
+        process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
+        pi_events_count_after = len(process_instance_events)
+        assert pi_events_count_before == pi_events_count_after
 
     def test_can_run_version_5_migration(
         self,
