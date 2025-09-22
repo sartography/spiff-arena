@@ -505,10 +505,10 @@ class ProcessInstanceProcessor:
         store_process_instance_events: bool = True,
         bpmn_process_instance: BpmnWorkflow | None = None,
     ) -> None:
-        # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
+        # NOTE: the first add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
         # We could potentially do this at save time by recreating the mappings var after getting the new id.
-        process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+        process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
@@ -517,7 +517,7 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
         )
         bpmn_definition_to_task_definitions_mappings = {}
-        process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+        process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
@@ -688,11 +688,11 @@ class ProcessInstanceProcessor:
         }
 
         if bpmn_process_definition is not None:
-            spiff_bpmn_process_dict["spec"] = BpmnProcessService._get_definition_dict_for_bpmn_process_definition(
+            spiff_bpmn_process_dict["spec"] = BpmnProcessService.get_definition_dict_for_bpmn_process_definition(
                 bpmn_process_definition,
                 bpmn_definition_to_task_definitions_mappings,
             )
-            BpmnProcessService._set_definition_dict_for_bpmn_subprocess_definitions(
+            BpmnProcessService.set_definition_dict_for_bpmn_subprocess_definitions(
                 bpmn_process_definition,
                 spiff_bpmn_process_dict,
                 bpmn_definition_to_task_definitions_mappings,
@@ -1198,7 +1198,7 @@ class ProcessInstanceProcessor:
         if self.process_instance_model.persistence_level != "none":
             with ProcessInstanceQueueService.dequeued(self.process_instance_model, needs_dequeue=needs_dequeue):
                 # TODO: ideally we just lock in the execution service, but not sure
-                # about _add_bpmn_process_definitions and if that needs to happen in
+                # about add_bpmn_process_definitions and if that needs to happen in
                 # the same lock like it does on main
                 return self._do_engine_steps(
                     exit_at,
@@ -1239,7 +1239,7 @@ class ProcessInstanceProcessor:
         self.raise_on_high_process_instance_count()
 
         if self.process_instance_model.bpmn_process is None:
-            self.process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(  # type: ignore
+            self.process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(  # type: ignore
                 self.serialize(),
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
