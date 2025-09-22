@@ -2,12 +2,12 @@
 
 const fs = require('fs');
 
-const connectorProxies = [
-  "https://connector-proxy-v1.fly.dev",
-  "https://l3m.fly.dev/",
-  "https://acp-bitter-fog-6526.fly.dev",
-  "https://connector-rand.jon-herron.workers.dev",
-];
+const config = {
+  "https://connector-proxy-v1.fly.dev": { not: /^http\// },
+  "https://l3m.fly.dev/": {},
+  "https://acp-bitter-fog-6526.fly.dev": {},
+  "https://connector-rand.jon-herron.workers.dev": {},
+};
 
 const munge = data => {
   var uniqueIdsByConnector = {};
@@ -76,7 +76,7 @@ const write = async data => {
 
 (async () => {
   Promise.all(
-    connectorProxies.map(url => fetch(new URL('/v1/commands', url))
+    Object.keys(config).map(url => fetch(new URL('/v1/commands', url))
       .then(resp => resp.json())
       .then(json => [url, json])
     )
