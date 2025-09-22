@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from flask import current_app
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.dialects import mysql
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
@@ -58,7 +58,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         return ["spec", "subprocess_specs", "serializer_version"]
 
     @classmethod
-    def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> None:
+    def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> Any:
         new_stuff = {"bpmn_identifier": bpmn_process_definition_dict["bpmn_identifier"]}
         on_duplicate_key_stmt = None
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from flask import current_app
 from sqlalchemy import ForeignKey
@@ -43,7 +44,7 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     @classmethod
-    def insert_or_update_record(cls, task_definition_dict: dict) -> None:
+    def insert_or_update_record(cls, task_definition_dict: dict) -> Any:
         new_stuff = {"bpmn_identifier": task_definition_dict["bpmn_identifier"]}
         on_duplicate_key_stmt = None
         if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":

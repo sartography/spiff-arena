@@ -1,4 +1,3 @@
-from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 import copy
 import datetime
 import os
@@ -33,6 +32,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService

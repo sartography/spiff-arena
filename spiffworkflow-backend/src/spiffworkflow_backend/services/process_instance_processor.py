@@ -508,7 +508,6 @@ class ProcessInstanceProcessor:
         # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
         # We could potentially do this at save time by recreating the mappings var after getting the new id.
-        # print("INIT SAVE")
         process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
@@ -518,12 +517,10 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
         )
         bpmn_definition_to_task_definitions_mappings = {}
-        # print("INIT LOAD")
         process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
-        # print("DONE")
 
         if bpmn_process_instance is None:
             bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
@@ -718,7 +715,6 @@ class ProcessInstanceProcessor:
                         TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"])  # type: ignore
                     )
                 bpmn_subprocesses = bpmn_subprocesses_query.all()
-                # print("OUR SUBS", bpmn_subprocesses)
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
                     subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
@@ -769,7 +765,6 @@ class ProcessInstanceProcessor:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.spiffworkflow_fully_initialized():
-            # print("WE INITI")
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -789,17 +784,13 @@ class ProcessInstanceProcessor:
                 )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
-                # print("HERE STUFF AGAIN 2", process_copy["subprocesses"])
                 bpmn_process_instance = BpmnProcessService._serializer.from_dict(process_copy)
-                # print("HERE STUFF AGAIN 3", bpmn_process_instance.subprocesses)
-                # print("HERE STUFF AGAIN 4", process_copy["subprocesses"])
                 bpmn_process_instance.get_tasks()
             except Exception as err:
                 raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
-            # print("WE LOAD NEW")
             bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
 
         return (
@@ -1248,7 +1239,7 @@ class ProcessInstanceProcessor:
         self.raise_on_high_process_instance_count()
 
         if self.process_instance_model.bpmn_process is None:
-            self.process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
+            self.process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(  # type: ignore
                 self.serialize(),
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )

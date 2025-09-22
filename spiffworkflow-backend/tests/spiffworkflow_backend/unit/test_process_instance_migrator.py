@@ -230,15 +230,12 @@ class TestProcessInstanceMigrator(BaseTest):
         )
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
 
-        print("WE LOAD PROC")
         # ensure data was imported correctly and is in expected state
         processor = ProcessInstanceProcessor(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
-        print("FROM BPMN", processor.bpmn_process_instance.subprocesses)
         bpmn_process_dict_version_3_after_import = processor.serialize(serialize_script_engine_state=False)
         self.round_last_state_change(bpmn_process_dict_before_import)
         self.round_last_state_change(bpmn_process_dict_version_3_after_import)
-        print("OUR STUFF", bpmn_process_dict_version_3_after_import.get("subprocesses"))
         # assert bpmn_process_dict_version_3_after_import == bpmn_process_dict_before_import
         return (process_instance, bpmn_process_dict_before_import)
