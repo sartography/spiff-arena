@@ -270,7 +270,6 @@ class BaseTest:
         if process_model is None:
             process_model = load_test_spec(
                 process_model_id=process_model_id,
-                bpmn_file_name=file_name,
                 process_model_source_directory=process_model_location,
             )
         data = [("file", (file_name, file_data))]
@@ -317,14 +316,13 @@ class BaseTest:
             load_test_spec(
                 process_model_id=test_process_model_id,
                 process_model_source_directory=basename,
-                bpmn_file_name=basename,
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.json()
         return response
 
     # @staticmethod

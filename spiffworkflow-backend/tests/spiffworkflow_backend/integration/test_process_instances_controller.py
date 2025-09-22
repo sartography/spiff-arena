@@ -26,7 +26,6 @@ class TestProcessInstancesController(BaseTest):
 
         process_model = load_test_spec(
             process_model_id="group/sample",
-            bpmn_file_name="sample.bpmn",
             process_model_source_directory="sample",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=user_one)

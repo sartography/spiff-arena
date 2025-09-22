@@ -508,7 +508,7 @@ class ProcessInstanceProcessor:
         # NOTE: the first _add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
         # We could potentially do this at save time by recreating the mappings var after getting the new id.
-        print("INIT SAVE")
+        # print("INIT SAVE")
         process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
@@ -518,12 +518,12 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
         )
         bpmn_definition_to_task_definitions_mappings = {}
-        print("INIT LOAD")
+        # print("INIT LOAD")
         process_instance_model.bpmn_process_definition = BpmnProcessService._add_bpmn_process_definitions(
             bpmn_process_dict,
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
-        print("DONE")
+        # print("DONE")
 
         if bpmn_process_instance is None:
             bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
@@ -769,7 +769,7 @@ class ProcessInstanceProcessor:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.spiffworkflow_fully_initialized():
-            print("WE INITI")
+            # print("WE INITI")
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -799,7 +799,7 @@ class ProcessInstanceProcessor:
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
         else:
-            print("WE LOAD NEW")
+            # print("WE LOAD NEW")
             bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
 
         return (

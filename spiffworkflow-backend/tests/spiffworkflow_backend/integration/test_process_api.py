@@ -1654,14 +1654,12 @@ class TestProcessApi(BaseTest):
     ) -> None:
         process_group_id = "runs_without_input"
         process_model_id = "sample"
-        bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
         process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
@@ -1692,14 +1690,12 @@ class TestProcessApi(BaseTest):
     ) -> None:
         process_group_id = "runs_without_input"
         process_model_id = "sample"
-        bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
         process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
 
