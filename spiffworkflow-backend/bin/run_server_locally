@@ -30,6 +30,7 @@ else
       UVICORN_LOG_LEVEL=debug
     fi
 
+    # this line blocks
     exec uv run uvicorn spiff_web_server:connexion_app \
       --reload \
       --host "0.0.0.0" \
