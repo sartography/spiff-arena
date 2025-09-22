@@ -201,6 +201,8 @@
   "form_render_error_message": "The form could not be built with the current schema, UI and data. Please try to correct the issue and try again.",
   "form_render_error_title": "Failed to render form",
   "frontend_version_information": "Frontend version information",
+  "frontend_access_denied_title": "Access Denied",
+  "frontend_access_denied_message": "You don't have permission to access this application. Please contact your administrator.",
   "go": "Go",
   "group_by": "Group by",
   "groups": "Groups",

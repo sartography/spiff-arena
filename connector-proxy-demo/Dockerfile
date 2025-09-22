@@ -20,9 +20,10 @@ FROM base AS deployment
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
+# libsqlite3-0=3.40.1-2+deb12u2 is to fix https://avd.aquasec.com/nvd/2025/cve-2025-6965/
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 \
+  && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 libsqlite3-0=3.40.1-2+deb12u2 \
   && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry==1.6.1
@@ -42,7 +43,7 @@ RUN pip install poetry==1.6.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
-  && apt-get install -y -q gcc libssl-dev pkg-config
+  && apt-get install -y -q gcc libssl-dev pkg-config libsqlite3-0=3.40.1-2+deb12u2
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.

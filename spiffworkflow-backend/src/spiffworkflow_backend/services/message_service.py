@@ -23,6 +23,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -62,6 +63,7 @@ class MessageService:
             message_type=MessageTypes.receive.value,
         ).all()
         message_instance_receive: MessageInstanceModel | None = None
+        receiving_process_instance: ProcessInstanceModel | None = None
         processor_receive = None
         try:
             for message_instance in available_receive_messages:
@@ -134,7 +136,7 @@ class MessageService:
                         processor_receive.save()
                     else:
                         db.session.commit()
-                if should_queue_process_instance(receiving_process_instance, execution_mode=execution_mode):
+                if should_queue_process_instance(execution_mode=execution_mode):
                     queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
                 return message_instance_receive
 
@@ -168,6 +170,8 @@ class MessageService:
                     raise exception from save_exception
             else:
                 db.session.commit()
+            if receiving_process_instance:
+                ErrorHandlingService.handle_error(receiving_process_instance, exception)
             if isinstance(exception, SpiffWorkflowException):
                 exception.add_note("The process instance encountered an error and failed after starting.")
             raise exception
@@ -264,7 +268,7 @@ class MessageService:
         processor_receive_to_use.bpmn_process_instance.send_event(bpmn_event)
         execution_strategy_name = None
 
-        if should_queue_process_instance(receiving_process_instance, execution_mode=execution_mode):
+        if should_queue_process_instance(execution_mode=execution_mode):
             # even if we are queueing, we ran a "send_event" call up above, and it updated some tasks.
             # we need to serialize these task updates to the db. do_engine_steps with save does that.
             processor_receive_to_use.do_engine_steps(

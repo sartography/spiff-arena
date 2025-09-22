@@ -1,13 +1,11 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
-import json
 from typing import Any
 
 import flask.wrappers
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
@@ -66,7 +64,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
         ) from exception
 
     _commit_and_push_to_git(f"User: {g.user.username} deleted process group {process_group_id}")
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify({"ok": True}), 200)
 
 
 def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:

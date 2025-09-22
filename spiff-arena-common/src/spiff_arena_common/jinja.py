@@ -1,5 +1,7 @@
 import re
 
+import jinja2
+
 class JinjaHelpers:
     """These are helpers that added to script tasks and to jinja for rendering templates.
 
@@ -29,3 +31,16 @@ class JinjaHelpers:
         escaped_value = escaped_value.replace("\n", "").replace("\r", "")
         return escaped_value
 
+
+def jinja(s, data):
+    if not s:
+        return s, None
+
+    try:
+        env = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+        env.filters.update(JinjaHelpers.get_helper_mapping())
+        template = env.from_string(s)
+
+        return template.render(**data), None
+    except Exception as e:
+        return None, f"{e.__class__.__name__}: {e}"

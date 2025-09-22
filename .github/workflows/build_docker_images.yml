@@ -64,7 +64,7 @@ jobs:
       security-events: write # Required for uploading Trivy scan results to GitHub Security
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry
@@ -82,7 +82,7 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.6.1
+        uses: docker/metadata-action@v5.8.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
@@ -103,7 +103,7 @@ jobs:
         id: full_tag
         run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
       - name: Build Docker image
-        uses: docker/build-push-action@v6.10.0
+        uses: docker/build-push-action@v6.18.0
         with:
           context: ${{ matrix.context }}
           push: false # Don't push yet
@@ -148,7 +148,7 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
       - name: Push Docker image
-        uses: docker/build-push-action@v6.10.0
+        uses: docker/build-push-action@v6.18.0
         with:
           context: ${{ matrix.context }}
           push: true
@@ -166,7 +166,7 @@ jobs:
     needs: [create_docker_images]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Apps
         run: ./bin/run_arena_with_docker_compose
       - name: wait_for_backend

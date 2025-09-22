@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import cookie from 'cookie';
+import * as cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
@@ -31,6 +31,12 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
   return encodeURIComponent(
     `${window.location.origin}${window.location.pathname}${queryParamString}`,
   );
+};
+
+const redirectToLogin = () => {
+  const encodedUrl = getCurrentLocation();
+  const loginUrl = `/login?original_url=${encodedUrl}`;
+  window.location.replace(loginUrl);
 };
 
 const checkPathForTaskShowParams = (
@@ -72,7 +78,9 @@ const doLogin = (
   redirectUrl?: string | null,
 ) => {
   const taskShowParams = checkPathForTaskShowParams(redirectUrl || undefined);
-  const loginParams = [`redirect_url=${redirectUrl || getCurrentLocation()}`];
+  const loginParams = [
+    `redirect_url=${encodeURIComponent(redirectUrl || getCurrentLocation())}`,
+  ];
   if (taskShowParams) {
     loginParams.push(
       `process_instance_id=${taskShowParams.process_instance_id}`,
@@ -176,6 +184,7 @@ const UserService = {
   getUserName,
   isLoggedIn,
   isPublicUser,
+  redirectToLogin,
 };
 
 export default UserService;

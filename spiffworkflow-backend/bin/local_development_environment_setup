@@ -52,6 +52,7 @@ if [[ "$use_local_open_id" == "true" ]]; then
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__identifier="default"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__label="internal openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri="${backend_base_url}/openid"
+  export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__additional_valid_issuers__0="http://host.docker.internal:7000/openid"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_id="spiffworkflow-backend"
   export SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__client_secret="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 

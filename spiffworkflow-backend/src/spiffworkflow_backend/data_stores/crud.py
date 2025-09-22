@@ -1,8 +1,11 @@
 from typing import Any
 
+import jsonschema
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
@@ -72,3 +75,17 @@ class DataStoreCRUD:
             return None
 
         return model.location  # type: ignore
+
+    @classmethod
+    def validate_schema(cls, store_model: KKVDataStoreModel | JSONDataStoreModel, value: dict) -> None:
+        if store_model.schema:
+            try:
+                jsonschema.validate(
+                    instance=value,
+                    schema=store_model.schema,
+                    format_checker=jsonschema.FormatChecker(),
+                )
+            except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError, TypeError) as e:
+                raise DataStoreWriteError(
+                    f"Attempting to write data that does not match the provided schema for '{store_model.identifier}': {e}"
+                ) from e

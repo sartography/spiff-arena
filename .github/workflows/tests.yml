@@ -8,8 +8,20 @@ on:
     branches:
       - main
       - "hotfix/**"
+    paths:
+      - spiffworkflow-backend/**
+      - spiffworkflow-frontend/**
+      - .github/workflows/tests.yml
+      - .github/workflows/constraints.txt
 
   pull_request:
+    branches:
+      - main
+    paths:
+      - spiffworkflow-backend/**
+      - spiffworkflow-frontend/**
+      - .github/workflows/tests.yml
+      - .github/workflows/constraints.txt
 
 defaults:
   run:
@@ -40,6 +52,12 @@ jobs:
               session: "tests",
               database: "mysql",
               upload_coverage: true,
+            }
+          - {
+              python: "3.13.7",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
             }
           - {
               python: "3.11",
@@ -117,7 +135,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5.3.0
@@ -146,7 +164,7 @@ jobs:
       # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
       # - name: Checkout Samples
       #   if: matrix.database == 'sqlite'
-      #   uses: actions/checkout@v4
+      #   uses: actions/checkout@v5
       #   with:
       #     repository: sartography/sample-process-models
       #     path: sample-process-models
@@ -216,7 +234,7 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v5.3.0
         with:
@@ -241,9 +259,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Checkout Samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -260,7 +278,7 @@ jobs:
     needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -288,7 +306,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v5.0.0
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -344,7 +362,7 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Development Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -352,7 +370,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 24.x
       - run: npm install
       - run: npm run lint
       - run: npm test
@@ -380,11 +398,11 @@ jobs:
   #       working-directory: spiffworkflow-frontend
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v5
   #       with:
   #         ref: ${{ github.event.workflow_run.head_sha }}
   #     - name: Checkout Samples
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v5
   #       with:
   #         repository: sartography/sample-process-models
   #         path: sample-process-models

@@ -9,6 +9,7 @@ import de from './locales/de/translation.json';
 import fi from './locales/fi/translation.json';
 import ptPT from './locales/pt_pt/translation.json';
 import csCZ from './locales/cs_cz/translation.json';
+import zhCN from './locales/zh_cn/translation.json';
 
 // eslint-disable-next-line import/no-named-as-default-member
 i18n
@@ -23,6 +24,7 @@ i18n
       fi: { translation: fi },
       'pt-PT': { translation: ptPT },
       'cs-CZ': { translation: csCZ },
+      'zh-CN': { translation: zhCN },
     },
     fallbackLng: 'en-US',
     interpolation: {

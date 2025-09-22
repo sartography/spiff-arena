@@ -1,17 +1,15 @@
 import uuid
 import re
-from playwright.sync_api import expect, BrowserContext
+from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.playwright_setup import browser_context  # fixture
 from helpers.debug import print_page_details
 
 
-def test_can_perform_crud_operations(browser_context: BrowserContext):
+def test_can_perform_crud_operations(page: Page):
     """
     Test that a user can create, view, update, and delete a process group via the UI.
     """
-    page = browser_context.new_page()
 
     # 1. Log in
     login(page, "admin", "admin")
