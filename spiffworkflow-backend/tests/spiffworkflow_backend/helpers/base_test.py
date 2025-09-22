@@ -32,6 +32,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -269,7 +270,6 @@ class BaseTest:
         if process_model is None:
             process_model = load_test_spec(
                 process_model_id=process_model_id,
-                bpmn_file_name=file_name,
                 process_model_source_directory=process_model_location,
             )
         data = [("file", (file_name, file_data))]
@@ -316,14 +316,13 @@ class BaseTest:
             load_test_spec(
                 process_model_id=test_process_model_id,
                 process_model_source_directory=basename,
-                bpmn_file_name=basename,
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.json()
         return response
 
     # @staticmethod
@@ -345,6 +344,7 @@ class BaseTest:
         if user is None:
             user = self.find_or_create_user()
 
+        BpmnProcessService.persist_bpmn_process_definition(process_model.id)
         current_time = round(time.time())
         start_in_seconds = None
         end_in_seconds = None

@@ -5,6 +5,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -24,7 +25,7 @@ class Version2(DataMigrationBase):
             spiff_tasks = processor.bpmn_process_instance.get_tasks(updated_ts=initial_time)
             task_service = TaskService(
                 process_instance,
-                processor._serializer,
+                BpmnProcessService.serializer,
                 processor.bpmn_definition_to_task_definitions_mappings,
                 task_model_mapping=processor.task_model_mapping,
                 bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,

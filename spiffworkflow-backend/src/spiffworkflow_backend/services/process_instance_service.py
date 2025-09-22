@@ -61,6 +61,7 @@ from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -130,6 +131,7 @@ class ProcessInstanceService:
         process_model: ProcessModelInfo,
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
+        load_bpmn_process_model: bool = True,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
         git_revision_error = None
         try:
@@ -137,6 +139,10 @@ class ProcessInstanceService:
         except GitCommandError as ex:
             git_revision_error = ex
             current_git_revision = None
+
+        if load_bpmn_process_model:
+            BpmnProcessService.persist_bpmn_process_definition(process_model.id)
+
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator_id=user.id,
@@ -171,12 +177,12 @@ class ProcessInstanceService:
         ProcessInstanceProcessor, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
         if target_bpmn_process_hash is None:
-            (target_bpmn_process_spec, target_subprocess_specs) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
+            (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
                 process_instance.process_model_identifier,
             )
             full_bpmn_spec_dict = {
-                "spec": ProcessInstanceProcessor._serializer.to_dict(target_bpmn_process_spec),
-                "subprocess_specs": ProcessInstanceProcessor._serializer.to_dict(target_subprocess_specs),
+                "spec": BpmnProcessService.serializer.to_dict(target_bpmn_process_spec),
+                "subprocess_specs": BpmnProcessService.serializer.to_dict(target_subprocess_specs),
             }
             target_bpmn_process_hash = sha256(json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")).hexdigest()
         else:
@@ -192,8 +198,8 @@ class ProcessInstanceService:
                 bpmn_subprocess_mapping={},
             )
             process_copy = copy.deepcopy(full_bpmn_process_dict)
-            target_bpmn_process_spec = ProcessInstanceProcessor._serializer.from_dict(process_copy["spec"])
-            target_subprocess_specs = ProcessInstanceProcessor._serializer.from_dict(process_copy["subprocess_specs"])
+            target_bpmn_process_spec = BpmnProcessService.serializer.from_dict(process_copy["spec"])
+            target_subprocess_specs = BpmnProcessService.serializer.from_dict(process_copy["subprocess_specs"])
 
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         if target_bpmn_process_hash == initial_bpmn_process_hash:
@@ -206,7 +212,10 @@ class ProcessInstanceService:
 
         # tasks that were in the old workflow and are in the new one as well
         top_level_bpmn_process_diff, subprocesses_diffs = diff_workflow(
-            processor._serializer.registry, processor.bpmn_process_instance, target_bpmn_process_spec, target_subprocess_specs
+            BpmnProcessService.serializer.registry,
+            processor.bpmn_process_instance,
+            target_bpmn_process_spec,
+            target_subprocess_specs,
         )
         if not cls.can_migrate(top_level_bpmn_process_diff, subprocesses_diffs):
             raise ProcessInstanceMigrationNotSafeError(
@@ -381,9 +390,12 @@ class ProcessInstanceService:
         process_model_identifier: str,
         user: UserModel,
         commit_db: bool = True,
+        load_bpmn_process_model: bool = True,
     ) -> ProcessInstanceModel:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(process_model, user)
+        process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
+            process_model, user, load_bpmn_process_model=load_bpmn_process_model
+        )
         cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         if commit_db:
             db.session.commit()
@@ -435,7 +447,9 @@ class ProcessInstanceService:
         if cycle.cycle_count == -1 or cycle.current_cycle < cycle.cycle_count:
             process_model = ProcessModelService.get_process_model(process_instance_model.process_model_identifier)
             start_configuration = (cycle.cycle_count, cycle.duration_in_seconds, cycle.duration_in_seconds)
-            cls.create_process_instance(process_model, process_instance_model.process_initiator, start_configuration)
+            cls.create_process_instance(
+                process_model, process_instance_model.process_initiator, start_configuration, load_bpmn_process_model=False
+            )
             cycle.current_cycle += 1
             db.session.add(cycle)
             db.session.commit()
@@ -891,6 +905,7 @@ class ProcessInstanceService:
     ) -> ProcessInstanceProcessor:
         process_instance = None
         if persistence_level == "none":
+            BpmnProcessService.persist_bpmn_process_definition(process_model.id)
             user_id = user.id if user is not None else None
             process_instance = ProcessInstanceModel(
                 status=ProcessInstanceStatus.not_started.value,

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
+from flask import current_app
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -52,3 +56,15 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     @classmethod
     def keys_for_full_process_model_hash(cls) -> list[str]:
         return ["spec", "subprocess_specs", "serializer_version"]
+
+    @classmethod
+    def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> Any:
+        new_stuff = {"bpmn_identifier": bpmn_process_definition_dict["bpmn_identifier"]}
+        on_duplicate_key_stmt = None
+        if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
+            insert_stmt = mysql_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
+            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_stuff)
+        else:
+            insert_stmt = postgres_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
+            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["full_process_model_hash"])
+        return db.session.execute(on_duplicate_key_stmt)

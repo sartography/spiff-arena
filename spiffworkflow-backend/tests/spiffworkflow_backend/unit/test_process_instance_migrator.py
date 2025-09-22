@@ -222,6 +222,7 @@ class TestProcessInstanceMigrator(BaseTest):
         with open(bpmn_json_file) as f:
             bpmn_process_dict_before_import = json.loads(f.read())
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+
         ProcessInstanceProcessor.persist_bpmn_process_dict(
             bpmn_process_dict_before_import,
             process_instance_model=process_instance,
