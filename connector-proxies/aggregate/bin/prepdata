@@ -3,6 +3,7 @@
 const fs = require('fs');
 
 const connectorProxies = [
+  "https://connector-proxy-v1.fly.dev",
   "https://l3m.fly.dev/",
   "https://acp-bitter-fog-6526.fly.dev",
   "https://connector-rand.jon-herron.workers.dev",
