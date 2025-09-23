@@ -28,7 +28,7 @@
     "@types/react-dom": "^18.3.1",
     "@uiw/react-md-editor": "^4.0.8",
     "ajv-errors": "^3.0.0",
-    "bpmn-js": "^17.9.1",
+    "bpmn-js": "^17.11.1",
     "bpmn-js-cli": "^2.4.0",
     "bpmn-js-properties-panel": "^5.19.0",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
