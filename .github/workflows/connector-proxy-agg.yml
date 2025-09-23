@@ -1,0 +1,18 @@
+name: Build and Deploy Connector Proxy - Aggregate
+on:
+  push:
+    paths:
+      - connector-proxies/aggregate/**
+      - .github/workflows/connector-proxy-agg.yml
+    branches:
+      - main
+jobs:
+  deploy:
+    name: Deploy Connector Proxy - Aggregate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy connector-proxies/aggregate --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_CP_AGG_API_TOKEN }}

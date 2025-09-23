@@ -44,7 +44,7 @@ const nginxConf = redirects => {
   return [
 `
 server {
-  listen 80;
+  listen 8080;
   server_name localhost;
   root /app/static;
 
