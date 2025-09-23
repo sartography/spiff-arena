@@ -6,7 +6,7 @@ services:
     environment:
       HOME: "/app"
     ports:
-      - 8300:80/tcp
+      - 8300:8080/tcp
     volumes:
       - ./connector-proxies/aggregate/nginx/conf.d:/etc/nginx/conf.d
       - ./connector-proxies/aggregate/static:/app/static
