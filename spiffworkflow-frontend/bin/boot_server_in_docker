@@ -21,7 +21,6 @@ if [[ -n "$react_configs" ]]; then
     exit 1
   fi
 
-
   while IFS= read -r react_config; do
     if [ -z "$react_config" ]; then continue; fi
 
@@ -33,31 +32,31 @@ if [[ -n "$react_configs" ]]; then
     # 1. Escape backslashes.
     # 2. Escape double quotes.
     # 3. Wrap the entire string in double quotes.
-    ENCODED_VALUE=$(echo "$VALUE" | sed -r -e 's/\\/\\\\/g' -e 's/"/\\"/g' | sed -r 's/.*/"&"/')
+    ENCODED_VALUE=$(echo "$VALUE" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | sed 's/.*/"&"/')
 
     # Construct the JavaScript assignment.
     JS_ASSIGNMENT="window.spiffworkflowFrontendJsenv.${KEY}=${ENCODED_VALUE};"
 
     # Escape for sed replacement string. Using | as delimiter.
     # The delimiter is not actually used in the final sed, but this is safe.
-    SED_REPLACEMENT=$(echo "$JS_ASSIGNMENT" | sed -r -e 's/\\/\\\\/g' -e 's/&/\\&/g' -e 's/\//\\\//g')
+    SED_REPLACEMENT=$(echo "$JS_ASSIGNMENT" | sed -e 's/\\/\\\\/g' -e 's/&/\\&/g' -e 's/\//\\\//g')
 
     # Inject the assignment before the closing </script> tag on the line
     # containing window.spiffworkflowFrontendJsenv.
-    sed -i.bak -r "/window.spiffworkflowFrontendJsenv/ s/<\/script>/; ${SED_REPLACEMENT}<\/script>/" "$index_html_file"
+    sed -i.bak "/window\.spiffworkflowFrontendJsenv/ s/<\/script>/; ${SED_REPLACEMENT}<\/script>/" "$index_html_file"
     rm -f "${index_html_file}.bak"
 
     if ! grep -qF -- "${JS_ASSIGNMENT}" "$index_html_file"; then
       echo >&2 "ERROR: Could not find '${JS_ASSIGNMENT}' in '${index_html_file}' after search and replace."
       exit 1
     fi
-  done <<< "$react_configs"
+  done <<<"$react_configs"
 fi
 
 port_to_use="${PORT0:-80}"
 if [[ -n "${SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT:-}" ]]; then
   port_to_use="$SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT"
 fi
-sed -r "s/\\{\\{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT\\}\\}/${port_to_use}/" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
+sed "s/\\{\\{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT\\}\\}/${port_to_use}/" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
 
 exec nginx -g "daemon off;"
