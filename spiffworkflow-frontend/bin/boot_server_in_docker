@@ -21,34 +21,42 @@ if [[ -n "$react_configs" ]]; then
     exit 1
   fi
 
-  if ! command -v perl >/dev/null; then
-    echo >&2 "ERROR: perl command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
-    exit 1
-  fi
+  while IFS= read -r react_config; do
+    if [ -z "$react_config" ]; then continue; fi
 
-  for react_config in $react_configs; do
-    react_config_without_prefix=$(sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)=(.*)/\1=\\"\2\\"/' <<<"${react_config}")
+    KEY_AND_VALUE=${react_config#SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_}
+    KEY=${KEY_AND_VALUE%%=*}
+    VALUE=${KEY_AND_VALUE#*=}
 
-    if [[ -z "$react_config_without_prefix" ]]; then
-      echo >&2 "ERROR: Could not parse react config line: '${react_config}'."
+    # Safely encode the value as a JSON string using sed.
+    # 1. Escape backslashes.
+    # 2. Escape double quotes.
+    # 3. Wrap the entire string in double quotes.
+    ENCODED_VALUE=$(echo "$VALUE" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | sed 's/.*/"&"/')
+
+    # Construct the JavaScript assignment.
+    JS_ASSIGNMENT="window.spiffworkflowFrontendJsenv.${KEY}=${ENCODED_VALUE};"
+
+    # Escape for sed replacement string. Using | as delimiter.
+    # The delimiter is not actually used in the final sed, but this is safe.
+    SED_REPLACEMENT=$(echo "$JS_ASSIGNMENT" | sed -e 's/\\/\\\\/g' -e 's/&/\\&/g' -e 's/\//\\\//g')
+
+    # Inject the assignment before the closing </script> tag on the line
+    # containing window.spiffworkflowFrontendJsenv.
+    sed -i.bak "/window\.spiffworkflowFrontendJsenv/ s/<\/script>/; ${SED_REPLACEMENT}<\/script>/" "$index_html_file"
+    rm -f "${index_html_file}.bak"
+
+    if ! grep -qF -- "${JS_ASSIGNMENT}" "$index_html_file"; then
+      echo >&2 "ERROR: Could not find '${JS_ASSIGNMENT}' in '${index_html_file}' after search and replace."
       exit 1
     fi
-
-    escaped_react_config=$(sed -E 's|/|\\/|g' <<<"${react_config_without_prefix}")
-    # actually do the search and replace to add the js config to the html page
-    perl -pi -e "s/(window.spiffworkflowFrontendJsenv *= *\{\})/\1;window.spiffworkflowFrontendJsenv.${escaped_react_config}/" "$index_html_file"
-
-    if ! grep -Eq "${react_config_without_prefix}" "$index_html_file"; then
-      echo >&2 "ERROR: Could not find '${react_config_without_prefix}' in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
-      exit 1
-    fi
-  done
+  done <<<"$react_configs"
 fi
 
 port_to_use="${PORT0:-80}"
 if [[ -n "${SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT:-}" ]]; then
   port_to_use="$SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT"
 fi
-perl -p -e "s/{{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}}/${port_to_use}/" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
+sed "s/\\{\\{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT\\}\\}/${port_to_use}/" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
 
 exec nginx -g "daemon off;"
