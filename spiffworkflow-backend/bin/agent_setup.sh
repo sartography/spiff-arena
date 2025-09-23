@@ -27,7 +27,7 @@ echo "      - Running 'uv sync' from spiffworkflow-backend..."
 uv sync
 
 # get process model repo as sibling of spiff-arena
-process_model_dir="../../sample-process-models"
+process_model_dir="../sample-process-models"
 if [[ ! -d "$process_model_dir" ]]; then
   git clone https://github.com/sartography/sample-process-models.git "$process_model_dir"
 fi
