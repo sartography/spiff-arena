@@ -24,9 +24,14 @@ echo "[2/5] Setting up MySQL server..."
 # MySQL service should start automatically after installation, but ensure it's enabled and running
 sudo systemctl enable mysql
 sudo systemctl start mysql
-# Create user with empty password as required by the application
+# Set root password to empty as required by recreate_db script
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+# Also create the spiffworkflow user with empty password
 sudo mysql -e "CREATE USER IF NOT EXISTS 'spiffworkflow'@'localhost' IDENTIFIED BY '';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'spiffworkflow'@'localhost';"
+# Create the databases that recreate_db expects to exist
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development;"
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing;"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
 # Step 3: Install Python Dependencies
