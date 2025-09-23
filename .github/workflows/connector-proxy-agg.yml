@@ -6,7 +6,6 @@ on:
       - .github/workflows/connector-proxy-agg.yml
     branches:
       - main
-      - deployagg
 jobs:
   deploy:
     name: Deploy Connector Proxy - Aggregate
