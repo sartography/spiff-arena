@@ -7,40 +7,46 @@ This document provides instructions for AI agents working in the `spiffworkflow-
 Setting up the development environment requires several manual steps. A fully automated script is not available due to the requirement of a running MySQL server.
 
 1. **Install System Dependencies:**
-    This project requires development headers for PostgreSQL and MySQL. On a Debian-based system, you can install them with:
+   This project requires development headers for PostgreSQL and MySQL. On a Debian-based system, you can install them with:
 
-    ```bash
-    sudo apt-get update
-    sudo apt-get install -y libpq-dev libmysqlclient-dev mysql-client
-    ```
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y libpq-dev libmysqlclient-dev mysql-client
+   ```
 
 2. **Install Python Dependencies:**
-    Use `uv` to install the Python dependencies:
+   Use `uv` to install the Python dependencies:
 
-    ```bash
-    uv sync
-    ```
+   ```bash
+   uv sync
+   ```
+
+   Also install from root:
+
+   ```bash
+   (cd .. && uv sync)
+   ```
 
 3. **Set up Databases:**
-    - For local development, you need a running MySQL server. Then, run the following command to create and migrate the database:
 
-      ```bash
-      ./bin/recreate_db clean
-      ```
+   - For local development, you need a running MySQL server. Then, run the following command to create and migrate the database:
 
-    - For running the unit tests, a separate sqlite database is required. Create it with:
+     ```bash
+     ./bin/recreate_db clean
+     ```
 
-      ```bash
-      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean
-      ```
+   - For running the unit tests, a separate sqlite database is required. Create it with:
+
+     ```bash
+     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean
+     ```
 
 ## Running Tests
 
 - **Run all tests:**
-  From the root of the repository, run:
 
   ```bash
-  ./bin/run_pyl
+  ../bin/run_pyl
   ```
 
   (This will run pre-commit hooks and the python test suite).
