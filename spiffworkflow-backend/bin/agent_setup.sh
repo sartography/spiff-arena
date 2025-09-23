@@ -26,6 +26,12 @@ echo "      - Running 'uv sync' from root..."
 echo "      - Running 'uv sync' from spiffworkflow-backend..."
 uv sync
 
+# get process model repo as sibling of spiff-arena
+process_model_dir="../../sample-process-models"
+if [[ ! -d "$process_model_dir" ]]; then
+  git clone https://github.com/sartography/sample-process-models.git "$process_model_dir"
+fi
+
 # Step 3: Set up Databases
 echo "[3/4] Setting up databases..."
 echo "      - Creating main database..."
