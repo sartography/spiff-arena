@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-set -e
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# Check if running on macOS
+if [[ "${OSTYPE:-}" == "darwin"* ]]; then
+    echo "❌ This script is designed for Linux agent environments and cannot run on macOS."
+    echo "   It assumes Linux-specific server setup and Playwright installation."
+    echo "   Please run this script in a Linux container or agent environment."
+    exit 1
+fi
 
 # Change to the root directory
 cd "$(dirname "$0")/../.."
@@ -21,16 +34,16 @@ cleanup() {
     echo ""
     echo "=== Cleaning up servers ==="
     
-    if [ "$STARTED_BACKEND" = true ] && [ -n "$BACKEND_PID" ]; then
-        echo "Stopping backend server (PID: $BACKEND_PID)..."
-        kill $BACKEND_PID 2>/dev/null || true
-        wait $BACKEND_PID 2>/dev/null || true
+    if [ "${STARTED_BACKEND:-false}" = true ] && [ -n "${BACKEND_PID:-}" ]; then
+        echo "Stopping backend server (PID: ${BACKEND_PID})..."
+        kill "${BACKEND_PID}" 2>/dev/null || true
+        wait "${BACKEND_PID}" 2>/dev/null || true
     fi
     
-    if [ "$STARTED_FRONTEND" = true ] && [ -n "$FRONTEND_PID" ]; then
-        echo "Stopping frontend server (PID: $FRONTEND_PID)..."
-        kill $FRONTEND_PID 2>/dev/null || true
-        wait $FRONTEND_PID 2>/dev/null || true
+    if [ "${STARTED_FRONTEND:-false}" = true ] && [ -n "${FRONTEND_PID:-}" ]; then
+        echo "Stopping frontend server (PID: ${FRONTEND_PID})..."
+        kill "${FRONTEND_PID}" 2>/dev/null || true
+        wait "${FRONTEND_PID}" 2>/dev/null || true
     fi
     
     echo "=== Cleanup complete ==="
@@ -95,7 +108,7 @@ fi
 echo ""
 echo "🧪 Running Playwright tests..."
 cd "$ROOT_DIR/spiffworkflow-frontend/test/browser"
-uv run pytest "$@"
+uv run pytest "${@:-}"
 
 echo ""
 echo "=== Playwright Tests Complete ==="

@@ -50,5 +50,7 @@ This is a React application built with Vite and using `npm` as the package manag
 This project contains Playwright tests for end-to-end testing. These tests require both the frontend and backend to be running.
 
 - **Location:** The tests are located in the `spiffworkflow-frontend/test/browser` directory.
-- **Setup:** The test environment requires Python and its own set of dependencies. A `README.md` file in the test directory contains setup instructions. A setup script `bin/agent_playwright_setup.sh` is also available at the root of the repository to automate the setup of the full testing environment.
-- **Running tests:** Playwright tests can be run if requested by the user.
+- **Setup:** The test environment requires Python and its own set of dependencies. A `README.md` file in the test directory contains setup instructions. Agent setup scripts are available:
+  - `./bin/agents/setup.sh` (from root) - Complete environment setup (backend + frontend + Playwright)
+  - `./bin/agents/setup.sh` (from frontend) - Frontend-only setup
+- **Running tests:** Use `./bin/agents/run_playwright.sh` (from root) to automatically start servers and run tests.

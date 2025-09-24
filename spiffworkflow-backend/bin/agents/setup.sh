@@ -7,6 +7,14 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# Check if running on macOS
+if [[ "${OSTYPE:-}" == "darwin"* ]]; then
+    echo "❌ This script is designed for Linux agent environments and cannot run on macOS."
+    echo "   It requires apt-get, systemctl, and other Linux-specific tools."
+    echo "   Please run this script in a Linux container or agent environment."
+    exit 1
+fi
+
 # Change the current working directory to the script's parent directory
 # (spiffworkflow-backend) to ensure all paths are correct.
 cd "$(dirname "$0")/../.."

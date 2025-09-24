@@ -4,6 +4,18 @@ This document provides instructions for AI agents working in the `spiffworkflow-
 
 ## Environment Setup
 
+### Automated Setup (Recommended)
+
+For agent environments, use the automated setup script:
+
+```bash
+./bin/agents/setup.sh
+```
+
+This script handles system dependencies, Python packages, database setup, and verification tests.
+
+### Manual Setup
+
 Setting up the development environment requires several manual steps. A fully automated script is not available due to the requirement of a running MySQL server.
 
 1. **Install System Dependencies:**

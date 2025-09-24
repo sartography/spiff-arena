@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-set -e
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# Check if running on macOS
+if [[ "${OSTYPE:-}" == "darwin"* ]]; then
+    echo "❌ This script is designed for Linux agent environments and cannot run on macOS."
+    echo "   It requires Linux-specific paths and sudo commands for Playwright setup."
+    echo "   Please run this script in a Linux container or agent environment."
+    exit 1
+fi
 
 # Change the current working directory to the script's parent directory
 # (spiffworkflow-frontend) to ensure all paths are correct.
