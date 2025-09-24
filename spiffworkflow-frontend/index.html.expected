@@ -20,13 +20,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <script>
-      window.spiffworkflowFrontendJsenv = {};
+      window.spiffworkflowFrontendJsenv = {};window.spiffworkflowFrontendJsenv.BACKEND_BASE_URL="http://hey.com/api";
     </script>
+    <script type="module" crossorigin src="/assets/index-CkZCnYH7.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CJk96EgC.css">
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
