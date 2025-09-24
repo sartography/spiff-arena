@@ -46,10 +46,4 @@ if [[ -n "${SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT:-}" ]]; then
 fi
 sed "s/{{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}}/${port_to_use}/g" /var/tmp/nginx.conf.template >/etc/nginx/conf.d/default.conf
 
-cat /etc/nginx/conf.d/default.conf
-grep BACKEND /usr/share/nginx/html/index.html
-
-if ! diff index.html.expected /usr/share/nginx/html/index.html; then echo bad index && exit 1; fi
-if ! diff default.conf.expected /etc/nginx/conf.d/default.conf; then echo bad default && exit 1; fi
-
 exec nginx -g "daemon off;"
