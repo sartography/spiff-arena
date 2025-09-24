@@ -10,7 +10,7 @@
     "@casl/ability": "^6.7.1",
     "@casl/react": "^4.0.0",
     "@microsoft/fetch-event-source": "^2.0.1",
-    "@monaco-editor/react": "^4.4.5",
+    "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^6.4.3",
     "@mui/material": "^6.4.3",
     "@mui/x-data-grid": "^7.25.0",
