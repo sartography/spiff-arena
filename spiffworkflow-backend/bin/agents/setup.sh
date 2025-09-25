@@ -45,12 +45,12 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 # Step 3: Install Python Dependencies
 echo "[3/5] Installing Python dependencies..."
 echo "      - Running 'uv sync' from root..."
-(cd ../.. && uv sync)
+(cd .. && uv sync)
 echo "      - Running 'uv sync' from spiffworkflow-backend..."
 uv sync
 
 # get process model repo as sibling of spiff-arena
-process_model_dir="../../sample-process-models"
+process_model_dir="../sample-process-models"
 if [[ ! -d "$process_model_dir" ]]; then
   git clone https://github.com/sartography/sample-process-models.git "$process_model_dir"
 fi
@@ -64,6 +64,6 @@ SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean
 
 # Step 5: Run Tests to Verify Setup
 echo "[5/5] Running tests to verify the backend environment..."
-../../bin/run_pyl
+../bin/run_pyl
 
 echo "--- Backend environment setup and verification complete. ---"
