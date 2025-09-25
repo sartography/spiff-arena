@@ -35,6 +35,7 @@ on:
       - fail-fast-off
       - newui-all-in
       - rebuild-v1.0.0
+      - support-using-subdir-of-bpmn-spec-repo
     tags: [v*]
 
 jobs:
