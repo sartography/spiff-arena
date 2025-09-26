@@ -353,15 +353,17 @@ class TestProcessModelsController(BaseTest):
         including those in subprocesses.
         """
         process_model = load_test_spec(
-            "test_group/call_activity_to_human_task",
-            primary_file_name="primary_process.bpmn",
-            process_model_source_directory="call-activity-to-human-task",
+            "test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
         )
         modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
         url = f"/v1.0/process-models/{modified_id}/human-task-definitions"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
         assert response.status_code == 200
         human_tasks = response.json()
-        assert len(human_tasks) == 1
-        assert human_tasks[0]["name"] == "The Manual Task"
-        assert human_tasks[0]["task_type"] == "ManualTask"
+        assert len(human_tasks) == 3
+        assert human_tasks[0]["bpmn_identifier"] == "initiator_one"
+        assert human_tasks[0]["bpmn_name"] == "Initiator One"
+        assert human_tasks[0]["typename"] == "ManualTask"
+        assert human_tasks[0]["properties_json"]["lane"] == "Process Initiator"

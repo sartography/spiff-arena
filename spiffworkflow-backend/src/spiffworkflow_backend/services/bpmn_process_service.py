@@ -53,27 +53,43 @@ SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 SPIFF_CONFIG[KKVDataStore] = KKVDataStoreConverter
 SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 
+# Notes on bpmn_definition_to_task_definitions_mappings:
+#
+# this caches the bpmn_process_definition_identifier and task_identifier back to the bpmn_process_id
+# intthe database. This is to cut down on database queries while adding new tasks to the database.
+# Structure:
+#   { "[[BPMN_PROCESS_DEFINITION_IDENTIFIER]]": {
+#       "[[TASK_IDENTIFIER]]": [[TASK_DEFINITION]],
+#       "bpmn_process_definition": [[BPMN_PROCESS_DEFINITION]] }
+#   }
+# To use from a spiff_task:
+#   [spiff_task.workflow.spec.name][spiff_task.task_spec.name]
+
 
 class BpmnProcessService:
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
     serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
 
     @classmethod
-    def persist_bpmn_process_definition(cls, process_model_identifier: str) -> BpmnProcessDefinitionModel:
+    def persist_bpmn_process_definition(
+        cls, process_model_identifier: str, bpmn_definition_to_task_definitions_mappings: dict | None = None
+    ) -> BpmnProcessDefinitionModel:
+        if bpmn_definition_to_task_definitions_mappings is None:
+            bpmn_definition_to_task_definitions_mappings = {}
+
         (
             bpmn_process_spec,
             subprocesses,
-        ) = BpmnProcessService.get_process_model_and_subprocesses(process_model_identifier)
+        ) = cls.get_process_model_and_subprocesses(process_model_identifier)
 
-        bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
+        bpmn_process_instance = cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
 
-        bpmn_definition_to_task_definitions_mappings: dict = {}
-        bpmn_process_definition_parent = BpmnProcessService.add_bpmn_process_definitions(
-            BpmnProcessService.serialize(bpmn_process_instance),
+        bpmn_process_definition_parent = cls.add_bpmn_process_definitions(
+            cls.serialize(bpmn_process_instance),
             bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
         )
 
-        BpmnProcessService.save_to_database(
+        cls.save_to_database(
             bpmn_definition_to_task_definitions_mappings, bpmn_process_definition_parent=bpmn_process_definition_parent
         )
         return bpmn_process_definition_parent
@@ -217,7 +233,7 @@ class BpmnProcessService:
 
     @classmethod
     def serialize(cls, bpmn_process_instance: BpmnWorkflow) -> dict:
-        return BpmnProcessService.serializer.to_dict(bpmn_process_instance)  # type: ignore
+        return cls.serializer.to_dict(bpmn_process_instance)  # type: ignore
 
     @classmethod
     def save_to_database(
@@ -286,6 +302,26 @@ class BpmnProcessService:
                     db.session.add(bpmn_process_definition_relationship)
 
         db.session.commit()
+
+    @classmethod
+    def extract_human_task_definitions(cls, bpmn_definition_to_task_definitions_mappings: dict) -> list[TaskDefinitionModel]:
+        human_tasks = []
+        for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+            for task_identifier, task_definition in entity.items():
+                if (
+                    task_definition.id is None
+                    and task_identifier != "bpmn_process_definition"
+                    and task_definition.is_human_task()
+                ):
+                    # task_definition_dict = {
+                    #     "bpmn_identifier": task_definition.bpmn_identifier,
+                    #     "bpmn_name": task_definition.bpmn_name,
+                    #     "properties_json": task_definition.properties_json,
+                    #     "typename": task_definition.typename,
+                    # }
+                    human_tasks.append(task_definition)
+
+        return human_tasks
 
     @classmethod
     def _store_bpmn_process_definition(
