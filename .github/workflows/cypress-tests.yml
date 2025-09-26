@@ -1,0 +1,58 @@
+name: Cypress Tests
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build Docker Images"]
+    types:
+      - completed
+
+jobs:
+  quickstart-guide-test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'v'))) }}
+    steps:
+      - name: Get SHA for workflow_run
+        id: get_sha
+        if: github.event_name == 'workflow_run'
+        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.get_sha.outputs.sha }}
+
+      - name: Set image tag for main branch
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main'
+        # Assumes docker-compose.yml is at the root and uses ':latest' tag.
+        # This will replace ':latest' with ':main-latest' for the images.
+        run: |
+          sed -i 's|\(image: ghcr.io/sartography/spiffworkflow-frontend\):latest|\1:main-latest|' docker-compose.yml
+          sed -i 's|\(image: ghcr.io/sartography/spiffworkflow-backend\):latest|\1:main-latest|' docker-compose.yml
+          sed -i 's|\(image: ghcr.io/sartography/connector-proxy-demo\):latest|\1:main-latest|' docker-compose.yml
+
+      - name: Setup Apps
+        run: ./bin/run_arena_with_docker_compose
+      - name: wait_for_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/wait_for_backend_to_be_up 5 8000
+      - name: wait_for_frontend
+        working-directory: ./spiffworkflow-frontend
+        run: ./bin/wait_for_frontend_to_be_up 5 8001
+      - name: wait_for_connector
+        working-directory: ./connector-proxy-demo
+        run: ./bin/wait_for_connector_to_be_up 5 8004
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./spiffworkflow-frontend
+          browser: chromium
+          # just run one test to make sure we didn't completely break it
+          spec: cypress/e2e/process_groups.cy.js
+        env:
+          # pass GitHub token to allow accurately detecting a build vs a re-run build
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
+          SPIFFWORKFLOW_FRONTEND_PORT: 8001
