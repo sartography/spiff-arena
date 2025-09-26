@@ -308,17 +308,7 @@ class BpmnProcessService:
         human_tasks = []
         for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
             for task_identifier, task_definition in entity.items():
-                if (
-                    task_definition.id is None
-                    and task_identifier != "bpmn_process_definition"
-                    and task_definition.is_human_task()
-                ):
-                    # task_definition_dict = {
-                    #     "bpmn_identifier": task_definition.bpmn_identifier,
-                    #     "bpmn_name": task_definition.bpmn_name,
-                    #     "properties_json": task_definition.properties_json,
-                    #     "typename": task_definition.typename,
-                    # }
+                if task_identifier != "bpmn_process_definition" and task_definition.is_human_task():
                     human_tasks.append(task_definition)
 
         return human_tasks
