@@ -1,0 +1,57 @@
+name: Playwright Tests
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build Docker Images"]
+    types:
+      - completed
+
+jobs:
+  quickstart-guide-test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'v'))) }}
+    steps:
+      - name: Get SHA for workflow_run
+        id: get_sha
+        if: github.event_name == 'workflow_run'
+        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.get_sha.outputs.sha }}
+
+      - name: Set image tag for main branch
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main'
+        # Assumes docker-compose.yml is at the root and uses ':latest' tag.
+        # This will replace ':latest' with ':main-latest' for the images.
+        run: |
+          sed -i 's|\(image: ghcr.io/sartography/spiffworkflow-frontend\):latest|\1:main-latest|' docker-compose.yml
+          sed -i 's|\(image: ghcr.io/sartography/spiffworkflow-backend\):latest|\1:main-latest|' docker-compose.yml
+          sed -i 's|\(image: ghcr.io/sartography/connector-proxy-demo\):latest|\1:main-latest|' docker-compose.yml
+
+      - name: Setup Apps
+        run: ./bin/run_arena_with_docker_compose
+      - name: wait_for_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/wait_for_backend_to_be_up 5 8000
+      - name: wait_for_frontend
+        working-directory: ./spiffworkflow-frontend
+        run: ./bin/wait_for_frontend_to_be_up 5 8001
+      - name: wait_for_connector
+        working-directory: ./connector-proxy-demo
+        run: ./bin/wait_for_connector_to_be_up 5 8004
+      - name: Setup Python and UV
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install UV
+        run: pip install uv
+      - name: Playwright run
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run pytest process_groups/test_can_perform_crud_operations.py
+        env:
+          # pass GitHub token to allow accurately detecting a build vs a re-run build
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          E2E_URL: "http://localhost:8001"
