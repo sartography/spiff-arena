@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: E2E Tests
 
 on:
   workflow_dispatch:
@@ -48,9 +48,12 @@ jobs:
           python-version: "3.12"
       - name: Install UV
         run: pip install uv
+      - name: Install Playwright browsers
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run playwright install --with-deps
       - name: Playwright run
         working-directory: ./spiffworkflow-frontend/test/browser
-        run: uv run pytest process_groups/test_can_perform_crud_operations.py
+        run: uv run pytest
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
