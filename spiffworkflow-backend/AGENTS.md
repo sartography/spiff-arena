@@ -6,10 +6,11 @@ This document provides instructions for AI agents working in the `spiffworkflow-
 
 ### Automated Setup (Recommended)
 
-For agent environments, use the automated setup script:
+For agent environments, unless the file `agent_setup_script_has_completed_successfully` exists, use the automated setup script
+in the spiffworkflow-backend directory:
 
 ```bash
-./bin/agents/setup.sh
+./bin/agents/backend_setup.sh
 ```
 
 This script handles system dependencies, Python packages, database setup, and verification tests.
