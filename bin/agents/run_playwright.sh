@@ -79,24 +79,25 @@ else
     echo "✅ Backend server is already running"
 fi
 
-# Check if frontend is running  
+# Check if frontend is running
 echo "Checking if frontend server is running..."
 if ! curl -s -o /dev/null http://localhost:7001; then
     echo "🚀 Starting frontend server..."
     cd "$ROOT_DIR/spiffworkflow-frontend"
-    npm start &
+
+    # Start frontend server and wait for it to be ready
+    echo "Waiting for frontend to be ready..."
+    (npm start | tee /tmp/frontend.log) &
     FRONTEND_PID=$!
     STARTED_FRONTEND=true
-    
-    # Wait for frontend to be ready
-    echo "Waiting for frontend to be ready..."
-    for i in {1..60}; do
-        if curl -s -o /dev/null http://localhost:7001; then
+
+    for i in {1..120}; do
+        if grep -q "Local:" /tmp/frontend.log; then
             echo "✅ Frontend is ready!"
             break
         fi
-        if [ $i -eq 60 ]; then
-            echo "❌ Frontend failed to start within 60 seconds"
+        if [ $i -eq 120 ]; then
+            echo "❌ Frontend failed to start within 120 seconds"
             exit 1
         fi
         sleep 1
@@ -104,6 +105,7 @@ if ! curl -s -o /dev/null http://localhost:7001; then
 else
     echo "✅ Frontend server is already running"
 fi
+
 
 echo ""
 echo "🧪 Running Playwright tests..."
