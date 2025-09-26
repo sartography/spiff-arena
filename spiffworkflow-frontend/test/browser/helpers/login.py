@@ -1,8 +1,9 @@
 import os
 from playwright.sync_api import Page, expect
+from helpers.url import get_base_url
 
-# Default base URL, can be overridden via E2E_URL environment variable
-BASE_URL = os.getenv("E2E_URL", "http://localhost:7001")
+BASE_URL = get_base_url()
+
 
 
 def login(page: Page, username: str, password: str, base_url: str = BASE_URL):
