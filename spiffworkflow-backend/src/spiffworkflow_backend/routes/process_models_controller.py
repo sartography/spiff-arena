@@ -640,3 +640,15 @@ def process_model_milestone_list(
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return make_response(jsonify({"milestones": milestones}), 200)
+
+
+def get_human_task_definitions(modified_process_model_identifier: str) -> flask.wrappers.Response:
+    """
+    Returns a list of human task definitions for a given process model,
+    including tasks in subprocesses.
+    """
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
+    files = ProcessModelService.get_process_model_files(process_model)
+    human_tasks = SpecFileService.extract_human_task_definitions(process_model, files)
+    return make_response(jsonify(human_tasks), 200)

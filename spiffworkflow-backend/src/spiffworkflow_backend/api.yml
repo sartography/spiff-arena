@@ -1909,6 +1909,41 @@ paths:
                         task_type:
                           type: string
 
+  /process-models/{modified_process_model_identifier}/human-task-definitions:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_models_controller.get_human_task_definitions
+      summary: Returns human task definitions for a process model
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Returns the human task definitions for the process model.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    bpmn_identifier:
+                      type: string
+                    bpmn_name:
+                      type: string
+                      nullable: true
+                    file:
+                      type: string
+                    task_type:
+                      type: string
+
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
       - name: modified_process_model_identifier

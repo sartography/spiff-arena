@@ -340,3 +340,28 @@ class TestProcessModelsController(BaseTest):
         assert response.json() is not None
         process_model_data: dict = response.json()
         return process_model_data
+
+    def test_get_human_task_definitions(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """
+        Test that we can retrieve human task definitions from a process model,
+        including those in subprocesses.
+        """
+        process_model = load_test_spec(
+            "test_group/call_activity_to_human_task",
+            primary_file_name="primary_process.bpmn",
+            process_model_source_directory="call-activity-to-human-task",
+        )
+        modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        url = f"/v1.0/process-models/{modified_id}/human-task-definitions"
+        response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        human_tasks = response.json()
+        assert len(human_tasks) == 1
+        assert human_tasks[0]["name"] == "The Manual Task"
+        assert human_tasks[0]["task_type"] == "ManualTask"
