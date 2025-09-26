@@ -1,5 +1,3 @@
-# DISABLING while https://www.aikido.dev/blog/npm-debug-and-chalk-packages-compromised is getting fixed
-#
 # Some of the automerge workflow is described at https://stackoverflow.com/a/68365564/6090676
 name: Dependabot auto-merge
 on:
@@ -27,12 +25,10 @@ permissions:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    # DISABLING while https://www.aikido.dev/blog/npm-debug-and-chalk-packages-compromised is getting fixed
-    if: false
-    # if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Development Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       ###### GET PR NUMBER
       # we saved the pr_number in tests.yml. fetch it so we can merge the correct PR.
