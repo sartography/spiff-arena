@@ -45,7 +45,7 @@ jobs:
       - name: Setup Python and UV
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install UV
         run: pip install uv
       - name: Playwright run
@@ -54,7 +54,4 @@ jobs:
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
-          SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
-          SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
           E2E_URL: "http://localhost:8001"
