@@ -1,4 +1,4 @@
-name: Cypress Tests
+name: Playwright Tests
 
 on:
   workflow_dispatch:
@@ -42,17 +42,19 @@ jobs:
       - name: wait_for_connector
         working-directory: ./connector-proxy-demo
         run: ./bin/wait_for_connector_to_be_up 5 8004
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
+      - name: Setup Python and UV
+        uses: actions/setup-python@v5
         with:
-          working-directory: ./spiffworkflow-frontend
-          browser: chromium
-          # just run one test to make sure we didn't completely break it
-          spec: cypress/e2e/process_groups.cy.js
+          python-version: '3.12'
+      - name: Install UV
+        run: pip install uv
+      - name: Playwright run
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run pytest process_groups/test_can_perform_crud_operations.py
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
-          SPIFFWORKFLOW_FRONTEND_PORT: 8001
+          SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
+          SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
+          SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
+          E2E_URL: "http://localhost:8001"
