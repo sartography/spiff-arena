@@ -386,3 +386,9 @@ class MessageService:
                 )
             )
         return receiving_process_instance
+
+    @classmethod
+    def get_process_model_identifier_from_message_name(cls, modified_message_name: str) -> dict:
+        """Given a message name, returns the process model that would be started."""
+        message_triggerable_process_model = cls.find_message_triggerable_process_model(modified_message_name)
+        return {"process_model_identifier": message_triggerable_process_model.process_model_identifier}

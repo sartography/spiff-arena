@@ -3022,6 +3022,27 @@ paths:
                   process_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
+  /messages/{modified_message_name}/process-model:
+    parameters:
+      - name: modified_message_name
+        in: path
+        required: true
+        description: The message_name, modified to replace slashes (/) with colons
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.messages_controller.get_process_model_for_message
+      summary: Returns the process model for a given message name
+      tags:
+        - Messages
+      responses:
+        "200":
+          description: The process model associated with the message.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
   /public/messages/form/{modified_message_name}:
     parameters:
       - name: modified_message_name

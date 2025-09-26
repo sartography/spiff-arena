@@ -4,7 +4,9 @@ from flask import g
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
@@ -12,6 +14,36 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestMessages(BaseTest):
+    def test_get_process_model_for_message(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test getting the process model for a given message name."""
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group")
+        self.create_process_model_with_api(
+            client,
+            "test_group/test_model",
+            "My Test Model",
+            user=with_super_admin_user,
+        )
+        trigger = MessageTriggerableProcessModel(
+            process_model_identifier="test_group/test_model",
+            message_name="start_message",
+        )
+        db.session.add(trigger)
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/messages/test_group:start_message/process-model",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["process_model_identifier"] == "test_group/test_model"
+
     def test_message_from_api_into_running_process(
         self,
         app: Flask,
