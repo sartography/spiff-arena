@@ -54,9 +54,13 @@ class GitService:
     ) -> str:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         process_model_relative_path = FileSystemService.process_model_relative_path(process_model)
+        path_in_repo = f"{process_model_relative_path}/{file_name}"
+        subdir = current_app.config.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_SUBDIR_WITHIN_REPO")
+        if subdir:
+            path_in_repo = f"{subdir}/{path_in_repo}"
         shell_command = [
             "show",
-            f"{revision}:{process_model_relative_path}/{file_name}",
+            f"{revision}:{path_in_repo}",
         ]
         return cls.run_shell_command_to_get_stdout(shell_command, context_directory=bpmn_spec_absolute_dir)
 
