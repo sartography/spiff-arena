@@ -805,7 +805,7 @@ export default function ProcessModelTreePage({
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-testid="add-process-group-button"
+                          data-testid="add-data-store-button"
                           href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />

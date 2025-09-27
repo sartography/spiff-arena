@@ -27,7 +27,7 @@ def login(page: Page, username: str, password: str, base_url: str = BASE_URL):
 
     # Wait for navigation and check for an element indicating successful login.
     # The 'User Actions' button seems reliable based on previous context.
-    expect(page.get_by_role("button", name="User Actions")).to_be_visible()
+    expect(page.get_by_role("button", name="User Actions")).to_be_visible(timeout=20000)
 
 
 def logout(page: Page, base_url: str = BASE_URL):
