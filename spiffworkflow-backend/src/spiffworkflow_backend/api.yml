@@ -1930,19 +1930,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    bpmn_identifier:
-                      type: string
-                    bpmn_name:
-                      type: string
-                      nullable: true
-                    file:
-                      type: string
-                    task_type:
-                      type: string
+                  $ref: "#/components/schemas/TaskDefinition"
 
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
@@ -3978,6 +3966,27 @@ components:
       properties:
         allows_guest:
           type: boolean
+    TaskDefinition:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        bpmn_process_definition_id:
+          readOnly: true
+          type: number
+        bpmn_identifier:
+          type: string
+        bpmn_name:
+          type: string
+        typename:
+          type: string
+        properties_json:
+          type: object
+        updated_at_in_seconds:
+          type: number
+        created_at_in_seconds:
+          type: number
+
     Task:
       properties:
         id:
