@@ -3041,7 +3041,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModel"
+                properties:
+                  process_model_identifier:
+                    type: string
 
   /public/messages/form/{modified_message_name}:
     parameters:
