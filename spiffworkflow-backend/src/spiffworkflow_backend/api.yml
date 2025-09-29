@@ -3041,6 +3041,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   process_model_identifier:
                     type: string
