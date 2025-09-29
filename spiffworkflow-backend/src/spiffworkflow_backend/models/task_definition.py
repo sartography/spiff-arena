@@ -56,3 +56,6 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
                 index_elements=["bpmn_process_definition_id", "bpmn_identifier"]
             )
         return db.session.execute(on_duplicate_key_stmt)
+
+    def is_human_task(self) -> bool:
+        return self.typename in ["UserTask", "ManualTask"]
