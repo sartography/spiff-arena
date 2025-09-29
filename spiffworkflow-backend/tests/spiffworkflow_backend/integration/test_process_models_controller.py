@@ -348,10 +348,6 @@ class TestProcessModelsController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """
-        Test that we can retrieve human task definitions from a process model,
-        including those in subprocesses.
-        """
         process_model = load_test_spec(
             "test_group/model_with_lanes",
             bpmn_file_name="lanes.bpmn",
