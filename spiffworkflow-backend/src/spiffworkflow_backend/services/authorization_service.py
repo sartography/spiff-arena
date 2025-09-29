@@ -660,6 +660,7 @@ class AuthorizationService:
         # FIXME: we need to fix so that user that can start a process-model
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))

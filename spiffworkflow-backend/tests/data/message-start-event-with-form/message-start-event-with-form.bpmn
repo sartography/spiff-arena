@@ -12,7 +12,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="message_start_event_one" targetRef="script_task_one" />
     <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="script_task_one" targetRef="EndEvent_1" />
-    <bpmn:startEvent id="message_start_event_one" name="Message Start Event One" messageRef="[object Object]">
+    <bpmn:startEvent id="message_start_event_one" name="Message Start Event One">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>## Enter your frist name</spiffworkflow:instructionsForEndUser>
         <spiffworkflow:guestConfirmation># Thanks
