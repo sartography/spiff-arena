@@ -21,7 +21,6 @@ class TestMessages(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test getting the process model for a given message name."""
         self.create_process_group_with_api(client, with_super_admin_user, "test_group")
         self.create_process_model_with_api(
             client,
