@@ -8,6 +8,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask import redirect
+from flask import render_template
 from flask import request
 from werkzeug.wrappers import Response
 
@@ -141,16 +142,29 @@ def login(
     return redirect(login_redirect_url)
 
 
-def login_return(code: str, state: str, session_state: str = "") -> Response | None:
+def login_return(
+    state: str,
+    code: str | None = None,
+    error: str | None = None,
+    error_description: str | None = None,
+    session_state: str = "",
+) -> Response | None:
+    if error:
+        return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
+
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["final_url"]
     authentication_identifier = state_dict["authentication_identifier"]
-    auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
+    auth_token_object = AuthenticationService().get_auth_token_object(
+        code, authentication_identifier=authentication_identifier
+    )
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
         decoded_token = _get_decoded_token(id_token)
 
-        if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
+        if AuthenticationService.validate_decoded_token(
+            decoded_token, authentication_identifier=authentication_identifier
+        ):
             if decoded_token and "error" not in decoded_token:
                 user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                 g.user = user_model

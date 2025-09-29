@@ -53,7 +53,7 @@ paths:
     parameters:
       - name: code
         in: query
-        required: true
+        required: false
         schema:
           type: string
       - name: state
@@ -62,6 +62,16 @@ paths:
         schema:
           type: string
       - name: session_state
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: error
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: error_description
         in: query
         required: false
         schema:
