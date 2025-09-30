@@ -2,11 +2,9 @@ import calendar
 import datetime
 import json
 import logging
-import os
 import time
 import uuid
 
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from SpiffWorkflow.bpmn.parser.util import full_tag
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
@@ -16,8 +14,6 @@ from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskPar
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG
 from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter, SpiffBpmnTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ServiceTask, UserTask
-from SpiffWorkflow.spiff.specs.spiff_task import SpiffBpmnTask
-from SpiffWorkflow.task import Task
 from SpiffWorkflow.util.task import TaskFilter, TaskState
 
 logging.basicConfig(level=logging.INFO)

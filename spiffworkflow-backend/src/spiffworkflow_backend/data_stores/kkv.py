@@ -177,6 +177,33 @@ class KKVDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["KKVDataStore"] = KKVDataStore
 
+    @classmethod
+    def clear(cls, identifier: str, location: str | None) -> None:
+        if not location:
+            return
+
+        store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+        if store_model is None:
+            raise DataStoreWriteError(f"Unable to locate kkv data store '{identifier}'.")
+
+        models = db.session.query(KKVDataStoreEntryModel).filter_by(kkv_data_store_id=store_model.id).all()
+
+        for model_to_delete in models:
+            db.session.delete(model_to_delete)
+
+        db.session.commit()
+
+    @classmethod
+    def delete(cls, identifier: str, location: str | None) -> None:
+        if not location:
+            return
+
+        store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+        if store_model:
+            db.session.delete(store_model)
+            db.session.commit()
+
 
 class KKVDataStoreConverter(BpmnConverter):  # type: ignore
     def to_dict(self, spec: Any) -> dict[str, Any]:

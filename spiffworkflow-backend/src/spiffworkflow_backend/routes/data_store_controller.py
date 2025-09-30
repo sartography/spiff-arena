@@ -88,6 +88,35 @@ def data_store_item_list(
     return _build_response(data_store_class, identifier, location, page, per_page)
 
 
+def data_store_clear(
+    data_store_type: str, identifier: str, location: str | None = None, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
+    """Clears the items in a data store."""
+
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
+    data_store_class, _ = DATA_STORES[data_store_type]
+    data_store_class.clear(identifier, location)
+    return _build_response(data_store_class, identifier, location, page, per_page)
+
+
+def data_store_delete(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
+    """Deletes a data store."""
+
+    if data_store_type not in DATA_STORES:
+        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+
+    data_store_class, _ = DATA_STORES[data_store_type]
+    data_store_class.delete(identifier, process_group_identifier)
+
+    response = {
+        "ok": True,
+    }
+
+    return make_response(jsonify(response), 200)
+
+
 def data_store_create(body: dict) -> flask.wrappers.Response:
     return _data_store_upsert(body, True)
 

@@ -3646,6 +3646,14 @@ paths:
         - Data Stores
       responses:
         "200":
+          description: The requested data store.
+    delete:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_clear
+      summary: Clears all items of a data store.
+      tags:
+        - Data Stores
+      responses:
+        "200":
           description: A list of the data stored in the requested data store.
   /data-stores/{data_store_type}/{identifier}:
     parameters:
@@ -3670,6 +3678,14 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_show
       summary: Returns a description of the data store.
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: The requested data store.
+    delete:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_delete
+      summary: Deletes the data store.
       tags:
         - Data Stores
       responses:

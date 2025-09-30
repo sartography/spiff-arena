@@ -18,6 +18,7 @@ import HttpService from '../services/HttpService';
 import { DataStore, DataStoreRecords, PaginationObject } from '../interfaces';
 import PaginationForTable from './PaginationForTable';
 import { getPageInfoFromSearchParams } from '../helpers';
+import DataStoreButtons from './DataStoreButtons';
 
 export default function DataStoreListTable() {
   const [dataStores, setDataStores] = useState<DataStore[]>([]);
@@ -173,6 +174,7 @@ export default function DataStoreListTable() {
         tableToDisplay={getTable()}
         paginationQueryParamPrefix="datastore"
       />
+      {dataStore && <DataStoreButtons dataStore={dataStore} />}
     </>
   );
 }
