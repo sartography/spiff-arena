@@ -211,3 +211,23 @@ class TestAuthentication(BaseTest):
             headers={"Authorization": "Bearer " + access_token.split("=")[1]},
         )
         assert response.status_code == 403
+
+    def test_login_return_with_error(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test that the login_return endpoint handles errors from the OIDC provider."""
+        error = "access_denied"
+        error_description = "User is not assigned to the client application."
+        state = AuthenticationService.generate_state(authentication_identifier="default", final_url="/")
+        url = f"/v1.0/login_return?state={state.decode()}&error={error}&error_description={error_description}"
+
+        response = client.get(url)
+
+        assert response.status_code == 401
+        response_text = response.text
+        assert "<h1>Authentication Error</h1>" in response_text
+        assert f"<strong>Error:</strong> {error}" in response_text
+        assert f"<strong>Description:</strong> {error_description}" in response_text

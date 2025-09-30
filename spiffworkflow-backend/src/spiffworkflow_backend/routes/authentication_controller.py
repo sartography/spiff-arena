@@ -8,6 +8,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask import redirect
+from flask import render_template
 from flask import request
 from werkzeug.wrappers import Response
 
@@ -141,7 +142,19 @@ def login(
     return redirect(login_redirect_url)
 
 
-def login_return(code: str, state: str, session_state: str = "") -> Response | None:
+def login_return(
+    state: str,
+    code: str | None = None,
+    error: str | None = None,
+    error_description: str | None = None,
+    session_state: str = "",
+) -> Response | None:
+    if error:
+        return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
+
+    if code is None:
+        raise ApiError(error_code="missing_code", message="Authorization code not found in request", status_code=400)
+
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["final_url"]
     authentication_identifier = state_dict["authentication_identifier"]
