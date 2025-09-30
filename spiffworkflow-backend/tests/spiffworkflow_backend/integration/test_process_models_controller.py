@@ -340,3 +340,26 @@ class TestProcessModelsController(BaseTest):
         assert response.json() is not None
         process_model_data: dict = response.json()
         return process_model_data
+
+    def test_get_human_task_definitions(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        url = f"/v1.0/process-models/{modified_id}/human-task-definitions"
+        response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        human_tasks = response.json()
+        assert len(human_tasks) == 3
+        assert human_tasks[0]["bpmn_identifier"] == "initiator_one"
+        assert human_tasks[0]["bpmn_name"] == "Initiator One"
+        assert human_tasks[0]["typename"] == "ManualTask"
+        assert human_tasks[0]["properties_json"]["lane"] == "Process Initiator"
