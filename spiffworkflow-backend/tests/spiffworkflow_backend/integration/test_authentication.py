@@ -222,12 +222,12 @@ class TestAuthentication(BaseTest):
         error = "access_denied"
         error_description = "User is not assigned to the client application."
         state = AuthenticationService.generate_state(authentication_identifier="default", final_url="/")
-        url = f"/v1.0/login_return?state={state}&error={error}&error_description={error_description}"
+        url = f"/v1.0/login_return?state={state.decode()}&error={error}&error_description={error_description}"
 
         response = client.get(url)
 
         assert response.status_code == 401
-        response_text = response.get_data(as_text=True)
+        response_text = response.text
         assert "<h1>Authentication Error</h1>" in response_text
         assert f"<strong>Error:</strong> {error}" in response_text
         assert f"<strong>Description:</strong> {error_description}" in response_text

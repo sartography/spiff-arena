@@ -152,6 +152,9 @@ def login_return(
     if error:
         return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
 
+    if code is None:
+        raise ApiError(error_code="missing_code", message="Authorization code not found in request", status_code=400)
+
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["final_url"]
     authentication_identifier = state_dict["authentication_identifier"]
