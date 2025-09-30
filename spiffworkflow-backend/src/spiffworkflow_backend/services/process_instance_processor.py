@@ -447,16 +447,6 @@ class ProcessInstanceProcessor:
         # should help us cache it in memeory. it also does not have a guid which is why just avoid caching it in this system.
         self.task_model_mapping: dict[str, TaskModel] = {}
         self.bpmn_subprocess_mapping: dict[str, BpmnProcessModel] = {}
-
-        # this caches the bpmn_process_definition_identifier and task_identifier back to the bpmn_process_id
-        # intthe database. This is to cut down on database queries while adding new tasks to the database.
-        # Structure:
-        #   { "[[BPMN_PROCESS_DEFINITION_IDENTIFIER]]": {
-        #       "[[TASK_IDENTIFIER]]": [[TASK_DEFINITION]],
-        #       "bpmn_process_definition": [[BPMN_PROCESS_DEFINITION]] }
-        #   }
-        # To use from a spiff_task:
-        #   [spiff_task.workflow.spec.name][spiff_task.task_spec.name]
         self.bpmn_definition_to_task_definitions_mappings: dict = {}
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None

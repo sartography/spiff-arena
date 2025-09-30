@@ -1919,6 +1919,29 @@ paths:
                         task_type:
                           type: string
 
+  /process-models/{modified_process_model_identifier}/human-task-definitions:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_models_controller.get_human_task_definitions
+      summary: Returns human task definitions for a process model
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Returns the human task definitions for the process model.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskDefinition"
+
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
       - name: modified_process_model_identifier
@@ -3032,6 +3055,30 @@ paths:
                   process_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
+  /messages/{modified_message_name}/process-model:
+    parameters:
+      - name: modified_message_name
+        in: path
+        required: true
+        description: The message_name, modified to replace slashes (/) with colons
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.messages_controller.get_process_model_for_message
+      summary: Returns the process model for a given message name
+      tags:
+        - Messages
+      responses:
+        "200":
+          description: The process model associated with the message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  process_model_identifier:
+                    type: string
+
   /public/messages/form/{modified_message_name}:
     parameters:
       - name: modified_message_name
@@ -3953,6 +4000,27 @@ components:
       properties:
         allows_guest:
           type: boolean
+    TaskDefinition:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        bpmn_process_definition_id:
+          readOnly: true
+          type: number
+        bpmn_identifier:
+          type: string
+        bpmn_name:
+          type: string
+        typename:
+          type: string
+        properties_json:
+          type: object
+        updated_at_in_seconds:
+          type: number
+        created_at_in_seconds:
+          type: number
+
     Task:
       properties:
         id:

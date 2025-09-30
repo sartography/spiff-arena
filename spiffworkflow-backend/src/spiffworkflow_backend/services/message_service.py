@@ -372,7 +372,7 @@ class MessageService:
     def get_process_instance_for_message_instance(
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
-        receiving_process_instance: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
+        receiving_process_instance: ProcessInstanceModel | None = ProcessInstanceModel.query.filter_by(
             id=message_instance_receive.process_instance_id
         ).first()
         if receiving_process_instance is None:
