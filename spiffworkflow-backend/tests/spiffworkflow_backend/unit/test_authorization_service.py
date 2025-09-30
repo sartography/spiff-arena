@@ -546,6 +546,7 @@ class TestAuthorizationService(BaseTest):
                 ("/logs/*", "read"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
+                ("/messages/*", "read"),
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
                 ("/process-instance-events/*", "read"),

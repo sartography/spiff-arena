@@ -26,6 +26,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -640,3 +641,11 @@ def process_model_milestone_list(
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return make_response(jsonify({"milestones": milestones}), 200)
+
+
+def get_human_task_definitions(modified_process_model_identifier: str) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    bpmn_definition_to_task_definitions_mappings: dict = {}
+    BpmnProcessService.persist_bpmn_process_definition(process_model_identifier, bpmn_definition_to_task_definitions_mappings)
+    human_tasks = BpmnProcessService.extract_human_task_definitions(bpmn_definition_to_task_definitions_mappings)
+    return make_response(jsonify(human_tasks), 200)

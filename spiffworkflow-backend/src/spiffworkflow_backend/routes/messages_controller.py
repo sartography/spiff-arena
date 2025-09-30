@@ -106,3 +106,9 @@ def message_send(
         status=200,
         mimetype="application/json",
     )
+
+
+def get_process_model_for_message(modified_message_name: str) -> flask.wrappers.Response:
+    message_triggerable_process_model = MessageService.find_message_triggerable_process_model(modified_message_name)
+    process_model_identifier = {"process_model_identifier": message_triggerable_process_model.process_model_identifier}
+    return make_response(jsonify(process_model_identifier), 200)
