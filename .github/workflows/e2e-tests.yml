@@ -43,7 +43,7 @@ jobs:
         working-directory: ./connector-proxy-demo
         run: ./bin/wait_for_connector_to_be_up 5 8004
       - name: Setup Python and UV
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install UV
