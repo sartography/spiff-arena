@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Delete 'spiff' main containers older than a week
         # v3.0.1 tries to reference ghcr.io/snok/container-retention-policy:v3.0.1 which doesn't exist
+        # https://github.com/snok/container-retention-policy/issues/109
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: sartography
