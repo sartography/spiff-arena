@@ -1004,10 +1004,12 @@ class AuthorizationService:
         added_permissions: AddedPermissionDict,
         initial_permission_assignments: list[PermissionAssignmentModel],
         initial_user_to_group_assignments: list[UserGroupAssignmentModel],
+        initial_waiting_group_assignments: list[UserGroupAssignmentWaitingModel],
         group_permissions_only: bool = False,
     ) -> None:
         added_permission_assignments = added_permissions["permission_assignments"]
         added_user_to_group_identifiers = added_permissions["user_to_group_identifiers"]
+        added_waiting_group_assignments = added_permissions["waiting_user_group_assignments"]
 
         for ipa in initial_permission_assignments:
             if ipa not in added_permission_assignments:
@@ -1026,6 +1028,10 @@ class AuthorizationService:
                     }
                     if current_user_dict not in added_user_to_group_identifiers:
                         db.session.delete(iutga)
+
+        for wugam in initial_waiting_group_assignments:
+            if wugam not in added_waiting_group_assignments:
+                db.session.delete(wugam)
 
         db.session.commit()
 
@@ -1094,6 +1100,7 @@ class AuthorizationService:
                 added_permissions,
                 initial_permission_assignments,
                 initial_user_to_group_assignments,
+                initial_waiting_group_assignments,
                 group_permissions_only=group_permissions_only,
             )
             current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - COMPLETED successfully")
