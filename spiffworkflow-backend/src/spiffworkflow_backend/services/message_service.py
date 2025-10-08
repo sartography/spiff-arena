@@ -54,43 +54,43 @@ class MessageService:
         db.session.add(message_instance_send)
         db.session.commit()
 
-        # Find available messages that might match
-        available_receive_messages = MessageInstanceModel.query.filter_by(
-            name=message_instance_send.name,
-            status=MessageStatuses.ready.value,
-            message_type=MessageTypes.receive.value,
-        ).all()
         message_instance_receive: MessageInstanceModel | None = None
         receiving_process_instance: ProcessInstanceModel | None = None
         processor_receive = None
         try:
-            for message_instance in available_receive_messages:
-                if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
-                    message_instance_receive = message_instance
-            message_triggerable_process_model = None
-            receiving_process_instance = None
-            if message_instance_receive is None:
-                # Check for a message triggerable process and start that to create a new message_instance_receive
-                message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-                    message_name=message_instance_send.name
+            # Check for a message triggerable process and start that to create a new message_instance_receive
+            message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+                message_name=message_instance_send.name
+            ).first()
+            if message_triggerable_process_model:
+                user: UserModel | None = message_instance_send.user
+                if user is None:
+                    user = UserService.find_or_create_system_user()
+                receiving_process_instance, processor_receive = MessageService.start_process_with_message(
+                    message_triggerable_process_model,
+                    user,
+                    message_instance_send=message_instance_send,
+                    execution_mode=execution_mode,
+                )
+                message_instance_receive = MessageInstanceModel.query.filter_by(
+                    process_instance_id=receiving_process_instance.id,
+                    message_type="receive",
+                    status="ready",
                 ).first()
-                if message_triggerable_process_model:
-                    user: UserModel | None = message_instance_send.user
-                    if user is None:
-                        user = UserService.find_or_create_system_user()
-                    receiving_process_instance, processor_receive = MessageService.start_process_with_message(
-                        message_triggerable_process_model,
-                        user,
-                        message_instance_send=message_instance_send,
-                        execution_mode=execution_mode,
-                    )
-                    message_instance_receive = MessageInstanceModel.query.filter_by(
-                        process_instance_id=receiving_process_instance.id,
-                        message_type="receive",
-                        status="ready",
-                    ).first()
             else:
-                receiving_process_instance = MessageService.get_process_instance_for_message_instance(message_instance_receive)
+                # Find available messages that might match
+                available_receive_messages = MessageInstanceModel.query.filter_by(
+                    name=message_instance_send.name,
+                    status=MessageStatuses.ready.value,
+                    message_type=MessageTypes.receive.value,
+                ).all()
+                for message_instance in available_receive_messages:
+                    if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
+                        message_instance_receive = message_instance
+                if message_instance_receive is not None:
+                    receiving_process_instance = MessageService.get_process_instance_for_message_instance(
+                        message_instance_receive
+                    )
 
             if processor_receive is None and message_instance_receive is not None:
                 # Set the receiving message to running, so it is not altered elswhere ...
