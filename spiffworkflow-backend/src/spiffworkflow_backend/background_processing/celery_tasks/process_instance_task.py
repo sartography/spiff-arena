@@ -41,7 +41,7 @@ def celery_task_event_notifier_run(
 
     process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"])
     data = {
-        "post_body": {
+        "event": {
             "event_type": event_type,
             "data": {
                 "process_instance_id": updated_process_instance_id,
