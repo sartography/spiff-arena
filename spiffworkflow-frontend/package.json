@@ -30,7 +30,7 @@
     "ajv-errors": "^3.0.0",
     "bpmn-js": "^17.11.1",
     "bpmn-js-cli": "^2.4.0",
-    "bpmn-js-properties-panel": "^5.19.0",
+    "bpmn-js-properties-panel": "^5.42.1",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^1.0.2",
     "date-fns": "^3.6.0",
