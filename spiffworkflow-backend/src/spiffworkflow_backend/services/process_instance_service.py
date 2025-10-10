@@ -727,7 +727,6 @@ class ProcessInstanceService:
         # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
         if (
             current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", False)
-            and hasattr(spiff_task.task_spec, "__class__")
             and spiff_task.task_spec.__class__.__name__ == "UserTask"
             and hasattr(spiff_task.task_spec, "extensions")
             and "properties" in spiff_task.task_spec.extensions
@@ -779,7 +778,12 @@ class ProcessInstanceService:
             data,
             process_instance.id,
         )
-        spiff_task.task_spec.add_data_from_form(spiff_task, data)
+
+        if spiff_task.task_spec.__class__.__name__ == "UserTask":
+            spiff_task.task_spec.add_data_from_form(spiff_task, data)
+        else:
+            # this would only affect manual tasks and at some point, we may want to fail instead of updating it
+            DeepMerge.merge(spiff_task.data, data)
 
     @classmethod
     def complete_form_task(
