@@ -779,7 +779,7 @@ class ProcessInstanceService:
             data,
             process_instance.id,
         )
-        DeepMerge.merge(spiff_task.data, data)
+        spiff_task.task_spec.add_data_from_form(spiff_task, data)
 
     @classmethod
     def complete_form_task(
