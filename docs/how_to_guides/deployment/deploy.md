@@ -27,3 +27,8 @@ graph TD;
 API, Celery Worker, Connector Proxy, and Frontend can run any number of replicas.
 The Background container is like a cron container, so it should run only one replica.
 
+## Configuration
+
+The app uses sqlalchemy and supports mysql, postgres, or sqlite.
+You must set `SPIFFWORKFLOW_BACKEND_DATABASE_TYPE` to one of these three values as well as setting `SPIFFWORKFLOW_BACKEND_DATABASE_URI`.
+Check the `default.py` config file in the `spiffworkflow-backend/src/spiffworkflow_backend/config` directory for more env vars.
