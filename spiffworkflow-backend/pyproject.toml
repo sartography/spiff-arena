@@ -27,7 +27,7 @@ dependencies = [
     "typing-extensions >= 4.12.2",
     "spiffworkflow-connector-command",
     "werkzeug >= 2.3",
-    "connexion[swagger-ui, flask, uvicorn] == 3.1", # 3.2 breaks swagger-ui https://github.com/spec-first/connexion/issues/2029
+    "connexion[swagger-ui, flask, uvicorn] == 3.3.0", # 3.2 breaks swagger-ui https://github.com/spec-first/connexion/issues/2029
     "lxml >= 5.3.1",
     "PyJWT >= 2.10.1",
     "APScheduler >=3.6.0",
