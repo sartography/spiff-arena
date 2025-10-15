@@ -363,3 +363,49 @@ class TestProcessModelsController(BaseTest):
         assert human_tasks[0]["bpmn_name"] == "Initiator One"
         assert human_tasks[0]["typename"] == "ManualTask"
         assert human_tasks[0]["properties_json"]["lane"] == "Process Initiator"
+
+    def test_process_model_copy(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test copying a process model."""
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group",
+            process_model_id="hello_world",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(
+            process_model.id
+        )
+
+        # Copy the process model
+        copy_url = f"/v1.0/process-models/{modified_process_model_identifier}/copy"
+        copy_data = {
+            "id": "test_group/hello_world_copy",
+            "display_name": "Hello World Copy",
+        }
+        response = client.post(
+            copy_url,
+            json=copy_data,
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        self.assertEqual(response.status_code, 201)
+
+        # Verify that the new process model exists
+        new_process_model_id = "test_group/hello_world_copy"
+        modified_new_process_model_id = new_process_model_id.replace("/", ":")
+        get_url = f"/v1.0/process-models/{modified_new_process_model_id}"
+        response = client.get(
+            get_url, headers=self.logged_in_headers(with_super_admin_user)
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], new_process_model_id)
+        self.assertEqual(response.json()["display_name"], "Hello World Copy")
+        self.assertEqual(len(response.json()["files"]), 1)
+        self.assertEqual(response.json()["files"][0]["name"], "hello_world.bpmn")
