@@ -200,8 +200,9 @@ export default function ProcessModelShow() {
       id: newId,
     };
 
-    if (newDisplayName) {
-      postBody.display_name = newDisplayName;
+    // Only include display_name in request if it was provided
+    if (newDisplayName && newDisplayName.trim()) {
+      postBody.display_name = newDisplayName.trim();
     }
 
     HttpService.makeCallToBackend({
