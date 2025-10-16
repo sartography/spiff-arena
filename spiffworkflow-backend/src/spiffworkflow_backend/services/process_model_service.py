@@ -204,7 +204,7 @@ class ProcessModelService(FileSystemService):
             file_contents = FileSystemService.get_data(original_process_model, bpmn_file)
             bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
             script_task_elements = bpmn_etree_element.xpath(
-                "//process", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+                "//bpmn:process", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
             )
             new_process_id = None
             for process in script_task_elements:

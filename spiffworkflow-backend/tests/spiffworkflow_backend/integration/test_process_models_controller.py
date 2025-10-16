@@ -381,7 +381,6 @@ class TestProcessModelsController(BaseTest):
         )
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
-        # Copy the process model
         copy_url = f"/v1.0/process-models/{modified_process_model_identifier}/copy"
         copy_data = {
             "id": "test_group/hello_world_copy",
@@ -394,13 +393,15 @@ class TestProcessModelsController(BaseTest):
         )
         assert response.status_code == 201, response.text
 
-        # Verify that the new process model exists
         new_process_model_id = "test_group/hello_world_copy"
+        new_process_model = ProcessModelService.get_process_model(new_process_model_id)
         modified_new_process_model_id = new_process_model_id.replace("/", ":")
         get_url = f"/v1.0/process-models/{modified_new_process_model_id}"
         response = client.get(get_url, headers=self.logged_in_headers(with_super_admin_user))
         assert response.status_code == 200
         assert response.json()["id"] == new_process_model_id
         assert response.json()["display_name"] == "Hello World Copy"
+        assert response.json()["primary_process_id"] == new_process_model.primary_process_id
+        assert response.json()["primary_process_id"] != process_model.primary_process_id
         assert len(response.json()["files"]) == 1
         assert response.json()["files"][0]["name"] == "hello_world.bpmn"
