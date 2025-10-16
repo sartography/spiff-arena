@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Upload, Edit, Delete } from '@mui/icons-material';
+import { Upload, Edit, Delete, ContentCopy } from '@mui/icons-material';
 import { Stack, IconButton, Typography } from '@mui/material';
 import { Can } from '@casl/react';
 // Example icon
@@ -23,6 +23,7 @@ import { Notification } from '../components/Notification';
 import ProcessModelTestRun from '../components/ProcessModelTestRun';
 import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
+import ProcessModelCopyModal from '../components/ProcessModelCopyModal';
 import SpiffTooltip from '../components/SpiffTooltip';
 
 export default function ProcessModelShow() {
@@ -35,6 +36,7 @@ export default function ProcessModelShow() {
   const [reloadModel, setReloadModel] = useState<boolean>(false);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
+  const [showCopyModal, setShowCopyModal] = useState<boolean>(false);
   const [processModelPublished, setProcessModelPublished] = useState<any>(null);
   const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(1);
@@ -187,6 +189,31 @@ export default function ProcessModelShow() {
     setShowFileUploadModal(false);
   };
 
+  const handleCopyCancel = () => {
+    setShowCopyModal(false);
+  };
+
+  const handleCopyConfirm = (newId: string, newDisplayName: string) => {
+    removeError();
+    const url = `/process-models/${modifiedProcessModelId}/copy`;
+    const postBody = {
+      id: newId,
+      display_name: newDisplayName,
+    };
+
+    HttpService.makeCallToBackend({
+      path: url,
+      httpMethod: 'POST',
+      postBody,
+      successCallback: (result: ProcessModel) => {
+        setShowCopyModal(false);
+        // Navigate to the new process model
+        navigate(`/process-models/${result.id}`);
+      },
+      failureCallback: addError,
+    });
+  };
+
   const processModelPublishMessage = () => {
     if (processModelPublished) {
       const prUrl: string = processModelPublished.pr_url;
@@ -221,6 +248,12 @@ export default function ProcessModelShow() {
           handleFileUploadCancel={handleFileUploadCancel}
           checkDuplicateFile={checkDuplicateFile}
           setShowFileUploadModal={setShowFileUploadModal}
+        />
+        <ProcessModelCopyModal
+          showCopyModal={showCopyModal}
+          processModel={processModel}
+          handleCopyCancel={handleCopyCancel}
+          handleCopyConfirm={handleCopyConfirm}
         />
         <ProcessBreadcrumb
           hotCrumbs={[
@@ -260,6 +293,14 @@ export default function ProcessModelShow() {
               confirmButtonLabel={t('delete')}
             />
           </Can>
+          <SpiffTooltip title={t('copy_process_model')} placement="top">
+            <IconButton
+              data-testid="copy-process-model-button"
+              onClick={() => setShowCopyModal(true)}
+            >
+              <ContentCopy />
+            </IconButton>
+          </SpiffTooltip>
           {!processModel.actions || processModel.actions.publish ? (
             <Can
               I="POST"
