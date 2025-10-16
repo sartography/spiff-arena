@@ -380,9 +380,7 @@ class TestProcessModelsController(BaseTest):
             bpmn_file_name="hello_world.bpmn",
             process_model_source_directory="hello_world",
         )
-        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(
-            process_model.id
-        )
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
         # Copy the process model
         copy_url = f"/v1.0/process-models/{modified_process_model_identifier}/copy"
@@ -401,9 +399,7 @@ class TestProcessModelsController(BaseTest):
         new_process_model_id = "test_group/hello_world_copy"
         modified_new_process_model_id = new_process_model_id.replace("/", ":")
         get_url = f"/v1.0/process-models/{modified_new_process_model_id}"
-        response = client.get(
-            get_url, headers=self.logged_in_headers(with_super_admin_user)
-        )
+        response = client.get(get_url, headers=self.logged_in_headers(with_super_admin_user))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], new_process_model_id)
         self.assertEqual(response.json()["display_name"], "Hello World Copy")

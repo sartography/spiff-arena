@@ -227,17 +227,11 @@ def process_model_move(modified_process_model_identifier: str, new_location: str
     return make_response(jsonify(new_process_model), 200)
 
 
-def process_model_copy(
-    modified_process_model_identifier: str, body: dict[str, str]
-) -> flask.wrappers.Response:
+def process_model_copy(modified_process_model_identifier: str, body: dict[str, str]) -> flask.wrappers.Response:
     """Copies a process model."""
     process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
-    new_process_model = ProcessModelService.copy_process_model(
-        process_model_identifier, body["id"], body["display_name"]
-    )
-    _commit_and_push_to_git(
-        f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}"
-    )
+    new_process_model = ProcessModelService.copy_process_model(process_model_identifier, body["id"], body["display_name"])
+    _commit_and_push_to_git(f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}")
     return make_response(jsonify(new_process_model.to_dict()), 201)
 
 

@@ -2,15 +2,14 @@ import copy
 import json
 import os
 import random
-import re
 import shutil
 import string
 import uuid
-import xml.etree.ElementTree as ET
 from json import JSONDecodeError
 from typing import Any
 from typing import TypeVar
 
+import defusedxml.ElementTree as ElementTree  # type: ignore
 from flask import current_app
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -205,32 +204,13 @@ class ProcessModelService(FileSystemService):
         bpmn_files = [f for f in os.listdir(new_model_path) if f.endswith(".bpmn")]
         for bpmn_file in bpmn_files:
             bpmn_path = os.path.join(new_model_path, bpmn_file)
-            tree = ET.parse(bpmn_path)
+            tree = ElementTree.parse(bpmn_path)
             root = tree.getroot()
             for process in root.findall(".//{http://www.omg.org/spec/BPMN/20100524/MODEL}process"):
                 # make process id unique by adding random string to add
-                fuzz = "".join(
-                    random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7)
-                )
-                process.set("id", f'{new_process_model_id.replace("-", "_")}_{fuzz}')
+                fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+                process.set("id", f"{new_process_model_id.replace('-', '_')}_{fuzz}")
             tree.write(bpmn_path)
-        return new_process_model
-
-    @classmethod
-    def copy_process_model(
-        cls, original_process_model_id: str, new_process_model_id: str, new_display_name: str
-    ) -> ProcessModelInfo:
-        """Copy a process model."""
-        original_process_model = cls.get_process_model(original_process_model_id)
-        original_model_path = cls.process_model_full_path(original_process_model)
-
-        new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_process_model_id))
-        shutil.copytree(original_model_path, new_model_path)
-
-        new_process_model = cls.get_process_model(new_process_model_id)
-        new_process_model.id = new_process_model_id
-        new_process_model.display_name = new_display_name
-        cls.save_process_model(new_process_model)
         return new_process_model
 
     @classmethod
