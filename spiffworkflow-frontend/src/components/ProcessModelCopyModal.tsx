@@ -35,6 +35,11 @@ export default function ProcessModelCopyModal({
       setValidationError('Process model ID is required');
       return false;
     }
+    // Check if process group is specified (must contain at least one forward slash)
+    if (!newId.trim().includes('/')) {
+      setValidationError('Process model ID must include a process group (e.g., group/model-name)');
+      return false;
+    }
     // Basic ID validation - should not contain spaces or most special characters
     if (!/^[a-zA-Z0-9_/-]+$/.test(newId.trim())) {
       setValidationError('Process model ID can only contain letters, numbers, hyphens, underscores, and forward slashes');
