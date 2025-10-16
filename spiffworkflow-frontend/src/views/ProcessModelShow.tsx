@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Upload, Edit, Delete, ContentCopy } from '@mui/icons-material';
-import { Stack, IconButton, Typography } from '@mui/material';
+import { Upload, Edit, Delete, ContentCopy, MoreVert } from '@mui/icons-material';
+import { Stack, IconButton, Typography, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Can } from '@casl/react';
 // Example icon
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -41,6 +41,7 @@ export default function ProcessModelShow() {
   const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(1);
   const [readmeFile, setReadmeFile] = useState<ProcessFile | null>(null);
+  const [actionsMenuAnchor, setActionsMenuAnchor] = useState<null | HTMLElement>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -193,6 +194,14 @@ export default function ProcessModelShow() {
     setShowCopyModal(false);
   };
 
+  const handleActionsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setActionsMenuAnchor(event.currentTarget);
+  };
+
+  const handleActionsMenuClose = () => {
+    setActionsMenuAnchor(null);
+  };
+
   const handleCopyConfirm = (newId: string, newDisplayName?: string) => {
     removeError();
     const url = `/process-models/${modifiedProcessModelId}/copy`;
@@ -270,56 +279,96 @@ export default function ProcessModelShow() {
           ]}
         />
         {processModelPublishMessage()}
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="h2" component="h1">
             {t('process_model')}: {processModel.display_name}
           </Typography>
-          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <SpiffTooltip title={t('edit_process_model')} placement="top">
-              <IconButton
-                data-testid="edit-process-model-button"
-                component="a"
-                href={`/process-models/${modifiedProcessModelId}/edit`}
-              >
-                <Edit />
-              </IconButton>
-            </SpiffTooltip>
-          </Can>
-          <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
-            <ButtonWithConfirmation
-              data-testid="delete-process-model-button"
-              renderIcon={<Delete />}
-              iconDescription={t('delete_process_model')}
-              hasIconOnly
-              description={t('delete_process_model_confirm', {
-                processModelName: processModel.display_name,
-              })}
-              onConfirmation={deleteProcessModel}
-              confirmButtonLabel={t('delete')}
-            />
-          </Can>
-          <SpiffTooltip title={t('copy_process_model')} placement="top">
+
+          {/* More Actions Menu */}
+          <SpiffTooltip title={t('more_actions')} placement="top">
             <IconButton
-              data-testid="copy-process-model-button"
-              onClick={() => setShowCopyModal(true)}
+              data-testid="more-actions-button"
+              onClick={handleActionsMenuOpen}
             >
-              <ContentCopy />
+              <MoreVert />
             </IconButton>
           </SpiffTooltip>
+          <Menu
+            anchorEl={actionsMenuAnchor}
+            open={Boolean(actionsMenuAnchor)}
+            onClose={handleActionsMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
+              <MenuItem
+                component="a"
+                href={`/process-models/${modifiedProcessModelId}/edit`}
+                data-testid="edit-process-model-menu-item"
+                onClick={handleActionsMenuClose}
+              >
+                <ListItemIcon>
+                  <Edit fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t('edit_process_model')}</ListItemText>
+              </MenuItem>
+            </Can>
+            <MenuItem
+              data-testid="copy-process-model-menu-item"
+              onClick={() => {
+                setShowCopyModal(true);
+                handleActionsMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                <ContentCopy fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t('copy_process_model')}</ListItemText>
+            </MenuItem>
+            <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
+              <MenuItem
+                data-testid="delete-process-model-menu-item"
+                onClick={() => {
+                  handleActionsMenuClose();
+                  // The ButtonWithConfirmation will handle the confirmation dialog
+                  if (window.confirm(t('delete_process_model_confirm', {
+                    processModelName: processModel.display_name,
+                  }))) {
+                    deleteProcessModel();
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <Delete fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t('delete_process_model')}</ListItemText>
+              </MenuItem>
+            </Can>
+          </Menu>
+
+          {/* Keep frequently used actions outside menu */}
           {!processModel.actions || processModel.actions.publish ? (
             <Can
               I="POST"
               a={targetUris.processModelPublishPath}
               ability={ability}
             >
-              <IconButton
-                color="primary"
-                data-testid="publish-process-model-button"
-                onClick={publishProcessModel}
-                disabled={publishDisabled}
-              >
-                <Upload />
-              </IconButton>
+              <SpiffTooltip title={t('publish_process_model')} placement="top">
+                <IconButton
+                  color="primary"
+                  data-testid="publish-process-model-button"
+                  onClick={publishProcessModel}
+                  disabled={publishDisabled}
+                >
+                  <Upload />
+                </IconButton>
+              </SpiffTooltip>
             </Can>
           ) : null}
           <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
