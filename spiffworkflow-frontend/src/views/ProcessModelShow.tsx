@@ -193,13 +193,16 @@ export default function ProcessModelShow() {
     setShowCopyModal(false);
   };
 
-  const handleCopyConfirm = (newId: string, newDisplayName: string) => {
+  const handleCopyConfirm = (newId: string, newDisplayName?: string) => {
     removeError();
     const url = `/process-models/${modifiedProcessModelId}/copy`;
-    const postBody = {
+    const postBody: { id: string; display_name?: string } = {
       id: newId,
-      display_name: newDisplayName,
     };
+
+    if (newDisplayName) {
+      postBody.display_name = newDisplayName;
+    }
 
     HttpService.makeCallToBackend({
       path: url,
@@ -207,8 +210,9 @@ export default function ProcessModelShow() {
       postBody,
       successCallback: (result: ProcessModel) => {
         setShowCopyModal(false);
-        // Navigate to the new process model
-        navigate(`/process-models/${result.id}`);
+        // Navigate to the new process model, replacing forward slashes with colons
+        const navigationId = result.id.replace(/\//g, ':');
+        navigate(`/process-models/${navigationId}`);
       },
       failureCallback: addError,
     });

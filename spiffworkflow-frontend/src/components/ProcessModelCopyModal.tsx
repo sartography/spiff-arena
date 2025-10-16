@@ -16,7 +16,7 @@ interface ProcessModelCopyModalProps {
   showCopyModal: boolean;
   processModel: ProcessModel;
   handleCopyCancel: () => void;
-  handleCopyConfirm: (id: string, displayName: string) => void;
+  handleCopyConfirm: (id: string, displayName?: string) => void;
 }
 
 export default function ProcessModelCopyModal({
@@ -35,10 +35,6 @@ export default function ProcessModelCopyModal({
       setValidationError('Process model ID is required');
       return false;
     }
-    if (!newDisplayName.trim()) {
-      setValidationError('Display name is required');
-      return false;
-    }
     // Basic ID validation - should not contain spaces or most special characters
     if (!/^[a-zA-Z0-9_/-]+$/.test(newId.trim())) {
       setValidationError('Process model ID can only contain letters, numbers, hyphens, underscores, and forward slashes');
@@ -50,7 +46,7 @@ export default function ProcessModelCopyModal({
 
   const handleConfirm = () => {
     if (validateInputs()) {
-      handleCopyConfirm(newId.trim(), newDisplayName.trim());
+      handleCopyConfirm(newId.trim(), newDisplayName.trim() || undefined);
       // Clear form
       setNewId('');
       setNewDisplayName('');
@@ -99,8 +95,7 @@ export default function ProcessModelCopyModal({
             onChange={(e) => setNewDisplayName(e.target.value)}
             placeholder="e.g., My New Process Model"
             fullWidth
-            required
-            helperText="Human-readable name for the process model"
+            helperText="Human-readable name for the process model (optional)"
           />
 
           {validationError && (
@@ -118,7 +113,7 @@ export default function ProcessModelCopyModal({
           onClick={handleConfirm}
           color="primary"
           variant="contained"
-          disabled={!newId.trim() || !newDisplayName.trim()}
+          disabled={!newId.trim()}
         >
           {t('copy')}
         </Button>
