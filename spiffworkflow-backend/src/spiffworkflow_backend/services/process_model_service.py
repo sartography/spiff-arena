@@ -9,8 +9,8 @@ from json import JSONDecodeError
 from typing import Any
 from typing import TypeVar
 
-import defusedxml.ElementTree as ElementTree  # type: ignore
 from flask import current_app
+from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
@@ -188,7 +188,6 @@ class ProcessModelService(FileSystemService):
     def copy_process_model(
         cls, original_process_model_id: str, new_process_model_id: str, new_display_name: str
     ) -> ProcessModelInfo:
-        """Copy a process model."""
         original_process_model = cls.get_process_model(original_process_model_id)
         original_model_path = cls.process_model_full_path(original_process_model)
 
@@ -198,19 +197,26 @@ class ProcessModelService(FileSystemService):
         new_process_model = cls.get_process_model(new_process_model_id)
         new_process_model.id = new_process_model_id
         new_process_model.display_name = new_display_name
-        cls.save_process_model(new_process_model)
 
-        # Update process id in bpmn file
         bpmn_files = [f for f in os.listdir(new_model_path) if f.endswith(".bpmn")]
         for bpmn_file in bpmn_files:
             bpmn_path = os.path.join(new_model_path, bpmn_file)
-            tree = ElementTree.parse(bpmn_path)
-            root = tree.getroot()
-            for process in root.findall(".//{http://www.omg.org/spec/BPMN/20100524/MODEL}process"):
-                # make process id unique by adding random string to add
+            file_contents = FileSystemService.get_data(original_process_model, bpmn_file)
+            bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
+            script_task_elements = bpmn_etree_element.xpath(
+                "//process", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+            )
+            new_process_id = None
+            for process in script_task_elements:
                 fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
-                process.set("id", f"{new_process_model_id.replace('-', '_')}_{fuzz}")
-            tree.write(bpmn_path)
+                old_process_id = process.get("id")
+                new_process_id = f"{old_process_id}_{fuzz}"
+                process.set("id", new_process_id)
+                if bpmn_file == new_process_model.primary_file_name and new_process_model.primary_process_id == old_process_id:
+                    new_process_model.primary_process_id = new_process_id
+
+            FileSystemService.write_file_data_to_system(bpmn_path, etree.tostring(bpmn_etree_element))
+        cls.save_process_model(new_process_model)
         return new_process_model
 
     @classmethod
@@ -805,3 +811,11 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info
+
+    # This is designed to isolate xml parsing, which is a security issue, and make it as safe as possible.
+    # S320 indicates that xml parsing with lxml is unsafe. To mitigate this, we add options to the parser
+    # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
+    @classmethod
+    def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
+        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
+        return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320

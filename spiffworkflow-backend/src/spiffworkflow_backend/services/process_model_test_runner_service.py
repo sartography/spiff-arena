@@ -29,7 +29,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DEFAULT_NSMAP = {
     "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -286,7 +286,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
     def _get_etree_from_bpmn_file(self, bpmn_file: str) -> etree._Element:
         with open(bpmn_file, "rb") as f_handle:
             data = f_handle.read()
-        return SpecFileService.get_etree_from_xml_bytes(data)
+        return ProcessModelService.get_etree_from_xml_bytes(data)
 
     def _find_related_bpmn_files(self, bpmn_file: str) -> list[str]:
         related_bpmn_files = []

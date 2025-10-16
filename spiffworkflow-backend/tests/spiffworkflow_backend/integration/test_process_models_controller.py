@@ -371,14 +371,13 @@ class TestProcessModelsController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test copying a process model."""
         process_model = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="test_group",
             process_model_id="hello_world",
             bpmn_file_name="hello_world.bpmn",
-            process_model_source_directory="hello_world",
+            bpmn_file_location="hello_world",
         )
         modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
 
@@ -393,7 +392,7 @@ class TestProcessModelsController(BaseTest):
             json=copy_data,
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.text
 
         # Verify that the new process model exists
         new_process_model_id = "test_group/hello_world_copy"
