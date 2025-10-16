@@ -393,15 +393,15 @@ class TestProcessModelsController(BaseTest):
             json=copy_data,
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        self.assertEqual(response.status_code, 201)
+        assert response.status_code == 201
 
         # Verify that the new process model exists
         new_process_model_id = "test_group/hello_world_copy"
         modified_new_process_model_id = new_process_model_id.replace("/", ":")
         get_url = f"/v1.0/process-models/{modified_new_process_model_id}"
         response = client.get(get_url, headers=self.logged_in_headers(with_super_admin_user))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["id"], new_process_model_id)
-        self.assertEqual(response.json()["display_name"], "Hello World Copy")
-        self.assertEqual(len(response.json()["files"]), 1)
-        self.assertEqual(response.json()["files"][0]["name"], "hello_world.bpmn")
+        assert response.status_code == 200
+        assert response.json()["id"] == new_process_model_id
+        assert response.json()["display_name"] == "Hello World Copy"
+        assert len(response.json()["files"]) == 1
+        assert response.json()["files"][0]["name"] == "hello_world.bpmn"
