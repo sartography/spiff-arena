@@ -38,6 +38,10 @@ class ProcessModelWithInstancesNotDeletableError(Exception):
     pass
 
 
+class ProcessModelInvalidError(Exception):
+    pass
+
+
 class ProcessModelService(FileSystemService):
     """This is a way of persisting json files to the file system in a way that mimics the data
     as it would have been stored in the database. This is specific to Workflow Specifications, and
@@ -188,6 +192,13 @@ class ProcessModelService(FileSystemService):
     def copy_process_model(
         cls, original_process_model_id: str, new_process_model_id: str, new_display_name: str
     ) -> ProcessModelInfo:
+        if len(new_process_model_id.split("/")) < 2:
+            msg = (
+                "Process model id needs to have a group followed by the model name: [process_group_id]/[process_model]"
+                f"{new_process_model_id} is invalid"
+            )
+            raise ProcessModelInvalidError(msg)
+
         original_process_model = cls.get_process_model(original_process_model_id)
         original_model_path = cls.process_model_full_path(original_process_model)
 
