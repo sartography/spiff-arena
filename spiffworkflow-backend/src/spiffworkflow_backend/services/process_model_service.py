@@ -894,5 +894,7 @@ class ProcessModelService(FileSystemService):
     # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
     @classmethod
     def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
-        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True, load_dtd=False)
+        etree_xml_parser = etree.XMLParser(
+            resolve_entities=False, remove_comments=True, no_network=True, load_dtd=False, dtd_validation=False
+        )
         return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
