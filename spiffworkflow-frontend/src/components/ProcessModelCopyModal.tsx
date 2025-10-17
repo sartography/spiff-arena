@@ -32,17 +32,17 @@ export default function ProcessModelCopyModal({
 
   const validateInputs = (): boolean => {
     if (!newId.trim()) {
-      setValidationError('Process model ID is required');
+      setValidationError(t('process_model_id_required'));
       return false;
     }
     // Check if process group is specified (must contain at least one forward slash)
     if (!newId.trim().includes('/')) {
-      setValidationError('Process model ID must include a process group (e.g., group/model-name)');
+      setValidationError(t('process_model_copy_group_required_error'));
       return false;
     }
     // Basic ID validation - should not contain spaces or most special characters
     if (!/^[a-zA-Z0-9_/-]+$/.test(newId.trim())) {
-      setValidationError('Process model ID can only contain letters, numbers, hyphens, underscores, and forward slashes');
+      setValidationError(t('process_model_id_validation_error'));
       return false;
     }
     setValidationError('');
@@ -100,7 +100,7 @@ export default function ProcessModelCopyModal({
             onChange={(e) => setNewDisplayName(e.target.value)}
             placeholder="e.g., My New Process Model"
             fullWidth
-            helperText="Human-readable name for the process model (optional)"
+            helperText={t('process_model_display_name_help_optional')}
           />
 
           {validationError && (
