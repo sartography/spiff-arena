@@ -251,7 +251,7 @@ class GitService:
         cls.run_shell_command(
             ["pull", "--rebase"], context_directory=current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         )
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_process_model_caches()
         return True
 
     @classmethod

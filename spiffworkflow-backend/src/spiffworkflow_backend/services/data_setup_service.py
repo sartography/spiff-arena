@@ -22,16 +22,16 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 class DataSetupService:
     @classmethod
     def run_setup(cls) -> list:
-        return cls.save_all_process_models()
+        return cls.refresh_process_model_caches()
 
     @classmethod
-    def save_all_process_models(cls) -> list:
+    def refresh_process_model_caches(cls) -> list:
         """Build a cache of all processes, messages, correlation keys, and start events.
 
         These all exist within processes located on the file system, so we can quickly reference them
         from the database.
         """
-        current_app.logger.debug("DataSetupService.save_all_process_models() start")
+        current_app.logger.debug("DataSetupService.refresh_process_model_caches() start")
 
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
@@ -44,7 +44,7 @@ class DataSetupService:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
                 # Use the common processing logic
-                model_refs, model_failures = cls._process_single_process_model(process_model, reference_objects)
+                model_refs, model_failures = cls._extract_process_model_references(process_model, reference_objects)
                 references.extend(model_refs)
                 failing_process_models.extend(model_failures)
             elif FileSystemService.is_data_store_json_file(file):
@@ -70,7 +70,7 @@ class DataSetupService:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
 
-        current_app.logger.debug("DataSetupService.save_all_process_models() end")
+        current_app.logger.debug("DataSetupService.refresh_process_model_caches() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
         MessageDefinitionService.delete_all_message_models()
@@ -93,10 +93,10 @@ class DataSetupService:
         return failing_process_models
 
     @classmethod
-    def _process_single_process_model(
+    def _extract_process_model_references(
         cls, process_model: ProcessModelInfo, reference_objects: dict[str, ReferenceCacheModel]
     ) -> tuple[list, list]:
-        """Process a single process model and return references and any failures.
+        """Extract references from a single process model and return references and any failures.
 
         Args:
             process_model: The ProcessModelInfo object to process
@@ -136,16 +136,16 @@ class DataSetupService:
         return references, failing_process_models
 
     @classmethod
-    def save_single_process_model(cls, process_model_id: str) -> list:
+    def refresh_single_process_model_cache(cls, process_model_id: str) -> list:
         """Build cache for a single process model."""
-        current_app.logger.debug(f"DataSetupService.save_single_process_model() start for {process_model_id}")
+        current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() start for {process_model_id}")
 
         failing_process_models = []
         reference_objects: dict[str, ReferenceCacheModel] = {}
 
         try:
             process_model = ProcessModelService.get_process_model(process_model_id)
-            references, model_failures = cls._process_single_process_model(process_model, reference_objects)
+            references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
             failing_process_models.extend(model_failures)
 
             # Update caches for the references
@@ -164,7 +164,7 @@ class DataSetupService:
         except Exception as ex:
             failing_process_models.append((process_model_id, str(ex)))
 
-        current_app.logger.debug(f"DataSetupService.save_single_process_model() end for {process_model_id}")
+        current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() end for {process_model_id}")
         return failing_process_models
 
     @classmethod
