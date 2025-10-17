@@ -630,7 +630,7 @@ def _create_or_update_process_model_file(
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):
-        DataSetupService.refresh_process_model_caches()
+        DataSetupService.refresh_single_process_model_cache(process_model_identifier)
 
     return make_response(jsonify(file), http_status_to_return)
 
