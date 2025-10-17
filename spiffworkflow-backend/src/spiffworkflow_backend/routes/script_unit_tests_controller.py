@@ -15,6 +15,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_required_parameter_or_raise
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -36,7 +37,7 @@ def script_unit_test_create(modified_process_model_identifier: str, body: dict[s
 
     # TODO: move this to an xml service or something
     file_contents = SpecFileService.get_data(process_model, file.name)
-    bpmn_etree_element = SpecFileService.get_etree_from_xml_bytes(file_contents)
+    bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
 
     nsmap = bpmn_etree_element.nsmap
     spiff_element_maker = ElementMaker(namespace="http://spiffworkflow.org/bpmn/schema/1.0/core", nsmap=nsmap)

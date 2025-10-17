@@ -6,7 +6,7 @@ from lxml import etree
 def detect_multiple_incoming_flows(bpmn_file):
     # Parse the BPMN file
     try:
-        # actually use SpecFileService.get_etree_from_xml_bytes if we use this in future
+        # actually use ProcessModelService.get_etree_from_xml_bytes if we use this in future
         tree = etree.parse(bpmn_file, parser=etree.XMLParser(resolve_entities=False))  # noqa: S320
     except etree.XMLSyntaxError as e:
         print(f"Error parsing {bpmn_file}: {e}")

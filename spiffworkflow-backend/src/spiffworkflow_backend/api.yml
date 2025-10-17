@@ -620,6 +620,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
+  /process-models/{modified_process_model_identifier}/copy:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: the modified process model id
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_copy
+      summary: Creates a new process model with the given parameters.
+      tags:
+        - Process Models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCopyRequest"
+      responses:
+        "201":
+          description: Process model copied successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
   /process-model-natural-language/{modified_process_group_id}:
     parameters:
       - name: modified_process_group_id
@@ -3927,6 +3954,17 @@ components:
         primary_process_id:
           type: string
           nullable: true
+    ProcessModelCopyRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The new process model identifier
+        display_name:
+          type: string
+          description: The display name for the copied model (optional - defaults to last segment of ID)
     ProcessGroup:
       properties:
         id:

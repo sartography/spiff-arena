@@ -15,7 +15,7 @@ class TestDataSetupService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.copy_example_process_models()
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_process_model_caches()
         cache = ReferenceCacheModel.query.filter(ReferenceCacheModel.type == "process").all()
         assert len(cache) == 1
 
@@ -26,7 +26,7 @@ class TestDataSetupService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         self.copy_example_process_models()
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_process_model_caches()
         message_models = MessageModel.query.all()
         assert len(message_models) == 4
         message_map = {model.identifier: model for model in message_models}

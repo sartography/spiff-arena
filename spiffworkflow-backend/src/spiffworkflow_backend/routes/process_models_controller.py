@@ -227,6 +227,23 @@ def process_model_move(modified_process_model_identifier: str, new_location: str
     return make_response(jsonify(new_process_model), 200)
 
 
+def process_model_copy(modified_process_model_identifier: str, body: dict[str, str]) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+
+    # Generate default display name from last segment of ID if not provided
+    display_name = body.get("display_name")
+    if not display_name:
+        display_name = body["id"].split("/")[-1]
+
+    new_process_model = ProcessModelService.copy_process_model(process_model_identifier, body["id"], display_name)
+    _commit_and_push_to_git(f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}")
+
+    # Update the process model cache for the new copied model
+    DataSetupService.refresh_single_process_model_cache(new_process_model.id)
+
+    return make_response(jsonify(new_process_model.to_dict()), 201)
+
+
 def process_model_publish(modified_process_model_identifier: str, branch_to_update: str | None = None) -> flask.wrappers.Response:
     if branch_to_update is None:
         branch_to_update = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"]
@@ -613,7 +630,7 @@ def _create_or_update_process_model_file(
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_single_process_model_cache(process_model_identifier)
 
     return make_response(jsonify(file), http_status_to_return)
 
