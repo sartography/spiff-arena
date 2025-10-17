@@ -78,66 +78,11 @@ class DataSetupService:
         MessageDefinitionService.save_all_message_models(all_message_models)
         db.session.commit()
 
-        for ref in references:
-            try:
-                SpecFileService.update_caches_except_process(ref)
-                db.session.commit()
-            except Exception as ex:
-                failing_process_models.append(
-                    (
-                        f"{ref.relative_location}/{ref.file_name}",
-                        repr(ex),
-                    )
-                )
-
+        cls._update_process_model_caches_for_references(references, failing_process_models)
         return failing_process_models
 
     @classmethod
-    def _extract_process_model_references(
-        cls, process_model: ProcessModelInfo, reference_objects: dict[str, ReferenceCacheModel]
-    ) -> tuple[list, list]:
-        """Extract references from a single process model and return references and any failures.
-
-        Args:
-            process_model: The ProcessModelInfo object to process
-            reference_objects: Dictionary to store reference cache objects
-
-        Returns:
-            Tuple of (references, failing_process_models)
-        """
-        failing_process_models = []
-        references = []
-
-        current_app.logger.debug(f"Processing Process Model: {process_model.display_name}")
-
-        try:
-            refs = SpecFileService.get_references_for_process(process_model)
-            for ref in refs:
-                try:
-                    reference_cache = ReferenceCacheModel.from_spec_reference(ref)
-                    ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-                    db.session.commit()
-                    references.append(ref)
-                except Exception as ex:
-                    failing_process_models.append(
-                        (
-                            f"{ref.relative_location}/{ref.file_name}",
-                            repr(ex),
-                        )
-                    )
-        except Exception as ex2:
-            failing_process_models.append(
-                (
-                    f"{process_model.id}",
-                    str(ex2),
-                )
-            )
-
-        return references, failing_process_models
-
-    @classmethod
     def refresh_single_process_model_cache(cls, process_model_id: str) -> list:
-        """Build cache for a single process model."""
         current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() start for {process_model_id}")
 
         failing_process_models = []
@@ -147,20 +92,7 @@ class DataSetupService:
             process_model = ProcessModelService.get_process_model(process_model_id)
             references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
             failing_process_models.extend(model_failures)
-
-            # Update caches for the references
-            for ref in references:
-                try:
-                    SpecFileService.update_caches_except_process(ref)
-                    db.session.commit()
-                except Exception as ex:
-                    failing_process_models.append(
-                        (
-                            f"{ref.relative_location}/{ref.file_name}",
-                            repr(ex),
-                        )
-                    )
-
+            cls._update_process_model_caches_for_references(references, failing_process_models)
         except Exception as ex:
             failing_process_models.append((process_model_id, str(ex)))
 
@@ -276,3 +208,51 @@ class DataSetupService:
                 current_app.logger.debug(f"DataSetupService: was expecting key '{key}' to point to a data store model to delete.")
                 continue
             db.session.delete(model)
+
+    @classmethod
+    def _extract_process_model_references(
+        cls, process_model: ProcessModelInfo, reference_objects: dict[str, ReferenceCacheModel]
+    ) -> tuple[list, list]:
+        failing_process_models = []
+        references = []
+
+        current_app.logger.debug(f"Extracting References for Process Model: {process_model.display_name}")
+
+        try:
+            refs = SpecFileService.get_references_for_process(process_model)
+            for ref in refs:
+                try:
+                    reference_cache = ReferenceCacheModel.from_spec_reference(ref)
+                    ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
+                    db.session.commit()
+                    references.append(ref)
+                except Exception as ex:
+                    failing_process_models.append(
+                        (
+                            f"{ref.relative_location}/{ref.file_name}",
+                            repr(ex),
+                        )
+                    )
+        except Exception as ex2:
+            failing_process_models.append(
+                (
+                    f"{process_model.id}",
+                    str(ex2),
+                )
+            )
+
+        return references, failing_process_models
+
+    @classmethod
+    def _update_process_model_caches_for_references(cls, references: list, failing_process_models: list) -> None:
+        for ref in references:
+            try:
+                SpecFileService.update_caches_except_process(ref)
+                db.session.commit()
+            except Exception as ex:
+                failing_process_models.append(
+                    (
+                        f"{ref.relative_location}/{ref.file_name}",
+                        repr(ex),
+                    )
+                )
