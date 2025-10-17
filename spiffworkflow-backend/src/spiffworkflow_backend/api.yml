@@ -638,7 +638,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProcessModel"
+              $ref: "#/components/schemas/ProcessModelCopyRequest"
       responses:
         "201":
           description: Process model copied successfully.
@@ -3954,6 +3954,17 @@ components:
         primary_process_id:
           type: string
           nullable: true
+    ProcessModelCopyRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The new process model identifier
+        display_name:
+          type: string
+          description: The display name for the copied model (optional - defaults to last segment of ID)
     ProcessGroup:
       properties:
         id:
