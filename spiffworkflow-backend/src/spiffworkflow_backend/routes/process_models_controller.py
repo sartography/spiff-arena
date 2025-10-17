@@ -237,6 +237,10 @@ def process_model_copy(modified_process_model_identifier: str, body: dict[str, s
 
     new_process_model = ProcessModelService.copy_process_model(process_model_identifier, body["id"], display_name)
     _commit_and_push_to_git(f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}")
+
+    # Update the process model cache for the new copied model
+    DataSetupService.save_single_process_model(new_process_model.id)
+
     return make_response(jsonify(new_process_model.to_dict()), 201)
 
 

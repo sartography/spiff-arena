@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
@@ -42,30 +43,10 @@ class DataSetupService:
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
-                current_app.logger.debug(f"Process Model: {process_model.display_name}")
-                try:
-                    # FIXME: get_references_for_file_contents is erroring out for elements in the list
-                    refs = SpecFileService.get_references_for_process(process_model)
-                    for ref in refs:
-                        try:
-                            reference_cache = ReferenceCacheModel.from_spec_reference(ref)
-                            ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-                            db.session.commit()
-                            references.append(ref)
-                        except Exception as ex:
-                            failing_process_models.append(
-                                (
-                                    f"{ref.relative_location}/{ref.file_name}",
-                                    repr(ex),
-                                )
-                            )
-                except Exception as ex2:
-                    failing_process_models.append(
-                        (
-                            f"{process_model.id}",
-                            str(ex2),
-                        )
-                    )
+                # Use the common processing logic
+                model_refs, model_failures = cls._process_single_process_model(process_model, reference_objects)
+                references.extend(model_refs)
+                failing_process_models.extend(model_failures)
             elif FileSystemService.is_data_store_json_file(file):
                 relative_location = FileSystemService.relative_location(file)
                 file_name = os.path.basename(file)
@@ -109,6 +90,81 @@ class DataSetupService:
                     )
                 )
 
+        return failing_process_models
+
+    @classmethod
+    def _process_single_process_model(
+        cls, process_model: ProcessModelInfo, reference_objects: dict[str, ReferenceCacheModel]
+    ) -> tuple[list, list]:
+        """Process a single process model and return references and any failures.
+
+        Args:
+            process_model: The ProcessModelInfo object to process
+            reference_objects: Dictionary to store reference cache objects
+
+        Returns:
+            Tuple of (references, failing_process_models)
+        """
+        failing_process_models = []
+        references = []
+
+        current_app.logger.debug(f"Processing Process Model: {process_model.display_name}")
+
+        try:
+            refs = SpecFileService.get_references_for_process(process_model)
+            for ref in refs:
+                try:
+                    reference_cache = ReferenceCacheModel.from_spec_reference(ref)
+                    ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
+                    db.session.commit()
+                    references.append(ref)
+                except Exception as ex:
+                    failing_process_models.append(
+                        (
+                            f"{ref.relative_location}/{ref.file_name}",
+                            repr(ex),
+                        )
+                    )
+        except Exception as ex2:
+            failing_process_models.append(
+                (
+                    f"{process_model.id}",
+                    str(ex2),
+                )
+            )
+
+        return references, failing_process_models
+
+    @classmethod
+    def save_single_process_model(cls, process_model_id: str) -> list:
+        """Build cache for a single process model."""
+        current_app.logger.debug(f"DataSetupService.save_single_process_model() start for {process_model_id}")
+
+        failing_process_models = []
+        reference_objects: dict[str, ReferenceCacheModel] = {}
+
+        try:
+            process_model = ProcessModelService.get_process_model(process_model_id)
+            references, model_failures = cls._process_single_process_model(process_model, reference_objects)
+            failing_process_models.extend(model_failures)
+
+            # Update caches for the references
+            for ref in references:
+                try:
+                    SpecFileService.update_caches_except_process(ref)
+                    db.session.commit()
+                except Exception as ex:
+                    failing_process_models.append(
+                        (
+                            f"{ref.relative_location}/{ref.file_name}",
+                            repr(ex),
+                        )
+                    )
+
+        except Exception as ex:
+            failing_process_models.append((process_model_id, str(ex)))
+
+        current_app.logger.debug(f"DataSetupService.save_single_process_model() end for {process_model_id}")
         return failing_process_models
 
     @classmethod

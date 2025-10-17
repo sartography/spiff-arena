@@ -194,10 +194,20 @@ class ProcessModelService(FileSystemService):
     ) -> ProcessModelInfo:
         if len(new_process_model_id.split("/")) < 2:
             msg = (
-                "Process model id needs to have a group followed by the model name: [process_group_id]/[process_model]"
+                "Process model id needs to have a group followed by the model name: [process_group_id]/[process_model]. "
                 f"{new_process_model_id} is invalid"
             )
             raise ProcessModelInvalidError(msg)
+
+        # Validate that the target process group exists
+        target_process_group_segments = new_process_model_id.split("/")[:-1]  # All segments except the last one (model name)
+        target_process_group_id = "/".join(target_process_group_segments)
+
+        if not cls.is_process_group_identifier(target_process_group_id):
+            raise ProcessModelInvalidError(
+                f"Process group '{target_process_group_id}' does not exist. "
+                f"Please create the process group first or choose an existing one."
+            )
 
         original_process_model = cls.get_process_model(original_process_model_id)
         original_model_path = cls.process_model_full_path(original_process_model)
