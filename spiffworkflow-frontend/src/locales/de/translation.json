@@ -322,6 +322,7 @@
   "process_model_id_validation_error": "Prozessmodell-ID kann nur Buchstaben, Zahlen, Bindestriche, Unterstriche und Schrägstriche enthalten",
   "process_model_no_files_help": "Dieses Prozessmodell hat keine zugeordneten Dateien. Versuchen Sie, eine BPMN-Datei zu erstellen, indem Sie unten 'Neue BPMN-Datei' auswählen.",
   "process_models_with_count": "Prozessmodelle ({{count}})",
+  "publish_process_model": "Prozessmodell veröffentlichen",
   "process_no_instances": "Keine Prozessinstanzen gefunden",
   "process_perspectives": "Prozessinstanz-Perspektiven",
   "process_reset": "Zurücksetzen",

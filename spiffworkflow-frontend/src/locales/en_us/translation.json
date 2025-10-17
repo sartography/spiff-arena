@@ -324,6 +324,7 @@
   "process_model_id_validation_error": "Process model ID can only contain letters, numbers, hyphens, underscores, and forward slashes",
   "process_model_no_files_help": "This process model does not have any files associated with it. Try creating a BPMN file by selecting 'New BPMN File' in the dropdown below.",
   "process_models_with_count": "Process Models ({{count}})",
+  "publish_process_model": "Publish Process Model",
   "process_no_instances": "No process instances found",
   "process_perspectives": "Process instance perspectives",
   "process_reset": "Reset",

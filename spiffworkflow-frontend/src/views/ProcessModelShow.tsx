@@ -345,6 +345,27 @@ export default function ProcessModelShow() {
               </ListItemIcon>
               <ListItemText>{t('copy_process_model')}</ListItemText>
             </MenuItem>
+            {!processModel.actions || processModel.actions.publish ? (
+              <Can
+                I="POST"
+                a={targetUris.processModelPublishPath}
+                ability={ability}
+              >
+                <MenuItem
+                  data-testid="publish-process-model-menu-item"
+                  onClick={() => {
+                    handleActionsMenuClose();
+                    publishProcessModel();
+                  }}
+                  disabled={publishDisabled}
+                >
+                  <ListItemIcon>
+                    <Upload fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>{t('publish_process_model')}</ListItemText>
+                </MenuItem>
+              </Can>
+            ) : null}
             <Can
               I="DELETE"
               a={targetUris.processModelShowPath}
@@ -375,24 +396,6 @@ export default function ProcessModelShow() {
           </Menu>
 
           {/* Keep frequently used actions outside menu */}
-          {!processModel.actions || processModel.actions.publish ? (
-            <Can
-              I="POST"
-              a={targetUris.processModelPublishPath}
-              ability={ability}
-            >
-              <SpiffTooltip title={t('publish_process_model')} placement="top">
-                <IconButton
-                  color="primary"
-                  data-testid="publish-process-model-button"
-                  onClick={publishProcessModel}
-                  disabled={publishDisabled}
-                >
-                  <Upload />
-                </IconButton>
-              </SpiffTooltip>
-            </Can>
-          ) : null}
           <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
             {hasTestCaseFiles ? (
               <ProcessModelTestRun titleText={t('run_bpmn_tests')} />
