@@ -251,6 +251,7 @@
   "message_title": "Nachricht {{id}} ({{name}}) Daten {{type}}:",
   "messages": "Nachrichten",
   "metadata_extractions": "Metadatenextraktionen",
+  "more_actions": "Weitere Aktionen",
   "metadata_extractions_help": "Sie können eine oder mehrere Metadatenextraktionen angeben, um Daten aus Ihren Prozessinstanzen zu ziehen und schnellen Zugriff in Suchen und Perspektiven zu ermöglichen.",
   "mi_instances": "{{type}} Instanzen für MI-Aufgabe",
   "migrate": "Migrieren",
