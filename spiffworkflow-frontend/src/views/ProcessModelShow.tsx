@@ -1,8 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Upload, Edit, Delete, ContentCopy, MoreVert } from '@mui/icons-material';
-import { Stack, IconButton, Typography, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import {
+  Upload,
+  Edit,
+  Delete,
+  ContentCopy,
+  MoreVert,
+} from '@mui/icons-material';
+import {
+  Stack,
+  IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 import { Can } from '@casl/react';
 // Example icon
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -15,7 +29,6 @@ import {
   setPageTitle,
 } from '../helpers';
 import { PermissionsToCheck, ProcessFile, ProcessModel } from '../interfaces';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
@@ -41,7 +54,8 @@ export default function ProcessModelShow() {
   const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(1);
   const [readmeFile, setReadmeFile] = useState<ProcessFile | null>(null);
-  const [actionsMenuAnchor, setActionsMenuAnchor] = useState<null | HTMLElement>(null);
+  const [actionsMenuAnchor, setActionsMenuAnchor] =
+    useState<null | HTMLElement>(null);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -331,15 +345,23 @@ export default function ProcessModelShow() {
               </ListItemIcon>
               <ListItemText>{t('copy_process_model')}</ListItemText>
             </MenuItem>
-            <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
+            <Can
+              I="DELETE"
+              a={targetUris.processModelShowPath}
+              ability={ability}
+            >
               <MenuItem
                 data-testid="delete-process-model-menu-item"
                 onClick={() => {
                   handleActionsMenuClose();
                   // The ButtonWithConfirmation will handle the confirmation dialog
-                  if (window.confirm(t('delete_process_model_confirm', {
-                    processModelName: processModel.display_name,
-                  }))) {
+                  if (
+                    window.confirm(
+                      t('delete_process_model_confirm', {
+                        processModelName: processModel.display_name,
+                      }),
+                    )
+                  ) {
                     deleteProcessModel();
                   }
                 }}
