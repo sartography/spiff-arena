@@ -81,7 +81,7 @@ export default function ProcessModelCopyModal({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Copy "{processModel.display_name}" to a new process model
+            Copy &quot;{processModel.display_name}&quot; to a new process model
           </Typography>
 
           <TextField

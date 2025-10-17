@@ -212,29 +212,85 @@ class ProcessModelService(FileSystemService):
         original_process_model = cls.get_process_model(original_process_model_id)
         original_model_path = cls.process_model_full_path(original_process_model)
 
+        # Prevent path traversal by ensuring resolved path is inside root_path
         new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_process_model_id))
+        root_path = os.path.abspath(FileSystemService.root_path())
+        try:
+            common_path = os.path.commonpath([new_model_path, root_path])
+            if common_path != root_path:
+                raise ProcessModelInvalidError(
+                    f"Invalid process model path: {new_process_model_id} resolves outside the allowed directory"
+                )
+        except ValueError:
+            # Different drives on Windows or other path issues
+            raise ProcessModelInvalidError(f"Invalid process model path: {new_process_model_id}") from None
+
+        # Check if target already exists before copying
+        if os.path.exists(new_model_path):
+            raise ProcessModelInvalidError(f"Process model already exists at path: {new_process_model_id}")
+
         shutil.copytree(original_model_path, new_model_path)
 
         new_process_model = cls.get_process_model(new_process_model_id)
         new_process_model.id = new_process_model_id
         new_process_model.display_name = new_display_name
 
+        # Build an id_map while renaming process IDs and update all references
+        id_map = {}
         bpmn_files = [f for f in os.listdir(new_model_path) if f.endswith(".bpmn")]
+
+        # First pass: Build the id_map by renaming all process IDs
         for bpmn_file in bpmn_files:
             bpmn_path = os.path.join(new_model_path, bpmn_file)
-            file_contents = FileSystemService.get_data(original_process_model, bpmn_file)
+            # Read from the copied files in new_model_path, not the original
+            with open(bpmn_path, "rb") as f:
+                file_contents = f.read()
             bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
-            script_task_elements = bpmn_etree_element.xpath(
+            process_elements = bpmn_etree_element.xpath(
                 "//bpmn:process", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
             )
-            new_process_id = None
-            for process in script_task_elements:
-                fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+
+            for process in process_elements:
                 old_process_id = process.get("id")
-                new_process_id = f"{old_process_id}_{fuzz}"
-                process.set("id", new_process_id)
-                if bpmn_file == new_process_model.primary_file_name and new_process_model.primary_process_id == old_process_id:
-                    new_process_model.primary_process_id = new_process_id
+                if old_process_id:
+                    fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+                    new_process_id = f"{old_process_id}_{fuzz}"
+                    process.set("id", new_process_id)
+                    id_map[old_process_id] = new_process_id
+
+                    # Update primary process ID if this matches
+                    if (
+                        bpmn_file == new_process_model.primary_file_name
+                        and new_process_model.primary_process_id == old_process_id
+                    ):
+                        new_process_model.primary_process_id = new_process_id
+
+            FileSystemService.write_file_data_to_system(bpmn_path, etree.tostring(bpmn_etree_element))
+
+        # Second pass: Update all references using the id_map
+        for bpmn_file in bpmn_files:
+            bpmn_path = os.path.join(new_model_path, bpmn_file)
+            with open(bpmn_path, "rb") as f:
+                file_contents = f.read()
+            bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
+
+            # Update participant/@processRef references
+            participants = bpmn_etree_element.xpath(
+                "//bpmn:participant[@processRef]", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+            )
+            for participant in participants:
+                process_ref = participant.get("processRef")
+                if process_ref and process_ref in id_map:
+                    participant.set("processRef", id_map[process_ref])
+
+            # Update callActivity/@calledElement references
+            call_activities = bpmn_etree_element.xpath(
+                "//bpmn:callActivity[@calledElement]", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+            )
+            for call_activity in call_activities:
+                called_element = call_activity.get("calledElement")
+                if called_element and called_element in id_map:
+                    call_activity.set("calledElement", id_map[called_element])
 
             FileSystemService.write_file_data_to_system(bpmn_path, etree.tostring(bpmn_etree_element))
         cls.save_process_model(new_process_model)
@@ -838,5 +894,5 @@ class ProcessModelService(FileSystemService):
     # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
     @classmethod
     def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
-        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
+        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True, load_dtd=False)
         return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
