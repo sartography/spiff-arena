@@ -34,6 +34,13 @@ def setup_database_configs(app: Flask) -> None:
     if worker_id is not None:
         parallel_test_suffix = f"_{worker_id}"
 
+    # Validate database type
+    database_type = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
+    if database_type is not None and database_type not in ["mysql", "postgres", "sqlite"]:
+        raise ConfigurationError(
+            f"Invalid SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: {database_type}. Supported types are: mysql, postgres, sqlite"
+        )
+
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":

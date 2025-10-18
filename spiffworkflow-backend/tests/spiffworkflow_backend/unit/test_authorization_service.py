@@ -441,7 +441,8 @@ class TestAuthorizationService(BaseTest):
             },
         ]
         AuthorizationService.refresh_permissions(group_info)
-        assert GroupModel.query.filter_by(identifier="group_two").first() is None
+        # we decided there is no reason to delete groups and it can cause db foreign key constraint issues
+        assert GroupModel.query.filter_by(identifier="group_two").first() is not None
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
         self.assert_user_has_permission(admin_user, "create", "/v1.0/process-groups/whatever")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
@@ -546,6 +547,7 @@ class TestAuthorizationService(BaseTest):
                 ("/logs/*", "read"),
                 ("/messages", "read"),
                 ("/messages/*", "create"),
+                ("/messages/*", "read"),
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
                 ("/process-instance-events/*", "read"),

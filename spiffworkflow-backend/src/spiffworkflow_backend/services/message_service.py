@@ -69,6 +69,13 @@ class MessageService:
                     message_instance_receive = message_instance
             message_triggerable_process_model = None
             receiving_process_instance = None
+
+            if message_instance_receive is not None:
+                receiving_process_instance = MessageService.get_process_instance_for_message_instance(message_instance_receive)
+                if not receiving_process_instance.can_receive_message():
+                    message_instance_receive = None
+                    receiving_process_instance = None
+
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
                 message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
@@ -89,8 +96,6 @@ class MessageService:
                         message_type="receive",
                         status="ready",
                     ).first()
-            else:
-                receiving_process_instance = MessageService.get_process_instance_for_message_instance(message_instance_receive)
 
             if processor_receive is None and message_instance_receive is not None:
                 # Set the receiving message to running, so it is not altered elswhere ...
@@ -98,11 +103,7 @@ class MessageService:
                 db.session.add(message_instance_receive)
                 db.session.commit()
 
-            if (
-                message_instance_receive is None
-                or receiving_process_instance is None
-                or not receiving_process_instance.can_receive_message()
-            ):
+            if message_instance_receive is None or receiving_process_instance is None:
                 # Assure we can send the message, otherwise keep going.
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
@@ -372,7 +373,7 @@ class MessageService:
     def get_process_instance_for_message_instance(
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
-        receiving_process_instance: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
+        receiving_process_instance: ProcessInstanceModel | None = ProcessInstanceModel.query.filter_by(
             id=message_instance_receive.process_instance_id
         ).first()
         if receiving_process_instance is None:

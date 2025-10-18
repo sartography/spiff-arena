@@ -660,6 +660,7 @@ class AuthorizationService:
         # FIXME: we need to fix so that user that can start a process-model
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
@@ -1007,7 +1008,6 @@ class AuthorizationService:
         group_permissions_only: bool = False,
     ) -> None:
         added_permission_assignments = added_permissions["permission_assignments"]
-        added_group_identifiers = added_permissions["group_identifiers"]
         added_user_to_group_identifiers = added_permissions["user_to_group_identifiers"]
         added_waiting_group_assignments = added_permissions["waiting_user_group_assignments"]
 
@@ -1028,14 +1028,6 @@ class AuthorizationService:
                     }
                     if current_user_dict not in added_user_to_group_identifiers:
                         db.session.delete(iutga)
-
-        # do not remove the default user group
-        added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
-        added_group_identifiers.add(SPIFF_GUEST_GROUP)
-        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()  # type: ignore
-        for gtd in groups_to_delete:
-            if not gtd.source_is_open_id:
-                db.session.delete(gtd)
 
         for wugam in initial_waiting_group_assignments:
             if wugam not in added_waiting_group_assignments:
