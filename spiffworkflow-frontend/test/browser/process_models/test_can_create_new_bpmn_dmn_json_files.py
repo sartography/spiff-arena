@@ -3,6 +3,7 @@ import re
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
+from helpers.process_model import delete_process_model_and_verify_removal
 
 
 def test_can_create_new_bpmn_dmn_json_files(page: Page):
@@ -88,12 +89,7 @@ def test_can_create_new_bpmn_dmn_json_files(page: Page):
         expect(page.get_by_test_id(testid), f"File {testid} listed").to_be_visible(timeout=10000)
 
     # 5. Delete the process model
-    page.get_by_test_id("delete-process-model-button").click()
-    expect(page.get_by_text("Are you sure"), "Delete confirmation visible").to_be_visible(timeout=10000)
-    page.get_by_role("button", name="Delete").click()
-    expect(page, "Returned to group page after delete").to_have_url(re.compile(rf".*/process-groups/{re.escape(group_path)}$"), timeout=10000)
-    expect(page.get_by_text(model_id), "Model id removed").to_have_count(0)
-    expect(page.get_by_text(display_name), "Model name removed").to_have_count(0)
+    delete_process_model_and_verify_removal(page, group_path, model_id, display_name)
 
     # 6. Log out
     logout(page)

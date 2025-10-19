@@ -3,6 +3,7 @@ import re
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
+from helpers.process_model import delete_process_model_and_verify_removal
 
 
 def test_can_perform_crud_operations_on_models(page: Page):
@@ -72,9 +73,16 @@ def test_can_perform_crud_operations_on_models(page: Page):
 
     # 5. Update the process model display name
     new_display = f"{display_name} edited"
-    edit_btn = page.get_by_test_id("edit-process-model-button")
-    expect(edit_btn).to_be_visible(timeout=10000)
-    edit_btn.click()
+
+    # Click the more actions menu button first
+    more_actions_btn = page.get_by_test_id("more-actions-button")
+    expect(more_actions_btn).to_be_visible(timeout=10000)
+    more_actions_btn.click()
+
+    # Then click the edit menu item
+    edit_menu_item = page.get_by_test_id("edit-process-model-menu-item")
+    expect(edit_menu_item).to_be_visible(timeout=10000)
+    edit_menu_item.click()
 
     # Verify navigation to edit form
     expect(page).to_have_url(
@@ -105,24 +113,9 @@ def test_can_perform_crud_operations_on_models(page: Page):
     )
 
     # 6. Delete the process model
-    delete_btn = page.get_by_test_id("delete-process-model-button")
-    expect(delete_btn).to_be_visible(timeout=10000)
-    delete_btn.click()
+    delete_process_model_and_verify_removal(page, group_path, model_id, new_display)
 
-    # Confirm deletion dialog appears
-    expect(page.get_by_text("Are you sure")).to_be_visible(timeout=10000)
-    # Click the destructive confirm button
-    confirm_btn = page.get_by_role("button", name="Delete")
-    expect(confirm_btn).to_be_visible(timeout=10000)
-    confirm_btn.click()
-
-    # 7. Verify deletion: back to group page, model no longer appears
-    expect(page).to_have_url(
-        re.compile(rf".*/process-groups/{re.escape(group_path)}$"),
-        timeout=10000,
-    )
-    expect(page.get_by_text(model_id)).to_have_count(0)
-    expect(page.get_by_text(new_display)).to_have_count(0)
+    # 7. Verify deletion completed successfully (already handled by helper)
 
     # 8. Log out
     logout(page)

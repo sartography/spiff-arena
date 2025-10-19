@@ -38,6 +38,7 @@ import ProcessModelTabs from '../components/ProcessModelTabs';
 import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadModal';
 import ProcessModelCopyModal from '../components/ProcessModelCopyModal';
 import SpiffTooltip from '../components/SpiffTooltip';
+import { useConfirmationDialog } from '../hooks/useConfirmationDialog';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -56,6 +57,35 @@ export default function ProcessModelShow() {
   const [readmeFile, setReadmeFile] = useState<ProcessFile | null>(null);
   const [actionsMenuAnchor, setActionsMenuAnchor] =
     useState<null | HTMLElement>(null);
+
+  // Functions that need to be available before hook declarations
+  const navigateToProcessModels = (_result: any) => {
+    navigate(
+      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
+    );
+  };
+
+  const deleteProcessModel = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}`,
+      successCallback: navigateToProcessModels,
+      httpMethod: 'DELETE',
+    });
+  };
+
+  // Confirmation dialog for delete action
+  const { openConfirmation: openDeleteConfirmation, ConfirmationDialog: DeleteConfirmationDialog } = useConfirmationDialog(
+    deleteProcessModel,
+    {
+      title: t('are_you_sure'),
+      description: processModel ? t('delete_process_model_confirm', {
+        processModelName: processModel.display_name,
+      }) : '',
+      confirmText: t('delete'),
+      cancelText: t('cancel'),
+      confirmColor: 'error',
+    }
+  );
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -139,20 +169,6 @@ export default function ProcessModelShow() {
       successCallback: onUploadedCallback,
       httpMethod,
       postBody: processModelToPass,
-    });
-  };
-
-  const navigateToProcessModels = (_result: any) => {
-    navigate(
-      `/process-groups/${getGroupFromModifiedModelId(modifiedProcessModelId)}`,
-    );
-  };
-
-  const deleteProcessModel = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}`,
-      successCallback: navigateToProcessModels,
-      httpMethod: 'DELETE',
     });
   };
 
@@ -375,16 +391,7 @@ export default function ProcessModelShow() {
                 data-testid="delete-process-model-menu-item"
                 onClick={() => {
                   handleActionsMenuClose();
-                  // The ButtonWithConfirmation will handle the confirmation dialog
-                  if (
-                    window.confirm(
-                      t('delete_process_model_confirm', {
-                        processModelName: processModel.display_name,
-                      }),
-                    )
-                  ) {
-                    deleteProcessModel();
-                  }
+                  openDeleteConfirmation();
                 }}
               >
                 <ListItemIcon>
@@ -428,6 +435,9 @@ export default function ProcessModelShow() {
         {permissionsLoaded ? (
           <span data-testid="process-model-show-permissions-loaded" />
         ) : null}
+
+        {/* Delete confirmation dialog */}
+        <DeleteConfirmationDialog />
       </>
     );
   }
