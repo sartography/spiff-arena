@@ -15,4 +15,4 @@ fi
 
 echo "Running browser tests with pytest..."
 cd test/browser
-uv run pytest -sv "$@"
+uv run pytest "$@"
