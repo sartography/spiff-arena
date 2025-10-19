@@ -16,7 +16,7 @@ import {
 import HttpService from '../services/HttpService';
 import { PermissionsToCheck, Secret } from '../interfaces';
 import { Notification } from '../components/Notification';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ConfirmButton from '../components/ConfirmButton';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
@@ -113,7 +113,7 @@ export default function SecretShow() {
         </h1>
         <Stack direction="row" spacing={3}>
           <Can I="DELETE" a={targetUris.secretShowPath} ability={ability}>
-            <ButtonWithConfirmation
+            <ConfirmButton
               description={t('delete_secret_confirmation')}
               onConfirmation={deleteSecret}
               buttonLabel={t('delete')}

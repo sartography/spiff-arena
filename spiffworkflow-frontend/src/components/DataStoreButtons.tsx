@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ConfirmButton from '../components/ConfirmButton';
 import HttpService from '../services/HttpService';
 import { DataStore } from '../interfaces';
 import { useNavigate } from 'react-router-dom';
@@ -34,11 +34,11 @@ export default function DataStoreButtons({
 
   return (
     <>
-      <ButtonWithConfirmation
+      <ConfirmButton
         buttonLabel={t('clear')}
         onConfirmation={clearDataStore}
       />{' '}
-      <ButtonWithConfirmation
+      <ConfirmButton
         buttonLabel={t('delete')}
         onConfirmation={deleteDataStore}
       />
