@@ -9,7 +9,14 @@ interface ConfirmButtonProps {
   description?: string;
   confirmButtonLabel?: string;
   variant?: 'text' | 'outlined' | 'contained';
-  color?: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
+  color?:
+    | 'inherit'
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'error'
+    | 'info'
+    | 'warning';
   startIcon?: React.ReactNode;
   disabled?: boolean;
 }
@@ -33,7 +40,7 @@ export default function ConfirmButton({
       description,
       confirmText: confirmButtonLabel,
       confirmColor: color,
-    }
+    },
   );
 
   return (

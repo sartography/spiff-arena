@@ -10,7 +10,14 @@ interface ConfirmIconButtonProps {
   title?: string;
   description?: string;
   confirmButtonLabel?: string;
-  color?: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
+  color?:
+    | 'inherit'
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'error'
+    | 'info'
+    | 'warning';
   disabled?: boolean;
   tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
 }
@@ -34,7 +41,7 @@ export default function ConfirmIconButton({
       description,
       confirmText: confirmButtonLabel,
       confirmColor: color,
-    }
+    },
   );
 
   return (

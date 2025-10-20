@@ -14,12 +14,19 @@ interface UseConfirmationDialogOptions {
   description?: string;
   confirmText?: string;
   cancelText?: string;
-  confirmColor?: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
+  confirmColor?:
+    | 'inherit'
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'error'
+    | 'info'
+    | 'warning';
 }
 
 export function useConfirmationDialog(
   onConfirm: () => void,
-  options: UseConfirmationDialogOptions = {}
+  options: UseConfirmationDialogOptions = {},
 ) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -47,9 +54,7 @@ export function useConfirmationDialog(
       aria-labelledby="confirmation-dialog-title"
       aria-describedby="confirmation-dialog-description"
     >
-      <DialogTitle id="confirmation-dialog-title">
-        {title}
-      </DialogTitle>
+      <DialogTitle id="confirmation-dialog-title">{title}</DialogTitle>
       {description && (
         <DialogContent>
           <DialogContentText id="confirmation-dialog-description">

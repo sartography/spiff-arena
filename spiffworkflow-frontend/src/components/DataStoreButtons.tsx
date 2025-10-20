@@ -34,10 +34,7 @@ export default function DataStoreButtons({
 
   return (
     <>
-      <ConfirmButton
-        buttonLabel={t('clear')}
-        onConfirmation={clearDataStore}
-      />{' '}
+      <ConfirmButton buttonLabel={t('clear')} onConfirmation={clearDataStore} />{' '}
       <ConfirmButton
         buttonLabel={t('delete')}
         onConfirmation={deleteDataStore}

@@ -74,18 +74,20 @@ export default function ProcessModelShow() {
   };
 
   // Confirmation dialog for delete action
-  const { openConfirmation: openDeleteConfirmation, ConfirmationDialog: DeleteConfirmationDialog } = useConfirmationDialog(
-    deleteProcessModel,
-    {
-      title: t('are_you_sure'),
-      description: processModel ? t('delete_process_model_confirm', {
-        processModelName: processModel.display_name,
-      }) : '',
-      confirmText: t('delete'),
-      cancelText: t('cancel'),
-      confirmColor: 'error',
-    }
-  );
+  const {
+    openConfirmation: openDeleteConfirmation,
+    ConfirmationDialog: DeleteConfirmationDialog,
+  } = useConfirmationDialog(deleteProcessModel, {
+    title: t('are_you_sure'),
+    description: processModel
+      ? t('delete_process_model_confirm', {
+          processModelName: processModel.display_name,
+        })
+      : '',
+    confirmText: t('delete'),
+    cancelText: t('cancel'),
+    confirmColor: 'error',
+  });
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {

@@ -126,8 +126,8 @@ export default function DataStoreListTable() {
   };
 
   const getFullDataStoreId = (ds: DataStore) => {
-    const location = ds.location ? `${ds.location}/` : '';
-    return `${ds.type}:${location}${ds.id}`;
+    const locationPrefix = ds.location ? `${ds.location}/` : '';
+    return `${ds.type}:${locationPrefix}${ds.id}`;
   };
 
   const { page, perPage } = getPageInfoFromSearchParams(
