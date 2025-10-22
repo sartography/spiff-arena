@@ -104,7 +104,7 @@ export default function ProcessModelShow() {
       setSelectedTabIndex(newTabIndex);
     };
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}?include_file_references=true`,
+      path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
   }, [reloadModel, modifiedProcessModelId]);
