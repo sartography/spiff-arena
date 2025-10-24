@@ -122,6 +122,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
+        HumanTaskModel.created_at_in_seconds.label("task_created_at_in_seconds"),
         func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier"),
         func.max(ProcessInstanceModel.status).label("process_instance_status"),
         func.max(ProcessInstanceModel.updated_at_in_seconds).label("updated_at_in_seconds"),
