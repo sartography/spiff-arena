@@ -25,24 +25,14 @@ def test_can_perform_crud_operations(page: Page):
     updated_name = f"{group_name} edited"
 
     print_page_details(page)
-    # Open the creation form (make sure to click the correct link)
-    add_btn_candidates = page.locator('[data-testid="add-process-group-button"]').all()
-    if len(add_btn_candidates) < 1:
-        raise AssertionError(f"Expected at least one add-process-group-button element, got {len(add_btn_candidates)}")
-
-    links = [b for b in add_btn_candidates if b.get_attribute('href')]
-    correct_btn = None
-    for l in links:
-        href = l.get_attribute('href')
-        if href and '/process-groups/' in href and href.endswith('/new'):
-            correct_btn = l
-    if not correct_btn and links:
-        correct_btn = links[0]
-    if not correct_btn:
-        correct_btn = add_btn_candidates[0]
-
-    expect(correct_btn).to_be_visible(timeout=10000)
-    correct_btn.click()
+    # Open the creation form.
+    # We wait for the specific "new" link to appear, which is more robust
+    # than the previous implementation that didn't wait correctly.
+    add_button_locator = page.locator(
+        'a[data-testid="add-process-group-button"][href*="/process-groups/"][href$="/new"]'
+    )
+    expect(add_button_locator).to_be_visible(timeout=20000)
+    add_button_locator.click()
     print_page_details(page)  # print immediately after click for debug
 
     # Try to robustly detect the form page for new group

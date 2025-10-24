@@ -57,7 +57,7 @@ import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
 import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
 import HttpService from '../services/HttpService';
 
-import ButtonWithConfirmation from './ButtonWithConfirmation';
+import ConfirmButton from './ConfirmButton';
 import {
   convertSvgElementToHtmlString,
   getBpmnProcessIdentifiers,
@@ -872,7 +872,7 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             {fileName && !isPrimaryFile && (
-              <ButtonWithConfirmation
+              <ConfirmButton
                 description={t('delete_file_description', { file: fileName })}
                 onConfirmation={handleDelete}
                 buttonLabel={t('delete')}
