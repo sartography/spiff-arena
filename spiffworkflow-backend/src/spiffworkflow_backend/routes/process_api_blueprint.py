@@ -294,21 +294,25 @@ def process_data_file_download(
     )
 
 
-def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
+def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str, Any]) -> tuple[Any, str | None]:
     return_value = None
-    if parameter in post_body:
-        return_value = post_body[parameter]
+    parameter_name = None
+
+    for parameter in parameters:
+        if parameter in post_body:
+            parameter_name = parameter
+            return_value = post_body[parameter]
 
     if return_value is None or return_value == "":
         raise (
             ApiError(
                 error_code="missing_required_parameter",
-                message=f"Parameter is missing from json request body: {parameter}",
+                message=f"Parameter is missing from json request body: {parameters}",
                 status_code=400,
             )
         )
 
-    return return_value
+    return return_value, parameter_name
 
 
 def _commit_and_push_to_git(message: str) -> None:
