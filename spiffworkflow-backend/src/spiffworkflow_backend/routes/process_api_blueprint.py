@@ -605,7 +605,7 @@ def _find_human_task_or_raise(
     else:
         human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
 
-    human_task: HumanTaskModel = human_task_query.first()
+    human_task: HumanTaskModel | None = human_task_query.first()
     if human_task is None:
         raise (
             ApiError(
@@ -635,8 +635,11 @@ def _get_spiff_task_from_processor(
     return spiff_task
 
 
-def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
+def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:
+    task_model_query = TaskModel.query.filter_by(guid=task_guid)
+    if process_instance_id is not None:
+        task_model_query = task_model_query.filter_by(process_instance_id=process_instance_id)
+    task_model: TaskModel | None = task_model_query.first()
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",
