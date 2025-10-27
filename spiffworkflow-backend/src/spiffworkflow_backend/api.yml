@@ -1222,6 +1222,8 @@ paths:
         content:
           application/json:
             schema:
+              required:
+                - bpmn_task_identifier
               properties:
                 bpmn_task_identifier:
                   type: string
