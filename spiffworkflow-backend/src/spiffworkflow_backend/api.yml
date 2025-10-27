@@ -1222,14 +1222,36 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              required:
+                - bpmn_task_identifier
+              properties:
+                bpmn_task_identifier:
+                  type: string
+                  nullable: false
+                  description: The bpmn identifier for the task
+                input_json:
+                  type: object
+                  nullable: true
+                  description: The input json for the initial state
+                previous_task_guid:
+                  type: string
+                  nullable: true
+                  description: Source task to get the input json from if not using input_json
+                expected_output_json:
+                  type: object
+                  nullable: true
+                  description: The expected output json after the script runs
+                task_guid:
+                  type: string
+                  nullable: true
+                  description: Source task to get the expected output json from if not using expected_output_json
       responses:
         "200":
           description: Script Unit Test Result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/OkTrue"
 
   /process-models/{modified_process_model_identifier}/script-unit-tests/run:
     parameters:

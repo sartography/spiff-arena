@@ -20,7 +20,7 @@ import {
   Tabs,
   Tab,
   TextField,
-  Grid,
+  Grid2 as Grid,
   Box,
   Stack,
   TextareaAutosize,
@@ -423,7 +423,7 @@ export default function ProcessModelEditDiagram() {
         <Box sx={{ p: 4 }}>
           <h2 id="modal-modal-title">{t('diagram_file_name_editor_title')}</h2>
           <Grid container spacing={2}>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 id="process_model_file_name"
                 label={t('diagram_file_name_editor_label')}
@@ -436,9 +436,7 @@ export default function ProcessModelEditDiagram() {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={4}>
-              {fileExtension}
-            </Grid>
+            <Grid size={{ xs: 4 }}>{fileExtension}</Grid>
           </Grid>
           <ButtonGroup>
             <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
@@ -850,14 +848,14 @@ export default function ProcessModelEditDiagram() {
       return (
         <main>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <p className="with-top-margin-for-unit-test-name">
                 {t('diagram_script_editor_unit_test_title', {
                   testId: currentScriptUnitTest.id,
                 })}
               </p>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <ButtonGroup>
                 <IconButton
                   onClick={setPreviousScriptUnitTest}
@@ -879,12 +877,10 @@ export default function ProcessModelEditDiagram() {
             </Grid>
           </Grid>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              {unitTestFailureElement()}
-            </Grid>
+            <Grid size={{ xs: 12 }}>{unitTestFailureElement()}</Grid>
           </Grid>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
                 <Editor
@@ -897,7 +893,7 @@ export default function ProcessModelEditDiagram() {
                 />
               </div>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <div>
                 {t('diagram_script_editor_unit_test_expected_output_json')}
               </div>
@@ -992,9 +988,7 @@ export default function ProcessModelEditDiagram() {
   const scriptEditor = () => {
     return (
       <Grid container>
-        <Grid item xs={12}>
-          {editorWindow()}
-        </Grid>
+        <Grid size={{ xs: 12 }}>{editorWindow()}</Grid>
       </Grid>
     );
   };
@@ -1002,10 +996,8 @@ export default function ProcessModelEditDiagram() {
   const scriptEditorWithAssist = () => {
     return (
       <Grid container>
-        <Grid item xs={7}>
-          {editorWindow()}
-        </Grid>
-        <Grid item xs={5}>
+        <Grid size={{ xs: 7 }}>{editorWindow()}</Grid>
+        <Grid size={{ xs: 5 }}>
           <Tooltip title={t('diagram_script_assist_tooltip')}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Info fontSize="small" />
@@ -1053,14 +1045,14 @@ export default function ProcessModelEditDiagram() {
             <TabPanel value={scriptEditorTabValue} index={0}>
               {scriptEditor()}
             </TabPanel>
+            <TabPanel value={scriptEditorTabValue} index={1}>
+              {scriptUnitTestEditorElement()}
+            </TabPanel>
             {scriptAssistEnabled && (
-              <TabPanel value={scriptEditorTabValue} index={1}>
+              <TabPanel value={scriptEditorTabValue} index={2}>
                 {scriptEditorWithAssist()}
               </TabPanel>
             )}
-            <TabPanel value={scriptEditorTabValue} index={2}>
-              {scriptUnitTestEditorElement()}
-            </TabPanel>
           </Box>
           <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
         </Box>

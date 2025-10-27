@@ -88,6 +88,8 @@ export interface BasicTask {
   extensions?: any;
 
   process_model_uses_queued_execution?: boolean;
+
+  runtime_info?: any;
 }
 
 // TODO: merge with ProcessInstanceTask
@@ -100,7 +102,6 @@ export interface Task extends BasicTask {
 
   event_definition?: EventDefinition;
   saved_form_data?: any;
-  runtime_info?: any;
 }
 
 // Currently used like ApiTask in backend
