@@ -1587,6 +1587,7 @@ paths:
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run_deprecated
       summary: DEPRECATED Run a process instance. Use /process-instance-run
+      deprecated: true
       tags:
         - Process Instances
       responses:
