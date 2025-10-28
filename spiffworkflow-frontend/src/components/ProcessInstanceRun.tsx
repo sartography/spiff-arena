@@ -116,7 +116,7 @@ export default function ProcessInstanceRun({
       storeRecentProcessModelInLocalStorage(processModel);
     }
     HttpService.makeCallToBackend({
-      path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
+      path: `/process-instances-run/${modifiedProcessModelId}/${processInstance.id}`,
       successCallback: onProcessInstanceRun,
       failureCallback: (result: any) => {
         addError(result);
