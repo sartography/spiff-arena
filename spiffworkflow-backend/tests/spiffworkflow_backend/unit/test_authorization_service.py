@@ -173,6 +173,7 @@ class TestAuthorizationService(BaseTest):
                     "read",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model:*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model:*", "create"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model:*",
                     "read",
@@ -264,6 +265,7 @@ class TestAuthorizationService(BaseTest):
                     "read",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model/*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model/*", "create"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model/*",
                     "read",
