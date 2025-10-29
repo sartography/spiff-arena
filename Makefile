@@ -106,6 +106,9 @@ be-tests: be-clear-log-file
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
+co-tests:
+	$(IN_ARENA) uv run pytest $(ARGS) spiff-arena-common/tests/spiff_arena_common/$(JUST)
+
 co-wheel:
 	$(IN_ARENA) uv build spiff-arena-common
 
@@ -183,7 +186,7 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	co-wheel \
+	co-tests co-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock cp-sh \
 	cpagg-logs cpagg-sh \
 	cpah-logs cpah-sh \
