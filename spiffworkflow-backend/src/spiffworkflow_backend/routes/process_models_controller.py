@@ -640,13 +640,14 @@ def _create_or_update_process_model_file(
     return make_response(jsonify(file), http_status_to_return)
 
 
-def process_model_specs(
+def process_model_validate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
+    # this will raise if there is an issue
     WorkflowSpecService.get_spec(files, process_model)
 
     return make_response(jsonify({"ok": True}), 200)
@@ -659,7 +660,6 @@ def process_model_milestone_list(
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
-    WorkflowSpecService.get_spec(files, process_model)
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return make_response(jsonify({"milestones": milestones}), 200)

@@ -1952,7 +1952,7 @@ paths:
                 items:
                   type: string
 
-  /process-models/{modified_process_model_identifier}/specs:
+  /process-models/{modified_process_model_identifier}/validate:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -1961,13 +1961,13 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_specs
-      summary: Returns process model specs
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_validate
+      summary: Validate a given process model
       tags:
         - Process Models
       responses:
         "200":
-          description: Returns the spec requested.
+          description: Returns ok true if the process model validated.
           content:
             application/json:
               schema:
