@@ -293,7 +293,7 @@ export default function ProcessModelEditDiagram() {
 
   const getProcessModelSpecs = () => {
     const httpMethod = 'GET';
-    const path = `/process-models/${modifiedProcessModelId}/specs`;
+    const path = `/process-models/${modifiedProcessModelId}/validate`;
 
     HttpService.makeCallToBackend({
       path,
