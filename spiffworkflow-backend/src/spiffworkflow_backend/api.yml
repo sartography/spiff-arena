@@ -1967,7 +1967,7 @@ paths:
         - Process Models
       responses:
         "200":
-          description: Returns the spec requested.
+          description: Returns ok true if the process model validated.
           content:
             application/json:
               schema:
