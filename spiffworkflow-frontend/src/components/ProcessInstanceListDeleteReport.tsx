@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
+import ConfirmButton from './ConfirmButton';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
@@ -22,7 +22,7 @@ export default function ProcessInstanceListDeleteReport({
   };
 
   return (
-    <ButtonWithConfirmation
+    <ConfirmButton
       description={t('delete_perspective_confirmation', {
         identifier: processInstanceReportSelection.identifier,
       })}
