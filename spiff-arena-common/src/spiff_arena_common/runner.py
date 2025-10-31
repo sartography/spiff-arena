@@ -5,6 +5,7 @@ import logging
 import time
 import uuid
 
+from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
@@ -170,14 +171,18 @@ def hydrate_workflow(specs, state):
 
     return workflow
 
-def lazy_load_tasks(workflow):
-    return get_tasks(workflow, TaskFilter(spec_class=CallActivity))
+def lazy_loads(workflow):
+    specs = set()
+    for t in workflow.get_tasks(task_filter=TaskFilter(spec_class=CallActivity)):
+        specs.add(t.task_spec.spec)
+    for t in workflow.get_tasks(task_filter=TaskFilter(spec_class=LoopTask)):
+        task_spec = t.workflow.spec.task_specs.get(t.task_spec.task_spec)
+        if task_spec and hasattr(task_spec, "spec"):
+            specs.add(task_spec.spec)
+    return list(specs)
 
 def missing_lazy_load_specs(workflow):
-    for t in lazy_load_tasks(workflow):
-        spec = t["task_spec"].get("spec")
-        if not spec:
-            continue
+    for spec in lazy_loads(workflow):
         if spec not in workflow.subprocess_specs:
             return True
     return False
@@ -280,7 +285,7 @@ def build_response(workflow, e):
             workflow,
             TaskFilter(TaskState.STARTED | TaskState.READY | TaskState.WAITING),
         )
-        response["lazy_load_tasks"] = lazy_load_tasks(workflow)
+        response["lazy_loads"] = lazy_loads(workflow)
 
     response["state"] = get_state(workflow)
 
