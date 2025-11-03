@@ -95,7 +95,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^14.2.1",
+    "@testing-library/react": "^16.3.0",
     "@types/carbon__colors": "^10.31.3",
     "@types/cookie": "^1.0.0",
     "@types/node": "^20.12.13",

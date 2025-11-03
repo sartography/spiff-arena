@@ -69,7 +69,7 @@ import {
   PermissionsToCheck,
   ProcessModel,
   ProcessReference,
-  Task,
+  BasicTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
@@ -103,7 +103,7 @@ type OwnProps = {
   onServiceTasksRequested?: (..._args: any[]) => any;
   onSetPrimaryFile?: (..._args: any[]) => any;
   saveDiagram?: (..._args: any[]) => any;
-  tasks?: Task[] | null;
+  tasks?: BasicTask[] | null;
   url?: string;
 };
 
@@ -529,12 +529,12 @@ export default function ReactDiagramEditor({
       console.error('ERROR:', err);
     }
 
-    function taskIsMultiInstanceChild(task: Task) {
+    function taskIsMultiInstanceChild(task: BasicTask) {
       // if a task has a runtime_info and iteration then assume it's a child task
       return Object.hasOwn(task.runtime_info || {}, 'iteration');
     }
 
-    function checkTaskCanBeHighlighted(task: Task) {
+    function checkTaskCanBeHighlighted(task: BasicTask) {
       const taskBpmnId = task.bpmn_identifier;
       return (
         !taskIsMultiInstanceChild(task) &&
@@ -548,7 +548,7 @@ export default function ReactDiagramEditor({
 
     function highlightBpmnIoElement(
       canvas: any,
-      task: Task,
+      task: BasicTask,
       bpmnIoClassName: string,
       bpmnProcessIdentifiers: string[],
     ) {
@@ -575,7 +575,7 @@ export default function ReactDiagramEditor({
     }
 
     function addOverlayOnCallActivity(
-      task: Task,
+      task: BasicTask,
       bpmnProcessIdentifiers: string[],
     ) {
       if (
@@ -655,7 +655,7 @@ export default function ReactDiagramEditor({
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
           canvas.getRootElement(),
         );
-        tasks.forEach((task: Task) => {
+        tasks.forEach((task: BasicTask) => {
           let className = '';
           if (task.state === 'COMPLETED') {
             className = 'completed-task-highlight';

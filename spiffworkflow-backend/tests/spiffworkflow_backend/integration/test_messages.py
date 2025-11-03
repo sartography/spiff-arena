@@ -9,9 +9,30 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessages(BaseTest):
+    def test_get_process_model_for_message(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/message-start-event-with-form"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="message-start-event-with-form",
+        )
+        response = client.get(
+            "/v1.0/messages/bounty_start/process-model",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["process_model_identifier"] == process_model.id
+
     def test_message_from_api_into_running_process(
         self,
         app: Flask,
@@ -76,7 +97,7 @@ class TestMessages(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         self.copy_example_process_models()
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_process_model_caches()
         response = client.get(
             "/v1.0/message-models/examples:1-basic-concepts",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),

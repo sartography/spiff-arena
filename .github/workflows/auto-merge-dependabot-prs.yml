@@ -28,14 +28,14 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Development Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
 
       ###### GET PR NUMBER
       # we saved the pr_number in tests.yml. fetch it so we can merge the correct PR.
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
       # https://github.com/actions/github-script
       - name: "Download artifact"
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             console.log("download artifact: started")

@@ -340,3 +340,68 @@ class TestProcessModelsController(BaseTest):
         assert response.json() is not None
         process_model_data: dict = response.json()
         return process_model_data
+
+    def test_get_human_task_definitions(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        url = f"/v1.0/process-models/{modified_id}/human-task-definitions"
+        response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        human_tasks = response.json()
+        assert len(human_tasks) == 3
+        assert human_tasks[0]["bpmn_identifier"] == "initiator_one"
+        assert human_tasks[0]["bpmn_name"] == "Initiator One"
+        assert human_tasks[0]["typename"] == "ManualTask"
+        assert human_tasks[0]["properties_json"]["lane"] == "Process Initiator"
+
+    def test_process_model_copy(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group",
+            process_model_id="hello_world",
+            bpmn_file_name="hello_world.bpmn",
+            bpmn_file_location="hello_world",
+        )
+        modified_process_model_identifier = process_model.modify_process_identifier_for_path_param(process_model.id)
+
+        copy_url = f"/v1.0/process-models/{modified_process_model_identifier}/copy"
+        copy_data = {
+            "id": "test_group/hello_world_copy",
+            "display_name": "Hello World Copy",
+        }
+        response = client.post(
+            copy_url,
+            json=copy_data,
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 201, response.text
+
+        new_process_model_id = "test_group/hello_world_copy"
+        new_process_model = ProcessModelService.get_process_model(new_process_model_id)
+        modified_new_process_model_id = new_process_model_id.replace("/", ":")
+        get_url = f"/v1.0/process-models/{modified_new_process_model_id}"
+        response = client.get(get_url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        assert response.json()["id"] == new_process_model_id
+        assert response.json()["display_name"] == "Hello World Copy"
+        assert response.json()["primary_process_id"] == new_process_model.primary_process_id
+        assert response.json()["primary_process_id"] != process_model.primary_process_id
+        assert len(response.json()["files"]) == 1
+        assert response.json()["files"][0]["name"] == "hello_world.bpmn"
