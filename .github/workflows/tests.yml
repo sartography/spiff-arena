@@ -366,7 +366,6 @@ jobs:
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
@@ -400,8 +399,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Checkout Samples
         uses: actions/checkout@v5
         with:
