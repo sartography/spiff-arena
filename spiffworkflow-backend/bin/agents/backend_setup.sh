@@ -25,7 +25,7 @@ echo "--- Starting Backend Environment Setup ---"
 # Step 1: Install System Dependencies
 echo "[1/5] Installing system dependencies..."
 sudo apt-get update
-sudo apt-get install -y libpq-dev libmysqlclient-dev mysql-client mysql-server
+sudo apt-get install -y libpq-dev libmariadb-dev mysql-client mysql-server
 
 # Step 2: Configure and Start MySQL Server
 echo "[2/5] Setting up MySQL server..."
