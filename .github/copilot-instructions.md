@@ -127,7 +127,7 @@ Playwright tests are located in `spiffworkflow-frontend/test/browser`:
 
 ### Python (Backend)
 
-- **Python Version**: 3.10+ (backend requires `>=3.10`, root requires `>=3.11,<3.13`)
+- **Python Version**: Backend supports 3.10+; root workspace requires 3.11 or 3.12 (not 3.13)
 - **Package Manager**: `uv` (not pip or poetry)
 - **Linting**: Ruff (configured in `pyproject.toml`)
 - **Pre-commit**: Configured in `.pre-commit-config.yaml`
