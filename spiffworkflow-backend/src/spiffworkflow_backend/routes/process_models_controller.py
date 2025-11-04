@@ -11,6 +11,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_task import trigger_metadata_backfill
@@ -201,8 +202,12 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 
     if include_file_references:
         for file in process_model.files:
-            refs = SpecFileService.get_references_for_file(file, process_model)
-            file.references = refs
+            try:
+                refs = SpecFileService.get_references_for_file(file, process_model)
+                file.references = refs
+            except ValidationException as exception:
+                file.references = [{"identifier": f"ERROR: {exception.__class__.__name__}", "display_name": str(exception)}]  # type: ignore
+
     process_model.parent_groups = ProcessModelService.get_parent_group_array(process_model.id)
     try:
         current_git_revision = GitService.get_current_revision()
@@ -635,13 +640,14 @@ def _create_or_update_process_model_file(
     return make_response(jsonify(file), http_status_to_return)
 
 
-def process_model_specs(
+def process_model_validate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
+    # this will raise if there is an issue
     WorkflowSpecService.get_spec(files, process_model)
 
     return make_response(jsonify({"ok": True}), 200)
@@ -654,7 +660,6 @@ def process_model_milestone_list(
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
-    WorkflowSpecService.get_spec(files, process_model)
     milestones = SpecFileService.extract_milestones_from_bpmn_files(process_model, files)
 
     return make_response(jsonify({"milestones": milestones}), 200)

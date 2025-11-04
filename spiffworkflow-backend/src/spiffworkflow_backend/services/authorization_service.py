@@ -71,6 +71,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
     {"path": "/process-instance-events", "relevant_permissions": ["read"]},
     {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
+    {"path": "/process-instance-run", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-import", "relevant_permissions": ["create"]},
@@ -549,9 +550,10 @@ class AuthorizationService:
         #   1. view your own instances.
         #   2. view the logs for these instances.
         if permission_set == "start":
-            path_prefixes_that_allow_create_access = ["process-instances"]
-            for path_prefix in path_prefixes_that_allow_create_access:
-                target_uri = f"/{path_prefix}/{process_related_path_segment}"
+            for target_uri in [
+                f"/process-instances/{process_related_path_segment}",
+                f"/process-instance-run/{process_related_path_segment}",
+            ]:
                 permissions_to_assign.append(PermissionToAssign(permission="create", target_uri=target_uri))
 
             # giving people access to all logs for an instance actually gives them a little bit more access
@@ -673,6 +675,7 @@ class AuthorizationService:
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instance-run/*"))
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))

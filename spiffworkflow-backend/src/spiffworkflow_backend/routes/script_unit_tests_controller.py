@@ -12,6 +12,7 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_required_parameter_or_raise
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -21,9 +22,21 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def script_unit_test_create(modified_process_model_identifier: str, body: dict[str, str | bool | int]) -> flask.wrappers.Response:
-    bpmn_task_identifier = _get_required_parameter_or_raise("bpmn_task_identifier", body)
-    input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise("expected_output_json", body)
+    bpmn_task_identifier, _ = _get_required_parameter_or_raise(["bpmn_task_identifier"], body)
+    input_value, input_json_source = _get_required_parameter_or_raise(["input_json", "previous_task_guid"], body)
+    output_value, expected_output_json_source = _get_required_parameter_or_raise(["expected_output_json", "task_guid"], body)
+
+    if input_json_source == "previous_task_guid":
+        task = TaskModel.query.filter_by(guid=input_value).first()
+        input_json = task.get_data()
+    else:
+        input_json = input_value
+
+    if expected_output_json_source == "task_guid":
+        task = TaskModel.query.filter_by(guid=output_value).first()
+        expected_output_json = task.get_data()
+    else:
+        expected_output_json = output_value
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
@@ -95,9 +108,9 @@ def script_unit_test_run(modified_process_model_identifier: str, body: dict[str,
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
-    python_script = _get_required_parameter_or_raise("python_script", body)
-    input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise("expected_output_json", body)
+    python_script, _ = _get_required_parameter_or_raise(["python_script"], body)
+    input_json, _ = _get_required_parameter_or_raise(["input_json"], body)
+    expected_output_json, _ = _get_required_parameter_or_raise(["expected_output_json"], body)
 
     result = ScriptUnitTestRunner.run_with_script_and_pre_post_contexts(python_script, input_json, expected_output_json)
     return make_response(jsonify(result), 200)

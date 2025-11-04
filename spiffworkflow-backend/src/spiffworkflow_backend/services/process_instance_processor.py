@@ -289,6 +289,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals = {
             "_strptime": _strptime,
             "all": all,
+            "any": any,
             "calendar": calendar,
             "dateparser": dateparser,
             "datetime": datetime,
