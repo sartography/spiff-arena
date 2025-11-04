@@ -53,4 +53,12 @@ This project contains Playwright tests for end-to-end testing. These tests requi
 - **Setup:** The test environment requires Python and its own set of dependencies. A `README.md` file in the test directory contains setup instructions. Agent setup scripts are available:
   - `./bin/agents/setup.sh` (from root) - Complete environment setup (backend + frontend + Playwright)
   - `./bin/agents/setup.sh` (from frontend) - Frontend-only setup
-- **Running tests:** Use `./bin/agents/run_playwright.sh` (from root) to automatically start servers and run tests.
+
+- **Running tests:**
+  - **Quick method:** Use `./bin/agents/run_playwright.sh` (from root) to automatically start servers and run tests
+  - **Manual method:** From the `spiffworkflow-frontend` directory:
+    ```bash
+    cd test/browser
+    uv run pytest [test_file.py] [-v]
+    ```
+    Example: `uv run pytest process_models/test_can_create_new_bpmn_dmn_json_files.py -v`

@@ -12,7 +12,7 @@ def test_can_paginate_items(page: Page):
     """
 
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Navigate to the process model show page
     page.goto(f"{BASE_URL}/process-groups")
