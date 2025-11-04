@@ -5,9 +5,22 @@ from helpers.url import get_base_url
 BASE_URL = get_base_url()
 
 
+def get_default_username() -> str:
+    """Get the default username from environment or use 'admin'."""
+    return os.environ.get("BROWSER_TEST_USERNAME", "admin")
 
-def login(page: Page, username: str, password: str, base_url: str = BASE_URL):
+
+def get_default_password() -> str:
+    """Get the default password from environment or use 'admin'."""
+    return os.environ.get("BROWSER_TEST_PASSWORD", "admin")
+
+
+def login(page: Page, username: str | None = None, password: str | None = None, base_url: str = BASE_URL):
     """Logs in a user via the standard login form."""
+    # Use provided credentials or fall back to defaults from environment
+    username = username or get_default_username()
+    password = password or get_default_password()
+    
     page.goto(base_url)
 
     # Check if already on the sign-in page or need to navigate

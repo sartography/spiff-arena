@@ -12,7 +12,7 @@ def test_can_perform_crud_operations(page: Page):
     """
 
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Navigate to process groups list
     list_url = f"{BASE_URL}/process-groups"

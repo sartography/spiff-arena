@@ -12,7 +12,7 @@ def test_can_perform_crud_operations_on_models(page: Page):
     """
 
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Navigate to the specific process group page
     group_id = "misc/acceptance-tests-group-one"

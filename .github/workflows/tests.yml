@@ -430,7 +430,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install UV
         run: pip install --constraint=../.github/workflows/constraints.txt uv
       - name: Install Playwright browsers
@@ -442,7 +442,8 @@ jobs:
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
+          BROWSER_TEST_USERNAME: "ciadmin1"
+          BROWSER_TEST_PASSWORD: "ciadmin1"
       - name: get_backend_logs_from_docker_compose
         if: failure()
         working-directory: ./spiffworkflow-backend

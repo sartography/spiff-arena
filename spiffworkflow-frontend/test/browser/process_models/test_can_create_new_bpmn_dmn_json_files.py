@@ -12,7 +12,7 @@ def test_can_create_new_bpmn_dmn_json_files(page: Page):
     verifies they appear in the Files tab listing, and deletes the model.
     """
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Create a new process model
     group_id = "misc/acceptance-tests-group-one"
