@@ -418,13 +418,11 @@ jobs:
           SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
           SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
       - name: start_frontend
-        # working-directory: ./spiffworkflow-frontend
         run: ./bin/build_and_run_with_docker_compose
       - name: wait_for_backend
         working-directory: ./spiffworkflow-backend
         run: ./bin/wait_for_backend_to_be_up 5
       - name: wait_for_frontend
-        # working-directory: ./spiffworkflow-frontend
         run: ./bin/wait_for_frontend_to_be_up 5
       - name: wait_for_keycloak
         working-directory: ./spiffworkflow-backend
@@ -434,7 +432,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install UV
-        run: pip install uv
+        run: pip install --constraint=../.github/workflows/constraints.txt uv
       - name: Install Playwright browsers
         working-directory: ./spiffworkflow-frontend/test/browser
         run: uv run playwright install --with-deps
