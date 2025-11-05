@@ -61,11 +61,13 @@ services:
       SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
       SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
 
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+      # TODO: Use the below to help in the future with implementing PKCE
+      # We don't need to support the whole private key jwt flow, but we do want to support PKCE
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
       # Use a mounted file for the private key
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE: "/run/secrets/private-key.pem"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE: "/run/secrets/private-key.pem"
       # Alternatively, provide the PEM as a string (beware of quoting issues with newlines and don't commit secrets to source control!)
       # SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: "put-pem-string-with-newlines-here"
     ports:
