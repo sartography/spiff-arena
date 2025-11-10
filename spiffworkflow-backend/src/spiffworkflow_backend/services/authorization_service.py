@@ -827,7 +827,7 @@ class AuthorizationService:
         return actions
 
     @classmethod
-    def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
+    def load_permissions_yaml(cls) -> Any:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
             raise (
                 PermissionsFileNotSetError(
@@ -835,9 +835,12 @@ class AuthorizationService:
                 )
             )
 
-        permission_configs = None
         with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
-            permission_configs = yaml.safe_load(file)
+            return yaml.safe_load(file)
+
+    @classmethod
+    def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
+        permission_configs = cls.load_permissions_yaml()
 
         group_permissions_by_group: dict[str, GroupPermissionsDict] = {}
         if current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:

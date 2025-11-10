@@ -30,6 +30,8 @@ else
       UVICORN_LOG_LEVEL=debug
     fi
 
+    uv run python "${script_dir}/bootstrap.py"
+
     # this line blocks
     exec uv run uvicorn spiff_web_server:connexion_app \
       --reload \
