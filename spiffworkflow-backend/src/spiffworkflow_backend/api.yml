@@ -620,6 +620,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
+  /process-models/{modified_process_model_identifier}/copy:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: the modified process model id
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_copy
+      summary: Creates a new process model with the given parameters.
+      tags:
+        - Process Models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCopyRequest"
+      responses:
+        "201":
+          description: Process model copied successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
   /process-model-natural-language/{modified_process_group_id}:
     parameters:
       - name: modified_process_group_id
@@ -1195,14 +1222,36 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              required:
+                - bpmn_task_identifier
+              properties:
+                bpmn_task_identifier:
+                  type: string
+                  nullable: false
+                  description: The bpmn identifier for the task
+                input_json:
+                  type: object
+                  nullable: true
+                  description: The input json for the initial state
+                previous_task_guid:
+                  type: string
+                  nullable: true
+                  description: Source task to get the input json from if not using input_json
+                expected_output_json:
+                  type: object
+                  nullable: true
+                  description: The expected output json after the script runs
+                task_guid:
+                  type: string
+                  nullable: true
+                  description: Source task to get the expected output json from if not using expected_output_json
       responses:
         "200":
           description: Script Unit Test Result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/OkTrue"
 
   /process-models/{modified_process_model_identifier}/script-unit-tests/run:
     parameters:
@@ -1507,6 +1556,49 @@ paths:
                     type: integer
                     description: Process instance id
   /process-instances/{modified_process_model_identifier}/{process_instance_id}/run:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model identifyer
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: force_run
+        in: query
+        required: false
+        description: Force the process instance to run even if it has already been started.
+        schema:
+          type: boolean
+      - name: execution_mode
+        in: query
+        required: false
+        description: Either run in "synchronous" or "asynchronous" mode.
+        schema:
+          type: string
+          enum:
+            - synchronous
+            - asynchronous
+    post:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run_deprecated
+      summary: DEPRECATED Run a process instance. Use /process-instance-run
+      deprecated: true
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Returns details about the workflows state and current task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-instance-run/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -1860,7 +1952,7 @@ paths:
                 items:
                   type: string
 
-  /process-models/{modified_process_model_identifier}/specs:
+  /process-models/{modified_process_model_identifier}/validate:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -1869,13 +1961,13 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_specs
-      summary: Returns process model specs
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_validate
+      summary: Validate a given process model
       tags:
         - Process Models
       responses:
         "200":
-          description: Returns the spec requested.
+          description: Returns ok true if the process model validated.
           content:
             application/json:
               schema:
@@ -3927,6 +4019,17 @@ components:
         primary_process_id:
           type: string
           nullable: true
+    ProcessModelCopyRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The new process model identifier
+        display_name:
+          type: string
+          description: The display name for the copied model (optional - defaults to last segment of ID)
     ProcessGroup:
       properties:
         id:

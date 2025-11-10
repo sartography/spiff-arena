@@ -97,6 +97,7 @@ dev = [
 
 [tool.uv.sources]
 SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", branch = "main" }
+# SpiffWorkflow = { path = "../../SpiffWorkflow", editable = true }
 spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", branch = "main" }
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", branch = "scoped-session-delete" }
 
