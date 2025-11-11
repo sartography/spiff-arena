@@ -306,7 +306,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v5.0.0
+        uses: actions/download-artifact@v6.0.0
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -366,7 +366,6 @@ jobs:
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
@@ -390,90 +389,71 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # cypress-run:
-  #   runs-on: ubuntu-latest
-  #   needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
-  #   defaults:
-  #     run:
-  #       working-directory: spiffworkflow-frontend
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v5
-  #       with:
-  #         ref: ${{ github.event.workflow_run.head_sha }}
-  #     - name: Checkout Samples
-  #       uses: actions/checkout@v5
-  #       with:
-  #         repository: sartography/sample-process-models
-  #         path: sample-process-models
-  #     - name: start_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/start_keycloak
-  #     - name: start_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #       timeout-minutes: 20
-  #       env:
-  #         SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
-  #         SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
-  #     - name: start_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #     - name: wait_for_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/wait_for_backend_to_be_up 5
-  #     - name: wait_for_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/wait_for_frontend_to_be_up 5
-  #     - name: wait_for_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/wait_for_keycloak 5
-  #     - name: Dump GitHub context
-  #       env:
-  #         GITHUB_CONTEXT: ${{ toJson(github) }}
-  #       run: |
-  #         echo "$GITHUB_CONTEXT"
-  #     - name: Cypress run
-  #       uses: cypress-io/github-action@v6
-  #       with:
-  #         working-directory: ./spiffworkflow-frontend
-  #         browser: chrome
-  #         # only record on push, not pull_request, since we do not have secrets for PRs,
-  #         # so the required CYPRESS_RECORD_KEY will not be available.
-  #         # we have limited runs in cypress cloud, so only record main builds
-  #         # the direct check for github.event_name == 'push' is for if we want to go back to triggering this workflow
-  #         # directly, rather than when Backend Tests complete.
-  #         # note that github.event.workflow_run is referring to the Backend Tests workflow and another option
-  #         # for github.event.workflow_run.event is 'pull_request', which we want to ignore.
-  #         record: ${{ github.ref_name == 'main' && ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push') || (github.event_name == 'push')) }}
-  #       env:
-  #         # pass the Dashboard record key as an environment variable
-  #         CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-  #         # pass GitHub token to allow accurately detecting a build vs a re-run build
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
-  #     - name: get_backend_logs_from_docker_compose
-  #       if: failure()
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
-  #     - name: Upload logs
-  #       if: failure()
-  #       uses: "actions/upload-artifact@v4"
-  #       with:
-  #         name: spiffworkflow-backend-logs
-  #         path: "./spiffworkflow-backend/log/*.log"
-  #
-  #     #  https://github.com/cypress-io/github-action#artifacts
-  #     - name: upload_screenshots
-  #       uses: actions/upload-artifact@v4
-  #       if: failure()
-  #       with:
-  #         name: cypress-screenshots
-  #         path: ./spiffworkflow-frontend/cypress/screenshots
-  #     # Test run video was always captured, so this action uses "always()" condition
-  #     - name: upload_videos
-  #       uses: actions/upload-artifact@v4
-  #       if: failure()
-  #       with:
-  #         name: cypress-videos
-  #         path: ./spiffworkflow-frontend/cypress/videos
+  playwright-run:
+    runs-on: ubuntu-latest
+    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: spiffworkflow-frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Checkout Samples
+        uses: actions/checkout@v5
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
+      - name: start_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/start_keycloak
+      - name: start_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/build_and_run_with_docker_compose
+        timeout-minutes: 20
+        env:
+          SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
+          SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
+      - name: start_frontend
+        run: ./bin/build_and_run_with_docker_compose
+      - name: wait_for_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/wait_for_backend_to_be_up 5
+      - name: wait_for_frontend
+        run: ./bin/wait_for_frontend_to_be_up 5
+      - name: wait_for_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/wait_for_keycloak 5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install UV
+        run: pip install --constraint=../.github/workflows/constraints.txt uv
+      - name: Install Playwright browsers
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run playwright install --with-deps
+      - name: Playwright run
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run pytest --tracing=retain-on-failure
+        env:
+          # pass GitHub token to allow accurately detecting a build vs a re-run build
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BROWSER_TEST_USERNAME: "ciadmin1"
+          BROWSER_TEST_PASSWORD: "ciadmin1"
+      - name: get_backend_logs_from_docker_compose
+        if: failure()
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
+      - name: Upload logs
+        if: failure()
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: spiffworkflow-backend-logs
+          path: "./spiffworkflow-backend/log/*.log"
+      - name: Upload Playwright traces
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-traces
+          path: ./spiffworkflow-frontend/test/browser/test-results/

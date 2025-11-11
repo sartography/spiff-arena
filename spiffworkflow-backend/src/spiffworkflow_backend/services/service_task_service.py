@@ -20,6 +20,7 @@ from spiffworkflow_connector_command.command_interface import CommandErrorDict
 
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
+from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -200,8 +201,11 @@ class ServiceTaskDelegate:
                 status_code = 0
                 parsed_response: dict = {}
                 try:
-                    # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
-                    proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
+                    if http_connector.does(operator_identifier):
+                        proxied_response = http_connector.do(operator_identifier, params)
+                    else:
+                        # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
+                        proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
 
                     status_code = proxied_response.status_code
                     response_text = proxied_response.text

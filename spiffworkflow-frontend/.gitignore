@@ -36,3 +36,4 @@ yarn-error.log*
 /screenshot*.png
 
 debug_screenshots
+/frontend.log

@@ -12,7 +12,7 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HttpService from '../services/HttpService';
 import { DataStore, DataStoreRecords, PaginationObject } from '../interfaces';
@@ -26,6 +26,7 @@ export default function DataStoreListTable() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function DataStoreListTable() {
         setDataStores(newStores);
       },
     });
-  }, []); // Do this once so we have a list of data stores to select from.
+  }, [location.key]); // Refresh data stores list on any navigation (including back from deletion)
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
@@ -49,6 +50,10 @@ export default function DataStoreListTable() {
     const dataStoreLocation = searchParams.get('location') || '';
 
     if (dataStoreType === '' || dataStoreIdentifier === '') {
+      // Clear state when no data store is selected (e.g., after deletion and navigation back to /data-stores)
+      setDataStore(null);
+      setResults([]);
+      setPagination(null);
       return;
     }
     if (dataStores && dataStoreIdentifier && dataStoreType) {
@@ -121,8 +126,8 @@ export default function DataStoreListTable() {
   };
 
   const getFullDataStoreId = (ds: DataStore) => {
-    const location = ds.location ? `${ds.location}/` : '';
-    return `${ds.type}:${location}${ds.id}`;
+    const locationPrefix = ds.location ? `${ds.location}/` : '';
+    return `${ds.type}:${locationPrefix}${ds.id}`;
   };
 
   const { page, perPage } = getPageInfoFromSearchParams(

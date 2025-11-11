@@ -67,7 +67,7 @@ import {
   isURL,
   getProcessStatus,
 } from '../helpers';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ConfirmIconButton from '../components/ConfirmIconButton';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   BasicTask,
@@ -644,10 +644,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
-        <ButtonWithConfirmation
+        <ConfirmIconButton
           renderIcon={<StopCircleOutlined />}
           iconDescription={t('terminate_button')}
-          hasIconOnly
           description={t('terminate_process_instance', {
             id: processInstance.id,
           })}
@@ -729,11 +728,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
-        <ButtonWithConfirmation
+        <ConfirmIconButton
           data-testid="process-instance-delete"
           renderIcon={<DeleteOutlineOutlined />}
           iconDescription={t('delete')}
-          hasIconOnly
           description={t('delete_process_instance', { id: processInstance.id })}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel={t('delete')}
