@@ -169,10 +169,7 @@ def login_return(
                 g.user = user_model
                 g.token = auth_token_object["id_token"]
                 if "refresh_token" in auth_token_object:
-                    current_app.logger.info("DEBUG - Got refresh token")
                     AuthenticationService.store_refresh_token(user_model.id, auth_token_object["refresh_token"])
-                else:
-                    current_app.logger.info("DEBUG - Did not get refresh token")
                 redirect_url = state_redirect_url
                 tld = current_app.config["THREAD_LOCAL_DATA"]
                 tld.new_access_token = auth_token_object["id_token"]
@@ -371,6 +368,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                     if user:
                         refresh_token = AuthenticationService.get_refresh_token(user.id)
                         if refresh_token:
+                            # TODO: This can lead to race conditions depending on how strictly refresh tokens are revoked
+                            # This should probably be coordinated by a lock so that only one process does it at a time
                             auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
                                 refresh_token, authentication_identifier=authentication_identifier
                             )
