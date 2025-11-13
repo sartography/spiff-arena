@@ -169,10 +169,10 @@ def login_return(
                 g.user = user_model
                 g.token = auth_token_object["id_token"]
                 if "refresh_token" in auth_token_object:
-                    current_app.logger.info("DEBUG - Got a refresh token!")
+                    current_app.logger.info("DEBUG - Got refresh token")
                     AuthenticationService.store_refresh_token(user_model.id, auth_token_object["refresh_token"])
                 else:
-                    current_app.logger.info("DEBUG - Did not get a refresh token!")
+                    current_app.logger.info("DEBUG - Did not get refresh token")
                 redirect_url = state_redirect_url
                 tld = current_app.config["THREAD_LOCAL_DATA"]
                 tld.new_access_token = auth_token_object["id_token"]
