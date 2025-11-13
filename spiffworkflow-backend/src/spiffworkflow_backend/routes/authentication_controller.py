@@ -381,6 +381,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                                     "sub": user.service_id,
                                     "iss": user.service,
                                 }
+                                if "refresh_token" in auth_token:
+                                    AuthenticationService.store_refresh_token(user.id, auth_token["refresh_token"])
 
                     if user_info is None:
                         AuthenticationService.set_user_has_logged_out()
