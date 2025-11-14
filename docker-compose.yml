@@ -52,30 +52,12 @@ services:
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP: "true"
       SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
       SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
-
-      # TODO: Use the below to help in the future with implementing PKCE
-      # We don't need to support the whole private key jwt flow, but we do want to support PKCE
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
-
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "urn:gov:gsa:openidconnect.profiles:sp:sso:gsa:tts-pic-demo"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: ""
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://idp.int.identitysandbox.gov/"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS: "https://idp.int.identitysandbox.gov/"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-      # Use a mounted file for the private key
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_FILE: "/run/secrets/private-key.pem"
-      # Alternatively, provide the PEM as a string (beware of quoting issues with newlines and don't commit secrets to source control!)
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: "put-pem-string-with-newlines-here"
+      SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE: true
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
       - ${SPIFFWORKFLOW_BACKEND_LOCAL_BPMN_SPEC_DIR:-./process_models}:/app/process_models
       - spiffworkflow_backend_db:/app/db_volume
-      # - ./private-key.pem:/run/secrets/private-key.pem:ro
 
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
