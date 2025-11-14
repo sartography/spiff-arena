@@ -1,6 +1,7 @@
 import base64
 import enum
 import json
+import secrets
 import sys
 import time
 import uuid
@@ -12,7 +13,6 @@ from typing import cast
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import load_der_x509_certificate
 from flask import url_for
 from security import safe_requests  # type: ignore
@@ -87,6 +87,22 @@ class AuthenticationOption(AuthenticationOptionForApi):
 
 class AuthenticationOptionNotFoundError(Exception):
     pass
+
+
+class PKCE:
+    '''
+    Config to support PKCE (Proof Key for Code Exchange)
+    RFC: https://www.rfc-editor.org/rfc/rfc7636
+    '''
+    
+    @staticmethod
+    def generate_code_verifier() -> str:
+        return base64.urlsafe_b64encode(secrets.token_bytes(64)).rstrip(b'=').decode()
+
+    @staticmethod
+    def generate_code_challenge(verifier: str) -> str:
+        digest = sha256(verifier.encode()).digest()
+        return base64.urlsafe_b64encode(digest).rstrip(b'=').decode()
 
 
 class AuthenticationService:
@@ -311,29 +327,6 @@ class AuthenticationService:
         )
         return state
 
-    def create_client_assertion(self, client_id, token_url):
-        private_key_data = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM"]
-
-        if not private_key_data:
-            raise ValueError("No private key available (provide SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_[FILE|STRING])")
-
-        private_key = load_pem_private_key(
-            private_key_data.encode("utf-8"), password=None, backend=default_backend()
-        )
-
-        now = int(time.time())
-        payload = {
-            "iss": client_id,
-            "sub": client_id,
-            "aud": token_url,
-            "jti": uuid.uuid4().hex,
-            "exp": now + 900,  # Token is valid for 15 minutes
-            "iat": now - 100,  # Issued at time, allow some leeway
-        }
-
-        return jwt.encode(payload, private_key, algorithm="RS256")
-
-
     def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
         login_return_path = url_for(
@@ -347,18 +340,21 @@ class AuthenticationService:
     def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
         redirect_url = self.get_redirect_uri_for_login_to_server()
         state = self.generate_state(authentication_identifier, final_url).decode("UTF-8")
-        nonce = self.generate_state(authentication_identifier, final_url).decode("UTF-8")
-        acr_values = current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES']
+        
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
-            + f"nonce={nonce}&"
             + "response_type=code&"
             + f"client_id={self.client_id(authentication_identifier)}&"
-            + f"acr_values={acr_values}&"
             + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
             + f"redirect_uri={redirect_url}"
         )
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]:
+            code_verifier = PKCE.generate_code_verifier()
+            code_challenge = PKCE.generate_code_challenge(code_verifier)
+            login_redirect_url += f"code_verifier={code_verifier}" + f"code_challenge={code_challenge}"
+
         return login_redirect_url
 
     def get_auth_token_object(self, code: str, authentication_identifier: str) -> dict:
@@ -371,6 +367,7 @@ class AuthenticationService:
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}"
         }
 
         data = {
@@ -379,20 +376,9 @@ class AuthenticationService:
             "redirect_uri": redirect_to_use,
         }
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE"] == "private_key_jwt":
-            client_assertion_type = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE"]
-            client_assertion = self.create_client_assertion(self.client_id(authentication_identifier), self.open_id_endpoint_for_name(
-                "token_endpoint",authentication_identifier=authentication_identifier, internal=True
-            ))
-            data["client_assertion_type"] = client_assertion_type
-            data["client_assertion"] = client_assertion
-        else:
-            headers['Authorization'] = f"Basic {backend_basic_auth.decode('utf-8')}"
-
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
         )
-        current_app.logger.debug(f" >>>> request_url: {request_url}, data: {data} >>>>")
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object
