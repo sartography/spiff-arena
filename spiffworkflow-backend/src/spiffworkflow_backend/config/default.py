@@ -130,7 +130,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
-config_from_env("SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", default=False) # Whether to enforce submission of a code challenge/verifier for OAuth PKCE
+config_from_env("SPIFFWORKFLOW_BACKEND_PKCE_METHOD", default="") # Set to enforce submission of a code challenge for OAuth PKCE
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
