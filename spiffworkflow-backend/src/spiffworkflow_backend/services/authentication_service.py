@@ -340,12 +340,13 @@ class AuthenticationService:
             + f"redirect_uri={redirect_url}"
         )
 
-        if (pkce_challenge_method := current_app.config["SPIFFWORKFLOW_BACKEND_PKCE_METHOD"]):
+        if (current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]):
             code_verifier = PKCE.generate_code_verifier()
             session["code_verifier"] = code_verifier
             code_challenge = PKCE.generate_code_challenge(code_verifier)
+            # Restrict PKCE challenge method to "S256" challenge since "plain" is less secure
             login_redirect_url += (
-                f"&code_challenge={code_challenge}&code_challenge_method={pkce_challenge_method}"
+                f"&code_challenge={code_challenge}&code_challenge_method=S256"
             )
 
         return login_redirect_url
