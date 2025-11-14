@@ -4,7 +4,6 @@ import json
 import secrets
 import sys
 import time
-import uuid
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
@@ -14,7 +13,7 @@ from typing import cast
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509 import load_der_x509_certificate
-from flask import url_for
+from flask import url_for, session
 from security import safe_requests  # type: ignore
 
 from spiffworkflow_backend.models.user import SPIFF_GENERATED_JWT_ALGORITHM
@@ -94,7 +93,7 @@ class PKCE:
     Config to support PKCE (Proof Key for Code Exchange)
     RFC: https://www.rfc-editor.org/rfc/rfc7636
     '''
-    
+
     @staticmethod
     def generate_code_verifier() -> str:
         return base64.urlsafe_b64encode(secrets.token_bytes(64)).rstrip(b'=').decode()
@@ -296,20 +295,11 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = f"{self.get_backend_url()}{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/logout_return"
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE"] == "private_key_jwt":
-
-            request_url = (
-                self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-                + f"?post_logout_redirect_uri={redirect_url}&"
-                + f"client_id={self.client_id(authentication_identifier)}"
-            )
-
-        else:
-            request_url = (
-                self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-                + f"?post_logout_redirect_uri={redirect_url}&"
-                + f"id_token_hint={id_token}"
-            )
+        request_url = (
+            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
+            + f"?post_logout_redirect_uri={redirect_url}&"
+            + f"id_token_hint={id_token}"
+        )
 
         return redirect(request_url)
 
@@ -352,9 +342,10 @@ class AuthenticationService:
 
         if (pkce_challenge_method := current_app.config["SPIFFWORKFLOW_BACKEND_PKCE_METHOD"]):
             code_verifier = PKCE.generate_code_verifier()
+            session["code_verifier"] = code_verifier
             code_challenge = PKCE.generate_code_challenge(code_verifier)
             login_redirect_url += (
-                f"&code_verifier={code_verifier}&code_challenge={code_challenge}&code_challenge_method={pkce_challenge_method}"
+                f"&code_challenge={code_challenge}&code_challenge_method={pkce_challenge_method}"
             )
 
         return login_redirect_url
@@ -377,11 +368,14 @@ class AuthenticationService:
             "code": code,
             "redirect_uri": redirect_to_use,
         }
+        if (code_verifier := session["code_verifier"]):
+            data["code_verifier"] = code_verifier
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
         )
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+        del session["code_verifier"]
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object
 
