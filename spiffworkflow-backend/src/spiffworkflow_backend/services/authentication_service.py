@@ -353,7 +353,9 @@ class AuthenticationService:
         if (pkce_challenge_method := current_app.config["SPIFFWORKFLOW_BACKEND_PKCE_METHOD"]):
             code_verifier = PKCE.generate_code_verifier()
             code_challenge = PKCE.generate_code_challenge(code_verifier)
-            login_redirect_url += f"&code_challenge={code_challenge}" + f"&code_challenge_method={pkce_challenge_method}"
+            login_redirect_url += (
+                f"&code_verifier={code_verifier}&code_challenge={code_challenge}&code_challenge_method={pkce_challenge_method}"
+            )
 
         return login_redirect_url
 
