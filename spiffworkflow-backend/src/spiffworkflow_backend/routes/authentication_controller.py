@@ -162,9 +162,9 @@ def login_return(
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
         decoded_token = _get_decoded_token(id_token)
+
         if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
             if decoded_token and "error" not in decoded_token:
-
                 user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                 g.user = user_model
                 g.token = auth_token_object["id_token"]

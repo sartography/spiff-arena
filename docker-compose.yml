@@ -49,7 +49,6 @@ services:
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
-
       SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
       SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP: "true"
@@ -60,7 +59,6 @@ services:
     volumes:
       - ${SPIFFWORKFLOW_BACKEND_LOCAL_BPMN_SPEC_DIR:-./process_models}:/app/process_models
       - spiffworkflow_backend_db:/app/db_volume
-
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
       interval: 10s
