@@ -36,6 +36,7 @@ on:
       - newui-all-in
       - rebuild-v1.0.0
       - support-using-subdir-of-bpmn-spec-repo
+      - support-PKCE-and-refresh-token-rotation
     tags: [v*]
 
 jobs:
@@ -45,13 +46,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image_name: gsa-tts/spiffworkflow-frontend
+          - image_name: gsa-tts/spiffworkflow-frontend-test-pkce
             context: spiffworkflow-frontend
             description: "Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-          - image_name: gsa-tts/spiffworkflow-backend
+          - image_name: gsa-tts/spiffworkflow-frontend-test-pkce
             context: spiffworkflow-backend
             description: "Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-          - image_name: gsa-tts/connector-proxy-demo
+          - image_name: gsa-tts/connector-proxy-demo-test-pkce
             context: connector-proxy-demo
             description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
 
