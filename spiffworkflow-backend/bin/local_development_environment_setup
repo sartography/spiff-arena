@@ -15,8 +15,7 @@ fi
 PORT="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
 acceptance_test_mode="false"
 
-# use_local_open_id="false" ##NOTE: to get non-local IDP working in docker you need to flip this to "false". Not sure how to do this programmatically.
-use_local_open_id="false"
+use_local_open_id="true"
 # always check $@ so we can pass in multiple args
 if [[ "${1:-}" == "keycloak" ]]; then
   use_local_open_id="false"
