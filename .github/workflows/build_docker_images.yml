@@ -49,7 +49,7 @@ jobs:
           - image_name: gsa-tts/spiffworkflow-frontend-test-pkce
             context: spiffworkflow-frontend
             description: "Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-          - image_name: gsa-tts/spiffworkflow-frontend-test-pkce
+          - image_name: gsa-tts/spiffworkflow-backend-test-pkce
             context: spiffworkflow-backend
             description: "Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
           - image_name: gsa-tts/connector-proxy-demo-test-pkce
