@@ -46,14 +46,6 @@ services:
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: "sqlite:////app/db_volume/db.sqlite3"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
       SPIFFWORKFLOW_BACKEND_LOG_LEVEL: "DEBUG"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
-      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
-
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "urn:gov:gsa:openidconnect.profiles:sp:sso:gsa:tts-pic-demo"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: ""
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://idp.int.identitysandbox.gov/"
-      SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS: "https://idp.int.identitysandbox.gov/"
 
       SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
       SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
@@ -63,6 +55,14 @@ services:
 
       # TODO: Use the below to help in the future with implementing PKCE
       # We don't need to support the whole private key jwt flow, but we do want to support PKCE
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
+
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "urn:gov:gsa:openidconnect.profiles:sp:sso:gsa:tts-pic-demo"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: ""
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://idp.int.identitysandbox.gov/"
+      # SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS: "https://idp.int.identitysandbox.gov/"
       # SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
       # SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: "urn:acr.login.gov:auth-only"
       # SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
@@ -75,7 +75,7 @@ services:
     volumes:
       - ${SPIFFWORKFLOW_BACKEND_LOCAL_BPMN_SPEC_DIR:-./process_models}:/app/process_models
       - spiffworkflow_backend_db:/app/db_volume
-      - ./private-key.pem:/run/secrets/private-key.pem:ro
+      # - ./private-key.pem:/run/secrets/private-key.pem:ro
 
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
