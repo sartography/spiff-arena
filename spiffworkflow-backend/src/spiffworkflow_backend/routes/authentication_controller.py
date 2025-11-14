@@ -368,6 +368,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                     if user:
                         refresh_token = AuthenticationService.get_refresh_token(user.id)
                         if refresh_token:
+                            # TODO: This can lead to race conditions depending on how strictly refresh tokens are revoked
+                            # This should probably be coordinated by a lock so that only one process does it at a time
                             auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
                                 refresh_token, authentication_identifier=authentication_identifier
                             )
@@ -381,6 +383,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                                     "sub": user.service_id,
                                     "iss": user.service,
                                 }
+                                if "refresh_token" in auth_token:
+                                    AuthenticationService.store_refresh_token(user.id, auth_token["refresh_token"])
 
                     if user_info is None:
                         AuthenticationService.set_user_has_logged_out()

@@ -160,4 +160,3 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
-
