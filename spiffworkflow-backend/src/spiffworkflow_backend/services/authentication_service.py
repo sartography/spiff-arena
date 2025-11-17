@@ -1,6 +1,7 @@
 import base64
 import enum
 import json
+import secrets
 import sys
 import time
 from hashlib import sha256
@@ -12,6 +13,7 @@ from typing import cast
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509 import load_der_x509_certificate
+from flask import session
 from flask import url_for
 from security import safe_requests  # type: ignore
 
@@ -85,6 +87,26 @@ class AuthenticationOption(AuthenticationOptionForApi):
 
 class AuthenticationOptionNotFoundError(Exception):
     pass
+
+
+class PKCE:
+    """
+    Config to support PKCE (Proof Key for Code Exchange)
+    RFC: https://www.rfc-editor.org/rfc/rfc7636
+    """
+
+    CODE_VERIFIER_KEY = "code_verifier"
+    CODE_CHALLENGE_KEY = "code_challenge"
+    CODE_CHALLENGE_METHOD_KEY = "code_challenge_method"
+
+    @staticmethod
+    def generate_code_verifier() -> str:
+        return base64.urlsafe_b64encode(secrets.token_bytes(64)).rstrip(b"=").decode()
+
+    @staticmethod
+    def generate_code_challenge(verifier: str) -> str:
+        digest = sha256(verifier.encode()).digest()
+        return base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
 
 class AuthenticationService:
@@ -321,6 +343,17 @@ class AuthenticationService:
             + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
             + f"redirect_uri={redirect_url}"
         )
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]:
+            code_verifier = PKCE.generate_code_verifier()
+            # Store the verifier server-side for use when exchanging the authorization code.
+            session[PKCE.CODE_VERIFIER_KEY] = code_verifier
+            code_challenge = PKCE.generate_code_challenge(code_verifier)
+            code_challenge_method = "S256"  # Restrict PKCE challenge method to "S256" since "plain" is less secure.
+            login_redirect_url += (
+                f"&{PKCE.CODE_CHALLENGE_KEY}={code_challenge}&{PKCE.CODE_CHALLENGE_METHOD_KEY}={code_challenge_method}"
+            )
+
         return login_redirect_url
 
     def get_auth_token_object(self, code: str, authentication_identifier: str) -> dict:
@@ -341,6 +374,12 @@ class AuthenticationService:
             "code": code,
             "redirect_uri": redirect_to_use,
         }
+
+        # Attach PKCE verifier for the authorization_code exchange when enabled.
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"):
+            code_verifier = session.pop(PKCE.CODE_VERIFIER_KEY, None)
+            if code_verifier:
+                data[PKCE.CODE_VERIFIER_KEY] = code_verifier
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True

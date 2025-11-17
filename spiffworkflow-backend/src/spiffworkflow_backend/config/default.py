@@ -130,6 +130,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
+config_from_env("SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", default=False)  # Set to enforce OAuth PKCE (recommended)
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
