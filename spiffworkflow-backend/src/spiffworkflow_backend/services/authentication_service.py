@@ -378,9 +378,13 @@ class AuthenticationService:
         # Attach PKCE verifier for the authorization_code exchange when enabled.
         if current_app.config.get("SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"):
             code_verifier = session.pop(PKCE.CODE_VERIFIER_KEY, None)
-            if code_verifier:
-                data[PKCE.CODE_VERIFIER_KEY] = code_verifier
-
+            if not code_verifier:
+                raise ApiError(
+                    error_code="missing_pkce_verifier",
+                    message="PKCE is enforced but code verifier is missing from session. This may indicate a session timeout or configuration issue.",
+                    status_code=400,
+                )
+            data[PKCE.CODE_VERIFIER_KEY] = code_verifier
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
         )
