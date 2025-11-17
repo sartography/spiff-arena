@@ -1140,7 +1140,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/ProcessModel"
 
   /extensions/{modified_process_model_identifier}:
     parameters:
@@ -1161,7 +1161,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/ProcessModel"
     post:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_run
       summary: Run an extension for a given process model
@@ -1180,7 +1180,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /extensions-get-data/{query_params}:
     parameters:
@@ -1202,7 +1202,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /process-models/{modified_process_model_identifier}/script-unit-tests:
     parameters:
@@ -1278,7 +1278,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /process-instances/{modified_process_model_identifier}:
     parameters:
@@ -2521,7 +2521,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /process-data-file-download/{modified_process_model_identifier}/{process_instance_id}/{process_data_identifier}:
     parameters:
@@ -2554,7 +2554,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /send-event/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
@@ -2587,7 +2587,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/Task"
 
   /task-complete/{modified_process_model_identifier}/{process_instance_id}/{task_guid}:
     parameters:
@@ -3037,7 +3037,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/Task"
 
   /message-models:
     get:
@@ -3051,7 +3051,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /message-models/{relative_location}:
     parameters:
@@ -3072,7 +3072,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /messages:
     parameters:
@@ -3105,7 +3105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Workflow"
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /messages/{modified_message_name}:
     parameters:
