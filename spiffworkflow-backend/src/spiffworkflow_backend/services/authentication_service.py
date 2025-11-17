@@ -40,6 +40,7 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
 from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
