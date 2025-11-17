@@ -9,12 +9,12 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 
 
 def find_script_tasks_with_get_current_user(bpmn_file_path: str, root_path: str) -> None:
-    from spiffworkflow_backend.services.spec_file_service import SpecFileService
+    from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
     try:
         with open(bpmn_file_path, "rb") as bpmn_file:
             binary_data = bpmn_file.read()
-        tree = SpecFileService.get_etree_from_xml_bytes(binary_data)
+        tree = ProcessModelService.get_etree_from_xml_bytes(binary_data)
         check_script_and_prescript_elements(tree, bpmn_file_path, root_path)
     except etree.XMLSyntaxError:
         print(f"Error parsing XML in file {bpmn_file_path}. Please check for syntax issues.")

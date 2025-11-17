@@ -58,4 +58,4 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
         return db.session.execute(on_duplicate_key_stmt)
 
     def is_human_task(self) -> bool:
-        return self.typename in ["UserTask", "ManualTask"]
+        return self.typename in ["UserTask", "ManualTask", "NoneTask"]

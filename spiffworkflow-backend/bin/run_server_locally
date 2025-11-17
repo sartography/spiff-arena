@@ -24,11 +24,13 @@ else
   else
 
     if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false uv run python bin/save_all_bpmn.py
+      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP=false uv run python bin/refresh_all_caches.py
     fi
     if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
       UVICORN_LOG_LEVEL=debug
     fi
+
+    uv run python "${script_dir}/bootstrap.py"
 
     # this line blocks
     exec uv run uvicorn spiff_web_server:connexion_app \

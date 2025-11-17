@@ -97,7 +97,7 @@ class TestMessages(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         self.copy_example_process_models()
-        DataSetupService.save_all_process_models()
+        DataSetupService.refresh_process_model_caches()
         response = client.get(
             "/v1.0/message-models/examples:1-basic-concepts",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),

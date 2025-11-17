@@ -9,7 +9,7 @@ PROCESS_MODEL = "task-with-guest-form"
 
 def start_process_and_get_public_link(page: Page) -> str:
     # 1. Login and navigate to process group
-    login(page, "admin", "admin", base_url=BASE_URL)
+    login(page, base_url=BASE_URL)
     page.goto(f"{BASE_URL}/process-groups")
     # Select the Shared Resources group
     page.get_by_text(PROCESS_GROUP, exact=False).first.click()

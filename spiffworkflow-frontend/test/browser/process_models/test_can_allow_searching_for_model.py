@@ -12,7 +12,7 @@ def test_can_allow_searching_for_model(page: Page):
     """
 
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Navigate to the Acceptance Tests Group One page
     group_id = "misc/acceptance-tests-group-one"
