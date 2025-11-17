@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.7.0-trixie-slim AS base
+FROM node:24.10.0-trixie-slim AS base
 
 RUN mkdir /app
 
@@ -41,10 +41,14 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29.1-alpine
+FROM nginx:1.29.2-alpine
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
+
+# to fix security vulnerability:
+# remove this line once the base image has the secure version of this lib (10.46)
+RUN apk add --upgrade pcre2
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*

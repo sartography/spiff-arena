@@ -294,21 +294,25 @@ def process_data_file_download(
     )
 
 
-def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
+def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str, Any]) -> tuple[Any, str | None]:
     return_value = None
-    if parameter in post_body:
-        return_value = post_body[parameter]
+    parameter_name = None
+
+    for parameter in parameters:
+        if parameter in post_body:
+            parameter_name = parameter
+            return_value = post_body[parameter]
 
     if return_value is None or return_value == "":
         raise (
             ApiError(
                 error_code="missing_required_parameter",
-                message=f"Parameter is missing from json request body: {parameter}",
+                message=f"Parameter is missing from json request body: {parameters}",
                 status_code=400,
             )
         )
 
-    return return_value
+    return return_value, parameter_name
 
 
 def _commit_and_push_to_git(message: str) -> None:
@@ -601,7 +605,7 @@ def _find_human_task_or_raise(
     else:
         human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
 
-    human_task: HumanTaskModel = human_task_query.first()
+    human_task: HumanTaskModel | None = human_task_query.first()
     if human_task is None:
         raise (
             ApiError(
@@ -631,8 +635,11 @@ def _get_spiff_task_from_processor(
     return spiff_task
 
 
-def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
+def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:
+    task_model_query = TaskModel.query.filter_by(guid=task_guid)
+    if process_instance_id is not None:
+        task_model_query = task_model_query.filter_by(process_instance_id=process_instance_id)
+    task_model: TaskModel | None = task_model_query.first()
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",

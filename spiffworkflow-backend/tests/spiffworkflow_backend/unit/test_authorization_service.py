@@ -131,6 +131,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model:*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model:*", "create"),
                 ("/process-instances/for-me/some-process-group:some-process-model:*", "read"),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
                 ("/process-model-import/some-process-group:some-process-model:*", "create"),
@@ -173,6 +174,7 @@ class TestAuthorizationService(BaseTest):
                     "read",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model:*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model:*", "create"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model:*",
                     "read",
@@ -222,6 +224,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model/*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model/*", "create"),
                 ("/process-instances/for-me/some-process-group:some-process-model/*", "read"),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
                 ("/process-model-import/some-process-group:some-process-model/*", "create"),
@@ -264,6 +267,7 @@ class TestAuthorizationService(BaseTest):
                     "read",
                 ),
                 ("/process-instance-events/some-process-group:some-process-model/*", "read"),
+                ("/process-instance-run/some-process-group:some-process-model/*", "create"),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model/*",
                     "read",
@@ -441,7 +445,8 @@ class TestAuthorizationService(BaseTest):
             },
         ]
         AuthorizationService.refresh_permissions(group_info)
-        assert GroupModel.query.filter_by(identifier="group_two").first() is None
+        # we decided there is no reason to delete groups and it can cause db foreign key constraint issues
+        assert GroupModel.query.filter_by(identifier="group_two").first() is not None
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
         self.assert_user_has_permission(admin_user, "create", "/v1.0/process-groups/whatever")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
@@ -550,6 +555,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
                 ("/process-instance-events/*", "read"),
+                ("/process-instance-run/*", "create"),
                 ("/process-instance-migrate/*", "create"),
                 ("/process-instance-reset/*", "create"),
                 ("/process-instance-resume/*", "create"),

@@ -1,4 +1,3 @@
-
 services:
   spiffworkflow-backend:
     build:

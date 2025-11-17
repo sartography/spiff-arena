@@ -62,18 +62,10 @@ class SpecFileService(FileSystemService):
             file_contents = f.read()
         return cls.get_references_for_file_contents(process_model_info, file.name, file_contents)
 
-    # This is designed to isolate xml parsing, which is a security issue, and make it as safe as possible.
-    # S320 indicates that xml parsing with lxml is unsafe. To mitigate this, we add options to the parser
-    # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
-    @classmethod
-    def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
-        etree_xml_parser = etree.XMLParser(resolve_entities=False, remove_comments=True, no_network=True)
-        return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
-
     @classmethod
     def get_bpmn_process_ids_for_file_contents(cls, binary_data: bytes) -> list[str]:
         parser = MyCustomParser()
-        parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
+        parser.add_bpmn_xml(ProcessModelService.get_etree_from_xml_bytes(binary_data))
         return list(parser.process_parsers.keys())
 
     @classmethod
@@ -102,7 +94,7 @@ class SpecFileService(FileSystemService):
         start_messages = []
         called_element_ids = []
         if file_type.value == FileType.bpmn.value:
-            parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
+            parser.add_bpmn_xml(ProcessModelService.get_etree_from_xml_bytes(binary_data))
             parser_type = "process"
             sub_parsers = list(parser.process_parsers.values())
             messages = parser.messages
@@ -110,7 +102,7 @@ class SpecFileService(FileSystemService):
             # to check permissions for call activities
             parser.get_process_dependencies()
         elif file_type.value == FileType.dmn.value:
-            parser.add_dmn_xml(cls.get_etree_from_xml_bytes(binary_data))
+            parser.add_dmn_xml(ProcessModelService.get_etree_from_xml_bytes(binary_data))
             sub_parsers = list(parser.dmn_parsers.values())
             parser_type = "decision"
         else:
@@ -146,7 +138,7 @@ class SpecFileService(FileSystemService):
             BpmnValidator()
             parser = MyCustomParser()
             try:
-                parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data), filename=file_name)
+                parser.add_bpmn_xml(ProcessModelService.get_etree_from_xml_bytes(binary_data), filename=file_name)
             except Exception as exception:
                 raise ProcessModelFileInvalidError(f"Received error trying to parse bpmn xml: {str(exception)}") from exception
 
@@ -383,7 +375,7 @@ class SpecFileService(FileSystemService):
 
         for file in bpmn_files:
             file_contents = cls.get_data(process_model_info, file.name)
-            bpmn_etree = cls.get_etree_from_xml_bytes(file_contents)
+            bpmn_etree = ProcessModelService.get_etree_from_xml_bytes(file_contents)
 
             events = cls.extract_events_from_bpmn_file(bpmn_etree, event_types)
 

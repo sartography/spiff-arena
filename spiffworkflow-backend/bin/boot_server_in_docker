@@ -99,7 +99,7 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   if [[ -z "${SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS:-}" ]]; then
     export SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false
   fi
-  uv run python bin/save_all_bpmn.py
+  uv run python bin/refresh_all_caches.py
 fi
 
 log_info "Starting gunicorn server"

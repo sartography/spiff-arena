@@ -54,7 +54,7 @@ jobs:
       - name: Set up Snyk CLI to check for security issues
         # Snyk can be used to break the build when it detects security issues.
         # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@e2221410bff24446ba09102212d8bc75a567237d
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
         env:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -88,7 +88,6 @@ jobs:
       # # checks library dependencies
       # - name: Snyk test
       #   run: snyk test
-
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
@@ -102,7 +101,7 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: spiffworkflow-backend/snyk-code.sarif
   snyk-frontend:
@@ -122,13 +121,13 @@ jobs:
       - name: Set up Snyk CLI to check for security issues
         # Snyk can be used to break the build when it detects security issues.
         # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@e2221410bff24446ba09102212d8bc75a567237d
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
         env:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 18.x
       - run: npm install
@@ -155,6 +154,6 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: spiffworkflow-frontend/snyk-code.sarif

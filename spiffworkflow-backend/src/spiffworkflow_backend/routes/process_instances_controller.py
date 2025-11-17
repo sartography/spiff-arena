@@ -68,6 +68,20 @@ def process_instance_create(
     return make_response(jsonify(process_instance.serialized()), 201)
 
 
+def process_instance_run_deprecated(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    force_run: bool = False,
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    return process_instance_run(
+        modified_process_model_identifier=modified_process_model_identifier,
+        process_instance_id=process_instance_id,
+        force_run=force_run,
+        execution_mode=execution_mode,
+    )
+
+
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,

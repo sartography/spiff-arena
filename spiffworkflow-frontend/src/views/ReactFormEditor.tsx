@@ -15,7 +15,7 @@ import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ConfirmButton from '../components/ConfirmButton';
 import { modifyProcessIdentifierForPathParam, setPageTitle } from '../helpers';
 import { ProcessFile, PermissionsToCheck, ProcessModel } from '../interfaces';
 import { Notification } from '../components/Notification';
@@ -309,7 +309,7 @@ export default function ReactFormEditor() {
             ability={ability}
           >
             {params.file_name ? (
-              <ButtonWithConfirmation
+              <ConfirmButton
                 data-testid="delete-process-model-file"
                 description={t('delete_file_description', {
                   file: params.file_name,
