@@ -20,7 +20,7 @@ import {
   Tabs,
   Tab,
   TextField,
-  Grid2 as Grid,
+  Grid,
   Box,
   Stack,
   TextareaAutosize,
