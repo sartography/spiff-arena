@@ -1,10 +1,10 @@
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 from flask import current_app
 
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
-from spiffworkflow_backend.testing.local_test_client import LocalTestClient
 
 
 def does(id: str) -> bool:
@@ -19,14 +19,31 @@ def do(id: str, params: dict[str, Any]) -> Any:
     data = params.get("data")
 
     if url.startswith("http://local/"):
-        # Use LocalTestClient which properly routes through connexion middleware
-        local_client = LocalTestClient()
-        return getattr(local_client, handler)(
-            url,
-            query_string=params.get("params"),
-            headers=headers,
-            json=data,
-        )
+        # Use connexion test client directly to route through connexion middleware
+        connexion_app = getattr(current_app, 'config', {}).get('CONNEXION_APP')
+        if connexion_app and hasattr(connexion_app, 'test_client'):
+            try:
+                client = connexion_app.test_client()
+            except Exception:
+                # Fall back to Flask test client if connexion client creation fails
+                client = current_app.test_client()
+        else:
+            client = current_app.test_client()
+
+        # Extract path from URL and prepare parameters for connexion test client
+        path = urlparse(url).path
+        kwargs = {}
+
+        # Handle headers
+        if headers is not None:
+            kwargs['headers'] = headers
+
+        # Convert query_string -> params for connexion test client
+        query_params = params.get("params")
+        if query_params is not None:
+            kwargs['params'] = query_params
+
+        return getattr(client, handler)(path, **kwargs)
 
     return getattr(requests, handler)(  # type: ignore
         url,
