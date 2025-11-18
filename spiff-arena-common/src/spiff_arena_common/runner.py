@@ -5,6 +5,9 @@ import logging
 import time
 import uuid
 
+import jsonschema
+
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
@@ -80,6 +83,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "calendar": calendar,
             "datetime": datetime.datetime,
             "json": json,
+            "jsonschema": jsonschema,
             "time": time,
             "timedelta": datetime.timedelta,
         })
@@ -277,6 +281,11 @@ def build_response(workflow, e):
             "message": f"{e}",
             "error_tasks": get_tasks(workflow, TaskFilter(TaskState.ERROR)),
         }
+
+        if isinstance(e, WorkflowTaskException):
+            response["line_number"] = e.line_number
+            response["offset"] = e.offset
+            response["error_line"] = e.error_line
 
     if completed:
         response["result"] = workflow.data
