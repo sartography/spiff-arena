@@ -382,7 +382,10 @@ class AuthenticationService:
             if not code_verifier:
                 raise ApiError(
                     error_code="missing_pkce_verifier",
-                    message="PKCE is enforced but code verifier is missing from session. This may indicate a session timeout or configuration issue.",
+                    message=(
+                        "PKCE is enforced but code verifier is missing from session. "
+                        "This may indicate a session timeout or configuration issue."
+                    ),
                     status_code=400,
                 )
             data[PKCE.CODE_VERIFIER_KEY] = code_verifier
