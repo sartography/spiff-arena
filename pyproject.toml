@@ -17,6 +17,7 @@ requires-python = ">=3.11,<3.13"
 [dependency-groups]
 dev = [
     "Jinja2",
+    "jsonschema >= 4.23.0",
     "pre-commit",
     "pre-commit-hooks",
     "pytest",

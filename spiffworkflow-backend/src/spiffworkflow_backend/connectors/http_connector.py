@@ -1,4 +1,6 @@
 from typing import Any
+from typing import cast
+from urllib.parse import urlparse
 
 import requests
 from flask import current_app
@@ -11,22 +13,56 @@ def does(id: str) -> bool:
 
 
 def do(id: str, params: dict[str, Any]) -> Any:
-    handler = _config[id]["handler"]
+    handler = cast(str, _config[id]["handler"])
     url = params["url"]
     headers = params.get("headers")
     auth = _auth(params)
     data = params.get("data")
 
     if url.startswith("http://local/"):
-        with current_app.test_client() as client:
-            return getattr(client, handler)(  # type: ignore
-                url,
-                query_string=params.get("params"),
-                headers=headers,
-                json=data,
-            )
+        # Use connexion test client directly to route through connexion middleware
+        connexion_app = getattr(current_app, "config", {}).get("CONNEXION_APP")
+        if connexion_app and hasattr(connexion_app, "test_client"):
+            client = connexion_app.test_client()
+        else:
+            raise ValueError("CONNEXION_APP not available or does not have test_client method")
 
-    return getattr(requests, handler)(  # type: ignore
+        # Extract path from URL and prepare parameters for connexion test client
+        path = urlparse(url).path
+        kwargs = {}
+
+        # Handle headers
+        if headers is not None:
+            kwargs["headers"] = headers
+
+        # Convert query_string -> params for connexion test client
+        query_params = params.get("params")
+        if query_params is not None:
+            kwargs["params"] = query_params
+
+        # Handle request body - check if data should be treated as JSON
+        if data is not None:
+            # If data is a dict or list, treat it as JSON (matching requests semantics)
+            if isinstance(data, dict | list):
+                kwargs["json"] = data
+            else:
+                # Otherwise treat as raw data
+                kwargs["data"] = data
+
+        # Handle authentication
+        if auth is not None:
+            # Convert (user, pass) tuple to Authorization header for test client
+            import base64
+
+            username, password = auth
+            credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+            if "headers" not in kwargs:
+                kwargs["headers"] = {}
+            kwargs["headers"]["Authorization"] = f"Basic {credentials}"
+
+        return getattr(client, handler)(path, **kwargs)
+
+    return getattr(requests, handler)(
         url,
         params.get("params"),
         headers=headers,
