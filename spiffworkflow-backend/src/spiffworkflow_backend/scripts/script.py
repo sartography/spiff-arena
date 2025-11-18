@@ -12,7 +12,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceNotFoundError
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.testing.local_test_client import LocalTestClient
 
 # Generally speaking, having some global in a flask app is TERRIBLE.
 # This is here, because after loading the application this will never change under
@@ -36,15 +35,7 @@ class InvalidArgsGivenToScriptError(Exception):
     pass
 
 
-class SpiffBridge:
-    """Provides a parent class to scripts that provides helpful tools for making calls to the api."""
-
-    def get_client(self) -> LocalTestClient:
-        """Returns a requests object that has been authenticated with the application."""
-        return LocalTestClient()
-
-
-class Script(SpiffBridge):
+class Script:
     """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks."""
 
     @abstractmethod
