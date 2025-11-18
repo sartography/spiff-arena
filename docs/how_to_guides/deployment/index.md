@@ -5,6 +5,7 @@
 deploy
 configure_secrets
 manage_permissions
+configure_openid_provider
 configure_okta_as_an_openid_provider
 configure_azure_as_an_openid_provider
 use_pathbased_routing
