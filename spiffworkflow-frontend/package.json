@@ -65,7 +65,7 @@
   "scripts": {
     "build": "vite build",
     "eslint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx",
-    "format": "prettier --write src/**/*.[tj]s{,x}",
+    "format": "prettier --write --list-different src/**/*.[tj]s{,x}",
     "lint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx && npm run typecheck",
     "lint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "serve": "vite preview",

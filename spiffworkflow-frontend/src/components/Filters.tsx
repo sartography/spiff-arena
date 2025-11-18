@@ -85,9 +85,7 @@ export default function Filters({
     let reportSearchSection = null;
     if (reportSearchComponent) {
       reportSearchSection = (
-        <Grid size={{ xs: 12, sm: 6, md: 8 }}>
-          {reportSearchComponent()}
-        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 8 }}>{reportSearchComponent()}</Grid>
       );
     }
     return (
