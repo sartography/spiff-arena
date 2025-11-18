@@ -40,6 +40,26 @@ def do(id: str, params: dict[str, Any]) -> Any:
         if query_params is not None:
             kwargs["params"] = query_params
 
+        # Handle request body - check if data should be treated as JSON
+        if data is not None:
+            # If data is a dict or list, treat it as JSON (matching requests semantics)
+            if isinstance(data, dict | list):
+                kwargs["json"] = data
+            else:
+                # Otherwise treat as raw data
+                kwargs["data"] = data
+
+        # Handle authentication
+        if auth is not None:
+            # Convert (user, pass) tuple to Authorization header for test client
+            import base64
+
+            username, password = auth
+            credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+            if "headers" not in kwargs:
+                kwargs["headers"] = {}
+            kwargs["headers"]["Authorization"] = f"Basic {credentials}"
+
         return getattr(client, handler)(path, **kwargs)
 
     return getattr(requests, handler)(
