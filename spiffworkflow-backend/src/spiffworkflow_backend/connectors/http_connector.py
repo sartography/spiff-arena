@@ -23,13 +23,9 @@ def do(id: str, params: dict[str, Any]) -> Any:
         # Use connexion test client directly to route through connexion middleware
         connexion_app = getattr(current_app, "config", {}).get("CONNEXION_APP")
         if connexion_app and hasattr(connexion_app, "test_client"):
-            try:
-                client = connexion_app.test_client()
-            except Exception:
-                # Fall back to Flask test client if connexion client creation fails
-                client = current_app.test_client()
+            client = connexion_app.test_client()
         else:
-            client = current_app.test_client()
+            raise ValueError("CONNEXION_APP not available or does not have test_client method")
 
         # Extract path from URL and prepare parameters for connexion test client
         path = urlparse(url).path
