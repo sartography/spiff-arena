@@ -2,7 +2,7 @@ import {
   FilterAlt as FilterAltIcon,
   Link as LinkIcon,
 } from '@mui/icons-material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

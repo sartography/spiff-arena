@@ -10,7 +10,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
 import { PureAbility } from '@casl/ability';

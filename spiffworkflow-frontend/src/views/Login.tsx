@@ -2,7 +2,7 @@ import { ArrowForward } from '@mui/icons-material';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircularProgress, Button, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticationOption } from '../interfaces';
 import HttpService from '../services/HttpService';

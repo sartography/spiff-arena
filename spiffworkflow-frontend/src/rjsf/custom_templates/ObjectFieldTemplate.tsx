@@ -8,7 +8,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 
 /* usage: add ui:layout to an object in the uiSchema
  *

@@ -17,7 +17,7 @@ import {
   InputLabel,
   Box,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
 import {

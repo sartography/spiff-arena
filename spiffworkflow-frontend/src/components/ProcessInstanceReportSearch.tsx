@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Autocomplete, FormLabel, TextField } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
