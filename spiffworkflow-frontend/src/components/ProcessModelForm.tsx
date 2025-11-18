@@ -11,7 +11,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
 import { Add as AddAlt, Delete as TrashCan } from '@mui/icons-material';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';

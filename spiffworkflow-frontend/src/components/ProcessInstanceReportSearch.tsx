@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Autocomplete, Grid, FormLabel, TextField } from '@mui/material';
+import { Autocomplete, FormLabel, TextField } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -65,7 +66,7 @@ export default function ProcessInstanceReportSearch({
   if (reportsAvailable()) {
     return (
       <Grid container spacing={2} style={{ paddingTop: '0px' }}>
-        <Grid item xs={12} sm={6} md={12}>
+        <Grid size={{ xs: 12, sm: 6, md: 12 }}>
           <FormLabel>{titleText || t('process_perspectives')}</FormLabel>
           <Autocomplete
             onChange={(_, value) => onChange(value)}

@@ -8,7 +8,7 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
 
 /* usage: add ui:layout to an object in the uiSchema
  *
@@ -111,10 +111,11 @@ export default function ObjectFieldTemplate<
               const { sm, md, lg } = row[name];
               return (
                 <Grid
-                  item
-                  xs={sm || Math.floor(defaultSm / numberOfColumns)}
-                  md={md || Math.floor(defaultMd / numberOfColumns)}
-                  lg={lg || Math.floor(defaultLg / numberOfColumns)}
+                  size={{
+                    xs: sm || Math.floor(defaultSm / numberOfColumns),
+                    md: md || Math.floor(defaultMd / numberOfColumns),
+                    lg: lg || Math.floor(defaultLg / numberOfColumns),
+                  }}
                 >
                   {element.content}
                 </Grid>

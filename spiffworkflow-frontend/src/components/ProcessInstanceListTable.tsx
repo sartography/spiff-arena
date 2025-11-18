@@ -12,7 +12,7 @@ import {
   Typography,
   IconButton,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';

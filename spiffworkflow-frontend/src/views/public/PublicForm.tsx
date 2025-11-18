@@ -1,4 +1,5 @@
-import { Box, CircularProgress, Grid } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -153,7 +154,7 @@ export default function PublicForm() {
             defaultMessage={publicTask.form.instructions_for_end_user}
           />
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 12, sm: 8 }}>
               <CustomForm
                 id={`form-to-submit-${publicTask.task_guid}`}
                 key={`form-to-submit-${publicTask.task_guid}`}

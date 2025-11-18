@@ -6,9 +6,9 @@ import {
   Typography,
   IconButton,
   Chip,
-  Grid,
   Container,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { PlayArrow } from '@mui/icons-material';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 
@@ -29,7 +29,7 @@ export default function TaskCard({
 }: TaskCardProps) {
   const { t } = useTranslation();
   return (
-    <Grid id="task-card-grid" item key={entry.id} xs={12} sm={6} md={4}>
+    <Grid id="task-card-grid" size={{ xs: 12, sm: 6, md: 4 }} key={entry.id}>
       <Card
         onClick={() => hasAccessToCompleteTask && handleRunTask(entry)}
         sx={{

@@ -23,7 +23,6 @@ import {
   View,
 } from '@carbon/icons-react';
 import {
-  Grid,
   Box,
   Typography,
   IconButton,
@@ -42,6 +41,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   DeleteOutlineOutlined,
@@ -521,7 +521,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <dl>
             <Typography component="dt" variant="subtitle2">
               {t('status')}:
@@ -595,7 +595,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Typography>
           </dl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl className="metadata-display">
@@ -1483,7 +1483,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
           return (
             <Grid container spacing={2}>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <SpiffTooltip title="View">
                   <IconButton
                     onClick={() =>
@@ -1494,7 +1494,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   </IconButton>
                 </SpiffTooltip>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <div className={`task-instance-modal-row-item ${buttonClass}`}>
                   {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
@@ -1752,7 +1752,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <p>
               {t('viewing_process_instance_at_time_when')}{' '}
               <span title={title}>

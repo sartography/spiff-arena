@@ -8,7 +8,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Grid,
   Button,
   Modal,
   CircularProgress,
@@ -18,6 +17,7 @@ import {
   InputLabel,
   Box,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { createSearchParams, Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from './PaginationForTable';
 import {
@@ -421,7 +421,7 @@ export default function ProcessInstanceLogList({
       // taskNameFilterPlaceholder = 'Choose a task bpmn name';
     }
     filterElements.push(
-      <Grid item md={4}>
+      <Grid size={{ md: 4 }}>
         <FormControl fullWidth>
           <InputLabel id="task-name-filter-label">{taskNameHeader}</InputLabel>
           <Select
@@ -446,7 +446,7 @@ export default function ProcessInstanceLogList({
     if (isEventsView) {
       filterElements.push(
         <>
-          <Grid item md={4}>
+          <Grid size={{ md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="task-identifier-filter-label">
                 {t('task_identifier')}
@@ -468,7 +468,7 @@ export default function ProcessInstanceLogList({
               </Select>
             </FormControl>
           </Grid>
-          <Grid item md={4}>
+          <Grid size={{ md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="task-type-select-label">
                 {t('task_type')}
@@ -490,7 +490,7 @@ export default function ProcessInstanceLogList({
               </Select>
             </FormControl>
           </Grid>
-          <Grid item md={4}>
+          <Grid size={{ md: 4 }}>
             <FormControl fullWidth>
               <InputLabel id="event-type-select-label">
                 {t('event_type')}
@@ -522,7 +522,7 @@ export default function ProcessInstanceLogList({
           {filterElements}
         </Grid>
         <Grid container spacing={2} className="with-bottom-margin">
-          <Grid item sm={4} md={4} lg={8}>
+          <Grid size={{ sm: 4, md: 4, lg: 8 }}>
             <Button variant="outlined" onClick={resetFiltersAndRun}>
               {t('reset')}
             </Button>
