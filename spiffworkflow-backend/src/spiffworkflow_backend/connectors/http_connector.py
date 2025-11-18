@@ -18,10 +18,24 @@ def do(id: str, params: dict[str, Any]) -> Any:
     data = params.get("data")
 
     if url.startswith("http://local/"):
+        print("in local http_connector.py and attempting to use test_client")
         with current_app.test_client() as client:
+            print("client")
+            print(client)
+            print("handler")
+            print(handler)
+            print("url")
+            print(url)
+            query_string=params.get("params"),
+            print("query_string")
+            print(query_string)
+            print("headers")
+            print(headers)
+            print("data")
+            print(data)
             return getattr(client, handler)(  # type: ignore
                 url,
-                query_string=params.get("params"),
+                query_string=query_string,
                 headers=headers,
                 json=data,
             )

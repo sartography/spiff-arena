@@ -26,9 +26,7 @@ class BootstrapProvider:
         ]
 
     def get_files(self) -> list[FileModel]:
-        readme_path = os.path.join(
-            FileSystemService.root_path(), "sample-process-models", "a_process", "README.md"
-        )
+        readme_path = os.path.join(FileSystemService.root_path(), "sample-process-models", "a_process", "README.md")
         return [
             FileModel(
                 name="README.md",

@@ -1,9 +1,9 @@
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 from tests.base_test import BaseTest
 from tests.data.providers.bootstrap_provider import BootstrapProvider
+
 
 class TestBootstrap(BaseTest):
     def test_bootstrap(self, app_context, mock_process_model_get_all, mock_process_model_get):
@@ -18,6 +18,7 @@ class TestBootstrap(BaseTest):
                 ProcessModelService.add_process_model_file(file)
 
             from spiffworkflow_backend.bin.bootstrap import main
+
             main()
 
             user = UserModel.query.filter_by(username="bootstrap_user").first()
