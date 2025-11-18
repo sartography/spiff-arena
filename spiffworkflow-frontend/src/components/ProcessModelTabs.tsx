@@ -100,7 +100,7 @@ export default function ProcessModelTabs({
         <Select
           labelId="add-file-select-label"
           label={t('add_file')}
-          onChange={(event) => {
+          onChange={(event: any) => {
             const selectedItem = event.target.value;
             if (selectedItem === 'new_bpmn_file') {
               navigate(
