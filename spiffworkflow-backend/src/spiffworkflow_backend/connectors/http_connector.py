@@ -4,6 +4,7 @@ import requests
 from flask import current_app
 
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
+from spiffworkflow_backend.testing.local_test_client import LocalTestClient
 
 
 def does(id: str) -> bool:
@@ -18,27 +19,14 @@ def do(id: str, params: dict[str, Any]) -> Any:
     data = params.get("data")
 
     if url.startswith("http://local/"):
-        print("in local http_connector.py and attempting to use test_client")
-        with current_app.test_client() as client:
-            print("client")
-            print(client)
-            print("handler")
-            print(handler)
-            print("url")
-            print(url)
+        # Use LocalTestClient which properly routes through connexion middleware
+        local_client = LocalTestClient()
+        return getattr(local_client, handler)(
+            url,
             query_string=params.get("params"),
-            print("query_string")
-            print(query_string)
-            print("headers")
-            print(headers)
-            print("data")
-            print(data)
-            return getattr(client, handler)(  # type: ignore
-                url,
-                query_string=query_string,
-                headers=headers,
-                json=data,
-            )
+            headers=headers,
+            json=data,
+        )
 
     return getattr(requests, handler)(  # type: ignore
         url,

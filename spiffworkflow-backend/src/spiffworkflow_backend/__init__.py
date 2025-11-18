@@ -106,7 +106,9 @@ def create_app() -> FlaskApp:
         max_age=3600,
     )
 
-    connexion_app.add_api("api.yml", base_path=app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"])
+    # Get the directory where this __init__.py file is located
+    api_file_path = os.path.join(os.path.dirname(__file__), "api.yml")
+    connexion_app.add_api(api_file_path, base_path=app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"])
 
     app.json = MyJSONEncoder(app)
 
