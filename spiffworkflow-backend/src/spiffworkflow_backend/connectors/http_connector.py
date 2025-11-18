@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast
 from urllib.parse import urlparse
 
 import requests
@@ -12,7 +13,7 @@ def does(id: str) -> bool:
 
 
 def do(id: str, params: dict[str, Any]) -> Any:
-    handler = _config[id]["handler"]
+    handler = cast(str, _config[id]["handler"])
     url = params["url"]
     headers = params.get("headers")
     auth = _auth(params)
@@ -20,8 +21,8 @@ def do(id: str, params: dict[str, Any]) -> Any:
 
     if url.startswith("http://local/"):
         # Use connexion test client directly to route through connexion middleware
-        connexion_app = getattr(current_app, 'config', {}).get('CONNEXION_APP')
-        if connexion_app and hasattr(connexion_app, 'test_client'):
+        connexion_app = getattr(current_app, "config", {}).get("CONNEXION_APP")
+        if connexion_app and hasattr(connexion_app, "test_client"):
             try:
                 client = connexion_app.test_client()
             except Exception:
@@ -36,16 +37,16 @@ def do(id: str, params: dict[str, Any]) -> Any:
 
         # Handle headers
         if headers is not None:
-            kwargs['headers'] = headers
+            kwargs["headers"] = headers
 
         # Convert query_string -> params for connexion test client
         query_params = params.get("params")
         if query_params is not None:
-            kwargs['params'] = query_params
+            kwargs["params"] = query_params
 
         return getattr(client, handler)(path, **kwargs)
 
-    return getattr(requests, handler)(  # type: ignore
+    return getattr(requests, handler)(
         url,
         params.get("params"),
         headers=headers,
