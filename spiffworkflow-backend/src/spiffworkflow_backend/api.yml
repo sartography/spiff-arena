@@ -148,46 +148,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /login_api:
-    parameters:
-      - name: authentication_identifier
-        in: query
-        required: true
-        schema:
-          type: string
-    get:
-      operationId: spiffworkflow_backend.routes.authentication_controller.login_api
-      summary: Authenticate user for API access
-      tags:
-        - Authentication
-      responses:
-        "200":
-          description: Redirects to authentication server
-  /login_api_return:
-    parameters:
-      - name: code
-        in: query
-        required: true
-        schema:
-          type: string
-      - name: state
-        in: query
-        required: true
-        schema:
-          type: string
-      - name: session_state
-        in: query
-        required: false
-        schema:
-          type: string
-    get:
-      operationId: spiffworkflow_backend.routes.authentication_controller.login_api_return
-      tags:
-        - Authentication
-      responses:
-        "200":
-          description: Test Return Response
-
   /script-assist/enabled:
     get:
       operationId: spiffworkflow_backend.routes.script_assist_controller.enabled
@@ -3785,18 +3745,6 @@ paths:
           description: The requested data store.
 
 components:
-  securitySchemes:
-    oAuth2AuthCode:
-      type: oauth2
-      description: authenticate with openid server
-      flows:
-        authorizationCode:
-          authorizationUrl: /v1.0/login_api
-          tokenUrl: /v1.0/login_api_return
-          scopes:
-            read_email: read email
-      x-tokenInfoFunc: spiffworkflow_backend.routes.authentication_controller.get_scope
-
   schemas:
     Pagination:
       type: object
