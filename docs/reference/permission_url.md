@@ -7,7 +7,7 @@ The permission URL, or target URI, refers to the specific endpoint or resource t
 - **BASIC:** Allows basic access to complete tasks and use the site.
 - **SUPPORT:** BASIC permissions plus significant administrative permissions.
 - **ELEVATED:** Includes SUPPORT permissions and adds the ability to view and modify secrets.
-Does not include the ability to view or modify process groups and process models.
+  Does not include the ability to view or modify process groups and process models.
 - **ALL:** Grants access to all API endpoints, without any limitations.
 
 ```{admonition} Note
@@ -18,11 +18,13 @@ For example, `/process-models/*` allows access to all resources related to proce
 This functionality is implemented in [authorization_service.py](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/services/authorization_service.py).
 
 (pg)=
+
 ## PG
 
 Process Group permissions control the access rights granted to users or entities within the given process group.
 
 (pm)=
+
 ## PM
 
 These permissions relate to process models and assign permissions and access rights to users or entities specifically within a given process model.
@@ -50,6 +52,7 @@ It provides administrator-level permissions, allowing the user to perform any ac
 ### ALL URLs
 
 % use bash syntax here to avoid syntax highlighting. otherwise, it gets highlighted as if it's python
+
 ```bash
   /active-users/unregister/{last_visited_identifier}:
   /active-users/updates/{last_visited_identifier}:
@@ -61,8 +64,6 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /event-error-details/{modified_process_model_identifier}/{process_instance_id}/{process_instance_event_id}:
   /github-webhook-receive:
   /login:
-  /login_api:
-  /login_api_return:
   /login_return:
   /login_with_access_token:
   /logout:
