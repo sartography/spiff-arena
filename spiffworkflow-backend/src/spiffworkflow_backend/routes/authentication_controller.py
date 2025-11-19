@@ -212,11 +212,6 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
     return make_response(jsonify({"ok": True}))
 
 
-def login_api(authentication_identifier: str) -> Response:
-    login_redirect_url = AuthenticationService().get_login_redirect_url(authentication_identifier)
-    return redirect(login_redirect_url)
-
-
 def logout(id_token: str, authentication_identifier: str, redirect_url: str | None, backend_only: bool = False) -> Response:
     if redirect_url is None:
         redirect_url = ""
