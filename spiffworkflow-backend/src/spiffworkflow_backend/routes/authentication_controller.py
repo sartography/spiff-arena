@@ -149,10 +149,6 @@ def login_return(
     error_description: str | None = None,
     session_state: str = "",
 ) -> Response | None:
-    # Temporarily logging for debug purposes
-    current_app.logger.debug('login_return')
-    current_app.logger.debug('code', code)
-    current_app.logger.debug('state', state)
     if error:
         return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
 
@@ -228,25 +224,13 @@ def login_api(authentication_identifier: str) -> Response:
 
 
 def login_api_return(code: str, state: str, session_state: str) -> str:
-    # Temporarily logging for debug purposes
-    current_app.logger.debug('login_api_return')
-    current_app.logger.debug('code', code)
-    current_app.logger.debug('state', state)
+    # state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+    # state_dict["final_url"]
 
-    state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
-
-    authentication_identifier = state_dict["authentication_identifier"]
-    pkce_id = state_dict.get("pkce_id")  # May be None if PKCE was not enforced when state was generated
-
-    auth_service = AuthenticationService()
-    auth_token_object = auth_service.get_auth_token_object(
-        code=code,
-        authentication_identifier=authentication_identifier,
-        pkce_id=pkce_id,
-    )
-
-    access_token: str | None = auth_token_object.get("access_token")
-    if not access_token:
+    redirect_path = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/login_api_return"
+    auth_token_object = AuthenticationService().get_auth_token_object(code, redirect_path)
+    access_token: str = auth_token_object["access_token"]
+    if access_token is None:
         raise MissingAccessTokenError("Cannot find the access token for the request")
 
     return access_token

@@ -10,6 +10,7 @@ class PkceCodeVerifierModel(SpiffworkflowBaseDBModel):
     """
     In the OAuth PKCE flow, the first request to the auth server ("give me an auth code") sends a one-time code challenge.
     The next request ("give me an access token") needs to send a one-time code verifier based on that challenge.
+    (This ensure the client that requested the auth code is the same one requesting the access token with that auth code.)
     We store such code verifiers here.
     """
     __tablename__ = "pkce_code_verifier"
