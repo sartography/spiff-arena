@@ -94,6 +94,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
         "traces_sampler": traces_sampler,
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
         "before_send": before_send,
+        "auto_enabling_integrations": False, # We are seeing an OpenAI agents error. Just testing to see if this resolves it.
     }
 
     # https://docs.sentry.io/platforms/python/configuration/releases
