@@ -44,7 +44,7 @@ def test_can_create_new_bpmn_dmn_json_files(page: Page):
         # Perform minimal edit to enable Save button
         if ext == "bpmn":
             page.locator('g[data-element-id=StartEvent_1]').click()
-            page.locator('.bio-properties-panel-group-header-title[title=General]').click()
+            page.locator('.bio-properties-panel-group-header-title:has-text("General")').click()
             page.locator('#bio-properties-panel-name').fill('Start Event Name')
         elif ext == "dmn":
             page.locator('g[data-element-id^=decision_]').click()
