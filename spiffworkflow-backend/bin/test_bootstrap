@@ -7,4 +7,8 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL='site-administration/hotbootstrap' SPIFFWORKFLOW_BACKEND_BOOTSTRAP_USERNAME='adminX@bootstrap' ./bin/run_local_python_script bin/bootstrap.py
+SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml \
+  SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL='site-administration/hotbootstrap' \
+  SPIFFWORKFLOW_BACKEND_BOOTSTRAP_USERNAME='adminX@bootstrap' \
+  ./bin/run_local_python_script \
+  bin/bootstrap.py

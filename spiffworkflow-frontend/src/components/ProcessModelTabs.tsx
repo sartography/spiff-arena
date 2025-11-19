@@ -2,7 +2,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
-  Grid,
   Tab,
   Tabs,
   MenuItem,
@@ -11,6 +10,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Can } from '@casl/react'; // Corrected import
 import { useNavigate } from 'react-router-dom';
 import { PureAbility } from '@casl/ability';
@@ -100,7 +100,7 @@ export default function ProcessModelTabs({
         <Select
           labelId="add-file-select-label"
           label={t('add_file')}
-          onChange={(event) => {
+          onChange={(event: any) => {
             const selectedItem = event.target.value;
             if (selectedItem === 'new_bpmn_file') {
               navigate(
@@ -162,7 +162,7 @@ export default function ProcessModelTabs({
       </TabPanel>
       <TabPanel value={selectedTabIndex} index={1}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Can
               I="POST"
               a={targetUris.processModelFileCreatePath}

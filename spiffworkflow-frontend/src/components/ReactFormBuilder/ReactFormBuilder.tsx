@@ -4,12 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Editor, loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
-// @ts-ignore
-
 import merge from 'lodash/merge';
 
 import {
-  Grid,
   TextField,
   Button,
   CircularProgress,
@@ -18,6 +15,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useDebouncedCallback } from 'use-debounce';
 import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
@@ -384,7 +382,7 @@ export default function ReactFormBuilder({
     }
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="h4">{t('schema_name')}</Typography>
           <Typography variant="body1">{t('provide_schema_name')}</Typography>
           <TextField
@@ -432,7 +430,7 @@ export default function ReactFormBuilder({
   }
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Tabs value={selectedIndex} onChange={handleTabChange}>
           <Tab label={t('json_schema')} />
           <Tab label={t('ui_settings')} />
@@ -521,7 +519,7 @@ export default function ReactFormBuilder({
           )}
         </Box>
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Typography variant="h4">{t('form_preview')}</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
