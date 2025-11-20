@@ -1,9 +1,11 @@
 declare const window: Window & typeof globalThis;
 
-import { TaskMetadataObject } from './interfaces';
+import { TaskMetadata, TaskMetadataArraySchema } from './interfaces';
 
 const { port, hostname } = window.location;
 let protocol = 'https';
+
+const CONFIGURATION_ERRORS: string[] = [];
 
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
@@ -86,9 +88,17 @@ if (!backendBaseUrl.endsWith('/v1.0')) {
 const documentationUrl = getConfigValue('DOCUMENTATION_URL');
 
 const taskMetadataJson = getConfigValue('TASK_METADATA');
-let taskMetadata: (string | TaskMetadataObject)[] | null = null;
+let taskMetadata: TaskMetadata | null = null;
 if (taskMetadataJson) {
   taskMetadata = JSON.parse(taskMetadataJson);
+  try {
+    // this will validate the object
+    TaskMetadataArraySchema.parse(taskMetadata);
+  } catch (error: any) {
+    CONFIGURATION_ERRORS.push(
+      `Unable to parse configuration 'TASK_METADATA'. Error was ${error.message}`,
+    );
+  }
 }
 const TASK_METADATA = taskMetadata;
 
@@ -152,6 +162,7 @@ const DATE_RANGE_DELIMITER = ':::';
 const SPIFF_ENVIRONMENT = spiffEnvironment;
 export {
   BACKEND_BASE_URL,
+  CONFIGURATION_ERRORS,
   DARK_MODE_ENABLED,
   DATE_FORMAT,
   DATE_FORMAT_CARBON,
