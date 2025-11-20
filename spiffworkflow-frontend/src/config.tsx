@@ -89,7 +89,6 @@ let taskMetadata: (string | TaskMetadataObject)[] | null = null;
 if (taskMetadataJson) {
   taskMetadata = JSON.parse(taskMetadataJson);
 }
-console.log('META', taskMetadata);
 const TASK_METADATA = taskMetadata;
 
 const BACKEND_BASE_URL = backendBaseUrl;
