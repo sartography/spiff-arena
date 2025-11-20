@@ -16,25 +16,22 @@ declare global {
 
 // Helper function to get config value from either runtime config or Vite env
 function getConfigValue(key: string): string | null {
-  // First check runtime config (window.spiffworkflowFrontendJsenv)
   if ('spiffworkflowFrontendJsenv' in window) {
     if (key in window.spiffworkflowFrontendJsenv) {
       return window.spiffworkflowFrontendJsenv[key];
     }
   }
-  
-  // Then check Vite environment variables (import.meta.env)
+
   if (import.meta.env) {
     const viteKey = `VITE_${key}`;
     if (viteKey in import.meta.env) {
       return import.meta.env[viteKey];
     }
   }
-  
+
   return null;
 }
 
-// Dark mode configuration
 let darkModeEnabled = getConfigValue('DARK_MODE_ENABLED');
 if (darkModeEnabled === null) {
   darkModeEnabled = 'true';
@@ -44,16 +41,13 @@ const DARK_MODE_ENABLED = !!(
   darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
 );
 
-// App routing strategy
 let appRoutingStrategy = getConfigValue('APP_ROUTING_STRATEGY');
 if (appRoutingStrategy === null) {
   appRoutingStrategy = 'subdomain_based';
 }
 
-// Environment identifier
 let spiffEnvironment = getConfigValue('ENVIRONMENT_IDENTIFIER') || '';
 
-// Backend base URL
 let backendBaseUrl = getConfigValue('BACKEND_BASE_URL');
 
 if (!backendBaseUrl) {
@@ -89,10 +83,8 @@ if (!backendBaseUrl.endsWith('/v1.0')) {
   backendBaseUrl += '/v1.0';
 }
 
-// Documentation URL
 const documentationUrl = getConfigValue('DOCUMENTATION_URL');
 
-// Task metadata
 const taskMetadataJson = getConfigValue('TASK_METADATA');
 let taskMetadata: (string | TaskMetadataObject)[] | null = null;
 if (taskMetadataJson) {
