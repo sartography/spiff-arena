@@ -15,7 +15,7 @@ fi
 shift
 
 # Check if api_path looks like a UUID (8-4-4-4-12 hex digits)
-if [[ "$api_path" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+if [[ "$api_path" =~ ^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$ ]]; then
   # First argument is a UUID, use it as an API key
   api_key="$api_path"
   authorization="SpiffWorkflow-Api-Key: $api_key"
