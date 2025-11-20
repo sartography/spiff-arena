@@ -5,17 +5,6 @@ import { TaskMetadataObject } from './interfaces';
 const { port, hostname } = window.location;
 let protocol = 'https';
 
-// so we can turn this feature on and off as we work on it
-let darkModeEnabled = 'true';
-
-if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
-  darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
-}
-
-const DARK_MODE_ENABLED = !!(
-  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
-);
-
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
     [key: string]: string;
@@ -25,32 +14,47 @@ declare global {
   }
 }
 
-let spiffEnvironment = '';
-let appRoutingStrategy = 'subdomain_based';
-let backendBaseUrl = null;
-let documentationUrl = null;
-let taskMetadataJson = null;
-if ('spiffworkflowFrontendJsenv' in window) {
-  if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
-    appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+// Helper function to get config value from either runtime config or Vite env
+function getConfigValue(key: string): string | null {
+  // First check runtime config (window.spiffworkflowFrontendJsenv)
+  if ('spiffworkflowFrontendJsenv' in window) {
+    if (key in window.spiffworkflowFrontendJsenv) {
+      return window.spiffworkflowFrontendJsenv[key];
+    }
   }
-  if ('ENVIRONMENT_IDENTIFIER' in window.spiffworkflowFrontendJsenv) {
-    spiffEnvironment = window.spiffworkflowFrontendJsenv.ENVIRONMENT_IDENTIFIER;
+  
+  // Then check Vite environment variables (import.meta.env)
+  if (import.meta.env) {
+    const viteKey = `VITE_${key}`;
+    if (viteKey in import.meta.env) {
+      return import.meta.env[viteKey];
+    }
   }
-  if ('BACKEND_BASE_URL' in window.spiffworkflowFrontendJsenv) {
-    backendBaseUrl = window.spiffworkflowFrontendJsenv.BACKEND_BASE_URL;
-  }
-  if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
-    documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
-  }
-  if ('TASK_METADATA' in window.spiffworkflowFrontendJsenv) {
-    taskMetadataJson = window.spiffworkflowFrontendJsenv.TASK_METADATA;
-  }
+  
+  return null;
 }
 
-if (import.meta.env && import.meta.env.VITE_BACKEND_BASE_URL) {
-  backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
+// Dark mode configuration
+let darkModeEnabled = getConfigValue('DARK_MODE_ENABLED');
+if (darkModeEnabled === null) {
+  darkModeEnabled = 'true';
 }
+
+const DARK_MODE_ENABLED = !!(
+  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
+);
+
+// App routing strategy
+let appRoutingStrategy = getConfigValue('APP_ROUTING_STRATEGY');
+if (appRoutingStrategy === null) {
+  appRoutingStrategy = 'subdomain_based';
+}
+
+// Environment identifier
+let spiffEnvironment = getConfigValue('ENVIRONMENT_IDENTIFIER') || '';
+
+// Backend base URL
+let backendBaseUrl = getConfigValue('BACKEND_BASE_URL');
 
 if (!backendBaseUrl) {
   let hostAndPortAndPathPrefix;
@@ -85,6 +89,11 @@ if (!backendBaseUrl.endsWith('/v1.0')) {
   backendBaseUrl += '/v1.0';
 }
 
+// Documentation URL
+const documentationUrl = getConfigValue('DOCUMENTATION_URL');
+
+// Task metadata
+const taskMetadataJson = getConfigValue('TASK_METADATA');
 let taskMetadata: (string | TaskMetadataObject)[] | null = null;
 if (taskMetadataJson) {
   taskMetadata = JSON.parse(taskMetadataJson);
@@ -106,13 +115,9 @@ const PROCESS_STATUSES = [
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss
-let generalDateFormat = 'yyyy-MM-dd';
-// let generalDateFormat = 'dd-MMM-yyyy';
-if (
-  'spiffworkflowFrontendJsenv' in window &&
-  'DATE_FORMAT' in window.spiffworkflowFrontendJsenv
-) {
-  generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
+let generalDateFormat = getConfigValue('DATE_FORMAT');
+if (generalDateFormat === null) {
+  generalDateFormat = 'yyyy-MM-dd';
 }
 
 const splitDateFormat = generalDateFormat.split('-');
