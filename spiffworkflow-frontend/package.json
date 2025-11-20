@@ -30,7 +30,7 @@
     "bpmn-js": "^17.11.1",
     "bpmn-js-cli": "^2.4.0",
     "bpmn-js-properties-panel": "^5.19.0",
-    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#task-metadata-for-human-tasks",
+    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^1.0.2",
     "date-fns": "^3.6.0",
     "diagram-js": "^14.11.3",
