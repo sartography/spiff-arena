@@ -951,9 +951,17 @@ class ProcessInstanceProcessor:
                 json_metadata = {}
                 print(f"DEBUG: Extensions keys: {extensions.keys()}")
                 if "taskMetadataValues" in extensions:
-                    val = extensions["taskMetadataValues"]
-                    print(f"DEBUG: taskMetadataValues type: {type(val)}")
-                    print(f"DEBUG: taskMetadataValues repr: {repr(val)}")
+                    task_metadata_values = extensions["taskMetadataValues"]
+                    print(f"DEBUG: taskMetadataValues type: {type(task_metadata_values)}")
+                    print(f"DEBUG: taskMetadataValues repr: {repr(task_metadata_values)}")
+                    # Process each taskMetadataValue using the script engine
+                    for key, value in task_metadata_values.items():
+                        try:
+                            json_metadata[key] = self._script_engine.evaluate(ready_or_waiting_task, value)
+                        except Exception as e:
+                            current_app.logger.warning(
+                                f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                            )
                 if hasattr(ready_or_waiting_task.task_spec, "_wf_spec"):
                     print(f"DEBUG: _wf_spec dir: {dir(ready_or_waiting_task.task_spec._wf_spec)}")
                 print(f"DEBUG: task_spec dir: {dir(ready_or_waiting_task.task_spec)}")
