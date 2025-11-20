@@ -30,7 +30,16 @@ export default function App() {
    */
   const layout = () => {
     if (CONFIGURATION_ERRORS.length > 0) {
-      return CONFIGURATION_ERRORS;
+      return (
+        <div style={{ padding: '20px', color: 'red' }}>
+          <h2>Configuration Errors</h2>
+          <ul>
+            {CONFIGURATION_ERRORS.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      );
     }
     return (
       <div className="cds--white">

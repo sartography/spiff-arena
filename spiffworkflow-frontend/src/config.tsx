@@ -90,8 +90,8 @@ const documentationUrl = getConfigValue('DOCUMENTATION_URL');
 const taskMetadataJson = getConfigValue('TASK_METADATA');
 let taskMetadata: TaskMetadata | null = null;
 if (taskMetadataJson) {
-  taskMetadata = JSON.parse(taskMetadataJson);
   try {
+    taskMetadata = JSON.parse(taskMetadataJson);
     // this will validate the object
     TaskMetadataArraySchema.parse(taskMetadata);
   } catch (error: any) {

@@ -23,7 +23,7 @@ if [[ -n "$react_configs" ]]; then
 
   for react_config in $react_configs; do
     env_var=$(awk -F '=' '{print $1}' <<<"$react_config" | sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_//')
-    env_value=$(awk -F '=' '{print $2}' <<<"$react_config" | sed -E "s/'//g")
+    env_value=$(awk -F '=' '{print $2}' <<<"$react_config" | sed -E "s/(^['\"]|['\"]$)//g")
 
     if [[ -z "$env_var" || -z "$env_value" ]]; then
       echo >&2 "ERROR: Could not parse react config line: '${react_config}'."
