@@ -5,6 +5,12 @@ export interface User {
   username: string;
 }
 
+export interface TaskMetadataObject {
+  name: string;
+  label: string;
+  description: string;
+}
+
 export interface ApiAction {
   path: string;
   method: string;

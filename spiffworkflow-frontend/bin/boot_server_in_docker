@@ -11,6 +11,7 @@ set -o errtrace -o errexit -o nounset -o pipefail
 react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_" || echo '')
 if [[ -n "$react_configs" ]]; then
   index_html_file="/usr/share/nginx/html/index.html"
+  # index_html_file="./index.html"
   if [[ ! -f "$index_html_file" ]]; then
     echo >&2 "ERROR: Could not find '${index_html_file}'. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
     exit 1
@@ -22,7 +23,9 @@ if [[ -n "$react_configs" ]]; then
   fi
 
   for react_config in $react_configs; do
-    react_config_without_prefix=$(sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)=(.*)/\1=\\"\2\\"/' <<<"${react_config}")
+    # remove surrounding single quotes if they are there and put back single quotes on the value.
+    # this is to better support json.
+    react_config_without_prefix=$(sed -E "s/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)='?(.*)'?/\1=\\'\2\\'/" <<<"${react_config}")
 
     if [[ -z "$react_config_without_prefix" ]]; then
       echo >&2 "ERROR: Could not parse react config line: '${react_config}'."
