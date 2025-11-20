@@ -949,11 +949,8 @@ class ProcessInstanceProcessor:
                 form_file_name = None
                 ui_form_file_name = None
                 json_metadata = {}
-                print(f"DEBUG: Extensions keys: {extensions.keys()}")
                 if "taskMetadataValues" in extensions:
                     task_metadata_values = extensions["taskMetadataValues"]
-                    print(f"DEBUG: taskMetadataValues type: {type(task_metadata_values)}")
-                    print(f"DEBUG: taskMetadataValues repr: {repr(task_metadata_values)}")
                     # Process each taskMetadataValue using the script engine
                     for key, value in task_metadata_values.items():
                         try:
@@ -962,9 +959,6 @@ class ProcessInstanceProcessor:
                             current_app.logger.warning(
                                 f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
                             )
-                if hasattr(ready_or_waiting_task.task_spec, "_wf_spec"):
-                    print(f"DEBUG: _wf_spec dir: {dir(ready_or_waiting_task.task_spec._wf_spec)}")
-                print(f"DEBUG: task_spec dir: {dir(ready_or_waiting_task.task_spec)}")
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:
@@ -981,7 +975,8 @@ class ProcessInstanceProcessor:
                                 json_metadata[metadata_key] = self._script_engine.evaluate(ready_or_waiting_task, value)
                             except Exception as e:
                                 current_app.logger.warning(
-                                    f"Failed to evaluate json_metadata key {metadata_key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                                    f"Failed to evaluate json_metadata key {metadata_key} for task "
+                                    f"{ready_or_waiting_task.task_spec.name}: {e}"
                                 )
 
                 human_task = None
@@ -1016,7 +1011,6 @@ class ProcessInstanceProcessor:
                         db.session.add(human_task)
                         db.session.flush()
                     except Exception as e:
-                        print(f"DEBUG: Error adding human task: {e}")
                         raise e
                     new_humna_tasks.append(human_task)
 
