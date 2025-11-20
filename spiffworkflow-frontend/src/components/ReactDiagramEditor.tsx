@@ -390,9 +390,15 @@ export default function ReactDiagramEditor({
     }
 
     const onMetadataRequested = (event: any) => {
-      console.log('got request for metadata keys');
       event.eventBus.fire('spiff.task_metadata_keys.returned', {
-        keys: ['due_days_after_open', 'due_days_before_closing'],
+        keys: [
+          {
+            name: 'due_days_after_open',
+            label: 'Due Days After Open',
+            description: 'Number of days after opening until due',
+          },
+          'due_days_before_closing',
+        ],
       });
     };
 
