@@ -160,9 +160,7 @@ def login_return(
     authentication_identifier = state_dict["authentication_identifier"]
     pkce_id = state_dict.get("pkce_id")  # may be None if PKCE not enforced when state was created
     auth_token_object = AuthenticationService().get_auth_token_object(
-        code,
-        authentication_identifier=authentication_identifier,
-        pkce_id=pkce_id
+        code, authentication_identifier=authentication_identifier, pkce_id=pkce_id
     )
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]

@@ -1,5 +1,4 @@
 import ast
-import base64
 import re
 
 from flask.app import Flask
@@ -20,12 +19,25 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 class TestAuthentication(BaseTest):
     def test_get_login_state(self) -> None:
         redirect_url = "http://example.com/"
-        state = AuthenticationService.generate_state(authentication_identifier="default", final_url=redirect_url)
-        state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
+        state = AuthenticationService.encode_state_payload(state_payload)
+        state_dict = ast.literal_eval(state)
 
         assert isinstance(state_dict, dict)
         assert "final_url" in state_dict.keys()
         assert state_dict["final_url"] == redirect_url
+
+    def test_get_login_state_with_pkce_enabled(self, app: Flask) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+            redirect_url = "http://example.com/"
+            state_payload = AuthenticationService.generate_state_payload(
+                authentication_identifier="default", final_url=redirect_url
+            )
+            state = AuthenticationService.encode_state_payload(state_payload)
+            state_dict = ast.literal_eval(state)
+
+            assert isinstance(state_dict, dict)
+            assert isinstance(state_dict["pkce_id"], str)
 
     def test_properly_adds_user_to_groups_from_token_on_login(
         self,
@@ -221,8 +233,9 @@ class TestAuthentication(BaseTest):
         """Test that the login_return endpoint handles errors from the OIDC provider."""
         error = "access_denied"
         error_description = "User is not assigned to the client application."
-        state = AuthenticationService.generate_state(authentication_identifier="default", final_url="/")
-        url = f"/v1.0/login_return?state={state.decode()}&error={error}&error_description={error_description}"
+        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url="/")
+        state = AuthenticationService.encode_state_payload(state_payload)
+        url = f"/v1.0/login_return?state={state}&error={error}&error_description={error_description}"
 
         response = client.get(url)
 
@@ -231,3 +244,4 @@ class TestAuthentication(BaseTest):
         assert "<h1>Authentication Error</h1>" in response_text
         assert f"<strong>Error:</strong> {error}" in response_text
         assert f"<strong>Description:</strong> {error_description}" in response_text
+

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 
-from dataclasses import dataclass
 
 @dataclass
 class PkceCodeVerifierModel(SpiffworkflowBaseDBModel):
@@ -13,9 +12,9 @@ class PkceCodeVerifierModel(SpiffworkflowBaseDBModel):
     (This ensure the client that requested the auth code is the same one requesting the access token with that auth code.)
     We store such code verifiers here.
     """
+
     __tablename__ = "pkce_code_verifier"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    pkce_id: str = db.Column(db.String(512), nullable=False, unique=True) # Unique per-login PKCE lookup key
+    pkce_id: str = db.Column(db.String(512), nullable=False, unique=True)  # Unique per-login PKCE lookup key
     code_verifier: str = db.Column(db.String(512), nullable=False)
-

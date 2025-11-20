@@ -8,6 +8,8 @@ from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
+from typing import NotRequired
+from typing import TypedDict
 from typing import cast
 
 from cryptography.hazmat.backends import default_backend
@@ -40,16 +42,17 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.exceptions.error import OpenIdConnectionError, PkceCodeVerifierStorageError
+from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
+from spiffworkflow_backend.exceptions.error import PkceCodeVerifierStorageError
 from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.exceptions.error import TokenInvalidError
 from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 
 
 class JWKSKeyConfig(TypedDict):
@@ -110,8 +113,10 @@ class PKCE:
         return base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
     @staticmethod
-    def store_pkce_code_verifier(pkce_id: int, code_verifier: str) -> None:
-        code_verifier_object: PkceCodeVerifierModel = PkceCodeVerifierModel.query.filter(PkceCodeVerifierModel.pkce_id == pkce_id).first()
+    def store_pkce_code_verifier(pkce_id: str, code_verifier: str) -> None:
+        code_verifier_object: PkceCodeVerifierModel = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.pkce_id == pkce_id
+        ).first()
         if code_verifier_object:
             code_verifier_object.code_verifier = code_verifier
         else:
@@ -121,17 +126,13 @@ class PKCE:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise PkceCodeVerifierStorageError(
-                f"We could not store the PKCE code verifier. Original error is {e}"
-            ) from e
+            raise PkceCodeVerifierStorageError(f"We could not store the PKCE code verifier. Original error is {e}") from e
 
     @staticmethod
-    def consume_pkce_code_verifier(pkce_id: int) -> str | None:
-        code_verifier_object: PkceCodeVerifierModel | None = (
-            PkceCodeVerifierModel.query
-            .filter(PkceCodeVerifierModel.pkce_id == pkce_id)
-            .first()
-        )
+    def consume_pkce_code_verifier(pkce_id: str) -> str | None:
+        code_verifier_object: PkceCodeVerifierModel | None = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.pkce_id == pkce_id
+        ).first()
 
         if code_verifier_object is None:
             return None
@@ -349,8 +350,13 @@ class AuthenticationService:
 
         return redirect(request_url)
 
+    class StatePayload(TypedDict):
+        final_url: str | None
+        authentication_identifier: str
+        pkce_id: NotRequired[str]
+
     @staticmethod
-    def generate_state_payload(authentication_identifier: str, final_url: str | None = None) -> dict[str, str]:
+    def generate_state_payload(authentication_identifier: str, final_url: str | None = None) -> StatePayload:
         # The final_url is where we want to return the user to, within the application - in case they
         # where headed to a specific page. This is different than the "redirect url" we specify to
         # the open id server - we want the open id server to always send us back to the login_return
@@ -358,12 +364,19 @@ class AuthenticationService:
         my_final_url = final_url
         if final_url is None:
             my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
-        
-        state_payload: dict[str, str] = {"final_url": my_final_url, "authentication_identifier": authentication_identifier}
+
+        state_payload: AuthenticationService.StatePayload = {
+            "final_url": my_final_url,
+            "authentication_identifier": authentication_identifier,
+        }
         if current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]:
-            pkce_id = secrets.token_urlsafe(32) # Associate a unique PKCE id with the request for cross-reference later
+            pkce_id = secrets.token_urlsafe(32)  # Associate a unique PKCE id with the request for cross-reference later
             state_payload["pkce_id"] = pkce_id
         return state_payload
+
+    @staticmethod
+    def encode_state_payload(state_payload: StatePayload) -> str:
+        return base64.b64encode(bytes(str(state_payload), "UTF-8")).decode("UTF-8")
 
     def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
@@ -378,7 +391,7 @@ class AuthenticationService:
     def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
         redirect_url = self.get_redirect_uri_for_login_to_server()
         state_payload = self.generate_state_payload(authentication_identifier, final_url)
-        state = base64.b64encode(bytes(str(state_payload), "UTF-8")).decode("UTF-8")
+        state = self.encode_state_payload(state_payload)
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
@@ -457,7 +470,6 @@ class AuthenticationService:
         response = requests.post(request_url, data=data, headers=headers, timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
         auth_token_object: dict = json.loads(response.text)
         return auth_token_object
-
 
     @classmethod
     def is_valid_azp(cls, authentication_identifier: str, azp: str | None) -> bool:
@@ -569,7 +581,6 @@ class AuthenticationService:
         if refresh_token_object:
             return refresh_token_object.token
         return None
-
 
     @classmethod
     def get_key_config(cls, jwks_configs: JWKSConfigs, key_id: str) -> JWKSKeyConfig | None:
