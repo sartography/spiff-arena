@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+api_path="${1:-}"
+if [[ -z "$api_path" ]]; then
+  echo >&2 "usage: $(basename $0) [api_path]"
+  exit 1
+fi
+shift
+
+username="${SPIFFWORKFLOW_USERNAME:-admin}"
+password="${SPIFFWORKFLOW_PASSWORD:-admin}"
+realm_name="${SPIFFWORKFLOW_REALM:-spiffworkflow}"
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+
+if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
+  export BACKEND_BASE_URL=http://localhost:7000
+fi
+
+access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$realm_name" 2>/tmp/spiff_token.log)
+if [[ -z "$access_token" ]]; then
+  echo >&2 "ERROR: Could not get token. Error was $(cat /tmp/spiff_token.log)"
+  exit 1
+fi
+authorization="Authorization: Bearer $access_token"
+
+if ! grep -qE '^https?:' <<<"$api_path"; then
+  if ! grep -qE '/v1\.0' <<<"$api_path"; then
+    api_path="${BACKEND_BASE_URL}/v1.0${api_path}"
+  else
+    api_path="${BACKEND_BASE_URL}${api_path}"
+  fi
+fi
+
+curl -s -L --fail-with-body "$api_path" \
+  -H 'accept: application/json, text/plain, */*' \
+  -H "$authorization" "$@"
