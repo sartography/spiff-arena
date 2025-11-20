@@ -389,6 +389,18 @@ export default function ReactDiagramEditor({
       });
     }
 
+    const onMetadataRequested = (event) => {
+      console.log('got request for metadata keys');
+      event.eventBus.fire('spiff.task_metadata_keys.returned', {
+        keys: ['due_days_after_open', 'due_days_before_closing'],
+      });
+    };
+
+    diagramModeler.on(
+      'spiff.task_metadata_keys.requested',
+      onMetadataRequested,
+    );
+
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
       if (error) {

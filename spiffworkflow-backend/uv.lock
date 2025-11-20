@@ -2339,7 +2339,7 @@ wheels = [
 [[package]]
 name = "spiffworkflow"
 version = "3.1.2"
-source = { git = "https://github.com/sartography/SpiffWorkflow?branch=parse-task-metadata-values-extension#8d29cbdf7f2052c0fae9cd86e2973900ad76ebe0" }
+source = { git = "https://github.com/sartography/SpiffWorkflow?branch=parse-task-metadata-values-extension#b132203d2e164eb53c20a2b1f459b270f80fa22f" }
 dependencies = [
     { name = "lxml" },
 ]
