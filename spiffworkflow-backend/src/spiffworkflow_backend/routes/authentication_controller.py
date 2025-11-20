@@ -14,7 +14,6 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import InvalidRedirectUrlError
-from spiffworkflow_backend.exceptions.error import MissingAccessTokenError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
@@ -214,24 +213,6 @@ def login_with_access_token(access_token: str, authentication_identifier: str) -
         )
 
     return make_response(jsonify({"ok": True}))
-
-
-def login_api(authentication_identifier: str) -> Response:
-    login_redirect_url = AuthenticationService().get_login_redirect_url(authentication_identifier)
-    return redirect(login_redirect_url)
-
-
-def login_api_return(code: str, state: str, session_state: str) -> str:
-    # state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
-    # state_dict["final_url"]
-
-    redirect_path = f"{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/login_api_return"
-    auth_token_object = AuthenticationService().get_auth_token_object(code, redirect_path)
-    access_token: str = auth_token_object["access_token"]
-    if access_token is None:
-        raise MissingAccessTokenError("Cannot find the access token for the request")
-
-    return access_token
 
 
 def logout(id_token: str, authentication_identifier: str, redirect_url: str | None, backend_only: bool = False) -> Response:

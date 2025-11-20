@@ -116,11 +116,7 @@ export default function NumericRangeField({
       setMaxValue(formatNumberString(numberValue?.toString() || ''));
     }
     if (!disabled && !readonly) {
-      onChange({
-        ...(formData || {}),
-        ...{ max, min },
-        [nameToChange]: numberValue,
-      });
+      onChange(numberValue, [nameToChange]);
     }
   };
 

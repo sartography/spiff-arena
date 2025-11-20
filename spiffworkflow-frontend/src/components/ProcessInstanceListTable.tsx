@@ -12,7 +12,7 @@ import {
   Typography,
   IconButton,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -327,7 +327,7 @@ export default function ProcessInstanceListTable({
     const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter = column.display_type
       ? displayTypeFormatters[column.display_type]
-      : reportColumnFormatters[columnAccessor] ?? defaultFormatter;
+      : (reportColumnFormatters[columnAccessor] ?? defaultFormatter);
     const value = processInstance[columnAccessor];
 
     if (columnAccessor === 'status') {

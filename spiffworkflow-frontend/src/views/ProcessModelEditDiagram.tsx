@@ -20,7 +20,6 @@ import {
   Tabs,
   Tab,
   TextField,
-  Grid2 as Grid,
   Box,
   Stack,
   TextareaAutosize,
@@ -28,6 +27,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import {
   SkipNext,
   SkipPrevious,

@@ -66,8 +66,8 @@ export default function ObjectFieldTemplate<
     description,
     disabled,
     formData,
-    idSchema,
-    onAddClick,
+    fieldPathId,
+    onAddProperty,
     properties,
     readonly,
     registry,
@@ -111,10 +111,11 @@ export default function ObjectFieldTemplate<
               const { sm, md, lg } = row[name];
               return (
                 <Grid
-                  item
-                  xs={sm || Math.floor(defaultSm / numberOfColumns)}
-                  md={md || Math.floor(defaultMd / numberOfColumns)}
-                  lg={lg || Math.floor(defaultLg / numberOfColumns)}
+                  size={{
+                    xs: sm || Math.floor(defaultSm / numberOfColumns),
+                    md: md || Math.floor(defaultMd / numberOfColumns),
+                    lg: lg || Math.floor(defaultLg / numberOfColumns),
+                  }}
                 >
                   {element.content}
                 </Grid>
@@ -136,10 +137,10 @@ export default function ObjectFieldTemplate<
   }
 
   return (
-    <fieldset id={idSchema.$id}>
+    <fieldset id={fieldPathId.$id}>
       {(options.title || title) && (
         <TitleFieldTemplate
-          id={`${idSchema.$id}__title`}
+          id={`${fieldPathId.$id}__title`}
           title={options.title || title}
           required={required}
           schema={schema}
@@ -149,7 +150,7 @@ export default function ObjectFieldTemplate<
       )}
       {(options.description || description) && (
         <DescriptionFieldTemplate
-          id={`${idSchema.$id}__description`}
+          id={`${fieldPathId.$id}__description`}
           description={options.description || description!}
           schema={schema}
           uiSchema={uiSchema}
@@ -162,7 +163,7 @@ export default function ObjectFieldTemplate<
       {canExpand<T, S, F>(schema, uiSchema, formData) && (
         <AddButton
           className="object-property-expand"
-          onClick={onAddClick(schema)}
+          onClick={onAddProperty}
           disabled={disabled || readonly}
           uiSchema={uiSchema}
           registry={registry}

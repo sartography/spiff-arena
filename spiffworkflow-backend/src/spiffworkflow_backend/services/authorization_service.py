@@ -283,7 +283,6 @@ class AuthorizationService:
         authentication_exclusion_list = [
             "spiffworkflow_backend.routes.authentication_controller.authentication_options",
             "spiffworkflow_backend.routes.authentication_controller.login",
-            "spiffworkflow_backend.routes.authentication_controller.login_api_return",
             "spiffworkflow_backend.routes.authentication_controller.login_return",
             "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
             "spiffworkflow_backend.routes.authentication_controller.logout",
