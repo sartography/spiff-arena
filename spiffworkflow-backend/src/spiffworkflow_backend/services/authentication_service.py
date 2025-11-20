@@ -121,7 +121,6 @@ class PKCE:
             code_verifier_object.code_verifier = code_verifier
         else:
             code_verifier_object = PkceCodeVerifierModel(pkce_id=pkce_id, code_verifier=code_verifier)
-        code_verifier_object.created_at_in_seconds = round(time.time())
         db.session.add(code_verifier_object)
         try:
             db.session.commit()
@@ -150,6 +149,20 @@ class PKCE:
             ) from e
 
         return code_verifier
+
+    @staticmethod
+    def delete_expired_pkce_code_verifiers(expiration_time_in_seconds: int = 600) -> int:
+        if expiration_time_in_seconds < 0:
+            raise PkceCodeVerifierStorageError("expiration_time_in_seconds must be non-negative")
+
+        now = round(time.time())
+        expired_time_cutoff = now - expiration_time_in_seconds
+
+        deleted_count: int = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.created_at_in_seconds <= expired_time_cutoff
+        ).delete()
+        db.session.commit()
+        return deleted_count
 
 
 class AuthenticationService:

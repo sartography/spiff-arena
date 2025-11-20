@@ -1,6 +1,7 @@
 import ast
 import base64
 import re
+import time
 import urllib.parse
 
 import pytest
@@ -10,6 +11,7 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import PKCE
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
@@ -295,3 +297,31 @@ class TestAuthentication(BaseTest):
                     AuthenticationService().get_auth_token_object(
                         code="fake_auth_code", authentication_identifier="default", pkce_id="invalid_pkce_id"
                     )
+
+    def test_delete_expired_pkce_verifiers(
+        self,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        max_pkce_verifier_time_in_seconds = 100
+
+        non_expired = PkceCodeVerifierModel(pkce_id="1", code_verifier="test_verifier_1")
+        expired = PkceCodeVerifierModel(pkce_id="2", code_verifier="test_verifier_2")
+
+        db.session.add_all([non_expired, expired])
+        db.session.commit()
+
+        # On creation, SpiffworkflowBaseDBModel automatically sets created_at_in_seconds to "now."
+        # We override the timestamps to control expiry behavior explicitly.
+        now = round(time.time())
+        expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds
+        non_expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds + 1
+        db.session.commit()
+
+        assert PkceCodeVerifierModel.query.count() == 2
+
+        deleted_count = PKCE.delete_expired_pkce_code_verifiers(max_pkce_verifier_time_in_seconds)
+        assert deleted_count == 1
+
+        remaining = PkceCodeVerifierModel.query.all()
+        assert len(remaining) == 1
+        assert remaining[0].pkce_id == non_expired.pkce_id
