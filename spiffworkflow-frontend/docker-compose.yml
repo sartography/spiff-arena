@@ -8,7 +8,5 @@ services:
     environment:
       - APPLICATION_ROOT=/
       - PORT0=7001
-      - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA='[{"name":"due_days_after_open","label":"DueDaysAfterOpen","description":"Numberofdaysafteropeninguntildue"},"due_days_before_closing"]'
-      # - SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA="HEY"
     ports:
       - '7001:7001'
