@@ -948,12 +948,25 @@ class ProcessInstanceProcessor:
 
                 form_file_name = None
                 ui_form_file_name = None
+                json_metadata = {}
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:
                         form_file_name = properties["formJsonSchemaFilename"]
                     if "formUiSchemaFilename" in properties:
                         ui_form_file_name = properties["formUiSchemaFilename"]
+                    if "formUiSchemaFilename" in properties:
+                        ui_form_file_name = properties["formUiSchemaFilename"]
+
+                    for key, value in properties.items():
+                        if key.startswith("metadata:"):
+                            metadata_key = key.split("metadata:", 1)[1]
+                            try:
+                                json_metadata[metadata_key] = self._script_engine.evaluate(ready_or_waiting_task, value)
+                            except Exception as e:
+                                current_app.logger.warning(
+                                    f"Failed to evaluate json_metadata key {metadata_key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                                )
 
                 human_task = None
                 for at in initial_human_tasks:
@@ -981,8 +994,14 @@ class ProcessInstanceProcessor:
                         task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                         lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
+                        json_metadata=json_metadata,
                     )
-                    db.session.add(human_task)
+                    try:
+                        db.session.add(human_task)
+                        db.session.flush()
+                    except Exception as e:
+                        print(f"DEBUG: Error adding human task: {e}")
+                        raise e
                     new_humna_tasks.append(human_task)
 
                     for potential_owner in potential_owner_hash["potential_owners"]:
