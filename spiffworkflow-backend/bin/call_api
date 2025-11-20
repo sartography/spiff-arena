@@ -34,6 +34,11 @@ fi
 authorization="Authorization: Bearer $access_token"
 
 if ! grep -qE '^https?:' <<<"$api_path"; then
+  # Add leading slash if not present
+  if [[ "$api_path" != /* ]]; then
+    api_path="/$api_path"
+  fi
+
   if ! grep -qE '/v1\.0' <<<"$api_path"; then
     api_path="${BACKEND_BASE_URL}/v1.0${api_path}"
   else
