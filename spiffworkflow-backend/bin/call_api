@@ -14,24 +14,44 @@ if [[ -z "$api_path" ]]; then
 fi
 shift
 
-username="${SPIFFWORKFLOW_USERNAME:-admin}"
-password="${SPIFFWORKFLOW_PASSWORD:-admin}"
-realm_name="${SPIFFWORKFLOW_REALM:-spiffworkflow}"
-script_dir="$(
-  cd -- "$(dirname "$0")" >/dev/null 2>&1
-  pwd -P
-)"
+# Check if api_path looks like a UUID (8-4-4-4-12 hex digits)
+if [[ "$api_path" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+  # First argument is a UUID, use it as an API key
+  api_key="$api_path"
+  authorization="SpiffWorkflow-Api-Key: $api_key"
+
+  # Get the actual API path from the next argument
+  api_path="${1:-}"
+  if [[ -z "$api_path" ]]; then
+    echo >&2 "usage: $(basename $0) [api_key] [api_path]"
+    exit 1
+  fi
+  shift
+else
+  # Use bearer token authentication
+  username="${SPIFFWORKFLOW_USERNAME:-admin}"
+  password="${SPIFFWORKFLOW_PASSWORD:-admin}"
+  realm_name="${SPIFFWORKFLOW_REALM:-spiffworkflow}"
+  script_dir="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1
+    pwd -P
+  )"
+
+  if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
+    export BACKEND_BASE_URL=http://localhost:7000
+  fi
+
+  access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$realm_name" 2>/tmp/spiff_token.log)
+  if [[ -z "$access_token" ]]; then
+    echo >&2 "ERROR: Could not get token. Error was $(cat /tmp/spiff_token.log)"
+    exit 1
+  fi
+  authorization="Authorization: Bearer $access_token"
+fi
 
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   export BACKEND_BASE_URL=http://localhost:7000
 fi
-
-access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$realm_name" 2>/tmp/spiff_token.log)
-if [[ -z "$access_token" ]]; then
-  echo >&2 "ERROR: Could not get token. Error was $(cat /tmp/spiff_token.log)"
-  exit 1
-fi
-authorization="Authorization: Bearer $access_token"
 
 if ! grep -qE '^https?:' <<<"$api_path"; then
   # Add leading slash if not present
