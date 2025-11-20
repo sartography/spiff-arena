@@ -121,6 +121,7 @@ class PKCE:
             code_verifier_object.code_verifier = code_verifier
         else:
             code_verifier_object = PkceCodeVerifierModel(pkce_id=pkce_id, code_verifier=code_verifier)
+        code_verifier_object.created_at_in_seconds = round(time.time())
         db.session.add(code_verifier_object)
         try:
             db.session.commit()
