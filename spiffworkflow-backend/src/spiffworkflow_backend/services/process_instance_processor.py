@@ -949,6 +949,14 @@ class ProcessInstanceProcessor:
                 form_file_name = None
                 ui_form_file_name = None
                 json_metadata = {}
+                print(f"DEBUG: Extensions keys: {extensions.keys()}")
+                if "taskMetadataValues" in extensions:
+                    val = extensions["taskMetadataValues"]
+                    print(f"DEBUG: taskMetadataValues type: {type(val)}")
+                    print(f"DEBUG: taskMetadataValues repr: {repr(val)}")
+                if hasattr(ready_or_waiting_task.task_spec, "_wf_spec"):
+                    print(f"DEBUG: _wf_spec dir: {dir(ready_or_waiting_task.task_spec._wf_spec)}")
+                print(f"DEBUG: task_spec dir: {dir(ready_or_waiting_task.task_spec)}")
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:

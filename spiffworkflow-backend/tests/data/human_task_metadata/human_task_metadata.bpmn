@@ -17,10 +17,10 @@
     </bpmn:scriptTask>
     <bpmn:userTask id="Activity_1gqykqt" name="User Task with Metadata">
       <bpmn:extensionElements>
-        <spiffworkflow:properties>
-          <spiffworkflow:property name="metadata:dynamic_key" value="my_var" />
-          <spiffworkflow:property name="metadata:static_key" value="'static_value'" />
-        </spiffworkflow:properties>
+        <spiffworkflow:taskMetadataValues>
+          <spiffworkflow:taskMetadataValue name="dynamic_key" value="my_var" />
+          <spiffworkflow:taskMetadataValue name="static_key" value="'static_value'" />
+        </spiffworkflow:taskMetadataValues>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0b04rbg</bpmn:incoming>
       <bpmn:outgoing>Flow_13mlau2</bpmn:outgoing>

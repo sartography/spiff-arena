@@ -6,6 +6,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+
 class TestHumanTaskMetadata(BaseTest):
     def test_json_metadata_population(
         self,
