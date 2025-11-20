@@ -1,5 +1,7 @@
 declare const window: Window & typeof globalThis;
 
+import { TaskMetadataObject } from './interfaces';
+
 const { port, hostname } = window.location;
 let protocol = 'https';
 
@@ -27,6 +29,7 @@ let spiffEnvironment = '';
 let appRoutingStrategy = 'subdomain_based';
 let backendBaseUrl = null;
 let documentationUrl = null;
+let taskMetadataJson = null;
 if ('spiffworkflowFrontendJsenv' in window) {
   if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
     appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
@@ -39,6 +42,9 @@ if ('spiffworkflowFrontendJsenv' in window) {
   }
   if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
     documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
+  }
+  if ('TASK_METADATA' in window.spiffworkflowFrontendJsenv) {
+    taskMetadataJson = window.spiffworkflowFrontendJsenv.TASK_METADATA;
   }
 }
 
@@ -78,6 +84,13 @@ if (!backendBaseUrl) {
 if (!backendBaseUrl.endsWith('/v1.0')) {
   backendBaseUrl += '/v1.0';
 }
+
+let taskMetadata: (string | TaskMetadataObject)[] | null = null;
+if (taskMetadataJson) {
+  taskMetadata = JSON.parse(taskMetadataJson);
+}
+console.log('META', taskMetadata);
+const TASK_METADATA = taskMetadata;
 
 const BACKEND_BASE_URL = backendBaseUrl;
 const DOCUMENTATION_URL = documentationUrl;
@@ -152,5 +165,6 @@ export {
   DOCUMENTATION_URL,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
+  TASK_METADATA,
   TIME_FORMAT_HOURS_MINUTES,
 };

@@ -74,6 +74,7 @@ import {
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
 import ProcessInstanceRun from './ProcessInstanceRun';
+import { TASK_METADATA } from '../config';
 
 type OwnProps = {
   processModelId: string;
@@ -391,14 +392,7 @@ export default function ReactDiagramEditor({
 
     const onMetadataRequested = (event: any) => {
       event.eventBus.fire('spiff.task_metadata_keys.returned', {
-        keys: [
-          {
-            name: 'due_days_after_open',
-            label: 'Due Days After Open',
-            description: 'Number of days after opening until due',
-          },
-          'due_days_before_closing',
-        ],
+        keys: TASK_METADATA,
       });
     };
 
