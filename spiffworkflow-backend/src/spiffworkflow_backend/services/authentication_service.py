@@ -375,8 +375,8 @@ class AuthenticationService:
         return state_payload
 
     @staticmethod
-    def encode_state_payload(state_payload: StatePayload) -> str:
-        return base64.b64encode(bytes(str(state_payload), "UTF-8")).decode("UTF-8")
+    def encode_state_payload(state_payload: StatePayload) -> bytes:
+        return base64.b64encode(bytes(str(state_payload), "UTF-8"))
 
     def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
@@ -391,7 +391,7 @@ class AuthenticationService:
     def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
         redirect_url = self.get_redirect_uri_for_login_to_server()
         state_payload = self.generate_state_payload(authentication_identifier, final_url)
-        state = self.encode_state_payload(state_payload)
+        state = self.encode_state_payload(state_payload).decode("UTF-8")
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"

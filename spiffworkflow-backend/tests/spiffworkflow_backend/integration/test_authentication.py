@@ -1,12 +1,17 @@
 import ast
+import base64
 import re
+import urllib.parse
 
+import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authentication_service import PKCE
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
@@ -21,10 +26,9 @@ class TestAuthentication(BaseTest):
         redirect_url = "http://example.com/"
         state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
         state = AuthenticationService.encode_state_payload(state_payload)
-        state_dict = ast.literal_eval(state)
+        state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
 
         assert isinstance(state_dict, dict)
-        assert "final_url" in state_dict.keys()
         assert state_dict["final_url"] == redirect_url
 
     def test_get_login_state_with_pkce_enabled(self, app: Flask) -> None:
@@ -34,7 +38,7 @@ class TestAuthentication(BaseTest):
                 authentication_identifier="default", final_url=redirect_url
             )
             state = AuthenticationService.encode_state_payload(state_payload)
-            state_dict = ast.literal_eval(state)
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
 
             assert isinstance(state_dict, dict)
             assert isinstance(state_dict["pkce_id"], str)
@@ -235,7 +239,7 @@ class TestAuthentication(BaseTest):
         error_description = "User is not assigned to the client application."
         state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url="/")
         state = AuthenticationService.encode_state_payload(state_payload)
-        url = f"/v1.0/login_return?state={state}&error={error}&error_description={error_description}"
+        url = f"/v1.0/login_return?state={state.decode()}&error={error}&error_description={error_description}"
 
         response = client.get(url)
 
@@ -245,3 +249,49 @@ class TestAuthentication(BaseTest):
         assert f"<strong>Error:</strong> {error}" in response_text
         assert f"<strong>Description:</strong> {error_description}" in response_text
 
+    def test_login_return_contains_pkce_parameters_when_pkce_enforced(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+            redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+            auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+
+            mocker.patch(
+                "spiffworkflow_backend.services.authentication_service.AuthenticationService.open_id_endpoint_for_name",
+                return_value=auth_uri,
+            )
+
+            response = client.get(
+                f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default", follow_redirects=True
+            )
+            parsed_url = urllib.parse.urlparse(str(response.url))
+            params = urllib.parse.parse_qs(parsed_url.query)
+            state = params.get("state", [])[0]
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+
+            assert params.get(PKCE.CODE_CHALLENGE_KEY, [])[0]
+            assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
+            assert isinstance(state_dict["pkce_id"], str)
+
+    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask, mocker: MockerFixture) -> None:
+        with app.test_request_context(
+            "/some/path",
+            base_url="https://example.com/",  # this is what request.host_url will be based on
+        ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+                with pytest.raises(
+                    ApiError,
+                    match="PKCE is enforced but PKCE identifier is missing from state",
+                ):
+                    AuthenticationService().get_auth_token_object(code="fake_auth_code", authentication_identifier="default")
+                with pytest.raises(
+                    ApiError,
+                    match="ApiError: PKCE is enforced but code verifier is missing from storage",
+                ):
+                    AuthenticationService().get_auth_token_object(
+                        code="fake_auth_code", authentication_identifier="default", pkce_id="invalid_pkce_id"
+                    )
