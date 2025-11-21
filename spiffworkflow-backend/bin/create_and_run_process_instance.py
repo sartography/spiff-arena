@@ -1,3 +1,4 @@
+import json
 import sys
 
 from spiffworkflow_backend import create_app
@@ -22,6 +23,11 @@ def main() -> None:
         ProcessInstanceService.run_process_instance_with_processor(
             process_instance, execution_strategy_name=execution_strategy_name
         )
+
+        # Print the final task data
+        final_data = process_instance.get_data()
+        print("\nFinal Task Data:")
+        print(json.dumps(final_data, indent=2))
 
 
 if __name__ == "__main__":
