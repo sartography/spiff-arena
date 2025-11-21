@@ -959,6 +959,9 @@ class ProcessInstanceProcessor:
                             current_app.logger.warning(
                                 f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
                             )
+                            msg = f"Failed to evaluate taskMetadataValue {key}: {e}"
+                            json_metadata[f"{key}_error"] = msg
+
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:
