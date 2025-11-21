@@ -24,14 +24,15 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthentication(BaseTest):
-    def test_get_login_state(self) -> None:
-        redirect_url = "http://example.com/"
-        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
-        state = AuthenticationService.encode_state_payload(state_payload)
-        state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
+    def test_get_login_state_without_pkce_enabled(self, app: Flask,) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False):
+            redirect_url = "http://example.com/"
+            state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
+            state = AuthenticationService.encode_state_payload(state_payload)
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
 
-        assert isinstance(state_dict, dict)
-        assert state_dict["final_url"] == redirect_url
+            assert isinstance(state_dict, dict)
+            assert state_dict["final_url"] == redirect_url
 
     def test_get_login_state_with_pkce_enabled(self, app: Flask) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
