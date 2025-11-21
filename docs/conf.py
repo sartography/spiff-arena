@@ -11,7 +11,7 @@
 #   https://github.com/sartography/spiff-arena/blob/d9b303db782b1004a818c426283e9cfbc5ed0ec7/spiffworkflow-backend/docs/conf.py
 
 project = "SpiffWorkflow"
-copyright = "2023, Sartography"
+copyright = "2025, Sartography"
 author = "Sartography"  # Very ok to add your name here.
 release = "0.1"
 
