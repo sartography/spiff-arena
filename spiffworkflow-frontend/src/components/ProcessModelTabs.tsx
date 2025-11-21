@@ -6,7 +6,6 @@ import {
   Tabs,
   MenuItem,
   Select,
-  Typography,
   FormControl,
   InputLabel,
 } from '@mui/material';
@@ -47,11 +46,7 @@ function TabPanel({ children, value, index }: ProcessModelTabPanelProps) {
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }

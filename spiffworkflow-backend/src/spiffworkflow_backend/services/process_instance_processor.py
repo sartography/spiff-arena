@@ -948,6 +948,17 @@ class ProcessInstanceProcessor:
 
                 form_file_name = None
                 ui_form_file_name = None
+                json_metadata = {}
+                if "taskMetadataValues" in extensions:
+                    task_metadata_values = extensions["taskMetadataValues"]
+                    # Process each taskMetadataValue using the script engine
+                    for key, value in task_metadata_values.items():
+                        try:
+                            json_metadata[key] = self._script_engine.evaluate(ready_or_waiting_task, value)
+                        except Exception as e:
+                            current_app.logger.warning(
+                                f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                            )
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:
@@ -981,6 +992,7 @@ class ProcessInstanceProcessor:
                         task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                         lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
+                        json_metadata=json_metadata,
                     )
                     db.session.add(human_task)
                     new_humna_tasks.append(human_task)
