@@ -168,6 +168,9 @@ class Script:
 
     @staticmethod
     def _get_all_subclasses(script_class: Any) -> list[type[Script]]:
+        # NOTE: for some reason, putting this anywhere else doesn't work. It says the current_app variable is unbound.
+        from flask import current_app
+
         # hackish mess to make sure we have all the modules loaded for the scripts
         pkg_dir = os.path.dirname(__file__)
         for _module_loader, name, _ispkg in pkgutil.iter_modules([pkg_dir]):
@@ -175,8 +178,6 @@ class Script:
 
         # Load global scripts from the process model repository
         try:
-            from flask import current_app
-
             bpmn_spec_dir = current_app.config.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
             global_scripts_dir_name = current_app.config.get("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME")
 
