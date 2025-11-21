@@ -12,4 +12,5 @@ use_custom_process_metadata
 use_process_metadata_backfill
 troubleshoot_locally
 deployment/index
+extend_the_system/index
 ```
