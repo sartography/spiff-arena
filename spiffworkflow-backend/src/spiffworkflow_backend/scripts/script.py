@@ -142,7 +142,12 @@ class Script:
             return run_script_if_allowed
 
         def get_script_function_name(subclass: type[Script]) -> str:
-            return subclass.__module__.split(".")[-1]
+            # Convert class name from PascalCase to snake_case
+            # This works for both normal scripts and global scripts regardless of module names
+            class_name = subclass.__name__
+            import re
+
+            return re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
 
         execlist = {}
         subclasses = Script.get_all_subclasses()
@@ -163,7 +168,6 @@ class Script:
 
     @staticmethod
     def _get_all_subclasses(script_class: Any) -> list[type[Script]]:
-        print(f"CUSTOM: get all subs")
         # hackish mess to make sure we have all the modules loaded for the scripts
         pkg_dir = os.path.dirname(__file__)
         for _module_loader, name, _ispkg in pkgutil.iter_modules([pkg_dir]):
@@ -176,28 +180,20 @@ class Script:
             bpmn_spec_dir = current_app.config.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
             global_scripts_dir_name = current_app.config.get("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME")
 
-            print(f"CUSTOM: checking")
             if bpmn_spec_dir and global_scripts_dir_name:
-                print(f"CUSTOM: got both")
-
                 global_scripts_path = os.path.join(bpmn_spec_dir, global_scripts_dir_name)
                 if os.path.isdir(global_scripts_path):
-                    print(f"CUSTOM: is dir")
                     import sys
 
                     for filename in os.listdir(global_scripts_path):
-                        print(f"CUSTOM: filename: {filename}")
                         if filename.endswith(".py") and not filename.startswith("__"):
-                            print(f"CUSTOM: filename is py: {filename}")
                             filepath = os.path.join(global_scripts_path, filename)
                             module_name = f"global_script_{filename[:-3]}"
                             spec = importlib.util.spec_from_file_location(module_name, filepath)
                             if spec and spec.loader:
-                                print(f"CUSTOM: got spec loader")
                                 module = importlib.util.module_from_spec(spec)
                                 sys.modules[module_name] = module
                                 spec.loader.exec_module(module)
-                                print(f"CUSTOM: done with spec loader")
         except ImportError:
             # Flask might not be installed or we might not be in an app context
             pass
@@ -215,7 +211,5 @@ class Script:
         for subclass in script_class.__subclasses__():
             all_subclasses.append(subclass)
             all_subclasses.extend(Script._get_all_subclasses(subclass))
-        print("CUSTOM: all subs are:")
-        print(all_subclasses)
 
         return all_subclasses
