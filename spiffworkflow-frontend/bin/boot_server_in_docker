@@ -21,7 +21,9 @@ if [[ -n "$react_configs" ]]; then
     exit 1
   fi
 
-  for react_config in $react_configs; do
+  while IFS= read -r react_config; do
+    [[ -z "$react_config" ]] && continue
+    
     env_var=$(awk -F '=' '{print $1}' <<<"$react_config" | sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_//')
     env_value=$(awk -F '=' '{print $2}' <<<"$react_config" | sed -E "s/(^['\"]|['\"]$)//g")
 
@@ -40,7 +42,7 @@ if [[ -n "$react_configs" ]]; then
       echo >&2 "index.html: $(cat $index_html_file)"
       exit 1
     fi
-  done
+  done <<< "$react_configs"
 fi
 
 port_to_use="${PORT0:-80}"
