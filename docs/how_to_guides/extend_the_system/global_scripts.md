@@ -9,7 +9,7 @@ If you need to make network calls, use connectors instead.
 Global Scripts are **disabled by default**. To enable:
 
 ```bash
-SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME=global-scripts
+SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR=global-scripts
 ```
 
 Scripts go in `process-models/global-scripts/` (or whatever directory you specify).

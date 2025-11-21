@@ -181,7 +181,7 @@ class Script:
         # Load global scripts from the process model repository
         try:
             bpmn_spec_dir = current_app.config.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
-            global_scripts_dir_name = current_app.config.get("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME")
+            global_scripts_dir_name = current_app.config.get("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR")
 
             if bpmn_spec_dir and global_scripts_dir_name:
                 global_scripts_path = os.path.join(bpmn_spec_dir, global_scripts_dir_name)

@@ -31,7 +31,7 @@ class HelloWorld(Script):
                 f.write(script_content)
 
             with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR", tmp_dir):
-                with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME", "global-scripts"):
+                with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR", "global-scripts"):
                     # Reset Script.SCRIPT_SUB_CLASSES to None to force reloading
                     # We can reset it by accessing the module
                     import spiffworkflow_backend.scripts.script as script_module
