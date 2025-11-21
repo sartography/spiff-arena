@@ -8,9 +8,14 @@ from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
-from typing import NotRequired
-from typing import TypedDict
 from typing import cast
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
+else:
+    from typing import NotRequired
+    from typing import TypedDict
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
