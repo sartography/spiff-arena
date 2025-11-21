@@ -27,7 +27,9 @@ class TestAuthentication(BaseTest):
     def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False):
             redirect_url = "http://example.com/"
-            state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
+            state_payload = AuthenticationService.generate_state_payload(
+                authentication_identifier="default", final_url=redirect_url
+            )
             state = AuthenticationService.encode_state_payload(state_payload)
             state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
 
@@ -280,7 +282,7 @@ class TestAuthentication(BaseTest):
             assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
             assert isinstance(state_dict["pkce_id"], str)
 
-    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask, mocker: MockerFixture) -> None:
+    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask) -> None:
         with app.test_request_context(
             "/some/path",
             base_url="https://example.com/",  # this is what request.host_url will be based on
