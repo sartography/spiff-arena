@@ -169,6 +169,8 @@ class Script:
     @staticmethod
     def _get_all_subclasses(script_class: Any) -> list[type[Script]]:
         # NOTE: for some reason, putting this anywhere else doesn't work. It says the current_app variable is unbound.
+        import sys
+
         from flask import current_app
 
         # hackish mess to make sure we have all the modules loaded for the scripts
@@ -184,8 +186,6 @@ class Script:
             if bpmn_spec_dir and global_scripts_dir_name:
                 global_scripts_path = os.path.join(bpmn_spec_dir, global_scripts_dir_name)
                 if os.path.isdir(global_scripts_path):
-                    import sys
-
                     for filename in os.listdir(global_scripts_path):
                         if filename.endswith(".py") and not filename.startswith("__"):
                             filepath = os.path.join(global_scripts_path, filename)
@@ -202,8 +202,6 @@ class Script:
             # If we can't load the scripts, we should probably log it.
             # We attempt to log using current_app. If this fails (e.g. no app context),
             # we let it bubble up as it indicates a deeper issue in a context where we expected to load scripts.
-            from flask import current_app
-
             current_app.logger.error(f"Error loading global scripts: {e}")
 
         """Returns a list of all classes that extend this class."""

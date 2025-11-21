@@ -36,20 +36,21 @@ class HelloWorld(Script):
                     # We can reset it by accessing the module
                     import spiffworkflow_backend.scripts.script as script_module
 
-                    script_module.SCRIPT_SUB_CLASSES = None
+                    try:
+                        script_module.SCRIPT_SUB_CLASSES = None
 
-                    subclasses = Script.get_all_subclasses()
-                    hello_world_class = next((s for s in subclasses if s.__name__ == "HelloWorld"), None)
+                        subclasses = Script.get_all_subclasses()
+                        hello_world_class = next((s for s in subclasses if s.__name__ == "HelloWorld"), None)
 
-                    assert hello_world_class is not None, "HelloWorld class should be loaded from global scripts"
+                        assert hello_world_class is not None, "HelloWorld class should be loaded from global scripts"
 
-                    script_instance = hello_world_class()
-                    context = ScriptAttributesContext(
-                        task=None, environment_identifier="testing", process_instance_id=1, process_model_identifier="test"
-                    )
-                    result = script_instance.run(context)
+                        script_instance = hello_world_class()
+                        context = ScriptAttributesContext(
+                            task=None, environment_identifier="testing", process_instance_id=1, process_model_identifier="test"
+                        )
+                        result = script_instance.run(context)
 
-                    assert result == "Hello World from Global Script"
-
-                    # Clean up: Reset SCRIPT_SUB_CLASSES again so it doesn't affect other tests
-                    script_module.SCRIPT_SUB_CLASSES = None
+                        assert result == "Hello World from Global Script"
+                    finally:
+                        # Clean up: Reset SCRIPT_SUB_CLASSES again so it doesn't affect other tests
+                        script_module.SCRIPT_SUB_CLASSES = None
