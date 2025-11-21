@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
-COPY . /app/
+COPY package.json package-lock.json /app/
 
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
@@ -34,6 +34,7 @@ COPY . /app/
 # npx can-i-ignore-scripts can check that it's safe to ignore scripts.
 RUN npm ci --ignore-scripts
 
+COPY . /app/
 RUN ./bin/build
 
 

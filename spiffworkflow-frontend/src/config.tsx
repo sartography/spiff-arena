@@ -1,18 +1,11 @@
 declare const window: Window & typeof globalThis;
 
+import { TaskMetadata, TaskMetadataArraySchema } from './interfaces';
+
 const { port, hostname } = window.location;
 let protocol = 'https';
 
-// so we can turn this feature on and off as we work on it
-let darkModeEnabled = 'true';
-
-if (import.meta.env && import.meta.env.VITE_DARK_MODE_ENABLED) {
-  darkModeEnabled = import.meta.env.VITE_DARK_MODE_ENABLED;
-}
-
-const DARK_MODE_ENABLED = !!(
-  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
-);
+const CONFIGURATION_ERRORS: string[] = [];
 
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
@@ -23,28 +16,41 @@ declare global {
   }
 }
 
-let spiffEnvironment = '';
-let appRoutingStrategy = 'subdomain_based';
-let backendBaseUrl = null;
-let documentationUrl = null;
-if ('spiffworkflowFrontendJsenv' in window) {
-  if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
-    appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+// Helper function to get config value from either runtime config or Vite env
+function getConfigValue(key: string): string | null {
+  if ('spiffworkflowFrontendJsenv' in window) {
+    if (key in window.spiffworkflowFrontendJsenv) {
+      return window.spiffworkflowFrontendJsenv[key];
+    }
   }
-  if ('ENVIRONMENT_IDENTIFIER' in window.spiffworkflowFrontendJsenv) {
-    spiffEnvironment = window.spiffworkflowFrontendJsenv.ENVIRONMENT_IDENTIFIER;
+
+  if (import.meta.env) {
+    const viteKey = `VITE_${key}`;
+    if (viteKey in import.meta.env) {
+      return import.meta.env[viteKey];
+    }
   }
-  if ('BACKEND_BASE_URL' in window.spiffworkflowFrontendJsenv) {
-    backendBaseUrl = window.spiffworkflowFrontendJsenv.BACKEND_BASE_URL;
-  }
-  if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
-    documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
-  }
+
+  return null;
 }
 
-if (import.meta.env && import.meta.env.VITE_BACKEND_BASE_URL) {
-  backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL;
+let darkModeEnabled = getConfigValue('DARK_MODE_ENABLED');
+if (darkModeEnabled === null) {
+  darkModeEnabled = 'true';
 }
+
+const DARK_MODE_ENABLED = !!(
+  darkModeEnabled && darkModeEnabled.toLowerCase() === 'true'
+);
+
+let appRoutingStrategy = getConfigValue('APP_ROUTING_STRATEGY');
+if (appRoutingStrategy === null) {
+  appRoutingStrategy = 'subdomain_based';
+}
+
+let spiffEnvironment = getConfigValue('ENVIRONMENT_IDENTIFIER') || '';
+
+let backendBaseUrl = getConfigValue('BACKEND_BASE_URL');
 
 if (!backendBaseUrl) {
   let hostAndPortAndPathPrefix;
@@ -79,6 +85,23 @@ if (!backendBaseUrl.endsWith('/v1.0')) {
   backendBaseUrl += '/v1.0';
 }
 
+const documentationUrl = getConfigValue('DOCUMENTATION_URL');
+
+const taskMetadataJson = getConfigValue('TASK_METADATA');
+let taskMetadata: TaskMetadata | null = null;
+if (taskMetadataJson) {
+  try {
+    taskMetadata = JSON.parse(taskMetadataJson);
+    // this will validate the object
+    TaskMetadataArraySchema.parse(taskMetadata);
+  } catch (error: any) {
+    CONFIGURATION_ERRORS.push(
+      `Unable to parse configuration 'TASK_METADATA'. Error was ${error.message}`,
+    );
+  }
+}
+const TASK_METADATA = taskMetadata;
+
 const BACKEND_BASE_URL = backendBaseUrl;
 const DOCUMENTATION_URL = documentationUrl;
 
@@ -94,13 +117,9 @@ const PROCESS_STATUSES = [
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss
-let generalDateFormat = 'yyyy-MM-dd';
-// let generalDateFormat = 'dd-MMM-yyyy';
-if (
-  'spiffworkflowFrontendJsenv' in window &&
-  'DATE_FORMAT' in window.spiffworkflowFrontendJsenv
-) {
-  generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
+let generalDateFormat = getConfigValue('DATE_FORMAT');
+if (generalDateFormat === null) {
+  generalDateFormat = 'yyyy-MM-dd';
 }
 
 const splitDateFormat = generalDateFormat.split('-');
@@ -143,6 +162,7 @@ const DATE_RANGE_DELIMITER = ':::';
 const SPIFF_ENVIRONMENT = spiffEnvironment;
 export {
   BACKEND_BASE_URL,
+  CONFIGURATION_ERRORS,
   DARK_MODE_ENABLED,
   DATE_FORMAT,
   DATE_FORMAT_CARBON,
@@ -152,5 +172,6 @@ export {
   DOCUMENTATION_URL,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
+  TASK_METADATA,
   TIME_FORMAT_HOURS_MINUTES,
 };
