@@ -1,4 +1,19 @@
 import { ReactElement } from 'react';
+import { z } from 'zod';
+
+export const TaskMetadataObjectSchema = z
+  .object({
+    name: z.string(),
+    label: z.string().optional(),
+    description: z.string().optional(),
+  })
+  .strict();
+
+export const TaskMetadataArraySchema = z.array(
+  z.union([z.string(), TaskMetadataObjectSchema]),
+);
+
+export type TaskMetadata = z.infer<typeof TaskMetadataArraySchema>;
 
 export interface User {
   id: number;
