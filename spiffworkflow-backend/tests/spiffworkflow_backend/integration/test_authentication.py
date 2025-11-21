@@ -24,7 +24,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthentication(BaseTest):
-    def test_get_login_state_without_pkce_enabled(self, app: Flask,) -> None:
+    def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False):
             redirect_url = "http://example.com/"
             state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
