@@ -124,6 +124,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         HumanTaskModel.process_instance_id,
         HumanTaskModel.created_at_in_seconds,
         HumanTaskModel.updated_at_in_seconds,
+        HumanTaskModel.json_metadata,
         func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier"),
         func.max(ProcessInstanceModel.status).label("process_instance_status"),
         func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
@@ -185,6 +186,7 @@ def task_list_completed(process_instance_id: int, page: int = 1, per_page: int =
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
+            HumanTaskModel.json_metadata,
             UserModel.username.label("completed_by_username"),  # type: ignore
         )
     )
@@ -880,6 +882,7 @@ def _get_tasks(
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
+            HumanTaskModel.json_metadata,
             lane_name_column,
             potential_owner_usernames_from_group_concat_or_similar,
         )

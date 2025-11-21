@@ -7,6 +7,7 @@ import { AbilityContext } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './views/PublicRoutes';
+import { CONFIGURATION_ERRORS } from './config';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,18 @@ export default function App() {
    * https://tanstack.com/query/latest
    */
   const layout = () => {
+    if (CONFIGURATION_ERRORS.length > 0) {
+      return (
+        <div style={{ padding: '20px', color: 'red' }}>
+          <h2>Configuration Errors</h2>
+          <ul>
+            {CONFIGURATION_ERRORS.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
     return (
       <div className="cds--white">
         <QueryClientProvider client={queryClient}>
