@@ -18,7 +18,7 @@ jobs:
         run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.get_sha.outputs.sha }}
 

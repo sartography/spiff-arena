@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v6
@@ -164,7 +164,7 @@ jobs:
       # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
       # - name: Checkout Samples
       #   if: matrix.database == 'sqlite'
-      #   uses: actions/checkout@v5
+      #   uses: actions/checkout@v6
       #   with:
       #     repository: sartography/sample-process-models
       #     path: sample-process-models
@@ -234,7 +234,7 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -259,9 +259,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Checkout Samples
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -278,7 +278,7 @@ jobs:
     needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -362,7 +362,7 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Development Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -398,9 +398,9 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Checkout Samples
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models

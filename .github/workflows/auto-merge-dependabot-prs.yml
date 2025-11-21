@@ -28,7 +28,7 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Development Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       ###### GET PR NUMBER
       # we saved the pr_number in tests.yml. fetch it so we can merge the correct PR.
