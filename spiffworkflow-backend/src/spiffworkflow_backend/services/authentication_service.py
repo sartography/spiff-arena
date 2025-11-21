@@ -383,7 +383,7 @@ class AuthenticationService:
             "final_url": my_final_url,
             "authentication_identifier": authentication_identifier,
         }
-        if current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
             pkce_id = secrets.token_urlsafe(32)  # Associate a unique PKCE id with the request for cross-reference later
             state_payload["pkce_id"] = pkce_id
         return state_payload
@@ -415,7 +415,7 @@ class AuthenticationService:
             + f"redirect_uri={redirect_url}"
         )
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"]:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
             code_verifier = PKCE.generate_code_verifier()
             # Store the verifier server-side for use when exchanging the authorization code.
             PKCE.store_pkce_code_verifier(pkce_id=state_payload["pkce_id"], code_verifier=code_verifier)
@@ -452,7 +452,7 @@ class AuthenticationService:
         }
 
         # Attach PKCE verifier for the authorization_code exchange when enabled.
-        if current_app.config.get("SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE"):
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
             if not pkce_id:
                 # We enforced PKCE when sending the user out; missing pkce_id means something broke.
                 raise ApiError(

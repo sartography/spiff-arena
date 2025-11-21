@@ -20,4 +20,4 @@ class PkceCodeVerifierModel(SpiffworkflowBaseDBModel):
     code_verifier: str = db.Column(db.String(512), nullable=False)
 
     # In case there are accumulated entries, use created_at_in_seconds to determine outdated entries
-    created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
+    created_at_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)

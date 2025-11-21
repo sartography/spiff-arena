@@ -34,7 +34,7 @@ class TestAuthentication(BaseTest):
         assert state_dict["final_url"] == redirect_url
 
     def test_get_login_state_with_pkce_enabled(self, app: Flask) -> None:
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
             redirect_url = "http://example.com/"
             state_payload = AuthenticationService.generate_state_payload(
                 authentication_identifier="default", final_url=redirect_url
@@ -258,7 +258,7 @@ class TestAuthentication(BaseTest):
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
             redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
             auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
 
@@ -284,7 +284,7 @@ class TestAuthentication(BaseTest):
             "/some/path",
             base_url="https://example.com/",  # this is what request.host_url will be based on
         ):
-            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_ENFORCE_PKCE", True):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
                 with pytest.raises(
                     ApiError,
                     match="PKCE is enforced but PKCE identifier is missing from state",
