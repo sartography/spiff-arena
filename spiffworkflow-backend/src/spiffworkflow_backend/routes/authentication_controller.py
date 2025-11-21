@@ -157,7 +157,10 @@ def login_return(
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["final_url"]
     authentication_identifier = state_dict["authentication_identifier"]
-    auth_token_object = AuthenticationService().get_auth_token_object(code, authentication_identifier=authentication_identifier)
+    pkce_id = state_dict.get("pkce_id")  # may be None if PKCE not enforced when state was created
+    auth_token_object = AuthenticationService().get_auth_token_object(
+        code, authentication_identifier=authentication_identifier, pkce_id=pkce_id
+    )
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
         decoded_token = _get_decoded_token(id_token)
@@ -349,6 +352,10 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                     if user:
                         refresh_token = AuthenticationService.get_refresh_token(user.id)
                         if refresh_token:
+                            # Multiple near-simultaneous requests to this endpoint can cause race conditions: an auth server
+                            # that enforces strict refresh token revocation can respond with an an error response, i.e.,
+                            # "You've already used this refresh token." The request here should probably be coordinated by
+                            # a distributed lock of some kind.
                             auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
                                 refresh_token, authentication_identifier=authentication_identifier
                             )
@@ -362,6 +369,8 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                                     "sub": user.service_id,
                                     "iss": user.service,
                                 }
+                                if "refresh_token" in auth_token:
+                                    AuthenticationService.store_refresh_token(user.id, auth_token["refresh_token"])
 
                     if user_info is None:
                         AuthenticationService.set_user_has_logged_out()

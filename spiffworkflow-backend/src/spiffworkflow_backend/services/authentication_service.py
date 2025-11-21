@@ -1,6 +1,7 @@
 import base64
 import enum
 import json
+import secrets
 import sys
 import time
 from hashlib import sha256
@@ -8,6 +9,13 @@ from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
 from typing import cast
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
+else:
+    from typing import NotRequired
+    from typing import TypedDict
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -38,12 +46,15 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import OpenIdConnectionError
+from spiffworkflow_backend.exceptions.error import PkceCodeVerifierStorageError
 from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.exceptions.error import TokenInvalidError
 from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -85,6 +96,78 @@ class AuthenticationOption(AuthenticationOptionForApi):
 
 class AuthenticationOptionNotFoundError(Exception):
     pass
+
+
+class PKCE:
+    """
+    Config to support PKCE (Proof Key for Code Exchange)
+    RFC: https://www.rfc-editor.org/rfc/rfc7636
+    """
+
+    CODE_VERIFIER_KEY = "code_verifier"
+    CODE_CHALLENGE_KEY = "code_challenge"
+    CODE_CHALLENGE_METHOD_KEY = "code_challenge_method"
+
+    @staticmethod
+    def generate_code_verifier() -> str:
+        return base64.urlsafe_b64encode(secrets.token_bytes(64)).rstrip(b"=").decode()
+
+    @staticmethod
+    def generate_code_challenge(verifier: str) -> str:
+        digest = sha256(verifier.encode()).digest()
+        return base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
+
+    @staticmethod
+    def store_pkce_code_verifier(pkce_id: str, code_verifier: str) -> None:
+        code_verifier_object: PkceCodeVerifierModel = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.pkce_id == pkce_id
+        ).first()
+        if code_verifier_object:
+            code_verifier_object.code_verifier = code_verifier
+        else:
+            code_verifier_object = PkceCodeVerifierModel(pkce_id=pkce_id, code_verifier=code_verifier)
+        db.session.add(code_verifier_object)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise PkceCodeVerifierStorageError(f"We could not store the PKCE code verifier. Original error is {e}") from e
+
+    @staticmethod
+    def consume_pkce_code_verifier(pkce_id: str) -> str | None:
+        code_verifier_object: PkceCodeVerifierModel | None = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.pkce_id == pkce_id
+        ).first()
+
+        if code_verifier_object is None:
+            return None
+
+        code_verifier = code_verifier_object.code_verifier
+        db.session.delete(code_verifier_object)
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise PkceCodeVerifierStorageError(
+                f"We could not remove the PKCE code verifier with pkce_id {pkce_id}. Original error is {e}"
+            ) from e
+
+        return code_verifier
+
+    @staticmethod
+    def delete_expired_pkce_code_verifiers(expiration_time_in_seconds: int = 600) -> int:
+        if expiration_time_in_seconds < 0:
+            raise PkceCodeVerifierStorageError("expiration_time_in_seconds must be non-negative")
+
+        now = round(time.time())
+        expired_time_cutoff = now - expiration_time_in_seconds
+
+        deleted_count: int = PkceCodeVerifierModel.query.filter(
+            PkceCodeVerifierModel.created_at_in_seconds <= expired_time_cutoff
+        ).delete()
+        db.session.commit()
+        return deleted_count
 
 
 class AuthenticationService:
@@ -286,8 +369,13 @@ class AuthenticationService:
 
         return redirect(request_url)
 
+    class StatePayload(TypedDict):
+        final_url: str | None
+        authentication_identifier: str
+        pkce_id: NotRequired[str]
+
     @staticmethod
-    def generate_state(authentication_identifier: str, final_url: str | None = None) -> bytes:
+    def generate_state_payload(authentication_identifier: str, final_url: str | None = None) -> StatePayload:
         # The final_url is where we want to return the user to, within the application - in case they
         # where headed to a specific page. This is different than the "redirect url" we specify to
         # the open id server - we want the open id server to always send us back to the login_return
@@ -295,10 +383,19 @@ class AuthenticationService:
         my_final_url = final_url
         if final_url is None:
             my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
-        state = base64.b64encode(
-            bytes(str({"final_url": my_final_url, "authentication_identifier": authentication_identifier}), "UTF-8")
-        )
-        return state
+
+        state_payload: AuthenticationService.StatePayload = {
+            "final_url": my_final_url,
+            "authentication_identifier": authentication_identifier,
+        }
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+            pkce_id = secrets.token_urlsafe(32)  # Associate a unique PKCE id with the request for cross-reference later
+            state_payload["pkce_id"] = pkce_id
+        return state_payload
+
+    @staticmethod
+    def encode_state_payload(state_payload: StatePayload) -> bytes:
+        return base64.b64encode(bytes(str(state_payload), "UTF-8"))
 
     def get_redirect_uri_for_login_to_server(self) -> str:
         host_url = request.host_url.strip("/")
@@ -312,7 +409,8 @@ class AuthenticationService:
 
     def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:
         redirect_url = self.get_redirect_uri_for_login_to_server()
-        state = self.generate_state(authentication_identifier, final_url).decode("UTF-8")
+        state_payload = self.generate_state_payload(authentication_identifier, final_url)
+        state = self.encode_state_payload(state_payload).decode("UTF-8")
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint", authentication_identifier=authentication_identifier)
             + f"?state={state}&"
@@ -321,9 +419,25 @@ class AuthenticationService:
             + f"scope={' '.join(current_app.config['SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES'])}&"
             + f"redirect_uri={redirect_url}"
         )
+
+        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+            code_verifier = PKCE.generate_code_verifier()
+            # Store the verifier server-side for use when exchanging the authorization code.
+            PKCE.store_pkce_code_verifier(pkce_id=state_payload["pkce_id"], code_verifier=code_verifier)
+            code_challenge = PKCE.generate_code_challenge(code_verifier)
+            code_challenge_method = "S256"  # Restrict PKCE challenge method to "S256" since "plain" is less secure.
+            login_redirect_url += (
+                f"&{PKCE.CODE_CHALLENGE_KEY}={code_challenge}&{PKCE.CODE_CHALLENGE_METHOD_KEY}={code_challenge_method}"
+            )
+
         return login_redirect_url
 
-    def get_auth_token_object(self, code: str, authentication_identifier: str) -> dict:
+    def get_auth_token_object(
+        self,
+        code: str,
+        authentication_identifier: str,
+        pkce_id: str | None = None,
+    ) -> dict:
         backend_basic_auth_string = (
             f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
         )
@@ -341,6 +455,32 @@ class AuthenticationService:
             "code": code,
             "redirect_uri": redirect_to_use,
         }
+
+        # Attach PKCE verifier for the authorization_code exchange when enabled.
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
+            if not pkce_id:
+                # We enforced PKCE when sending the user out; missing pkce_id means something broke.
+                raise ApiError(
+                    error_code="missing_pkce_id",
+                    message=(
+                        "PKCE is enforced but PKCE identifier is missing from state. "
+                        "This may indicate a session timeout or configuration issue."
+                    ),
+                    status_code=400,
+                )
+
+            code_verifier = PKCE.consume_pkce_code_verifier(pkce_id=pkce_id)
+            if not code_verifier:
+                raise ApiError(
+                    error_code="missing_pkce_verifier",
+                    message=(
+                        "PKCE is enforced but code verifier is missing from storage. "
+                        "This may indicate a session timeout or configuration issue."
+                    ),
+                    status_code=400,
+                )
+
+            data[PKCE.CODE_VERIFIER_KEY] = code_verifier
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
