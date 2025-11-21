@@ -104,5 +104,8 @@ Here are some of the use cases already implemented by our users:
 - Adding custom styling with CSS files
 
 Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
-When considering an extension, also consider whether the code would be more properly included in the core source code or as a connector inside your [connector proxy](connector_proxy).
+When considering an extension, also consider whether the code would be more properly included in the core source code or as a [connector](how_to_build_a_connector) for external system integrations.
+
+Extensions work well with other SpiffArena extensibility features like [Global Scripts](global_scripts), which provide reusable backend logic that can be called from process models. Extensions can leverage global scripts to perform backend operations while providing custom frontend interfaces.
+
 In cases where an extension is appropriate, by following the instructions in this guide, organizations can expand the system's functionality to meet their unique needs.

@@ -1,5 +1,7 @@
 # How to build a connector
 
+Connectors are custom integrations that run within SpiffArena's [Connector Proxy](../../explanation/dev/connector_proxy) architecture to interact with external systems. The Connector Proxy provides a secure, scalable way to handle these integrations.
+
 While existing connectors like connector-http are very flexible, you may choose to build a connector for a specific use case.
 
 To get an idea of what you are in for, take a look at existing connectors:

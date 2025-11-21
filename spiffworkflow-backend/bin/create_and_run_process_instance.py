@@ -1,3 +1,4 @@
+import json
 import sys
 
 from spiffworkflow_backend import create_app
@@ -7,10 +8,10 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 def main() -> None:
-    app = create_app()
+    flask_app = create_app().app
     process_model_identifier = sys.argv[1].replace(":", "/")
 
-    with app.app.app_context():
+    with flask_app.app_context():
         user = UserModel.query.first()
         if user is None:
             username = "testuser"
@@ -18,10 +19,15 @@ def main() -> None:
         process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_identifier, user
         )
-        execution_strategy_name = app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
+        execution_strategy_name = flask_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         ProcessInstanceService.run_process_instance_with_processor(
             process_instance, execution_strategy_name=execution_strategy_name
         )
+
+        # Print the final task data
+        final_data = process_instance.get_data()
+        print("\nFinal Task Data:")
+        print(json.dumps(final_data, indent=2))
 
 
 if __name__ == "__main__":
