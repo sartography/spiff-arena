@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import os
 import pkgutil
 from abc import abstractmethod
@@ -166,6 +167,38 @@ class Script:
         pkg_dir = os.path.dirname(__file__)
         for _module_loader, name, _ispkg in pkgutil.iter_modules([pkg_dir]):
             importlib.import_module("." + name, __package__)
+
+        # Load global scripts from the process model repository
+        try:
+            from flask import current_app
+
+            bpmn_spec_dir = current_app.config.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
+            global_scripts_dir_name = current_app.config.get("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME")
+
+            if bpmn_spec_dir and global_scripts_dir_name:
+                global_scripts_path = os.path.join(bpmn_spec_dir, global_scripts_dir_name)
+                if os.path.isdir(global_scripts_path):
+                    import sys
+
+                    for filename in os.listdir(global_scripts_path):
+                        if filename.endswith(".py") and not filename.startswith("__"):
+                            filepath = os.path.join(global_scripts_path, filename)
+                            module_name = f"global_script_{filename[:-3]}"
+                            spec = importlib.util.spec_from_file_location(module_name, filepath)
+                            if spec and spec.loader:
+                                module = importlib.util.module_from_spec(spec)
+                                sys.modules[module_name] = module
+                                spec.loader.exec_module(module)
+        except ImportError:
+            # Flask might not be installed or we might not be in an app context
+            pass
+        except Exception as e:
+            # If we can't load the scripts, we should probably log it.
+            # We attempt to log using current_app. If this fails (e.g. no app context),
+            # we let it bubble up as it indicates a deeper issue in a context where we expected to load scripts.
+            from flask import current_app
+
+            current_app.logger.error(f"Error loading global scripts: {e}")
 
         """Returns a list of all classes that extend this class."""
         all_subclasses = []

@@ -64,6 +64,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
 
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
+config_from_env("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR_NAME", default="global-scripts")
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
 
 ### background processor
