@@ -1,4 +1,3 @@
-import pytest
 from flask import Flask
 from starlette.testclient import TestClient
 
@@ -6,6 +5,7 @@ from spiffworkflow_backend.models.api_log_model import APILogModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 
 class TestAPILogging(BaseTest):
     def test_message_send_logging(
@@ -25,15 +25,15 @@ class TestAPILogging(BaseTest):
             # We use a message name that might not exist, but we expect the logging to happen anyway
             # or at least we expect the controller to be called.
             # If the controller returns 404, the logging decorator should still run if it wraps the controller.
-            # Wait, if the controller returns 404 because the message definition is not found, 
+            # Wait, if the controller returns 404 because the message definition is not found,
             # the controller IS called (it's inside message_send that it looks up the message).
-            
+
             response = client.post(
                 "/v1.0/messages/test_message",
                 json={"payload": {"key": "value"}},
                 headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             )
-            
+
             # Even if it fails (404/500), it should log
             logs = db.session.query(APILogModel).all()
             assert len(logs) == 1
@@ -57,15 +57,15 @@ class TestAPILogging(BaseTest):
             db.session.commit()
 
             # URL: /v1.0/process-instance-run/<process_model_id>/<process_instance_id>
-            response = client.post(
+            client.post(
                 "/v1.0/process-instance-run/test_model/123",
                 json={},
                 headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             )
-            
+
             logs = db.session.query(APILogModel).all()
             assert len(logs) == 1
             log = logs[0]
             assert log.endpoint == "/v1.0/process-instance-run/test_model/123"
             assert log.method == "POST"
-            assert log.process_instance_id == 123 # Should be extracted from URL/kwargs if not in response
+            assert log.process_instance_id == 123  # Should be extracted from URL/kwargs if not in response
