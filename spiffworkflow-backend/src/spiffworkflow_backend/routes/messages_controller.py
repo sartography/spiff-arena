@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
+from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
 
 def message_model_list_from_root() -> flask.wrappers.Response:
@@ -90,6 +91,7 @@ def message_instance_list(
 #  -H 'authorization: Bearer [FIXME]' \
 #  -H 'content-type: application/json' \
 #  --data-raw '{"payload":{"sure": "yes", "food": "spicy"}}'
+@log_api_interaction
 def message_send(
     modified_message_name: str,
     body: dict[str, Any],
