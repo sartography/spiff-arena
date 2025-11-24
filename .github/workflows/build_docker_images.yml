@@ -31,11 +31,7 @@ on:
   push:
     branches:
       - main
-      - keycloak-realm-with-groups
-      - fail-fast-off
-      - newui-all-in
-      - rebuild-v1.0.0
-      - support-using-subdir-of-bpmn-spec-repo
+      - api-logs
     tags: [v*]
 
 jobs:
@@ -160,3 +156,4 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
+
