@@ -23,26 +23,28 @@ if [[ -n "$react_configs" ]]; then
 
   while IFS= read -r react_config; do
     [[ -z "$react_config" ]] && continue
-    
+
     env_var=$(awk -F '=' '{print $1}' <<<"$react_config" | sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_//')
     env_value=$(awk -F '=' '{print $2}' <<<"$react_config" | sed -E "s/(^['\"]|['\"]$)//g")
 
-    if [[ -z "$env_var" || -z "$env_value" ]]; then
+    if [[ -z "$env_var" ]]; then
       echo >&2 "ERROR: Could not parse react config line: '${react_config}'."
       exit 1
     fi
 
-    escaped_react_config_value=$(sed -E 's|/|\\/|g' <<<"${env_value}")
-    # actually do the search and replace to add the js config to the html page
-    sed -i "s/\(window.spiffworkflowFrontendJsenv *= *{}\)/\1;window.spiffworkflowFrontendJsenv.${env_var} = '${escaped_react_config_value}'/" "$index_html_file"
+    if [[ -n "$env_value" ]]; then
+      escaped_react_config_value=$(sed -E 's|/|\\/|g' <<<"${env_value}")
+      # actually do the search and replace to add the js config to the html page
+      sed -i "s/\(window.spiffworkflowFrontendJsenv *= *{}\)/\1;window.spiffworkflowFrontendJsenv.${env_var} = '${escaped_react_config_value}'/" "$index_html_file"
 
-    env_value_grep_escaped=$(sed -E 's/\[/\\[/g' <<<"$env_value")
-    if ! grep -q "${env_var} = '${env_value_grep_escaped}'" "$index_html_file"; then
-      echo >&2 "ERROR: Could not find \"${env_var} = '${env_value}'\" in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
-      echo >&2 "index.html: $(cat $index_html_file)"
-      exit 1
+      env_value_grep_escaped=$(sed -E 's/\[/\\[/g' <<<"$env_value")
+      if ! grep -q "${env_var} = '${env_value_grep_escaped}'" "$index_html_file"; then
+        echo >&2 "ERROR: Could not find \"${env_var} = '${env_value}'\" in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
+        echo >&2 "index.html: $(cat $index_html_file)"
+        exit 1
+      fi
     fi
-  done <<< "$react_configs"
+  done <<<"$react_configs"
 fi
 
 port_to_use="${PORT0:-80}"
