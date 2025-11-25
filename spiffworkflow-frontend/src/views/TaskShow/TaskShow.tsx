@@ -108,7 +108,19 @@ export default function TaskShow() {
     const processTaskWithDataResult = (result: Task) => {
       setTaskWithTaskData(result);
 
-      const taskDataToUse = result.saved_form_data || result.data;
+      const variableName = result.extensions.variableName;
+      let taskDataToUse;
+      if (result.saved_form_data) {
+        taskDataToUse = result.saved_form_data;
+      } else if (
+        typeof variableName !== 'undefined' &&
+        variableName != null &&
+        typeof result.data[variableName] !== 'undefined'
+      ) {
+        taskDataToUse = result.data[variableName];
+      } else {
+        taskDataToUse = result.data;
+      }
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
     };
