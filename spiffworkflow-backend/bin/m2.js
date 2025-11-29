@@ -12,7 +12,7 @@ const API_HOST = __ENV.API_HOST || "localhost:7000";
 // k6 configuration
 export const options = {
   vus: 10, // 10 virtual users (5 iterations * 2 concurrent requests)
-  iterations: 10, // Total 10 requests (5 pairs)
+  iterations: 10, // Total 20 requests (10 pairs)
   duration: "30s", // Maximum duration
 };
 
@@ -30,7 +30,7 @@ export default function () {
   const response1 = http.post(
     `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
     payload,
-    { headers: headers }
+    { headers: headers },
   );
 
   // Check first response
@@ -42,7 +42,7 @@ export default function () {
   const response2 = http.post(
     `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
     payload,
-    { headers: headers }
+    { headers: headers },
   );
 
   // Check second response
