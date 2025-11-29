@@ -3,7 +3,7 @@ import { check } from "k6";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 
 // Load API key from environment variable
-const API_KEY = __ENV.CIVI;
+const API_KEY = __ENV.SPIFF_API_KEY || __ENV.CIVI;
 
 // Load host from environment variable, default to localhost for local development
 const API_HOST = __ENV.API_HOST || "localhost:7000";
