@@ -26,28 +26,27 @@ export default function () {
 
   const payload = JSON.stringify({ x: uuid });
 
-  // Make both requests with the same UUID
-  const responses = http.batch([
-    {
-      method: "POST",
-      url: `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
-      body: payload,
-      params: { headers: headers },
-    },
-    {
-      method: "POST",
-      url: `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
-      body: payload,
-      params: { headers: headers },
-    },
-  ]);
+  // Make requests sequentially - first message/one, then message/two
+  const response1 = http.post(
+    `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
+    payload,
+    { headers: headers }
+  );
 
-  // Check responses
-  check(responses[0], {
+  // Check first response
+  check(response1, {
     "message/one status is 200": (r) => r.status === 200,
   });
 
-  check(responses[1], {
+  // Fire second request only after first completes
+  const response2 = http.post(
+    `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
+    payload,
+    { headers: headers }
+  );
+
+  // Check second response
+  check(response2, {
     "message/two status is 200": (r) => r.status === 200,
   });
 }
