@@ -9,6 +9,9 @@ const API_KEY = __ENV.SPIFF_API_KEY || __ENV.CIVI;
 const API_HOST = __ENV.API_HOST || "localhost:7000";
 // const API_HOST = __ENV.API_HOST || "host.docker.internal:7000";
 
+// Load request mode from environment variable: "sequential" or "batch"
+const REQUEST_MODE = __ENV.REQUEST_MODE || "sequential";
+
 // k6 configuration
 export const options = {
   vus: 10, // 10 virtual users (5 iterations * 2 concurrent requests)
@@ -26,27 +29,55 @@ export default function () {
 
   const payload = JSON.stringify({ x: uuid });
 
-  // Make requests sequentially - first message/one, then message/two
-  const response1 = http.post(
-    `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
-    payload,
-    { headers: headers },
-  );
+  if (REQUEST_MODE === "batch") {
+    // Batch mode: fire both requests in parallel
+    const responses = http.batch([
+      [
+        "POST",
+        `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
+        payload,
+        { headers: headers },
+      ],
+      [
+        "POST",
+        `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
+        payload,
+        { headers: headers },
+      ],
+    ]);
 
-  // Check first response
-  check(response1, {
-    "message/one status is 200": (r) => r.status === 200,
-  });
+    // Check first response
+    check(responses[0], {
+      "message/one status is 200": (r) => r.status === 200,
+    });
 
-  // Fire second request only after first completes
-  const response2 = http.post(
-    `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
-    payload,
-    { headers: headers },
-  );
+    // Check second response
+    check(responses[1], {
+      "message/two status is 200": (r) => r.status === 200,
+    });
+  } else {
+    // Sequential mode: fire requests one after another (default)
+    const response1 = http.post(
+      `http://${API_HOST}/v1.0/messages/one?execution_mode=synchronous`,
+      payload,
+      { headers: headers },
+    );
 
-  // Check second response
-  check(response2, {
-    "message/two status is 200": (r) => r.status === 200,
-  });
+    // Check first response
+    check(response1, {
+      "message/one status is 200": (r) => r.status === 200,
+    });
+
+    // Fire second request only after first completes
+    const response2 = http.post(
+      `http://${API_HOST}/v1.0/messages/two?execution_mode=synchronous`,
+      payload,
+      { headers: headers },
+    );
+
+    // Check second response
+    check(response2, {
+      "message/two status is 200": (r) => r.status === 200,
+    });
+  }
 }
