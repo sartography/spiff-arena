@@ -2,7 +2,6 @@
 import os
 import shutil
 from collections.abc import Generator
-from tempfile import TemporaryDirectory
 from typing import Any
 
 import flask
@@ -37,16 +36,14 @@ def _set_unit_testing_env_variables() -> None:
 @pytest.fixture(scope="session")
 def connexion_app() -> Generator[FlaskApp, Any, Any]:  # noqa
     _set_unit_testing_env_variables()
-    with TemporaryDirectory() as temp_dir:
-        os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = temp_dir
-        connexion_app = create_app()
-        with connexion_app.app.app_context():
-            # to screw with this, poet add nplusone --group dev
-            # from nplusone.ext.flask_sqlalchemy import NPlusOne
-            # connexion_app.config["NPLUSONE_RAISE"] = True
-            # NPlusOne(connexion_app)
+    connexion_app = create_app()
+    with connexion_app.app.app_context():
+        # to screw with this, poet add nplusone --group dev
+        # from nplusone.ext.flask_sqlalchemy import NPlusOne
+        # connexion_app.config["NPLUSONE_RAISE"] = True
+        # NPlusOne(connexion_app)
 
-            yield connexion_app
+        yield connexion_app
 
 
 @pytest.fixture(scope="session")
