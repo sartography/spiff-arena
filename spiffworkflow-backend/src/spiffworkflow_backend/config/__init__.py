@@ -34,6 +34,15 @@ def setup_database_configs(app: Flask) -> None:
     if worker_id is not None:
         parallel_test_suffix = f"_{worker_id}"
 
+    database_uri = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+    if database_uri:
+        database_type_from_uri = urlparse(database_uri).scheme
+        if "+" in database_type_from_uri:
+            database_type_from_uri = database_type_from_uri.split("+")[0]
+        if database_type_from_uri == "postgresql":
+            database_type_from_uri = "postgres"
+        app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] = database_type_from_uri
+
     # Validate database type
     database_type = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
     if database_type is not None and database_type not in ["mysql", "postgres", "sqlite"]:
