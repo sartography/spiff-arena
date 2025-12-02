@@ -49,12 +49,22 @@ Here is a complete example of a User Task with both static and dynamic metadata:
 
 ## Step 2: Configure the Frontend
 
-To make use of this metadata in the frontend, you will need to configure the `REACT_APP_HUMAN_TASK_METADATA` environment variable. This variable should be set to a JSON string or a list of strings that defines the metadata to be displayed.
+To make use of this metadata in the frontend, you will need to configure a task metadata environment variable.
+This variable should be set to a JSON string or a list of strings that defines the metadata to be displayed.
+The name of this variable when running locally
 
 For example, to display the `icon` and `my_link` metadata, you would set the following environment variable:
 
 ```
-REACT_APP_HUMAN_TASK_METADATA='["icon", "my_link"]'
+VITE_TASK_METADATA='["icon", "my_link"]'
 ```
+
+You can also include titles and descriptions to help people building diagrams to include more information about each field:
+
+```
+VITE_TASK_METADATA='[{"name":"icon","label": "Icon","description":""},{"name": "my_link","description": "This link will be included when end users complete the task"}]' npm start
+```
+
+`SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA` will be used
 
 This will make the metadata available in the frontend application, where it can be used to customize the display of human tasks.
