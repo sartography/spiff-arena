@@ -1,12 +1,16 @@
 # Use Human Task Metadata
 
-This guide will walk you through the steps to create a process model that attaches metadata to human tasks. This metadata can be used to provide additional information to front-end applications, for example, to display a custom icon or link.
+This guide will walk you through the steps to create a process model that attaches custom metadata to human tasks.
+This metadata can be used to provide additional information to front-end applications, for example, to display a custom icon or link.
+This feature would be configured by system administrators and would allow BPMN process authors to make use of that configuration to dynamically set the metadata.
 
 ## Step 1: Configure the Frontend
 
-Before you can add metadata to your tasks, you need to configure the frontend to recognize which metadata fields are available. Without this configuration, the metadata fields will not appear in the properties panel.
+Before you can add metadata to your tasks, you need to configure the frontend to recognize which metadata fields are available.
+Without this configuration, the metadata fields will not appear in the properties panel.
 
-To configure the available metadata fields, you need to set a task metadata environment variable. This variable should be set to a JSON string or a list of strings that defines the metadata fields that will be available.
+To configure the available metadata fields, you need to set a task metadata environment variable.
+This variable should be set to a JSON string or a list of strings that defines the metadata fields that will be available.
 
 For example, to make `icon` and `my_link` metadata fields available, you would set the following environment variable:
 
@@ -20,15 +24,16 @@ You can also include titles and descriptions to help people building diagrams un
 VITE_TASK_METADATA='[{"name":"icon","label": "Icon","description":""},{"name": "my_link","description": "This link will be included when end users complete the task"}]'
 ```
 
-When running locally, use `VITE_TASK_METADATA`. In production environments, `SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA` will be used.
+When developing locally, use `VITE_TASK_METADATA`.
+In production environments, or even if you are using a built docker image of spiffworkflow-frontend, specify `SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA`.
 
-Once configured, these metadata fields will be available in the properties panel when you select a User Task.
+Once configured, these metadata fields will be available in the properties panel as the "Task Metadata" group when you select a User Task.
 
 ## Step 2: Add Metadata to User Tasks
 
-In your BPMN diagram, select the User Task to which you want to add metadata. In the properties panel, go to the "Extensions" tab and add a new "spiffworkflow:taskMetadataValues" extension.
-
-Within this extension, you can add multiple `spiffworkflow:taskMetadataValue` elements, each with a `name` and a `value`.
+In your BPMN diagram, select the User Task to which you want to add metadata.
+In the properties panel, go to the "Task Metadata" group.
+If the system has been configured to allow `icon` and `my_link`, these two fields will be available to fill out.
 
 ### Static Metadata
 
