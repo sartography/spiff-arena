@@ -2,7 +2,29 @@
 
 This guide will walk you through the steps to create a process model that attaches metadata to human tasks. This metadata can be used to provide additional information to front-end applications, for example, to display a custom icon or link.
 
-## Step 1: Define the Process Model
+## Step 1: Configure the Frontend
+
+Before you can add metadata to your tasks, you need to configure the frontend to recognize which metadata fields are available. Without this configuration, the metadata fields will not appear in the properties panel.
+
+To configure the available metadata fields, you need to set a task metadata environment variable. This variable should be set to a JSON string or a list of strings that defines the metadata fields that will be available.
+
+For example, to make `icon` and `my_link` metadata fields available, you would set the following environment variable:
+
+```
+VITE_TASK_METADATA='["icon", "my_link"]'
+```
+
+You can also include titles and descriptions to help people building diagrams understand what each field is for:
+
+```
+VITE_TASK_METADATA='[{"name":"icon","label": "Icon","description":""},{"name": "my_link","description": "This link will be included when end users complete the task"}]'
+```
+
+When running locally, use `VITE_TASK_METADATA`. In production environments, `SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA` will be used.
+
+Once configured, these metadata fields will be available in the properties panel when you select a User Task.
+
+## Step 2: Add Metadata to User Tasks
 
 In your BPMN diagram, select the User Task to which you want to add metadata. In the properties panel, go to the "Extensions" tab and add a new "spiffworkflow:taskMetadataValues" extension.
 
@@ -32,7 +54,7 @@ For dynamic metadata, the `value` is an expression that will be evaluated when t
 
 In this example, `my_var` is a process variable that will be substituted into the URL.
 
-Here is a complete example of a User Task with both static and dynamic metadata:
+Here is a complete example showing the underlying XML format with both static and dynamic metadata:
 
 ```xml
 <bpmn:userTask id="Activity_1gqykqt" name="User Task with Metadata">
@@ -47,24 +69,4 @@ Here is a complete example of a User Task with both static and dynamic metadata:
 </bpmn:userTask>
 ```
 
-## Step 2: Configure the Frontend
-
-To make use of this metadata in the frontend, you will need to configure a task metadata environment variable.
-This variable should be set to a JSON string or a list of strings that defines the metadata to be displayed.
-The name of this variable when running locally
-
-For example, to display the `icon` and `my_link` metadata, you would set the following environment variable:
-
-```
-VITE_TASK_METADATA='["icon", "my_link"]'
-```
-
-You can also include titles and descriptions to help people building diagrams to include more information about each field:
-
-```
-VITE_TASK_METADATA='[{"name":"icon","label": "Icon","description":""},{"name": "my_link","description": "This link will be included when end users complete the task"}]' npm start
-```
-
-`SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA` will be used
-
-This will make the metadata available in the frontend application, where it can be used to customize the display of human tasks.
+Once you've added metadata to your tasks, it will be available in the frontend application, where it can be used to customize the display of human tasks.
