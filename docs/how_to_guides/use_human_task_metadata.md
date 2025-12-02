@@ -38,8 +38,8 @@ If the system has been configured to allow `icon` and `my_link`, these two field
 
 When you fill out the values for each metadata variable in any given user task, you can do so with a static value or a dynamic value (which can use future running process instance data).
 
-For static metadata, the `value` is a literal string, like `'fa-user'`.
-For dynamic metadata, the `value` is an expression that will be evaluated when the task becomes available for completion, like `f'https://example.com/details/{my_var}'`.
+For static metadata, the value is a literal string, like `'fa-user'`.
+For dynamic metadata, the value is an expression that will be evaluated when the task becomes available for completion, like `f'https://example.com/details/{my_var}'`.
 
 In this example, `my_var` is a process variable that will be substituted into the URL.
 
