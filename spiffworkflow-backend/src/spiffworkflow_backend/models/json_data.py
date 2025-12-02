@@ -4,13 +4,9 @@ import json
 from hashlib import sha256
 from typing import TypedDict
 
-from flask import current_app
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
-from sqlalchemy.exc import IntegrityError
-
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 class JsonDataModelNotFoundError(Exception):
@@ -65,25 +61,11 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
-            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
-                # For MySQL, use naive insert to avoid deadlocks from ON DUPLICATE KEY UPDATE.
-                # We already have the hash, so we don't need anything back from the insert.
-                # We iterate one-by-one (vs batch) since MySQL lacks a deadlock-free batch upsert equivalent.
-                for json_data_dict in list_of_dicts:
-                    try:
-                        db.session.execute(mysql_insert(JsonDataModel).values(json_data_dict))
-                    except IntegrityError as e:
-                        # Check if it's a duplicate key error (errno 1062)
-                        if e.orig.args[0] == 1062:
-                            # Record already exists, this is expected and fine
-                            continue
-                        # Some other integrity error, re-raise
-                        raise
-            else:
-                # PostgreSQL's on_conflict_do_nothing doesn't have deadlock issues
-                insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
-                on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["hash"])
-                db.session.execute(on_duplicate_key_stmt)
+            insert_or_ignore_duplicate(
+                model_class=JsonDataModel,
+                values=list_of_dicts,
+                postgres_conflict_index_elements=["hash"],
+            )
 
     @classmethod
     def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:
