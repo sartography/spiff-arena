@@ -7,7 +7,7 @@ from spiffworkflow_backend.models.user import UserModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
-class TestAPILogging(BaseTest):
+class TestApiLogging(BaseTest):
     def test_message_send_logging(
         self,
         app: Flask,
