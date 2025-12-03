@@ -1,20 +1,18 @@
 """Unit tests for deferred API logging functionality."""
 
-import json
 from typing import Any
-from unittest.mock import patch, MagicMock
-from flask import Flask, g
+from unittest.mock import patch
+
 import pytest
+from flask import Flask
+from flask import g
 
 from spiffworkflow_backend.models.api_log_model import APILogModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.utils.api_logging import (
-    log_api_interaction,
-    setup_deferred_logging,
-    _queue_api_log_entry,
-    _process_log_queue,
-    _log_queue
-)
+from spiffworkflow_backend.utils.api_logging import _log_queue
+from spiffworkflow_backend.utils.api_logging import _process_log_queue
+from spiffworkflow_backend.utils.api_logging import _queue_api_log_entry
+from spiffworkflow_backend.utils.api_logging import log_api_interaction
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -23,6 +21,7 @@ class TestDeferredAPILogging(BaseTest):
 
     def test_decorator_respects_config_setting(self, app: Flask) -> None:
         """Test that the decorator only logs when enabled."""
+
         @log_api_interaction
         def test_function() -> tuple[dict[str, str], int]:
             return {"result": "success"}, 200
@@ -43,6 +42,7 @@ class TestDeferredAPILogging(BaseTest):
 
     def test_decorator_creates_log_when_enabled(self, app: Flask) -> None:
         """Test that the decorator creates logs when enabled."""
+
         @log_api_interaction
         def test_function() -> tuple[dict[str, str], int]:
             return {"result": "success"}, 200
@@ -62,7 +62,7 @@ class TestDeferredAPILogging(BaseTest):
                     assert result == ({"result": "success"}, 200)
 
                     # Process any queued logs (simulating teardown)
-                    if hasattr(g, 'has_pending_api_logs') and g.has_pending_api_logs:
+                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
                         _process_log_queue()
 
                 # Should create a log entry
@@ -81,6 +81,7 @@ class TestDeferredAPILogging(BaseTest):
 
     def test_decorator_logs_exceptions(self, app: Flask) -> None:
         """Test that the decorator logs when the decorated function raises exceptions."""
+
         @log_api_interaction
         def test_function() -> None:
             raise ValueError("Test error")
@@ -100,7 +101,7 @@ class TestDeferredAPILogging(BaseTest):
                         test_function()
 
                     # Process any queued logs
-                    if hasattr(g, 'has_pending_api_logs') and g.has_pending_api_logs:
+                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
                         _process_log_queue()
 
                 # Should still create a log entry for the failed request
@@ -139,7 +140,7 @@ class TestDeferredAPILogging(BaseTest):
                         test_function()
 
                     # Process any queued logs
-                    if hasattr(g, 'has_pending_api_logs') and g.has_pending_api_logs:
+                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
                         _process_log_queue()
 
                 # Should create a log entry with API error details
@@ -154,6 +155,7 @@ class TestDeferredAPILogging(BaseTest):
 
     def test_process_instance_id_extraction(self, app: Flask) -> None:
         """Test extraction of process_instance_id from various sources."""
+
         @log_api_interaction
         def test_function_with_kwargs(process_instance_id: int | None = None) -> tuple[dict[str, dict[str, int]], int]:
             return {"process_instance": {"id": 456}}, 200
@@ -170,10 +172,10 @@ class TestDeferredAPILogging(BaseTest):
             try:
                 with app.test_request_context("/test"):
                     # Test extraction from kwargs
-                    result = test_function_with_kwargs(process_instance_id=123)
+                    test_function_with_kwargs(process_instance_id=123)
 
                     # Process any queued logs
-                    if hasattr(g, 'has_pending_api_logs') and g.has_pending_api_logs:
+                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
                         _process_log_queue()
 
                 logs = db.session.query(APILogModel).all()
@@ -197,12 +199,7 @@ class TestDeferredAPILogging(BaseTest):
                 _log_queue.get_nowait()
 
             # Create a log entry outside request context
-            log_entry = APILogModel(
-                endpoint="/test",
-                method="POST",
-                status_code=200,
-                duration_ms=100
-            )
+            log_entry = APILogModel(endpoint="/test", method="POST", status_code=200, duration_ms=100)
 
             # This should process immediately since we're outside Flask context
             _queue_api_log_entry(log_entry)
@@ -225,12 +222,7 @@ class TestDeferredAPILogging(BaseTest):
 
             # Add multiple entries to queue
             for i in range(3):
-                log_entry = APILogModel(
-                    endpoint=f"/test{i}",
-                    method="GET",
-                    status_code=200,
-                    duration_ms=50 + i
-                )
+                log_entry = APILogModel(endpoint=f"/test{i}", method="GET", status_code=200, duration_ms=50 + i)
                 _log_queue.put(log_entry)
 
             # Process the queue
@@ -259,16 +251,11 @@ class TestDeferredAPILogging(BaseTest):
                 g.has_pending_api_logs = True
 
                 # Create a mock log entry in the queue
-                log_entry = APILogModel(
-                    endpoint="/teardown_test",
-                    method="POST",
-                    status_code=201,
-                    duration_ms=75
-                )
+                log_entry = APILogModel(endpoint="/teardown_test", method="POST", status_code=201, duration_ms=75)
                 _log_queue.put(log_entry)
 
                 # Manually call what the teardown handler would do
-                if hasattr(g, 'has_pending_api_logs') and g.has_pending_api_logs:
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
                     _process_log_queue()
 
             # Verify the log was processed
@@ -276,20 +263,15 @@ class TestDeferredAPILogging(BaseTest):
             assert len(logs) == 1
             assert logs[0].status_code == 201
 
-    @patch('spiffworkflow_backend.utils.api_logging.logger')
+    @patch("spiffworkflow_backend.utils.api_logging.logger")
     def test_error_handling_in_log_processing(self, mock_logger: Any, app: Flask) -> None:
         """Test error handling when log processing fails."""
         with app.app_context():
             # Create a valid log entry but mock db.session.commit to raise an exception
-            test_entry = APILogModel(
-                endpoint="/error_test",
-                method="GET",
-                status_code=200,
-                duration_ms=100
-            )
+            test_entry = APILogModel(endpoint="/error_test", method="GET", status_code=200, duration_ms=100)
 
             # Mock db.session.commit to raise an exception
-            with patch('spiffworkflow_backend.models.db.db.session.commit', side_effect=Exception("DB Error")):
+            with patch("spiffworkflow_backend.models.db.db.session.commit", side_effect=Exception("DB Error")):
                 _log_queue.put(test_entry)
                 _process_log_queue()
 
