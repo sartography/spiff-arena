@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import Any
 
 from flask import Response
+from flask import current_app
 from flask import request
 
 from spiffworkflow_backend.models.api_log_model import APILogModel
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 def log_api_interaction(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        # Check if API logging is enabled
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
+            return func(*args, **kwargs)
+
         start_time = time.time()
 
         # Capture request details
