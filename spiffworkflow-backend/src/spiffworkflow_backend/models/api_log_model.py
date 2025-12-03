@@ -17,5 +17,7 @@ class APILogModel(SpiffworkflowBaseDBModel):
     request_body: dict | None = db.Column(db.JSON)
     response_body: dict | None = db.Column(db.JSON)
     status_code: int = db.Column(db.Integer, index=True)
-    process_instance_id: int | None = db.Column(db.Integer, nullable=True, index=True)
     duration_ms: int = db.Column(db.Integer, index=True)
+
+    # not a foreign key so we can create and keep the log regardless of the state or process instance
+    process_instance_id: int | None = db.Column(db.Integer, nullable=True, index=True)
