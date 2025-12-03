@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from datetime import timezone
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -10,7 +11,7 @@ class APILogModel(SpiffworkflowBaseDBModel):
     __tablename__ = "api_log"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    created_at: datetime = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at: datetime = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     endpoint: str = db.Column(db.String(255), index=True)
     method: str = db.Column(db.String(10), index=True)
     request_body: dict | None = db.Column(db.JSON)
