@@ -11,6 +11,7 @@ from flask import Flask
 from flask import Response
 from flask import current_app
 from flask import g
+from flask import has_request_context
 from flask import request
 
 from spiffworkflow_backend.models.api_log_model import APILogModel
@@ -53,9 +54,14 @@ def _queue_api_log_entry(log_entry: APILogModel) -> None:
     _log_queue.put(log_entry)
 
     # Try to mark that we have pending logs for this request context
-    try:
-        g.has_pending_api_logs = True
-    except RuntimeError:
+    if has_request_context():  # type: ignore[no-untyped-call]
+        try:
+            g.has_pending_api_logs = True
+        except RuntimeError:
+            # Fallback: process immediately if we can't set the flag
+            logger.debug("Processing API log immediately - couldn't set g flag")
+            _process_log_queue()
+    else:
         # Outside Flask request context (like in tests), process logs immediately
         logger.debug("Processing API log immediately - outside Flask request context")
         _process_log_queue()
@@ -75,9 +81,7 @@ def log_api_interaction(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Check if API logging is enabled
-        is_logging_enabled = current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False)
-        logger.debug(f"API logging decorator called for {func.__name__}, enabled: {is_logging_enabled}")
-        if not is_logging_enabled:
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
             return func(*args, **kwargs)
 
         start_time = time.time()
@@ -126,10 +130,14 @@ def log_api_interaction(func: Callable) -> Callable:
                         # despite the header, or some other issue. We'll just skip the body.
                         logger.warning("Failed to parse response body as JSON", exc_info=True)
                         pass
+                elif isinstance(response, tuple) and len(response) >= 2:
+                    # Handle tuple responses like (data, status_code) or (data, status_code, headers)
+                    response_body = response[0]
+                    if isinstance(response[1], int):
+                        status_code = response[1]
                 else:
-                    # Handle cases where response might not be a Flask Response object immediately
-                    # (though in controllers it usually is)
-                    pass
+                    # Handle other response types - assume it's the response body
+                    response_body = response
 
             # Extract process_instance_id if available in response
             if response_body and isinstance(response_body, dict):
@@ -154,7 +162,6 @@ def log_api_interaction(func: Callable) -> Callable:
                 duration_ms=duration_ms,
             )
             # Queue the log entry for deferred processing instead of immediate commit
-            logger.debug(f"Queueing log entry for {endpoint} with status {status_code}")
             _queue_api_log_entry(log_entry)
 
         return response
