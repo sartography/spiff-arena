@@ -383,11 +383,13 @@ def process_model_test_run(
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     process_model_test_runner = ProcessModelTestRunner(
+        process_model_identifier,
         process_model_directory_path=FileSystemService.root_path(),
         process_model_directory_for_test_discovery=FileSystemService.full_path_from_id(process_model.id),
         test_case_file=test_case_file,
         test_case_identifier=test_case_identifier,
     )
+
     process_model_test_runner.run()
 
     response_json = {

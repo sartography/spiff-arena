@@ -66,6 +66,9 @@ class ApiError(Exception):
             msg += f"In file {self.file_name}. "
         return msg
 
+    def to_dict(self) -> dict:
+        return self.serialized()
+
     def serialized(self) -> dict[str, Any]:
         initial_dict = self.__dict__
         return_dict = {}

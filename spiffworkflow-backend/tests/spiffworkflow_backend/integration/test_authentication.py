@@ -303,6 +303,7 @@ class TestAuthentication(BaseTest):
 
     def test_delete_expired_pkce_verifiers(
         self,
+        app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         max_pkce_verifier_time_in_seconds = 100

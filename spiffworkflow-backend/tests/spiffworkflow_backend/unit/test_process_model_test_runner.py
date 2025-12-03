@@ -24,7 +24,7 @@ class TestProcessModelTestRunner(BaseTest):
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        process_model_test_runner = ProcessModelTestRunner(os.path.join(self.root_path(), "DNE"))
+        process_model_test_runner = ProcessModelTestRunner("", os.path.join(self.root_path(), "DNE"))
         with pytest.raises(NoTestCasesFoundError):
             process_model_test_runner.run()
         assert process_model_test_runner.all_test_cases_passed(), process_model_test_runner.test_case_results
@@ -36,7 +36,7 @@ class TestProcessModelTestRunner(BaseTest):
     ) -> None:
         with pytest.raises(UnsupporterRunnerDelegateGivenError):
             ProcessModelTestRunner(
-                os.path.join(self.root_path(), "DNE"), process_model_test_runner_delegate_class=NoTestCasesFoundError
+                "", os.path.join(self.root_path(), "DNE"), process_model_test_runner_delegate_class=NoTestCasesFoundError
             )
 
     def test_can_test_multiple_process_models_with_all_passing_tests(
@@ -116,6 +116,7 @@ class TestProcessModelTestRunner(BaseTest):
         if bpmn_process_directory_name:
             path_segments = path_segments + [bpmn_process_directory_name]
         process_model_test_runner = ProcessModelTestRunner(
+            "",
             process_model_directory_path=os.path.join(*base_process_model_dir_path_segments),
             process_model_directory_for_test_discovery=os.path.join(*path_segments),
             test_case_file=test_case_file,
