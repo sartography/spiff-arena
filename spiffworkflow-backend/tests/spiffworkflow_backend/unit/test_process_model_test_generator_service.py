@@ -63,6 +63,7 @@ class TestProcessModelTestGeneratorService(BaseTest):
         with open(os.path.join(process_model_path, "test_main.json"), "w") as f:
             f.write(json.dumps(bpmn_unit_test_specification, indent=2))
         process_model_test_runner = ProcessModelTestRunner(
+            "",
             process_model_directory_path=process_model_path,
             process_model_directory_for_test_discovery=process_model_path,
             test_case_file="test_main.json",

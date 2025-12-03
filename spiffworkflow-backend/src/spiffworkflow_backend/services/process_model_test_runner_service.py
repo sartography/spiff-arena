@@ -15,6 +15,7 @@ from typing import Any
 
 import dateparser
 import pytz
+from flask import current_app
 from lxml import etree  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -24,6 +25,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -264,6 +266,8 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         return bpmn_process_instance
 
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
+        KKVDataStore.add_data_store_getters_to_spiff_task(spiff_task)
+
         if task_data_for_submit is not None or spiff_task.task_spec.manual:
             if task_data_for_submit is not None:
                 DeepMerge.merge(spiff_task.data, task_data_for_submit)
@@ -337,12 +341,14 @@ class ProcessModelTestRunner:
 
     def __init__(
         self,
+        process_model_identifier: str,
         process_model_directory_path: str,
         process_model_test_runner_delegate_class: type = ProcessModelTestRunnerMostlyPureSpiffDelegate,
         process_model_directory_for_test_discovery: str | None = None,
         test_case_file: str | None = None,
         test_case_identifier: str | None = None,
     ) -> None:
+        self.process_model_identifier = process_model_identifier
         self.process_model_directory_path = process_model_directory_path
         self.process_model_directory_for_test_discovery = (
             process_model_directory_for_test_discovery or process_model_directory_path
@@ -384,6 +390,10 @@ class ProcessModelTestRunner:
         return "\n".join(formatted_tests)
 
     def run(self) -> None:
+        tld = current_app.config.get("THREAD_LOCAL_DATA")
+        if tld:
+            tld.process_model_identifier = self.process_model_identifier
+
         if len(self.test_mappings.items()) < 1:
             raise NoTestCasesFoundError(
                 f"Could not find any test cases in given directory: {self.process_model_directory_for_test_discovery}"
@@ -555,21 +565,3 @@ class ProcessModelTestRunner:
 
 class ProcessModelTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
     pass
-
-
-class ProcessModelTestRunnerService:
-    def __init__(
-        self,
-        process_model_directory_path: str,
-        test_case_file: str | None = None,
-        test_case_identifier: str | None = None,
-    ) -> None:
-        self.process_model_test_runner = ProcessModelTestRunner(
-            process_model_directory_path,
-            test_case_file=test_case_file,
-            test_case_identifier=test_case_identifier,
-            process_model_test_runner_delegate_class=ProcessModelTestRunnerBackendDelegate,
-        )
-
-    def run(self) -> None:
-        self.process_model_test_runner.run()
