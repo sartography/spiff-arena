@@ -115,6 +115,9 @@ def log_api_interaction(func: Callable) -> Callable:
                 status_code = e.status_code
             if hasattr(e, "to_dict"):
                 response_body = e.to_dict()
+            else:
+                response_body = {"fabricated_response_body_from_exception": f"{e.__class__.__name__}: {str(e)}"}
+
             raise e
         finally:
             duration_ms = int((time.time() - start_time) * 1000)
