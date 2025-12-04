@@ -123,7 +123,7 @@ class SpiffLogHandler(SocketHandler):
             # Exceptions during connecting and sending are just silently caught and the socket is closed and set to None
             # As a first step (ie, not rewriting the entire handler) log when this happens
             if self.sock is None:
-                self.app.logger.error('Event logger socket failure')
+                self.app.logger.error("Event logger socket failure")
         except Exception:
             self.handleError(record)
 
