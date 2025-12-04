@@ -15,7 +15,7 @@ jobs:
       - name: Get SHA for workflow_run
         id: get_sha
         if: github.event_name == 'workflow_run'
-        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@v6
