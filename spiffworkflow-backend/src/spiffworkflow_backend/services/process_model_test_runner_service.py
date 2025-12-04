@@ -25,7 +25,6 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
-from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
@@ -266,8 +265,6 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
         return bpmn_process_instance
 
     def execute_task(self, spiff_task: SpiffTask, task_data_for_submit: dict | None = None) -> None:
-        KKVDataStore.add_data_store_getters_to_spiff_task(spiff_task)
-
         if task_data_for_submit is not None or spiff_task.task_spec.manual:
             if task_data_for_submit is not None:
                 DeepMerge.merge(spiff_task.data, task_data_for_submit)
