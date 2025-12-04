@@ -116,9 +116,16 @@ class SpiffLogHandler(SocketHandler):
         else:
             return False
 
-    def makePickle(self, record: Any) -> bytes:  # noqa: N802
-        # Instead of returning a pickled log record, write the json entry to the socket
-        return (self.format(record) + "\n").encode("utf-8")
+    def emit(self, record: Any) -> None:  # noqa: N802
+        try:
+            rec = (self.format(record) + "\n").encode("utf-8")
+            self.send(rec)
+            # Exceptions during connecting and sending are just silently caught and the socket is closed and set to None
+            # As a first step (ie, not rewriting the entire handler) log when this happens
+            if self.sock is None:
+                self.app.logger.error('Event logger socket failure')
+        except Exception:
+            self.handleError(record)
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
