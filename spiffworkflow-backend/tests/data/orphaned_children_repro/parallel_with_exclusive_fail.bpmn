@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_ParallelWithExclusiveFail"
+                  targetNamespace="http://example.com/parallel-exclusive-fail">
+  <bpmn:process id="Process_ParallelExclusiveFail" isExecutable="true">
+
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:scriptTask id="Task_Init" name="Initialize">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToParallelGateway</bpmn:outgoing>
+      <bpmn:script>
+initialized = True
+route_choice = "A"  # This will be used by the exclusive gateway
+      </bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- PARALLEL GATEWAY - Creates 3 READY branches -->
+    <bpmn:parallelGateway id="Gateway_Parallel_Fork">
+      <bpmn:incoming>Flow_ToParallelGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchA</bpmn:outgoing>
+      <bpmn:outgoing>Flow_BranchB</bpmn:outgoing>
+      <bpmn:outgoing>Flow_BranchC</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Branch A: Simple successful path -->
+    <bpmn:scriptTask id="Task_BranchA" name="Branch A Processing">
+      <bpmn:incoming>Flow_BranchA</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchA_ToMerge</bpmn:outgoing>
+      <bpmn:script>branch_a = "completed"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Branch B: Service Task (FAILS) → Exclusive Gateway → Multiple Paths -->
+    <!-- THIS IS THE KEY BRANCH THAT SHOULD TRIGGER THE BUG -->
+    <bpmn:serviceTask id="Task_ServiceFail" name="Service Task That Fails">
+      <bpmn:incoming>Flow_BranchB</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToExclusiveGateway</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http_GetRequest" resultVariable="response">
+          http/GetRequest
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:parameters>
+          <spiffworkflow:parameter id="url" type="str" value="&quot;https://invalid-url-will-fail-12345.test/api&quot;"/>
+        </spiffworkflow:parameters>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- EXCLUSIVE GATEWAY after the failing service task -->
+    <!-- This creates PREDICTED children that might become orphaned -->
+    <bpmn:exclusiveGateway id="Gateway_Exclusive" name="Route Decision" default="Flow_RouteDefault">
+      <bpmn:incoming>Flow_ToExclusiveGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_RouteA</bpmn:outgoing>
+      <bpmn:outgoing>Flow_RouteB</bpmn:outgoing>
+      <bpmn:outgoing>Flow_RouteDefault</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:scriptTask id="Task_RouteA" name="Route A">
+      <bpmn:incoming>Flow_RouteA</bpmn:incoming>
+      <bpmn:outgoing>Flow_RouteA_ToMerge</bpmn:outgoing>
+      <bpmn:script>route = "A"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <bpmn:scriptTask id="Task_RouteB" name="Route B">
+      <bpmn:incoming>Flow_RouteB</bpmn:incoming>
+      <bpmn:outgoing>Flow_RouteB_ToMerge</bpmn:outgoing>
+      <bpmn:script>route = "B"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <bpmn:scriptTask id="Task_RouteDefault" name="Route Default">
+      <bpmn:incoming>Flow_RouteDefault</bpmn:incoming>
+      <bpmn:outgoing>Flow_RouteDefault_ToMerge</bpmn:outgoing>
+      <bpmn:script>route = "default"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Merge routes back -->
+    <bpmn:exclusiveGateway id="Gateway_Exclusive_Merge">
+      <bpmn:incoming>Flow_RouteA_ToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_RouteB_ToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_RouteDefault_ToMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchB_ToMerge</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Branch C: Another simple successful path -->
+    <bpmn:scriptTask id="Task_BranchC" name="Branch C Processing">
+      <bpmn:incoming>Flow_BranchC</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchC_ToMerge</bpmn:outgoing>
+      <bpmn:script>branch_c = "completed"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- PARALLEL GATEWAY MERGE -->
+    <bpmn:parallelGateway id="Gateway_Parallel_Merge">
+      <bpmn:incoming>Flow_BranchA_ToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_BranchB_ToMerge</bpmn:incoming>
+      <bpmn:incoming>Flow_BranchC_ToMerge</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToEnd</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_ToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="Task_Init"/>
+    <bpmn:sequenceFlow id="Flow_ToParallelGateway" sourceRef="Task_Init" targetRef="Gateway_Parallel_Fork"/>
+
+    <!-- Parallel branches -->
+    <bpmn:sequenceFlow id="Flow_BranchA" sourceRef="Gateway_Parallel_Fork" targetRef="Task_BranchA"/>
+    <bpmn:sequenceFlow id="Flow_BranchB" sourceRef="Gateway_Parallel_Fork" targetRef="Task_ServiceFail"/>
+    <bpmn:sequenceFlow id="Flow_BranchC" sourceRef="Gateway_Parallel_Fork" targetRef="Task_BranchC"/>
+
+    <!-- Branch B internal flows (Service → Exclusive Gateway → Routes) -->
+    <bpmn:sequenceFlow id="Flow_ToExclusiveGateway" sourceRef="Task_ServiceFail" targetRef="Gateway_Exclusive"/>
+
+    <bpmn:sequenceFlow id="Flow_RouteA" sourceRef="Gateway_Exclusive" targetRef="Task_RouteA">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">route_choice == "A"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_RouteB" sourceRef="Gateway_Exclusive" targetRef="Task_RouteB">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">route_choice == "B"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_RouteDefault" sourceRef="Gateway_Exclusive" targetRef="Task_RouteDefault"/>
+
+    <!-- Routes merge back -->
+    <bpmn:sequenceFlow id="Flow_RouteA_ToMerge" sourceRef="Task_RouteA" targetRef="Gateway_Exclusive_Merge"/>
+    <bpmn:sequenceFlow id="Flow_RouteB_ToMerge" sourceRef="Task_RouteB" targetRef="Gateway_Exclusive_Merge"/>
+    <bpmn:sequenceFlow id="Flow_RouteDefault_ToMerge" sourceRef="Task_RouteDefault" targetRef="Gateway_Exclusive_Merge"/>
+
+    <!-- Branches merge to parallel gateway -->
+    <bpmn:sequenceFlow id="Flow_BranchA_ToMerge" sourceRef="Task_BranchA" targetRef="Gateway_Parallel_Merge"/>
+    <bpmn:sequenceFlow id="Flow_BranchB_ToMerge" sourceRef="Gateway_Exclusive_Merge" targetRef="Gateway_Parallel_Merge"/>
+    <bpmn:sequenceFlow id="Flow_BranchC_ToMerge" sourceRef="Task_BranchC" targetRef="Gateway_Parallel_Merge"/>
+
+    <bpmn:sequenceFlow id="Flow_ToEnd" sourceRef="Gateway_Parallel_Merge" targetRef="EndEvent_1"/>
+
+  </bpmn:process>
+</bpmn:definitions>

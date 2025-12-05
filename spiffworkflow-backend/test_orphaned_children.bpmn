@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
+                  targetNamespace="http://example.com/bpmn-repro">
+  <bpmn:process id="Process_OrphanedChildren" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Initialize data -->
+    <bpmn:scriptTask id="ScriptTask_Init" name="Initialize workflow" scriptFormat="python">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:script>
+workflow_id = "test-123"
+should_fail = True
+      </bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Service task that fails IMMEDIATELY -->
+    <bpmn:serviceTask id="ServiceTask_Fail" name="Service that fails immediately">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http_GetRequest" resultVariable="api_response">
+          http/GetRequest
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:parameters>
+          <spiffworkflow:parameter id="url" type="str" value="&quot;https://this-will-definitely-fail-12345678.example.invalid/api&quot;"/>
+        </spiffworkflow:parameters>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- This task should be PREDICTED but the service task fails before it's processed -->
+    <bpmn:scriptTask id="ScriptTask_AfterService" name="Task after failed service" scriptFormat="python">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:script>
+result = "completed"
+      </bpmn:script>
+    </bpmn:scriptTask>
+
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="ScriptTask_Init"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="ScriptTask_Init" targetRef="ServiceTask_Fail"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="ServiceTask_Fail" targetRef="ScriptTask_AfterService"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="ScriptTask_AfterService" targetRef="EndEvent_1"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_OrphanedChildren">
+      <bpmndi:BPMNShape id="Shape_StartEvent_1" bpmnElement="StartEvent_1">
+        <dc:Bounds x="100" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ScriptTask_Init" bpmnElement="ScriptTask_Init">
+        <dc:Bounds x="200" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ServiceTask_Fail" bpmnElement="ServiceTask_Fail">
+        <dc:Bounds x="350" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ScriptTask_AfterService" bpmnElement="ScriptTask_AfterService">
+        <dc:Bounds x="500" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_EndEvent_1" bpmnElement="EndEvent_1">
+        <dc:Bounds x="650" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="136" y="118"/>
+        <di:waypoint x="200" y="118"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_2" bpmnElement="Flow_2">
+        <di:waypoint x="300" y="118"/>
+        <di:waypoint x="350" y="118"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_3" bpmnElement="Flow_3">
+        <di:waypoint x="450" y="118"/>
+        <di:waypoint x="500" y="118"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_4" bpmnElement="Flow_4">
+        <di:waypoint x="600" y="118"/>
+        <di:waypoint x="650" y="118"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

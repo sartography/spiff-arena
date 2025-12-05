@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
+                  id="Definitions_OrphanedChildren"
+                  targetNamespace="http://example.com/orphaned-children">
+  <bpmn:process id="Process_OrphanedChildren" isExecutable="true">
+
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:scriptTask id="Task_Init" name="Initialize Data">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToGateway</bpmn:outgoing>
+      <bpmn:script>initialized = True</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Parallel Gateway - creates all children immediately -->
+    <bpmn:parallelGateway id="Gateway_Fork">
+      <bpmn:incoming>Flow_ToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchA</bpmn:outgoing>
+      <bpmn:outgoing>Flow_BranchB</bpmn:outgoing>
+      <bpmn:outgoing>Flow_BranchC</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Branch A: Simple script task -->
+    <bpmn:scriptTask id="Task_BranchA" name="Branch A Processing">
+      <bpmn:incoming>Flow_BranchA</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchA_End</bpmn:outgoing>
+      <bpmn:script>branch_a = "completed"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Branch B: Failing service task -->
+    <bpmn:serviceTask id="Task_ServiceFail" name="Service Task That Fails">
+      <bpmn:incoming>Flow_BranchB</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchB_End</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http_GetRequest" resultVariable="response">
+          http/GetRequest
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:parameters>
+          <spiffworkflow:parameter id="url" type="str" value="&quot;https://invalid-url-that-will-fail-12345.test/api&quot;"/>
+        </spiffworkflow:parameters>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- Branch C: Script task with subprocess -->
+    <bpmn:scriptTask id="Task_BranchC" name="Branch C Processing">
+      <bpmn:incoming>Flow_BranchC</bpmn:incoming>
+      <bpmn:outgoing>Flow_BranchC_End</bpmn:outgoing>
+      <bpmn:script>branch_c = "completed"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Merge Gateway -->
+    <bpmn:parallelGateway id="Gateway_Merge">
+      <bpmn:incoming>Flow_BranchA_End</bpmn:incoming>
+      <bpmn:incoming>Flow_BranchB_End</bpmn:incoming>
+      <bpmn:incoming>Flow_BranchC_End</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToEnd</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_ToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="Task_Init"/>
+    <bpmn:sequenceFlow id="Flow_ToGateway" sourceRef="Task_Init" targetRef="Gateway_Fork"/>
+    <bpmn:sequenceFlow id="Flow_BranchA" sourceRef="Gateway_Fork" targetRef="Task_BranchA"/>
+    <bpmn:sequenceFlow id="Flow_BranchB" sourceRef="Gateway_Fork" targetRef="Task_ServiceFail"/>
+    <bpmn:sequenceFlow id="Flow_BranchC" sourceRef="Gateway_Fork" targetRef="Task_BranchC"/>
+    <bpmn:sequenceFlow id="Flow_BranchA_End" sourceRef="Task_BranchA" targetRef="Gateway_Merge"/>
+    <bpmn:sequenceFlow id="Flow_BranchB_End" sourceRef="Task_ServiceFail" targetRef="Gateway_Merge"/>
+    <bpmn:sequenceFlow id="Flow_BranchC_End" sourceRef="Task_BranchC" targetRef="Gateway_Merge"/>
+    <bpmn:sequenceFlow id="Flow_ToEnd" sourceRef="Gateway_Merge" targetRef="EndEvent_1"/>
+
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_OrphanedChildren">
+      <bpmndi:BPMNShape id="Shape_StartEvent" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_TaskInit" bpmnElement="Task_Init">
+        <dc:Bounds x="240" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_GatewayFork" bpmnElement="Gateway_Fork">
+        <dc:Bounds x="395" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_TaskA" bpmnElement="Task_BranchA">
+        <dc:Bounds x="500" y="40" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ServiceTask" bpmnElement="Task_ServiceFail">
+        <dc:Bounds x="500" y="150" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_TaskC" bpmnElement="Task_BranchC">
+        <dc:Bounds x="500" y="260" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_GatewayMerge" bpmnElement="Gateway_Merge">
+        <dc:Bounds x="655" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_EndEvent" bpmnElement="EndEvent_1">
+        <dc:Bounds x="762" y="102" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

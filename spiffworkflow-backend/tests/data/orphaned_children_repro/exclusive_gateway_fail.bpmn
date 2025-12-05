@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_ExclusiveGatewayFail"
+                  targetNamespace="http://example.com/exclusive-gateway-fail">
+  <bpmn:process id="Process_ExclusiveGatewayFail" isExecutable="true">
+
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- This service task fails BEFORE the gateway -->
+    <bpmn:serviceTask id="Task_ServiceFail" name="Service Task That Fails">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToGateway</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http_GetRequest" resultVariable="response">
+          http/GetRequest
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:parameters>
+          <spiffworkflow:parameter id="url" type="str" value="&quot;https://invalid-url-12345.test/api&quot;"/>
+        </spiffworkflow:parameters>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- Exclusive gateway - only ONE path will be READY, others are PREDICTED -->
+    <bpmn:exclusiveGateway id="Gateway_Exclusive">
+      <bpmn:incoming>Flow_ToGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_PathA</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PathB</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Default</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Path A -->
+    <bpmn:scriptTask id="Task_PathA" name="Path A">
+      <bpmn:incoming>Flow_PathA</bpmn:incoming>
+      <bpmn:outgoing>Flow_PathA_End</bpmn:outgoing>
+      <bpmn:script>path = "A"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Path B -->
+    <bpmn:scriptTask id="Task_PathB" name="Path B">
+      <bpmn:incoming>Flow_PathB</bpmn:incoming>
+      <bpmn:outgoing>Flow_PathB_End</bpmn:outgoing>
+      <bpmn:script>path = "B"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <!-- Default Path -->
+    <bpmn:scriptTask id="Task_Default" name="Default Path">
+      <bpmn:incoming>Flow_Default</bpmn:incoming>
+      <bpmn:outgoing>Flow_Default_End</bpmn:outgoing>
+      <bpmn:script>path = "default"</bpmn:script>
+    </bpmn:scriptTask>
+
+    <bpmn:endEvent id="EndEvent_A">
+      <bpmn:incoming>Flow_PathA_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_B">
+      <bpmn:incoming>Flow_PathB_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_Default">
+      <bpmn:incoming>Flow_Default_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="Task_ServiceFail"/>
+    <bpmn:sequenceFlow id="Flow_ToGateway" sourceRef="Task_ServiceFail" targetRef="Gateway_Exclusive"/>
+
+    <bpmn:sequenceFlow id="Flow_PathA" sourceRef="Gateway_Exclusive" targetRef="Task_PathA">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">choice == "A"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_PathB" sourceRef="Gateway_Exclusive" targetRef="Task_PathB">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">choice == "B"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_Default" sourceRef="Gateway_Exclusive" targetRef="Task_Default"/>
+
+    <bpmn:sequenceFlow id="Flow_PathA_End" sourceRef="Task_PathA" targetRef="EndEvent_A"/>
+    <bpmn:sequenceFlow id="Flow_PathB_End" sourceRef="Task_PathB" targetRef="EndEvent_B"/>
+    <bpmn:sequenceFlow id="Flow_Default_End" sourceRef="Task_Default" targetRef="EndEvent_Default"/>
+
+  </bpmn:process>
+</bpmn:definitions>
