@@ -753,12 +753,15 @@ def _get_task_model_for_request(
                 task_model.form_ui_schema = {}
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
 
+            subset_var = extensions.get("variableName")
+            if subset_var:
+                task_model.data = { subset_var: task_model.data.get(subset_var, {}) } 
+            
         # it should be safe to add instructions to the task spec here since we are never commiting it back to the db
         extensions["instructionsForEndUser"] = JinjaService.render_instructions_for_end_user(task_model, extensions)
-
+        
     task_model.extensions = extensions
     return task_model
-
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_data: dict) -> None:
