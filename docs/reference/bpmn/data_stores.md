@@ -11,6 +11,41 @@ You might use a Data Store when it is not sufficient for data to be accessible i
 If you have a use case where you need to store data and access it from multiple different process instances, you could also consider using a Service Task to contact a database external to SpiffWorkflow, either via a database library in a connector or using a database via an API.
 All of these mechanisms work well in SpiffWorkflow, so the choice will depend on your storage and performance requirements.
 
+## Access Control and Hierarchical Scoping
+
+Data stores use hierarchical scoping based on process group locations. This allows data stores to be shared across related process groups while maintaining appropriate access boundaries.
+
+### How It Works
+
+When a process accesses a data store, the system searches upward through the process group hierarchy to find a matching data store by identifier:
+
+1. Search starts at the process's current location
+2. Continues up through each parent location
+3. Ends at the root level (`""`)
+4. Returns the first (most specific) match found
+
+**Closest Match Priority**: When multiple data stores share the same identifier at different hierarchy levels, the most specific (deepest) location takes precedence.
+
+**Unidirectional Inheritance**: Child process groups can access data stores defined in parent locations, but parent process groups cannot access data stores defined in child locations.
+
+### Example
+
+For a process at location `site-administration/reporting/monthly`:
+
+```
+Search order:
+  1. site-administration/reporting/monthly
+  2. site-administration/reporting
+  3. site-administration
+  4. "" (root)
+```
+
+If a data store with identifier `customer_db` exists at both `site-administration` and root levels, the process will use the `site-administration` version (closest match).
+
+### Data Store Identity
+
+Data stores are uniquely identified by `(type, location, identifier)`. This means the same identifier can exist at multiple locations in the hierarchy, with each representing a distinct data store.
+
 ## Types of Data Store
 
 1. {ref}`kkv-data-store`
