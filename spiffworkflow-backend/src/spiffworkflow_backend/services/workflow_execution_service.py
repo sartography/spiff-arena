@@ -275,10 +275,8 @@ class ExecutionStrategy:
                     task_info = (
                         f"Task: {failed_task.task_spec.name} (bpmn_name: {failed_task.task_spec.bpmn_name}, id: {failed_task.id})"
                     )
-                    exception_with_context = type(exception)(f"{task_info} - {str(exception)}", failed_task)
-                    exception_with_context.__cause__ = exception
-                    exception_with_context.__traceback__ = exception.__traceback__
-                    exceptions.append(exception_with_context)
+                    exception.args = (f"{task_info} - {str(exception)}",)
+                    exceptions.append(exception)
 
             for spiff_task in completed_tasks:
                 self.delegate.did_complete_task(spiff_task)
