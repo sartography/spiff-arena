@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import sys
 import time
 from abc import abstractmethod
 from collections.abc import Callable
@@ -8,6 +9,13 @@ from datetime import datetime
 from threading import Lock
 from typing import Any
 from uuid import UUID
+
+# ExceptionGroup is built-in in Python 3.11+, but needs backport for 3.10
+if sys.version_info < (3, 11):
+    try:
+        from exceptiongroup import ExceptionGroup  # type: ignore[assignment]
+    except ImportError:
+        pass  # Runtime will catch NameError if not available
 
 import flask.app
 from flask import current_app
