@@ -752,8 +752,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         // reverse operates on self as well as return the new ordered array so reverse it right away
         successCallback: (results: BasicTask[]) =>
           setTaskInstancesToDisplay(results.reverse()),
-        failureCallback: (error: any) => {
-          setTaskDataToDisplay(`ERROR: ${error.message}`);
+        failureCallback: (err: any) => {
+          setTaskDataToDisplay(`ERROR: ${err.message}`);
         },
       });
     },
@@ -781,8 +781,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
           httpMethod: 'GET',
           successCallback: processTaskResult,
-          failureCallback: (error: any) => {
-            setTaskDataToDisplay(`ERROR: ${error.message}`);
+          failureCallback: (err: any) => {
+            setTaskDataToDisplay(`ERROR: ${err.message}`);
             setShowTaskDataLoading(false);
           },
         });
