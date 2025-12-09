@@ -241,24 +241,52 @@ class ExecutionStrategy:
         # service tasks at once - many api calls, and then get those responses back without
         # waiting for each individual task to complete.
         futures = []
+        future_to_task = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for spiff_task in engine_steps:
                 self.delegate.will_complete_task(spiff_task)
-                futures.append(
-                    executor.submit(
-                        self._run,
-                        spiff_task,
-                        current_app._get_current_object(),
-                        user,
-                        process_instance.process_model_identifier,
-                        process_instance.id,
-                    )
+                future = executor.submit(
+                    self._run,
+                    spiff_task,
+                    current_app._get_current_object(),
+                    user,
+                    process_instance.process_model_identifier,
+                    process_instance.id,
                 )
-            for future in concurrent.futures.as_completed(futures):
-                spiff_task = future.result()
+                futures.append(future)
+                future_to_task[id(future)] = spiff_task
 
-            for spiff_task in engine_steps:
+            exceptions = []
+            completed_tasks = []
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    spiff_task = future.result()
+                    completed_tasks.append(spiff_task)
+                except Exception as exception:
+                    failed_task = future_to_task[id(future)]
+                    task_info = (
+                        f"Task: {failed_task.task_spec.name} (bpmn_name: {failed_task.task_spec.bpmn_name}, id: {failed_task.id})"
+                    )
+                    exception_with_context = type(exception)(f"{task_info} - {str(exception)}", failed_task)
+                    exception_with_context.__cause__ = exception
+                    exception_with_context.__traceback__ = exception.__traceback__
+                    exceptions.append(exception_with_context)
+
+            for spiff_task in completed_tasks:
                 self.delegate.did_complete_task(spiff_task)
+
+            if exceptions:
+                # Try to use ExceptionGroup (Python 3.11+), fall back to raising first exception
+                try:
+                    exception_strings = [str(exception) for exception in exceptions]
+                    msg = f"{len(exceptions)} task(s) failed during parallel {exception_strings}"
+
+                    raise ExceptionGroup(msg, exceptions)
+                except NameError:
+                    if len(exceptions) > 1:
+                        for exc in exceptions[1:]:
+                            current_app.logger.error(f"Additional task failure during parallel execution: {exc}", exc_info=exc)
+                    raise exceptions[0]
 
     def _run_engine_steps_without_threads(
         self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
