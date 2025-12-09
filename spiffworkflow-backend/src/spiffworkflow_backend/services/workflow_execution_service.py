@@ -286,7 +286,7 @@ class ExecutionStrategy:
                     if len(exceptions) > 1:
                         for exc in exceptions[1:]:
                             current_app.logger.error(f"Additional task failure during parallel execution: {exc}", exc_info=exc)
-                    raise exceptions[0]
+                    raise exceptions[0] from None
 
     def _run_engine_steps_without_threads(
         self, engine_steps: list[SpiffTask], process_instance: ProcessInstanceModel, user: UserModel | None
