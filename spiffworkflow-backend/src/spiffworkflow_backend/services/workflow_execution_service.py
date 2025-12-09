@@ -254,8 +254,13 @@ class ExecutionStrategy:
                         process_instance.id,
                     )
                 )
+
+            exceptions = []
             for future in concurrent.futures.as_completed(futures):
-                spiff_task = future.result()
+                try:
+                    spiff_task = future.result()
+                except Exception as exception:
+                    exceptions.append(exception)
 
             for spiff_task in engine_steps:
                 self.delegate.did_complete_task(spiff_task)
