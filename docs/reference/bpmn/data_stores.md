@@ -46,12 +46,6 @@ If a data store with identifier `customer_db` exists at both `site-administratio
 
 Data stores are uniquely identified by `(type, location, identifier)`. This means the same identifier can exist at multiple locations in the hierarchy, with each representing a distinct data store.
 
-### Called Process Scoping
-
-When a process is initiated through a Call Activity, its access to data stores is determined by its own location within the process group hierarchy, not the location of the calling process.
-
-For instance, if a process located in a `site-administration` group calls a process in a `finance` group, the called process will only have access to data stores within the `finance` hierarchy. It will not be able to access data stores from the `site-administration` group unless they are defined at a common ancestor level (e.g., the root level). This ensures that data access remains confined to the appropriate process group, even when processes are called across different branches of the hierarchy.
-
 ## Types of Data Store
 
 1. {ref}`kkv-data-store`
