@@ -13,7 +13,7 @@ from uuid import UUID
 # ExceptionGroup is built-in in Python 3.11+, but needs backport for 3.10
 if sys.version_info < (3, 11):
     try:
-        from exceptiongroup import ExceptionGroup  # type: ignore[assignment]
+        from exceptiongroup import ExceptionGroup
     except ImportError:
         pass  # Runtime will catch NameError if not available
 
