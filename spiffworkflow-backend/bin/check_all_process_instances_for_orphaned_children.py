@@ -37,11 +37,11 @@ def check_all_process_instances(limit: int | None = None, status_filter: str | N
 
     process_instances = query.all()
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"CHECKING {len(process_instances)} PROCESS INSTANCE(S) FOR ORPHANED CHILDREN")
     if status_filter:
         print(f"Status Filter: {status_filter}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     affected_process_instances = []
     total_orphaned_references = 0
@@ -75,22 +75,26 @@ def check_all_process_instances(limit: int | None = None, status_filter: str | N
 
             if missing_children:
                 orphaned_count += len(missing_children)
-                tasks_with_orphaned_children.append({
-                    "task_guid": task.guid,
-                    "task_state": task.state,
-                    "task_bpmn_id": task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN",
-                    "missing_count": len(missing_children),
-                })
+                tasks_with_orphaned_children.append(
+                    {
+                        "task_guid": task.guid,
+                        "task_state": task.state,
+                        "task_bpmn_id": task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN",
+                        "missing_count": len(missing_children),
+                    }
+                )
 
         if orphaned_count > 0:
-            affected_process_instances.append({
-                "process_instance_id": process_instance.id,
-                "process_model": process_instance.process_model_identifier,
-                "status": process_instance.status,
-                "orphaned_references": orphaned_count,
-                "tasks_with_orphans": len(tasks_with_orphaned_children),
-                "task_details": tasks_with_orphaned_children,
-            })
+            affected_process_instances.append(
+                {
+                    "process_instance_id": process_instance.id,
+                    "process_model": process_instance.process_model_identifier,
+                    "status": process_instance.status,
+                    "orphaned_references": orphaned_count,
+                    "tasks_with_orphans": len(tasks_with_orphaned_children),
+                    "task_details": tasks_with_orphaned_children,
+                }
+            )
             total_orphaned_references += orphaned_count
 
         # Progress indicator
@@ -98,9 +102,9 @@ def check_all_process_instances(limit: int | None = None, status_filter: str | N
             print(f"Checked {idx}/{len(process_instances)} process instances...")
 
     # Print summary
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("SCAN COMPLETE")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     print(f"Total Process Instances Scanned: {len(process_instances)}")
     print(f"Total Tasks Checked: {total_tasks_checked}")
@@ -108,15 +112,15 @@ def check_all_process_instances(limit: int | None = None, status_filter: str | N
     print(f"Total Orphaned Child References: {total_orphaned_references}")
 
     if affected_process_instances:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("AFFECTED PROCESS INSTANCES")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         print(f"{'Process ID':<12} {'Status':<12} {'Model':<40} {'Orphans':<10} {'Tasks':<10}")
-        print(f"{'-'*12} {'-'*12} {'-'*40} {'-'*10} {'-'*10}")
+        print(f"{'-' * 12} {'-' * 12} {'-' * 40} {'-' * 10} {'-' * 10}")
 
         for item in affected_process_instances:
-            model = item['process_model']
+            model = item["process_model"]
             if len(model) > 37:
                 model = model[:34] + "..."
 
@@ -128,30 +132,32 @@ def check_all_process_instances(limit: int | None = None, status_filter: str | N
                 f"{item['tasks_with_orphans']:<10}"
             )
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("DETAILED BREAKDOWN")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         for item in affected_process_instances:
             print(f"\nProcess Instance: {item['process_instance_id']}")
             print(f"  Model: {item['process_model']}")
             print(f"  Status: {item['status']}")
             print(f"  Total Orphaned References: {item['orphaned_references']}")
-            print(f"  Tasks with Orphaned Children:")
+            print("  Tasks with Orphaned Children:")
 
-            for task_detail in item['task_details']:
+            for task_detail in item["task_details"]:
                 print(f"    - {task_detail['task_bpmn_id']} [{task_detail['task_state']}]")
                 print(f"      GUID: {task_detail['task_guid']}")
                 print(f"      Missing Children: {task_detail['missing_count']}")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("RECOMMENDATIONS")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         print("To get detailed information about a specific process instance, run:")
-        print(f"  ./bin/run_local_python_script bin/check_orphaned_task_children.py <process_instance_id>")
+        print("  ./bin/run_local_python_script bin/check_orphaned_task_children.py <process_instance_id>")
         print("\nExample:")
-        print(f"  ./bin/run_local_python_script bin/check_orphaned_task_children.py {affected_process_instances[0]['process_instance_id']}")
+        print(
+            f"  ./bin/run_local_python_script bin/check_orphaned_task_children.py {affected_process_instances[0]['process_instance_id']}"
+        )
 
     else:
         print("\n✅ NO ORPHANED CHILD REFERENCES FOUND")

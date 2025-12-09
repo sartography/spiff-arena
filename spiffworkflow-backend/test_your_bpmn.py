@@ -6,7 +6,6 @@ from flask import Flask
 from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -23,6 +22,7 @@ def test_your_original_bpmn_with_diagnostics(
 
     # First, let me save your BPMN to the test data directory
     import os
+
     test_data_dir = "tests/data/orphaned_children_repro"
     os.makedirs(test_data_dir, exist_ok=True)
 
@@ -134,9 +134,7 @@ branch_c_status = "success"
         process_model_source_directory="orphaned_children_repro",
     )
 
-    process_instance = base_test.create_process_instance_from_process_model(
-        process_model=process_model
-    )
+    process_instance = base_test.create_process_instance_from_process_model(process_model=process_model)
 
     processor = ProcessInstanceProcessor(process_instance)
 
@@ -150,15 +148,13 @@ branch_c_status = "success"
     # Refresh and check
     db.session.refresh(process_instance)
 
-    all_tasks = TaskModel.query.filter_by(
-        process_instance_id=process_instance.id
-    ).all()
+    all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
 
     existing_guids = {t.guid for t in all_tasks}
 
-    print(f"\n{'='*80}")
-    print(f"TASK ANALYSIS FOR USER'S ORIGINAL BPMN")
-    print(f"{'='*80}")
+    print(f"\n{'=' * 80}")
+    print("TASK ANALYSIS FOR USER'S ORIGINAL BPMN")
+    print(f"{'=' * 80}")
     print(f"\nTotal tasks: {len(all_tasks)}")
 
     # Count by state
@@ -184,7 +180,7 @@ branch_c_status = "success"
         missing = [c for c in children if c not in existing_guids]
         if missing:
             orphaned_found = True
-            print(f"\n🐛 ORPHANED CHILDREN FOUND!")
+            print("\n🐛 ORPHANED CHILDREN FOUND!")
             print(f"  Parent: {task_def} [{task.state}]")
             print(f"  GUID: {task.guid}")
             print(f"  Children in JSON: {len(children)}")
@@ -193,13 +189,13 @@ branch_c_status = "success"
                 print(f"    ✗ {m}")
 
     if not orphaned_found:
-        print(f"\n✅ No orphaned children found")
+        print("\n✅ No orphaned children found")
         print("Your BPMN didn't reproduce the bug in this test environment")
 
     # Print full task tree
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("FULL TASK TREE")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     for task in all_tasks:
         task_def = task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN"
         children = task.properties_json.get("children", [])
@@ -214,4 +210,5 @@ branch_c_status = "success"
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main([__file__, "-xvs"]))

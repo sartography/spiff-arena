@@ -9,7 +9,6 @@ Usage:
 import sys
 
 from spiffworkflow_backend import create_app
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 
@@ -32,7 +31,7 @@ def check_orphaned_children(process_instance_id: int) -> None:
     existing_task_guids = {task.guid for task in tasks}
 
     print(f"\nTotal tasks in database: {len(tasks)}")
-    print(f"\nTask Breakdown by State:")
+    print("\nTask Breakdown by State:")
     state_counts = {}
     for task in tasks:
         state_counts[task.state] = state_counts.get(task.state, 0) + 1
@@ -63,7 +62,7 @@ def check_orphaned_children(process_instance_id: int) -> None:
 
         if missing_children:
             orphaned_found = True
-            print(f"\n⚠️  ORPHANED CHILDREN FOUND!")
+            print("\n⚠️  ORPHANED CHILDREN FOUND!")
             print(f"    Parent Task: {task_def}")
             print(f"    Parent GUID: {task.guid}")
             print(f"    Parent State: {task.state}")

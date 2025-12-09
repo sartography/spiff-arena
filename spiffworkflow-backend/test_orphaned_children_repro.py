@@ -49,13 +49,15 @@ class OrphanedChildrenChecker:
                 children_guids = task.properties_json["children"]
                 for child_guid in children_guids:
                     if child_guid not in existing_task_guids:
-                        orphaned_references.append({
-                            "parent_guid": task.guid,
-                            "parent_task_spec": task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN",
-                            "parent_state": task.state,
-                            "orphaned_child_guid": child_guid,
-                            "parent_children_count": len(children_guids),
-                        })
+                        orphaned_references.append(
+                            {
+                                "parent_guid": task.guid,
+                                "parent_task_spec": task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN",
+                                "parent_state": task.state,
+                                "orphaned_child_guid": child_guid,
+                                "parent_children_count": len(children_guids),
+                            }
+                        )
 
         return {
             "orphaned_count": len(orphaned_references),
@@ -83,7 +85,7 @@ class OrphanedChildrenChecker:
                 print(f"    State: {ref['parent_state']}")
                 print(f"    Children Count: {ref['parent_children_count']}")
                 print(f"    ORPHANED Child GUID: {ref['orphaned_child_guid']}")
-                print(f"    ^--- This child does NOT exist in the database!")
+                print("    ^--- This child does NOT exist in the database!")
         else:
             print("\n✓ No orphaned references found - all children exist in database")
 
@@ -109,9 +111,7 @@ def test_with_parallel_gateway_bpmn(app: Flask, client: TestClient) -> None:
 
     # Create process instance
     base_test = BaseTest()
-    process_instance = base_test.create_process_instance_from_process_model(
-        process_model=process_model
-    )
+    process_instance = base_test.create_process_instance_from_process_model(process_model=process_model)
 
     # Run the process - expect it to fail
     processor = ProcessInstanceProcessor(process_instance)
@@ -164,9 +164,7 @@ def test_simple_failing_service(app: Flask, client: TestClient) -> None:
         return
 
     base_test = BaseTest()
-    process_instance = base_test.create_process_instance_from_process_model(
-        process_model=process_model
-    )
+    process_instance = base_test.create_process_instance_from_process_model(process_model=process_model)
 
     processor = ProcessInstanceProcessor(process_instance)
     try:

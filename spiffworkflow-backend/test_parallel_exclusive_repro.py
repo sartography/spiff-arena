@@ -38,36 +38,32 @@ def test_parallel_gateway_with_exclusive_after_failing_service(
         process_model_source_directory="orphaned_children_repro",
     )
 
-    process_instance = base_test.create_process_instance_from_process_model(
-        process_model=process_model
-    )
+    process_instance = base_test.create_process_instance_from_process_model(process_model=process_model)
 
     processor = ProcessInstanceProcessor(process_instance)
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("TESTING: Parallel Gateway → Failing Service Task → Exclusive Gateway")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     # Expect failure
     try:
         processor.do_engine_steps(save=True)
         print("⚠️  Process completed without error (unexpected)")
     except WorkflowExecutionServiceError as e:
-        print(f"✓ Process failed as expected")
+        print("✓ Process failed as expected")
         print(f"  Error: {str(e)[:150]}...")
 
     # Refresh and analyze
     db.session.refresh(process_instance)
 
-    all_tasks = TaskModel.query.filter_by(
-        process_instance_id=process_instance.id
-    ).all()
+    all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
 
     existing_guids = {t.guid for t in all_tasks}
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("TASK ANALYSIS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"\nTotal tasks in database: {len(all_tasks)}")
 
     # Group by state
@@ -80,9 +76,9 @@ def test_parallel_gateway_with_exclusive_after_failing_service(
         print(f"  {state}: {count}")
 
     # Check for orphaned children
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("CHECKING FOR ORPHANED CHILDREN")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     orphaned_found = False
     orphaned_details = []
@@ -105,30 +101,32 @@ def test_parallel_gateway_with_exclusive_after_failing_service(
 
         if missing_children:
             orphaned_found = True
-            orphaned_details.append({
-                "parent_task": task_def,
-                "parent_guid": task.guid,
-                "parent_state": task.state,
-                "total_children": len(children),
-                "missing_children": missing_children,
-            })
+            orphaned_details.append(
+                {
+                    "parent_task": task_def,
+                    "parent_guid": task.guid,
+                    "parent_state": task.state,
+                    "total_children": len(children),
+                    "missing_children": missing_children,
+                }
+            )
 
     if orphaned_found:
         print(f"\n🎉 BUG REPRODUCED! Found {len(orphaned_details)} task(s) with orphaned children!")
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         for detail in orphaned_details:
             print(f"\nParent Task: {detail['parent_task']}")
             print(f"  State: {detail['parent_state']}")
             print(f"  GUID: {detail['parent_guid']}")
             print(f"  Total children in JSON: {detail['total_children']}")
             print(f"  Orphaned children: {len(detail['missing_children'])}")
-            for missing in detail['missing_children']:
+            for missing in detail["missing_children"]:
                 print(f"    ✗ {missing} (NOT IN DATABASE)")
 
         # Print detailed task tree
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("DETAILED TASK TREE")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         for task in all_tasks:
             task_def = task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN"
@@ -163,9 +161,9 @@ def test_parallel_gateway_with_exclusive_after_failing_service(
         print("  4. We need a different scenario (maybe with subprocesses?)")
 
         # Still print task tree for analysis
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("TASK TREE (for analysis)")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         for task in all_tasks:
             task_def = task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN"
@@ -186,4 +184,5 @@ def test_parallel_gateway_with_exclusive_after_failing_service(
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main([__file__, "-xvs"]))

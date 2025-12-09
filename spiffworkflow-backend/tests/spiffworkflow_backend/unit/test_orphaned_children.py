@@ -1,10 +1,10 @@
 """Test for orphaned child task references bug."""
+
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -39,9 +39,7 @@ class TestOrphanedChildren(BaseTest):
         )
 
         # Create and run process instance
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
 
         # Expect the process to fail due to service task error
@@ -56,9 +54,7 @@ class TestOrphanedChildren(BaseTest):
         db.session.refresh(process_instance)
 
         # Get all tasks for this process instance
-        all_tasks = TaskModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
 
         print(f"\n📊 Total tasks in database: {len(all_tasks)}")
 
@@ -75,11 +71,7 @@ class TestOrphanedChildren(BaseTest):
             if not children_guids:
                 continue
 
-            task_def = (
-                task.task_definition.bpmn_identifier
-                if task.task_definition
-                else "UNKNOWN"
-            )
+            task_def = task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN"
 
             # Check if any child doesn't exist in database
             missing_children = []
@@ -88,38 +80,36 @@ class TestOrphanedChildren(BaseTest):
                     missing_children.append(child_guid)
 
             if missing_children:
-                orphaned_references.append({
-                    "parent_guid": task.guid,
-                    "parent_task_def": task_def,
-                    "parent_state": task.state,
-                    "children_count": len(children_guids),
-                    "orphaned_children": missing_children,
-                })
+                orphaned_references.append(
+                    {
+                        "parent_guid": task.guid,
+                        "parent_task_def": task_def,
+                        "parent_state": task.state,
+                        "children_count": len(children_guids),
+                        "orphaned_children": missing_children,
+                    }
+                )
 
         # Print detailed report
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         if orphaned_references:
             print("🐛 BUG REPRODUCED: Orphaned child references found!")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             for ref in orphaned_references:
                 print(f"\nParent Task: {ref['parent_task_def']}")
                 print(f"  GUID: {ref['parent_guid']}")
                 print(f"  State: {ref['parent_state']}")
                 print(f"  Total children in JSON: {ref['children_count']}")
                 print(f"  Orphaned children ({len(ref['orphaned_children'])}):")
-                for orphaned_child in ref['orphaned_children']:
+                for orphaned_child in ref["orphaned_children"]:
                     print(f"    ✗ {orphaned_child} (NOT IN DATABASE)")
 
             # Print task tree for debugging
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print("Task Tree (for debugging):")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             for task in all_tasks:
-                task_def = (
-                    task.task_definition.bpmn_identifier
-                    if task.task_definition
-                    else "UNKNOWN"
-                )
+                task_def = task.task_definition.bpmn_identifier if task.task_definition else "UNKNOWN"
                 print(f"\n{task_def} [{task.state}]")
                 print(f"  GUID: {task.guid}")
                 if "children" in task.properties_json:
@@ -138,7 +128,7 @@ class TestOrphanedChildren(BaseTest):
         else:
             print("✅ No orphaned child references found")
             print("All child references exist in the database")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
             # This is actually unexpected - the bug should occur
             # But we won't fail the test, just note it
             print("\n⚠️  Note: Expected to reproduce orphaned children bug but didn't.")
@@ -165,9 +155,7 @@ class TestOrphanedChildren(BaseTest):
             process_model_source_directory="orphaned_children_repro",
         )
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
 
         with pytest.raises(WorkflowExecutionServiceError):
@@ -176,10 +164,7 @@ class TestOrphanedChildren(BaseTest):
         db.session.refresh(process_instance)
 
         # Find tasks in ERROR state
-        error_tasks = TaskModel.query.filter_by(
-            process_instance_id=process_instance.id,
-            state="ERROR"
-        ).all()
+        error_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id, state="ERROR").all()
 
         print(f"\n📊 Tasks in ERROR state: {len(error_tasks)}")
 
@@ -187,18 +172,12 @@ class TestOrphanedChildren(BaseTest):
             pytest.skip("No ERROR tasks found - cannot test this scenario")
 
         # Get all task GUIDs
-        all_tasks = TaskModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        all_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
         existing_guids = {t.guid for t in all_tasks}
 
         # Check ERROR tasks for orphaned children
         for error_task in error_tasks:
-            task_def = (
-                error_task.task_definition.bpmn_identifier
-                if error_task.task_definition
-                else "UNKNOWN"
-            )
+            task_def = error_task.task_definition.bpmn_identifier if error_task.task_definition else "UNKNOWN"
             print(f"\nERROR Task: {task_def}")
             print(f"  GUID: {error_task.guid}")
 
@@ -209,9 +188,7 @@ class TestOrphanedChildren(BaseTest):
                 for child_guid in children:
                     if child_guid not in existing_guids:
                         print(f"    ✗ ORPHANED: {child_guid}")
-                        pytest.fail(
-                            f"ERROR task {task_def} has orphaned child reference: {child_guid}"
-                        )
+                        pytest.fail(f"ERROR task {task_def} has orphaned child reference: {child_guid}")
                     else:
                         print(f"    ✓ Exists: {child_guid}")
             else:

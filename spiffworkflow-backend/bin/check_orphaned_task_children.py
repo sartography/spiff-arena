@@ -47,7 +47,7 @@ def dump_task_details(task: TaskModel, label: str) -> None:
     if task.runtime_info:
         print(f"Runtime Info: {task.runtime_info}")
 
-    print(f"\nFull Properties JSON:")
+    print("\nFull Properties JSON:")
     print(format_json(task.properties_json))
 
 
@@ -102,24 +102,26 @@ def check_process_instance(process_instance_id: int) -> int:
                 missing_children.append(child_guid)
 
         if missing_children:
-            orphaned_references_found.append({
-                "parent_task": task,
-                "missing_children": missing_children,
-                "total_children": len(children_guids),
-            })
+            orphaned_references_found.append(
+                {
+                    "parent_task": task,
+                    "missing_children": missing_children,
+                    "total_children": len(children_guids),
+                }
+            )
 
     if orphaned_references_found:
-        print(f"\nORPHANED REFERENCES FOUND")
+        print("\nORPHANED REFERENCES FOUND")
         print(f"Tasks with orphaned children: {len(orphaned_references_found)}")
         print(f"Total orphaned references: {sum(len(x['missing_children']) for x in orphaned_references_found)}")
 
         for idx, orphaned_ref in enumerate(orphaned_references_found, 1):
-            parent_task = orphaned_ref['parent_task']
-            missing_children = orphaned_ref['missing_children']
+            parent_task = orphaned_ref["parent_task"]
+            missing_children = orphaned_ref["missing_children"]
             task_def = parent_task.task_definition
             task_name = task_def.bpmn_identifier if task_def else "UNKNOWN"
 
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print(f"ORPHANED REFERENCE #{idx}: {task_name}")
             print("=" * 80)
             print(f"Parent GUID: {parent_task.guid}")
@@ -141,10 +143,7 @@ def check_process_instance(process_instance_id: int) -> int:
                     dump_task_details(other_task, f"MISPLACED TASK: {child_guid}")
 
             # Show valid children for comparison
-            valid_children = [
-                c for c in parent_task.properties_json["children"]
-                if c in existing_task_guids
-            ]
+            valid_children = [c for c in parent_task.properties_json["children"] if c in existing_task_guids]
 
             if valid_children:
                 print(f"\nValid children of parent ({len(valid_children)}):")
