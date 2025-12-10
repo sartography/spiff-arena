@@ -112,6 +112,67 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
+    def test_automatically_creates_group_for_lane_when_it_does_not_exist(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test that groups are automatically created for lanes when they don't exist.
+
+        The lanes.bpmn file has a finance_team lane. This test deliberately does NOT
+        create that group beforehand. The system should automatically create the group
+        when it encounters the lane, set lane_assignment_id to the new group, and
+        have empty potential_owners (since the group has no users yet).
+        """
+        initiator_user = self.find_or_create_user("initiator_user")
+
+        finance_team_lane_name = "Finance Team"
+        # Note: We are NOT calling AuthorizationService.import_permissions_from_yaml_file()
+        # which would create the Finance Team group. This is intentional - we want to test
+        # that the group gets created automatically.
+
+        # Verify the finance_team group doesn't exist yet
+        finance_group_before = GroupModel.query.filter_by(identifier=finance_team_lane_name).first()
+        assert finance_group_before is None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # Complete the first task (initiator_one) to reach the finance_approval task
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
+        assert human_task.task_name == "initiator_one"
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
+
+        # Advance the processor to create the next human task (which will trigger group creation)
+        processor.do_engine_steps(save=True)
+
+        # Now we should be at the finance_approval task which has lane "finance_team"
+        # The system should have automatically created the finance_team group
+        assert len(process_instance.active_human_tasks) == 1
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+
+        # Verify the group was automatically created
+        finance_group_after = GroupModel.query.filter_by(identifier=finance_team_lane_name).first()
+        assert finance_group_after is not None
+        assert finance_group_after.name == finance_team_lane_name
+
+        # lane_assignment_id should be set to the newly created group
+        assert finance_task.lane_assignment_id == finance_group_after.id
+
+        # potential_owners should be empty since the group has no users
+        assert len(finance_task.potential_owners) == 0
+
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,

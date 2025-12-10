@@ -821,8 +821,14 @@ class ProcessInstanceProcessor:
             ]
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
-            if group_model is not None:
-                lane_assignment_id = group_model.id
+            if group_model is None:
+                # Automatically create the group if it doesn't exist
+                group_model = GroupModel(identifier=task_lane, name=task_lane)
+                db.session.add(group_model)
+                # Use flush instead of commit to work within existing transactions
+                # but so we can still get the id
+                db.session.flush()
+            lane_assignment_id = group_model.id
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
                 for username_or_email in task.data["lane_owners"][task_lane]:
                     lane_owner_user = UserModel.query.filter(
@@ -841,8 +847,6 @@ class ProcessInstanceProcessor:
                     ),
                 )
             else:
-                if group_model is None:
-                    raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
