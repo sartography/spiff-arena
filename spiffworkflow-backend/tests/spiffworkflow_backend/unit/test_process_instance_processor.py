@@ -127,13 +127,13 @@ class TestProcessInstanceProcessor(BaseTest):
         """
         initiator_user = self.find_or_create_user("initiator_user")
 
-        finance_team_lane_name = "Finance Team"
+        finance_team_lane_identifier = "Finance Team"
         # Note: We are NOT calling AuthorizationService.import_permissions_from_yaml_file()
         # which would create the Finance Team group. This is intentional - we want to test
         # that the group gets created automatically.
 
-        # Verify the finance_team group doesn't exist yet
-        finance_group_before = GroupModel.query.filter_by(identifier=finance_team_lane_name).first()
+        # Verify the Finance Team group doesn't exist yet
+        finance_group_before = GroupModel.query.filter_by(identifier=finance_team_lane_identifier).first()
         assert finance_group_before is None
 
         process_model = load_test_spec(
@@ -163,9 +163,9 @@ class TestProcessInstanceProcessor(BaseTest):
         assert finance_task.task_name == "finance_approval"
 
         # Verify the group was automatically created
-        finance_group_after = GroupModel.query.filter_by(identifier=finance_team_lane_name).first()
+        finance_group_after = GroupModel.query.filter_by(identifier=finance_team_lane_identifier).first()
         assert finance_group_after is not None
-        assert finance_group_after.name == finance_team_lane_name
+        assert finance_group_after.identifier == finance_team_lane_identifier
 
         # lane_assignment_id should be set to the newly created group
         assert finance_task.lane_assignment_id == finance_group_after.id
