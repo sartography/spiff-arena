@@ -15,8 +15,6 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestCallActivityDataStoreScope(BaseTest):
-    """Test call activity data store scoping behavior."""
-
     def test_called_process_uses_caller_location_for_data_store_access(
         self,
         app: Flask,
@@ -33,11 +31,9 @@ class TestCallActivityDataStoreScope(BaseTest):
         This is because tld.process_model_identifier remains set to the top-level process identifier
         throughout execution, even when inside call activity subprocesses.
         """
-        # Create process groups
         self.create_process_group("site-administration", "Site Administration")
         self.create_process_group("finance", "Finance")
 
-        # Load the callee process model FIRST in finance group
         # This must be loaded before the caller so it's registered in the reference_cache
         load_test_spec(
             process_model_id="finance/callee",
@@ -45,8 +41,6 @@ class TestCallActivityDataStoreScope(BaseTest):
             primary_file_name="callee.bpmn",
         )
 
-        # Load the caller process model in site-administration group
-        # The caller references the callee via Call Activity
         caller_model = load_test_spec(
             process_model_id="site-administration/caller",
             process_model_source_directory="call_activity_ds_scope_caller",
@@ -78,13 +72,11 @@ class TestCallActivityDataStoreScope(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
-        # Check the result to determine behavior
         assert process_instance.status == ProcessInstanceStatus.complete.value, (
             "UNEXPECTED: Call activity uses callee's own location (finance). "
             "Expected it to use caller's location (site-administration)."
         )
 
-        # If we reach here, call activity used CALLER's location
         assert processor.bpmn_process_instance.data["result_value"] == "admin_value", (
             "Call activity accessed data store but got wrong value"
         )

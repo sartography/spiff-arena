@@ -40,7 +40,6 @@ def url_info() -> Response:
 
 
 def process_instance_with_most_tasks() -> Response:
-    """Returns the process instance ID with the most tasks and the count of those tasks."""
     result = (
         db.session.query(TaskModel.process_instance_id, func.count(TaskModel.guid).label("task_count"))
         .group_by(TaskModel.process_instance_id)
