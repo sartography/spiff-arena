@@ -28,8 +28,8 @@ class TestDebugController(BaseTest):
         # Create a process model with fewer tasks
         process_model1 = load_test_spec(
             process_model_id="test_group/model_with_few_tasks",
-            bpmn_file_name="manual_task.bpmn",
-            process_model_source_directory="manual_task",
+            bpmn_file_name="data_stores.bpmn",
+            process_model_source_directory="data_stores",
         )
         process_instance1 = self.create_process_instance_from_process_model(process_model1)
         processor1 = ProcessInstanceProcessor(process_instance1)
@@ -38,8 +38,8 @@ class TestDebugController(BaseTest):
         # Create another process model with more tasks
         process_model2 = load_test_spec(
             process_model_id="test_group/model_with_more_tasks",
-            bpmn_file_name="data_stores.bpmn",
-            process_model_source_directory="data_stores",
+            bpmn_file_name="manual_task.bpmn",
+            process_model_source_directory="manual_task",
         )
         process_instance2 = self.create_process_instance_from_process_model(process_model2)
         processor2 = ProcessInstanceProcessor(process_instance2)
