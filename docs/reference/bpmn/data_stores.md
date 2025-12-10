@@ -42,6 +42,12 @@ Search order:
 
 If a data store with identifier `customer_db` exists at both `site-administration` and root levels, the process will use the `site-administration` version (closest match).
 
+### Call Activities
+
+When a process calls another process via a Call Activity, the called process uses the **caller's location** for data store lookups, not its own location. The process model identifier is set at the top level and remains unchanged when entering call activity subprocesses.
+
+**Example**: If a process in `site-administration` calls a process defined in `finance` via Call Activity, the called process will search for data stores starting from `site-administration` (the caller's location), not from `finance` (its own location).
+
 ### Data Store Identity
 
 Data stores are uniquely identified by `(type, location, identifier)`. This means the same identifier can exist at multiple locations in the hierarchy, with each representing a distinct data store.
