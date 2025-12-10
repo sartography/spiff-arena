@@ -44,20 +44,13 @@ class TestDebugController(BaseTest):
         process_instance2 = self.create_process_instance_from_process_model(process_model2)
         processor2 = ProcessInstanceProcessor(process_instance2)
         processor2.do_engine_steps(save=True)
+        task_count = TaskModel.query.filter_by(process_instance_id=process_instance2.id).count()
 
         # Create a few more instances with fewer tasks to make sure our endpoint works correctly
         for _ in range(2):
             process_instance = self.create_process_instance_from_process_model(process_model1)
             processor = ProcessInstanceProcessor(process_instance)
             processor.do_engine_steps(save=True)
-
-        # Count the tasks in each instance
-        task_count1 = TaskModel.query.filter_by(process_instance_id=process_instance1.id).count()
-        task_count2 = TaskModel.query.filter_by(process_instance_id=process_instance2.id).count()
-
-        # Figure out which instance has more tasks
-        instance_with_most_tasks = process_instance1 if task_count1 > task_count2 else process_instance2
-        most_tasks_count = max(task_count1, task_count2)
 
         # Call the endpoint and check the response
         response = client.get(
@@ -70,5 +63,5 @@ class TestDebugController(BaseTest):
         assert "task_count" in response.json()
 
         # Verify that the endpoint returns the process instance with the most tasks
-        assert response.json()["process_instance_id"] == instance_with_most_tasks.id
-        assert response.json()["task_count"] == most_tasks_count
+        assert response.json()["process_instance_id"] == process_instance2.id
+        assert response.json()["task_count"] == task_count
