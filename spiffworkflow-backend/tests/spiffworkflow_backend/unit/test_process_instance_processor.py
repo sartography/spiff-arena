@@ -173,6 +173,88 @@ class TestProcessInstanceProcessor(BaseTest):
         # potential_owners should be empty since the group has no users
         assert len(finance_task.potential_owners) == 0
 
+    def test_updates_human_task_assignments_when_yaml_config_adds_user_to_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test that human task assignments update when YAML config changes add user to group.
+
+        Scenario:
+        1. A process instance has a human task assigned to Finance Team
+        2. A user exists but is NOT in Finance Team
+        3. Configuration (YAML) is updated to add the user to Finance Team
+        4. User signs in (create_user_from_sign_in is called)
+        5. The user should now be assigned to the existing human task
+        """
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+        from spiffworkflow_backend.services.authorization_service import AuthorizationService
+
+        initiator_user = self.find_or_create_user("initiator_user")
+
+        # Create testuser1 who is NOT in Finance Team yet
+        # Note: find_or_create_user creates a user with service="internal" and service_id=username
+        testuser1 = self.find_or_create_user("testuser1")
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+
+        # Start process and advance to finance_approval task
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # Complete first task to get to finance_approval
+        human_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
+        processor.do_engine_steps(save=True)
+
+        # Now at finance_approval task - testuser1 should NOT be assigned yet
+        # because they're not in Finance Team
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+
+        testuser1_assignments_before = HumanTaskUserModel.query.filter_by(
+            user_id=testuser1.id, human_task_id=finance_task.id
+        ).all()
+        assert len(testuser1_assignments_before) == 0
+
+        # Verify testuser1 is NOT in Finance Team yet
+        assert not any(g.identifier == "Finance Team" for g in testuser1.groups)
+
+        # Now simulate user signing in - this should:
+        # 1. Call import_permissions_from_sign_in which reads the YAML
+        # 2. Add testuser1 to Finance Team (per the YAML config)
+        # 3. Detect the group change and update human task assignments
+        # Use the existing user's service and service_id
+        # The YAML has testuser1 in Finance Team, so this should add them to the group
+        returned_user = AuthorizationService.create_user_from_sign_in(
+            {
+                "sub": testuser1.service_id,  # "testuser1"
+                "iss": testuser1.service,  # "internal"
+                "preferred_username": testuser1.username,  # "testuser1"
+            }
+        )
+
+        # Refresh to get the latest groups from the database
+        from spiffworkflow_backend.models.db import db
+
+        db.session.expire(returned_user, ["groups"])
+
+        # Verify testuser1 is now in Finance Team
+        assert any(g.identifier == "Finance Team" for g in returned_user.groups)
+
+        # testuser1 should now be assigned to the finance_approval task
+        testuser1_assignments_after = HumanTaskUserModel.query.filter_by(
+            user_id=testuser1.id, human_task_id=finance_task.id
+        ).all()
+        assert len(testuser1_assignments_after) == 1
+
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,
