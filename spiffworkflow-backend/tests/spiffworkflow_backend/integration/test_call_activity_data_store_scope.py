@@ -1,4 +1,4 @@
-"""Test that call activities respect data store scoping based on callee's process group."""
+"""Test that call activities respect data store scoping based on caller's process group."""
 
 import time
 
