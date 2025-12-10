@@ -847,10 +847,6 @@ class ProcessInstanceProcessor:
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
                 ]
-                self.raise_if_no_potential_owners(
-                    potential_owners,
-                    f"Could not find any users in group to assign to lane: {task_lane}",
-                )
 
         return {
             "potential_owners": potential_owners,
