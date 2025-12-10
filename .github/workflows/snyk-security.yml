@@ -86,7 +86,9 @@ jobs:
       # snyk does not currently support uv
       #   https://github.com/astral-sh/uv/issues/11181
       - name: Get around snyk not liking uv
-        run: uv pip freeze > requirements.txt
+        run: |
+          uv pip freeze > requirements.txt
+          pip install -r requirements.txt
 
       # # checks library dependencies
       - name: Snyk test
