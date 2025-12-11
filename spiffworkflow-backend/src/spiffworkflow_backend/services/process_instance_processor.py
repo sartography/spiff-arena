@@ -919,7 +919,7 @@ class ProcessInstanceProcessor:
 
         db.session.add(self.process_instance_model)
 
-        new_humna_tasks = []
+        new_human_tasks = []
         initial_human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -991,7 +991,7 @@ class ProcessInstanceProcessor:
                         json_metadata=json_metadata,
                     )
                     db.session.add(human_task)
-                    new_humna_tasks.append(human_task)
+                    new_human_tasks.append(human_task)
 
                     for potential_owner in potential_owner_hash["potential_owners"]:
                         human_task_user = HumanTaskUserModel(
@@ -999,7 +999,7 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-        if len(new_humna_tasks) > 0:
+        if len(new_human_tasks) > 0:
             queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
 
         if len(initial_human_tasks) > 0:
