@@ -60,17 +60,13 @@ class DataStoreCRUD:
 
     @staticmethod
     def process_model_location_for_task(spiff_task: SpiffTask) -> str | None:
-        from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+        from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 
         # Try to find the location based on the process identifier (for called processes)
         if spiff_task.workflow.spec.name:
-            reference = (
-                ReferenceCacheModel.basic_query()
-                .filter_by(identifier=spiff_task.workflow.spec.name, type="process")
-                .first()
-            )
-            if reference:
-                return reference.relative_location
+            location = ReferenceCacheService.get_process_location(spiff_task.workflow.spec.name)
+            if location:
+                return location
 
         # Fallback to the old method (thread local data) - mostly for backward compatibility or edge cases
         tld = current_app.config.get("THREAD_LOCAL_DATA")

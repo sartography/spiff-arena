@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from dataclasses import dataclass
+from dataclasses import field
 from typing import Any
 
 import pytest
@@ -17,8 +18,19 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 @dataclass
+class MockSpec:
+    name: str = "test_process"
+
+
+@dataclass
+class MockWorkflow:
+    spec: MockSpec = field(default_factory=MockSpec)
+
+
+@dataclass
 class MockTask:
     data: dict[str, Any]
+    workflow: MockWorkflow = field(default_factory=MockWorkflow)
 
 
 @pytest.fixture()

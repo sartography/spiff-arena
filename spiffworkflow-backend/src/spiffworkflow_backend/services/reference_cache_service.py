@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from sqlalchemy import insert
 from sqlalchemy.orm import aliased
 
@@ -68,3 +70,11 @@ class ReferenceCacheService:
             .filter(called_reference_alias.identifier.in_(bpmn_process_identifiers))
         ).all()
         return references
+
+    @classmethod
+    @lru_cache(maxsize=2048)
+    def get_process_location(cls, identifier: str) -> str | None:
+        reference = ReferenceCacheModel.basic_query().filter_by(identifier=identifier, type="process").first()
+        if reference:
+            return str(reference.relative_location)
+        return None
