@@ -68,7 +68,11 @@ class DataStoreCRUD:
             if location:
                 return location
 
-        # Fallback to the old method (thread local data) - mostly for backward compatibility or edge cases
+        # Fallback to the old method (thread local data).
+        # This is primarily for:
+        # 1. Backward compatibility.
+        # 2. Unit tests that do not populate the ReferenceCacheModel.
+        # 3. Edge cases where the process might not be in the cache yet.
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         if tld and hasattr(tld, "process_model_identifier"):
             return tld.process_model_identifier  # type: ignore
