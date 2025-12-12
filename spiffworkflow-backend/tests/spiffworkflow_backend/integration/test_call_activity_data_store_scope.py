@@ -15,7 +15,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestCallActivityDataStoreScope(BaseTest):
-    def test_called_process_uses_caller_location_for_data_store_access(
+    def test_called_process_uses_called_process_location_for_data_store_access(
         self,
         app: Flask,
         client: TestClient,
@@ -26,10 +26,9 @@ class TestCallActivityDataStoreScope(BaseTest):
 
         ACTUAL BEHAVIOR (verified by this test):
         When a process in 'site-administration' calls a process in 'finance' via Call Activity,
-        the called process uses the CALLER's location (site-administration) for data store lookups.
+        the called process uses the CALLED PROCESS's location (finance) for data store lookups.
 
-        This is because tld.process_model_identifier remains set to the top-level process identifier
-        throughout execution, even when inside call activity subprocesses.
+        This allows reusable processes to have their own data stores defined in their own process groups.
         """
         self.create_process_group("site-administration", "Site Administration")
         self.create_process_group("finance", "Finance")
@@ -49,22 +48,22 @@ class TestCallActivityDataStoreScope(BaseTest):
 
         current_time = round(time.time())
 
-        # Test: Data store at caller's location should be accessible
+        # Test: Data store at CALLED process location should be accessible
         # This proves whether call activities use caller's or callee's location
-        ds_admin = JSONDataStoreModel(
+        ds_finance = JSONDataStoreModel(
             identifier="test_data_store",
-            location="site-administration",
-            name="Admin Data Store",
+            location="finance",
+            name="Finance Data Store",
             schema={},
-            description="Data store in site-administration group",
-            data={"key": "admin_value"},
+            description="Data store in finance group",
+            data={"key": "finance_value"},
             updated_at_in_seconds=current_time,
             created_at_in_seconds=current_time,
         )
-        db.session.add(ds_admin)
+        db.session.add(ds_finance)
         db.session.commit()
 
-        # Run the caller process - if it completes, callee is using caller's location
+        # Run the caller process - if it completes, callee is using callee's location (finance)
         process_instance = self.create_process_instance_from_process_model(
             process_model=caller_model,
             user=with_super_admin_user,
@@ -73,13 +72,14 @@ class TestCallActivityDataStoreScope(BaseTest):
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         assert process_instance.status == ProcessInstanceStatus.complete.value, (
-            "UNEXPECTED: Call activity uses callee's own location (finance). "
-            "Expected it to use caller's location (site-administration)."
+            "UNEXPECTED: Call activity failed to find data store in 'finance'. "
+            "Expected it to use called process location (finance)."
         )
 
-        assert processor.bpmn_process_instance.data["result_value"] == "admin_value", (
-            "Call activity accessed data store but got wrong value"
+        assert processor.bpmn_process_instance.data["result_value"] == "finance_value", (
+            "Call activity accessed data store but got wrong value. "
+            f"Expected 'finance_value', got '{processor.bpmn_process_instance.data.get('result_value')}'"
         )
 
-        db.session.delete(ds_admin)
+        db.session.delete(ds_finance)
         db.session.commit()
