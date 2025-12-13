@@ -4,6 +4,7 @@ Script to extract all relevant information for a single operation from an OpenAP
 Includes operation details, parameters, request/response schemas, and referenced entities.
 """
 
+import os
 import sys
 from typing import Any
 
@@ -67,6 +68,55 @@ def get_all_referenced_schemas(spec: dict, initial_refs: set[str]) -> dict[str, 
             to_process.update(nested_refs - processed)
 
     return schemas
+
+
+def get_all_operation_ids(spec: dict) -> list[str]:
+    """
+    Get all operation IDs from the spec.
+    Returns a list of operation IDs.
+    """
+    operation_ids = []
+    for _path, path_item in spec.get("paths", {}).items():
+        for method, operation in path_item.items():
+            if method in ["get", "post", "put", "delete", "patch", "options", "head"]:
+                if isinstance(operation, dict) and "operationId" in operation:
+                    operation_ids.append(operation["operationId"])
+    return operation_ids
+
+
+def find_matching_operation_ids(spec: dict, search_term: str) -> list[str]:
+    """
+    Find all operation IDs that match the search term.
+    
+    Matching priority:
+    1. Exact match of full operation ID
+    2. Exact match of last segment (after last dot)
+    3. Partial match anywhere in operation ID
+    
+    Returns a list of matching operation IDs.
+    """
+    all_ids = get_all_operation_ids(spec)
+    
+    # Check for exact match first
+    if search_term in all_ids:
+        return [search_term]
+    
+    # Check for exact match of last segment
+    last_segment_matches = []
+    for op_id in all_ids:
+        last_segment = op_id.split(".")[-1]
+        if last_segment == search_term:
+            last_segment_matches.append(op_id)
+    
+    if len(last_segment_matches) == 1:
+        return last_segment_matches
+    elif len(last_segment_matches) > 1:
+        # Multiple last segment matches - return them for disambiguation
+        return last_segment_matches
+    
+    # Fall back to partial matching
+    partial_matches = [op_id for op_id in all_ids if search_term in op_id]
+    return partial_matches
 
 
 def find_operation(spec: dict, operation_id: str) -> tuple:
@@ -236,26 +286,78 @@ def print_operation_info(info: dict) -> None:
     print("\n" + "=" * 80)
 
 
+def get_default_spec_path() -> str:
+    """
+    Determine the default path to api.yml relative to this script.
+    Assumes the script is in bin/ and api.yml is in src/spiffworkflow_backend/api.yml
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up one level from bin/ to the project root
+    project_root = os.path.dirname(script_dir)
+    # Construct path to api.yml
+    api_path = os.path.join(project_root, "src", "spiffworkflow_backend", "api.yml")
+    return api_path
+
+
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python extract_operation_info.py <api_spec.yml> <operation_id>")
-        print("\nExample: python extract_operation_info.py api.yml process_instance_create")
+    if len(sys.argv) < 2:
+        print("Usage: python extract_operation_info.py <operation_id> [api_spec.yml] [--save]")
+        print("\nExample: python extract_operation_info.py process_instance_create")
+        print("         python extract_operation_info.py process_instance_create custom_api.yml")
+        print("         python extract_operation_info.py process_instance_create --save")
+        print("\nIf api_spec.yml is not provided, defaults to ../src/spiffworkflow_backend/api.yml")
+        print("\nNote: You can provide a partial operation ID. If it matches exactly one operation,")
+        print("      that operation will be used. If multiple operations match, they will be listed.")
         sys.exit(1)
 
-    spec_file = sys.argv[1]
-    operation_id = sys.argv[2]
+    search_term = sys.argv[1]
+
+    # Determine spec file path
+    spec_file = None
+    save_output = False
+
+    # Check remaining arguments
+    for arg in sys.argv[2:]:
+        if arg == "--save":
+            save_output = True
+        elif spec_file is None and not arg.startswith("--"):
+            spec_file = arg
+
+    # Use default if no spec file provided
+    if spec_file is None:
+        spec_file = get_default_spec_path()
+        print(f"Using default spec file: {spec_file}\n")
 
     try:
         spec = load_openapi_spec(spec_file)
-        info = extract_operation_info(spec, operation_id)
-        print_operation_info(info)
 
-        # Optionally save to a file
-        if len(sys.argv) > 3 and sys.argv[3] == "--save":
-            output_file = f"{operation_id}_info.yml"
-            with open(output_file, "w") as f:
-                yaml.dump(info, f, default_flow_style=False, sort_keys=False)
-            print(f"\nInformation saved to: {output_file}")
+        # Try to find matching operation IDs
+        matching_ids = find_matching_operation_ids(spec, search_term)
+
+        if len(matching_ids) == 0:
+            print(f"Error: No operations found matching '{search_term}'")
+            sys.exit(1)
+        elif len(matching_ids) > 1:
+            print(f"Error: Multiple operations match '{search_term}':")
+            for op_id in sorted(matching_ids):
+                print(f"  - {op_id}")
+            print("\nPlease be more specific.")
+            sys.exit(1)
+        else:
+            # Exactly one match - use it
+            operation_id = matching_ids[0]
+            if operation_id != search_term:
+                print(f"Found matching operation: {operation_id}\n")
+
+            info = extract_operation_info(spec, operation_id)
+            print_operation_info(info)
+
+            # Optionally save to a file
+            if save_output:
+                output_file = f"{operation_id}_info.yml"
+                with open(output_file, "w") as f:
+                    yaml.dump(info, f, default_flow_style=False, sort_keys=False)
+                print(f"\nInformation saved to: {output_file}")
 
     except FileNotFoundError:
         print(f"Error: File '{spec_file}' not found")
