@@ -87,33 +87,33 @@ def get_all_operation_ids(spec: dict) -> list[str]:
 def find_matching_operation_ids(spec: dict, search_term: str) -> list[str]:
     """
     Find all operation IDs that match the search term.
-    
+
     Matching priority:
     1. Exact match of full operation ID
     2. Exact match of last segment (after last dot)
     3. Partial match anywhere in operation ID
-    
+
     Returns a list of matching operation IDs.
     """
     all_ids = get_all_operation_ids(spec)
-    
+
     # Check for exact match first
     if search_term in all_ids:
         return [search_term]
-    
+
     # Check for exact match of last segment
     last_segment_matches = []
     for op_id in all_ids:
         last_segment = op_id.split(".")[-1]
         if last_segment == search_term:
             last_segment_matches.append(op_id)
-    
+
     if len(last_segment_matches) == 1:
         return last_segment_matches
     elif len(last_segment_matches) > 1:
         # Multiple last segment matches - return them for disambiguation
         return last_segment_matches
-    
+
     # Fall back to partial matching
     partial_matches = [op_id for op_id in all_ids if search_term in op_id]
     return partial_matches
