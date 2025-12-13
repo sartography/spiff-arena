@@ -58,7 +58,6 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 # noqa: F401
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -820,9 +819,9 @@ class ProcessInstanceProcessor:
                 }
             ]
         else:
-            group_model = GroupModel.query.filter_by(identifier=task_lane).first()
-            if group_model is not None:
-                lane_assignment_id = group_model.id
+            # Automatically create the group if it doesn't exist (includes principal creation)
+            group_model = UserService.find_or_create_group(task_lane)
+            lane_assignment_id = group_model.id
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
                 for username_or_email in task.data["lane_owners"][task_lane]:
                     lane_owner_user = UserModel.query.filter(
@@ -841,16 +840,10 @@ class ProcessInstanceProcessor:
                     ),
                 )
             else:
-                if group_model is None:
-                    raise (NoPotentialOwnersForTaskError(f"Could not find a group with name matching lane: {task_lane}"))
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
                 ]
-                self.raise_if_no_potential_owners(
-                    potential_owners,
-                    f"Could not find any users in group to assign to lane: {task_lane}",
-                )
 
         return {
             "potential_owners": potential_owners,
@@ -926,7 +919,7 @@ class ProcessInstanceProcessor:
 
         db.session.add(self.process_instance_model)
 
-        new_humna_tasks = []
+        new_human_tasks = []
         initial_human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
@@ -948,6 +941,20 @@ class ProcessInstanceProcessor:
 
                 form_file_name = None
                 ui_form_file_name = None
+                json_metadata = {}
+                if "taskMetadataValues" in extensions:
+                    task_metadata_values = extensions["taskMetadataValues"]
+                    # Process each taskMetadataValue using the script engine
+                    for key, value in task_metadata_values.items():
+                        try:
+                            json_metadata[key] = self._script_engine.evaluate(ready_or_waiting_task, value)
+                        except Exception as e:
+                            current_app.logger.warning(
+                                f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                            )
+                            msg = f"Failed to evaluate taskMetadataValue {key}: {e}"
+                            json_metadata[f"{key}_error"] = msg
+
                 if "properties" in extensions:
                     properties = extensions["properties"]
                     if "formJsonSchemaFilename" in properties:
@@ -981,9 +988,10 @@ class ProcessInstanceProcessor:
                         task_status=TaskState.get_name(ready_or_waiting_task.state),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                         lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
+                        json_metadata=json_metadata,
                     )
                     db.session.add(human_task)
-                    new_humna_tasks.append(human_task)
+                    new_human_tasks.append(human_task)
 
                     for potential_owner in potential_owner_hash["potential_owners"]:
                         human_task_user = HumanTaskUserModel(
@@ -991,7 +999,7 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-        if len(new_humna_tasks) > 0:
+        if len(new_human_tasks) > 0:
             queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
 
         if len(initial_human_tasks) > 0:

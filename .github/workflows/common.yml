@@ -16,18 +16,18 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
-    - name: Install pypa/build
-      run: pip install --constraint=.github/workflows/constraints.txt pip uv
-    - name: Build a binary wheel and a source tarball
-      run: uv build spiff-arena-common
-    - name: Publish distribution 📦 to PyPI
-      if: github.ref == 'refs/heads/main'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        username: __token__
-        password: ${{ secrets.COMMON_PYPI_KEY }}
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install pypa/build
+        run: pip install --constraint=.github/workflows/constraints.txt pip uv
+      - name: Build a binary wheel and a source tarball
+        run: uv build spiff-arena-common
+      - name: Publish distribution 📦 to PyPI
+        if: github.ref == 'refs/heads/main'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.COMMON_PYPI_KEY }}

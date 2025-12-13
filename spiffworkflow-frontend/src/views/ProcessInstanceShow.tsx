@@ -23,7 +23,6 @@ import {
   View,
 } from '@carbon/icons-react';
 import {
-  Grid,
   Box,
   Typography,
   IconButton,
@@ -42,6 +41,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   DeleteOutlineOutlined,
@@ -145,7 +145,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
     useState<boolean>(false);
 
-  const { addError, removeError } = useAPIError();
+  const { error, addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`,
   );
@@ -521,7 +521,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <dl>
             <Typography component="dt" variant="subtitle2">
               {t('status')}:
@@ -595,7 +595,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Typography>
           </dl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl className="metadata-display">
@@ -752,8 +752,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         // reverse operates on self as well as return the new ordered array so reverse it right away
         successCallback: (results: BasicTask[]) =>
           setTaskInstancesToDisplay(results.reverse()),
-        failureCallback: (error: any) => {
-          setTaskDataToDisplay(`ERROR: ${error.message}`);
+        failureCallback: (err: any) => {
+          setTaskDataToDisplay(`ERROR: ${err.message}`);
         },
       });
     },
@@ -781,8 +781,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
           httpMethod: 'GET',
           successCallback: processTaskResult,
-          failureCallback: (error: any) => {
-            setTaskDataToDisplay(`ERROR: ${error.message}`);
+          failureCallback: (err: any) => {
+            setTaskDataToDisplay(`ERROR: ${err.message}`);
             setShowTaskDataLoading(false);
           },
         });
@@ -1139,7 +1139,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const addPotentialOwners = () => {
-    if (!additionalPotentialOwners) {
+    if (!additionalPotentialOwners || additionalPotentialOwners.length === 0) {
+      addError({
+        message: 'Please select a user from the dropdown',
+      });
       return;
     }
     if (!taskToDisplay) {
@@ -1373,10 +1376,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <p className="explanatory-message with-tiny-bottom-margin">
             {t('select_user_to_complete_task')}
           </p>
+          {error && (
+            <div style={{ color: 'red', marginBottom: '10px' }}>
+              {error.message}
+            </div>
+          )}
           <UserSearch
             className="modal-dropdown"
             onSelectedUser={(user: User) => {
               setAdditionalPotentialOwners([user]);
+              removeError();
             }}
           />
         </div>
@@ -1483,7 +1492,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
           return (
             <Grid container spacing={2}>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <SpiffTooltip title="View">
                   <IconButton
                     onClick={() =>
@@ -1494,7 +1503,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   </IconButton>
                 </SpiffTooltip>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <div className={`task-instance-modal-row-item ${buttonClass}`}>
                   {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
@@ -1752,7 +1761,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <p>
               {t('viewing_process_instance_at_time_when')}{' '}
               <span title={title}>

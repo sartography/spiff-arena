@@ -51,6 +51,7 @@ from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel  # noqa: F401
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel  # noqa: F401
 from spiffworkflow_backend.models.secret_model import SecretModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
@@ -117,5 +118,6 @@ from spiffworkflow_backend.models.feature_flag import (
     FeatureFlagModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel  # noqa: F401
+from spiffworkflow_backend.models.api_log_model import APILogModel  # noqa: F401
 
 add_listeners()

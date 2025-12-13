@@ -2,7 +2,8 @@ import {
   FilterAlt as FilterAltIcon,
   Link as LinkIcon,
 } from '@mui/icons-material';
-import { Grid, IconButton, Snackbar } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { IconButton, Snackbar } from '@mui/material';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SpiffTooltip from './SpiffTooltip';
@@ -84,9 +85,7 @@ export default function Filters({
     let reportSearchSection = null;
     if (reportSearchComponent) {
       reportSearchSection = (
-        <Grid item xs={12} sm={6} md={8}>
-          {reportSearchComponent()}
-        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 8 }}>{reportSearchComponent()}</Grid>
       );
     }
     return (
@@ -98,7 +97,7 @@ export default function Filters({
           justifyContent="flex-end"
         >
           {reportSearchSection}
-          <Grid item xs={12} sm={6} md={4} className="filter-icon">
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} className="filter-icon">
             {buttonElements()}
           </Grid>
         </Grid>

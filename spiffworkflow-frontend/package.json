@@ -11,19 +11,18 @@
     "@casl/react": "^4.0.0",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.7.0",
-    "@mui/icons-material": "^6.4.3",
-    "@mui/material": "^6.4.3",
+    "@mui/icons-material": "^7.0.0",
+    "@mui/material": "^7.3.5",
     "@mui/x-data-grid": "^7.25.0",
     "@mui/x-tree-view": "^7.25.0",
     "@preact/preset-vite": "^2.10.2",
-    "@rjsf/core": "^5.24.3",
-    "@rjsf/mui": "^5.24.13",
-    "@rjsf/utils": "^5.24.3",
-    "@rjsf/validator-ajv8": "^5.24.3",
+    "@rjsf/core": "^6.1.2",
+    "@rjsf/mui": "^6.1.1",
+    "@rjsf/utils": "^6.1.1",
+    "@rjsf/validator-ajv8": "^6.1.1",
     "@tanstack/react-query": "^5.40.0",
     "@tanstack/react-query-devtools": "^5.68.0",
-    "@types/dompurify": "^3.2.0",
-    "@types/jest": "^29.5.12",
+    "@types/jest": "^30.0.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.1",
     "@uiw/react-md-editor": "^4.0.8",
@@ -33,7 +32,7 @@
     "bpmn-js-properties-panel": "^5.19.0",
     "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^1.0.2",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "diagram-js": "^14.11.3",
     "dmn-js": "^17.4.0",
     "dmn-js-properties-panel": "^3.8.0",
@@ -56,7 +55,8 @@
     "use-debounce": "^10.0.1",
     "vite": "^7.1.3",
     "vite-plugin-svgr": "^4.3.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "zod": "^4.1.12"
   },
   "overrides": {
     "postcss-preset-env": {
@@ -66,7 +66,7 @@
   "scripts": {
     "build": "vite build",
     "eslint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx",
-    "format": "prettier --write src/**/*.[tj]s{,x}",
+    "format": "prettier --write --list-different src/**/*.[tj]s{,x}",
     "lint": "./node_modules/.bin/eslint src --ext .js,.jsx,.ts,.tsx && npm run typecheck",
     "lint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
     "serve": "vite preview",
@@ -97,9 +97,8 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/carbon__colors": "^10.31.3",
-    "@types/cookie": "^1.0.0",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^20.12.13",
-    "typescript-eslint": "8.38.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "@vitest/coverage-v8": "^3.2.4",
@@ -114,6 +113,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "jsdom": "^26.1.0",
     "prettier": "^3.3.2",
+    "typescript-eslint": "8.38.0",
     "vitest": "^3.2.4"
   }
 }

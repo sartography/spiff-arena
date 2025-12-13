@@ -28,11 +28,33 @@ class NoOpCipher:
         return value
 
 
+# given the database uri from the env, returns string (mysql, postgres, sqlite) or None
+def detect_database_type_from_uri(database_uri: str | None) -> str | None:
+    if not database_uri:
+        return None
+
+    parsed = urlparse(database_uri)
+    database_type_from_uri = parsed.scheme
+
+    if "+" in database_type_from_uri:
+        database_type_from_uri = database_type_from_uri.split("+")[0]
+    if database_type_from_uri == "postgresql":
+        database_type_from_uri = "postgres"
+
+    return database_type_from_uri
+
+
 def setup_database_configs(app: Flask) -> None:
     worker_id = os.environ.get("PYTEST_XDIST_WORKER")
     parallel_test_suffix = ""
     if worker_id is not None:
         parallel_test_suffix = f"_{worker_id}"
+
+    database_uri = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+    if database_uri:
+        database_type_from_uri = detect_database_type_from_uri(database_uri)
+        if database_type_from_uri:
+            app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] = database_type_from_uri
 
     # Validate database type
     database_type = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")

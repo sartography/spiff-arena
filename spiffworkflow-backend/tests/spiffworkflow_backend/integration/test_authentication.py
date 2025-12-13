@@ -1,13 +1,19 @@
 import ast
 import base64
 import re
+import time
+import urllib.parse
 
+import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authentication_service import PKCE
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
@@ -18,14 +24,29 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthentication(BaseTest):
-    def test_get_login_state(self) -> None:
-        redirect_url = "http://example.com/"
-        state = AuthenticationService.generate_state(authentication_identifier="default", final_url=redirect_url)
-        state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+    def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False):
+            redirect_url = "http://example.com/"
+            state_payload = AuthenticationService.generate_state_payload(
+                authentication_identifier="default", final_url=redirect_url
+            )
+            state = AuthenticationService.encode_state_payload(state_payload)
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
 
-        assert isinstance(state_dict, dict)
-        assert "final_url" in state_dict.keys()
-        assert state_dict["final_url"] == redirect_url
+            assert isinstance(state_dict, dict)
+            assert state_dict["final_url"] == redirect_url
+
+    def test_get_login_state_with_pkce_enabled(self, app: Flask) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
+            redirect_url = "http://example.com/"
+            state_payload = AuthenticationService.generate_state_payload(
+                authentication_identifier="default", final_url=redirect_url
+            )
+            state = AuthenticationService.encode_state_payload(state_payload)
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("UTF-8"))
+
+            assert isinstance(state_dict, dict)
+            assert isinstance(state_dict["pkce_id"], str)
 
     def test_properly_adds_user_to_groups_from_token_on_login(
         self,
@@ -221,7 +242,8 @@ class TestAuthentication(BaseTest):
         """Test that the login_return endpoint handles errors from the OIDC provider."""
         error = "access_denied"
         error_description = "User is not assigned to the client application."
-        state = AuthenticationService.generate_state(authentication_identifier="default", final_url="/")
+        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url="/")
+        state = AuthenticationService.encode_state_payload(state_payload)
         url = f"/v1.0/login_return?state={state.decode()}&error={error}&error_description={error_description}"
 
         response = client.get(url)
@@ -231,3 +253,79 @@ class TestAuthentication(BaseTest):
         assert "<h1>Authentication Error</h1>" in response_text
         assert f"<strong>Error:</strong> {error}" in response_text
         assert f"<strong>Description:</strong> {error_description}" in response_text
+
+    def test_login_return_contains_pkce_parameters_when_pkce_enforced(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
+            redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+            auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+
+            mocker.patch(
+                "spiffworkflow_backend.services.authentication_service.AuthenticationService.open_id_endpoint_for_name",
+                return_value=auth_uri,
+            )
+
+            response = client.get(
+                f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default", follow_redirects=True
+            )
+            parsed_url = urllib.parse.urlparse(str(response.url))
+            params = urllib.parse.parse_qs(parsed_url.query)
+            state = params.get("state", [])[0]
+            state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
+
+            assert params.get(PKCE.CODE_CHALLENGE_KEY, [])[0]
+            assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
+            assert isinstance(state_dict["pkce_id"], str)
+
+    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask) -> None:
+        with app.test_request_context(
+            "/some/path",
+            base_url="https://example.com/",  # this is what request.host_url will be based on
+        ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
+                with pytest.raises(
+                    ApiError,
+                    match="PKCE is enforced but PKCE identifier is missing from state",
+                ):
+                    AuthenticationService().get_auth_token_object(code="fake_auth_code", authentication_identifier="default")
+                with pytest.raises(
+                    ApiError,
+                    match="ApiError: PKCE is enforced but code verifier is missing from storage",
+                ):
+                    AuthenticationService().get_auth_token_object(
+                        code="fake_auth_code", authentication_identifier="default", pkce_id="invalid_pkce_id"
+                    )
+
+    def test_delete_expired_pkce_verifiers(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        max_pkce_verifier_time_in_seconds = 100
+
+        non_expired = PkceCodeVerifierModel(pkce_id="1", code_verifier="test_verifier_1")
+        expired = PkceCodeVerifierModel(pkce_id="2", code_verifier="test_verifier_2")
+
+        db.session.add_all([non_expired, expired])
+        db.session.commit()
+
+        # On creation, SpiffworkflowBaseDBModel automatically sets created_at_in_seconds to "now."
+        # We override the timestamps to control expiry behavior explicitly.
+        now = round(time.time())
+        expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds
+        non_expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds + 1
+        db.session.commit()
+
+        assert PkceCodeVerifierModel.query.count() == 2
+
+        deleted_count = PKCE.delete_expired_pkce_code_verifiers(max_pkce_verifier_time_in_seconds)
+        assert deleted_count == 1
+
+        remaining = PkceCodeVerifierModel.query.all()
+        assert len(remaining) == 1
+        assert remaining[0].pkce_id == non_expired.pkce_id

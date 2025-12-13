@@ -64,6 +64,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
 
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
+config_from_env("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
 
 ### background processor
@@ -130,6 +131,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", default=False)  # Set to enforce OAuth PKCE (recommended)
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
@@ -183,6 +185,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_LOG_MILESTONES", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
+config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")

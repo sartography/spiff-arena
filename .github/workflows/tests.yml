@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v6
@@ -164,7 +164,7 @@ jobs:
       # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
       # - name: Checkout Samples
       #   if: matrix.database == 'sqlite'
-      #   uses: actions/checkout@v5
+      #   uses: actions/checkout@v6
       #   with:
       #     repository: sartography/sample-process-models
       #     path: sample-process-models
@@ -206,7 +206,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -215,14 +215,14 @@ jobs:
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
-      #   uses: actions/upload-artifact@v4
+      #   uses: actions/upload-artifact@v5
       #   with:
       #     name: docs
       #     path: docs/_build
       #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
@@ -234,7 +234,7 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -259,9 +259,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Checkout Samples
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -278,7 +278,7 @@ jobs:
     needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -343,7 +343,7 @@ jobs:
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
       - name: Upload PR number as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: pr_number
@@ -362,7 +362,7 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Development Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -398,9 +398,9 @@ jobs:
         working-directory: spiffworkflow-frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Checkout Samples
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
@@ -447,12 +447,12 @@ jobs:
         run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
       - name: Upload logs
         if: failure()
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: spiffworkflow-backend-logs
           path: "./spiffworkflow-backend/log/*.log"
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}
         with:
           name: playwright-traces

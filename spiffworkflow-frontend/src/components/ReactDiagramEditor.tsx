@@ -74,6 +74,7 @@ import {
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import SpiffTooltip from './SpiffTooltip';
 import ProcessInstanceRun from './ProcessInstanceRun';
+import { TASK_METADATA } from '../config';
 
 type OwnProps = {
   processModelId: string;
@@ -388,6 +389,17 @@ export default function ReactDiagramEditor({
         createPrePostScriptOverlay(event);
       });
     }
+
+    const onMetadataRequested = (event: any) => {
+      event.eventBus.fire('spiff.task_metadata_keys.returned', {
+        keys: TASK_METADATA,
+      });
+    };
+
+    diagramModeler.on(
+      'spiff.task_metadata_keys.requested',
+      onMetadataRequested,
+    );
 
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
