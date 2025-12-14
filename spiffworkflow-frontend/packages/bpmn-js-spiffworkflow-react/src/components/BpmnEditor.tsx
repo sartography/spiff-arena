@@ -190,9 +190,6 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
     if (diagramType === 'bpmn') {
       diagramModeler = new BpmnModeler({
         container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
         propertiesPanel: {
           parent: '#js-properties-panel',
         },
@@ -213,9 +210,6 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
     } else if (diagramType === 'dmn') {
       diagramModeler = new DmnModeler({
         container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
         drd: {
           propertiesPanel: {
             parent: '#js-properties-panel',
@@ -230,9 +224,6 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
     } else if (diagramType === 'readonly') {
       diagramModeler = new BpmnViewer({
         container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
         additionalModules: [
           KeyboardMoveModule,
           MoveCanvasModule,
