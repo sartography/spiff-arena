@@ -41,5 +41,22 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sartography/bpmn-js-spiffworkflow-react.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sartography/bpmn-js-spiffworkflow-react/issues"
+  },
+  "homepage": "https://github.com/sartography/bpmn-js-spiffworkflow-react#readme",
+  "keywords": [
+    "bpmn",
+    "bpmn-js",
+    "spiffworkflow",
+    "react",
+    "diagram",
+    "editor",
+    "dmn"
+  ]
 }
