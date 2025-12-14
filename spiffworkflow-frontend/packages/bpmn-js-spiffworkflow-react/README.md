@@ -16,13 +16,25 @@ React components for BPMN/DMN diagram editing, built on [bpmn-js-spiffworkflow](
 
 ### Peer Dependencies
 
-Your app must have these installed:
+Your app must install these dependencies:
+
+```bash
+npm install react react-dom bpmn-js bpmn-js-properties-panel bpmn-js-spiffworkflow dmn-js dmn-js-properties-panel diagram-js
+```
+
+Or add to package.json:
 
 ```json
 {
-  "peerDependencies": {
+  "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "bpmn-js": "^18.9.1",
+    "bpmn-js-properties-panel": "^5.44.0",
+    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
+    "dmn-js": "^17.4.0",
+    "dmn-js-properties-panel": "^3.8.3",
+    "diagram-js": "^15.4.0"
   }
 }
 ```
