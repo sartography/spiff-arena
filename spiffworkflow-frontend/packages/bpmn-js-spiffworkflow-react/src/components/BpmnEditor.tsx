@@ -16,7 +16,7 @@ import {
   // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
 } from 'dmn-js-properties-panel';
 
-import React, { useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -64,6 +64,8 @@ export interface BpmnEditorRef {
 
 export type TaskMetadataItem = string | { name: string; label?: string; description?: string };
 
+const DEFAULT_TASK_METADATA_KEYS: TaskMetadataItem[] = [];
+
 export interface BpmnEditorInternalProps extends BpmnEditorProps {
   taskMetadataKeys?: TaskMetadataItem[] | null;
 }
@@ -76,7 +78,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
   fileName,
   tasks,
   url,
-  taskMetadataKeys = [],
+  taskMetadataKeys = DEFAULT_TASK_METADATA_KEYS,
   onCallActivityOverlayClick,
   onDataStoresRequested,
   onDmnFilesRequested,
@@ -96,6 +98,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
   const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
+  const diagramFetchedRef = useRef(false);
 
   const zoom = useCallback(
     (amount: number) => {
@@ -105,11 +108,19 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
           modeler = (diagramModelerState as any).getActiveViewer();
         }
         if (modeler) {
-          if (amount === 0) {
-            const canvas = modeler.get('canvas');
-            canvas.zoom(FitViewport, 'auto');
-          } else {
-            modeler.get('zoomScroll').stepZoom(amount);
+          try {
+            if (amount === 0) {
+              const canvas = modeler.get('canvas');
+              // Check if canvas has valid dimensions before zooming
+              const container = canvas._container;
+              if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+                canvas.zoom(FitViewport, 'auto');
+              }
+            } else {
+              modeler.get('zoomScroll').stepZoom(amount);
+            }
+          } catch (error) {
+            console.warn('Failed to zoom:', error);
           }
         }
       }
@@ -171,8 +182,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
         ? 'hidden-properties-panel'
         : 'js-properties-panel';
     temp.innerHTML = `
-      <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
-        <div class="canvas ${canvasClass}" id="canvas"></div>
+      <div class="content with-diagram bpmn-js-container" id="js-drop-zone" style="height: 100%;">
+        <div class="canvas ${canvasClass}" id="canvas" style="height: 100%;"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
@@ -416,6 +427,13 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
         onLaunchMessageEditor(event);
       }
     });
+
+    // Cleanup: destroy the modeler when component unmounts or when we need a new modeler
+    return () => {
+      if (diagramModeler) {
+        diagramModeler.destroy();
+      }
+    };
   }, [
     diagramType,
     taskMetadataKeys,
@@ -441,11 +459,31 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
       return;
     }
     diagramModelerState.importXML(diagramXMLString);
-    zoom(0);
+
+    // Zoom to fit after a short delay to ensure canvas is rendered
+    setTimeout(() => {
+      try {
+        let modeler = diagramModelerState;
+        if (diagramType === 'dmn') {
+          modeler = diagramModelerState.getActiveViewer();
+        }
+        if (modeler) {
+          const canvas = modeler.get('canvas');
+          // Check if canvas has valid dimensions before zooming
+          const container = canvas._container;
+          if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+            canvas.zoom(FitViewport, 'auto');
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to zoom canvas:', error);
+      }
+    }, 100);
+
     if (diagramType !== 'dmn') {
       fixUnresolvedReferences(diagramModelerState);
     }
-  }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
+  }, [diagramXMLString, diagramModelerState, diagramType]);
 
   // Import done operations
   useEffect(() => {
@@ -453,6 +491,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
       return undefined;
     }
     if (performingXmlUpdates) {
+      return undefined;
+    }
+    // Prevent re-running fetch logic if we've already fetched
+    if (diagramFetchedRef.current) {
       return undefined;
     }
 
@@ -556,7 +598,15 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
       }
 
       const canvas = diagramModelerState.get('canvas');
-      canvas.zoom(FitViewport, 'auto');
+      // Check if canvas has valid dimensions before zooming
+      try {
+        const container = canvas._container;
+        if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+          canvas.zoom(FitViewport, 'auto');
+        }
+      } catch (error) {
+        console.warn('Failed to zoom canvas on import:', error);
+      }
 
       if (tasks) {
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
@@ -630,6 +680,9 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
 
     (diagramModelerState as any).on('import.done', onImportDone);
 
+    // Mark that we've initialized the fetch logic
+    diagramFetchedRef.current = true;
+
     if (diagramXML) {
       setDiagramXMLString(diagramXML);
       return undefined;
@@ -654,9 +707,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
       return undefined;
     }
 
-    return () => {
-      (diagramModelerState as any).destroy();
-    };
+    return undefined;
   }, [
     apiService,
     diagramModelerState,
@@ -671,7 +722,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(({
   ]);
 
   // The component only renders the container - the actual diagram is rendered by bpmn-js
-  return <div id="diagram-container" />;
+  return <div id="diagram-container" style={{ height: '100%', width: '100%' }} />;
 });
 
 BpmnEditor.displayName = 'BpmnEditor';
