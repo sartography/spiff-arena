@@ -12,13 +12,36 @@ security: []
 paths:
   /authentication-options:
     get:
-      summary: redirect to open id authentication server
+      summary: Get available authentication options
+      description: Returns information about available authentication methods and configurations for this SpiffWorkflow instance
       operationId: spiffworkflow_backend.routes.authentication_controller.authentication_options
       tags:
         - Authentication
       responses:
         "200":
-          description: Redirects to authentication server
+          description: List of authentication providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - uri
+                    - identifier
+                  properties:
+                    uri:
+                      type: string
+                      description: The authentication server URI
+                      example: "http://localhost:7000/openid"
+                    label:
+                      type: string
+                      description: Display label for the authentication method
+                      example: "internal openid"
+                    identifier:
+                      type: string
+                      description: Unique identifier for this authentication method
+                      example: "default"
   /login:
     parameters:
       - name: authentication_identifier
@@ -42,13 +65,14 @@ paths:
         schema:
           type: string
     get:
-      summary: redirect to open id authentication server
+      summary: Initiate login flow
+      description: Redirects to the authentication server to begin the login process. After successful authentication, the user will be redirected back to the redirect_url or the login_return endpoint.
       operationId: spiffworkflow_backend.routes.authentication_controller.login
       tags:
         - Authentication
       responses:
-        "200":
-          description: Redirects to authentication server
+        "302":
+          description: Redirects to authentication server for login
   /login_return:
     parameters:
       - name: code
@@ -88,31 +112,39 @@ paths:
       - name: id_token
         in: query
         required: true
+        description: The ID token to invalidate
         schema:
           type: string
       - name: redirect_url
         in: query
         required: false
+        description: URL to redirect to after logout
         schema:
           type: string
       - name: authentication_identifier
         in: query
         required: true
+        description: Identifier of the authentication method being used
         schema:
           type: string
       - name: backend_only
         in: query
         required: false
+        description: If true, only logout from the backend without redirecting to the authentication server
         schema:
           type: boolean
+          default: false
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.logout
       summary: Logout authenticated user
+      description: Logs out the user and optionally redirects to the authentication server's logout endpoint
       tags:
         - Authentication
       responses:
+        "302":
+          description: Redirects to authentication server logout or redirect_url
         "200":
-          description: Logout Authenticated User
+          description: Successful logout (backend_only mode)
   /logout_return:
     get:
       operationId: spiffworkflow_backend.routes.authentication_controller.logout_return
@@ -188,17 +220,30 @@ paths:
   /status:
     get:
       operationId: spiffworkflow_backend.routes.health_controller.status
-      summary: Returns 200 if the server is Responding
+      summary: Returns server status and frontend access permission
+      description: Checks if the server is running and whether the current user (if authenticated) has permission to access the frontend
       tags:
         - Liveness
         - Status
       responses:
         "200":
-          description: The server is running.
+          description: Server is running with status information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OkTrue"
+                type: object
+                required:
+                  - ok
+                  - can_access_frontend
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                    description: Server status indicator
+                  can_access_frontend:
+                    type: boolean
+                    example: true
+                    description: Whether the authenticated user has permission to access the frontend
 
   /debug/test-raise-error:
     post:
@@ -919,20 +964,36 @@ paths:
   /processes:
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_list
-      summary:
-        Return a list of all processes (not just primary process of a process model)
-        useful for finding processes for call activites.
+      summary: Return a list of all processes (not just primary process of a process model)
+      description: Returns all BPMN process definitions from all process models. Useful for finding processes for call activities.
       tags:
         - Process Models
       responses:
         "200":
-          description: Successfully return the requested processes
+          description: Array of BPMN process definitions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Process"
+                  allOf:
+                    - $ref: "#/components/schemas/Process"
+                    - type: object
+                      properties:
+                        relative_location:
+                          type: string
+                          description: The process group location relative to root
+                          example: "misc/qa/bpmn-model-testing"
+                        properties:
+                          type: object
+                          description: Additional process properties
+                          properties:
+                            has_lanes:
+                              type: boolean
+                            is_primary:
+                              type: boolean
+                            is_executable:
+                              type: boolean
 
   /github-webhook-receive:
     post:
@@ -1092,15 +1153,18 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.extensions_controller.extension_list
       summary: Returns the list of available extensions
+      description: Gets all process models configured as extensions, including their files and UI schema definitions
       tags:
         - Extensions
       responses:
         "200":
-          description: Resulting extensions
+          description: Array of extension process models with file contents
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProcessModel"
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessModel"
 
   /extensions/{modified_process_model_identifier}:
     parameters:
@@ -2011,9 +2075,10 @@ paths:
       - name: file_contents_hash
         in: query
         required: false
-        description: The hash of the file contents that originally came with the file.
+        description: Hash of the original file contents for optimistic locking. If provided, the update will only succeed if this hash matches the current file hash, preventing concurrent modification conflicts.
         schema:
           type: string
+          example: "0bd785d19b800380025d5a7819fee88833e145691683f1eabf33c24a8e2dbe97"
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_show
       summary: Returns metadata about the file
@@ -2087,15 +2152,23 @@ paths:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.task_list_my_tasks
       summary: returns the list of ready or waiting tasks for a user
+      description: Gets all tasks assigned to or available to the current user, optionally filtered by process instance
       responses:
         "200":
-          description: list of tasks
+          description: Object containing results array and pagination information
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Task"
+                type: object
+                required:
+                  - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
 
   /tasks/for-my-open-processes:
     parameters:
@@ -2749,17 +2822,19 @@ paths:
       - name: execute_tasks
         in: query
         required: false
-        description: Execute ready tasks on the process instance.
+        description: If true, execute ready tasks on the process instance automatically. This causes the process to run forward until it reaches a user task or completes.
         schema:
           type: boolean
+          default: false
     get:
       tags:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.interstitial
-      summary: An SSE (Server Sent Events) endpoint that returns what tasks are currently active (running, waiting, or the final END event)
+      summary: Get currently active task for a process instance
+      description: An SSE (Server Sent Events) endpoint that returns what tasks are currently active (running, waiting, or the final END event). Can optionally execute ready tasks automatically with execute_tasks=true.
       responses:
         "200":
-          description: One task
+          description: Currently active task
           content:
             application/json:
               schema:
@@ -3541,6 +3616,7 @@ paths:
     post:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.permissions_check
       summary: Checks if current user has access to given list of target uris and permissions.
+      description: Batch permission check for multiple URIs and HTTP methods
       tags:
         - Permissions
       requestBody:
@@ -3548,14 +3624,46 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              type: object
+              required:
+                - requests_to_check
+              properties:
+                requests_to_check:
+                  type: object
+                  description: Map of URIs to arrays of HTTP methods to check
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                  example:
+                    "/v1.0/process-groups":
+                      - "GET"
+                      - "POST"
+                    "/v1.0/data-stores":
+                      - "GET"
       responses:
         "200":
-          description: Result of permission check
+          description: Result of permission checks
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Secret"
+                type: object
+                required:
+                  - results
+                properties:
+                  results:
+                    type: object
+                    description: Map of URIs to method permission results (true if allowed, false if denied)
+                    additionalProperties:
+                      type: object
+                      additionalProperties:
+                        type: boolean
+                    example:
+                      "/v1.0/process-groups":
+                        "GET": true
+                        "POST": false
+                      "/v1.0/data-stores":
+                        "GET": true
 
   /connector-proxy/typeahead/{category}:
     parameters:
@@ -3617,11 +3725,44 @@ paths:
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_list
       summary: Return a list of the data store objects.
+      description: Returns all data stores accessible to the user, optionally filtered by process group
       tags:
         - Data Stores
       responses:
         "200":
-          description: The list of currently defined data store objects
+          description: Array of data store objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - type
+                    - name
+                    - location
+                  properties:
+                    id:
+                      type: string
+                      description: Unique identifier for the data store
+                      example: "employees"
+                    clz:
+                      type: string
+                      description: Class name of the data store implementation
+                      example: "JSONDataStore"
+                    name:
+                      type: string
+                      description: Display name of the data store
+                      example: "Employees JSON"
+                    type:
+                      type: string
+                      description: Type of data store (json, kkv, etc.)
+                      example: "json"
+                    location:
+                      type: string
+                      description: Process group location where the data store is defined
+                      example: "misc/qa/data-store-tests"
     post:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_create
       summary: Create a new data store instance.
@@ -4093,18 +4234,59 @@ components:
         id:
           readOnly: true
           type: string
+          description: Task identifier (same as task_guid for consistency)
+        task_id:
+          type: string
+          description: Task identifier
+        task_guid:
+          type: string
+          description: Globally unique identifier for this task instance
+        task_name:
+          type: string
+          description: BPMN element name/ID
         name:
           type: string
+          description: Human-readable task name
+        task_title:
+          type: string
+          description: Display title for the task
         title:
           type: string
+          description: Display title (alias for task_title)
+        task_type:
+          type: string
+          description: Type of BPMN task (UserTask, ScriptTask, etc.)
+          example: "UserTask"
         type:
           type: string
+          description: Type of task
+        task_status:
+          type: string
+          description: Current status of the task
+          example: "READY"
         state:
           type: string
+          description: Task state
+        completed:
+          type: boolean
+          description: Whether the task has been completed
         documentation:
           type: string
+          description: Markdown documentation for the task
         data:
           type: object
+          description: Task data/variables
+        form_file_name:
+          type: string
+          nullable: true
+          description: JSON schema file name for the form
+        ui_form_file_name:
+          type: string
+          nullable: true
+          description: UI schema file name for the form
+        json_metadata:
+          type: object
+          description: Additional metadata stored as JSON
         multi_instance_type:
           type: string
           enum: ["none", "looping", "parallel", "sequential"]
@@ -4114,10 +4296,64 @@ components:
           type: number
         process_name:
           type: string
+        process_instance_id:
+          type: integer
+          description: ID of the process instance this task belongs to
+        process_model_identifier:
+          type: string
+          description: Identifier of the process model
+        process_model_display_name:
+          type: string
+          description: Display name of the process model
+        process_instance_status:
+          type: string
+          description: Current status of the process instance
+        bpmn_process_identifier:
+          type: string
+          description: BPMN process definition identifier
+        last_milestone_bpmn_name:
+          type: string
+          nullable: true
+          description: Name of the last milestone reached
+        potential_owner_usernames:
+          type: string
+          description: Comma-separated list of potential owner usernames
+        process_initiator_username:
+          type: string
+          description: Username of the user who started the process
         lane_name:
           type: string
+          nullable: true
+          description: BPMN lane name if task is in a lane
+        lane_assignment_id:
+          type: integer
+          nullable: true
+          description: ID of the lane assignment
+        actual_owner_id:
+          type: integer
+          nullable: true
+          description: User ID of the actual owner
+        completed_by_user_id:
+          type: integer
+          nullable: true
+          description: User ID of who completed the task
+        assigned_user_group_identifier:
+          type: string
+          nullable: true
+          description: Identifier of the assigned user group
+        created_at_in_seconds:
+          type: integer
+          description: Unix timestamp when task was created
+        updated_at_in_seconds:
+          type: integer
+          description: Unix timestamp when task was last updated
+        process_instance_summary:
+          type: string
+          nullable: true
+          description: Summary of the process instance
         properties:
           type: object
+          description: Additional task properties
       example:
         id: study_identification
         name: Study Identification
