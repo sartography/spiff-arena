@@ -331,12 +331,7 @@ class MessageService:
         )
         db.session.add(message_instance)
         db.session.commit()
-        try:
-            receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
-        except Exception as e:
-            db.session.delete(message_instance)
-            db.session.commit()
-            raise e
+        receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
         if not receiver_message:
             db.session.delete(message_instance)
             db.session.commit()
