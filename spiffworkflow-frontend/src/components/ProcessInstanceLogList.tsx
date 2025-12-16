@@ -54,10 +54,12 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: '80%', // Increased width
   maxWidth: 'md', // Added max width for responsiveness
+  maxHeight: '90vh', // Limit height to 90% of viewport height
   bgcolor: 'background.paper',
   border: '2px solid #000',
   boxShadow: 24,
   p: 4,
+  overflow: 'auto', // Enable scrolling for large content
 };
 
 export default function ProcessInstanceLogList({

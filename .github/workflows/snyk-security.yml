@@ -85,13 +85,18 @@ jobs:
 
       # snyk does not currently support uv
       #   https://github.com/astral-sh/uv/issues/11181
+      - name: Get around snyk not liking uv
+        run: |
+          uv pip freeze > requirements.txt
+          pip install -r requirements.txt
+
       # # checks library dependencies
-      # - name: Snyk test
-      #   run: snyk test
+      - name: Snyk test
+        run: snyk test --skip-unresolved
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
+        run: snyk monitor --all-projects --skip-unresolved
 
         # Build the docker image for testing
       - name: Build a Docker image

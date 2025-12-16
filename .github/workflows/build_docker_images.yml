@@ -31,7 +31,6 @@ on:
   push:
     branches:
       - main
-      - api-logs
       - feature/logging-for-event-logger
     tags: [v*]
 
