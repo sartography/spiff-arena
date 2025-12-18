@@ -145,7 +145,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
     useState<boolean>(false);
 
-  const { addError, removeError } = useAPIError();
+  const { error, addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`,
   );
@@ -752,8 +752,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         // reverse operates on self as well as return the new ordered array so reverse it right away
         successCallback: (results: BasicTask[]) =>
           setTaskInstancesToDisplay(results.reverse()),
-        failureCallback: (error: any) => {
-          setTaskDataToDisplay(`ERROR: ${error.message}`);
+        failureCallback: (err: any) => {
+          setTaskDataToDisplay(`ERROR: ${err.message}`);
         },
       });
     },
@@ -781,8 +781,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
           httpMethod: 'GET',
           successCallback: processTaskResult,
-          failureCallback: (error: any) => {
-            setTaskDataToDisplay(`ERROR: ${error.message}`);
+          failureCallback: (err: any) => {
+            setTaskDataToDisplay(`ERROR: ${err.message}`);
             setShowTaskDataLoading(false);
           },
         });
@@ -1139,7 +1139,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const addPotentialOwners = () => {
-    if (!additionalPotentialOwners) {
+    if (!additionalPotentialOwners || additionalPotentialOwners.length === 0) {
+      addError({
+        message: 'Please select a user from the dropdown',
+      });
       return;
     }
     if (!taskToDisplay) {
@@ -1373,10 +1376,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <p className="explanatory-message with-tiny-bottom-margin">
             {t('select_user_to_complete_task')}
           </p>
+          {error && (
+            <div style={{ color: 'red', marginBottom: '10px' }}>
+              {error.message}
+            </div>
+          )}
           <UserSearch
             className="modal-dropdown"
             onSelectedUser={(user: User) => {
               setAdditionalPotentialOwners([user]);
+              removeError();
             }}
           />
         </div>

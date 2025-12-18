@@ -27,6 +27,7 @@ export default function UserSearch({
       result.users.forEach((user: User) => {
         if (user.username === inputText) {
           setSelectedUser(user);
+          onSelectedUser(user);
         }
       });
     }

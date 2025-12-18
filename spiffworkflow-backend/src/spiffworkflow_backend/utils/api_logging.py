@@ -1,10 +1,17 @@
 import functools
 import logging
+import threading
 import time
 from collections.abc import Callable
+from queue import Empty
+from queue import Queue
 from typing import Any
 
+from flask import Flask
 from flask import Response
+from flask import current_app
+from flask import g
+from flask import has_request_context
 from flask import request
 
 from spiffworkflow_backend.models.api_log_model import APILogModel
@@ -12,10 +19,71 @@ from spiffworkflow_backend.models.db import db
 
 logger = logging.getLogger(__name__)
 
+# Thread-safe queue for deferred API log entries
+_log_queue: Queue[APILogModel] = Queue()
+_log_worker_started = False
+_log_worker_lock = threading.Lock()
+
+
+def _process_log_queue() -> None:
+    """Process queued API log entries in batches."""
+    entries_to_commit = []
+
+    # Collect all pending entries
+    while not _log_queue.empty():
+        try:
+            entry = _log_queue.get_nowait()
+            entries_to_commit.append(entry)
+        except Empty:
+            break
+
+    if entries_to_commit:
+        try:
+            # Use a new session to avoid transaction conflicts
+            for entry in entries_to_commit:
+                db.session.add(entry)
+            db.session.commit()
+            logger.debug(f"Committed {len(entries_to_commit)} API log entries")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to commit API log entries: {e}")
+
+
+def _queue_api_log_entry(log_entry: APILogModel) -> None:
+    """Queue an API log entry for deferred processing."""
+    _log_queue.put(log_entry)
+
+    # Try to mark that we have pending logs for this request context
+    if has_request_context():  # type: ignore[no-untyped-call]
+        try:
+            g.has_pending_api_logs = True
+        except RuntimeError:
+            # Fallback: process immediately if we can't set the flag
+            logger.debug("Processing API log immediately - couldn't set g flag")
+            _process_log_queue()
+    else:
+        # Outside Flask request context (like in tests), process logs immediately
+        logger.debug("Processing API log immediately - outside Flask request context")
+        _process_log_queue()
+
+
+def setup_deferred_logging(app: Flask) -> None:
+    """Set up teardown handlers for deferred API logging."""
+
+    @app.teardown_appcontext
+    def process_pending_logs(error: Exception | None) -> None:
+        """Process any pending API logs after the request context ends."""
+        if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+            _process_log_queue()
+
 
 def log_api_interaction(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        # Check if API logging is enabled
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
+            return func(*args, **kwargs)
+
         start_time = time.time()
 
         # Capture request details
@@ -47,6 +115,9 @@ def log_api_interaction(func: Callable) -> Callable:
                 status_code = e.status_code
             if hasattr(e, "to_dict"):
                 response_body = e.to_dict()
+            else:
+                response_body = {"fabricated_response_body_from_exception": f"{e.__class__.__name__}: {str(e)}"}
+
             raise e
         finally:
             duration_ms = int((time.time() - start_time) * 1000)
@@ -62,10 +133,14 @@ def log_api_interaction(func: Callable) -> Callable:
                         # despite the header, or some other issue. We'll just skip the body.
                         logger.warning("Failed to parse response body as JSON", exc_info=True)
                         pass
+                elif isinstance(response, tuple) and len(response) >= 2:
+                    # Handle tuple responses like (data, status_code) or (data, status_code, headers)
+                    response_body = response[0]
+                    if isinstance(response[1], int):
+                        status_code = response[1]
                 else:
-                    # Handle cases where response might not be a Flask Response object immediately
-                    # (though in controllers it usually is)
-                    pass
+                    # Handle other response types - assume it's the response body
+                    response_body = response
 
             # Extract process_instance_id if available in response
             if response_body and isinstance(response_body, dict):
@@ -89,8 +164,8 @@ def log_api_interaction(func: Callable) -> Callable:
                 process_instance_id=process_instance_id,
                 duration_ms=duration_ms,
             )
-            db.session.add(log_entry)
-            db.session.commit()
+            # Queue the log entry for deferred processing instead of immediate commit
+            _queue_api_log_entry(log_entry)
 
         return response
 

@@ -517,6 +517,9 @@ class AuthorizationService:
                         old_group_ids.add(group_id)
                         UserService.remove_user_from_group(user_model, group_id)
 
+        # Track group IDs before and after YAML import to catch changes from configuration
+        group_ids_before_yaml_import = {g.id for g in user_model.groups}
+
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
         # the user will immediately need permissions to use the site.
@@ -524,6 +527,17 @@ class AuthorizationService:
         # before the user signs in, because we won't know things like
         # the external service user identifier.
         cls.import_permissions_from_yaml_file(user_model)
+
+        # Refresh the groups relationship to get the latest from the database
+        db.session.expire(user_model, ["groups"])
+        # Calculate which groups were added/removed by YAML configuration changes
+        group_ids_after_yaml_import = {g.id for g in user_model.groups}
+        yaml_added_group_ids = group_ids_after_yaml_import - group_ids_before_yaml_import
+        yaml_removed_group_ids = group_ids_before_yaml_import - group_ids_after_yaml_import
+
+        # Combine YAML changes with OpenID changes
+        new_group_ids.update(yaml_added_group_ids)
+        old_group_ids.update(yaml_removed_group_ids)
 
         if new_user:
             new_group_ids.update({g.id for g in user_model.groups})

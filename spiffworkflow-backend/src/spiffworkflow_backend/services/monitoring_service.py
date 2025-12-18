@@ -55,6 +55,12 @@ def traces_sampler(sampling_context: Any) -> Any:
 
 
 def configure_sentry(app: flask.app.Flask) -> None:
+    sentry_dsn = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN")
+
+    # Skip Sentry initialization if no DSN is configured (e.g., in tests)
+    if not sentry_dsn:
+        return
+
     # get rid of NotFound errors
     def before_send(event: Any, hint: Any) -> Any:
         if "exc_info" in hint:
@@ -79,7 +85,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
         sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
 
     sentry_configs = {
-        "dsn": app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
+        "dsn": sentry_dsn,
         "integrations": [
             FlaskIntegration(),
         ],
