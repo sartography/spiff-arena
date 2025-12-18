@@ -1,7 +1,8 @@
 """Database utility functions for common operations."""
+
+from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Any
-from typing import Mapping
-from typing import Sequence
 
 from flask import current_app
 from sqlalchemy.dialects.mysql import insert as mysql_insert
@@ -70,7 +71,5 @@ def insert_or_ignore_duplicate(
     else:
         # PostgreSQL's on_conflict_do_nothing doesn't have deadlock issues
         insert_stmt = postgres_insert(model_class).values(values)
-        on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(
-            index_elements=postgres_conflict_index_elements
-        )
+        on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=postgres_conflict_index_elements)
         return db.session.execute(on_duplicate_key_stmt)
