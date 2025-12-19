@@ -94,14 +94,14 @@ def _acquire_message_lock(message_name: str, payload: dict, timeout: int = 10):
     if dialect_name == "postgresql":
         # PostgreSQL: Use advisory locks (transaction-scoped, auto-released)
         hash_value = int(hashlib.sha256(signature_str.encode()).hexdigest()[:16], 16)
-        lock_id = hash_value % (2**63)  # Convert to signed 64-bit integer
-        db.session.execute(db.text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": lock_id})
+        lock_key = hash_value % (2**63)  # Convert to signed 64-bit integer
+        db.session.execute(db.text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
 
     elif dialect_name == "mysql":
         # MySQL: Use GET_LOCK() - session-scoped, needs explicit release
         # Timeout of 10 seconds - returns 1 if lock acquired, 0 if timeout
         lock_key = hashlib.sha256(signature_str.encode()).hexdigest()[:32]
-        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_key, 10)"), {"lock_key": lock_key})
+        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_key, :timeout)"), {"lock_key": lock_key, "timeout": timeout})
         lock_acquired = result.scalar()
         if lock_acquired != 1:
             raise Exception(f"Failed to acquire lock for message: {message_name}")
@@ -117,14 +117,14 @@ def _acquire_message_lock(message_name: str, payload: dict, timeout: int = 10):
         {"name": message_name, "timeout": timeout},
     ).scalar_one()
 
-    print("GOT", got)
     if got != 1:
         raise RuntimeError("Could not acquire lock")
 
     try:
         yield
     finally:
-        db.session.execute(text("SELECT RELEASE_LOCK(:name)"), {"name": message_name})
+        if dialect_name == "mysql":
+            db.session.execute(text("SELECT RELEASE_LOCK(:lock_key)"), {"lock_key": lock_key})
 
 
 # body: {

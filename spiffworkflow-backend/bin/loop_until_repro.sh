@@ -19,7 +19,7 @@ echo "Will run until the issue is detected or you press Ctrl+C"
 echo ""
 
 attempt=0
-max_attempts=3
+max_attempts=2
 
 while true; do
   attempt=$((attempt + 1))
