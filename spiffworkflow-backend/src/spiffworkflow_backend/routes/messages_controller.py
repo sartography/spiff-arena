@@ -87,7 +87,7 @@ def message_instance_list(
 
 
 @contextmanager
-def mysql_named_lock(message_name: str, payload: str, timeout: int = 10):
+def _acquire_message_lock(message_name: str, payload: str, timeout: int = 10):
 
     dialect_name = db.session.bind.dialect.name
     lock_key = None
@@ -150,7 +150,7 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    with mysql_named_lock(f"msg:{modified_message_name}"):
+    with _acquire_message_lock(f"msg:{modified_message_name}"):
         receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
         process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
         response_json = {
