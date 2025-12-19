@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-function error_handler() {
-  echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
-  exit "$2"
-}
-trap 'error_handler ${LINENO} $?' ERR
-set -o errtrace -o errexit -o nounset -o pipefail
+set -eo pipefail
 
 script_dir="$(
   cd -- "$(dirname "$0")" >/dev/null 2>&1

@@ -14,6 +14,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
+from contextlib import contextmanager
+from sqlalchemy import text
 
 
 def message_model_list_from_root() -> flask.wrappers.Response:
@@ -81,6 +83,24 @@ def message_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
+@contextmanager
+def mysql_named_lock(name: str, timeout: int = 10):
+    # Keep same connection for lock + work
+    got = db.session.execute(
+        text("SELECT GET_LOCK(:name, :timeout)"),
+        {"name": name, "timeout": timeout},
+    ).scalar_one()
+
+    print("GOT", got)
+    if got != 1:
+        raise RuntimeError("Could not acquire lock")
+
+    try:
+        yield
+    finally:
+        db.session.execute(text("SELECT RELEASE_LOCK(:name)"), {"name": name})
+
+
 # body: {
 #   payload: dict,
 #   process_instance_id: Optional[int],
@@ -97,17 +117,18 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
-    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
-    response_json = {
-        "task_data": process_instance.get_data(),
-        "process_instance": process_instance.serialized(),
-    }
-    return Response(
-        json.dumps(response_json),
-        status=200,
-        mimetype="application/json",
-    )
+    with mysql_named_lock(f"msg:{modified_message_name}"):
+        receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
+        process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+        response_json = {
+            "task_data": process_instance.get_data(),
+            "process_instance": process_instance.serialized(),
+        }
+        return Response(
+            json.dumps(response_json),
+            status=200,
+            mimetype="application/json",
+        )
 
 
 def get_process_model_for_message(modified_message_name: str) -> flask.wrappers.Response:
