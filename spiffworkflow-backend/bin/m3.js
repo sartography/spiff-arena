@@ -1,6 +1,7 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
+import exec from 'k6/execution';
 
 // Load API key from environment variable
 const API_KEY = __ENV.SPIFF_API_KEY || __ENV.CIVI;
@@ -72,6 +73,15 @@ export default function (data) {
   check(response, {
     "message/two status is 200": (r) => r.status === 200,
   });
+
+  // Check if this is the race condition we're looking for
+  if (response.body && response.body.includes("This process is not waiting for two")) {
+    console.error(`🔴 RACE CONDITION REPRODUCED! VU ${__VU}: Found "This process is not waiting for two" in response`);
+    console.error(`Response status: ${response.status}`);
+    console.error(`Response body: ${response.body}`);
+    // Abort the test immediately with a specific exit code
+    exec.test.abort("Race condition reproduced - process not waiting for message");
+  }
 
   if (response.status !== 200) {
     console.error(`VU ${__VU}: message/two failed. Status: ${response.status}, Body: ${response.body}`);
