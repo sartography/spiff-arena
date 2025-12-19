@@ -30,23 +30,23 @@ while true; do
   echo "=========================================="
   echo "Attempt #${attempt} - $(date)"
   echo "=========================================="
-  
+
   # Clean up all process and message instances
   echo "Cleaning up database..."
   "${script_dir}/run_local_python_script" "${script_dir}/delete_all_process_and_message_instances.py"
-  
+
   echo ""
   echo "Running k6 test..."
-  
+
   # Run k6 test and capture exit code
   set +e
-  docker run --rm -i grafana/k6 \
+  docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
     -e SPIFF_API_KEY="$CIVI" \
     -e API_HOST=host.docker.internal:7000 \
-    run -u 60 -i 60 - < "${script_dir}/m3.js"
+    run -u 60 -i 60 - <"${script_dir}/m3.js"
   k6_exit_code=$?
   set -e
-  
+
   # k6 exits with code 108 when exec.test.abort() is called
   if [ $k6_exit_code -eq 108 ]; then
     echo ""
@@ -61,7 +61,7 @@ while true; do
   elif [ $k6_exit_code -ne 0 ]; then
     echo "Warning: k6 exited with code ${k6_exit_code} (not the race condition)"
   fi
-  
+
   echo ""
   echo "No race condition detected on attempt #${attempt}. Trying again..."
   echo ""
