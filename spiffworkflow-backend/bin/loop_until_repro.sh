@@ -19,6 +19,7 @@ echo "Will run until the issue is detected or you press Ctrl+C"
 echo ""
 
 attempt=0
+max_attempts=3
 
 while true; do
   attempt=$((attempt + 1))
@@ -26,9 +27,9 @@ while true; do
   echo "Attempt #${attempt} - $(date)"
   echo "=========================================="
 
-  # Clean up all process and message instances
-  echo "Cleaning up database..."
-  "${script_dir}/run_local_python_script" "${script_dir}/delete_all_process_and_message_instances.py"
+  # # Clean up all process and message instances
+  # echo "Cleaning up database..."
+  # "${script_dir}/run_local_python_script" "${script_dir}/delete_all_process_and_message_instances.py"
 
   echo ""
   echo "Running k6 test..."
@@ -38,7 +39,7 @@ while true; do
   docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
     -e SPIFF_API_KEY="$CIVI" \
     -e API_HOST=host.docker.internal:7000 \
-    run -u 60 -i 60 - <"${script_dir}/m3.js"
+    run -u 2 -i 2 - <"${script_dir}/m3.js"
   k6_exit_code=$?
   set -e
 
@@ -60,5 +61,8 @@ while true; do
   echo ""
   echo "No race condition detected on attempt #${attempt}. Trying again..."
   echo ""
+  if [[ "$attempt" == "$max_attempts" ]]; then
+    exit 1
+  fi
   sleep 1
 done

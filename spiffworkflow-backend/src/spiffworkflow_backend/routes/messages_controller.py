@@ -1,3 +1,4 @@
+from spiffworkflow_backend.models.db import dialect_name
 import hashlib
 import json
 from typing import Any
@@ -84,31 +85,23 @@ def message_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
-
-
 @contextmanager
-def _acquire_message_lock(message_name: str, payload: str, timeout: int = 10):
-
-    dialect_name = db.session.bind.dialect.name
+def _acquire_message_lock(message_name: str, payload: dict, timeout: int = 10):
     lock_key = None
+    signature = {"name": message_name, "payload": payload}
+    signature_str = json.dumps(signature, sort_keys=True)
 
     if dialect_name == "postgresql":
         # PostgreSQL: Use advisory locks (transaction-scoped, auto-released)
-        signature_str = json.dumps(
-            {"name": message_name, "payload": payload},
-            sort_keys=True,
-        )
         hash_value = int(hashlib.sha256(signature_str.encode()).hexdigest()[:16], 16)
-        lock_id = hash_value % (2 ** 63)  # Convert to signed 64-bit integer
+        lock_id = hash_value % (2**63)  # Convert to signed 64-bit integer
         db.session.execute(db.text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": lock_id})
 
     elif dialect_name == "mysql":
         # MySQL: Use GET_LOCK() - session-scoped, needs explicit release
-        signature = { "name": message_name, "payload": payload }
-        signature_str = json.dumps(signature, sort_keys=True)
-        lock_key = hashlib.sha256(signature_str.encode()).hexdigest()[:32]
         # Timeout of 10 seconds - returns 1 if lock acquired, 0 if timeout
-        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_name, 10)"), {"lock_name": lock_key})
+        lock_key = hashlib.sha256(signature_str.encode()).hexdigest()[:32]
+        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_key, 10)"), {"lock_key": lock_key})
         lock_acquired = result.scalar()
         if lock_acquired != 1:
             raise Exception(f"Failed to acquire lock for message: {message_name}")
@@ -150,7 +143,7 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    with _acquire_message_lock(f"msg:{modified_message_name}"):
+    with _acquire_message_lock(f"msg:{modified_message_name}", body):
         receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
         process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
         response_json = {
