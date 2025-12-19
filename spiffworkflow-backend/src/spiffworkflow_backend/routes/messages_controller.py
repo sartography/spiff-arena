@@ -1,3 +1,4 @@
+import hashlib
 import json
 from typing import Any
 
@@ -83,12 +84,44 @@ def message_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
+
+
 @contextmanager
-def mysql_named_lock(name: str, timeout: int = 10):
+def mysql_named_lock(message_name: str, payload: str, timeout: int = 10):
+
+    dialect_name = db.session.bind.dialect.name
+    lock_key = None
+
+    if dialect_name == "postgresql":
+        # PostgreSQL: Use advisory locks (transaction-scoped, auto-released)
+        signature_str = json.dumps(
+            {"name": message_name, "payload": payload},
+            sort_keys=True,
+        )
+        hash_value = int(hashlib.sha256(signature_str.encode()).hexdigest()[:16], 16)
+        lock_id = hash_value % (2 ** 63)  # Convert to signed 64-bit integer
+        db.session.execute(db.text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": lock_id})
+
+    elif dialect_name == "mysql":
+        # MySQL: Use GET_LOCK() - session-scoped, needs explicit release
+        signature = { "name": message_name, "payload": payload }
+        signature_str = json.dumps(signature, sort_keys=True)
+        lock_key = hashlib.sha256(signature_str.encode()).hexdigest()[:32]
+        # Timeout of 10 seconds - returns 1 if lock acquired, 0 if timeout
+        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_name, 10)"), {"lock_name": lock_key})
+        lock_acquired = result.scalar()
+        if lock_acquired != 1:
+            raise Exception(f"Failed to acquire lock for message: {message_name}")
+
+    elif dialect_name == "sqlite":
+        # SQLite: Use BEGIN IMMEDIATE to get a write lock on the entire database
+        # This serializes all write transactions (auto-released on commit/rollback)
+        db.session.execute(db.text("BEGIN IMMEDIATE"))
+
     # Keep same connection for lock + work
     got = db.session.execute(
         text("SELECT GET_LOCK(:name, :timeout)"),
-        {"name": name, "timeout": timeout},
+        {"name": message_name, "timeout": timeout},
     ).scalar_one()
 
     print("GOT", got)
@@ -98,7 +131,7 @@ def mysql_named_lock(name: str, timeout: int = 10):
     try:
         yield
     finally:
-        db.session.execute(text("SELECT RELEASE_LOCK(:name)"), {"name": name})
+        db.session.execute(text("SELECT RELEASE_LOCK(:name)"), {"name": message_name})
 
 
 # body: {
