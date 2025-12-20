@@ -1,5 +1,3 @@
-from spiffworkflow_backend.models.db import dialect_name
-import hashlib
 import json
 from typing import Any
 
@@ -16,8 +14,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
-from contextlib import contextmanager
-from sqlalchemy import text
 
 
 def message_model_list_from_root() -> flask.wrappers.Response:
@@ -85,48 +81,6 @@ def message_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
-@contextmanager
-def _acquire_message_lock(message_name: str, payload: dict, timeout: int = 10):
-    lock_key = None
-    signature = {"name": message_name, "payload": payload}
-    signature_str = json.dumps(signature, sort_keys=True)
-
-    if dialect_name == "postgresql":
-        # PostgreSQL: Use advisory locks (transaction-scoped, auto-released)
-        hash_value = int(hashlib.sha256(signature_str.encode()).hexdigest()[:16], 16)
-        lock_key = hash_value % (2**63)  # Convert to signed 64-bit integer
-        db.session.execute(db.text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
-
-    elif dialect_name == "mysql":
-        # MySQL: Use GET_LOCK() - session-scoped, needs explicit release
-        # Timeout of 10 seconds - returns 1 if lock acquired, 0 if timeout
-        lock_key = hashlib.sha256(signature_str.encode()).hexdigest()[:32]
-        result = db.session.execute(db.text("SELECT GET_LOCK(:lock_key, :timeout)"), {"lock_key": lock_key, "timeout": timeout})
-        lock_acquired = result.scalar()
-        if lock_acquired != 1:
-            raise Exception(f"Failed to acquire lock for message: {message_name}")
-
-    elif dialect_name == "sqlite":
-        # SQLite: Use BEGIN IMMEDIATE to get a write lock on the entire database
-        # This serializes all write transactions (auto-released on commit/rollback)
-        db.session.execute(db.text("BEGIN IMMEDIATE"))
-
-    # Keep same connection for lock + work
-    got = db.session.execute(
-        text("SELECT GET_LOCK(:name, :timeout)"),
-        {"name": message_name, "timeout": timeout},
-    ).scalar_one()
-
-    if got != 1:
-        raise RuntimeError("Could not acquire lock")
-
-    try:
-        yield
-    finally:
-        if dialect_name == "mysql":
-            db.session.execute(text("SELECT RELEASE_LOCK(:lock_key)"), {"lock_key": lock_key})
-
-
 # body: {
 #   payload: dict,
 #   process_instance_id: Optional[int],
@@ -143,18 +97,17 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    with _acquire_message_lock(f"msg:{modified_message_name}", body):
-        receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
-        process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
-        response_json = {
-            "task_data": process_instance.get_data(),
-            "process_instance": process_instance.serialized(),
-        }
-        return Response(
-            json.dumps(response_json),
-            status=200,
-            mimetype="application/json",
-        )
+    receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
+    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    response_json = {
+        "task_data": process_instance.get_data(),
+        "process_instance": process_instance.serialized(),
+    }
+    return Response(
+        json.dumps(response_json),
+        status=200,
+        mimetype="application/json",
+    )
 
 
 def get_process_model_for_message(modified_message_name: str) -> flask.wrappers.Response:

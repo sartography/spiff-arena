@@ -2,7 +2,6 @@ API_KEY="$CIVI"
 
 for i in $(seq 1 5); do
   uuid=$(uuidgen)
-  curl 'localhost:7000/v1.0/messages/one?execution_mode=synchronous' -H "Spiffworkflow-Api-Key:$API_KEY" -H 'Content-Type: application/json' -X POST -d "{\"x\":\"$uuid\"}" &
-  curl 'localhost:7000/v1.0/messages/two?execution_mode=synchronous' -H "Spiffworkflow-Api-Key:$API_KEY" -H 'Content-Type: application/json' -X POST -d "{\"x\":\"$uuid\"}" &
+  curl 'localhost:7000/v1.0/messages/one?execution_mode=synchronous' -H "Spiffworkflow-Api-Key:$API_KEY" -H 'Content-Type: application/json' -X POST -d "{\"x\":\"$uuid\"}"
+  curl 'localhost:7000/v1.0/messages/two?execution_mode=synchronous' -H "Spiffworkflow-Api-Key:$API_KEY" -H 'Content-Type: application/json' -X POST -d "{\"x\":\"$uuid\"}"
 done
-wait

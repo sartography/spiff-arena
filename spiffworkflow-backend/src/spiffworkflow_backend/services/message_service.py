@@ -64,59 +64,62 @@ class MessageService:
         receiving_process_instance: ProcessInstanceModel | None = None
         processor_receive = None
         try:
-            for message_instance in available_receive_messages:
-                if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
-                    message_instance_receive = message_instance
-            message_triggerable_process_model = None
+            receiving_process_instance = None
+            processor_receive = None
+            for mi in available_receive_messages:
+                if mi.correlates(message_instance_send, CustomBpmnScriptEngine()):
+                    message_instance_receive = mi
+                    receiving_process_instance = MessageService.get_process_instance_for_message_instance(
+                        message_instance_receive
+                    )
+                    try:
+                        with ProcessInstanceQueueService.dequeued(receiving_process_instance, max_attempts=1):
+                            if receiving_process_instance.can_receive_message():
+                                cls.process_message_receive(
+                                    receiving_process_instance,
+                                    message_instance_receive,
+                                    message_instance_send,
+                                    execution_mode=execution_mode,
+                                    processor_receive=processor_receive,
+                                )
+                                message_instance_receive.status = "completed"
+                                message_instance_receive.counterpart_id = message_instance_send.id
+                                db.session.add(message_instance_receive)
+                                message_instance_send.status = "completed"
+                                message_instance_send.counterpart_id = message_instance_receive.id
+                                db.session.add(message_instance_send)
+                                db.session.commit()
+                                if should_queue_process_instance(execution_mode=execution_mode):
+                                    queue_process_instance_if_appropriate(
+                                        receiving_process_instance, execution_mode=execution_mode
+                                    )
+                                return message_instance_receive
+                    except ProcessInstanceIsAlreadyLockedError:
+                        # Someone else has this locked, let's keep looking
+                        pass
+            message_instance_receive = None
             receiving_process_instance = None
 
-            if message_instance_receive is not None:
-                receiving_process_instance = MessageService.get_process_instance_for_message_instance(message_instance_receive)
-                if not receiving_process_instance.can_receive_message():
-                    message_instance_receive = None
-                    receiving_process_instance = None
-
-            if message_instance_receive is None:
-                # Check for a message triggerable process and start that to create a new message_instance_receive
-                message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-                    message_name=message_instance_send.name
+            # Check for a message triggerable process and start that to create a new message_instance_receive
+            message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+                message_name=message_instance_send.name
+            ).first()
+            if message_triggerable_process_model:
+                user: UserModel | None = message_instance_send.user
+                if user is None:
+                    user = UserService.find_or_create_system_user()
+                receiving_process_instance, processor_receive = MessageService.start_process_with_message(
+                    message_triggerable_process_model,
+                    user,
+                    message_instance_send=message_instance_send,
+                    execution_mode=execution_mode,
+                )
+                message_instance_receive = MessageInstanceModel.query.filter_by(
+                    process_instance_id=receiving_process_instance.id,
+                    message_type="receive",
+                    status="ready",
                 ).first()
-                if message_triggerable_process_model:
-                    user: UserModel | None = message_instance_send.user
-                    if user is None:
-                        user = UserService.find_or_create_system_user()
-                    receiving_process_instance, processor_receive = MessageService.start_process_with_message(
-                        message_triggerable_process_model,
-                        user,
-                        message_instance_send=message_instance_send,
-                        execution_mode=execution_mode,
-                    )
-                    message_instance_receive = MessageInstanceModel.query.filter_by(
-                        process_instance_id=receiving_process_instance.id,
-                        message_type="receive",
-                        status="ready",
-                    ).first()
 
-            if processor_receive is None and message_instance_receive is not None:
-                # Set the receiving message to running, so it is not altered elswhere ...
-                message_instance_receive.status = "running"
-                db.session.add(message_instance_receive)
-                db.session.commit()
-
-            if message_instance_receive is None or receiving_process_instance is None:
-                # Assure we can send the message, otherwise keep going.
-                message_instance_send.status = "ready"
-                db.session.add(message_instance_send)
-                if message_instance_receive is not None:
-                    message_instance_receive.status = "ready"
-                    db.session.add(message_instance_receive)
-                if processor_receive is not None:
-                    processor_receive.save()
-                else:
-                    db.session.commit()
-                return None
-
-            try:
                 with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
                     cls.process_message_receive(
                         receiving_process_instance,
@@ -131,15 +134,12 @@ class MessageService:
                     message_instance_send.status = "completed"
                     message_instance_send.counterpart_id = message_instance_receive.id
                     db.session.add(message_instance_send)
-                    if processor_receive is not None:
-                        processor_receive.save()
-                    else:
-                        db.session.commit()
+                    processor_receive.save()
                 if should_queue_process_instance(execution_mode=execution_mode):
                     queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
                 return message_instance_receive
-
-            except ProcessInstanceIsAlreadyLockedError:
+            else:
+                # Assure we can send the message, otherwise keep going.
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
                 if message_instance_receive is not None:

@@ -19,7 +19,7 @@ echo "Will run until the issue is detected or you press Ctrl+C"
 echo ""
 
 attempt=0
-max_attempts=2
+max_attempts=100
 
 while true; do
   attempt=$((attempt + 1))
@@ -39,7 +39,7 @@ while true; do
   docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
     -e SPIFF_API_KEY="$CIVI" \
     -e API_HOST=host.docker.internal:7000 \
-    run -u 2 -i 2 - <"${script_dir}/m3.js"
+    run -u 60 -i 60 - <"${script_dir}/m3.js"
   k6_exit_code=$?
   set -e
 
