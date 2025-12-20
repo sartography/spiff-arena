@@ -39,7 +39,7 @@ def insert_or_ignore_duplicate(
         For PostgreSQL: Result from db.session.execute()
     """
     is_mysql = current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql"
-    is_batch = isinstance(values, Sequence) and not isinstance(values, (str, bytes))
+    is_batch = isinstance(values, Sequence) and not isinstance(values, str | bytes)
 
     if is_mysql:
         # For MySQL, use naive insert to avoid deadlocks from ON DUPLICATE KEY UPDATE.

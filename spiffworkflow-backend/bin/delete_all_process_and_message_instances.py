@@ -18,10 +18,12 @@ parent_dir = os.path.dirname(current_dir)
 src_dir = os.path.join(parent_dir, "src")
 sys.path.insert(0, src_dir)
 
+# Import after path modification
+# ruff: noqa: E402
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
 def show_counts():
@@ -35,11 +37,11 @@ def show_counts():
     with app.app.app_context():
         process_instance_count = db.session.query(ProcessInstanceModel).count()
         message_instance_count = db.session.query(MessageInstanceModel).count()
-        standalone_message_count = db.session.query(MessageInstanceModel).filter(
-            MessageInstanceModel.process_instance_id.is_(None)
-        ).count()
+        standalone_message_count = (
+            db.session.query(MessageInstanceModel).filter(MessageInstanceModel.process_instance_id.is_(None)).count()
+        )
 
-    print(f"Found:")
+    print("Found:")
     print(f"  - {process_instance_count} process instances")
     print(f"  - {message_instance_count} total message instances")
     print(f"  - {standalone_message_count} standalone message instances")
@@ -54,9 +56,7 @@ def delete_all_instances():
 
         # Step 1: Delete standalone message instances (not tied to a process instance)
         print("Deleting standalone message instances...")
-        standalone_messages = db.session.query(MessageInstanceModel).filter(
-            MessageInstanceModel.process_instance_id.is_(None)
-        )
+        standalone_messages = db.session.query(MessageInstanceModel).filter(MessageInstanceModel.process_instance_id.is_(None))
         standalone_count = standalone_messages.count()
         standalone_messages.delete(synchronize_session=False)
         print(f"Deleted {standalone_count} standalone message instances")
