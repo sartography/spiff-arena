@@ -55,34 +55,25 @@ class MessageService:
         db.session.add(message_instance_send)
         db.session.commit()
 
-        receiving_process_instance: ProcessInstanceModel | None = None
         message_instance_receive: MessageInstanceModel | None = None
 
-        try:
-            # First, try to find an existing process instance waiting for this message
-            result = cls._try_correlate_with_existing_receiver(message_instance_send, execution_mode)
-            if result is not None:
-                return result
+        # Let the methods handle the exceptions to ensure the proper variables are set so we do not lose errors
 
-            # No existing receiver found, try to start a new process
-            result = cls._try_start_new_process_for_message(message_instance_send, execution_mode)
-            if result is not None:
-                return result
+        # First, try to find an existing process instance waiting for this message
+        message_instance_receive = cls._try_correlate_with_existing_receiver(message_instance_send, execution_mode)
+        if message_instance_receive is not None:
+            return message_instance_receive
 
-            # No match found - reset send message to ready so it can be tried again later
-            message_instance_send.status = MessageStatuses.ready.value
-            db.session.add(message_instance_send)
-            db.session.commit()
-            return None
+        # No existing receiver found, try to start a new process
+        message_instance_receive = cls._try_start_new_process_for_message(message_instance_send, execution_mode)
+        if message_instance_receive is not None:
+            return message_instance_receive
 
-        except Exception as exception:
-            cls._handle_correlation_failure(
-                exception,
-                message_instance_send,
-                message_instance_receive,
-                receiving_process_instance,
-            )
-            raise
+        # No match found - reset send message to ready so it can be tried again later
+        message_instance_send.status = MessageStatuses.ready.value
+        db.session.add(message_instance_send)
+        db.session.commit()
+        return None
 
     @classmethod
     def _try_correlate_with_existing_receiver(
@@ -97,35 +88,47 @@ class MessageService:
             message_type=MessageTypes.receive.value,
         ).all()
 
-        for message_instance_receive in available_receive_messages:
-            if not message_instance_receive.correlates(message_instance_send, CustomBpmnScriptEngine()):
-                continue
+        receiving_process_instance: ProcessInstanceModel | None = None
+        message_instance_receive: MessageInstanceModel | None = None
 
-            receiving_process_instance = cls.get_process_instance_for_message_instance(message_instance_receive)
+        try:
+            for message_instance_receive in available_receive_messages:
+                if not message_instance_receive.correlates(message_instance_send, CustomBpmnScriptEngine()):
+                    continue
 
-            try:
-                with ProcessInstanceQueueService.dequeued(receiving_process_instance, max_attempts=1):
-                    if not receiving_process_instance.can_receive_message():
-                        continue
+                receiving_process_instance = cls.get_process_instance_for_message_instance(message_instance_receive)
 
-                    cls.process_message_receive(
-                        receiving_process_instance,
-                        message_instance_receive,
-                        message_instance_send,
-                        execution_mode=execution_mode,
-                        processor_receive=None,
-                    )
-                    cls._mark_messages_completed(message_instance_send, message_instance_receive)
-                    db.session.commit()
+                try:
+                    with ProcessInstanceQueueService.dequeued(receiving_process_instance, max_attempts=1):
+                        if not receiving_process_instance.can_receive_message():
+                            continue
 
-                    if should_queue_process_instance(execution_mode=execution_mode):
-                        queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
+                        cls.process_message_receive(
+                            receiving_process_instance,
+                            message_instance_receive,
+                            message_instance_send,
+                            execution_mode=execution_mode,
+                            processor_receive=None,
+                        )
+                        cls._mark_messages_completed(message_instance_send, message_instance_receive)
+                        db.session.commit()
 
-                    return message_instance_receive
+                        if should_queue_process_instance(execution_mode=execution_mode):
+                            queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
 
-            except ProcessInstanceIsAlreadyLockedError:
-                # Someone else has this locked, keep looking for another match
-                continue
+                        return message_instance_receive
+
+                except ProcessInstanceIsAlreadyLockedError:
+                    # Someone else has this locked, keep looking for another match
+                    continue
+        except Exception as exception:
+            cls._handle_correlation_failure(
+                exception,
+                message_instance_send,
+                message_instance_receive,
+                receiving_process_instance,
+            )
+            raise
 
         return None
 
@@ -136,50 +139,64 @@ class MessageService:
         execution_mode: str | None,
     ) -> MessageInstanceModel | None:
         """Try to start a new process instance that can receive this message."""
-        message_triggerable_process_model: MessageTriggerableProcessModel | None = MessageTriggerableProcessModel.query.filter_by(
-            message_name=message_instance_send.name
-        ).first()
 
-        if message_triggerable_process_model is None:
-            return None
+        receiving_process_instance: ProcessInstanceModel | None = None
+        message_instance_receive: MessageInstanceModel | None = None
 
-        user: UserModel = (
-            message_instance_send.user if message_instance_send.user is not None else UserService.find_or_create_system_user()
-        )
-
-        receiving_process_instance, processor_receive = cls.start_process_with_message(
-            message_triggerable_process_model,
-            user,
-            message_instance_send=message_instance_send,
-            execution_mode=execution_mode,
-        )
-
-        message_instance_receive: MessageInstanceModel | None = MessageInstanceModel.query.filter_by(
-            process_instance_id=receiving_process_instance.id,
-            message_type=MessageTypes.receive.value,
-            status=MessageStatuses.ready.value,
-        ).first()
-
-        if message_instance_receive is None:
-            raise MessageServiceError(
-                f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
+        try:
+            message_triggerable_process_model: MessageTriggerableProcessModel | None = (
+                MessageTriggerableProcessModel.query.filter_by(message_name=message_instance_send.name).first()
             )
 
-        with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
-            cls.process_message_receive(
-                receiving_process_instance,
-                message_instance_receive,
-                message_instance_send,
+            if message_triggerable_process_model is None:
+                return None
+
+            user: UserModel = (
+                message_instance_send.user if message_instance_send.user is not None else UserService.find_or_create_system_user()
+            )
+
+            receiving_process_instance, processor_receive = cls.start_process_with_message(
+                message_triggerable_process_model,
+                user,
+                message_instance_send=message_instance_send,
                 execution_mode=execution_mode,
-                processor_receive=processor_receive,
             )
-            cls._mark_messages_completed(message_instance_send, message_instance_receive)
-            processor_receive.save()
 
-        if should_queue_process_instance(execution_mode=execution_mode):
-            queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
+            message_instance_receive = MessageInstanceModel.query.filter_by(
+                process_instance_id=receiving_process_instance.id,
+                message_type=MessageTypes.receive.value,
+                status=MessageStatuses.ready.value,
+            ).first()
 
-        return message_instance_receive
+            if message_instance_receive is None:
+                raise MessageServiceError(
+                    f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
+                )
+
+            with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
+                cls.process_message_receive(
+                    receiving_process_instance,
+                    message_instance_receive,
+                    message_instance_send,
+                    execution_mode=execution_mode,
+                    processor_receive=processor_receive,
+                )
+                cls._mark_messages_completed(message_instance_send, message_instance_receive)
+                processor_receive.save()
+
+            if should_queue_process_instance(execution_mode=execution_mode):
+                queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
+
+            return message_instance_receive
+
+        except Exception as exception:
+            cls._handle_correlation_failure(
+                exception,
+                message_instance_send,
+                message_instance_receive,
+                receiving_process_instance,
+            )
+            raise
 
     @classmethod
     def _mark_messages_completed(
@@ -202,7 +219,7 @@ class MessageService:
         exception: Exception,
         message_instance_send: MessageInstanceModel,
         message_instance_receive: MessageInstanceModel | None,
-        receiving_process_instance: ProcessInstanceModel | None,
+        receiving_process_instance: ProcessInstanceModel | None = None,
     ) -> None:
         """Handle failure during message correlation by marking messages as failed."""
         # Don't rollback - the message failed and we need to preserve the failure state
