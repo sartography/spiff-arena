@@ -306,7 +306,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v6.0.0
+        uses: actions/download-artifact@v7.0.0
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -317,7 +317,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5.5.1
+        uses: codecov/codecov-action@v5.5.2
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v5.0.0
