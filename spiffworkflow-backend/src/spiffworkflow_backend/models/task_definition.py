@@ -3,16 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flask import current_app
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 @dataclass
@@ -45,17 +43,11 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def insert_or_update_record(cls, task_definition_dict: dict) -> Any:
-        new_stuff = {"bpmn_identifier": task_definition_dict["bpmn_identifier"]}
-        on_duplicate_key_stmt = None
-        if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
-            insert_stmt = mysql_insert(TaskDefinitionModel).values(task_definition_dict)
-            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_stuff)
-        else:
-            insert_stmt = postgres_insert(TaskDefinitionModel).values(task_definition_dict)
-            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(
-                index_elements=["bpmn_process_definition_id", "bpmn_identifier"]
-            )
-        return db.session.execute(on_duplicate_key_stmt)
+        return insert_or_ignore_duplicate(
+            model_class=TaskDefinitionModel,
+            values=task_definition_dict,
+            postgres_conflict_index_elements=["bpmn_process_definition_id", "bpmn_identifier"],
+        )
 
     def is_human_task(self) -> bool:
         return self.typename in ["UserTask", "ManualTask", "NoneTask"]
