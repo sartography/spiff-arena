@@ -7,6 +7,7 @@ from SpiffWorkflow.bpmn.specs.event_definitions.message import CorrelationProper
 from SpiffWorkflow.bpmn.specs.mixins import StartEventMixin  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import MessageEventDefinition  # type: ignore
+from sqlalchemy.orm import selectinload
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
@@ -82,11 +83,15 @@ class MessageService:
         execution_mode: str | None,
     ) -> MessageInstanceModel | None:
         """Try to find and correlate with an existing process instance waiting for this message."""
-        available_receive_messages: list[MessageInstanceModel] = MessageInstanceModel.query.filter_by(
-            name=message_instance_send.name,
-            status=MessageStatuses.ready.value,
-            message_type=MessageTypes.receive.value,
-        ).all()
+        available_receive_messages: list[MessageInstanceModel] = (
+            MessageInstanceModel.query.options(selectinload(MessageInstanceModel.correlation_rules))
+            .filter_by(
+                name=message_instance_send.name,
+                status=MessageStatuses.ready.value,
+                message_type=MessageTypes.receive.value,
+            )
+            .all()
+        )
 
         receiving_process_instance: ProcessInstanceModel | None = None
         message_instance_receive: MessageInstanceModel | None = None
