@@ -28,3 +28,19 @@ class TestWorkflowExecutionService(BaseTest):
         self.complete_next_manual_task(processor)
         assert process_instance.last_milestone_bpmn_name == "Completed"
         assert process_instance.status == "complete"
+
+    def test_boundary_event_priority(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/prioritize-boundary-event",
+            process_model_source_directory="prioritize-boundary-event",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == "complete"
+        assert processor.bpmn_process_instance.data == {"testOk": True}
+
