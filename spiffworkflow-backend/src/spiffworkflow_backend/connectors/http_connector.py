@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from typing import cast
 from urllib.parse import urlparse
@@ -6,6 +7,11 @@ import requests
 from flask import current_app
 
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
+
+
+class HttpConnectorResponse:
+    text: str | None = None
+    status_code: int | None = None
 
 
 def does(id: str) -> bool:
@@ -60,16 +66,47 @@ def do(id: str, params: dict[str, Any]) -> Any:
                 kwargs["headers"] = {}
             kwargs["headers"]["Authorization"] = f"Basic {credentials}"
 
-        return getattr(client, handler)(path, **kwargs)
+        response = getattr(client, handler)(path, **kwargs)
 
-    return getattr(requests, handler)(
-        url,
-        params.get("params"),
-        headers=headers,
-        auth=auth,
-        json=data,
-        timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
-    )
+    else:
+        response = getattr(requests, handler)(
+            url,
+            params.get("params"),
+            headers=headers,
+            auth=auth,
+            json=data,
+            timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+        )
+    return _connector_response(response)
+
+
+def _connector_response(http_response: requests.Response) -> HttpConnectorResponse:
+    status = http_response.status_code
+
+    content_type = http_response.headers.get("Content-Type", "")
+    raw_response = http_response.text
+
+    if "application/json" in content_type:
+        command_response = json.loads(raw_response)
+    else:
+        command_response = {"raw_response": raw_response}
+
+    return_dict = {
+        "command_response": {
+            "body": command_response,
+            "mimetype": "application/json",
+            "http_status": status,
+        },
+        "command_response_version": 2,
+        "error": None,
+        "spiff__logs": [],
+    }
+
+    # create a blank object so we can mimic an actual http response object
+    obj = HttpConnectorResponse()
+    obj.text = json.dumps(return_dict)
+    obj.status_code = http_response.status_code
+    return obj
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
