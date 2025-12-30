@@ -43,4 +43,3 @@ class TestWorkflowExecutionService(BaseTest):
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
         assert processor.bpmn_process_instance.data == {"testOk": True}
-

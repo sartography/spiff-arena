@@ -23,8 +23,8 @@ from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.control import BoundaryEventJoin  # type: ignore
-from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit  # type: ignore
-from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit
+from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin
 from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
