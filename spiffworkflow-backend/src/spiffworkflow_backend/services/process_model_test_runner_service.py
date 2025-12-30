@@ -20,6 +20,8 @@ from lxml import etree  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
+from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -274,9 +276,27 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
 
     def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         ready_tasks = list(bpmn_process_instance.get_tasks(state=TaskState.READY))
-        if len(ready_tasks) > 0:
+        code, no_code = [], []
+        for task in ready_tasks:
+            if isinstance(task.task_spec, BoundaryEvent):
+                event_definition = task.task_spec.event_definition
+                if isinstance(event_definition, CodeEventDefinition) and event_definition.code is not None:
+                    code.append(task)
+                else:
+                    no_code.append(task)
+
+        # This ensures that boundary events take priority, and events that have codes assigned
+        # take precedence over default actions
+        if len(code) > 0:
+            for task in no_code:
+                task.cancel()
+            return code[0]
+        elif len(no_code) > 0:
+            return no_code[0]
+        elif len(ready_tasks) > 0:
             return ready_tasks[0]
-        return None
+        else:
+            return None
 
     def _add_bpmn_file_to_parser(self, parser: MyCustomParser, bpmn_file: str) -> None:
         related_file_etree = self._get_etree_from_bpmn_file(bpmn_file)
