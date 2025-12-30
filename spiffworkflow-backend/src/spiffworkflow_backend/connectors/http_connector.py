@@ -68,14 +68,15 @@ def do(id: str, params: dict[str, Any]) -> Any:
 
         response = getattr(client, handler)(path, **kwargs)
 
-    response = getattr(requests, handler)(
-        url,
-        params.get("params"),
-        headers=headers,
-        auth=auth,
-        json=data,
-        timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
-    )
+    else:
+        response = getattr(requests, handler)(
+            url,
+            params.get("params"),
+            headers=headers,
+            auth=auth,
+            json=data,
+            timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+        )
     return _connector_response(response)
 
 
