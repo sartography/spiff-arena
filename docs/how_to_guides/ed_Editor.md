@@ -10,7 +10,7 @@ The **ED Editor** is a proprietary editor available from **SpiffWorks**. It supp
 
 ## What You Can Do in the ED Editor
 
-- **Author BPMN diagrams** in real time
+- **Author BPMN diagrams** in real-time
 - **Run BPMN diagrams** to validate flow behavior while you build
 - **Sync process models to GitHub** (optional) using a dedicated configuration BPMN file
 
@@ -115,7 +115,6 @@ At minimum, it contains:
 ```python
 github_token="...."
 acp="..."
-
 config = {
   "connectorProxyUrl": acp,
   "sync": {
