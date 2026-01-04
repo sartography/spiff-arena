@@ -64,7 +64,7 @@ See [Configuring an OpenID Provider](/how_to_guides/deployment/configure_openid_
 ### Method 2: Using Script Tasks
 
 Script tasks enable dynamic assignment of lane owners within the workflow.
-You can specify the lane owners directly in the workflow logic.
+You can specify the lane owners directly in the workflow logic, and you might choose this path if the task assignment logic is more nuanced than simply assigning the members of a specific group.
 
 ```python
 # Script task to assign lane owners
