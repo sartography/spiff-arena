@@ -82,12 +82,19 @@ workflow.reset_from_task_id(start.id)
 ### **12. Understanding Secrets and Authentications in SpiffArena**
 
 **Q:** What are 'Secrets' and 'Authentications' used for in SpiffArena?
-**A:** Secrets are used for communicating with external services when you use service tasks and connectors. Authentications are used when you need to OAuth into an external service. Check out more information [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/Secrets.html).
+**A:** Secrets are used for communicating with external services when you use service tasks and connectors. Authentications are used when you need to OAuth into an external service. Check out more information [here](/how_to_guides/deployment/configure_secrets).
 
 ### **13. Determining the Lane of a Task in a Workflow**
 
 **Q:** In the pre/post script of a task in a workflow, how do I determine what lane the current task is in?  
 **A:** You can access the task and use `task.task_spec.lane` to get the lane as a string. This allows you to programmatically determine which lane a task belongs to during its execution.
+
+You can also use the lane name with `get_group_members()` to fetch the corresponding group or users dynamically for sending notifications or dynamic task assignment:
+```python
+group_members = get_group_members(lane_name)
+```
+
+Refer to the [Pools and Lanes Documentation](/reference/bpmn/pools_and_lanes) and [Script Tasks Documentation](/reference/bpmn/script_tasks) for additional details.
 
 ### **14. Understanding Script Attributes Context**
 
@@ -216,7 +223,7 @@ Instructions in the getting started guide reference `curl`, but if that is not w
 If you need to communicate with external systems, it's recommended to use a ServiceTask instead.
 ServiceTasks in SpiffArena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol.
 For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
-Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
+Detailed documentation available [here](/how_to_guides/deployment/configure_a_connector_proxy).
 If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
 
 ### **27: Storage of Properties Data in SpiffArena**
@@ -255,7 +262,7 @@ For instance, the configuration for a service task can be found [here](https://g
 **Q:** How can I create new users for my co-workers in SpiffWorkflow?
 
 **A:** There are multiple methods to manage this, such as using OpenID or the process model. However, for beginners eager to add a user quickly, you can adjust the 'example.yml' configuration file within the app identified as ` 'SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"`
-After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
+After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](/how_to_guides/deployment/manage_permissions). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
 
 ### **33: Understanding the Collaboration Flag in Spiff-Example-CLI**
 
@@ -537,18 +544,7 @@ Common errors occur when configuring HTTP Service Tasks.
   
   Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
 
-### **47: Retrieve Lane or Group Information**
-**Q:** How do I retrieve lane or group information during task execution?**
-
-**A:** 
-Users need to retrieve the group or username associated with a specific lane during task execution for sending notifications or dynamic task assignment.
-- Use the lane name with `get_group_members()` to fetch the corresponding group or users dynamically:
-  ```python
-  group_members = get_group_members(lane_name)
-  ```
-- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/script_tasks.html) for additional details.
-
-### **48: Modify Process Instances during Execution**
+### **47: Modify Process Instances during Execution**
 **Q:** Can I modify process instances during execution?**
 
 **A:** 
@@ -561,7 +557,7 @@ Users need to change task data or adjust token positions in running processes. T
 - Modifying data objects directly is not supported.
 - BPMN diagram changes cannot be made during runtime.
 
-### **49: Running SpiffWorkflow on a Custom Hostname in Docker**
+### **48: Running SpiffWorkflow on a Custom Hostname in Docker**
 **Q:** How do I change "localhost" to a custom hostname in SpiffWorkflow's Docker setup?
 
 **A:**   

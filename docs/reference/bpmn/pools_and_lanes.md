@@ -174,7 +174,7 @@ Let's discuss the methods for assigning lane owners:
 2. **Assigning User Groups**:
    - In cases where script tasks are not used for direct assignments, lane owners can be specified by utilizing predefined user groups within DB.
    - **How to Configure User Groups**:
-     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information is available [in the admins and permissions section](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#setting-up-admin-in-config-yaml).
+     - User groups can be assigned in the system configuration, often in a YAML file, which defines which users belong to specific groups. More information is available [in the admins and permissions section](/how_to_guides/deployment/manage_permissions).
 
      - **Example YAML Configuration**:
        ```yaml
