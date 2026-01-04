@@ -163,8 +163,8 @@ This example demonstrates task assignment across different Lanes for a petty cas
 If you manage user roles in an external system (like an OpenID provider), you can:
 
 1. Configure your OpenID system to include group/role information in user tokens
-2. Access this information in your BPMN diagrams through Lanes
-3. Map external roles to Lane assignments
+2. Configure the system to automatically use this information to add users to groups
+3. Use this information in your BPMN diagrams, allowing you to map external roles to Lane assignments
 
 ## Related Topics
 
