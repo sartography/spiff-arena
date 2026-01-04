@@ -36,22 +36,9 @@ Each Pool requires Lane configuration, even if it contains just a single Lane.
 
 There are two primary methods to specify who owns a Lane (i.e., who can complete tasks in that Lane):
 
-### Method 1: Using Script Tasks
+### Method 1: Using User Groups
 
-Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic.
-
-```python
-# Script task to assign lane owners
-lane_owners = {
-    "Reviewer": ["user1@example.com", "user2@example.com"]
-}
-```
-
-The dictionary maps Lane names to lists of users who can complete tasks in that Lane.
-
-### Method 2: Using User Groups
-
-When script tasks are not used for direct assignments, lane owners can be specified using predefined user groups configured in the system.
+Lane owners can be specified using predefined user groups configured in the system.
 
 User groups are typically defined in a YAML configuration file:
 
@@ -70,6 +57,19 @@ groups:
 When a Lane name matches a group name in the configuration, users in that group can complete tasks in the Lane.
 
 For more information on configuring user groups, see the [permissions documentation](/how_to_guides/deployment/manage_permissions).
+
+### Method 2: Using Script Tasks
+
+Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic.
+
+```python
+# Script task to assign lane owners
+lane_owners = {
+    "Reviewer": ["user1@example.com", "user2@example.com"]
+}
+```
+
+The dictionary maps Lane names to lists of users who can complete tasks in that Lane.
 
 ```{admonition} Note
 Specifying a user group in the `lane_owners` dictionary in a script task does not require it to previously exist in the database.
