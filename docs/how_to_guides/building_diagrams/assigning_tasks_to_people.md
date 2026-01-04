@@ -12,7 +12,8 @@ In SpiffWorkflow, task assignment is primarily managed through **Lanes** within 
 
 ## Using Lanes for Task Assignment
 
-Lanes are subdivisions within a Pool that assign activities to specific roles, systems, or departments. When a human task is placed within a Lane, only users associated with that Lane can complete the task.
+Lanes are subdivisions within a Pool that assign activities to specific roles, systems, or departments.
+When a human task is placed within a Lane, only users associated with that Lane can complete the task.
 
 ![Lanes Example](/images/lanes_1.png)
 
@@ -57,11 +58,13 @@ groups:
 When a Lane name matches a group name in the configuration, users in that group can complete tasks in the Lane.
 
 For more information on configuring user groups, see the [permissions documentation](/how_to_guides/deployment/manage_permissions).
-You can also configure the system to respect group membership defined through your OpenID provider; see [Configuring an OpenID Provider](/how_to_guides/deployment/configure_openid_provider).
+You can also configure the system to respect group membership defined through your OpenID provider.
+See [Configuring an OpenID Provider](/how_to_guides/deployment/configure_openid_provider).
 
 ### Method 2: Using Script Tasks
 
-Script tasks enable dynamic assignment of lane owners within the workflow. You can specify the lane owners directly in the workflow logic.
+Script tasks enable dynamic assignment of lane owners within the workflow.
+You can specify the lane owners directly in the workflow logic.
 
 ```python
 # Script task to assign lane owners
@@ -80,7 +83,8 @@ Specifying a user group in the `lane_owners` dictionary in a script task does no
 
 ### Excluding the Process Initiator from Approvers
 
-A common requirement is ensuring that the person who started a process cannot approve their own request. Here's how to implement this:
+A common requirement is ensuring that the person who started a process cannot approve their own request.
+Here's how to implement this:
 
 ```python
 # Define the group identifier dynamically based on process data
@@ -135,15 +139,18 @@ This example demonstrates task assignment across different Lanes for a petty cas
 
 1. **Start Event**: The workflow begins in the Requester Lane.
 
-2. **User Task: Petty Cash Request** (Requester Lane): Collects the request details including amount and reason.
+2. **User Task: Petty Cash Request** (Requester Lane):
+   Collects the request details including amount and reason.
 
    ![Petty Cash Request Form](/images/lanes_pools_example_2.png)
 
-3. **User Task: Approve Petty Cash** (Cashier Lane): The cashier reviews and approves the request.
+3. **User Task: Approve Petty Cash** (Cashier Lane):
+   The cashier reviews and approves the request.
 
    ![Approve Petty Cash Form](/images/lanes_pools_example_3.png)
 
-4. **Manual Task: Display Output** (Requester Lane): Shows the approval result to the requester.
+4. **Manual Task: Display Output** (Requester Lane):
+   Shows the approval result to the requester.
 
    ```markdown
    Your petty cash request for {{amount}} has been approved by {{approved_by}}
@@ -158,18 +165,6 @@ If you manage user roles in an external system (like an OpenID provider), you ca
 1. Configure your OpenID system to include group/role information in user tokens
 2. Access this information in your BPMN diagrams through Lanes
 3. Map external roles to Lane assignments
-
-## Best Practices
-
-1. **Use descriptive Lane names** that clearly indicate the role or department responsible for tasks.
-
-2. **Keep Lane assignments simple** when possible - complex assignment logic can make workflows harder to maintain.
-
-3. **Use script tasks for dynamic assignment** when you need to adjust task ownership based on workflow data or conditions.
-
-4. **Test your assignments** to ensure tasks route to the correct users in all scenarios.
-
-5. **Document your Lane structure** so team members understand who is responsible for each part of the workflow.
 
 ## Related Topics
 
