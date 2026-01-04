@@ -57,6 +57,7 @@ groups:
 When a Lane name matches a group name in the configuration, users in that group can complete tasks in the Lane.
 
 For more information on configuring user groups, see the [permissions documentation](/how_to_guides/deployment/manage_permissions).
+You can also configure the system to respect group membership defined through your OpenID provider; see [Configuring an OpenID Provider](/how_to_guides/deployment/configure_openid_provider).
 
 ### Method 2: Using Script Tasks
 
