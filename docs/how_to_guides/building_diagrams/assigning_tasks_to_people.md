@@ -79,6 +79,54 @@ The dictionary maps Lane names to lists of users who can complete tasks in that 
 Specifying a user group in the `lane_owners` dictionary in a script task does not require it to previously exist in the database.
 ```
 
+### Method 3: Group Assignment with `group:` Prefix
+
+For more flexible task assignment, you can assign entire groups to lanes using the `group:` prefix in your script tasks. This approach allows you to:
+
+- Assign tasks to multiple groups simultaneously
+- Mix group assignments with individual user assignments
+- Handle users who haven't signed in yet (they'll be assigned automatically when they sign in)
+- Override the default lane name group assignment
+
+```python
+# Script task with group assignment
+lane_owners = {
+    "Reviewer": [
+        "group:senior-reviewers",    # Assign to entire group
+        "group:technical-leads",     # Multiple groups allowed
+        "john@company.com",          # Mix with individual users
+        "newbie@company.com"         # User will be assigned when they sign in
+    ]
+}
+```
+
+#### Key Features
+
+**Group Assignment**: Use `group:group_name` to assign an entire group to a lane. All current members of the group will be able to complete tasks in that lane.
+
+**Dynamic Membership**: When users are added to or removed from groups, their task assignments are automatically updated for active tasks.
+
+**Mixed Assignment**: You can combine group assignments with individual user assignments in the same lane.
+
+**Pending Users**: If you specify a username or email that doesn't exist in the system yet, it will be stored and the user will be automatically assigned to relevant active tasks when they sign in.
+
+**Group Override**: When you specify groups in `lane_owners`, the system uses only those groups (it doesn't automatically include the lane name group).
+
+```python
+# Example: Complex approval workflow
+approval_lane_owners = {
+    "Manager": ["group:managers", "ceo@company.com"],
+    "Technical": ["group:senior-engineers", "group:architects"],
+    "Finance": ["group:finance-team", "temp-consultant@company.com"]
+}
+
+lane_owners = approval_lane_owners
+```
+
+```{admonition} Important
+When using group assignments, users who are added to the assigned groups after task creation can still complete the tasks. This enables dynamic team management without workflow disruption.
+```
+
 ## Dynamic Task Assignment
 
 ### Excluding the Process Initiator from Approvers

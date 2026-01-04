@@ -857,8 +857,8 @@ def _get_tasks(
                         and_(
                             HumanTaskGroupModel.human_task_id == HumanTaskModel.id,
                             HumanTaskGroupModel.group_id == GroupModel.id,
-                            GroupModel.identifier == user_group_identifier
-                        )
+                            GroupModel.identifier == user_group_identifier,
+                        ),
                     )
                 )
             else:
@@ -866,9 +866,7 @@ def _get_tasks(
                 human_tasks_query = human_tasks_query.filter(
                     or_(
                         HumanTaskModel.lane_assignment_id.is_not(None),  # type: ignore
-                        HumanTaskModel.id.in_(
-                            db.session.query(HumanTaskGroupModel.human_task_id).subquery()
-                        )
+                        HumanTaskModel.id.in_(db.session.query(HumanTaskGroupModel.human_task_id).subquery()),  # type: ignore
                     )
                 )
         else:
@@ -876,9 +874,7 @@ def _get_tasks(
             human_tasks_query = human_tasks_query.filter(
                 and_(
                     HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                    ~HumanTaskModel.id.in_(
-                        db.session.query(HumanTaskGroupModel.human_task_id).subquery()
-                    )
+                    ~HumanTaskModel.id.in_(db.session.query(HumanTaskGroupModel.human_task_id).subquery()),  # type: ignore
                 )
             )
 
