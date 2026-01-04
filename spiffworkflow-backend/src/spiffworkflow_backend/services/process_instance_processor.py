@@ -59,8 +59,10 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -807,6 +809,8 @@ class ProcessInstanceProcessor:
 
         potential_owners: list[PotentialOwner] = []
         lane_assignment_id = None
+        lane_owner_group_ids: list[int] = []
+        lane_owner_usernames_waiting: list[str] = []
 
         if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
             guest_user = UserService.find_or_create_guest_user()
@@ -822,24 +826,56 @@ class ProcessInstanceProcessor:
             # Automatically create the group if it doesn't exist (includes principal creation)
             group_model = UserService.find_or_create_group(task_lane)
             lane_assignment_id = group_model.id
+
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
-                for username_or_email in task.data["lane_owners"][task_lane]:
-                    lane_owner_user = UserModel.query.filter(
-                        or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
-                    ).first()
-                    if lane_owner_user is not None:
-                        potential_owners.append(
-                            {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
-                        )
-                self.raise_if_no_potential_owners(
-                    potential_owners,
-                    (
-                        "No users found in task data lane owner list for lane:"
-                        f" {task_lane}. The user list used:"
-                        f" {task.data['lane_owners'][task_lane]}"
-                    ),
-                )
+                # Parse lane_owners entries for groups and users
+                lane_owners_list = task.data["lane_owners"][task_lane]
+                has_groups = False
+
+                for owner_entry in lane_owners_list:
+                    if isinstance(owner_entry, str) and owner_entry.startswith("group:"):
+                        # Handle group assignment
+                        group_identifier = owner_entry[6:]  # Remove "group:" prefix
+                        owner_group = UserService.find_or_create_group(group_identifier)
+                        lane_owner_group_ids.append(owner_group.id)
+                        has_groups = True
+
+                        # Add existing users in this group to potential owners
+                        for user_assignment in owner_group.user_group_assignments:
+                            potential_owners.append(
+                                {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": user_assignment.user_id}
+                            )
+                    else:
+                        # Handle individual user assignment
+                        username_or_email = str(owner_entry)
+                        lane_owner_user = UserModel.query.filter(
+                            or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
+                        ).first()
+                        if lane_owner_user is not None:
+                            potential_owners.append(
+                                {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
+                            )
+                        else:
+                            # User doesn't exist yet, add to waiting list
+                            lane_owner_usernames_waiting.append(username_or_email)
+
+                # If no groups were specified, include the lane name group for backward compatibility
+                if not has_groups:
+                    lane_owner_group_ids.append(group_model.id)
+
+                # If we have no potential owners and no waiting users, raise an error
+                if not potential_owners and not lane_owner_usernames_waiting:
+                    self.raise_if_no_potential_owners(
+                        potential_owners,
+                        (
+                            "No users found in task data lane owner list for lane:"
+                            f" {task_lane}. The user list used:"
+                            f" {task.data['lane_owners'][task_lane]}"
+                        ),
+                    )
             else:
+                # No lane_owners specified, use lane name group
+                lane_owner_group_ids.append(group_model.id)
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
@@ -848,6 +884,8 @@ class ProcessInstanceProcessor:
         return {
             "potential_owners": potential_owners,
             "lane_assignment_id": lane_assignment_id,
+            "lane_owner_group_ids": lane_owner_group_ids,
+            "lane_owner_usernames_waiting": lane_owner_usernames_waiting if lane_owner_usernames_waiting else [],
         }
 
     def extract_metadata(self) -> dict:
@@ -999,6 +1037,16 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
+                    # Create HumanTaskGroupModel entries for group assignments
+                    for group_id in potential_owner_hash["lane_owner_group_ids"]:
+                        human_task_group = HumanTaskGroupModel(human_task=human_task, group_id=group_id)
+                        db.session.add(human_task_group)
+
+                    # Create HumanTaskUserWaitingModel entries for users not yet signed in
+                    for username in potential_owner_hash.get("lane_owner_usernames_waiting", []):
+                        human_task_user_waiting = HumanTaskUserWaitingModel(human_task=human_task, username=username)
+                        db.session.add(human_task_user_waiting)
+
         if len(new_human_tasks) > 0:
             queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
 
@@ -1006,6 +1054,11 @@ class ProcessInstanceProcessor:
             for at in initial_human_tasks:
                 at.completed = True
                 db.session.add(at)
+
+                # Cleanup only the waiting user assignments when task is completed
+                # Keep HumanTaskGroupModel entries for historical record of group assignments
+                # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
+                HumanTaskUserWaitingModel.query.filter_by(human_task_id=at.id).delete()
         db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
@@ -1466,6 +1519,11 @@ class ProcessInstanceProcessor:
         human_task.completed = True
         human_task.task_status = TaskState.get_name(spiff_task.state)
         db.session.add(human_task)
+
+        # Cleanup only the waiting user assignments when task is completed
+        # Keep HumanTaskGroupModel entries for historical record of group assignments
+        # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
+        HumanTaskUserWaitingModel.query.filter_by(human_task_id=human_task.id).delete()
 
         task_service = TaskService(
             process_instance=self.process_instance_model,

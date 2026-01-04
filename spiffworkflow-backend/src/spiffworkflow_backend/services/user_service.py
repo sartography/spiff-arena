@@ -12,8 +12,10 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import SPIFF_GUEST_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
@@ -68,6 +70,7 @@ class UserService:
                 ) from e
             cls.create_principal(user_model.id)
             cls.apply_waiting_group_assignments(user_model)
+            cls.apply_waiting_human_task_assignments(user_model)
             return user_model
 
         else:
@@ -177,6 +180,41 @@ class UserService:
                 cls.add_user_to_group(user, wildcard.group)
         db.session.commit()
 
+    @classmethod
+    def apply_waiting_human_task_assignments(cls, user: UserModel) -> None:
+        """Apply any waiting human task assignments when user signs in.
+
+        When lane_owners specifies a username/email that doesn't exist, we store
+        the assignment in HumanTaskUserWaitingModel. When the user signs in,
+        we check this table and create actual HumanTaskUserModel entries for
+        any active (not completed) tasks.
+        """
+        waiting_assignments = (
+            HumanTaskUserWaitingModel.query.join(HumanTaskModel)
+            .filter(
+                HumanTaskUserWaitingModel.username.in_([user.username, user.email]),
+                HumanTaskModel.completed == False,  # noqa: E712
+            )
+            .all()
+        )
+
+        for waiting in waiting_assignments:
+            # Check if user is already assigned to this task
+            existing = HumanTaskUserModel.query.filter_by(
+                human_task_id=waiting.human_task_id,
+                user_id=user.id,
+            ).first()
+            if existing is None:
+                human_task_user = HumanTaskUserModel(
+                    user_id=user.id,
+                    human_task_id=waiting.human_task_id,
+                    added_by=HumanTaskUserAddedBy.lane_owner.value,
+                )
+                db.session.add(human_task_user)
+            db.session.delete(waiting)
+
+        db.session.commit()
+
     @staticmethod
     def get_user_by_service_and_service_id(service: str, service_id: str) -> UserModel | None:
         user: UserModel = UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
@@ -188,7 +226,9 @@ class UserService:
     def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
         current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
         current_human_task_ids = [ca.human_task_id for ca in current_assignments]
-        human_tasks = (
+
+        # Find tasks assigned to new groups via either lane_assignment_id (legacy) or HumanTaskGroupModel (new)
+        human_tasks_legacy = (
             HumanTaskModel.query.outerjoin(HumanTaskUserModel)
             .filter(
                 HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
@@ -204,13 +244,35 @@ class UserService:
             .all()
         )
 
-        for human_task in human_tasks:
+        human_tasks_new = (
+            HumanTaskModel.query.join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
+            .outerjoin(HumanTaskUserModel, HumanTaskModel.id == HumanTaskUserModel.human_task_id)
+            .filter(
+                HumanTaskGroupModel.group_id.in_(new_group_ids),
+                HumanTaskModel.completed == False,  # noqa: E712
+                or_(
+                    and_(
+                        HumanTaskUserModel.user_id != user.id,
+                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                    ),
+                    HumanTaskUserModel.user_id == None,  # noqa: E711
+                ),
+            )
+            .all()
+        )
+
+        # Combine and deduplicate tasks from both sources
+        all_human_tasks = {ht.id: ht for ht in human_tasks_legacy + human_tasks_new}.values()
+
+        for human_task in all_human_tasks:
             if human_task.id not in current_human_task_ids:
                 human_task_user = HumanTaskUserModel(
                     user_id=user.id, human_task_id=human_task.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
                 )
                 db.session.add(human_task_user)
-        human_task_assignments_to_delete = (
+
+        # Remove assignments from tasks associated with old groups via either method
+        human_task_assignments_legacy = (
             HumanTaskUserModel.query.join(HumanTaskModel)
             .filter(
                 HumanTaskUserModel.user_id == user.id,
@@ -220,8 +282,25 @@ class UserService:
             )
             .all()
         )
-        for assignment_to_delete in human_task_assignments_to_delete:
+
+        human_task_assignments_new = (
+            HumanTaskUserModel.query.join(HumanTaskModel)
+            .join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
+            .filter(
+                HumanTaskUserModel.user_id == user.id,
+                HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                HumanTaskGroupModel.group_id.in_(old_group_ids),
+                HumanTaskModel.completed == False,  # noqa: E712
+            )
+            .all()
+        )
+
+        # Combine and deduplicate assignments to delete
+        all_assignments_to_delete = {a.id: a for a in human_task_assignments_legacy + human_task_assignments_new}.values()
+
+        for assignment_to_delete in all_assignments_to_delete:
             db.session.delete(assignment_to_delete)
+
         db.session.commit()
 
     @classmethod

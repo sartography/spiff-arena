@@ -18,6 +18,7 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
@@ -30,6 +31,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
@@ -848,11 +850,37 @@ def _get_tasks(
 
         if has_lane_assignment_id:
             if user_group_identifier:
-                human_tasks_query = human_tasks_query.filter(GroupModel.identifier == user_group_identifier)
+                # Filter by specific group via either legacy lane_assignment_id or new HumanTaskGroupModel
+                human_tasks_query = human_tasks_query.filter(
+                    or_(
+                        GroupModel.identifier == user_group_identifier,
+                        and_(
+                            HumanTaskGroupModel.human_task_id == HumanTaskModel.id,
+                            HumanTaskGroupModel.group_id == GroupModel.id,
+                            GroupModel.identifier == user_group_identifier
+                        )
+                    )
+                )
             else:
-                human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_not(None))  # type: ignore
+                # Filter to tasks assigned to groups via either method
+                human_tasks_query = human_tasks_query.filter(
+                    or_(
+                        HumanTaskModel.lane_assignment_id.is_not(None),  # type: ignore
+                        HumanTaskModel.id.in_(
+                            db.session.query(HumanTaskGroupModel.human_task_id).subquery()
+                        )
+                    )
+                )
         else:
-            human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
+            # Filter to tasks NOT assigned to groups (individual assignments only)
+            human_tasks_query = human_tasks_query.filter(
+                and_(
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    ~HumanTaskModel.id.in_(
+                        db.session.query(HumanTaskGroupModel.human_task_id).subquery()
+                    )
+                )
+            )
 
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
 

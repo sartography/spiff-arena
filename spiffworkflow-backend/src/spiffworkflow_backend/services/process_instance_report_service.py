@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
@@ -405,9 +406,23 @@ class ProcessInstanceReportService:
         process_status: str | None = None,
         instances_with_tasks_waiting_for_me: bool | None = False,
     ) -> Query:
-        group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
+        # Handle both legacy lane_assignment_id and new HumanTaskGroupModel approaches
         if user_group_identifier:
-            group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
+            # Filter by specific group via either legacy or new system
+            group_join_condition = or_(
+                and_(
+                    GroupModel.id == HumanTaskModel.lane_assignment_id,
+                    GroupModel.identifier == user_group_identifier
+                ),
+                and_(
+                    HumanTaskGroupModel.human_task_id == HumanTaskModel.id,
+                    HumanTaskGroupModel.group_id == GroupModel.id,
+                    GroupModel.identifier == user_group_identifier
+                )
+            )
+        else:
+            # Generic group filtering (legacy approach for backward compatibility)
+            group_join_condition = GroupModel.id == HumanTaskModel.lane_assignment_id
 
         if human_task_already_joined is False:
             process_instance_query = process_instance_query.join(HumanTaskModel)  # type: ignore
@@ -426,7 +441,7 @@ class ProcessInstanceReportService:
                         ),
                     )
 
-        process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))  # type: ignore
+        process_instance_query = process_instance_query.join(GroupModel, group_join_condition)  # type: ignore
         process_instance_query = process_instance_query.join(  # type: ignore
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,
