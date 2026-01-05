@@ -58,8 +58,10 @@ Recommended placement:
 - store `ed:config.bpmn` inside that workspace
 
 > **Why a dedicated workspace?**  
-> Keeping configuration separated from process models reduces accidental edits and makes setup easier to find.
-
+> Keeping configuration separated from process models:
+> - reduces accidental edits to configuration files
+> - makes setup easier to locate
+> - helps prevent `ed:config.bpmn` from being synced to GitHub along with process models
 ---
 
 ## Script Task Variables
@@ -116,7 +118,7 @@ At minimum, it contains:
 github_token="...."
 acp="..."
 config = {
-  "connectorProxyUrl": acp,
+  "connectorProxyUrl": "...",
   "sync": {
     "github": {
       "repos": [
