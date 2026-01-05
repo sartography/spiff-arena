@@ -34,5 +34,5 @@ class HumanTaskGroupModel(SpiffworkflowBaseDBModel):
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
 
-    human_task = relationship(HumanTaskModel)
+    human_task = relationship(HumanTaskModel, overlaps="human_task_groups")  # type: ignore[call-arg]
     group = relationship(GroupModel)
