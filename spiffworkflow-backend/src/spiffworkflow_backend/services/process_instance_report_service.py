@@ -281,7 +281,6 @@ class ProcessInstanceReportService:
         ]
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
-            # Alias for groups from legacy lane_assignment_id
             lane_group = aliased(GroupModel)
             human_task_query = (
                 HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict["id"], completed=False)
@@ -296,7 +295,6 @@ class ProcessInstanceReportService:
             if restrict_human_tasks_to_user is not None:
                 human_task_query = human_task_query.filter(HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id)
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
-            # Use group identifier from lane_assignment_id
             assigned_group_identifier = lane_group.identifier.label("assigned_user_group_identifier")
             human_task = (
                 human_task_query.add_columns(

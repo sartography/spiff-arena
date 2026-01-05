@@ -874,7 +874,6 @@ class ProcessInstanceService:
 
                 if group_identifiers:
                     assigned_user_group_identifier = ",".join(group_identifiers)
-                # Fallback to individual user assignments if no groups
                 elif len(human_task.potential_owners) > 0:
                     user_list = [u.email for u in human_task.potential_owners]
                     potential_owner_usernames = ",".join(user_list)

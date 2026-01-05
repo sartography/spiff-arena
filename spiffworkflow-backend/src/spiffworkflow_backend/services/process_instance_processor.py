@@ -834,19 +834,16 @@ class ProcessInstanceProcessor:
 
                 for owner_entry in lane_owners_list:
                     if isinstance(owner_entry, str) and owner_entry.startswith("group:"):
-                        # Handle group assignment
-                        group_identifier = owner_entry[6:]  # Remove "group:" prefix
+                        group_identifier = owner_entry[6:]
                         owner_group = UserService.find_or_create_group(group_identifier)
                         lane_owner_group_ids.append(owner_group.id)
                         has_groups = True
 
-                        # Add existing users in this group to potential owners
                         for user_assignment in owner_group.user_group_assignments:
                             potential_owners.append(
                                 {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": user_assignment.user_id}
                             )
                     else:
-                        # Handle individual user assignment
                         username_or_email = str(owner_entry)
                         lane_owner_user = UserModel.query.filter(
                             or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
@@ -856,14 +853,12 @@ class ProcessInstanceProcessor:
                                 {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
                             )
                         else:
-                            # User doesn't exist yet, add to waiting list
                             lane_owner_usernames_waiting.append(username_or_email)
 
                 # If no groups were specified, include the lane name group for backward compatibility
                 if not has_groups:
                     lane_owner_group_ids.append(group_model.id)
 
-                # If we have no potential owners and no waiting users, raise an error
                 if not potential_owners and not lane_owner_usernames_waiting:
                     self.raise_if_no_potential_owners(
                         potential_owners,
@@ -874,7 +869,6 @@ class ProcessInstanceProcessor:
                         ),
                     )
             else:
-                # No lane_owners specified, use lane name group
                 lane_owner_group_ids.append(group_model.id)
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
@@ -1037,12 +1031,10 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-                    # Create HumanTaskGroupModel entries for group assignments
                     for group_id in potential_owner_hash["lane_owner_group_ids"]:
                         human_task_group = HumanTaskGroupModel(human_task=human_task, group_id=group_id)
                         db.session.add(human_task_group)
 
-                    # Create HumanTaskUserWaitingModel entries for users not yet signed in
                     for username in potential_owner_hash.get("lane_owner_usernames_waiting", []):
                         human_task_user_waiting = HumanTaskUserWaitingModel(human_task=human_task, username=username)
                         db.session.add(human_task_user_waiting)

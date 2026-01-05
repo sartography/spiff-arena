@@ -859,7 +859,6 @@ def _get_tasks(
 
         if has_lane_assignment_id:
             if user_group_identifier:
-                # Filter by specific group via either legacy lane_assignment_id or new HumanTaskGroupModel
                 human_tasks_query = human_tasks_query.filter(
                     or_(
                         lane_group.identifier == user_group_identifier,
