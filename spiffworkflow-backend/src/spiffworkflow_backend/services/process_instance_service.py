@@ -856,20 +856,26 @@ class ProcessInstanceService:
         if can_complete is False:
             human_task = HumanTaskModel.query.filter_by(task_id=task_guid).first()
             if human_task is not None:
-                # Check for group assignment via legacy lane_assignment_id
+                # Collect group identifiers from both sources
+                group_identifiers = []
+
+                # Check for group assignment via HumanTaskGroupModel (preferred, supports multiple groups)
+                task_groups = HumanTaskGroupModel.query.filter_by(human_task_id=human_task.id).all()
+                for task_group in task_groups:
+                    group = GroupModel.query.filter_by(id=task_group.group_id).first()
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                # Also check legacy lane_assignment_id for backwards compatibility
                 if human_task.lane_assignment_id is not None:
                     group = GroupModel.query.filter_by(id=human_task.lane_assignment_id).first()
-                    if group is not None:
-                        assigned_user_group_identifier = group.identifier
-                # Check for group assignment via new HumanTaskGroupModel (use first group if multiple)
-                elif not assigned_user_group_identifier:
-                    task_group = HumanTaskGroupModel.query.filter_by(human_task_id=human_task.id).first()
-                    if task_group is not None:
-                        group = GroupModel.query.filter_by(id=task_group.group_id).first()
-                        if group is not None:
-                            assigned_user_group_identifier = group.identifier
-                # Fallback to individual user assignments
-                if not assigned_user_group_identifier and len(human_task.potential_owners) > 0:
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                if group_identifiers:
+                    assigned_user_group_identifier = ",".join(group_identifiers)
+                # Fallback to individual user assignments if no groups
+                elif len(human_task.potential_owners) > 0:
                     user_list = [u.email for u in human_task.potential_owners]
                     potential_owner_usernames = ",".join(user_list)
 

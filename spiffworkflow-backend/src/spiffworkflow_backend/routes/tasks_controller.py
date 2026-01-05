@@ -83,6 +83,8 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
     principal = _find_principal_or_raise()
     assigned_user = aliased(UserModel)
     process_initiator_user = aliased(UserModel)
+    lane_group = aliased(GroupModel)
+    human_task_group = aliased(GroupModel)
     human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .group_by(HumanTaskModel.id)
@@ -101,7 +103,9 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         .filter(HumanTaskUserModel.user_id == principal.user_id)
         .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
-        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
+        .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
     )
 
     if process_instance_id is not None:
@@ -111,6 +115,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         )
 
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
@@ -132,7 +137,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
-        func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
+        assigned_group_identifiers,
         potential_owner_usernames_from_group_concat_or_similar,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
@@ -817,10 +822,14 @@ def _get_tasks(
     # we can get back multiple for the same human task row which throws off
     # pagination later on
     # https://stackoverflow.com/q/34582014/6090676
+    lane_group = aliased(GroupModel)
+    human_task_group = aliased(GroupModel)
     human_tasks_query = (
         db.session.query(HumanTaskModel)
         .group_by(HumanTaskModel.id)  # type: ignore
-        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
+        .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         .filter(
@@ -853,12 +862,8 @@ def _get_tasks(
                 # Filter by specific group via either legacy lane_assignment_id or new HumanTaskGroupModel
                 human_tasks_query = human_tasks_query.filter(
                     or_(
-                        GroupModel.identifier == user_group_identifier,
-                        and_(
-                            HumanTaskGroupModel.human_task_id == HumanTaskModel.id,
-                            HumanTaskGroupModel.group_id == GroupModel.id,
-                            GroupModel.identifier == user_group_identifier,
-                        ),
+                        lane_group.identifier == user_group_identifier,
+                        human_task_group.identifier == user_group_identifier,
                     )
                 )
             else:
@@ -866,7 +871,7 @@ def _get_tasks(
                 human_tasks_query = human_tasks_query.filter(
                     or_(
                         HumanTaskModel.lane_assignment_id.is_not(None),  # type: ignore
-                        HumanTaskModel.id.in_(db.session.query(HumanTaskGroupModel.human_task_id).subquery()),  # type: ignore
+                        HumanTaskGroupModel.human_task_id.is_not(None),
                     )
                 )
         else:
@@ -874,16 +879,16 @@ def _get_tasks(
             human_tasks_query = human_tasks_query.filter(
                 and_(
                     HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                    ~HumanTaskModel.id.in_(db.session.query(HumanTaskGroupModel.human_task_id).subquery()),  # type: ignore
+                    HumanTaskGroupModel.human_task_id.is_(None),
                 )
             )
 
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     process_model_identifier_column = ProcessInstanceModel.process_model_identifier
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
-    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")  # type: ignore
     lane_name_column = HumanTaskModel.lane_name
     if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
         process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
@@ -891,7 +896,6 @@ def _get_tasks(
         )
         process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")
         user_username_column = func.max(UserModel.username).label("process_initiator_username")
-        group_identifier_column = func.max(GroupModel.identifier).label("assigned_user_group_identifier")
         lane_name_column = func.max(HumanTaskModel.lane_name).label("lane_name")
 
     human_tasks = (
@@ -899,7 +903,7 @@ def _get_tasks(
             process_model_identifier_column,
             process_instance_status_column,
             user_username_column,
-            group_identifier_column,
+            assigned_group_identifiers,
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
@@ -938,3 +942,26 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
         )
 
     return potential_owner_usernames_from_group_concat_or_similar
+
+
+def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: AliasedClass) -> Any:
+    """Get group identifiers from both legacy lane_assignment_id and new HumanTaskGroupModel.
+
+    Combines group identifiers from both sources into a single comma-separated string.
+    Uses CONCAT_WS or equivalent to combine both sources, filtering out nulls.
+    """
+    db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
+
+    if db_type == "postgres":
+        # For postgres, aggregate both columns separately then combine
+        # This ensures we get identifiers from both sources
+        lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
+        htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+    else:
+        # For mysql/sqlite, aggregate both columns separately then combine
+        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")

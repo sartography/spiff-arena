@@ -272,6 +272,7 @@ class UserService:
                 db.session.add(human_task_user)
 
         # Remove assignments from tasks associated with old groups via either method
+        # But only if the user is no longer in ANY group associated with the task
         human_task_assignments_legacy = (
             HumanTaskUserModel.query.join(HumanTaskModel)
             .filter(
@@ -295,11 +296,30 @@ class UserService:
             .all()
         )
 
-        # Combine and deduplicate assignments to delete
-        all_assignments_to_delete = {a.id: a for a in human_task_assignments_legacy + human_task_assignments_new}.values()
+        # Combine and deduplicate potential assignments to delete
+        potential_assignments_to_delete = {a.id: a for a in human_task_assignments_legacy + human_task_assignments_new}
 
-        for assignment_to_delete in all_assignments_to_delete:
-            db.session.delete(assignment_to_delete)
+        # Get all group ids the user currently belongs to
+        current_user_group_ids = {uga.group_id for uga in user.user_group_assignments}
+
+        for assignment in potential_assignments_to_delete.values():
+            human_task = assignment.human_task
+
+            # Collect all group IDs this task is assigned to (from both sources)
+            task_group_ids = set()
+
+            # Add legacy lane_assignment_id if present
+            if human_task.lane_assignment_id is not None:
+                task_group_ids.add(human_task.lane_assignment_id)
+
+            # Add groups from HumanTaskGroupModel
+            task_group_ids.update(htg.group_id for htg in human_task.human_task_groups)
+
+            # Check if user still has access via any of the assigned groups
+            still_has_access = bool(task_group_ids & current_user_group_ids)
+
+            if not still_has_access:
+                db.session.delete(assignment)
 
         db.session.commit()
 

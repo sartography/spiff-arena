@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 
 if TYPE_CHECKING:
+    from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel  # noqa: F401
     from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel  # noqa: F401
 
 
@@ -56,6 +57,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     human_task_users = relationship("HumanTaskUserModel", cascade="delete")
+    human_task_groups = relationship("HumanTaskGroupModel", cascade="delete")
     potential_owners = relationship(  # type: ignore
         "UserModel",
         viewonly=True,
@@ -72,10 +74,19 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:
         can_complete = False
+        # Check if user is directly assigned to the task
         for user in task.human_task_users:
             if user.user_id == g.user.id:
                 can_complete = True
                 break
+
+        # If not directly assigned, check if user is in any of the assigned groups
+        if not can_complete and hasattr(task, "human_task_groups"):
+            user_group_ids = {uga.group_id for uga in g.user.user_group_assignments}
+            for htg in task.human_task_groups:
+                if htg.group_id in user_group_ids:
+                    can_complete = True
+                    break
 
         new_task = Task(
             task.task_guid,
