@@ -32,6 +32,7 @@ on:
     branches:
       - main
       - pic-stable
+      - pic-test
     tags: [v*]
 
 jobs:
