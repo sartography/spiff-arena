@@ -4,7 +4,7 @@ The **ED Editor** is a proprietary editor available from **SpiffWorks**. It supp
 
 - Launch the editor: `https://ed.spiff.works`  
 
-![](/images/EDeditor.png)
+![Ed Editor Interface](/images/EDeditor.png)
 
 ---
 
@@ -23,7 +23,7 @@ The **ED Editor** is a proprietary editor available from **SpiffWorks**. It supp
 3. Create or open a BPMN diagram
 4. Edit and run the diagram as needed
 
-![](/images/Create_Workspace.png)
+![Create Workspace](/images/Create_Workspace.png)
 
 
 ---
@@ -66,38 +66,28 @@ Recommended placement:
 
 ## Script Task Variables
 
-Inside the **Script Task** in `ed:config.bpmn`, define **three variables**:
+Inside the **Script Task** in `ed:config.bpmn`, define **two variables**:
 
 - `github_token`
-- `acp`
 - `config`
 
-These values are used by the ED Editor to authenticate with GitHub, route service calls, and populate repo/branch options.
+These values are used by the ED Editor to authenticate with GitHub and determine which repositories and branches are available for syncing.
 
 ---
 
 ### 1) `github_token`
 
-A GitHub **Personal Access Token (PAT)** used to access the repositories you want to sync.
+A GitHub **Personal Access Token (PAT)** used to 
+access the repositories you want to sync.
+
 
 #### How to generate a token
 1. Go to GitHub **Settings**
 2. Open **Developer settings**
 3. Generate a **Personal access token**
 
-> **Security tip:** Treat this token like a password. Do not commit it to source control.
-
----
-
-### 2) `acp`
-
-The **connector proxy** URL used for making service calls.
-
-#### Recommendation
-- Avoid connecting directly to **production APIs** while building diagrams
-- Use a test system that mimics production behavior, or connect to a **staging/testing** environment
-
-This reduces the risk of triggering real-world actions while iterating on workflows.
+> **Security tip:** Treat this token like a 
+password. Do not commit it to source control.
 
 ---
 
@@ -116,7 +106,6 @@ At minimum, it contains:
 
 ```python
 github_token="...."
-acp="..."
 config = {
   "connectorProxyUrl": "...",
   "sync": {
@@ -133,6 +122,7 @@ config = {
   }
 }
 ```
+
 
 ### Field meanings
 
@@ -159,10 +149,9 @@ If you want the editor to support multiple process model repositories, add multi
 
 ```python
 github_token="...."
-acp="..."
+connectorProxyUrl": "..."
 
 config = {
-  "connectorProxyUrl": acp,
   "sync": {
     "github": {
       "repos": [
@@ -204,9 +193,8 @@ If Git sync isn’t working as expected:
 2. Confirm the diagram contains **Start → Script Task → End**
 3. Confirm the Script Task defines:
    - `github_token`
-   - `acp`
    - `config`
 4. Confirm the token has access to:
    - `owner/repo`
 5. Confirm `ref` matches an existing branch
-6. Confirm the connector proxy URL (`acp`) is reachable from where the editor is running
+6. Confirm the connectorProxyUrl is reachable from where the editor is running
