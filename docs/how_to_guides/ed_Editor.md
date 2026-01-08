@@ -91,7 +91,7 @@ password. Do not commit it to source control.
 
 ---
 
-### 3) `config`
+### 2) `config`
 
 A dictionary describing which repositories can be connected so the editor knows what to display in selection dropdowns.
 
