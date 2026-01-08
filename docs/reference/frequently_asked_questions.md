@@ -69,10 +69,10 @@ workflow.reset_from_task_id(start.id)
 **Q:** I need my users to generate many BPMN workflows by dropping preconfigured sub-processes into their workflows. Is this possible?
 **A:** Yes, you can use a "Call Activity" in SpiffArena to reference other processes in your diagram. SpiffArena provides a way to search for other processes in the system that can be used as Call Activities. This means you can create modular workflows by designing sub-processes (like ‘send to accounts’) and then incorporating them into multiple main workflows as needed. This modular approach not only streamlines the design process but also ensures consistency across different workflows.
 
-### **10. Integrating SpiffWorkflow with External Role Management**
+### **10. Assigning Tasks to Users and Groups**
 
-**Q:** How do I make external application user roles affect permissions on a task?
-**A:** You can manage the roles externally in an OpenID system and access the user and group information in the Lanes of your BPMN diagram.
+**Q:** How do I assign tasks to specific users, roles, or groups in my workflow?
+**A:** Task assignment in SpiffWorkflow is managed through Lanes in your BPMN diagrams. For detailed information on methods to assign lane owners, dynamic task assignment, excluding process initiators from approvers, and integrating with external role management, see the [Assigning Tasks to People](/how_to_guides/building_diagrams/assigning_tasks_to_people) guide.
 
 ### **11. Understanding Workflow Data vs Task Data**
 
@@ -82,48 +82,38 @@ workflow.reset_from_task_id(start.id)
 ### **12. Understanding Secrets and Authentications in SpiffArena**
 
 **Q:** What are 'Secrets' and 'Authentications' used for in SpiffArena?
-**A:** Secrets are used for communicating with external services when you use service tasks and connectors. Authentications are used when you need to OAuth into an external service. Check out more information [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/Secrets.html).
+**A:** Secrets are used for communicating with external services when you use service tasks and connectors. Authentications are used when you need to OAuth into an external service. Check out more information [here](/how_to_guides/deployment/configure_secrets).
 
-### **13. Determining the Lane of a Task in a Workflow**
-
-**Q:** In the pre/post script of a task in a workflow, how do I determine what lane the current task is in?  
-**A:** You can access the task and use `task.task_spec.lane` to get the lane as a string. This allows you to programmatically determine which lane a task belongs to during its execution.
-
-### **14. Understanding Script Attributes Context**
+### **13. Understanding Script Attributes Context**
 
 **Q:** I'm trying to understand the details of `script_attributes_context`. Where can I find more information?  
 **A:** The `ScriptAttributesContext` class is defined [here](https://github.com/sartography/spiff-arena/blob/deploy-mod-prod/spiffworkflow-backend/src/spiffworkflow_backend/models/script_attributes_context.py#L9).
 
-### **15. Using Message Start Event to Kick Off a Process**
+### **14. Using Message Start Event to Kick Off a Process**
 
 **Q:** How do I use a message start event to kick off a process?  
 **A:** This [script](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/bin/run_message_start_event_with_api#L39) is an example of using a message start event to kick off a process.
 
-### **16. Making REST API Calls in SpiffArena**
+### **15. Making REST API Calls in SpiffArena**
 
 **Q:** How do I make REST API calls in SpiffArena?  
 **A:** You can use Service Tasks driven by a Connector Proxy. Check out the [Connector Proxy Demo](https://github.com/sartography/connector-proxy-demo) for more details.
 
-### **17. Assigning User Tasks in SpiffWorkflow**
-
-**Q:** How does one use camunda:assignee="test" in a userTask with Spiff?  
-**A:** In SpiffWorkflow, user task assignments can be managed using Lanes in your BPMN diagram. Each Lane can designate which individual or group can execute the tasks within that Lane. If you're looking to interface permissions based on external application user roles, you can manage roles externally and pass the user and group information to assign them to the Lanes.
-
-### **18. Mimicking an Inclusive Gateway in SpiffWorkflow**
+### **16. Mimicking an Inclusive Gateway in SpiffWorkflow**
 
 **Q:** How can we mimic an inclusive gateway since SpiffWorkflow doesn't support it?  
 **A:** You can work around the absence of an inclusive gateway in SpiffWorkflow by using a Parallel Gateway. Within each path following the Parallel Gateway, you can place an Exclusive Gateway to check for the conditions that are or are not required. This approach is effective if the flows can eventually be merged back together.
 
 ![Mimicking Inclusive Gateway](/images/Mimicking_inclusive_gateway.png)
 
-### **19. Designing an Approval Process in SpiffWorkflow**
+### **18. Designing an Approval Process in SpiffWorkflow**
 
 **Q:** I am designing an approval process using SpiffWorkflow. Can SpiffWorkflow handle scenarios where a task should complete
 if more than 2 users approve out of 3 assignees?
 
 **A:** Yes, SpiffWorkflow can handle complex approval processes. The [provided video](https://www.youtube.com/watch?v=EfTbTg3KRqc) link offers insights into managing such scenarios using SpiffWorkflow.
 
-### **20. Process Instances in SpiffArena After Docker Compose Restart**
+### **19. Process Instances in SpiffArena After Docker Compose Restart**
 
 **Q:** I restarted docker-compose, and my process instances in SpiffArena aren't persistent. How can I ensure they remain after a restart?
 
@@ -132,13 +122,13 @@ This will ensure that your process instances remain after a restart.
 
 If you're still facing issues, refer to the provided documentation on admin and permissions for further guidance.
 
-### **21: Downloading and Re-uploading Process Models in SpiffArena**
+### **20: Downloading and Re-uploading Process Models in SpiffArena**
 
 **Q:** Is it possible to download a process model in SpiffArena and then re-upload it?
 
 **A:** Yes, in SpiffArena, you can download a process model and then re-upload it. However, it's essential to note that all process IDs must be unique across the system. If you're re-uploading a process model, its ID might need to be modified to ensure uniqueness.
 
-### **22: Understanding "Notification Addresses" and "Metadata Extractions" in SpiffArena**
+### **21: Understanding "Notification Addresses" and "Metadata Extractions" in SpiffArena**
 
 **Q:** What are the "notification addresses" and "metadata extractions" fields when creating a new process model in SpiffArena?
 
@@ -147,7 +137,7 @@ The "metadata extractions" field is used to extract specific metadata from the p
 Detailed documentation for both fields is available.
 It's worth noting that the functionality of "Notification Addresses" might undergo changes in the future to centralize the logic and avoid splitting configurations.
 
-### **23: Issues with SpiffArena Frontend Loading**
+### **22: Issues with SpiffArena Frontend Loading**
 
 **Q:** Why doesn't the SpiffArena frontend always load completely?
 
@@ -168,7 +158,7 @@ docker compose up -d
 By doing this, you'll pull the latest images, shut down the current containers, and then start them up again with the updated configurations.
 This should help in ensuring that the frontend loads completely and communicates effectively with the backend.
 
-### **24: Fixing  Resolving Docker Permission Issues When Installing SpiffArena (Linux)
+### **23: Resolving Docker Permission Issues When Installing SpiffArena (Linux)**
 
 **Q:**
 When installing Spiff Arena on Linux using Docker, users may encounter the following error:
@@ -199,7 +189,7 @@ This happens because Docker requires elevated (root) permissions, and the user i
 For more details, refer to Docker’s [guide](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
 
 
-### **25: Resolving Docker Compose Issues on M1/M2 Mac in SpiffArena**
+### **24: Resolving Docker Compose Issues on M1/M2 Mac in SpiffArena**
 
 **Q:** I'm using an M1/M2 Mac and facing issues with docker-compose in SpiffArena. How can I resolve this?
 
@@ -208,7 +198,7 @@ If you encounter messages about platform mismatches, note that these may just be
 Update your images and restart the containers as needed.
 Instructions in the getting started guide reference `curl`, but if that is not working for you, `wget` may be an option that is already installed on your system.
 
-### **26: Importing External Modules in Script Tasks in SpiffArena**
+### **25: Importing External Modules in Script Tasks in SpiffArena**
 
 **Q:** Why can't I import an external module in a script task in SpiffArena?
 
@@ -216,48 +206,48 @@ Instructions in the getting started guide reference `curl`, but if that is not w
 If you need to communicate with external systems, it's recommended to use a ServiceTask instead.
 ServiceTasks in SpiffArena utilize a concept called Connector Proxy, an externally hosted system that adheres to a specific protocol.
 For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
-Detailed documentation available [here](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/configure_connector_proxy.html).
+Detailed documentation available [here](/how_to_guides/deployment/configure_a_connector_proxy).
 If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
 
-### **27: Storage of Properties Data in SpiffArena**
+### **26: Storage of Properties Data in SpiffArena**
 
 **Q:** Where is the properties data stored in the properties panel?
 
 **A:** The properties data is stored directly within the XML of the BPMN diagram. Some of this data is stored in extension elements.
 For instance, the configuration for a service task can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/jonjon/ham/ham.bpmn#L13) and instructions can be found [here](https://github.com/sartography/sample-process-models/blob/sample-models-1/misc/documentation/user-guide-basics/user-guide-basics.bpmn#L24). If you're considering bypassing the properties panel, it's essential to ensure that the XML output remains consistent with the expected format.
 
-### **28: Starting a Task in SpiffArena**
+### **27: Starting a Task in SpiffArena**
 
 **Q:** How do I start a task? What do I need besides BPMN?
 
 **A:** To start a task, you'll need to have a proper BPMN diagram and a configured environment. The docker compose file, as mentioned on the [spiffworkflow.org](https://www.spiffworkflow.org/posts/articles/get_started/) website, provides a containerized environment for both the API and asynchronous processing. For a more robust production deployment, it's recommended to use separate containers for different functionalities.
 
-### **29: Setting Up Own OpenID Provider**
+### **28: Setting Up Own OpenID Provider**
 
 **Q:** Any documentation on how to set up our own openid provider?
 
 **A:** If you're using the spiff-arena/spiffworkflow-backend, there's a script named `./keycloak/bin/start_keycloak` that can initiate a container serving as an example OpenID provider. This can be a good starting point if you're looking to set up your own OpenID provider.
 
-### **30: Configuring SMTP Server for Email Notifications in SpiffWorkflow**
+### **29: Configuring SMTP Server for Email Notifications in SpiffWorkflow**
 
 **Q:** Where can I configure an SMTP server for Spiffworkflow to send email notifications?
 
 **A:** To configure an SMTP server for email notifications, you can utilize connectors and service tasks within SpiffWorkflow. For instance, connectors can be set up to send notifications to platforms like Slack.
 
-### **31: Accessing Timer Event Value/Expression in Code**
+### **30: Accessing Timer Event Value/Expression in Code**
 
 **Q:** Is there any way to access the timer event value/expression in my code?
 
 **A:** Yes, in SpiffWorkflow, you can access timer event values directly from the backend. There are specific sections in the codebase where timer event values are checked and utilized for various functionalities.
 
-### **32: Creating New Users in SpiffWorkflow**
+### **31: Creating New Users in SpiffWorkflow**
 
 **Q:** How can I create new users for my co-workers in SpiffWorkflow?
 
 **A:** There are multiple methods to manage this, such as using OpenID or the process model. However, for beginners eager to add a user quickly, you can adjust the 'example.yml' configuration file within the app identified as ` 'SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"`
-After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
+After making changes, restart the container to update user details. For more information, refer to the [Spiff-Arena documentation](/how_to_guides/deployment/manage_permissions). The mentioned file can be found [here](https://github.com/sartography/spiff-arena/tree/main/spiffworkflow-backend/src/spiffworkflow_backend/config/permissions).
 
-### **33: Understanding the Collaboration Flag in Spiff-Example-CLI**
+### **32: Understanding the Collaboration Flag in Spiff-Example-CLI**
 
 **Q:** Explain the functionality and purpose of the collaboration flag in spiff-example-cli?
 
@@ -265,7 +255,7 @@ After making changes, restart the container to update user details. For more inf
 
 A practical application of this might be when two processes need to interact but remain independent of each other.
 
-### **34: Custom Tasks and Services in Modeler**
+### **33: Custom Tasks and Services in Modeler**
 
 **Q:** How can I draw custom tasks or services in the modeler that can run in Python SpiffWorkflow when loaded using the BPMN YAML file?
 
@@ -278,7 +268,7 @@ A practical application of this might be when two processes need to interact but
 
 By following these guidelines, you can create custom tasks or services tailored to your specific workflow requirements in SpiffWorkflow.
 
-### **35: configure SpiffWorkflow to work with hostname instead of "localhost**
+### **34: Configure SpiffWorkflow to Work with Hostname Instead of "localhost"**
 
 **Q:** How can I configure SpiffWorkflow to work with my computer's hostname instead of "localhost"?
 
@@ -332,7 +322,7 @@ By following these guidelines, you can create custom tasks or services tailored 
 
 By following these steps, you can successfully configure SpiffWorkflow to work with your computer's hostname, ensuring smooth operation outside the "host" computer environment.
 
-### **36: Approval process in SpiffWorkflow**
+### **35: Approval Process in SpiffWorkflow**
 
 **Q:** How do I model an approval process in SpiffWorkflow where each task may require a different approver?
 
@@ -354,7 +344,7 @@ By following these steps, you can successfully configure SpiffWorkflow to work w
 
 By following these steps and utilizing the features of SpiffWorkflow, you can effectively model an approval process with multiple tasks and approvers, ensuring a smooth and efficient workflow.
 
-### **37: Timer Start Event and internal scheduler**
+### **36: Timer Start Event and Internal Scheduler**
 
 **Q:** How does the Timer Start Event work in SpiffWorkflow, and is there an internal scheduler to execute workflows at the specified timer value?
 
@@ -365,7 +355,7 @@ based on the timer.
 Additionally, there are environment variables like `SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS` that control the polling time for the
 scheduler. For more details, you can refer to the [SpiffWorkflow Backend Initialization Code](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/__init__.py).
 
-### **38: Authentication tokens in SpiffWorkflow**
+### **37: Authentication Tokens in SpiffWorkflow**
 
 **Q:** How does authentication work in SpiffWorkflow, particularly regarding the use of authentication tokens?
 
@@ -375,7 +365,7 @@ browser's developer tools. This can help you understand how the token is being p
 can copy any request to the backend as a curl command or inspect the headers to see how the bearer token is being used.
 If the standard openid flow is not ideal for your use case, Service Account / API Token management can be implemented using a process model.
 
-### **39: Configure SpiffArena to run behind a proxy server**
+### **38: Configure SpiffArena to Run Behind a Proxy Server**
 
 **Q:** How can I configure SpiffArena to run behind a proxy server, such as Traefik, and resolve issues with redirects and OpenID provider authentication?
 
@@ -397,7 +387,7 @@ For more detailed guidance and examples of SpiffArena deployment configurations,
 
 Remember, each deployment scenario can be unique, so it's important to tailor these guidelines to your specific setup and requirements.
 
-### **40: Change in states of script tasks**
+### **39: Change in States of Script Tasks**
 
 **Q:** Why does my script task in SpiffWorkflow change to the "STARTED" state instead of "COMPLETED" after execution, and how
 can I resolve this?
@@ -441,7 +431,7 @@ For practical implementation, refer to examples and guides available on SpiffWor
 This resource provides detailed steps on how to set up and utilize Service Tasks for calling external APIs.
 By adjusting the return value of your script task's `execute` method and understanding the underlying mechanics of task state management in SpiffWorkflow, you can effectively control the flow of your workflow processes.
 
-### **41: Event Design in SpiffWorkflow**
+### **40: Event Design in SpiffWorkflow**
 
 **Q:** How are internal and external events managed within SpiffWorkflow?
 
@@ -452,7 +442,7 @@ By adjusting the return value of your script task's `execute` method and underst
 - **Event Translation and Messaging:** External systems should translate their events into SpiffWorkflow's format and call `send_events` to trigger the workflow. SpiffWorkflow collects all unhandled events, which the workflow system should periodically check using `get_events`. This process allows for the translation and sending of these events to external systems.
 - **Practical Application:** In real-world applications, tasks like UserTasks can be mapped to ApprovalTasks or FormTasks, and ServiceTasks can be mapped to API calls to external systems. The approach to handling events or messages, such as using RabbitMQ for pub/sub events or direct messaging via email or SMS, depends on the specific requirements and design of the workflow system.
 
-### **42: SpiffWorkflow Backend Support**
+### **41: SpiffWorkflow Backend Support**
 
 **Q:** How does the SpiffWorkflow backend support different worker types and modular integrations?
 
@@ -474,7 +464,7 @@ print(current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND'])
 
 If issues persist, consider deploying an updated version of your backend from the main branch, which might include improved error messages that can help diagnose the problem.
 
-### **43: Managing Service Task Connectors**
+### **42: Managing Service Task Connectors**
 
 **Q:** Is it possible to manage service-task connectors via the API instead of including them in the main deployment?
 
@@ -483,7 +473,7 @@ Service-task connectors in SpiffWorkflow are typically included in the deploymen
 
 For a detailed guide on setting up and managing a connector proxy in just five minutes, refer to the [Connector Proxy Quick Start Guide](https://github.com/sartography/spiff-arena/wiki/Connector-Proxy-in-5-mins).
 
-### **44: Implementing and Troubleshooting Service Tasks in SpiffWorkflow**
+### **43: Implementing and Troubleshooting Service Tasks in SpiffWorkflow**
 
 **Q:** How can I create a process that retrieves data from a REST endpoint using a service task in SpiffWorkflow?
 
@@ -528,7 +518,7 @@ Common errors occur when configuring HTTP Service Tasks.
 - **Common Errors:**
   - **Missing `headers`:** Add `{}` to the `headers` field.
 
-### **45: Mapping input/Output for Call Activity Sub-process**
+### **44: Mapping Input/Output for Call Activity Sub-process**
 **Q:**  How do I map input and output for Call Activity sub-processes?**
 
 **A:** In the sub-process:
@@ -537,18 +527,7 @@ Common errors occur when configuring HTTP Service Tasks.
   
   Also, ensure input/output mappings are correctly defined in the parent process to facilitate data transfer.
 
-### **47: Retrieve Lane or Group Information**
-**Q:** How do I retrieve lane or group information during task execution?**
-
-**A:** 
-Users need to retrieve the group or username associated with a specific lane during task execution for sending notifications or dynamic task assignment.
-- Use the lane name with `get_group_members()` to fetch the corresponding group or users dynamically:
-  ```python
-  group_members = get_group_members(lane_name)
-  ```
-- Refer to the [Pools and Lanes Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/pools_and_lanes.html) and [Script Tasks Documentation](https://spiff-arena.readthedocs.io/en/latest/Building_Diagrams/script_tasks.html) for additional details.
-
-### **48: Modify Process Instances during Execution**
+### **45: Modify Process Instances During Execution**
 **Q:** Can I modify process instances during execution?**
 
 **A:** 
@@ -561,7 +540,7 @@ Users need to change task data or adjust token positions in running processes. T
 - Modifying data objects directly is not supported.
 - BPMN diagram changes cannot be made during runtime.
 
-### **49: Running SpiffWorkflow on a Custom Hostname in Docker**
+### **46: Running SpiffWorkflow on a Custom Hostname in Docker**
 **Q:** How do I change "localhost" to a custom hostname in SpiffWorkflow's Docker setup?
 
 **A:**   

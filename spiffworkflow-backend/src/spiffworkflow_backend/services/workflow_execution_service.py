@@ -22,10 +22,14 @@ from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
-from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventJoin  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit
+from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin
+from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins.events.intermediate_event import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -224,13 +228,28 @@ class ExecutionStrategy:
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         task_filter = TaskFilter(state=TaskState.READY, manual=False)
-
         steps = list(
             bpmn_process_instance.get_tasks(
                 first_task=self.delegate.last_completed_spiff_task(),
                 task_filter=task_filter,
             )
         )
+
+        # This ensures that escalations and errors that have code specified take precedence over those that do not
+        code, no_code = [], []
+        for task in steps:
+            spec = task.task_spec
+            if not isinstance(spec, BoundaryEvent) or not isinstance(spec.event_definition, CodeEventDefinition):
+                continue
+            if spec.event_definition.code is None:
+                no_code.append(task)
+            else:
+                code.append(task)
+
+        if len(code) > 0 and len(no_code) > 0:
+            for task in no_code:
+                steps.remove(task)
+                task.cancel()
 
         if not steps:
             steps = list(
@@ -392,7 +411,20 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
         LoggingService.log_event(ProcessInstanceEventType.task_completed.value, log_extras)
         self.process_instance.task_updated_at_in_seconds = round(time.time())
-        self._last_completed_spiff_task = spiff_task
+        # This ensures boundary events attached to a task are prioritized
+        # The default is to continue along a branch as long as possible, but this can allow subprocesses to
+        # complete before any boundary events can cancel it.
+        # Once a boundary event split is reached, don't update the search start until the corresponding join is reached.
+        if self._last_completed_spiff_task is None or not isinstance(
+            self._last_completed_spiff_task.task_spec, BoundaryEventSplit
+        ):
+            self._last_completed_spiff_task = spiff_task
+        elif (
+            isinstance(spiff_task.task_spec, BoundaryEventJoin)
+            and spiff_task.task_spec.split_task == self._last_completed_spiff_task.task_spec.name
+        ):
+            self._last_completed_spiff_task = spiff_task
+
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
