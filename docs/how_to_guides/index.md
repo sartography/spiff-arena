@@ -13,6 +13,6 @@ use_human_task_metadata
 use_process_metadata_backfill
 troubleshoot_locally
 deployment/index
-ed_Editor
+ed_editor
 extend_the_system/index
 ```
