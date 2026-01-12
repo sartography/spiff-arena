@@ -149,7 +149,6 @@ If you want the editor to support multiple process model repositories, add multi
 
 ```python
 github_token = "..."
-connectorProxyUrl = "..."
 
 config = {
   "sync": {
