@@ -2,7 +2,7 @@
 
 The **ED Editor** is a proprietary editor available from **SpiffWorks**. It supports **real-time** editing, authoring, and running of **BPMN diagrams** directly in the browser.
 
-- Launch the editor: `https://ed.spiff.works`  
+- Launch the editor: `https://ed.spiff.works`
 
 ![Ed Editor Interface](/images/EDeditor.png)
 
@@ -25,7 +25,6 @@ The **ED Editor** is a proprietary editor available from **SpiffWorks**. It supp
 
 ![Create Workspace](/images/Create_Workspace.png)
 
-
 ---
 
 ## Syncing with GitHub
@@ -44,9 +43,9 @@ You can create this file by hand or use an included example.
 
 Create a BPMN diagram that contains:
 
-- a **Start** element  
-- a **Script Task**  
-- an **End** element  
+- a **Start** element
+- a **Script Task**
+- an **End** element
 
 Name the file exactly:
 
@@ -59,9 +58,11 @@ Recommended placement:
 
 > **Why a dedicated workspace?**  
 > Keeping configuration separated from process models:
+>
 > - reduces accidental edits to configuration files
 > - makes setup easier to locate
 > - helps prevent `ed:config.bpmn` from being synced to GitHub along with process models
+
 ---
 
 ## Script Task Variables
@@ -77,17 +78,17 @@ These values are used by the ED Editor to authenticate with GitHub and determine
 
 ### 1) `github_token`
 
-A GitHub **Personal Access Token (PAT)** used to 
+A GitHub **Personal Access Token (PAT)** used to
 access the repositories you want to sync.
 
-
 #### How to generate a token
+
 1. Go to GitHub **Settings**
 2. Open **Developer settings**
 3. Generate a **Personal access token**
 
-> **Security tip:** Treat this token like a 
-password. Do not commit it to source control.
+> **Security tip:** Treat this token like a
+> password. Do not commit it to source control.
 
 ---
 
@@ -123,7 +124,6 @@ config = {
 }
 ```
 
-
 ### Field meanings
 
 - `connectorProxyUrl`  
@@ -148,8 +148,8 @@ config = {
 If you want the editor to support multiple process model repositories, add multiple entries under `repos`:
 
 ```python
-github_token="...."
-connectorProxyUrl": "..."
+github_token == "...."
+connectorProxyUrl = "..."
 
 config = {
   "sync": {
