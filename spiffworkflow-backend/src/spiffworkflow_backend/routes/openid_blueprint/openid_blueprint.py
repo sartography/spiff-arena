@@ -26,9 +26,7 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.config.openid.rsa_keys import OpenIdConfigsForDevOnly
 
-openid_blueprint = Blueprint(
-    "openid", __name__, template_folder="templates", static_folder="static"
-)
+openid_blueprint = Blueprint("openid", __name__, template_folder="templates", static_folder="static")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
 SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
@@ -79,10 +77,7 @@ def auth() -> str:
 def form_submit() -> Any:
     """Handles the login form submission."""
     users = get_users()
-    if (
-        request.values["Uname"] in users
-        and request.values["Pass"] == users[request.values["Uname"]]["password"]
-    ):
+    if request.values["Uname"] in users and request.values["Pass"] == users[request.values["Uname"]]["password"]:
         # Redirect back to the end user with some detailed information
         state = request.values.get("state")
         data = {
@@ -112,9 +107,7 @@ def token() -> Response:
     code = request.values.get("code")
 
     if code is None:
-        return make_response(
-            jsonify({"error": "missing_code_value_in_token_request"}), 400
-        )
+        return make_response(jsonify({"error": "missing_code_value_in_token_request"}), 400)
 
     """We just stuffed the user name on the front of the code, so grab it."""
     user_name, secret_hash = code.split(":")
@@ -168,9 +161,7 @@ def end_session() -> Response:
 
 @openid_blueprint.route("/jwks", methods=["GET"])
 def jwks() -> Response:
-    public_key = base64.b64encode(OpenIdConfigsForDevOnly.public_key.encode()).decode(
-        "utf-8"
-    )
+    public_key = base64.b64encode(OpenIdConfigsForDevOnly.public_key.encode()).decode("utf-8")
     jwks_configs = {
         "keys": [
             {
@@ -195,9 +186,7 @@ def get_users() -> Any:
     """Load users from a local configuration file."""
     global permission_cache  # noqa: PLW0603, allow global for performance
     if not permission_cache:
-        with open(
-            current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]
-        ) as file:
+        with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
             permission_cache = yaml.safe_load(file)
     if "users" in permission_cache:
         return permission_cache["users"]
