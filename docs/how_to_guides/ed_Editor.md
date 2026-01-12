@@ -148,7 +148,7 @@ config = {
 If you want the editor to support multiple process model repositories, add multiple entries under `repos`:
 
 ```python
-github_token == "...."
+github_token = "..."
 connectorProxyUrl = "..."
 
 config = {
