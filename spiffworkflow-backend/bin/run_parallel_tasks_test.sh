@@ -101,7 +101,7 @@ if [ -n "$first_duplicate_task" ]; then
   echo ""
   echo "=== 🔍 DETAILED BREAKDOWN: First problematic task GUID ==="
   echo "Task GUID: $first_duplicate_task"
-  mysql -uroot spiffworkflow_backend_local_development -e "SELECT task_id as 'Task GUID', id as 'Human Task ID', CASE WHEN completed = 1 THEN 'COMPLETED' ELSE 'PENDING' END as 'Completed Status', created_at_in_seconds, FROM_UNIXTIME(created_at_in_seconds) as 'Created At' FROM human_task WHERE process_instance_id = ${process_instance_id} AND task_id = '${first_duplicate_task}' ORDER BY created_at_in_seconds ASC;"
+  mysql -uroot spiffworkflow_backend_local_development -e "SELECT task_id as 'Task GUID', id as 'Human Task ID', CASE WHEN completed = 1 THEN 'true' ELSE 'false' END as 'human_task_completed', task_status, created_at_in_seconds, FROM_UNIXTIME(created_at_in_seconds) as 'Created At' FROM human_task WHERE process_instance_id = ${process_instance_id} AND task_id = '${first_duplicate_task}' ORDER BY created_at_in_seconds ASC;"
 else
   echo ""
   echo "=== ✅ NO RACE CONDITION DETECTED ==="
@@ -109,9 +109,10 @@ else
 fi
 
 if [ $k6_exit_code -ne 0 ]; then
-    echo ""
-    echo "⚠️  k6 test failed with exit code ${k6_exit_code}"
+  echo ""
+  echo "⚠️  k6 test failed with exit code ${k6_exit_code}"
 else
-    echo ""
-    echo "✅ k6 test completed successfully"
+  echo ""
+  echo "✅ k6 test completed successfully"
 fi
+
