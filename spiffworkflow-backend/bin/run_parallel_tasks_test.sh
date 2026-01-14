@@ -94,6 +94,20 @@ echo ""
 echo "=== Summary: Human task counts by task GUID ==="
 mysql -uroot spiffworkflow_backend_local_development -e "SELECT task_id, COUNT(*) as human_task_count, GROUP_CONCAT(CASE WHEN completed = 1 THEN 'COMPLETED' ELSE 'PENDING' END) as completion_status, CASE WHEN COUNT(*) > 1 THEN 'DUPLICATE - RACE CONDITION!' ELSE 'Normal' END as status FROM human_task WHERE process_instance_id = ${process_instance_id} GROUP BY task_id ORDER BY human_task_count DESC, task_id;"
 
+# Check if there are any race conditions and show detailed breakdown for the first problematic task
+first_duplicate_task=$(mysql -uroot spiffworkflow_backend_local_development -s -e "SELECT task_id FROM human_task WHERE process_instance_id = ${process_instance_id} GROUP BY task_id HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, task_id LIMIT 1;" 2>/dev/null)
+
+if [ -n "$first_duplicate_task" ]; then
+  echo ""
+  echo "=== 🔍 DETAILED BREAKDOWN: First problematic task GUID ==="
+  echo "Task GUID: $first_duplicate_task"
+  mysql -uroot spiffworkflow_backend_local_development -e "SELECT task_id as 'Task GUID', id as 'Human Task ID', CASE WHEN completed = 1 THEN 'COMPLETED' ELSE 'PENDING' END as 'Completed Status', created_at_in_seconds, FROM_UNIXTIME(created_at_in_seconds) as 'Created At' FROM human_task WHERE process_instance_id = ${process_instance_id} AND task_id = '${first_duplicate_task}' ORDER BY created_at_in_seconds ASC;"
+else
+  echo ""
+  echo "=== ✅ NO RACE CONDITION DETECTED ==="
+  echo "All task GUIDs have exactly one human_task record"
+fi
+
 if [ $k6_exit_code -ne 0 ]; then
     echo ""
     echo "⚠️  k6 test failed with exit code ${k6_exit_code}"
