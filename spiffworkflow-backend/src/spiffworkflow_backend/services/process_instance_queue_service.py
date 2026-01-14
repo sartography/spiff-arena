@@ -1,3 +1,5 @@
+from flask import g
+from flask import current_app
 import contextlib
 import time
 from collections.abc import Generator
@@ -89,6 +91,8 @@ class ProcessInstanceQueueService:
                 f"{locked_by} cannot lock process instance {process_instance.id}. {queue_entry.locked_by}. {message}"
             )
 
+        message = f"WE LOCKED WITH: {queue_entry.locked_by}. REQUESTID: {g.request_id}"
+        current_app.logger.warning(message)
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
     @classmethod
