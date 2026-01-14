@@ -26,12 +26,71 @@ echo "API Host: ${API_HOST}"
 echo "Starting test..."
 echo ""
 
-# Run k6 test
-docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
+# Run k6 test and capture exit code and output
+set +e
+k6_output=$(docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
   -e SPIFF_API_KEY="$CIVI" \
   -e API_HOST="$API_HOST" \
   -e NUM_TASKS="$NUM_TASKS" \
-  run -u "$NUM_TASKS" -i "$NUM_TASKS" - <"${script_dir}/parallel_tasks.js"
+  run -u "$NUM_TASKS" -i "$NUM_TASKS" - <"${script_dir}/parallel_tasks.js" 2>&1)
+k6_exit_code=$?
+set -e
+
+# Display the k6 output
+echo "$k6_output"
+
+# Extract process instance ID from k6 output
+process_instance_id=$(echo "$k6_output" | grep "PROCESS_INSTANCE_ID_FOR_BASH:" | sed 's/.*PROCESS_INSTANCE_ID_FOR_BASH: //' | head -1)
+
+if [ -z "$process_instance_id" ]; then
+  echo "⚠️  Could not extract process instance ID from k6 output"
+  echo "Skipping database checks"
+  exit $k6_exit_code
+fi
 
 echo ""
-echo "Test completed!"
+echo "Test completed with exit code: ${k6_exit_code}"
+echo "Process Instance ID: ${process_instance_id}"
+echo ""
+echo "Checking database for race condition indicators..."
+
+# Check for duplicate human task records by task GUID (the race condition we're looking for)
+echo "=== 🔍 RACE CONDITION CHECK: Multiple human_task records per task GUID ==="
+mysql -uroot spiffworkflow_backend_local_development -e \
+  "SELECT task_id, COUNT(*) as human_task_count, GROUP_CONCAT(id ORDER BY id) as human_task_record_ids,
+          GROUP_CONCAT(created_at_in_seconds ORDER BY id) as created_timestamps
+   FROM human_task
+   WHERE process_instance_id = ${process_instance_id}
+   GROUP BY task_id
+   HAVING COUNT(*) > 1
+   ORDER BY human_task_count DESC;"
+
+echo ""
+echo "=== All human tasks for process instance ${process_instance_id} ==="
+mysql -uroot spiffworkflow_backend_local_development -e \
+  "SELECT id, task_id, process_instance_id, task_name, task_title, created_at_in_seconds,
+          FROM_UNIXTIME(created_at_in_seconds) as created_at
+   FROM human_task
+   WHERE process_instance_id = ${process_instance_id}
+   ORDER BY task_id, created_at_in_seconds ASC;"
+
+echo ""
+echo "=== Summary: Human task counts by task GUID ==="
+mysql -uroot spiffworkflow_backend_local_development -e \
+  "SELECT task_id, COUNT(*) as human_task_count,
+          CASE
+            WHEN COUNT(*) > 1 THEN '🔴 DUPLICATE - RACE CONDITION!'
+            ELSE '✅ Normal'
+          END as status
+   FROM human_task
+   WHERE process_instance_id = ${process_instance_id}
+   GROUP BY task_id
+   ORDER BY human_task_count DESC, task_id;"
+
+if [ $k6_exit_code -ne 0 ]; then
+    echo ""
+    echo "⚠️  k6 test failed with exit code ${k6_exit_code}"
+else
+    echo ""
+    echo "✅ k6 test completed successfully"
+fi

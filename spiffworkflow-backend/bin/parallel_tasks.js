@@ -49,6 +49,7 @@ export function setup() {
   const createData = createResponse.json();
   const processInstanceId = createData.id;
   console.log(`Process instance created with ID: ${processInstanceId}`);
+  console.log(`PROCESS_INSTANCE_ID_FOR_BASH: ${processInstanceId}`);
 
   // Step 2: Run the process instance
   console.log(`Running process instance ${processInstanceId}...`);
@@ -176,18 +177,33 @@ export default function (data) {
     "task submission status is 200": (r) => r.status === 200,
   });
 
+  // Always log detailed response information
+  console.log(`VU ${__VU}: Task submission response for ${taskGuid}:`);
+  console.log(`  Status: ${submitResponse.status}`);
+  console.log(`  Headers: ${JSON.stringify(submitResponse.headers)}`);
+  console.log(`  Body: ${submitResponse.body}`);
+
   if (success) {
-    console.log(`VU ${__VU}: Successfully submitted task ${taskGuid}`);
+    console.log(`✅ VU ${__VU}: Successfully submitted task ${taskGuid}`);
   } else {
-    console.error(
-      `VU ${__VU}: Failed to submit task ${taskGuid}. Status: ${submitResponse.status}, Body: ${submitResponse.body}`,
-    );
+    console.error(`❌ VU ${__VU}: FAILED to submit task ${taskGuid}`);
+    console.error(`  Status Code: ${submitResponse.status}`);
+    console.error(`  Response Body: ${submitResponse.body}`);
+    console.error(`  Error Details: ${submitResponse.error || 'No error details available'}`);
+
+    // Try to parse JSON response for more details
+    try {
+      const errorData = submitResponse.json();
+      console.error(`  Parsed Error: ${JSON.stringify(errorData, null, 2)}`);
+    } catch (e) {
+      console.error(`  Could not parse response as JSON: ${e}`);
+    }
   }
 
   // Check for any race condition indicators in the response
   if (submitResponse.status >= 400) {
-    console.log(`VU ${__VU}: Potential race condition - HTTP ${submitResponse.status} for task ${taskGuid}`);
-    if (submitResponse.body && submitResponse.body.includes("race") || submitResponse.body.includes("conflict")) {
+    console.log(`🔍 VU ${__VU}: Potential race condition - HTTP ${submitResponse.status} for task ${taskGuid}`);
+    if (submitResponse.body && (submitResponse.body.includes("race") || submitResponse.body.includes("conflict") || submitResponse.body.includes("concurrent"))) {
       console.error(`🔴 POTENTIAL RACE CONDITION DETECTED! VU ${__VU}: ${submitResponse.body}`);
     }
   }
