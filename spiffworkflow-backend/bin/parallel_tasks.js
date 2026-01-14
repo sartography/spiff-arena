@@ -8,7 +8,7 @@ const API_KEY = __ENV.SPIFF_API_KEY || __ENV.CIVI;
 // Load host from environment variable, default to localhost for local development
 const API_HOST = __ENV.API_HOST || "localhost:7000";
 
-// Number of manual tasks to expect (configurable)
+// Number of manual tasks to create and expect (configurable)
 const NUM_TASKS = parseInt(__ENV.NUM_TASKS || "5");
 
 // k6 configuration - all VUs start at the same time to create race condition
@@ -27,56 +27,50 @@ const headers = {
 export function setup() {
   console.log(`Setting up parallel task load test for ${NUM_TASKS} tasks...`);
 
-  // Step 1: Create the process instance
-  console.log("Creating process instance for admin:parallel-task...");
-  const createResponse = http.post(
-    `http://${API_HOST}/v1.0/process-instances/admin:parallel-task`,
-    JSON.stringify({}), // Empty payload for now
+  const payload = JSON.stringify({ iteration_count: NUM_TASKS });
+
+  // Step 1: Send message to start the parallel task process
+  console.log(`Sending 'start-parallel-task-process' message with iteration_count: ${NUM_TASKS}...`);
+  const messageResponse = http.post(
+    `http://${API_HOST}/v1.0/messages/start-parallel-task-process?execution_mode=synchronous`,
+    payload,
     { headers: headers },
   );
 
-  const createSuccess = check(createResponse, {
-    "process instance creation status is 201": (r) => r.status === 201,
+  const messageSuccess = check(messageResponse, {
+    "message send status is 200": (r) => r.status === 200,
   });
 
-  if (!createSuccess) {
+  if (!messageSuccess) {
     console.error(
-      `Failed to create process instance. Status: ${createResponse.status}, Body: ${createResponse.body}`,
+      `Failed to send message. Status: ${messageResponse.status}, Body: ${messageResponse.body}`,
     );
-    exec.test.abort("Failed to create process instance");
+    exec.test.abort("Failed to send start message");
   }
 
-  const createData = createResponse.json();
-  const processInstanceId = createData.id;
-  console.log(`Process instance created with ID: ${processInstanceId}`);
+  const messageData = messageResponse.json();
+
+  // The response should contain process instance information
+  let processInstanceId;
+  if (messageData.process_instance && messageData.process_instance.id) {
+    processInstanceId = messageData.process_instance.id;
+  } else if (messageData.process_instance_id) {
+    processInstanceId = messageData.process_instance_id;
+  } else if (messageData.id) {
+    processInstanceId = messageData.id;
+  } else {
+    console.error(`Could not find process instance ID in response: ${JSON.stringify(messageData)}`);
+    exec.test.abort("Could not extract process instance ID from message response");
+  }
+
+  console.log(`Process instance started with ID: ${processInstanceId}`);
   console.log(`PROCESS_INSTANCE_ID_FOR_BASH: ${processInstanceId}`);
 
-  // Step 2: Run the process instance
-  console.log(`Running process instance ${processInstanceId}...`);
-  const runResponse = http.post(
-    `http://${API_HOST}/v1.0/process-instance-run/admin:parallel-task/${processInstanceId}`,
-    JSON.stringify({}), // Empty payload for now
-    { headers: headers },
-  );
-
-  const runSuccess = check(runResponse, {
-    "process instance run status is 200": (r) => r.status === 200,
-  });
-
-  if (!runSuccess) {
-    console.error(
-      `Failed to run process instance. Status: ${runResponse.status}, Body: ${runResponse.body}`,
-    );
-    exec.test.abort("Failed to run process instance");
-  }
-
-  console.log("Process instance started successfully");
-
-  // Step 3: Wait a bit for tasks to be created
+  // Step 2: Wait a bit for tasks to be created
   console.log("Waiting 2 seconds for manual tasks to be generated...");
   sleep(2);
 
-  // Step 4: Query for manual tasks
+  // Step 3: Query for manual tasks
   console.log("Querying for manual tasks...");
   const tasksResponse = http.get(
     `http://${API_HOST}/v1.0/tasks?process_instance_id=${processInstanceId}`,
