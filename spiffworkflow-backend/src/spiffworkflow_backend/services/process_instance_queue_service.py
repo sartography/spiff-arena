@@ -91,7 +91,10 @@ class ProcessInstanceQueueService:
                 f"{locked_by} cannot lock process instance {process_instance.id}. {queue_entry.locked_by}. {message}"
             )
 
-        message = f"WE LOCKED WITH: {queue_entry.locked_by}. REQUESTID: {g.request_id}"
+        task_guid = ""
+        if hasattr(g, "task_guid"):
+            task_guid = g.task_guid
+        message = f"WE LOCKED WITH: {queue_entry.locked_by}. REQUESTID: {g.request_id} TASK_GUID: {task_guid}"
         current_app.logger.warning(message)
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 

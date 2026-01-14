@@ -501,6 +501,7 @@ def _task_submit_shared(
     body: dict[str, Any],
     execution_mode: str | None = None,
 ) -> dict:
+    g.task_guid = task_guid
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
