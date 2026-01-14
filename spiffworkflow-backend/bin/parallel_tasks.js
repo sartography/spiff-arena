@@ -126,16 +126,23 @@ export function setup() {
     console.error(
       `Expected ${NUM_TASKS} tasks but found ${tasksList.length}. Tasks: ${JSON.stringify(tasksList)}`,
     );
-    exec.test.abort(`Insufficient tasks: expected ${NUM_TASKS}, got ${tasksList.length}`);
+    exec.test.abort(
+      `Insufficient tasks: expected ${NUM_TASKS}, got ${tasksList.length}`,
+    );
   }
 
   // Filter for manual tasks only (if needed)
-  const manualTasks = tasksList.filter(task =>
-    task.type === "Manual Task" || task.typename === "ManualTask" || task.task_type === "ManualTask"
+  const manualTasks = tasksList.filter(
+    (task) =>
+      task.type === "Manual Task" ||
+      task.typename === "ManualTask" ||
+      task.task_type === "ManualTask",
   );
 
   if (manualTasks.length < NUM_TASKS) {
-    console.log(`Found ${manualTasks.length} manual tasks out of ${tasksList.length} total tasks`);
+    console.log(
+      `Found ${manualTasks.length} manual tasks out of ${tasksList.length} total tasks`,
+    );
     console.log("Using all available tasks for the test...");
   }
 
@@ -148,7 +155,7 @@ export function setup() {
   // Return the process instance ID and tasks so all VUs can use them
   return {
     processInstanceId: processInstanceId,
-    tasks: tasksToUse.slice(0, NUM_TASKS) // Take only the number we need
+    tasks: tasksToUse.slice(0, NUM_TASKS), // Take only the number we need
   };
 }
 
@@ -157,14 +164,18 @@ export default function (data) {
   const vuIndex = __VU - 1; // VU IDs start at 1, but arrays start at 0
 
   if (vuIndex >= data.tasks.length) {
-    console.error(`VU ${__VU}: No task available for this VU (index ${vuIndex})`);
+    console.error(
+      `VU ${__VU}: No task available for this VU (index ${vuIndex})`,
+    );
     return;
   }
 
   const task = data.tasks[vuIndex];
   const taskGuid = task.id || task.guid || task.task_id;
 
-  console.log(`VU ${__VU}: Submitting task ${taskGuid} for process instance ${data.processInstanceId}`);
+  console.log(
+    `VU ${__VU}: Submitting task ${taskGuid} for process instance ${data.processInstanceId}`,
+  );
 
   // Submit the manual task
   const submitResponse = http.put(
@@ -189,7 +200,9 @@ export default function (data) {
     console.error(`❌ VU ${__VU}: FAILED to submit task ${taskGuid}`);
     console.error(`  Status Code: ${submitResponse.status}`);
     console.error(`  Response Body: ${submitResponse.body}`);
-    console.error(`  Error Details: ${submitResponse.error || 'No error details available'}`);
+    console.error(
+      `  Error Details: ${submitResponse.error || "No error details available"}`,
+    );
 
     // Try to parse JSON response for more details
     try {
@@ -200,11 +213,33 @@ export default function (data) {
     }
   }
 
-  // Check for any race condition indicators in the response
+  // Check for specific error indicators in the response
   if (submitResponse.status >= 400) {
-    console.log(`🔍 VU ${__VU}: Potential race condition - HTTP ${submitResponse.status} for task ${taskGuid}`);
-    if (submitResponse.body && (submitResponse.body.includes("race") || submitResponse.body.includes("conflict") || submitResponse.body.includes("concurrent"))) {
-      console.error(`🔴 POTENTIAL RACE CONDITION DETECTED! VU ${__VU}: ${submitResponse.body}`);
+    console.log(
+      `🔍 VU ${__VU}: Error response - HTTP ${submitResponse.status} for task ${taskGuid}`,
+    );
+
+    // Check for ProcessInstanceIsAlreadyLockedError specifically
+    if (
+      submitResponse.body &&
+      submitResponse.body.includes("ProcessInstanceIsAlreadyLockedError")
+    ) {
+      console.error(
+        `🔒 LOCK ERROR DETECTED! VU ${__VU}: ProcessInstanceIsAlreadyLockedError for task ${taskGuid}`,
+      );
+      console.log(`LOCK_ERROR_FOR_BASH: VU_${__VU}_TASK_${taskGuid}_LOCKED`);
+    }
+
+    // Check for other race condition indicators
+    if (
+      submitResponse.body &&
+      (submitResponse.body.includes("race") ||
+        submitResponse.body.includes("conflict") ||
+        submitResponse.body.includes("concurrent"))
+    ) {
+      console.error(
+        `🔴 POTENTIAL RACE CONDITION DETECTED! VU ${__VU}: ${submitResponse.body}`,
+      );
     }
   }
 }
