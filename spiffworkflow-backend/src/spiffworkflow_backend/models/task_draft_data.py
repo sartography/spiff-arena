@@ -15,11 +15,12 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.task import TaskModel
 
 
 class TaskDraftDataDict(TypedDict):
     process_instance_id: int
-    task_definition_id_path: str
+    task_guid: str
     saved_form_data_hash: str | None
 
 
@@ -29,20 +30,19 @@ class TaskDraftDataModel(SpiffworkflowBaseDBModel):
     __table_args__ = (
         UniqueConstraint(
             "process_instance_id",
-            "task_definition_id_path",
-            name="process_instance_task_definition_unique",
+            "task_guid",
+            name="process_instance_task_unique",
         ),
         PrimaryKeyConstraint(
             "process_instance_id",
-            "task_definition_id_path",
-            name="process_instance_task_definition_pk",
+            "task_guid",
+            name="process_instance_task_pk",
         ),
     )
 
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
 
-    # a colon delimited path of bpmn_process_definition_ids for a given task
-    task_definition_id_path: str = db.Column(db.String(255), nullable=False, index=True)
+    task_guid: str = db.Column(ForeignKey(TaskModel.guid), nullable=False, index=True)
 
     saved_form_data_hash: str | None = db.Column(db.String(255), nullable=True, index=True)
 
@@ -66,7 +66,7 @@ class TaskDraftDataModel(SpiffworkflowBaseDBModel):
             else:
                 insert_stmt = postgres_insert(TaskDraftDataModel).values([task_draft_data_dict])
             on_duplicate_key_stmt = insert_stmt.on_conflict_do_update(
-                index_elements=["process_instance_id", "task_definition_id_path"],
+                index_elements=["process_instance_id", "task_guid"],
                 set_={"saved_form_data_hash": task_draft_data_dict["saved_form_data_hash"]},
             )
         db.session.execute(on_duplicate_key_stmt)
