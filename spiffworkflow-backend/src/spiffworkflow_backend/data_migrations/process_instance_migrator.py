@@ -41,18 +41,7 @@ def benchmark_log_func(func: Any) -> Any:
 
 class ProcessInstanceMigrator:
     @classmethod
-    def needs_migration(cls, process_instance: ProcessInstanceModel) -> bool:
-        """Check if a process instance needs migration without actually running it."""
-        # if the serializer version is None, then we are dealing with a new process instance
-        if process_instance.spiff_serializer_version is None:
-            return False
-
-        # Use the centrally maintained constant that defines the current version
-        # This is automatically updated when new migrations are added
-        return process_instance.spiff_serializer_version < SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
-
-    @classmethod
-    def run(cls, process_instance: ProcessInstanceModel) -> None:
+    def run(cls, process_instance: ProcessInstanceModel) -> bool:
         """This updates the serialization of an instance to the current expected state.
 
         We do not run the migrator in cases where we do not expect to update the spiff internal state,
@@ -61,11 +50,13 @@ class ProcessInstanceMigrator:
         an updated serialization.
         """
 
+        ran_migration = False
+
         # if the serializer version is None, then we are dealing with a new process instance,
         # so we do not need to run the migrator
         # it will be set the newest serializer version momentarily.
         if process_instance.spiff_serializer_version is None:
-            return
+            return ran_migration
 
         # we need to run version3 first to get the typenames in place otherwise version2 fails
         # to properly create a bpmn_process_instance when calling from_dict on the assembled dictionary
@@ -73,14 +64,20 @@ class ProcessInstanceMigrator:
             cls.run_version(Version3, process_instance)
             cls.run_version(Version2, process_instance)
             cls.run_version(Version4, process_instance)
+            ran_migration = True
         elif process_instance.spiff_serializer_version < Version3.version():
             cls.run_version(Version3, process_instance)
             cls.run_version(Version4, process_instance)
+            ran_migration = True
         elif process_instance.spiff_serializer_version < Version4.version():
             cls.run_version(Version4, process_instance)
             cls.run_version(Version5, process_instance)
-        else:
+            ran_migration = True
+        elif process_instance.spiff_serializer_version < Version5.version():
             cls.run_version(Version5, process_instance)
+            ran_migration = True
+
+        return ran_migration
 
     @classmethod
     @benchmark_log_func

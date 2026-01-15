@@ -514,19 +514,11 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    # Check authorization before acquiring any locks to avoid marking the process instance
-    # as errored when authorization fails
     AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
-
-    # Check if migration is needed before acquiring lock
-    # This avoids holding the lock unnecessarily when migration isn't needed
-    needs_migration = ProcessInstanceMigrator.needs_migration(process_instance)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-            # Only run migration if needed, while holding the lock
-            if needs_migration:
-                ProcessInstanceMigrator.run(process_instance)
+            if ProcessInstanceMigrator.run(process_instance):
                 # Refresh the process instance to get any updates from migration
                 db.session.refresh(process_instance)
 
