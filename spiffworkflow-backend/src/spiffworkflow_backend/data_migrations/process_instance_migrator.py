@@ -13,7 +13,6 @@ from spiffworkflow_backend.data_migrations.version_4 import Version4
 from spiffworkflow_backend.data_migrations.version_5 import Version5
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 
 
 class DataMigrationFilesNotFoundError(Exception):

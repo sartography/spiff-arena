@@ -1,5 +1,3 @@
-from flask import g
-from flask import current_app
 import contextlib
 import time
 from collections.abc import Generator
@@ -50,11 +48,6 @@ class ProcessInstanceQueueService:
         current_time = round(time.time())
         if current_time > queue_entry.run_at_in_seconds:
             queue_entry.run_at_in_seconds = current_time
-        task_guid = ""
-        if hasattr(g, "task_guid"):
-            task_guid = g.task_guid
-        message = f"WE UNLOCK WITH: {queue_entry.locked_by}. REQUESTID: {g.request_id} TASK_GUID: {task_guid}"
-        current_app.logger.warning(message)
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
         db.session.commit()
 
@@ -96,11 +89,6 @@ class ProcessInstanceQueueService:
                 f"{locked_by} cannot lock process instance {process_instance.id}. {queue_entry.locked_by}. {message}"
             )
 
-        task_guid = ""
-        if hasattr(g, "task_guid"):
-            task_guid = g.task_guid
-        message = f"WE LOCKED WITH: {queue_entry.locked_by}. REQUESTID: {g.request_id} TASK_GUID: {task_guid}"
-        current_app.logger.warning(message)
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
     @classmethod

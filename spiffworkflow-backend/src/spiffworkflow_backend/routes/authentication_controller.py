@@ -1,4 +1,3 @@
-import uuid
 import ast
 import base64
 import re
@@ -40,7 +39,6 @@ def authentication_options() -> Response:
 
 # this does both authx and authn
 def omni_auth() -> None:
-    g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
     decoded_token = verify_token()
     AuthorizationService.check_for_permission(decoded_token)
 

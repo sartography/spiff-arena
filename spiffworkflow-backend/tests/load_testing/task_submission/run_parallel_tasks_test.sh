@@ -7,10 +7,10 @@ script_dir="$(
   pwd -P
 )"
 
-# Check if CIVI environment variable is set
-if [ -z "${CIVI:-}" ]; then
-  echo "Error: CIVI environment variable is not set"
-  echo "Please set it with: export CIVI=your_api_key"
+# Check if SPIFF_API_KEY environment variable is set
+if [ -z "${SPIFF_API_KEY:-}" ]; then
+  echo "Error: SPIFF_API_KEY environment variable is not set"
+  echo "Please set it with: export SPIFF_API_KEY=your_api_key"
   exit 1
 fi
 
@@ -30,7 +30,7 @@ echo ""
 # Run k6 test and capture exit code and output
 set +e
 k6_output=$(docker run --rm --add-host=host.docker.internal:host-gateway -i grafana/k6 \
-  -e SPIFF_API_KEY="$CIVI" \
+  -e SPIFF_API_KEY="$SPIFF_API_KEY" \
   -e API_HOST="$API_HOST" \
   -e NUM_TASKS="$NUM_TASKS" \
   run -u "$NUM_TASKS" -i "$NUM_TASKS" - <"${script_dir}/parallel_tasks.js" 2>&1)
@@ -115,4 +115,3 @@ else
   echo ""
   echo "✅ k6 test completed successfully"
 fi
-
