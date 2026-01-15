@@ -16,8 +16,8 @@ while true; do
     break
   else
     echo "Waiting for db migrations to finish"
-    echo "current revision: ${current_db_migration_head}"
-    echo "head revision: ${current_db_migration_revision}"
+    echo "current revision: ${current_db_migration_revision}"
+    echo "head revision: ${current_db_migration_head}"
     sleep 2
   fi
 done
