@@ -13,6 +13,7 @@ from spiffworkflow_backend.data_migrations.version_4 import Version4
 from spiffworkflow_backend.data_migrations.version_5 import Version5
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 
 
 class DataMigrationFilesNotFoundError(Exception):
@@ -39,6 +40,17 @@ def benchmark_log_func(func: Any) -> Any:
 
 
 class ProcessInstanceMigrator:
+    @classmethod
+    def needs_migration(cls, process_instance: ProcessInstanceModel) -> bool:
+        """Check if a process instance needs migration without actually running it."""
+        # if the serializer version is None, then we are dealing with a new process instance
+        if process_instance.spiff_serializer_version is None:
+            return False
+
+        # Use the centrally maintained constant that defines the current version
+        # This is automatically updated when new migrations are added
+        return process_instance.spiff_serializer_version < SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
+
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         """This updates the serialization of an instance to the current expected state.

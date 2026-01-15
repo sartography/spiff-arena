@@ -514,21 +514,26 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    # we're dequeing twice in this function.
-    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
-    # in the block causes the process instance to go into an error state. for example, when
-    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
-    # and the cost is not huge given that this function is not the most common code path in the world.
-    with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-        ProcessInstanceMigrator.run(process_instance)
+    # Check authorization before acquiring any locks to avoid marking the process instance
+    # as errored when authorization fails
+    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+
+    # Check if migration is needed before acquiring lock
+    # This avoids holding the lock unnecessarily when migration isn't needed
+    needs_migration = ProcessInstanceMigrator.needs_migration(process_instance)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+            # Only run migration if needed, while holding the lock
+            if needs_migration:
+                ProcessInstanceMigrator.run(process_instance)
+                # Refresh the process instance to get any updates from migration
+                db.session.refresh(process_instance)
+
             processor = ProcessInstanceProcessor(
                 process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
             )
             spiff_task = _get_spiff_task_from_processor(task_guid, processor)
-            AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
 
             if spiff_task.state != TaskState.READY:
                 raise (
