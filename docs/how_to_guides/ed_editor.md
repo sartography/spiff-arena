@@ -87,9 +87,6 @@ access the repositories you want to sync.
 2. Open **Developer settings**
 3. Generate a **Personal access token**
 
-> **Security tip:** Treat this token like a
-> password. Do not commit it to source control.
-
 ---
 
 ### 2) `config`
@@ -171,29 +168,3 @@ config = {
   }
 }
 ```
-
----
-
-## Common Setup Mistakes
-
-- **File name mismatch:** it must be `ed:config.bpmn` (including the colon)
-- **Wrong workspace:** keep it in a dedicated **Configuration** workspace to avoid confusion
-- **Token issues:** token is missing, expired, or not scoped to the intended repository
-- **Repo/ref typos:** branch name in `ref` does not exist (e.g., `main` vs `master`)
-- **Syntax errors:** missing commas or quotes in the script configuration
-
----
-
-## Troubleshooting Checklist
-
-If Git sync isn’t working as expected:
-
-1. Confirm the file is named **exactly** `ed:config.bpmn`
-2. Confirm the diagram contains **Start → Script Task → End**
-3. Confirm the Script Task defines:
-   - `github_token`
-   - `config`
-4. Confirm the token has access to:
-   - `owner/repo`
-5. Confirm `ref` matches an existing branch
-6. Confirm the connectorProxyUrl is reachable from where the editor is running
