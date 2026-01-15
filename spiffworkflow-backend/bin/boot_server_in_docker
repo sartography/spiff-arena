@@ -102,6 +102,9 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   uv run python bin/refresh_all_caches.py
 fi
 
+# uv run python bin/bootstrap.py
+## TODO: turn back on
+
 log_info "Starting gunicorn server"
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!

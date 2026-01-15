@@ -31,6 +31,7 @@ on:
   push:
     branches:
       - main
+      - pic-stable
     tags: [v*]
 
 jobs:
@@ -40,13 +41,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image_name: sartography/spiffworkflow-frontend
+          - image_name: gsa-tts/spiffworkflow-frontend
             context: spiffworkflow-frontend
             description: "Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-          - image_name: sartography/spiffworkflow-backend
+          - image_name: gsa-tts/spiffworkflow-backend
             context: spiffworkflow-backend
             description: "Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-          - image_name: sartography/connector-proxy-demo
+          - image_name: gsa-tts/connector-proxy-demo
             context: connector-proxy-demo
             description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
 

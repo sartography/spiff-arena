@@ -656,15 +656,11 @@ class TaskService:
     def task_draft_data_from_task_model(
         cls, task_model: TaskModel, create_if_not_exists: bool = False
     ) -> TaskDraftDataModel | None:
-        full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")
-        task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
         task_draft_data: TaskDraftDataModel | None = TaskDraftDataModel.query.filter_by(
-            process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
+            process_instance_id=task_model.process_instance_id, task_guid=task_model.guid
         ).first()
         if task_draft_data is None and create_if_not_exists:
-            task_draft_data = TaskDraftDataModel(
-                process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
-            )
+            task_draft_data = TaskDraftDataModel(process_instance_id=task_model.process_instance_id, task_guid=task_model.guid)
         return task_draft_data
 
     @classmethod
