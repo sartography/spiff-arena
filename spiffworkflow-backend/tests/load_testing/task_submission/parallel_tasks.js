@@ -189,9 +189,9 @@ export default function (data) {
   console.log(`  Body: ${submitResponse.body}`);
 
   if (success) {
-    console.log(`✅ VU ${__VU}: Successfully submitted task ${taskGuid}`);
+    console.log(`SUCCESS: VU ${__VU}: Successfully submitted task ${taskGuid}`);
   } else {
-    console.error(`❌ VU ${__VU}: FAILED to submit task ${taskGuid}`);
+    console.error(`FAILED: VU ${__VU}: FAILED to submit task ${taskGuid}`);
     console.error(`  Status Code: ${submitResponse.status}`);
     console.error(`  Response Body: ${submitResponse.body}`);
     console.error(
@@ -210,7 +210,7 @@ export default function (data) {
   // Check for specific error indicators in the response
   if (submitResponse.status >= 400) {
     console.log(
-      `🔍 VU ${__VU}: Error response - HTTP ${submitResponse.status} for task ${taskGuid}`,
+      `ERROR: VU ${__VU}: Error response - HTTP ${submitResponse.status} for task ${taskGuid}`,
     );
 
     // Check for ProcessInstanceIsAlreadyLockedError specifically
@@ -219,7 +219,7 @@ export default function (data) {
       submitResponse.body.includes("ProcessInstanceIsAlreadyLockedError")
     ) {
       console.error(
-        `🔒 LOCK ERROR DETECTED! VU ${__VU}: ProcessInstanceIsAlreadyLockedError for task ${taskGuid}`,
+        `LOCK ERROR DETECTED! VU ${__VU}: ProcessInstanceIsAlreadyLockedError for task ${taskGuid}`,
       );
       console.log(`LOCK_ERROR_FOR_BASH: VU_${__VU}_TASK_${taskGuid}_LOCKED`);
     }
@@ -232,7 +232,7 @@ export default function (data) {
         submitResponse.body.includes("concurrent"))
     ) {
       console.error(
-        `🔴 POTENTIAL RACE CONDITION DETECTED! VU ${__VU}: ${submitResponse.body}`,
+        `POTENTIAL RACE CONDITION DETECTED! VU ${__VU}: ${submitResponse.body}`,
       );
     }
   }
