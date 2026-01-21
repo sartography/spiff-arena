@@ -127,8 +127,6 @@ class TestMessageService(BaseTest):
         message_instances = MessageInstanceModel.query.filter_by(message_type="receive", status="ready").all()
         assert len(message_instances) == 0
 
-
-
     def test_single_conversation_between_two_processes(
         self,
         app: Flask,
