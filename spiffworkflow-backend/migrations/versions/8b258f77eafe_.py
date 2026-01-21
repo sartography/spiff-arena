@@ -72,4 +72,3 @@ def downgrade():
             unique=False,
         )
         batch_op.drop_column("task_guid")
-
