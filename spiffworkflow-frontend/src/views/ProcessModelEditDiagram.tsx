@@ -47,11 +47,8 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
   useBpmnEditorCallbacks,
-  useBpmnEditorLaunchers,
+  useBpmnEditorModals,
   findFileNameForReferenceId,
-  fireScriptUpdate,
-  fireMarkdownUpdate,
-  fireJsonSchemaUpdate,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
@@ -103,41 +100,13 @@ export default function ProcessModelEditDiagram() {
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
-  const [scriptText, setScriptText] = useState<string>('');
-  const [scriptType, setScriptType] = useState<string>('');
-  const [fileEventBus, setFileEventBus] = useState<any>(null);
-  const [jsonSchemaFileName, setJsonSchemaFileName] = useState<string>('');
-  const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
-
-  const [scriptEventBus, setScriptEventBus] = useState<any>(null);
-  const [scriptModeling, setScriptModeling] = useState(null);
-  const [scriptElement, setScriptElement] = useState(null);
-  const [showScriptEditor, setShowScriptEditor] = useState(false);
-  const handleShowScriptEditor = () => setShowScriptEditor(true);
-
-  const [markdownText, setMarkdownText] = useState<string | undefined>('');
-  const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
-  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [showMessageEditor, setShowMessageEditor] = useState(false);
-  const [messageId, setMessageId] = useState<string>('');
-  const [elementId, setElementId] = useState<string>('');
-  const [correlationProperties, setCorrelationProperties] =
-    useState<CorrelationProperties | null>(null);
-  const [showProcessSearch, setShowProcessSearch] = useState(false);
-  const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
-  const [processSearchElement, setProcessSearchElement] = useState<any>(null);
+  // Note: Modal states are now managed by useBpmnEditorModals hook
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
-
-  const [messageEvent, setMessageEvent] = useState<any>(null);
-
-  const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
-
-  const handleShowMessageEditor = () => setShowMessageEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -160,6 +129,7 @@ export default function ProcessModelEditDiagram() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
+  const params = useParams();
 
   // Use reusable hooks from bpmn-js-spiffworkflow-react package
   const bpmnEditorCallbacks = useBpmnEditorCallbacks({
@@ -167,6 +137,84 @@ export default function ProcessModelEditDiagram() {
     processModel,
     canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
     messageModelListPath: targetUris.messageModelListPath,
+  });
+
+  const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
+    const processResults = (result: any) => {
+      const selectionArray = result.map((item: any) => {
+        const label = `${item.display_name} (${item.identifier})`;
+        Object.assign(item, { label });
+        return item;
+      });
+      setProcesses(selectionArray);
+      if (onProcessesFetched) {
+        onProcessesFetched(selectionArray);
+      }
+    };
+    HttpService.makeCallToBackend({
+      path: `/processes`,
+      successCallback: processResults,
+    });
+
+    const worker = new Worker(
+      new URL('/src/workers/python.ts', import.meta.url),
+    );
+
+    setPythonWorker(worker);
+  }, []);
+
+  const [modalStates, modalActions] = useBpmnEditorModals({
+    processModel,
+    processes,
+    onRefreshProcesses: getProcessesCallback,
+    onNavigate: (path, newTab) => {
+      if (newTab) {
+        window.open(path);
+      } else {
+        navigate(path);
+      }
+    },
+    externalJsonSchemaEditorUrl: import.meta.env
+      .VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL,
+    processModelId: modifyProcessIdentifierForPathParam(
+      (params as any).process_model_id,
+    ),
+    onRefreshMessages: bpmnEditorCallbacks.onMessagesRequested,
+    onAddNewFilesIfNotExist: (fileName: string) => {
+      if (!processModel) {
+        return;
+      }
+      const { files } = processModel;
+      const fileNames = [
+        fileName,
+        fileName.replace('-schema.json', '-uischema.json'),
+        fileName.replace('-schema.json', '-exampledata.json'),
+      ];
+
+      const newFiles = fileNames
+        .filter((name) => !files.some((f: any) => f.name === name))
+        .map((name) => ({
+          content_type: 'application/json',
+          last_modified: '',
+          name,
+          process_model_id: processModel?.id || '',
+          references: [],
+          size: 0,
+          type: 'json',
+        }));
+
+      if (newFiles.length > 0) {
+        // we have to push items onto the existing files array.
+        // Otherwise react thinks more of the state changed than we want.
+        newFiles.forEach((file: any) => {
+          files.push(file);
+        });
+        setProcessModel((prevProcessModel: any) => ({
+          ...prevProcessModel,
+          files,
+        }));
+      }
+    },
   });
 
   function handleEditorDidMount(editor: any, monaco: any) {
@@ -197,7 +245,6 @@ export default function ProcessModelEditDiagram() {
   const [scriptUnitTestResult, setScriptUnitTestResult] =
     useState<ScriptUnitTestResult | null>(null);
 
-  const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -219,32 +266,8 @@ export default function ProcessModelEditDiagram() {
 
   const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
 
-  const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
-    const processResults = (result: any) => {
-      const selectionArray = result.map((item: any) => {
-        const label = `${item.display_name} (${item.identifier})`;
-        Object.assign(item, { label });
-        return item;
-      });
-      setProcesses(selectionArray);
-      if (onProcessesFetched) {
-        onProcessesFetched(selectionArray);
-      }
-    };
-    HttpService.makeCallToBackend({
-      path: `/processes`,
-      successCallback: processResults,
-    });
-
-    const worker = new Worker(
-      new URL('/src/workers/python.ts', import.meta.url),
-    );
-
-    setPythonWorker(worker);
-  }, []);
-
   const handleEditorScriptChange = (value: any) => {
-    setScriptText(value);
+    modalActions.updateScriptEditorScript(value);
   };
 
   useEffect(() => {
@@ -506,45 +529,30 @@ export default function ProcessModelEditDiagram() {
     [],
   );
 
-  const onLaunchScriptEditor = useCallback(
-    (
-      element: any,
-      script: string,
-      scriptTypeString: string,
-      eventBus: any,
-      modeling: any,
-    ) => {
-      // TODO: modeling is only needed for script unit tests.
-      // we should update this to act like updating scripts
-      // where we pass an event to bpmn-js
-      setScriptModeling(modeling);
-      setScriptText(script || '');
-      setScriptType(scriptTypeString);
-      setScriptEventBus(eventBus);
-      setScriptElement(element);
-      setScriptUnitTestElementWithIndex(0, element);
-      handleShowScriptEditor();
-    },
-    [setScriptUnitTestElementWithIndex],
-  );
+  // Note: onLaunchScriptEditor is now provided by useBpmnEditorModals hook
 
   const handleScriptEditorClose = () => {
-    fireScriptUpdate(scriptEventBus, scriptType, scriptText, scriptElement);
     resetUnitTextResult();
-    setShowScriptEditor(false);
+    modalActions.closeScriptEditor();
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
-    if (currentScriptUnitTest) {
+    if (currentScriptUnitTest && modalStates.scriptEditor.modeling) {
       currentScriptUnitTest.inputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
+      (modalStates.scriptEditor.modeling as any).updateProperties(
+        modalStates.scriptEditor.element,
+        {},
+      );
     }
   };
 
   const handleEditorScriptTestUnitOutputChange = (value: any) => {
-    if (currentScriptUnitTest) {
+    if (currentScriptUnitTest && modalStates.scriptEditor.modeling) {
       currentScriptUnitTest.expectedOutputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
+      (modalStates.scriptEditor.modeling as any).updateProperties(
+        modalStates.scriptEditor.element,
+        {},
+      );
     }
   };
 
@@ -567,16 +575,24 @@ export default function ProcessModelEditDiagram() {
     resetUnitTextResult();
     const newScriptIndex = currentScriptUnitTestIndex - 1;
     if (newScriptIndex >= 0) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
+      setScriptUnitTestElementWithIndex(
+        newScriptIndex,
+        modalStates.scriptEditor.element,
+      );
     }
   };
 
   const setNextScriptUnitTest = () => {
     resetUnitTextResult();
     const newScriptIndex = currentScriptUnitTestIndex + 1;
-    const unitTestsModdleElements = getScriptUnitTestElements(scriptElement);
+    const unitTestsModdleElements = getScriptUnitTestElements(
+      modalStates.scriptEditor.element,
+    );
     if (newScriptIndex < unitTestsModdleElements.length) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
+      setScriptUnitTestElementWithIndex(
+        newScriptIndex,
+        modalStates.scriptEditor.element,
+      );
     }
   };
 
@@ -601,7 +617,8 @@ export default function ProcessModelEditDiagram() {
         );
 
         const lineLength =
-          scriptText.split('\n')[result.line_number - 1].length + 1;
+          modalStates.scriptEditor.script.split('\n')[result.line_number - 1]
+            .length + 1;
 
         const editorRefToUse = editorRef.current as any;
         editorRefToUse.deltaDecorations(
@@ -622,7 +639,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const runCurrentUnitTest = () => {
-    if (currentScriptUnitTest && scriptElement) {
+    if (currentScriptUnitTest && modalStates.scriptEditor.element) {
       let inputJson = '';
       let expectedJson = '';
       try {
@@ -644,8 +661,8 @@ export default function ProcessModelEditDiagram() {
         httpMethod: 'POST',
         successCallback: processScriptUnitTestRunResult,
         postBody: {
-          bpmn_task_identifier: (scriptElement as any).id,
-          python_script: scriptText,
+          bpmn_task_identifier: (modalStates.scriptEditor.element as any).id,
+          python_script: modalStates.scriptEditor.script,
           input_json: inputJson,
           expected_output_json: expectedJson,
         },
@@ -720,13 +737,20 @@ export default function ProcessModelEditDiagram() {
         previousButtonDisable = false;
       }
       let nextButtonDisable = true;
-      const unitTestsModdleElements = getScriptUnitTestElements(scriptElement);
-      if (currentScriptUnitTestIndex < unitTestsModdleElements.length - 1) {
+      const unitTestsModdleElementsScript =
+        getScriptUnitTestElements(scriptElement);
+      if (
+        currentScriptUnitTestIndex <
+        unitTestsModdleElementsScript.length - 1
+      ) {
         nextButtonDisable = false;
       }
 
+      const unitTestsModdleElementsElement = getScriptUnitTestElements(
+        modalStates.scriptEditor.element,
+      );
       // unset current unit test if all tests were deleted
-      if (unitTestsModdleElements.length < 1) {
+      if (unitTestsModdleElementsElement.length < 1) {
         setCurrentScriptUnitTest(null);
         setCurrentScriptUnitTestIndex(-1);
       }
@@ -843,8 +867,8 @@ export default function ProcessModelEditDiagram() {
         width="auto"
         options={generalEditorOptions()}
         defaultLanguage="python"
-        defaultValue={scriptText}
-        value={scriptText}
+        defaultValue={modalStates.scriptEditor.script}
+        value={modalStates.scriptEditor.script}
         onChange={handleEditorScriptChange}
         onMount={handleEditorDidMount}
       />
@@ -935,17 +959,18 @@ export default function ProcessModelEditDiagram() {
       setScriptEditorTabValue(newValue);
     };
 
-    if (!showScriptEditor) {
+    if (!modalStates.scriptEditor.isOpen) {
       return null;
     }
     let scriptName = '';
-    if (scriptElement) {
-      scriptName = (scriptElement as any).di.bpmnElement.name;
+    if (modalStates.scriptEditor.element) {
+      scriptName = (modalStates.scriptEditor.element as any).di.bpmnElement
+        .name;
     }
     return (
       <Dialog
         className="wide-dialog"
-        open={showScriptEditor}
+        open={modalStates.scriptEditor.isOpen}
         onClose={handleScriptEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -980,18 +1005,10 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMarkdownEditor = useCallback(
-    (_element: any, markdown: string, eventBus: any) => {
-      setMarkdownText(markdown || '');
-      setMarkdownEventBus(eventBus);
-      handleShowMarkdownEditor();
-    },
-    [],
-  );
+  // Note: onLaunchMarkdownEditor is now provided by useBpmnEditorModals hook
 
   const handleMarkdownEditorClose = () => {
-    fireMarkdownUpdate(markdownEventBus, markdownText || '');
-    setShowMarkdownEditor(false);
+    modalActions.closeMarkdownEditor();
   };
 
   const markdownEditorTextArea = (props: any) => {
@@ -1002,7 +1019,7 @@ export default function ProcessModelEditDiagram() {
     return (
       <Dialog
         className="wide-dialog"
-        open={showMarkdownEditor}
+        open={modalStates.markdownEditor.isOpen}
         onClose={handleMarkdownEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1013,8 +1030,8 @@ export default function ProcessModelEditDiagram() {
             <MDEditor
               height={500}
               highlightEnable={false}
-              value={markdownText}
-              onChange={setMarkdownText}
+              value={modalStates.markdownEditor.markdown}
+              onChange={modalActions.updateMarkdownEditorContent}
               components={{
                 textarea: markdownEditorTextArea,
               }}
@@ -1026,32 +1043,27 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMessageEditor = useCallback((event: any) => {
-    setMessageEvent(event);
-    setMessageId(event.value.messageId);
-    setElementId(event.value.elementId);
-    setCorrelationProperties(event.value.correlation_properties);
-    handleShowMessageEditor();
-  }, []);
+  // Note: onLaunchMessageEditor is now provided by useBpmnEditorModals hook
 
   const handleMessageEditorClose = () => {
-    setShowMessageEditor(false);
-    onMessagesRequested(messageEvent);
+    modalActions.closeMessageEditor();
   };
 
   const handleMessageEditorSave = (_event: any) => {
-    messageEvent.eventBus.fire('spiff.message.save');
+    if (modalStates.messageEditor.event) {
+      modalStates.messageEditor.event.eventBus.fire('spiff.message.save');
+    }
   };
 
   const messageEditor = () => {
     // do not render this component until we actually want to display it
-    if (!showMessageEditor) {
+    if (!modalStates.messageEditor.isOpen) {
       return null;
     }
     return (
       <Dialog
         className="wide-dialog"
-        open={showMessageEditor}
+        open={modalStates.messageEditor.isOpen}
         onClose={handleMessageEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1064,10 +1076,12 @@ export default function ProcessModelEditDiagram() {
               modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
                 modifiedProcessModelId,
               )}
-              messageId={messageId}
-              correlationProperties={correlationProperties}
-              messageEvent={messageEvent}
-              elementId={elementId}
+              messageId={modalStates.messageEditor.messageId}
+              correlationProperties={
+                modalStates.messageEditor.correlationProperties
+              }
+              messageEvent={modalStates.messageEditor.event}
+              elementId={modalStates.messageEditor.elementId}
             />
           </div>
           <Button onClick={handleMessageEditorSave}>
@@ -1081,30 +1095,18 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onSearchProcessModels = useCallback(
-    (_processId: string, eventBus: any, element: any) => {
-      setProcessSearchEventBus(eventBus);
-      setProcessSearchElement(element);
-      setShowProcessSearch(true);
-    },
-    [],
-  );
+  // Note: onSearchProcessModels is now provided by useBpmnEditorModals hook
+
   const processSearchOnClose = (selection: ProcessReference) => {
-    if (selection) {
-      processSearchEventBus.fire('spiff.callactivity.update', {
-        element: processSearchElement,
-        value: selection.identifier,
-      });
-    }
-    setShowProcessSearch(false);
+    modalActions.closeProcessSearch(selection);
   };
 
   const processModelSelector = () => {
     return (
       <Dialog
         className="wide-dialog"
-        open={showProcessSearch}
-        onClose={processSearchOnClose}
+        open={modalStates.processSearch.isOpen}
+        onClose={() => processSearchOnClose(null as any)}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
@@ -1124,122 +1126,22 @@ export default function ProcessModelEditDiagram() {
   };
 
   // Note: findFileNameForReferenceId is now provided by the bpmn-js-spiffworkflow-react package
-
-  const onLaunchBpmnEditor = useCallback(
-    (processId: string) => {
-      const openProcessModelFileInNewTab = (
-        processReference: ProcessReference,
-      ) => {
-        const path = generatePath(
-          '/process-models/:process_model_path/files/:file_name',
-          {
-            process_model_path: modifyProcessIdentifierForPathParam(
-              processReference.relative_location,
-            ),
-            file_name: processReference.file_name,
-          },
-        );
-        window.open(path);
-      };
-
-      const openFileNameForProcessId = (
-        processesReferences: ProcessReference[],
-      ) => {
-        const processRef = processesReferences.find((p) => {
-          return p.identifier === processId;
-        });
-        if (processRef) {
-          openProcessModelFileInNewTab(processRef);
-        }
-      };
-
-      // using the "setState" method with a function gives us access to the
-      // most current state of processes. Otherwise it uses the stale state
-      // when passing the callback to a non-React component like bpmn-js:
-      //   https://stackoverflow.com/a/60643670/6090676
-      setProcesses((upToDateProcesses: ProcessReference[]) => {
-        const processRef = upToDateProcesses.find((p) => {
-          return p.identifier === processId;
-        });
-        if (!processRef) {
-          getProcessesCallback(openFileNameForProcessId);
-        } else {
-          openProcessModelFileInNewTab(processRef);
-        }
-        return upToDateProcesses;
-      });
-    },
-    [getProcessesCallback],
-  );
-
-  const onLaunchJsonSchemaEditor = useCallback(
-    (_element: any, fileName: string, eventBus: any) => {
-      const url = import.meta.env.VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL;
-      if (url) {
-        window.open(
-          `${url}?processModelId=${params.process_model_id || ''}&fileName=${fileName || ''}`,
-          '_blank',
-        );
-        return;
-      }
-
-      setFileEventBus(eventBus);
-      setJsonSchemaFileName(fileName);
-      setShowJsonSchemaEditor(true);
-    },
-    [params.process_model_id],
-  );
-
-  const addNewFileIfNotExist = () => {
-    if (!processModel) {
-      return;
-    }
-    const { files } = processModel;
-    const fileNames = [
-      jsonSchemaFileName,
-      jsonSchemaFileName.replace('-schema.json', '-uischema.json'),
-      jsonSchemaFileName.replace('-schema.json', '-exampledata.json'),
-    ];
-
-    const newFiles = fileNames
-      .filter((name) => !files.some((f) => f.name === name))
-      .map((name) => ({
-        content_type: 'application/json',
-        last_modified: '',
-        name,
-        process_model_id: processModel?.id || '',
-        references: [],
-        size: 0,
-        type: 'json',
-      }));
-
-    if (newFiles.length > 0) {
-      // we have to push items onto the existing files array.
-      // Otherwise react thinks more of the state changed than we want.
-      newFiles.forEach((file: any) => {
-        files.push(file);
-      });
-      setProcessModel((prevProcessModel: any) => ({
-        ...prevProcessModel,
-        files,
-      }));
-    }
-  };
+  // Note: onLaunchBpmnEditor is now provided by useBpmnEditorModals hook
+  // Note: onLaunchJsonSchemaEditor is now provided by useBpmnEditorModals hook
+  // Note: addNewFileIfNotExist is now handled by useBpmnEditorModals hook
 
   const handleJsonSchemaEditorClose = () => {
-    addNewFileIfNotExist();
-    fireJsonSchemaUpdate(fileEventBus, jsonSchemaFileName);
-    setShowJsonSchemaEditor(false);
+    modalActions.closeJsonSchemaEditor();
   };
 
   const jsonSchemaEditor = () => {
-    if (!showJsonSchemaEditor || !permissionsLoaded) {
+    if (!modalStates.jsonSchemaEditor.isOpen || !permissionsLoaded) {
       return null;
     }
     return (
       <Dialog
         className="wide-dialog"
-        open={showJsonSchemaEditor}
+        open={modalStates.jsonSchemaEditor.isOpen}
         onClose={handleJsonSchemaEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1250,8 +1152,8 @@ export default function ProcessModelEditDiagram() {
           </h2>
           <ReactFormBuilder
             processModelId={params.process_model_id || ''}
-            fileName={jsonSchemaFileName}
-            onFileNameSet={setJsonSchemaFileName}
+            fileName={modalStates.jsonSchemaEditor.fileName}
+            onFileNameSet={modalActions.updateJsonSchemaFileName}
             canUpdateFiles={ability.can(
               'POST',
               targetUris.processModelFileCreatePath,
@@ -1268,31 +1170,7 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchDmnEditor = useCallback(
-    (processId: string) => {
-      const file = findFileNameForReferenceId(processModel, processId, 'dmn');
-      let path = '';
-      if (file) {
-        path = generatePath(
-          '/process-models/:process_model_id/files/:file_name',
-          {
-            process_model_id: params.process_model_id || null,
-            file_name: file.name,
-          },
-        );
-        window.open(path);
-      } else {
-        path = generatePath(
-          '/process-models/:process_model_id/files?file_type=dmn',
-          {
-            process_model_id: params.process_model_id || null,
-          },
-        );
-      }
-      window.open(path);
-    },
-    [processModel, params.process_model_id],
-  );
+  // Note: onLaunchDmnEditor is now provided by useBpmnEditorLaunchers hook
 
   const isDmn = () => {
     const fileName = params.file_name || '';
@@ -1336,15 +1214,17 @@ export default function ProcessModelEditDiagram() {
         onDeleteFile={onDeleteFile}
         onDmnFilesRequested={bpmnEditorCallbacks.onDmnFilesRequested}
         onElementsChanged={onElementsChanged}
-        onJsonSchemaFilesRequested={bpmnEditorCallbacks.onJsonSchemaFilesRequested}
-        onLaunchBpmnEditor={onLaunchBpmnEditor}
-        onLaunchDmnEditor={onLaunchDmnEditor}
-        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
-        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
-        onLaunchMessageEditor={onLaunchMessageEditor}
-        onLaunchScriptEditor={onLaunchScriptEditor}
+        onJsonSchemaFilesRequested={
+          bpmnEditorCallbacks.onJsonSchemaFilesRequested
+        }
+        onLaunchBpmnEditor={modalActions.navigateToBpmnEditor}
+        onLaunchDmnEditor={modalActions.navigateToDmnEditor}
+        onLaunchJsonSchemaEditor={modalActions.openJsonSchemaEditor}
+        onLaunchMarkdownEditor={modalActions.openMarkdownEditor}
+        onLaunchMessageEditor={modalActions.openMessageEditor}
+        onLaunchScriptEditor={modalActions.openScriptEditor}
         onMessagesRequested={bpmnEditorCallbacks.onMessagesRequested}
-        onSearchProcessModels={onSearchProcessModels}
+        onSearchProcessModels={modalActions.openProcessSearch}
         onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
