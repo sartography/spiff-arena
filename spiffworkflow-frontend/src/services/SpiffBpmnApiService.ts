@@ -48,20 +48,23 @@ export class SpiffBpmnApiService implements BpmnApiService {
     });
   }
 
-  async getDataStores(): Promise<any[]> {
+  async getDataStores(processGroupIdentifier?: string): Promise<any[]> {
+    const query = processGroupIdentifier
+      ? `?upsearch=true&process_group_identifier=${processGroupIdentifier}`
+      : '';
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
-        path: '/data-stores',
+        path: `/data-stores${query}`,
         successCallback: resolve,
         failureCallback: reject,
       });
     });
   }
 
-  async getMessages(): Promise<any[]> {
+  async getMessages(path?: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
-        path: '/messages',
+        path: path || '/messages',
         successCallback: resolve,
         failureCallback: reject,
       });

@@ -46,6 +46,15 @@ import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
+  useBpmnEditorCallbacks,
+  useBpmnEditorLaunchers,
+  findFileNameForReferenceId,
+  fireScriptUpdate,
+  fireMarkdownUpdate,
+  fireJsonSchemaUpdate,
+} from '../../packages/bpmn-js-spiffworkflow-react/src';
+import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
+import {
   getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
@@ -151,6 +160,14 @@ export default function ProcessModelEditDiagram() {
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
+
+  // Use reusable hooks from bpmn-js-spiffworkflow-react package
+  const bpmnEditorCallbacks = useBpmnEditorCallbacks({
+    apiService: spiffBpmnApiService,
+    processModel,
+    canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
+    messageModelListPath: targetUris.messageModelListPath,
+  });
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -461,99 +478,7 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const makeApiHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.service_tasks.returned', {
-        serviceTaskOperators: results,
-      });
-    };
-  };
-
-  const makeDataStoresApiHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.data_stores.returned', {
-        options: results,
-      });
-    };
-  };
-
-  const onServiceTasksRequested = useCallback((event: any) => {
-    HttpService.makeCallToBackend({
-      path: `/service-tasks`,
-      successCallback: makeApiHandler(event),
-    });
-  }, []);
-
-  const onDataStoresRequested = useCallback(
-    (event: any) => {
-      const processGroupIdentifier =
-        processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
-      HttpService.makeCallToBackend({
-        path: `/data-stores?upsearch=true&process_group_identifier=${processGroupIdentifier}`,
-        successCallback: makeDataStoresApiHandler(event),
-      });
-    },
-    [processModel?.parent_groups],
-  );
-
-  const onJsonSchemaFilesRequested = useCallback(
-    (event: any) => {
-      const re = /.*[-.]schema.json/;
-      if (processModel?.files) {
-        const jsonFiles = processModel.files.filter((f) => f.name.match(re));
-        const options = jsonFiles.map((f) => {
-          return { label: f.name, value: f.name };
-        });
-        event.eventBus.fire('spiff.json_schema_files.returned', { options });
-      } else {
-        console.error('There is no process Model.');
-      }
-    },
-    [processModel?.files],
-  );
-
-  const onDmnFilesRequested = useCallback(
-    (event: any) => {
-      if (processModel?.files) {
-        const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
-        const options: any[] = [];
-        dmnFiles.forEach((file) => {
-          file.references.forEach((ref) => {
-            options.push({ label: ref.display_name, value: ref.identifier });
-          });
-        });
-        event.eventBus.fire('spiff.dmn_files.returned', { options });
-      } else {
-        console.error('There is no process model.');
-      }
-    },
-    [processModel?.files],
-  );
-
-  const makeMessagesRequestedHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.messages.returned', {
-        configuration: results,
-      });
-    };
-  };
-  const onMessagesRequested = useCallback(
-    (event: any) => {
-      // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
-      // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
-      // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
-      // access to the read the process model. we also considered automatically giving you access to read message_model_list
-      // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
-      // where we normally only pork barrel permissions on top of "start" and "all."
-      if (ability.can('GET', targetUris.messageModelListPath)) {
-        HttpService.makeCallToBackend({
-          path: targetUris.messageModelListPath,
-          successCallback: makeMessagesRequestedHandler(event),
-        });
-      }
-    },
-    [ability, targetUris.messageModelListPath],
-  );
+  // Note: API-based callbacks are now provided by useBpmnEditorCallbacks hook
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -604,12 +529,7 @@ export default function ProcessModelEditDiagram() {
   );
 
   const handleScriptEditorClose = () => {
-    scriptEventBus.fire('spiff.script.update', {
-      scriptType,
-      script: scriptText,
-      element: scriptElement,
-    });
-
+    fireScriptUpdate(scriptEventBus, scriptType, scriptText, scriptElement);
     resetUnitTextResult();
     setShowScriptEditor(false);
   };
@@ -1070,9 +990,7 @@ export default function ProcessModelEditDiagram() {
   );
 
   const handleMarkdownEditorClose = () => {
-    markdownEventBus.fire('spiff.markdown.update', {
-      value: markdownText,
-    });
+    fireMarkdownUpdate(markdownEventBus, markdownText || '');
     setShowMarkdownEditor(false);
   };
 
@@ -1205,25 +1123,7 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const findFileNameForReferenceId = useCallback(
-    (id: string, type: string): ProcessFile | null => {
-      // Given a reference id (like a process_id, or decision_id) finds the file
-      // that contains that reference and returns it.
-      let matchFile = null;
-      if (processModel?.files) {
-        const files = processModel.files.filter((f) => f.type === type);
-        files.some((file) => {
-          if (file.references.some((ref) => ref.identifier === id)) {
-            matchFile = file;
-            return true;
-          }
-          return false;
-        });
-      }
-      return matchFile;
-    },
-    [processModel?.files],
-  );
+  // Note: findFileNameForReferenceId is now provided by the bpmn-js-spiffworkflow-react package
 
   const onLaunchBpmnEditor = useCallback(
     (processId: string) => {
@@ -1328,9 +1228,7 @@ export default function ProcessModelEditDiagram() {
 
   const handleJsonSchemaEditorClose = () => {
     addNewFileIfNotExist();
-    fileEventBus.fire('spiff.jsonSchema.update', {
-      value: jsonSchemaFileName,
-    });
+    fireJsonSchemaUpdate(fileEventBus, jsonSchemaFileName);
     setShowJsonSchemaEditor(false);
   };
 
@@ -1372,7 +1270,7 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchDmnEditor = useCallback(
     (processId: string) => {
-      const file = findFileNameForReferenceId(processId, 'dmn');
+      const file = findFileNameForReferenceId(processModel, processId, 'dmn');
       let path = '';
       if (file) {
         path = generatePath(
@@ -1393,7 +1291,7 @@ export default function ProcessModelEditDiagram() {
       }
       window.open(path);
     },
-    [findFileNameForReferenceId, params.process_model_id],
+    [processModel, params.process_model_id],
   );
 
   const isDmn = () => {
@@ -1434,20 +1332,20 @@ export default function ProcessModelEditDiagram() {
         fileName={params.file_name}
         isPrimaryFile={params.file_name === processModel?.primary_file_name}
         processModel={processModel}
-        onDataStoresRequested={onDataStoresRequested}
+        onDataStoresRequested={bpmnEditorCallbacks.onDataStoresRequested}
         onDeleteFile={onDeleteFile}
-        onDmnFilesRequested={onDmnFilesRequested}
+        onDmnFilesRequested={bpmnEditorCallbacks.onDmnFilesRequested}
         onElementsChanged={onElementsChanged}
-        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onJsonSchemaFilesRequested={bpmnEditorCallbacks.onJsonSchemaFilesRequested}
         onLaunchBpmnEditor={onLaunchBpmnEditor}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchMessageEditor={onLaunchMessageEditor}
         onLaunchScriptEditor={onLaunchScriptEditor}
-        onMessagesRequested={onMessagesRequested}
+        onMessagesRequested={bpmnEditorCallbacks.onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
-        onServiceTasksRequested={onServiceTasksRequested}
+        onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
         saveDiagram={saveDiagram}

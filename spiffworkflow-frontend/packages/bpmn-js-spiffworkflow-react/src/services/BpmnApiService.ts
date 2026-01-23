@@ -26,13 +26,15 @@ export interface BpmnApiService {
 
   /**
    * Get data store definitions
+   * @param processGroupIdentifier - Optional process group identifier for filtering
    */
-  getDataStores?(): Promise<any[]>;
+  getDataStores?(processGroupIdentifier?: string): Promise<any[]>;
 
   /**
    * Get message definitions
+   * @param path - Optional custom path for the messages endpoint
    */
-  getMessages?(): Promise<any[]>;
+  getMessages?(path?: string): Promise<any[]>;
 
   /**
    * Get DMN file list
@@ -157,12 +159,15 @@ export class DefaultBpmnApiService implements BpmnApiService {
     return this.makeRequest('/service-tasks');
   }
 
-  async getDataStores(): Promise<any[]> {
-    return this.makeRequest('/data-stores');
+  async getDataStores(processGroupIdentifier?: string): Promise<any[]> {
+    const query = processGroupIdentifier
+      ? `?upsearch=true&process_group_identifier=${processGroupIdentifier}`
+      : '';
+    return this.makeRequest(`/data-stores${query}`);
   }
 
-  async getMessages(): Promise<any[]> {
-    return this.makeRequest('/messages');
+  async getMessages(path?: string): Promise<any[]> {
+    return this.makeRequest(path || '/messages');
   }
 
   async getDmnFiles(): Promise<any[]> {

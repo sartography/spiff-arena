@@ -65,3 +65,30 @@ export type {
     UseProcessSearchOptions,
 } from './hooks/useProcessSearch';
 
+export {
+    useBpmnEditorCallbacks,
+    findFileNameForReferenceId,
+} from './hooks/useBpmnEditorCallbacks';
+export type {
+    UseBpmnEditorCallbacksOptions,
+    BpmnEditorCallbacks,
+    ProcessFile,
+} from './hooks/useBpmnEditorCallbacks';
+
+export {
+    useBpmnEditorLaunchers,
+    fireScriptUpdate,
+    fireMarkdownUpdate,
+    fireJsonSchemaUpdate,
+    fireMessageSave,
+} from './hooks/useBpmnEditorLaunchers';
+export type {
+    UseBpmnEditorLaunchersOptions,
+    BpmnEditorLaunchers,
+    ScriptEditorState,
+    MarkdownEditorState,
+    MessageEditorState,
+    JsonSchemaEditorState,
+    ProcessSearchState as ProcessSearchLauncherState,
+} from './hooks/useBpmnEditorLaunchers';
+
