@@ -22,10 +22,14 @@ from flask import current_app
 from flask import g
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
-from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventJoin  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit
+from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin
+from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.mixins.events.intermediate_event import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -42,6 +46,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -224,13 +229,28 @@ class ExecutionStrategy:
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         task_filter = TaskFilter(state=TaskState.READY, manual=False)
-
         steps = list(
             bpmn_process_instance.get_tasks(
                 first_task=self.delegate.last_completed_spiff_task(),
                 task_filter=task_filter,
             )
         )
+
+        # This ensures that escalations and errors that have code specified take precedence over those that do not
+        code, no_code = [], []
+        for task in steps:
+            spec = task.task_spec
+            if not isinstance(spec, BoundaryEvent) or not isinstance(spec.event_definition, CodeEventDefinition):
+                continue
+            if spec.event_definition.code is None:
+                no_code.append(task)
+            else:
+                code.append(task)
+
+        if len(code) > 0 and len(no_code) > 0:
+            for task in no_code:
+                steps.remove(task)
+                task.cancel()
 
         if not steps:
             steps = list(
@@ -392,7 +412,20 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
         LoggingService.log_event(ProcessInstanceEventType.task_completed.value, log_extras)
         self.process_instance.task_updated_at_in_seconds = round(time.time())
-        self._last_completed_spiff_task = spiff_task
+        # This ensures boundary events attached to a task are prioritized
+        # The default is to continue along a branch as long as possible, but this can allow subprocesses to
+        # complete before any boundary events can cancel it.
+        # Once a boundary event split is reached, don't update the search start until the corresponding join is reached.
+        if self._last_completed_spiff_task is None or not isinstance(
+            self._last_completed_spiff_task.task_spec, BoundaryEventSplit
+        ):
+            self._last_completed_spiff_task = spiff_task
+        elif (
+            isinstance(spiff_task.task_spec, BoundaryEventJoin)
+            and spiff_task.task_spec.split_task == self._last_completed_spiff_task.task_spec.name
+        ):
+            self._last_completed_spiff_task = spiff_task
+
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -699,18 +732,27 @@ class WorkflowExecutionService:
 
     def queue_waiting_receive_messages(self) -> None:
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events)
+        waiting_message_events = list(filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events))
+
+        waiting_message_names = {event.name for event in waiting_message_events}
+
+        # Cancel any ready message instances that no longer have corresponding waiting events
+        existing_ready_messages = MessageInstanceModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            message_type="receive",
+            status="ready",
+        ).all()
+        existing_ready_message_names = set()
+        for message_instance in existing_ready_messages:
+            if message_instance.name not in waiting_message_names:
+                message_instance.status = MessageStatuses.cancelled.value
+                db.session.add(message_instance)
+            else:
+                existing_ready_message_names.add(message_instance.name)
+
         for event in waiting_message_events:
             # Ensure we are only creating one active message instance for each waiting message
-            if (
-                MessageInstanceModel.query.filter_by(
-                    process_instance_id=self.process_instance_model.id,
-                    message_type="receive",
-                    name=event.name,
-                    status="ready",
-                ).count()
-                > 0
-            ):
+            if event.name in existing_ready_message_names:
                 continue
 
             # Create a new Message Instance

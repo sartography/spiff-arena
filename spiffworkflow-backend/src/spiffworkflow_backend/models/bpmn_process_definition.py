@@ -3,13 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flask import current_app
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 # contents of top-level attributes from spiff:
@@ -59,12 +57,8 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> Any:
-        new_stuff = {"bpmn_identifier": bpmn_process_definition_dict["bpmn_identifier"]}
-        on_duplicate_key_stmt = None
-        if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
-            insert_stmt = mysql_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
-            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(**new_stuff)
-        else:
-            insert_stmt = postgres_insert(BpmnProcessDefinitionModel).values(bpmn_process_definition_dict)
-            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["full_process_model_hash"])
-        return db.session.execute(on_duplicate_key_stmt)
+        return insert_or_ignore_duplicate(
+            model_class=BpmnProcessDefinitionModel,
+            values=bpmn_process_definition_dict,
+            postgres_conflict_index_elements=["full_process_model_hash"],
+        )

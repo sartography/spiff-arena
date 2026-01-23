@@ -65,20 +65,22 @@ To allow reading and DISALLOW updating, it would look like this:
 ```
 ["read", "DENY:update"]
 ```
-## Default Permissions and User Groups**  
 
-### The "Everyone" Group  
-By default, **every user** who logs into the system is automatically part of the **"everyone"** group.  
+## Default Permissions and User Groups\*\*
 
-- Any **permissions assigned to this group apply to all users** unless explicitly overridden by other settings.  
-- The default group can be changed using the **environment variable**:  
+### The "Everyone" Group
+
+By default, **every user** who logs into the system is automatically part of the **"everyone"** group.
+
+- Any **permissions assigned to this group apply to all users** unless explicitly overridden by other settings.
+- The default group can be changed using the **environment variable**:
 
   ```sh
   SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP
   ```
 
   **Example Usage:**  
-  If you want all new users to be assigned to a **custom group** instead of "everyone," set:  
+  If you want all new users to be assigned to a **custom group** instead of "everyone," set:
 
   ```sh
   export SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP="custom-default-group"
@@ -86,56 +88,59 @@ By default, **every user** who logs into the system is automatically part of the
 
 ## Permission Levels
 
-SpiffWorkflow has **three primary permission levels** that determine what users can do.  
+SpiffWorkflow has **three primary permission levels** that determine what users can do.
 
-### BASIC Permissions 
-**BASIC** permissions allow users to interact with their own information and tasks.  
+### BASIC Permissions
+
+**BASIC** permissions allow users to interact with their own information and tasks.
 
 Users with this permission can:  
-  ✅ View details about their account and actions.  
-  ✅ Access **all process instances they have created**.  
-  ✅ Navigate the basic features of the platform.  
-  ✅ View tasks assigned to them.  
-  ❌ **Cannot modify or interact with other users' instances.**  
+ ✅ View details about their account and actions.  
+ ✅ Access **all process instances they have created**.  
+ ✅ Navigate the basic features of the platform.  
+ ✅ View tasks assigned to them.  
+ ❌ **Cannot modify or interact with other users' instances.**
 
-**Use Case**: Assigned to regular users who only interact with their own processes.  
+**Use Case**: Assigned to regular users who only interact with their own processes.
 
 ### ELEVATED Permissions
-**ELEVATED** permissions allow users to configure authentication and secrets for external integrations.  
+
+**ELEVATED** permissions allow users to configure authentication and secrets for external integrations.
 
 Users with this permission can:  
-  ✅ Define and manage **secrets** (API keys, credentials).  
-  ✅ Set up authentication for external services.  
-  ✅ Enable **SpiffWorkflow service tasks** to securely connect to external systems.  
+ ✅ Define and manage **secrets** (API keys, credentials).  
+ ✅ Set up authentication for external services.  
+ ✅ Enable **SpiffWorkflow service tasks** to securely connect to external systems.
 
-**Use Case**: Typically assigned to **technical administrators** or **developers** managing system integrations.  
+**Use Case**: Typically assigned to **technical administrators** or **developers** managing system integrations.
 
-### SUPPORT Permissions  
-**SUPPORT** permissions provide advanced control over process instances.  
+### SUPPORT Permissions
+
+**SUPPORT** permissions provide advanced control over process instances.
 
 Users with this permission can:  
-  ✅ **Pause** a running process.  
-  ✅ **Move** a process back to an earlier point.  
-  ✅ **Migrate** a process to a **new model version**.  
-  ✅ **Modify process data manually**.  
-  ✅ View **detailed execution logs** for debugging.  
+ ✅ **Pause** a running process.  
+ ✅ **Move** a process back to an earlier point.  
+ ✅ **Migrate** a process to a **new model version**.  
+ ✅ **Modify process data manually**.  
+ ✅ View **detailed execution logs** for debugging.
 
-This permission is typically **restricted to administrators or support engineers**, as it allows modification of **live workflows**.  
+This permission is typically **restricted to administrators or support engineers**, as it allows modification of **live workflows**.
 
-**Use Case**: Assigned to **support teams** responsible for troubleshooting process instances.  
+**Use Case**: Assigned to **support teams** responsible for troubleshooting process instances.
 
-| **Permission Level** | **Capabilities** |
-|----------------------|------------------|
-| **BASIC** | Users can view and interact with their own processes and assigned tasks. |
-| **ELEVATED** | Users can define secrets, configure authentication, and manage external integrations. |
-| **SUPPORT** | Users can **pause, modify, migrate, and debug** any process instance. |
-
+| **Permission Level** | **Capabilities**                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| **BASIC**            | Users can view and interact with their own processes and assigned tasks.              |
+| **ELEVATED**         | Users can define secrets, configure authentication, and manage external integrations. |
+| **SUPPORT**          | Users can **pause, modify, migrate, and debug** any process instance.                 |
 
 ## Site Administration
 
-Once the basic configuration setup is completed, specifying admin rights, you generally won't require additional permissions for designing processes and using the site.
-However, there might be certain situations that call for access control beyond the site or group level.
-In such cases, you have the flexibility to define and tailor admin requirements in a more detailed manner to fulfill specific needs.
+Setting up permissions in a YAML file may fit your needs.
+If not, there are other methods to configure which users are assigned to which groups and what the users in the groups can do.
+One way is to create a process model that defines groups and permissions.
+Setting up such a process model is described below.
 
 ### Step 1: Create Process Group
 

@@ -12,7 +12,7 @@ Grouping them together can create a mind map that's easy to remember.
 
 - Flow Objects
 - Connecting Objects
-- Swimlanes
+- Lanes
 - Artifacts
 
 **Model Left to Right:**
@@ -47,7 +47,7 @@ This makes the process model more robust and prepares stakeholders for potential
 ![out_of_stock](/images/out_of_stock.png)
 
 **Use Lanes for Roles and Responsibilities:**
-Utilize swimlanes (pools and lanes) to clearly define the roles and responsibilities when there are different departments or individuals involved in the process.
+Utilize lanes (pools and lanes) to clearly define the roles and responsibilities when there are different departments or individuals involved in the process.
 This visual representation will help demonstrate the interactions and handoffs between role players, enhancing the understanding of their involvement throughout the process.
 
 ![lanes](/images/lanes_1.png)
@@ -86,4 +86,3 @@ Ensure that each case reaches a conclusive outcome.
 Implement timers to manage actions or decisions within specific time frames, enabling progress through the process despite delays or inactivity.
 Additionally, utilize intermediate events, such as message events, signal events, or error events, to capture specific occurrences during the process.
 These events guide the process towards a conclusion and allow for the cancellation of instances from within the process or through external triggers.
-

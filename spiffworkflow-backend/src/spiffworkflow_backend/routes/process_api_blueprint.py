@@ -513,37 +513,34 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    # we're dequeing twice in this function.
-    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
-    # in the block causes the process instance to go into an error state. for example, when
-    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
-    # and the cost is not huge given that this function is not the most common code path in the world.
-    with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-        ProcessInstanceMigrator.run(process_instance)
-
-    processor = ProcessInstanceProcessor(
-        process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
-    )
-    spiff_task = _get_spiff_task_from_processor(task_guid, processor)
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
-
-    if spiff_task.state != TaskState.READY:
-        raise (
-            ApiError(
-                error_code="invalid_state",
-                message="You may not update a task unless it is in the READY state.",
-                status_code=400,
-            )
-        )
-
-    human_task = _find_human_task_or_raise(
-        process_instance_id=process_instance_id,
-        task_guid=task_guid,
-        only_tasks_that_can_be_completed=True,
-    )
+    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
+        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+            if ProcessInstanceMigrator.run(process_instance):
+                # Refresh the process instance to get any updates from migration
+                db.session.refresh(process_instance)
+
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+            )
+            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
+
+            if spiff_task.state != TaskState.READY:
+                raise (
+                    ApiError(
+                        error_code="invalid_state",
+                        message="You may not update a task unless it is in the READY state.",
+                        status_code=400,
+                    )
+                )
+
+            human_task = _find_human_task_or_raise(
+                process_instance_id=process_instance_id,
+                task_guid=task_guid,
+                only_tasks_that_can_be_completed=True,
+            )
+
             ProcessInstanceService.complete_form_task(
                 processor=processor,
                 spiff_task=spiff_task,
