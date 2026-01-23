@@ -472,12 +472,68 @@ The package exports several utility functions:
 
 ```typescript
 import {
+  // BPMN helpers
   getBpmnProcessIdentifiers, // Extract process IDs from diagram
   convertSvgElementToHtmlString, // Convert React SVG to HTML string
   makeid, // Generate random ID
   taskIsMultiInstanceChild, // Check if task is MI child
   checkTaskCanBeHighlighted, // Check if task can be highlighted
+
+  // JSON Schema helpers (for User Task forms)
+  extractSchemaBaseName, // "my-form-schema.json" -> "my-form"
+  toValidSchemaName, // Sanitize string to valid schema name
+  validateSchemaName, // Validate name, returns error or null
+  getSchemaFileNames, // Get {schemaFile, uiSchemaFile, exampleDataFile}
+  deriveSchemaNameFromElement, // Derive name from BPMN element
+  isSchemaFile, // Check if filename is schema-related
+  SCHEMA_NAME_PATTERN, // Regex for valid schema names
+  SCHEMA_EXTENSIONS, // File extension constants
 } from "bpmn-js-spiffworkflow-react";
+```
+
+---
+
+## Headless Hooks
+
+For building custom UI around editor features, the package provides headless hooks that handle logic while letting you provide your own components.
+
+### useJsonSchemaEditor
+
+Manages JSON Schema file creation/editing for User Task forms.
+
+```typescript
+import { useJsonSchemaEditor } from "bpmn-js-spiffworkflow-react";
+
+const [state, actions] = useJsonSchemaEditor({
+  open: isModalOpen,
+  fileName: "my-form-schema.json", // empty for new schema
+  processModelId: "my-process",
+  apiService: myApiService,
+  element: bpmnElement, // for deriving default name
+  eventBus: modelerEventBus,
+  onClose: () => setModalOpen(false),
+  onSave: () => showSuccess("Saved!"),
+  onError: (msg) => showError(msg),
+});
+
+// state: { mode, loading, saving, baseName, schemaContent, uiSchemaContent, ... }
+// actions: { setSchemaContent, save, createSchema, close, ... }
+```
+
+### useProcessSearch
+
+Manages process search/selection for Call Activity configuration.
+
+```typescript
+import { useProcessSearch } from "bpmn-js-spiffworkflow-react";
+
+const [state, actions] = useProcessSearch({
+  apiService: myApiService,
+  onSelect: (process) => console.log("Selected:", process),
+});
+
+// state: { isOpen, processes, filteredProcesses, loading, query }
+// actions: { open, close, select, setQuery, refresh }
 ```
 
 ---
