@@ -47,7 +47,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
   useBpmnEditorCallbacks,
-  useBpmnEditorLaunchers,
+  useBpmnEditorModals,
   findFileNameForReferenceId,
   fireScriptUpdate,
   fireMarkdownUpdate,
@@ -61,7 +61,6 @@ import {
   setPageTitle,
 } from '../helpers';
 import {
-  CorrelationProperties,
   PermissionsToCheck,
   ProcessFile,
   ProcessModel,
@@ -107,23 +106,13 @@ export default function ProcessModelEditDiagram() {
   const [scriptType, setScriptType] = useState<string>('');
   const [fileEventBus, setFileEventBus] = useState<any>(null);
   const [jsonSchemaFileName, setJsonSchemaFileName] = useState<string>('');
-  const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
 
   const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
-  const [showScriptEditor, setShowScriptEditor] = useState(false);
-  const handleShowScriptEditor = () => setShowScriptEditor(true);
 
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
-  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [showMessageEditor, setShowMessageEditor] = useState(false);
-  const [messageId, setMessageId] = useState<string>('');
-  const [elementId, setElementId] = useState<string>('');
-  const [correlationProperties, setCorrelationProperties] =
-    useState<CorrelationProperties | null>(null);
-  const [showProcessSearch, setShowProcessSearch] = useState(false);
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
@@ -133,11 +122,6 @@ export default function ProcessModelEditDiagram() {
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
-  const [messageEvent, setMessageEvent] = useState<any>(null);
-
-  const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
-
-  const handleShowMessageEditor = () => setShowMessageEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -168,6 +152,23 @@ export default function ProcessModelEditDiagram() {
     canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
     messageModelListPath: targetUris.messageModelListPath,
   });
+  const {
+    onLaunchScriptEditor,
+    onLaunchMarkdownEditor,
+    onLaunchMessageEditor,
+    onLaunchJsonSchemaEditor: launchJsonSchemaEditor,
+    onSearchProcessModels,
+    scriptEditorState,
+    markdownEditorState,
+    messageEditorState,
+    jsonSchemaEditorState,
+    processSearchState,
+    closeScriptEditor,
+    closeMarkdownEditor,
+    closeMessageEditor,
+    closeJsonSchemaEditor,
+    closeProcessSearch,
+  } = useBpmnEditorModals();
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -301,6 +302,30 @@ export default function ProcessModelEditDiagram() {
       }
     }
   }, [scriptAssistResult]);
+
+  useEffect(() => {
+    if (!markdownEditorState) {
+      return;
+    }
+    setMarkdownText(markdownEditorState.markdown || '');
+    setMarkdownEventBus(markdownEditorState.eventBus);
+  }, [markdownEditorState]);
+
+  useEffect(() => {
+    if (!jsonSchemaEditorState) {
+      return;
+    }
+    setFileEventBus(jsonSchemaEditorState.eventBus);
+    setJsonSchemaFileName(jsonSchemaEditorState.fileName);
+  }, [jsonSchemaEditorState]);
+
+  useEffect(() => {
+    if (!processSearchState) {
+      return;
+    }
+    setProcessSearchEventBus(processSearchState.eventBus);
+    setProcessSearchElement(processSearchState.element);
+  }, [processSearchState]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -506,32 +531,22 @@ export default function ProcessModelEditDiagram() {
     [],
   );
 
-  const onLaunchScriptEditor = useCallback(
-    (
-      element: any,
-      script: string,
-      scriptTypeString: string,
-      eventBus: any,
-      modeling: any,
-    ) => {
-      // TODO: modeling is only needed for script unit tests.
-      // we should update this to act like updating scripts
-      // where we pass an event to bpmn-js
-      setScriptModeling(modeling);
-      setScriptText(script || '');
-      setScriptType(scriptTypeString);
-      setScriptEventBus(eventBus);
-      setScriptElement(element);
-      setScriptUnitTestElementWithIndex(0, element);
-      handleShowScriptEditor();
-    },
-    [setScriptUnitTestElementWithIndex],
-  );
+  useEffect(() => {
+    if (!scriptEditorState) {
+      return;
+    }
+    setScriptModeling(scriptEditorState.modeling);
+    setScriptText(scriptEditorState.script || '');
+    setScriptType(scriptEditorState.scriptType);
+    setScriptEventBus(scriptEditorState.eventBus);
+    setScriptElement(scriptEditorState.element);
+    setScriptUnitTestElementWithIndex(0, scriptEditorState.element);
+  }, [scriptEditorState, setScriptUnitTestElementWithIndex]);
 
   const handleScriptEditorClose = () => {
     fireScriptUpdate(scriptEventBus, scriptType, scriptText, scriptElement);
     resetUnitTextResult();
-    setShowScriptEditor(false);
+    closeScriptEditor();
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
@@ -935,7 +950,7 @@ export default function ProcessModelEditDiagram() {
       setScriptEditorTabValue(newValue);
     };
 
-    if (!showScriptEditor) {
+    if (!scriptEditorState) {
       return null;
     }
     let scriptName = '';
@@ -945,7 +960,7 @@ export default function ProcessModelEditDiagram() {
     return (
       <Dialog
         className="wide-dialog"
-        open={showScriptEditor}
+        open={!!scriptEditorState}
         onClose={handleScriptEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -980,18 +995,9 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMarkdownEditor = useCallback(
-    (_element: any, markdown: string, eventBus: any) => {
-      setMarkdownText(markdown || '');
-      setMarkdownEventBus(eventBus);
-      handleShowMarkdownEditor();
-    },
-    [],
-  );
-
   const handleMarkdownEditorClose = () => {
     fireMarkdownUpdate(markdownEventBus, markdownText || '');
-    setShowMarkdownEditor(false);
+    closeMarkdownEditor();
   };
 
   const markdownEditorTextArea = (props: any) => {
@@ -999,10 +1005,13 @@ export default function ProcessModelEditDiagram() {
   };
 
   const markdownEditor = () => {
+    if (!markdownEditorState) {
+      return null;
+    }
     return (
       <Dialog
         className="wide-dialog"
-        open={showMarkdownEditor}
+        open={!!markdownEditorState}
         onClose={handleMarkdownEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1026,32 +1035,28 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchMessageEditor = useCallback((event: any) => {
-    setMessageEvent(event);
-    setMessageId(event.value.messageId);
-    setElementId(event.value.elementId);
-    setCorrelationProperties(event.value.correlation_properties);
-    handleShowMessageEditor();
-  }, []);
-
   const handleMessageEditorClose = () => {
-    setShowMessageEditor(false);
-    onMessagesRequested(messageEvent);
+    closeMessageEditor();
+    if (messageEditorState) {
+      onMessagesRequested(messageEditorState.event);
+    }
   };
 
   const handleMessageEditorSave = (_event: any) => {
-    messageEvent.eventBus.fire('spiff.message.save');
+    if (messageEditorState?.event?.eventBus) {
+      messageEditorState.event.eventBus.fire('spiff.message.save');
+    }
   };
 
   const messageEditor = () => {
     // do not render this component until we actually want to display it
-    if (!showMessageEditor) {
+    if (!messageEditorState) {
       return null;
     }
     return (
       <Dialog
         className="wide-dialog"
-        open={showMessageEditor}
+        open={!!messageEditorState}
         onClose={handleMessageEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1064,10 +1069,10 @@ export default function ProcessModelEditDiagram() {
               modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
                 modifiedProcessModelId,
               )}
-              messageId={messageId}
-              correlationProperties={correlationProperties}
-              messageEvent={messageEvent}
-              elementId={elementId}
+              messageId={messageEditorState.messageId}
+              correlationProperties={messageEditorState.correlationProperties}
+              messageEvent={messageEditorState.event}
+              elementId={messageEditorState.elementId}
             />
           </div>
           <Button onClick={handleMessageEditorSave}>
@@ -1081,14 +1086,6 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onSearchProcessModels = useCallback(
-    (_processId: string, eventBus: any, element: any) => {
-      setProcessSearchEventBus(eventBus);
-      setProcessSearchElement(element);
-      setShowProcessSearch(true);
-    },
-    [],
-  );
   const processSearchOnClose = (selection: ProcessReference) => {
     if (selection) {
       processSearchEventBus.fire('spiff.callactivity.update', {
@@ -1096,14 +1093,17 @@ export default function ProcessModelEditDiagram() {
         value: selection.identifier,
       });
     }
-    setShowProcessSearch(false);
+    closeProcessSearch();
   };
 
   const processModelSelector = () => {
+    if (!processSearchState) {
+      return null;
+    }
     return (
       <Dialog
         className="wide-dialog"
-        open={showProcessSearch}
+        open={!!processSearchState}
         onClose={processSearchOnClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
@@ -1173,7 +1173,7 @@ export default function ProcessModelEditDiagram() {
   );
 
   const onLaunchJsonSchemaEditor = useCallback(
-    (_element: any, fileName: string, eventBus: any) => {
+    (element: any, fileName: string, eventBus: any) => {
       const url = import.meta.env.VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL;
       if (url) {
         window.open(
@@ -1182,12 +1182,9 @@ export default function ProcessModelEditDiagram() {
         );
         return;
       }
-
-      setFileEventBus(eventBus);
-      setJsonSchemaFileName(fileName);
-      setShowJsonSchemaEditor(true);
+      launchJsonSchemaEditor(element, fileName, eventBus);
     },
-    [params.process_model_id],
+    [params.process_model_id, launchJsonSchemaEditor],
   );
 
   const addNewFileIfNotExist = () => {
@@ -1229,17 +1226,17 @@ export default function ProcessModelEditDiagram() {
   const handleJsonSchemaEditorClose = () => {
     addNewFileIfNotExist();
     fireJsonSchemaUpdate(fileEventBus, jsonSchemaFileName);
-    setShowJsonSchemaEditor(false);
+    closeJsonSchemaEditor();
   };
 
   const jsonSchemaEditor = () => {
-    if (!showJsonSchemaEditor || !permissionsLoaded) {
+    if (!jsonSchemaEditorState || !permissionsLoaded) {
       return null;
     }
     return (
       <Dialog
         className="wide-dialog"
-        open={showJsonSchemaEditor}
+        open={!!jsonSchemaEditorState}
         onClose={handleJsonSchemaEditorClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"

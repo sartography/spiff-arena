@@ -82,6 +82,7 @@ export {
     fireJsonSchemaUpdate,
     fireMessageSave,
 } from './hooks/useBpmnEditorLaunchers';
+export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -91,4 +92,3 @@ export type {
     JsonSchemaEditorState,
     ProcessSearchState as ProcessSearchLauncherState,
 } from './hooks/useBpmnEditorLaunchers';
-
