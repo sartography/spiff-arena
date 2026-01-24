@@ -49,11 +49,6 @@ import {
   useBpmnEditorCallbacks,
   useBpmnEditorModals,
   findFileNameForReferenceId,
-  ScriptEditorModal,
-  MarkdownEditorModal,
-  MessageEditorModal,
-  JsonSchemaEditorModal,
-  ProcessSearchModal,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
@@ -743,7 +738,7 @@ export default function ProcessModelEditDiagram() {
       }
       let nextButtonDisable = true;
       const unitTestsModdleElementsScript =
-        getScriptUnitTestElements(modalStates.scriptEditor.element);
+        getScriptUnitTestElements(scriptElement);
       if (
         currentScriptUnitTestIndex <
         unitTestsModdleElementsScript.length - 1
@@ -1036,7 +1031,7 @@ export default function ProcessModelEditDiagram() {
               height={500}
               highlightEnable={false}
               value={modalStates.markdownEditor.markdown}
-              onChange={(value) => modalActions.updateMarkdownEditorContent(value || '')}
+              onChange={modalActions.updateMarkdownEditorContent}
               components={{
                 textarea: markdownEditorTextArea,
               }}
@@ -1054,7 +1049,7 @@ export default function ProcessModelEditDiagram() {
     modalActions.closeMessageEditor();
   };
 
-  const handleMessageEditorSave = () => {
+  const handleMessageEditorSave = (_event: any) => {
     if (modalStates.messageEditor.event) {
       modalStates.messageEditor.event.eventBus.fire('spiff.message.save');
     }
@@ -1102,7 +1097,7 @@ export default function ProcessModelEditDiagram() {
 
   // Note: onSearchProcessModels is now provided by useBpmnEditorModals hook
 
-  const processSearchOnClose = (selection?: ProcessReference | null) => {
+  const processSearchOnClose = (selection: ProcessReference) => {
     modalActions.closeProcessSearch(selection);
   };
 
@@ -1276,94 +1271,11 @@ export default function ProcessModelEditDiagram() {
     return (
       <>
         {newFileNameBox()}
-
-        {/* Script Editor Modal from package */}
-        <ScriptEditorModal
-          isOpen={modalStates.scriptEditor.isOpen}
-          script={modalStates.scriptEditor.script}
-          scriptType={modalStates.scriptEditor.scriptType}
-          scriptName={
-            modalStates.scriptEditor.element?.di?.bpmnElement?.name || 'Script'
-          }
-          onClose={handleScriptEditorClose}
-          onScriptChange={handleEditorScriptChange}
-        />
-
-        {/* Markdown Editor Modal from package */}
-        <MarkdownEditorModal
-          isOpen={modalStates.markdownEditor.isOpen}
-          markdown={modalStates.markdownEditor.markdown}
-          onClose={handleMarkdownEditorClose}
-          onMarkdownChange={(md) => modalActions.updateMarkdownEditorContent(md || '')}
-        />
-
-        {/* JSON Schema Editor Modal from package with custom ReactFormBuilder */}
-        <JsonSchemaEditorModal
-          isOpen={modalStates.jsonSchemaEditor.isOpen}
-          fileName={modalStates.jsonSchemaEditor.fileName}
-          processModelId={params.process_model_id || ''}
-          onClose={handleJsonSchemaEditorClose}
-          onFileNameChange={modalActions.updateJsonSchemaFileName}
-        >
-          {permissionsLoaded && (
-            <ReactFormBuilder
-              processModelId={params.process_model_id || ''}
-              fileName={modalStates.jsonSchemaEditor.fileName}
-              onFileNameSet={modalActions.updateJsonSchemaFileName}
-              canUpdateFiles={ability.can(
-                'POST',
-                targetUris.processModelFileCreatePath,
-              )}
-              canCreateFiles={ability.can(
-                'PUT',
-                targetUris.processModelFileCreatePath,
-              )}
-              pythonWorker={pythonWorker}
-            />
-          )}
-        </JsonSchemaEditorModal>
-
-        {/* Process Search Modal from package with custom ProcessSearch */}
-        <ProcessSearchModal
-          isOpen={modalStates.processSearch.isOpen}
-          processes={processes}
-          onClose={processSearchOnClose}
-        >
-          <Box sx={{ p: 4 }}>
-            <h2 id="modal-modal-title">
-              {t('diagram_process_model_selector_title')}
-            </h2>
-            <ProcessSearch
-              height="500px"
-              onChange={processSearchOnClose}
-              processes={processes}
-              titleText={t('diagram_process_model_selector_search_placeholder')}
-            />
-          </Box>
-        </ProcessSearchModal>
-
-        {/* Message Editor Modal from package with custom MessageEditor */}
-        <MessageEditorModal
-          isOpen={modalStates.messageEditor.isOpen}
-          messageId={modalStates.messageEditor.messageId}
-          elementId={modalStates.messageEditor.elementId}
-          correlationProperties={modalStates.messageEditor.correlationProperties}
-          event={modalStates.messageEditor.event}
-          onClose={handleMessageEditorClose}
-          onSave={handleMessageEditorSave}
-        >
-          <MessageEditor
-            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-              modifiedProcessModelId,
-            )}
-            messageId={modalStates.messageEditor.messageId}
-            correlationProperties={
-              modalStates.messageEditor.correlationProperties
-            }
-            messageEvent={modalStates.messageEditor.event}
-            elementId={modalStates.messageEditor.elementId}
-          />
-        </MessageEditorModal>
+        {scriptEditorAndTests()}
+        {markdownEditor()}
+        {jsonSchemaEditor()}
+        {processModelSelector()}
+        {messageEditor()}
       </>
     );
   };

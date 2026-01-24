@@ -23,25 +23,7 @@
     "bpmn-js-spiffworkflow": "*",
     "dmn-js": "^17.0.0",
     "dmn-js-properties-panel": "^3.0.0",
-    "diagram-js": "^14.0.0 || ^15.0.0",
-    "@mui/material": "^7.0.0",
-    "@mui/icons-material": "^7.0.0",
-    "@monaco-editor/react": "^4.0.0",
-    "@uiw/react-md-editor": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@mui/material": {
-      "optional": true
-    },
-    "@mui/icons-material": {
-      "optional": true
-    },
-    "@monaco-editor/react": {
-      "optional": true
-    },
-    "@uiw/react-md-editor": {
-      "optional": true
-    }
+    "diagram-js": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
     "bpmn-js-cli": "^2.4.0"
