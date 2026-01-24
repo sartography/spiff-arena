@@ -92,15 +92,3 @@ export type {
     ProcessSearchState as ProcessSearchLauncherState,
 } from './hooks/useBpmnEditorLaunchers';
 
-export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
-export type {
-    UseBpmnEditorModalsOptions,
-    BpmnEditorModalsState,
-    BpmnEditorModalsActions,
-    ScriptEditorModalState,
-    MarkdownEditorModalState,
-    MessageEditorModalState,
-    JsonSchemaEditorModalState,
-    ProcessSearchModalState,
-} from './hooks/useBpmnEditorModals';
-
