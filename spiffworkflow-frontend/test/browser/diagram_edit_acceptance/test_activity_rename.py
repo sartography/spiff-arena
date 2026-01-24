@@ -1,0 +1,46 @@
+from playwright.sync_api import Page, expect
+
+from diagram_edit_acceptance.helpers import open_diagram, select_element
+
+USER_TASK_ID = "Activity_1v4njcq"
+
+
+def get_label_text(page: Page) -> str:
+    return page.evaluate(
+        """(id) => {
+        const el = document.querySelector(`g[data-element-id="${id}"] text`);
+        return el?.textContent?.trim() || '';
+      }""",
+        USER_TASK_ID,
+    )
+
+
+def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
+    open_diagram(page, USER_TASK_ID)
+    select_element(page, USER_TASK_ID)
+
+    current_label = get_label_text(page)
+    new_label = "user task edited" if current_label != "user task edited" else "user task"
+
+    label = page.locator(f'g[data-element-id="{USER_TASK_ID}"] text').first
+    label.dblclick(force=True)
+
+    editor = page.locator('.djs-direct-editing-content')
+    expect(editor, "Inline label editor visible").to_be_visible(timeout=10000)
+
+    page.keyboard.press("Meta+A")
+    page.keyboard.insert_text(new_label)
+
+    page.locator("#canvas").click(position={"x": 10, "y": 10})
+
+    expect(label, "Label updated in diagram").to_have_text(new_label, timeout=10000)
+
+    save_button = page.get_by_test_id("process-model-file-save-button")
+    expect(save_button, "Save enabled after rename").to_be_enabled(timeout=10000)
+    save_button.click()
+    expect(save_button, "Save completes after click").to_be_disabled(timeout=20000)
+
+    page.reload()
+    expect(label, "Renamed label persists after reload").to_have_text(
+        new_label, timeout=20000
+    )
