@@ -5,6 +5,27 @@ export type {
     BpmnEditorInternalProps,
 } from './components/BpmnEditor';
 
+export { default as BpmnEditorWithModals } from './components/BpmnEditorWithModals';
+export type {
+    BpmnEditorWithModalsProps,
+} from './components/BpmnEditorWithModals';
+
+// Modal components
+export {
+    ScriptEditorModal,
+    MarkdownEditorModal,
+    MessageEditorModal,
+    JsonSchemaEditorModal,
+    ProcessSearchModal,
+} from './components/modals';
+export type {
+    ScriptEditorModalProps,
+    MarkdownEditorModalProps,
+    MessageEditorModalProps,
+    JsonSchemaEditorModalProps,
+    ProcessSearchModalProps,
+} from './components/modals';
+
 // Type exports
 export type {
     BpmnEditorProps,
@@ -48,7 +69,7 @@ export {
 // Headless hook exports
 export { useJsonSchemaEditor } from './hooks/useJsonSchemaEditor';
 export type {
-    JsonSchemaEditorState,
+    JsonSchemaEditorState as JsonSchemaEditorHookState,
     JsonSchemaEditorActions,
     UseJsonSchemaEditorOptions,
 } from './hooks/useJsonSchemaEditor';

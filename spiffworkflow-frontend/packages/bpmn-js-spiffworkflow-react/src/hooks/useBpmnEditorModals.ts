@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import type { ProcessModel as BaseProcessModel } from '../types';
 
 export interface ProcessReference {
   identifier: string;
@@ -16,8 +17,7 @@ export interface ProcessFile {
   }>;
 }
 
-export interface ProcessModel {
-  id: string;
+export interface ProcessModel extends BaseProcessModel {
   files?: ProcessFile[];
 }
 
@@ -277,8 +277,8 @@ export function useBpmnEditorModals(
     });
   }, [markdownEditorState]);
 
-  const updateMarkdownEditorContent = useCallback((markdown: string) => {
-    setMarkdownEditorState((prev) => ({ ...prev, markdown }));
+  const updateMarkdownEditorContent = useCallback((markdown?: string) => {
+    setMarkdownEditorState((prev) => ({ ...prev, markdown: markdown || '' }));
   }, []);
 
   // Message Editor Actions
