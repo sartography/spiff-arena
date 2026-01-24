@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Browser
+from playwright.sync_api import Browser, Page, expect
 
-from helpers.login import login, BASE_URL
+from diagram_edit_acceptance.helpers import BASE_URL
 
 
 def _get_username() -> str:
@@ -13,6 +13,17 @@ def _get_username() -> str:
 
 def _get_password() -> str:
     return os.getenv("BROWSER_TEST_PASSWORD", "nelson")
+
+
+def login(page: Page, username: str | None = None, password: str | None = None) -> None:
+    username = username or _get_username()
+    password = password or _get_password()
+
+    page.goto(BASE_URL)
+    page.locator("#username").fill(username)
+    page.locator("#password").fill(password)
+    page.locator("#spiff-login-button").click()
+    expect(page.get_by_role("button", name="User Actions")).to_be_visible(timeout=20000)
 
 
 @pytest.fixture(scope="session")
@@ -24,7 +35,7 @@ def storage_state_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def authenticate(browser: Browser, storage_state_path: Path) -> Path:
     context = browser.new_context()
     page = context.new_page()
-    login(page, username=_get_username(), password=_get_password(), base_url=BASE_URL)
+    login(page, username=_get_username(), password=_get_password())
     context.storage_state(path=storage_state_path)
     context.close()
     return storage_state_path

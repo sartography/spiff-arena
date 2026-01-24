@@ -2,69 +2,14 @@ import re
 
 from playwright.sync_api import Page, expect
 
-from helpers.url import get_base_url
-
-BASE_URL = get_base_url()
-MODEL_FILE_URL = (
-    f"{BASE_URL}/process-models/"
-    "system:diagram-edit-acceptance-test:test-a/files/test-a.bpmn"
-)
+from diagram_edit_acceptance.helpers import MODEL_FILE_URL, open_diagram, select_element, expand_group_if_needed
 CALL_ACTIVITY_ID = "Activity_0m4kz8c"
 
 
-def open_diagram(page: Page) -> None:
-    page.set_viewport_size({"width": 1600, "height": 2000})
-    page.goto(MODEL_FILE_URL)
-    expect(page.get_by_text("Process Model File: test-a.bpmn"), "Diagram loaded").to_be_visible(
-        timeout=20000
-    )
-    page.get_by_role("button", name="Fit to View").click()
-    expect(
-        page.locator(f'g[data-element-id="{CALL_ACTIVITY_ID}"]'),
-        "Call activity rendered",
-    ).to_be_visible(timeout=20000)
-
-
-def select_element(page: Page, element_id: str) -> None:
-    target = page.locator(f'g[data-element-id="{element_id}"]')
-    hit = page.locator(f'g[data-element-id="{element_id}"] .djs-hit')
-    for _ in range(3):
-        page.evaluate(
-            """(id) => {
-            const el = document.querySelector(`g[data-element-id="${id}"]`);
-            if (el) el.scrollIntoView({ block: 'center', inline: 'center' });
-          }""",
-            element_id,
-        )
-        if hit.count() > 0:
-            hit.first.click(force=True)
-        else:
-            target.click(force=True)
-        if page.locator('input[name="id"]').input_value() == element_id:
-            return
-        page.wait_for_timeout(250)
-        page.evaluate(
-            """(id) => {
-            const el = document.querySelector(`g[data-element-id="${id}"]`);
-            if (!el) return false;
-            ['mousedown','mouseup','click'].forEach((type) =>
-              el.dispatchEvent(new MouseEvent(type, { bubbles: true }))
-            );
-            return true;
-          }""",
-            element_id,
-        )
-        if page.locator('input[name="id"]').input_value() == element_id:
-            return
-        page.wait_for_timeout(250)
-    expect(
-        page.locator('input[name="id"]'),
-        "Properties panel updated for selected element",
-    ).to_have_value(element_id, timeout=10000)
 
 
 def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
-    open_diagram(page)
+    open_diagram(page, CALL_ACTIVITY_ID)
     select_element(page, CALL_ACTIVITY_ID)
 
     called_element_group = page.locator('[data-group-id="group-called_element"]')
@@ -77,9 +22,7 @@ def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
 
     search_button = called_element_group.locator('button:has-text("Search")')
     if not search_button.is_visible():
-        called_element_group.locator('.bio-properties-panel-group-header-title').click(
-            force=True
-        )
+        expand_group_if_needed(called_element_group)
     search_button.click(force=True)
 
     dialog = page.get_by_role("dialog")
