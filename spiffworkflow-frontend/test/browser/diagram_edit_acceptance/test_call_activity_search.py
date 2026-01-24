@@ -13,10 +13,12 @@ CALL_ACTIVITY_ID = "Activity_0m4kz8c"
 
 
 def open_diagram(page: Page) -> None:
+    page.set_viewport_size({"width": 1600, "height": 2000})
     page.goto(MODEL_FILE_URL)
     expect(page.get_by_text("Process Model File: test-a.bpmn"), "Diagram loaded").to_be_visible(
         timeout=20000
     )
+    page.get_by_role("button", name="Fit to View").click()
     expect(
         page.locator(f'g[data-element-id="{CALL_ACTIVITY_ID}"]'),
         "Call activity rendered",
@@ -24,24 +26,37 @@ def open_diagram(page: Page) -> None:
 
 
 def select_element(page: Page, element_id: str) -> None:
-    page.evaluate(
-        """(id) => {
-        const el = document.querySelector(`g[data-element-id="${id}"]`);
-        if (!el) return false;
-        ['mousedown','mouseup','click'].forEach((type) =>
-          el.dispatchEvent(new MouseEvent(type, { bubbles: true }))
-        );
-        return true;
-      }""",
-        element_id,
-    )
     target = page.locator(f'g[data-element-id="{element_id}"]')
     hit = page.locator(f'g[data-element-id="{element_id}"] .djs-hit')
-    target.scroll_into_view_if_needed()
-    if hit.count() > 0:
-        hit.first.click(force=True)
-    else:
-        target.click(force=True)
+    for _ in range(3):
+        page.evaluate(
+            """(id) => {
+            const el = document.querySelector(`g[data-element-id="${id}"]`);
+            if (el) el.scrollIntoView({ block: 'center', inline: 'center' });
+          }""",
+            element_id,
+        )
+        if hit.count() > 0:
+            hit.first.click(force=True)
+        else:
+            target.click(force=True)
+        if page.locator('input[name="id"]').input_value() == element_id:
+            return
+        page.wait_for_timeout(250)
+        page.evaluate(
+            """(id) => {
+            const el = document.querySelector(`g[data-element-id="${id}"]`);
+            if (!el) return false;
+            ['mousedown','mouseup','click'].forEach((type) =>
+              el.dispatchEvent(new MouseEvent(type, { bubbles: true }))
+            );
+            return true;
+          }""",
+            element_id,
+        )
+        if page.locator('input[name="id"]').input_value() == element_id:
+            return
+        page.wait_for_timeout(250)
     expect(
         page.locator('input[name="id"]'),
         "Properties panel updated for selected element",

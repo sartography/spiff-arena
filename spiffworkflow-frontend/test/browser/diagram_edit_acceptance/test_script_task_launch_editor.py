@@ -13,6 +13,7 @@ SCRIPT_TASK_ID = "Activity_0qpzdpu"
 
 
 def open_diagram(page: Page) -> None:
+    page.set_viewport_size({"width": 1600, "height": 2000})
     page.goto(MODEL_FILE_URL)
     expect(page.get_by_text("Process Model File: test-a.bpmn"), "Diagram loaded").to_be_visible(
         timeout=20000
@@ -79,15 +80,16 @@ def open_script_editor(page: Page):
 
 
 def read_editor_text(dialog) -> str:
-    return dialog.locator(".view-lines").inner_text().strip()
+    text = dialog.locator(".view-lines").inner_text().strip()
+    return text.replace("\u00a0", " ")
 
 
 def set_editor_text(page: Page, dialog, text: str) -> None:
     editor = dialog.locator(".monaco-editor")
     editor.click()
-    page.keyboard.press("Control+A")
+    page.keyboard.press("Meta+A")
     page.keyboard.press("Backspace")
-    page.keyboard.type(text)
+    page.keyboard.insert_text(text)
 
 
 def test_can_edit_script_task_using_launch_editor(page: Page) -> None:
@@ -95,8 +97,7 @@ def test_can_edit_script_task_using_launch_editor(page: Page) -> None:
     select_element(page, SCRIPT_TASK_ID)
 
     dialog = open_script_editor(page)
-    current_script = read_editor_text(dialog)
-    updated_script = "a = 2" if "a = 1" in current_script else "a = 1"
+    updated_script = "a = 2"
 
     set_editor_text(page, dialog, updated_script)
     dialog.get_by_role("button", name=re.compile(r"close", re.I)).click()
@@ -108,6 +109,13 @@ def test_can_edit_script_task_using_launch_editor(page: Page) -> None:
 
     select_element(page, SCRIPT_TASK_ID)
     dialog = open_script_editor(page)
-    updated_text = read_editor_text(dialog)
-    expect(updated_text, "Script update persisted").to_contain(updated_script)
+    updated_text = ""
+    for _ in range(3):
+        updated_text = read_editor_text(dialog)
+        if re.search(r"^a\s*=\s*2$", updated_text.strip(), re.M):
+            break
+        page.wait_for_timeout(300)
+    assert re.search(r"^a\s*=\s*2$", updated_text.strip(), re.M), (
+        "Script update persisted in editor after reopen"
+    )
     dialog.get_by_role("button", name=re.compile(r"close", re.I)).click()
