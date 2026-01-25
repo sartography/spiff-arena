@@ -1,11 +1,4 @@
-import {
-  ReactNode,
-  SyntheticEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -16,13 +9,9 @@ import { useTranslation } from 'react-i18next';
 import {
   Button,
   ButtonGroup,
-  Tabs,
-  Tab,
-  TextField,
   Box,
   Stack,
   TextareaAutosize,
-  CircularProgress,
   IconButton,
   Tooltip,
 } from '@mui/material';
@@ -48,7 +37,6 @@ import {
   useBpmnEditorCallbacks,
   useBpmnEditorModals,
   useProcessReferences,
-  ProcessSearch,
   useBpmnEditorTextEditorsState,
   useBpmnEditorScriptState,
   useScriptUnitTestsState,
@@ -57,6 +45,10 @@ import {
   MarkdownEditorDialog,
   JsonSchemaEditorDialog,
   DialogShell,
+  FileNameEditorDialog,
+  ProcessSearchDialog,
+  ScriptAssistPanel,
+  ScriptEditorDialog,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -84,26 +76,6 @@ import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery'
 import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-
-function TabPanel(props: {
-  children?: ReactNode;
-  index: number;
-  value: number;
-}) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
@@ -422,33 +394,19 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <DialogShell
+      <FileNameEditorDialog
         open={showFileNameEditor}
-        onClose={handleFileNameCancel}
         title={t('diagram_file_name_editor_title')}
-        className=""
-      >
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 8 }}>
-            <TextField
-              id="process_model_file_name"
-              label={t('diagram_file_name_editor_label')}
-              value={newFileName}
-              onChange={(e: any) => setNewFileName(e.target.value)}
-              error={!!processModelFileInvalidText}
-              helperText={processModelFileInvalidText}
-              size="small"
-              autoFocus
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 4 }}>{fileExtension}</Grid>
-        </Grid>
-        <ButtonGroup>
-          <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
-          <Button onClick={handleFileNameCancel}>{t('cancel')}</Button>
-        </ButtonGroup>
-      </DialogShell>
+        label={t('diagram_file_name_editor_label')}
+        value={newFileName}
+        fileExtension={fileExtension}
+        errorText={processModelFileInvalidText}
+        onChange={setNewFileName}
+        onSave={handleFileNameSave}
+        onCancel={handleFileNameCancel}
+        saveLabel={t('save_changes')}
+        cancelLabel={t('cancel')}
+      />
     );
   };
 
@@ -832,33 +790,15 @@ export default function ProcessModelEditDiagram() {
   /* If the Script Assist tab is enabled (via scriptAssistEnabled), this is the UI */
   const scriptAssistWindow = () => {
     return (
-      <>
-        <TextareaAutosize
-          placeholder={t('diagram_script_assist_placeholder')}
-          minRows={20}
-          value={scriptAssistValue}
-          onChange={(e: any) => setScriptAssistValue(e.target.value)}
-          style={{ width: '100%' }}
-        />
-        <Stack
-          direction="row"
-          justifyContent="flex-end"
-          alignItems="center"
-          spacing={2}
-        >
-          {scriptAssistError && (
-            <div style={{ color: 'red' }}>{scriptAssistError}</div>
-          )}
-          {scriptAssistLoading && <CircularProgress />}
-          <Button
-            variant="contained"
-            onClick={() => handleProcessScriptAssist()}
-            disabled={scriptAssistLoading}
-          >
-            {t('diagram_script_assist_button')}
-          </Button>
-        </Stack>
-      </>
+      <ScriptAssistPanel
+        value={scriptAssistValue}
+        onChange={setScriptAssistValue}
+        placeholder={t('diagram_script_assist_placeholder')}
+        error={scriptAssistError}
+        loading={scriptAssistLoading}
+        buttonLabel={t('diagram_script_assist_button')}
+        onSubmit={handleProcessScriptAssist}
+      />
     );
   };
 
@@ -900,34 +840,21 @@ export default function ProcessModelEditDiagram() {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
     return (
-      <DialogShell
-        className="wide-dialog"
+      <ScriptEditorDialog
         open={!!scriptEditorState}
-        onClose={handleScriptEditorClose}
         title={t('diagram_script_editor_title', { scriptName })}
-      >
-        <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
-          <Tab label={t('diagram_script_editor_tab_script_editor')} />
-          {scriptAssistEnabled && (
-            <Tab label={t('diagram_script_editor_tab_script_assist')} />
-          )}
-          <Tab label={t('diagram_script_editor_tab_unit_tests')} />
-        </Tabs>
-        <Box>
-          <TabPanel value={scriptEditorTabValue} index={0}>
-            {scriptEditor()}
-          </TabPanel>
-          <TabPanel value={scriptEditorTabValue} index={1}>
-            {scriptUnitTestEditorElement()}
-          </TabPanel>
-          {scriptAssistEnabled && (
-            <TabPanel value={scriptEditorTabValue} index={2}>
-              {scriptEditorWithAssist()}
-            </TabPanel>
-          )}
-        </Box>
-        <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
-      </DialogShell>
+        tabValue={scriptEditorTabValue}
+        onTabChange={handleTabChange}
+        scriptTabLabel={t('diagram_script_editor_tab_script_editor')}
+        assistTabLabel={t('diagram_script_editor_tab_script_assist')}
+        unitTestsTabLabel={t('diagram_script_editor_tab_unit_tests')}
+        assistEnabled={scriptAssistEnabled}
+        renderScript={scriptEditor}
+        renderUnitTests={scriptUnitTestEditorElement}
+        renderAssist={scriptEditorWithAssist}
+        closeLabel={t('close')}
+        onClose={handleScriptEditorClose}
+      />
     );
   };
 
@@ -1020,20 +947,14 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <DialogShell
-        className="wide-dialog"
+      <ProcessSearchDialog
         open={!!processSearchState}
-        onClose={processSearchOnClose}
         title={t('diagram_process_model_selector_title')}
-      >
-        <ProcessSearch
-          height="500px"
-          onChange={processSearchOnClose}
-          processes={processes}
-          titleText={t('diagram_process_model_selector_search_placeholder')}
-          placeholderText={t('choose_a_process')}
-        />
-      </DialogShell>
+        onChange={processSearchOnClose}
+        processes={processes}
+        titleText={t('diagram_process_model_selector_search_placeholder')}
+        placeholderText={t('choose_a_process')}
+      />
     );
   };
 

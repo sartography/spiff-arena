@@ -1,17 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Modal, UnorderedList, Link } from '@carbon/react';
-import { Button, IconButton, Stack } from '@mui/material';
+import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Can } from '@casl/react';
-import {
-  ZoomIn,
-  ZoomOut,
-  CenterFocusStrongOutlined,
-} from '@mui/icons-material';
 
 // Import from the extracted package
-import { BpmnEditor, BpmnEditorRef } from '../../packages/bpmn-js-spiffworkflow-react/src';
+import {
+  BpmnEditor,
+  BpmnEditorRef,
+  DiagramActionBar,
+  DiagramZoomControls,
+  ProcessReferencesDialog,
+} from '../../packages/bpmn-js-spiffworkflow-react/src';
 
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -22,7 +21,6 @@ import {
   BasicTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import SpiffTooltip from './SpiffTooltip';
 import ProcessInstanceRun from './ProcessInstanceRun';
 import ConfirmButton from './ConfirmButton';
 import { TASK_METADATA } from '../config';
@@ -159,28 +157,17 @@ export default function ReactDiagramEditor({
       return null;
     }
     return (
-      <Modal
+      <ProcessReferencesDialog
         open={showingReferences}
-        modalHeading={t('diagram_process_model_references')}
-        onRequestClose={() => setShowingReferences(false)}
-        passiveModal
-      >
-        <UnorderedList>
-          {callers.map((ref: ProcessReference) => (
-            <li key={`list-${ref.relative_location}`}>
-              <Link
-                size="lg"
-                href={`/process-models/${modifyProcessIdentifierForPathParam(
-                  ref.relative_location,
-                )}`}
-              >
-                {`${ref.display_name}`}
-              </Link>{' '}
-              ({ref.relative_location})
-            </li>
-          ))}
-        </UnorderedList>
-      </Modal>
+        onClose={() => setShowingReferences(false)}
+        title={t('diagram_process_model_references')}
+        references={callers}
+        buildHref={(ref) =>
+          `/process-models/${modifyProcessIdentifierForPathParam(
+            ref.relative_location,
+          )}`
+        }
+      />
     );
   };
 
@@ -202,110 +189,70 @@ export default function ReactDiagramEditor({
   };
 
   const userActionOptions = () => {
-    if (diagramType !== 'readonly') {
-      return (
-        <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
-          <Can
-            I="PUT"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            <Button
-              onClick={handleSave}
-              variant="contained"
-              disabled={disableSaveButton}
-              data-testid="process-model-file-save-button"
-            >
-              {t('save')}
-            </Button>
-          </Can>
-          {processModel && <ProcessInstanceRun processModel={processModel} />}
-          <Can
-            I="DELETE"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {fileName && !isPrimaryFile && (
-              <ConfirmButton
-                description={t('delete_file_description', { file: fileName })}
-                onConfirmation={handleDelete}
-                buttonLabel={t('delete')}
-              />
-            )}
-          </Can>
-          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            {onSetPrimaryFile && (
-              <Button onClick={handleSetPrimaryFile} variant="contained">
-                {t('diagram_set_as_primary_file')}
-              </Button>
-            )}
-          </Can>
-          <Can
-            I="GET"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            <Button variant="contained" onClick={downloadXmlFile}>
-              {t('diagram_download')}
-            </Button>
-          </Can>
-          <Can
-            I="GET"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {canViewXml && (
-              <Button
-                variant="contained"
-                onClick={() => {
-                  navigate(
-                    `/process-models/${processModelId}/form/${fileName}`,
-                  );
-                }}
-              >
-                {t('diagram_view_xml')}
-              </Button>
-            )}
-          </Can>
-          {getReferencesButton()}
-          <Can
-            I="PUT"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {activeUserElement || null}
-          </Can>
-        </Stack>
-      );
+    if (diagramType === 'readonly') {
+      return null;
     }
-    return null;
+
+    const deleteButton =
+      fileName && !isPrimaryFile ? (
+        <ConfirmButton
+          description={t('delete_file_description', { file: fileName })}
+          onConfirmation={handleDelete}
+          buttonLabel={t('delete')}
+        />
+      ) : null;
+
+    const processInstanceRun = processModel ? (
+      <ProcessInstanceRun processModel={processModel} />
+    ) : null;
+
+    const viewXml = () => {
+      navigate(`/process-models/${processModelId}/form/${fileName}`);
+    };
+
+    return (
+      <DiagramActionBar
+        canSave={ability.can('PUT', targetUris.processModelFileShowPath)}
+        onSave={handleSave}
+        saveDisabled={disableSaveButton}
+        saveLabel={t('save')}
+        canDelete={ability.can('DELETE', targetUris.processModelFileShowPath)}
+        deleteButton={deleteButton}
+        canSetPrimary={
+          !!onSetPrimaryFile &&
+          ability.can('PUT', targetUris.processModelShowPath)
+        }
+        onSetPrimary={handleSetPrimaryFile}
+        setPrimaryLabel={t('diagram_set_as_primary_file')}
+        canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
+        onDownload={downloadXmlFile}
+        downloadLabel={t('diagram_download')}
+        canViewXml={
+          canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
+        }
+        onViewXml={viewXml}
+        viewXmlLabel={t('diagram_view_xml')}
+        referencesButton={getReferencesButton()}
+        processInstanceRun={processInstanceRun}
+        activeUserElement={
+          ability.can('PUT', targetUris.processModelFileShowPath)
+            ? activeUserElement
+            : null
+        }
+      />
+    );
   };
 
   const diagramControlButtons = () => {
     return (
-      <div className="diagram-control-buttons">
-        <SpiffTooltip title={t('diagram_zoom_in')} placement="bottom">
-          <IconButton aria-label={t('diagram_zoom_in')} onClick={() => zoom(1)}>
-            <ZoomIn />
-          </IconButton>
-        </SpiffTooltip>
-        <SpiffTooltip title={t('diagram_zoom_out')} placement="bottom">
-          <IconButton
-            aria-label={t('diagram_zoom_out')}
-            onClick={() => zoom(-1)}
-          >
-            <ZoomOut />
-          </IconButton>
-        </SpiffTooltip>
-        <SpiffTooltip title={t('diagram_zoom_fit')} placement="bottom">
-          <IconButton
-            aria-label={t('diagram_zoom_fit')}
-            onClick={() => zoom(0)}
-          >
-            <CenterFocusStrongOutlined />
-          </IconButton>
-        </SpiffTooltip>
-      </div>
+      <DiagramZoomControls
+        onZoomIn={() => zoom(1)}
+        onZoomOut={() => zoom(-1)}
+        onZoomFit={() => zoom(0)}
+        zoomInLabel={t('diagram_zoom_in')}
+        zoomOutLabel={t('diagram_zoom_out')}
+        zoomFitLabel={t('diagram_zoom_fit')}
+      />
     );
   };
 

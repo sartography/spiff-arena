@@ -5,6 +5,13 @@ export { default as MessageEditorDialog } from './components/MessageEditorDialog
 export { default as MarkdownEditorDialog } from './components/MarkdownEditorDialog';
 export { default as JsonSchemaEditorDialog } from './components/JsonSchemaEditorDialog';
 export { default as DialogShell } from './components/DialogShell';
+export { default as FileNameEditorDialog } from './components/FileNameEditorDialog';
+export { default as ScriptAssistPanel } from './components/ScriptAssistPanel';
+export { default as ScriptEditorDialog } from './components/ScriptEditorDialog';
+export { default as ProcessSearchDialog } from './components/ProcessSearchDialog';
+export { default as DiagramActionBar } from './components/DiagramActionBar';
+export { default as DiagramZoomControls } from './components/DiagramZoomControls';
+export { default as ProcessReferencesDialog } from './components/ProcessReferencesDialog';
 export type {
     BpmnEditorRef,
     BpmnEditorInternalProps,
