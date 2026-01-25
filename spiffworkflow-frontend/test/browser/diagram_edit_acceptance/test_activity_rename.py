@@ -1,6 +1,6 @@
 from playwright.sync_api import Page, expect
 
-from diagram_edit_acceptance.helpers import open_diagram, select_element
+from diagram_edit_acceptance.helpers import open_diagram, select_element, get_save_button
 
 USER_TASK_ID = "Activity_1v4njcq"
 
@@ -35,7 +35,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
 
     expect(label, "Label updated in diagram").to_have_text(new_label, timeout=10000)
 
-    save_button = page.get_by_test_id("process-model-file-save-button")
+    save_button = get_save_button(page)
     expect(save_button, "Save enabled after rename").to_be_enabled(timeout=10000)
     save_button.click()
     expect(save_button, "Save completes after click").to_be_disabled(timeout=20000)

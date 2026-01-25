@@ -1,29 +1,53 @@
 from playwright.sync_api import Page, expect
 
-from diagram_edit_acceptance.helpers import open_diagram, select_element, expand_group_if_needed
+from diagram_edit_acceptance.config import CONFIG
+from diagram_edit_acceptance.helpers import (
+    open_diagram,
+    select_element,
+    expand_group_if_needed,
+    locate,
+)
+
 CALL_ACTIVITY_ID = "Activity_0m4kz8c"
-
-
 
 
 def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
     open_diagram(page, CALL_ACTIVITY_ID)
     select_element(page, CALL_ACTIVITY_ID)
 
-    called_element_group = page.locator('[data-group-id="group-called_element"]')
+    called_element_group = page.locator(
+        f'[data-group-id="{CONFIG["groups"]["call_activity"]}"]'
+    )
     expect(called_element_group, "Called Element section visible").to_be_visible(
         timeout=10000
     )
 
-    launch_button = called_element_group.locator(
-        'button:has-text("Launch Editor")'
-    )
-    if not launch_button.is_visible():
-        expand_group_if_needed(called_element_group)
+    expand_group_if_needed(called_element_group)
+    launch_button = locate(page, CONFIG["selectors"]["call_activity_open"], called_element_group)
     launch_button.click(force=True)
 
+    dialog = page.locator('[role="dialog"]')
+    page.wait_for_timeout(300)
+    if dialog.is_visible():
+        expect(
+            dialog.get_by_role(
+                "heading", name=CONFIG["dialog_headings"]["call_activity"]
+            ),
+            "Process selection dialog opened",
+        ).to_be_visible(timeout=10000)
+
+        search_input = locate(page, CONFIG["selectors"]["call_activity_search_input"], dialog)
+        search_input.click()
+        search_input.fill("test-b")
+        search_input.press("ArrowDown")
+        search_input.press("Enter")
+        confirm_spec = CONFIG["selectors"].get("call_activity_dialog_confirm")
+        if confirm_spec:
+            locate(page, confirm_spec, dialog).click()
+
+    expected_label = CONFIG["diagram"]["file_label_template"].format(file="test-b.bpmn")
     expect(
-        page.get_by_text("Process Model File: test-b.bpmn"),
+        page.get_by_text(expected_label),
         "Navigated to called process model",
     ).to_be_visible(timeout=20000)
     expect(

@@ -1,29 +1,48 @@
 import os
 from pathlib import Path
+from typing import Any, Mapping
 
 import pytest
 from playwright.sync_api import Browser, Page, expect
 
-from diagram_edit_acceptance.helpers import BASE_URL
+from diagram_edit_acceptance.config import CONFIG
+
+
+def _locator(page: Page, spec: Any):
+    if isinstance(spec, Mapping):
+        if "role" in spec:
+            return page.get_by_role(
+                spec["role"],
+                name=spec.get("name"),
+                exact=spec.get("exact", False),
+            )
+        if "text" in spec:
+            return page.get_by_text(spec["text"])
+        if "css" in spec:
+            return page.locator(spec["css"])
+    return page.locator(spec)
 
 
 def _get_username() -> str:
-    return os.getenv("BROWSER_TEST_USERNAME", "nelson")
+    login = CONFIG.get("login", {})
+    return os.getenv(login.get("username_env", ""), login.get("username_default", ""))
 
 
 def _get_password() -> str:
-    return os.getenv("BROWSER_TEST_PASSWORD", "nelson")
+    login = CONFIG.get("login", {})
+    return os.getenv(login.get("password_env", ""), login.get("password_default", ""))
 
 
 def login(page: Page, username: str | None = None, password: str | None = None) -> None:
+    login_config = CONFIG["login"]
     username = username or _get_username()
     password = password or _get_password()
 
-    page.goto(BASE_URL)
-    page.locator("#username").fill(username)
-    page.locator("#password").fill(password)
-    page.locator("#spiff-login-button").click()
-    expect(page.get_by_role("button", name="User Actions")).to_be_visible(timeout=20000)
+    page.goto(login_config["url"])
+    _locator(page, login_config["username"]).fill(username)
+    _locator(page, login_config["password"]).fill(password)
+    _locator(page, login_config["submit"]).click()
+    expect(_locator(page, login_config["post_login"])).to_be_visible(timeout=20000)
 
 
 @pytest.fixture(scope="session")
