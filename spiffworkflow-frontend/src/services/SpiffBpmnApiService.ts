@@ -100,6 +100,16 @@ export class SpiffBpmnApiService implements BpmnApiService {
       });
     });
   }
+
+  async getProcesses(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      HttpService.makeCallToBackend({
+        path: '/processes',
+        successCallback: resolve,
+        failureCallback: reject,
+      });
+    });
+  }
 }
 
 // Singleton instance for convenience

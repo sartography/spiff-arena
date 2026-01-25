@@ -48,8 +48,8 @@ import useAPIError from '../hooks/UseApiError';
 import {
   useBpmnEditorCallbacks,
   useBpmnEditorModals,
+  useProcessReferences,
   findFileNameForReferenceId,
-  fireCallActivityUpdate,
   fireScriptUpdate,
   fireMarkdownUpdate,
   fireJsonSchemaUpdate,
@@ -115,7 +115,6 @@ export default function ProcessModelEditDiagram() {
 
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
-  const [processes, setProcesses] = useState<ProcessReference[]>([]);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
@@ -167,7 +166,7 @@ export default function ProcessModelEditDiagram() {
     closeMarkdownEditor,
     closeMessageEditor,
     closeJsonSchemaEditor,
-    closeProcessSearch,
+    selectProcessSearchResult,
   } = useBpmnEditorModals();
 
   function handleEditorDidMount(editor: any, monaco: any) {
@@ -220,37 +219,23 @@ export default function ProcessModelEditDiagram() {
 
   const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
 
-  const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
-    const processResults = (result: any) => {
-      const selectionArray = result.map((item: any) => {
-        const label = `${item.display_name} (${item.identifier})`;
-        Object.assign(item, { label });
-        return item;
-      });
-      setProcesses(selectionArray);
-      if (onProcessesFetched) {
-        onProcessesFetched(selectionArray);
-      }
-    };
-    HttpService.makeCallToBackend({
-      path: `/processes`,
-      successCallback: processResults,
-    });
-
-    const worker = new Worker(
-      new URL('/src/workers/python.ts', import.meta.url),
-    );
-
-    setPythonWorker(worker);
-  }, []);
-
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
   };
 
+  const [{ processes }, { refresh: refreshProcesses }] = useProcessReferences({
+    apiService: spiffBpmnApiService,
+  });
+
   useEffect(() => {
-    getProcessesCallback();
-  }, [getProcessesCallback]);
+    const worker = new Worker(
+      new URL('/src/workers/python.ts', import.meta.url),
+    );
+    setPythonWorker(worker);
+    return () => {
+      worker.terminate();
+    };
+  }, []);
 
   useEffect(() => {
     const fileResult = (result: any) => {
@@ -1079,14 +1064,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const processSearchOnClose = (selection: ProcessReference) => {
-    if (selection && processSearchState?.eventBus && processSearchState?.element) {
-      fireCallActivityUpdate(
-        processSearchState.eventBus,
-        processSearchState.element,
-        selection.identifier,
-      );
-    }
-    closeProcessSearch();
+    selectProcessSearchResult(selection?.identifier);
   };
 
   const processModelSelector = () => {
@@ -1146,23 +1124,17 @@ export default function ProcessModelEditDiagram() {
         }
       };
 
-      // using the "setState" method with a function gives us access to the
-      // most current state of processes. Otherwise it uses the stale state
-      // when passing the callback to a non-React component like bpmn-js:
-      //   https://stackoverflow.com/a/60643670/6090676
-      setProcesses((upToDateProcesses: ProcessReference[]) => {
-        const processRef = upToDateProcesses.find((p) => {
-          return p.identifier === processId;
-        });
-        if (!processRef) {
-          getProcessesCallback(openFileNameForProcessId);
-        } else {
-          openProcessModelFileInNewTab(processRef);
-        }
-        return upToDateProcesses;
+      const processRef = processes.find((p) => p.identifier === processId);
+      if (processRef) {
+        openProcessModelFileInNewTab(processRef);
+        return;
+      }
+
+      refreshProcesses().then((freshProcesses) => {
+        openFileNameForProcessId(freshProcesses);
       });
     },
-    [getProcessesCallback],
+    [processes, refreshProcesses],
   );
 
   const onLaunchJsonSchemaEditor = useCallback(

@@ -29,19 +29,6 @@ def test_service_task_operator_visible(page: Page) -> None:
     expect(operator_value, "Operator ID field visible").to_be_visible(timeout=10000)
     expect(operator_value, "Operator ID field enabled").to_be_enabled(timeout=10000)
     operator_value.click()
-    if (
-        page.evaluate(
-            """() => {
-            const select = document.querySelector('#bio-properties-panel-selectOperatorId');
-            return select ? select.options.length : 0;
-            }"""
-        )
-        == 0
-    ):
-        page.wait_for_response(
-            lambda response: "/service-tasks" in response.url and response.ok,
-            timeout=30000,
-        )
     page.wait_for_function(
         """() => {
         const select = document.querySelector('#bio-properties-panel-selectOperatorId');

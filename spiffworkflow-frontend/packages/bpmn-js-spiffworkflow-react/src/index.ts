@@ -64,6 +64,13 @@ export type {
     ProcessSearchActions,
     UseProcessSearchOptions,
 } from './hooks/useProcessSearch';
+export { useProcessReferences } from './hooks/useProcessReferences';
+export type {
+    ProcessReference as ProcessReferenceResult,
+    ProcessReferencesState,
+    ProcessReferencesActions,
+    UseProcessReferencesOptions,
+} from './hooks/useProcessReferences';
 
 export {
     useBpmnEditorCallbacks,

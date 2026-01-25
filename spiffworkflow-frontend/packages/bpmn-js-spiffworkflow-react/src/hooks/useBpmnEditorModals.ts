@@ -5,6 +5,7 @@ import {
   JsonSchemaEditorState,
   ProcessSearchState,
   ScriptEditorState,
+  fireCallActivityUpdate,
   useBpmnEditorLaunchers,
 } from './useBpmnEditorLaunchers';
 
@@ -42,6 +43,23 @@ export function useBpmnEditorModals() {
     () => setProcessSearchState(null),
     [],
   );
+  const selectProcessSearchResult = useCallback(
+    (processId?: string) => {
+      if (
+        processId &&
+        processSearchState?.eventBus &&
+        processSearchState?.element
+      ) {
+        fireCallActivityUpdate(
+          processSearchState.eventBus,
+          processSearchState.element,
+          processId,
+        );
+      }
+      setProcessSearchState(null);
+    },
+    [processSearchState],
+  );
 
   return {
     ...launchers,
@@ -55,5 +73,6 @@ export function useBpmnEditorModals() {
     closeMessageEditor,
     closeJsonSchemaEditor,
     closeProcessSearch,
+    selectProcessSearchResult,
   };
 }

@@ -50,6 +50,11 @@ export interface BpmnApiService {
    * Search process models (for call activities)
    */
   searchProcessModels?(query: string): Promise<any[]>;
+
+  /**
+   * Get process references for call activity selection
+   */
+  getProcesses?(): Promise<any[]>;
 }
 
 /**
@@ -180,6 +185,10 @@ export class DefaultBpmnApiService implements BpmnApiService {
 
   async searchProcessModels(query: string): Promise<any[]> {
     return this.makeRequest(`/process-models?search=${encodeURIComponent(query)}`);
+  }
+
+  async getProcesses(): Promise<any[]> {
+    return this.makeRequest('/processes');
   }
 }
 
