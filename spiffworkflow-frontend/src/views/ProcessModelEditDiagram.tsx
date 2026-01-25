@@ -55,6 +55,8 @@ import {
   useScriptUnitTestsState,
   runScriptUnitTest,
   MessageEditorDialog,
+  MarkdownEditorDialog,
+  JsonSchemaEditorDialog,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -955,29 +957,23 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Dialog
-        className="wide-dialog"
+      <MarkdownEditorDialog
         open={!!markdownEditorState}
         onClose={handleMarkdownEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_markdown_editor_title')}</h2>
-          <div data-color-mode="light">
-            <MDEditor
-              height={500}
-              highlightEnable={false}
-              value={markdownText}
-              onChange={setMarkdownText}
-              components={{
-                textarea: markdownEditorTextArea,
-              }}
-            />
-          </div>
-          <Button onClick={handleMarkdownEditorClose}>{t('close')}</Button>
-        </Box>
-      </Dialog>
+        title={t('diagram_markdown_editor_title')}
+        closeLabel={t('close')}
+        renderEditor={() => (
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={markdownText}
+            onChange={setMarkdownText}
+            components={{
+              textarea: markdownEditorTextArea,
+            }}
+          />
+        )}
+      />
     );
   };
 
@@ -1164,17 +1160,12 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Dialog
-        className="wide-dialog"
+      <JsonSchemaEditorDialog
         open={!!jsonSchemaEditorState}
         onClose={handleJsonSchemaEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_json_schema_editor_title')}
-          </h2>
+        title={t('diagram_json_schema_editor_title')}
+        closeLabel={t('close')}
+        renderEditor={() => (
           <ReactFormBuilder
             processModelId={params.process_model_id || ''}
             fileName={jsonSchemaFileName}
@@ -1189,9 +1180,8 @@ export default function ProcessModelEditDiagram() {
             )}
             pythonWorker={pythonWorker}
           />
-          <Button onClick={handleJsonSchemaEditorClose}>{t('close')}</Button>
-        </Box>
-      </Dialog>
+        )}
+      />
     );
   };
 
