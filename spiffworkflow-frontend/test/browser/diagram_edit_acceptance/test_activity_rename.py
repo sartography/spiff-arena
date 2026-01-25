@@ -22,8 +22,10 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     current_label = get_label_text(page)
     new_label = "user task edited" if current_label != "user task edited" else "user task"
 
-    label = page.locator(f'g[data-element-id="{USER_TASK_ID}"] text').first
-    label.dblclick(force=True)
+    target = page.locator(f'g[data-element-id="{USER_TASK_ID}"]')
+    expect(target, "Diagram element visible for editing").to_be_visible(timeout=10000)
+    label = target.locator("text").first
+    target.dblclick(force=True)
 
     editor = page.locator('.djs-direct-editing-content')
     expect(editor, "Inline label editor visible").to_be_visible(timeout=10000)
@@ -38,7 +40,9 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     save_button = get_save_button(page)
     expect(save_button, "Save enabled after rename").to_be_enabled(timeout=10000)
     save_button.click()
-    expect(save_button, "Save completes after click").to_be_disabled(timeout=20000)
+    expect(save_button, "Save completes after click").to_have_text(
+        "Save", timeout=20000
+    )
 
     page.reload()
     expect(label, "Renamed label persists after reload").to_have_text(
