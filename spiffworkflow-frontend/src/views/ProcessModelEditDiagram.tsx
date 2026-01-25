@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Button,
   ButtonGroup,
-  Dialog,
   Tabs,
   Tab,
   TextField,
@@ -57,6 +56,7 @@ import {
   MessageEditorDialog,
   MarkdownEditorDialog,
   JsonSchemaEditorDialog,
+  DialogShell,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -422,36 +422,33 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <Dialog
+      <DialogShell
         open={showFileNameEditor}
         onClose={handleFileNameCancel}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        title={t('diagram_file_name_editor_title')}
+        className=""
       >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_file_name_editor_title')}</h2>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 8 }}>
-              <TextField
-                id="process_model_file_name"
-                label={t('diagram_file_name_editor_label')}
-                value={newFileName}
-                onChange={(e: any) => setNewFileName(e.target.value)}
-                error={!!processModelFileInvalidText}
-                helperText={processModelFileInvalidText}
-                size="small"
-                autoFocus
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>{fileExtension}</Grid>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 8 }}>
+            <TextField
+              id="process_model_file_name"
+              label={t('diagram_file_name_editor_label')}
+              value={newFileName}
+              onChange={(e: any) => setNewFileName(e.target.value)}
+              error={!!processModelFileInvalidText}
+              helperText={processModelFileInvalidText}
+              size="small"
+              autoFocus
+              fullWidth
+            />
           </Grid>
-          <ButtonGroup>
-            <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
-            <Button onClick={handleFileNameCancel}>{t('cancel')}</Button>
-          </ButtonGroup>
-        </Box>
-      </Dialog>
+          <Grid size={{ xs: 4 }}>{fileExtension}</Grid>
+        </Grid>
+        <ButtonGroup>
+          <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
+          <Button onClick={handleFileNameCancel}>{t('cancel')}</Button>
+        </ButtonGroup>
+      </DialogShell>
     );
   };
 
@@ -903,40 +900,34 @@ export default function ProcessModelEditDiagram() {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
     return (
-      <Dialog
+      <DialogShell
         className="wide-dialog"
         open={!!scriptEditorState}
         onClose={handleScriptEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        title={t('diagram_script_editor_title', { scriptName })}
       >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_script_editor_title', { scriptName })}
-          </h2>
-          <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
-            <Tab label={t('diagram_script_editor_tab_script_editor')} />
-            {scriptAssistEnabled && (
-              <Tab label={t('diagram_script_editor_tab_script_assist')} />
-            )}
-            <Tab label={t('diagram_script_editor_tab_unit_tests')} />
-          </Tabs>
-          <Box>
-            <TabPanel value={scriptEditorTabValue} index={0}>
-              {scriptEditor()}
+        <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
+          <Tab label={t('diagram_script_editor_tab_script_editor')} />
+          {scriptAssistEnabled && (
+            <Tab label={t('diagram_script_editor_tab_script_assist')} />
+          )}
+          <Tab label={t('diagram_script_editor_tab_unit_tests')} />
+        </Tabs>
+        <Box>
+          <TabPanel value={scriptEditorTabValue} index={0}>
+            {scriptEditor()}
+          </TabPanel>
+          <TabPanel value={scriptEditorTabValue} index={1}>
+            {scriptUnitTestEditorElement()}
+          </TabPanel>
+          {scriptAssistEnabled && (
+            <TabPanel value={scriptEditorTabValue} index={2}>
+              {scriptEditorWithAssist()}
             </TabPanel>
-            <TabPanel value={scriptEditorTabValue} index={1}>
-              {scriptUnitTestEditorElement()}
-            </TabPanel>
-            {scriptAssistEnabled && (
-              <TabPanel value={scriptEditorTabValue} index={2}>
-                {scriptEditorWithAssist()}
-              </TabPanel>
-            )}
-          </Box>
-          <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
+          )}
         </Box>
-      </Dialog>
+        <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
+      </DialogShell>
     );
   };
 
@@ -1029,26 +1020,20 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Dialog
+      <DialogShell
         className="wide-dialog"
         open={!!processSearchState}
         onClose={processSearchOnClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        title={t('diagram_process_model_selector_title')}
       >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_process_model_selector_title')}
-          </h2>
-          <ProcessSearch
-            height="500px"
-            onChange={processSearchOnClose}
-            processes={processes}
-            titleText={t('diagram_process_model_selector_search_placeholder')}
-            placeholderText={t('choose_a_process')}
-          />
-        </Box>
-      </Dialog>
+        <ProcessSearch
+          height="500px"
+          onChange={processSearchOnClose}
+          processes={processes}
+          titleText={t('diagram_process_model_selector_search_placeholder')}
+          placeholderText={t('choose_a_process')}
+        />
+      </DialogShell>
     );
   };
 

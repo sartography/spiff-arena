@@ -4,6 +4,7 @@ export { default as ProcessSearch } from './components/ProcessSearch';
 export { default as MessageEditorDialog } from './components/MessageEditorDialog';
 export { default as MarkdownEditorDialog } from './components/MarkdownEditorDialog';
 export { default as JsonSchemaEditorDialog } from './components/JsonSchemaEditorDialog';
+export { default as DialogShell } from './components/DialogShell';
 export type {
     BpmnEditorRef,
     BpmnEditorInternalProps,
