@@ -310,3 +310,45 @@ export function fireCallActivityUpdate(
     value,
   });
 }
+
+/**
+ * Helper to close markdown editor and persist the value
+ */
+export function closeMarkdownEditorWithUpdate(
+  eventBus: any,
+  value: string,
+  closeFn: () => void
+) {
+  fireMarkdownUpdate(eventBus, value);
+  closeFn();
+}
+
+/**
+ * Helper to close JSON schema editor and persist the value
+ */
+export function closeJsonSchemaEditorWithUpdate(
+  eventBus: any,
+  value: string,
+  closeFn: () => void,
+  beforeClose?: () => void
+) {
+  if (beforeClose) {
+    beforeClose();
+  }
+  fireJsonSchemaUpdate(eventBus, value);
+  closeFn();
+}
+
+/**
+ * Helper to close message editor and optionally refresh message models
+ */
+export function closeMessageEditorAndRefresh(
+  messageEvent: any,
+  closeFn: () => void,
+  onMessagesRequested?: (event: any) => void
+) {
+  closeFn();
+  if (messageEvent && onMessagesRequested) {
+    onMessagesRequested(messageEvent);
+  }
+}

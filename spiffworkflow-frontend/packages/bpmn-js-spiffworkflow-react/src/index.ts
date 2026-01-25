@@ -1,5 +1,6 @@
 // Main component exports
 export { default as BpmnEditor } from './components/BpmnEditor';
+export { default as ProcessSearch } from './components/ProcessSearch';
 export type {
     BpmnEditorRef,
     BpmnEditorInternalProps,
@@ -89,8 +90,12 @@ export {
     fireJsonSchemaUpdate,
     fireMessageSave,
     fireCallActivityUpdate,
+    closeMarkdownEditorWithUpdate,
+    closeJsonSchemaEditorWithUpdate,
+    closeMessageEditorAndRefresh,
 } from './hooks/useBpmnEditorLaunchers';
 export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
+export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsState';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -100,3 +105,7 @@ export type {
     JsonSchemaEditorState,
     ProcessSearchState as ProcessSearchLauncherState,
 } from './hooks/useBpmnEditorLaunchers';
+export type {
+    UseBpmnEditorTextEditorsStateOptions,
+    BpmnEditorTextEditorsState,
+} from './hooks/useBpmnEditorTextEditorsState';

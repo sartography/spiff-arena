@@ -49,11 +49,14 @@ import {
   useBpmnEditorCallbacks,
   useBpmnEditorModals,
   useProcessReferences,
+  ProcessSearch,
+  useBpmnEditorTextEditorsState,
   findFileNameForReferenceId,
   fireScriptUpdate,
-  fireMarkdownUpdate,
-  fireJsonSchemaUpdate,
   fireMessageSave,
+  closeMarkdownEditorWithUpdate,
+  closeJsonSchemaEditorWithUpdate,
+  closeMessageEditorAndRefresh,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
@@ -68,7 +71,6 @@ import {
   ProcessModel,
   ProcessReference,
 } from '../interfaces';
-import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
@@ -106,15 +108,10 @@ export default function ProcessModelEditDiagram() {
 
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
-  const [fileEventBus, setFileEventBus] = useState<any>(null);
-  const [jsonSchemaFileName, setJsonSchemaFileName] = useState<string>('');
-
   const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
 
-  const [markdownText, setMarkdownText] = useState<string | undefined>('');
-  const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
@@ -151,6 +148,7 @@ export default function ProcessModelEditDiagram() {
     canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
     messageModelListPath: targetUris.messageModelListPath,
   });
+  const { onMessagesRequested } = bpmnEditorCallbacks;
   const {
     onLaunchScriptEditor,
     onLaunchMarkdownEditor,
@@ -168,6 +166,17 @@ export default function ProcessModelEditDiagram() {
     closeJsonSchemaEditor,
     selectProcessSearchResult,
   } = useBpmnEditorModals();
+  const {
+    markdownText,
+    setMarkdownText,
+    markdownEventBus,
+    jsonSchemaFileName,
+    setJsonSchemaFileName,
+    fileEventBus,
+  } = useBpmnEditorTextEditorsState({
+    markdownEditorState,
+    jsonSchemaEditorState,
+  });
 
   function handleEditorDidMount(editor: any, monaco: any) {
     // here is the editor instance
@@ -287,22 +296,6 @@ export default function ProcessModelEditDiagram() {
       }
     }
   }, [scriptAssistResult]);
-
-  useEffect(() => {
-    if (!markdownEditorState) {
-      return;
-    }
-    setMarkdownText(markdownEditorState.markdown || '');
-    setMarkdownEventBus(markdownEditorState.eventBus);
-  }, [markdownEditorState]);
-
-  useEffect(() => {
-    if (!jsonSchemaEditorState) {
-      return;
-    }
-    setFileEventBus(jsonSchemaEditorState.eventBus);
-    setJsonSchemaFileName(jsonSchemaEditorState.fileName);
-  }, [jsonSchemaEditorState]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -973,8 +966,11 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleMarkdownEditorClose = () => {
-    fireMarkdownUpdate(markdownEventBus, markdownText || '');
-    closeMarkdownEditor();
+    closeMarkdownEditorWithUpdate(
+      markdownEventBus,
+      markdownText || '',
+      closeMarkdownEditor,
+    );
   };
 
   const markdownEditorTextArea = (props: any) => {
@@ -1013,10 +1009,11 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleMessageEditorClose = () => {
-    closeMessageEditor();
-    if (messageEditorState) {
-      onMessagesRequested(messageEditorState.event);
-    }
+    closeMessageEditorAndRefresh(
+      messageEditorState?.event,
+      closeMessageEditor,
+      onMessagesRequested,
+    );
   };
 
   const handleMessageEditorSave = (_event: any) => {
@@ -1088,6 +1085,7 @@ export default function ProcessModelEditDiagram() {
             onChange={processSearchOnClose}
             processes={processes}
             titleText={t('diagram_process_model_selector_search_placeholder')}
+            placeholderText={t('choose_a_process')}
           />
         </Box>
       </Dialog>
@@ -1189,9 +1187,12 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleJsonSchemaEditorClose = () => {
-    addNewFileIfNotExist();
-    fireJsonSchemaUpdate(fileEventBus, jsonSchemaFileName);
-    closeJsonSchemaEditor();
+    closeJsonSchemaEditorWithUpdate(
+      fileEventBus,
+      jsonSchemaFileName,
+      closeJsonSchemaEditor,
+      addNewFileIfNotExist,
+    );
   };
 
   const jsonSchemaEditor = () => {

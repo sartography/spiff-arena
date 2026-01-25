@@ -29,10 +29,24 @@ def test_service_task_operator_visible(page: Page) -> None:
     expect(operator_value, "Operator ID field visible").to_be_visible(timeout=10000)
     expect(operator_value, "Operator ID field enabled").to_be_enabled(timeout=10000)
     operator_value.click()
+    for _ in range(3):
+        options_count = page.evaluate(
+            """() => {
+            const select = document.querySelector('#bio-properties-panel-selectOperatorId');
+            return select ? select.options.length : 0;
+            }"""
+        )
+        if options_count > 0:
+            break
+        operator_value.click()
+        page.wait_for_timeout(1000)
+    if options_count == 0:
+        select_element(page, SERVICE_TASK_ID)
+        operator_value.click()
     page.wait_for_function(
         """() => {
         const select = document.querySelector('#bio-properties-panel-selectOperatorId');
-        return select && select.options && select.options.length > 0;
+        return select && (select.value === 'http/GetRequest' || select.options.length > 0);
         }""",
         timeout=30000,
     )
