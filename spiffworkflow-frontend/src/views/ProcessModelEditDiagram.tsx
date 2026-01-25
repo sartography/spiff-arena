@@ -52,6 +52,7 @@ import {
   ProcessSearch,
   useBpmnEditorTextEditorsState,
   useBpmnEditorScriptState,
+  useScriptUnitTestsState,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -189,12 +190,6 @@ export default function ProcessModelEditDiagram() {
     monacoRef.current = monaco;
   }
 
-  interface ScriptUnitTest {
-    id: string;
-    inputJson: any;
-    expectedOutputJson: any;
-  }
-
   interface ScriptUnitTestResult {
     result: boolean;
     context?: object;
@@ -202,13 +197,6 @@ export default function ProcessModelEditDiagram() {
     line_number?: number;
     offset?: number;
   }
-
-  const [currentScriptUnitTest, setCurrentScriptUnitTest] =
-    useState<ScriptUnitTest | null>(null);
-  const [currentScriptUnitTestIndex, setCurrentScriptUnitTestIndex] =
-    useState<number>(-1);
-  const [scriptUnitTestResult, setScriptUnitTestResult] =
-    useState<ScriptUnitTestResult | null>(null);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -464,7 +452,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const resetUnitTextResult = () => {
-    setScriptUnitTestResult(null);
+    resetScriptUnitTestResult();
     const styleSheet = document.styleSheets[0];
     const ruleList = styleSheet.cssRules;
     for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
@@ -494,16 +482,22 @@ export default function ProcessModelEditDiagram() {
     return [];
   };
 
-  const setScriptUnitTestElementWithIndex = useCallback(
-    (scriptIndex: number, element: any) => {
-      const unitTestsModdleElements = getScriptUnitTestElements(element);
-      if (unitTestsModdleElements.length > 0) {
-        setCurrentScriptUnitTest(unitTestsModdleElements[scriptIndex]);
-        setCurrentScriptUnitTestIndex(scriptIndex);
-      }
+  const [
+    {
+      currentScriptUnitTest,
+      currentScriptUnitTestIndex,
+      scriptUnitTestResult,
     },
-    [],
-  );
+    {
+      setScriptUnitTestElementWithIndex,
+      setPreviousScriptUnitTest,
+      setNextScriptUnitTest,
+      updateInputJson,
+      updateExpectedOutputJson,
+      setScriptUnitTestResult,
+      resetScriptUnitTestResult,
+    },
+  ] = useScriptUnitTestsState({ getScriptUnitTestElements });
 
   useEffect(() => {
     if (!scriptEditorState) {
@@ -524,17 +518,11 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
-    if (currentScriptUnitTest) {
-      currentScriptUnitTest.inputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
-    }
+    updateInputJson(value, scriptElement, scriptModeling);
   };
 
   const handleEditorScriptTestUnitOutputChange = (value: any) => {
-    if (currentScriptUnitTest) {
-      currentScriptUnitTest.expectedOutputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
-    }
+    updateExpectedOutputJson(value, scriptElement, scriptModeling);
   };
 
   const generalEditorOptions = () => {
@@ -550,23 +538,6 @@ export default function ProcessModelEditDiagram() {
       minimap: { enabled: false },
       folding: true,
     });
-  };
-
-  const setPreviousScriptUnitTest = () => {
-    resetUnitTextResult();
-    const newScriptIndex = currentScriptUnitTestIndex - 1;
-    if (newScriptIndex >= 0) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
-    }
-  };
-
-  const setNextScriptUnitTest = () => {
-    resetUnitTextResult();
-    const newScriptIndex = currentScriptUnitTestIndex + 1;
-    const unitTestsModdleElements = getScriptUnitTestElements(scriptElement);
-    if (newScriptIndex < unitTestsModdleElements.length) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
-    }
   };
 
   const processScriptUnitTestRunResult = (result: any) => {

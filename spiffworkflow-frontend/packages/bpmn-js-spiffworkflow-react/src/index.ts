@@ -98,6 +98,7 @@ export {
 export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsState';
 export { useBpmnEditorScriptState } from './hooks/useBpmnEditorScriptState';
+export { useScriptUnitTestsState } from './hooks/useScriptUnitTestsState';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -115,3 +116,8 @@ export type {
     UseBpmnEditorScriptStateOptions,
     BpmnEditorScriptState,
 } from './hooks/useBpmnEditorScriptState';
+export type {
+    UseScriptUnitTestsStateOptions,
+    ScriptUnitTestState,
+    ScriptUnitTestActions,
+} from './hooks/useScriptUnitTestsState';
