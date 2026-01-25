@@ -113,6 +113,7 @@ export { useBpmnEditorScriptState } from './hooks/useBpmnEditorScriptState';
 export { useScriptUnitTestsState } from './hooks/useScriptUnitTestsState';
 export { runScriptUnitTest } from './hooks/useScriptUnitTestRunner';
 export { useDiagramNavigationStack } from './hooks/useDiagramNavigationStack';
+export { useDiagramNavigationHandlers } from './hooks/useDiagramNavigationHandlers';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,

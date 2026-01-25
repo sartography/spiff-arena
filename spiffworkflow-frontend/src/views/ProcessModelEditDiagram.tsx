@@ -56,7 +56,7 @@ import {
   ScriptEditorDialog,
   DiagramNavigationBreadcrumbs,
   useDiagramNavigationStack,
-  findFileNameForReferenceId,
+  useDiagramNavigationHandlers,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
   closeJsonSchemaEditorWithUpdate,
@@ -1024,52 +1024,21 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  // Note: findFileNameForReferenceId is now provided by the bpmn-js-spiffworkflow-react package
-
-  const onLaunchBpmnEditor = useCallback(
-    (processId: string) => {
-      const openProcessModelFileInApp = (processReference: ProcessReference) => {
-        const processModelId = modifyProcessIdentifierForPathParam(
-          processReference.relative_location,
-        );
-        const path = generatePath(
-          '/process-models/:process_model_path/files/:file_name',
-          {
-            process_model_path: processModelId,
-            file_name: processReference.file_name,
-          },
-        );
-        pushNavigation({
-          processModelId,
-          fileName: processReference.file_name,
-          displayName: processReference.display_name || processId,
-        });
-        navigate(path);
-      };
-
-      const openFileNameForProcessId = (
-        processesReferences: ProcessReference[],
-      ) => {
-        const processRef = processesReferences.find((p) => {
-          return p.identifier === processId;
-        });
-        if (processRef) {
-          openProcessModelFileInApp(processRef);
-        }
-      };
-
-      const processRef = processes.find((p) => p.identifier === processId);
-      if (processRef) {
-        openProcessModelFileInApp(processRef);
-        return;
-      }
-
-      refreshProcesses().then((freshProcesses) => {
-        openFileNameForProcessId(freshProcesses);
-      });
-    },
-    [processes, refreshProcesses, navigate, pushNavigation],
-  );
+  const { onLaunchBpmnEditor, onLaunchDmnEditor } =
+    useDiagramNavigationHandlers({
+      processes,
+      refreshProcesses,
+      processModel,
+      currentProcessModelId: params.process_model_id || '',
+      normalizeProcessModelId: modifyProcessIdentifierForPathParam,
+      pushNavigation,
+      navigateTo: navigate,
+      buildProcessFilePath,
+      buildDmnListPath: (processModelId) =>
+        generatePath('/process-models/:process_model_id/files?file_type=dmn', {
+          process_model_id: processModelId || null,
+        }),
+    });
 
   const onLaunchJsonSchemaEditor = useCallback(
     (element: any, fileName: string, eventBus: any) => {
@@ -1161,27 +1130,7 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const onLaunchDmnEditor = useCallback(
-    (processId: string) => {
-      const file = findFileNameForReferenceId(processModel, processId, 'dmn');
-      if (file) {
-        const item: DiagramNavigationItem = {
-          processModelId: params.process_model_id || '',
-          fileName: file.name,
-          displayName: processId,
-        };
-        pushNavigation(item);
-        navigate(buildProcessFilePath(item));
-      } else {
-        navigate(
-          generatePath('/process-models/:process_model_id/files?file_type=dmn', {
-            process_model_id: params.process_model_id || null,
-          }),
-        );
-      }
-    },
-    [processModel, params.process_model_id, buildProcessFilePath, navigate, pushNavigation],
-  );
+  // onLaunchBpmnEditor/onLaunchDmnEditor now provided by useDiagramNavigationHandlers
 
   const isDmn = () => {
     const fileName = params.file_name || '';
