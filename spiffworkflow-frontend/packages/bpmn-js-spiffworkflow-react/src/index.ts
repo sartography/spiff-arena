@@ -81,6 +81,7 @@ export {
     fireMarkdownUpdate,
     fireJsonSchemaUpdate,
     fireMessageSave,
+    fireCallActivityUpdate,
 } from './hooks/useBpmnEditorLaunchers';
 export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export type {

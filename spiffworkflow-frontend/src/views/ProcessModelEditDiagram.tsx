@@ -49,9 +49,11 @@ import {
   useBpmnEditorCallbacks,
   useBpmnEditorModals,
   findFileNameForReferenceId,
+  fireCallActivityUpdate,
   fireScriptUpdate,
   fireMarkdownUpdate,
   fireJsonSchemaUpdate,
+  fireMessageSave,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
@@ -113,8 +115,6 @@ export default function ProcessModelEditDiagram() {
 
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
-  const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
-  const [processSearchElement, setProcessSearchElement] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
@@ -318,14 +318,6 @@ export default function ProcessModelEditDiagram() {
     setFileEventBus(jsonSchemaEditorState.eventBus);
     setJsonSchemaFileName(jsonSchemaEditorState.fileName);
   }, [jsonSchemaEditorState]);
-
-  useEffect(() => {
-    if (!processSearchState) {
-      return;
-    }
-    setProcessSearchEventBus(processSearchState.eventBus);
-    setProcessSearchElement(processSearchState.element);
-  }, [processSearchState]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -1044,7 +1036,7 @@ export default function ProcessModelEditDiagram() {
 
   const handleMessageEditorSave = (_event: any) => {
     if (messageEditorState?.event?.eventBus) {
-      messageEditorState.event.eventBus.fire('spiff.message.save');
+      fireMessageSave(messageEditorState.event.eventBus);
     }
   };
 
@@ -1087,11 +1079,12 @@ export default function ProcessModelEditDiagram() {
   };
 
   const processSearchOnClose = (selection: ProcessReference) => {
-    if (selection) {
-      processSearchEventBus.fire('spiff.callactivity.update', {
-        element: processSearchElement,
-        value: selection.identifier,
-      });
+    if (selection && processSearchState?.eventBus && processSearchState?.element) {
+      fireCallActivityUpdate(
+        processSearchState.eventBus,
+        processSearchState.element,
+        selection.identifier,
+      );
     }
     closeProcessSearch();
   };

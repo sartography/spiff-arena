@@ -295,3 +295,18 @@ export function fireJsonSchemaUpdate(eventBus: any, value: string) {
 export function fireMessageSave(eventBus: any) {
   eventBus.fire('spiff.message.save');
 }
+
+/**
+ * Helper to fire a call activity update event back to bpmn-js
+ * Call this when the user selects a process model for a call activity
+ */
+export function fireCallActivityUpdate(
+  eventBus: any,
+  element: any,
+  value: string
+) {
+  eventBus.fire('spiff.callactivity.update', {
+    element,
+    value,
+  });
+}
