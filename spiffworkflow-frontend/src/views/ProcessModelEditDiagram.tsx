@@ -1,4 +1,10 @@
-import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   generatePath,
   useNavigate,
@@ -9,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Button,
   ButtonGroup,
-  Box,
   Stack,
   TextareaAutosize,
   IconButton,
@@ -49,6 +54,8 @@ import {
   ProcessSearchDialog,
   ScriptAssistPanel,
   ScriptEditorDialog,
+  DiagramNavigationBreadcrumbs,
+  useDiagramNavigationStack,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -56,6 +63,7 @@ import {
   closeMessageEditorAndRefresh,
   closeScriptEditorWithUpdate,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
+import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
   getGroupFromModifiedModelId,
@@ -196,6 +204,27 @@ export default function ProcessModelEditDiagram() {
 
   const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
 
+  const {
+    stack: navigationStack,
+    push: pushNavigation,
+    reset: resetNavigation,
+    popToIndex,
+    updateTop,
+  } = useDiagramNavigationStack();
+
+  const buildProcessFilePath = useCallback(
+    (item: DiagramNavigationItem) => {
+      return generatePath(
+        '/process-models/:process_model_id/files/:file_name',
+        {
+          process_model_id: item.processModelId,
+          file_name: item.fileName,
+        },
+      );
+    },
+    [],
+  );
+
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
   };
@@ -246,6 +275,43 @@ export default function ProcessModelEditDiagram() {
       setPageTitle([processModel.display_name, processModelFile.name]);
     }
   }, [processModel, processModelFile]);
+
+  useEffect(() => {
+    if (!params.process_model_id || !params.file_name) {
+      return;
+    }
+    const currentItem: DiagramNavigationItem = {
+      processModelId: params.process_model_id,
+      fileName: params.file_name,
+    };
+    const existingIndex = navigationStack.findIndex(
+      (item) =>
+        item.processModelId === currentItem.processModelId &&
+        item.fileName === currentItem.fileName,
+    );
+    if (existingIndex === -1) {
+      resetNavigation(currentItem);
+      return;
+    }
+    if (existingIndex !== navigationStack.length - 1) {
+      popToIndex(existingIndex);
+    }
+  }, [
+    navigationStack,
+    params.file_name,
+    params.process_model_id,
+    popToIndex,
+    resetNavigation,
+  ]);
+
+  useEffect(() => {
+    if (!processModelFile) {
+      return;
+    }
+    updateTop({
+      displayName: processModelFile.name,
+    });
+  }, [processModelFile, updateTop]);
 
   /**
    * When the value of the Editor is updated dynamically async,
@@ -962,19 +1028,23 @@ export default function ProcessModelEditDiagram() {
 
   const onLaunchBpmnEditor = useCallback(
     (processId: string) => {
-      const openProcessModelFileInNewTab = (
-        processReference: ProcessReference,
-      ) => {
+      const openProcessModelFileInApp = (processReference: ProcessReference) => {
+        const processModelId = modifyProcessIdentifierForPathParam(
+          processReference.relative_location,
+        );
         const path = generatePath(
           '/process-models/:process_model_path/files/:file_name',
           {
-            process_model_path: modifyProcessIdentifierForPathParam(
-              processReference.relative_location,
-            ),
+            process_model_path: processModelId,
             file_name: processReference.file_name,
           },
         );
-        window.open(path);
+        pushNavigation({
+          processModelId,
+          fileName: processReference.file_name,
+          displayName: processReference.display_name || processId,
+        });
+        navigate(path);
       };
 
       const openFileNameForProcessId = (
@@ -984,13 +1054,13 @@ export default function ProcessModelEditDiagram() {
           return p.identifier === processId;
         });
         if (processRef) {
-          openProcessModelFileInNewTab(processRef);
+          openProcessModelFileInApp(processRef);
         }
       };
 
       const processRef = processes.find((p) => p.identifier === processId);
       if (processRef) {
-        openProcessModelFileInNewTab(processRef);
+        openProcessModelFileInApp(processRef);
         return;
       }
 
@@ -998,7 +1068,7 @@ export default function ProcessModelEditDiagram() {
         openFileNameForProcessId(freshProcesses);
       });
     },
-    [processes, refreshProcesses],
+    [processes, refreshProcesses, navigate, pushNavigation],
   );
 
   const onLaunchJsonSchemaEditor = useCallback(
@@ -1094,27 +1164,23 @@ export default function ProcessModelEditDiagram() {
   const onLaunchDmnEditor = useCallback(
     (processId: string) => {
       const file = findFileNameForReferenceId(processModel, processId, 'dmn');
-      let path = '';
       if (file) {
-        path = generatePath(
-          '/process-models/:process_model_id/files/:file_name',
-          {
-            process_model_id: params.process_model_id || null,
-            file_name: file.name,
-          },
-        );
-        window.open(path);
+        const item: DiagramNavigationItem = {
+          processModelId: params.process_model_id || '',
+          fileName: file.name,
+          displayName: processId,
+        };
+        pushNavigation(item);
+        navigate(buildProcessFilePath(item));
       } else {
-        path = generatePath(
-          '/process-models/:process_model_id/files?file_type=dmn',
-          {
+        navigate(
+          generatePath('/process-models/:process_model_id/files?file_type=dmn', {
             process_model_id: params.process_model_id || null,
-          },
+          }),
         );
       }
-      window.open(path);
     },
-    [processModel, params.process_model_id],
+    [processModel, params.process_model_id, buildProcessFilePath, navigate, pushNavigation],
   );
 
   const isDmn = () => {
@@ -1242,6 +1308,17 @@ export default function ProcessModelEditDiagram() {
         <h1>
           {t('process_model_file', { fileName: processModelFileName || '---' })}
         </h1>
+        <DiagramNavigationBreadcrumbs
+          stack={navigationStack}
+          onNavigate={(index) => {
+            const item = navigationStack[index];
+            if (!item) {
+              return;
+            }
+            popToIndex(index);
+            navigate(buildProcessFilePath(item));
+          }}
+        />
 
         {pageModals()}
 

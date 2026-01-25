@@ -12,6 +12,7 @@ export { default as ProcessSearchDialog } from './components/ProcessSearchDialog
 export { default as DiagramActionBar } from './components/DiagramActionBar';
 export { default as DiagramZoomControls } from './components/DiagramZoomControls';
 export { default as ProcessReferencesDialog } from './components/ProcessReferencesDialog';
+export { default as DiagramNavigationBreadcrumbs } from './components/DiagramNavigationBreadcrumbs';
 export type {
     BpmnEditorRef,
     BpmnEditorInternalProps,
@@ -111,6 +112,7 @@ export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsS
 export { useBpmnEditorScriptState } from './hooks/useBpmnEditorScriptState';
 export { useScriptUnitTestsState } from './hooks/useScriptUnitTestsState';
 export { runScriptUnitTest } from './hooks/useScriptUnitTestRunner';
+export { useDiagramNavigationStack } from './hooks/useDiagramNavigationStack';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -124,6 +126,7 @@ export type {
     UseBpmnEditorTextEditorsStateOptions,
     BpmnEditorTextEditorsState,
 } from './hooks/useBpmnEditorTextEditorsState';
+export type { DiagramNavigationItem } from './hooks/useDiagramNavigationStack';
 export type {
     UseBpmnEditorScriptStateOptions,
     BpmnEditorScriptState,
