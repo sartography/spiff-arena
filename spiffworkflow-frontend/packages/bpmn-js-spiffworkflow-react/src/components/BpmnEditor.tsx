@@ -537,6 +537,14 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
             }
         }, [diagramXMLString, diagramModelerState, diagramType]);
 
+        // Respond to upstream diagram XML changes (e.g., navigation between files)
+        useEffect(() => {
+            if (!diagramXML || !diagramModelerState) {
+                return;
+            }
+            setDiagramXMLString(diagramXML);
+        }, [diagramXML, diagramModelerState]);
+
         // Import done operations
         useEffect(() => {
             if (!diagramModelerState) {
@@ -801,4 +809,3 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 BpmnEditor.displayName = 'BpmnEditor';
 
 export default BpmnEditor;
-

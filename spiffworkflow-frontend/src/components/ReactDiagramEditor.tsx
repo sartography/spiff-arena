@@ -262,6 +262,7 @@ export default function ReactDiagramEditor({
       {showReferences()}
       {diagramControlButtons()}
       <BpmnEditor
+        key={`${processModelId}-${fileName || 'new'}-${diagramType}`}
         ref={bpmnEditorRef}
         apiService={spiffBpmnApiService}
         processModelId={processModelId}
