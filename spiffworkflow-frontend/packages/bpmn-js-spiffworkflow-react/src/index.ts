@@ -1,6 +1,7 @@
 // Main component exports
 export { default as BpmnEditor } from './components/BpmnEditor';
 export { default as ProcessSearch } from './components/ProcessSearch';
+export { default as MessageEditorDialog } from './components/MessageEditorDialog';
 export type {
     BpmnEditorRef,
     BpmnEditorInternalProps,
@@ -99,6 +100,7 @@ export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsState';
 export { useBpmnEditorScriptState } from './hooks/useBpmnEditorScriptState';
 export { useScriptUnitTestsState } from './hooks/useScriptUnitTestsState';
+export { runScriptUnitTest } from './hooks/useScriptUnitTestRunner';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -121,3 +123,7 @@ export type {
     ScriptUnitTestState,
     ScriptUnitTestActions,
 } from './hooks/useScriptUnitTestsState';
+export type {
+    RunScriptUnitTestOptions,
+    ScriptUnitTestRunPayload,
+} from './hooks/useScriptUnitTestRunner';

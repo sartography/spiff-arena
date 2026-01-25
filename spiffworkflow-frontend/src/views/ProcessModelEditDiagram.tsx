@@ -53,6 +53,8 @@ import {
   useBpmnEditorTextEditorsState,
   useBpmnEditorScriptState,
   useScriptUnitTestsState,
+  runScriptUnitTest,
+  MessageEditorDialog,
   findFileNameForReferenceId,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
@@ -582,35 +584,31 @@ export default function ProcessModelEditDiagram() {
   };
 
   const runCurrentUnitTest = () => {
-    if (currentScriptUnitTest && scriptElement) {
-      let inputJson = '';
-      let expectedJson = '';
-      try {
-        inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
-        expectedJson = JSON.parse(
-          currentScriptUnitTest.expectedOutputJson.value,
-        );
-      } catch (_) {
+    runScriptUnitTest({
+      currentScriptUnitTest,
+      scriptElement,
+      scriptText,
+      processModelId: modifiedProcessModelId,
+      beforeRun: resetUnitTextResult,
+      onResult: processScriptUnitTestRunResult,
+      onInvalidJson: () => {
         setScriptUnitTestResult({
           result: false,
           error: t('diagram_errors_json_formatting'),
         });
-        return;
-      }
-
-      resetUnitTextResult();
-      HttpService.makeCallToBackend({
-        path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
-        httpMethod: 'POST',
-        successCallback: processScriptUnitTestRunResult,
-        postBody: {
-          bpmn_task_identifier: (scriptElement as any).id,
-          python_script: scriptText,
-          input_json: inputJson,
-          expected_output_json: expectedJson,
-        },
-      });
-    }
+      },
+      runRequest: (payload) => {
+        return new Promise((resolve, reject) => {
+          HttpService.makeCallToBackend({
+            path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
+            httpMethod: 'POST',
+            successCallback: resolve,
+            failureCallback: reject,
+            postBody: payload,
+          });
+        });
+      },
+    });
   };
 
   const unitTestFailureElement = () => {
@@ -1003,35 +1001,26 @@ export default function ProcessModelEditDiagram() {
       return null;
     }
     return (
-      <Dialog
-        className="wide-dialog"
+      <MessageEditorDialog
         open={!!messageEditorState}
         onClose={handleMessageEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_message_editor_title')}</h2>
-          <p>{t('diagram_message_editor_description')}</p>
-          <div data-color-mode="light">
-            <MessageEditor
-              modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-                modifiedProcessModelId,
-              )}
-              messageId={messageEditorState.messageId}
-              correlationProperties={messageEditorState.correlationProperties}
-              messageEvent={messageEditorState.event}
-              elementId={messageEditorState.elementId}
-            />
-          </div>
-          <Button onClick={handleMessageEditorSave}>
-            {t('diagram_message_editor_save')}
-          </Button>
-          <Button onClick={handleMessageEditorClose}>
-            {t('diagram_message_editor_close')}
-          </Button>
-        </Box>
-      </Dialog>
+        onSave={handleMessageEditorSave}
+        title={t('diagram_message_editor_title')}
+        description={t('diagram_message_editor_description')}
+        saveLabel={t('diagram_message_editor_save')}
+        closeLabel={t('diagram_message_editor_close')}
+        renderEditor={() => (
+          <MessageEditor
+            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
+              modifiedProcessModelId,
+            )}
+            messageId={messageEditorState.messageId}
+            correlationProperties={messageEditorState.correlationProperties}
+            messageEvent={messageEditorState.event}
+            elementId={messageEditorState.elementId}
+          />
+        )}
+      />
     );
   };
 
