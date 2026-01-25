@@ -96,6 +96,7 @@ export {
 } from './hooks/useBpmnEditorLaunchers';
 export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsState';
+export { useBpmnEditorScriptState } from './hooks/useBpmnEditorScriptState';
 export type {
     UseBpmnEditorLaunchersOptions,
     BpmnEditorLaunchers,
@@ -109,3 +110,7 @@ export type {
     UseBpmnEditorTextEditorsStateOptions,
     BpmnEditorTextEditorsState,
 } from './hooks/useBpmnEditorTextEditorsState';
+export type {
+    UseBpmnEditorScriptStateOptions,
+    BpmnEditorScriptState,
+} from './hooks/useBpmnEditorScriptState';

@@ -51,6 +51,7 @@ import {
   useProcessReferences,
   ProcessSearch,
   useBpmnEditorTextEditorsState,
+  useBpmnEditorScriptState,
   findFileNameForReferenceId,
   fireScriptUpdate,
   fireMessageSave,
@@ -106,11 +107,6 @@ export default function ProcessModelEditDiagram() {
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
-  const [scriptText, setScriptText] = useState<string>('');
-  const [scriptType, setScriptType] = useState<string>('');
-  const [scriptEventBus, setScriptEventBus] = useState<any>(null);
-  const [scriptModeling, setScriptModeling] = useState(null);
-  const [scriptElement, setScriptElement] = useState(null);
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
@@ -166,6 +162,14 @@ export default function ProcessModelEditDiagram() {
     closeJsonSchemaEditor,
     selectProcessSearchResult,
   } = useBpmnEditorModals();
+  const {
+    scriptText,
+    setScriptText,
+    scriptType,
+    scriptEventBus,
+    scriptElement,
+    scriptModeling,
+  } = useBpmnEditorScriptState({ scriptEditorState });
   const {
     markdownText,
     setMarkdownText,
@@ -505,11 +509,6 @@ export default function ProcessModelEditDiagram() {
     if (!scriptEditorState) {
       return;
     }
-    setScriptModeling(scriptEditorState.modeling);
-    setScriptText(scriptEditorState.script || '');
-    setScriptType(scriptEditorState.scriptType);
-    setScriptEventBus(scriptEditorState.eventBus);
-    setScriptElement(scriptEditorState.element);
     setScriptUnitTestElementWithIndex(0, scriptEditorState.element);
   }, [scriptEditorState, setScriptUnitTestElementWithIndex]);
 
