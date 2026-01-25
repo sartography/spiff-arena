@@ -53,11 +53,11 @@ import {
   useBpmnEditorTextEditorsState,
   useBpmnEditorScriptState,
   findFileNameForReferenceId,
-  fireScriptUpdate,
   fireMessageSave,
   closeMarkdownEditorWithUpdate,
   closeJsonSchemaEditorWithUpdate,
   closeMessageEditorAndRefresh,
+  closeScriptEditorWithUpdate,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
@@ -513,9 +513,14 @@ export default function ProcessModelEditDiagram() {
   }, [scriptEditorState, setScriptUnitTestElementWithIndex]);
 
   const handleScriptEditorClose = () => {
-    fireScriptUpdate(scriptEventBus, scriptType, scriptText, scriptElement);
-    resetUnitTextResult();
-    closeScriptEditor();
+    closeScriptEditorWithUpdate(
+      scriptEventBus,
+      scriptType,
+      scriptText,
+      scriptElement,
+      closeScriptEditor,
+      resetUnitTextResult,
+    );
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {

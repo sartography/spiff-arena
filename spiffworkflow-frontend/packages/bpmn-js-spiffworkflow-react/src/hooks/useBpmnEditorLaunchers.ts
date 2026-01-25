@@ -352,3 +352,21 @@ export function closeMessageEditorAndRefresh(
     onMessagesRequested(messageEvent);
   }
 }
+
+/**
+ * Helper to close script editor and persist the script update
+ */
+export function closeScriptEditorWithUpdate(
+  eventBus: any,
+  scriptType: string,
+  script: string,
+  element: any,
+  closeFn: () => void,
+  beforeClose?: () => void
+) {
+  if (beforeClose) {
+    beforeClose();
+  }
+  fireScriptUpdate(eventBus, scriptType, script, element);
+  closeFn();
+}

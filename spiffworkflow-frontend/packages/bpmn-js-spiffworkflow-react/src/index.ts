@@ -93,6 +93,7 @@ export {
     closeMarkdownEditorWithUpdate,
     closeJsonSchemaEditorWithUpdate,
     closeMessageEditorAndRefresh,
+    closeScriptEditorWithUpdate,
 } from './hooks/useBpmnEditorLaunchers';
 export { useBpmnEditorModals } from './hooks/useBpmnEditorModals';
 export { useBpmnEditorTextEditorsState } from './hooks/useBpmnEditorTextEditorsState';
