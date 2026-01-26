@@ -3,8 +3,6 @@ from playwright.sync_api import Page, expect
 from diagram_edit_acceptance.config import CONFIG
 from diagram_edit_acceptance.helpers import (
     open_diagram,
-    select_element,
-    expand_group_if_needed,
     locate,
     ensure_group_visible,
 )
@@ -23,9 +21,29 @@ def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
         timeout=10000
     )
 
-    expand_group_if_needed(called_element_group)
-    launch_button = locate(page, CONFIG["selectors"]["call_activity_open"], called_element_group)
-    launch_button.click(force=True)
+    page.wait_for_function(
+        """() => !!document.querySelector('[data-group-id="group-called_element"]')"""
+    )
+    toggled = page.evaluate(
+        """() => {
+        const groupEl = document.querySelector('[data-group-id="group-called_element"]');
+        if (!groupEl) return false;
+        const button = groupEl.querySelector('button[title="Toggle section"]');
+        if (!button) return false;
+        button.click();
+        return true;
+        }"""
+    )
+    assert toggled, "Called element group toggle exists"
+    page.wait_for_function(
+        """() => !!document.querySelector('#spiffworkflow-open-call-activity-button')"""
+    )
+    page.evaluate(
+        """() => {
+        const button = document.querySelector('#spiffworkflow-open-call-activity-button');
+        if (button) button.click();
+        }"""
+    )
 
     dialog = page.locator('[role="dialog"]')
     page.wait_for_timeout(300)

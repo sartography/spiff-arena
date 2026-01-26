@@ -6,6 +6,7 @@ from diagram_edit_acceptance.helpers import (
     ensure_group_visible,
     expand_group_if_needed,
     locate,
+    select_element,
 )
 
 SERVICE_TASK_ID = "Activity_1wbmh1r"
@@ -17,6 +18,7 @@ def test_service_task_operator_visible(page: Page) -> None:
 
     group = page.locator(f'[data-group-id="{CONFIG["groups"]["service"]}"]')
     expect(group, "Service properties group visible").to_be_visible(timeout=10000)
+    select_element(page, SERVICE_TASK_ID)
     expand_group_if_needed(group)
 
     operator_select = locate(
@@ -24,7 +26,6 @@ def test_service_task_operator_visible(page: Page) -> None:
     )
     expect(operator_select, "Operator ID field visible").to_be_visible(timeout=10000)
 
-    operator_select.wait_for(state="visible", timeout=10000)
     expected_operator = "http/GetRequest"
     operator_value = ""
     for _ in range(3):

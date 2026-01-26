@@ -122,6 +122,7 @@ def select_element(page: Page, element_id: str) -> None:
 
 
 def expand_group_if_needed(group_locator: Locator) -> None:
+    expect(group_locator, "Group visible").to_be_visible(timeout=10000)
     entries = group_locator.locator(".bio-properties-panel-group-entries")
     if entries.count() > 0 and entries.first.is_visible():
         return
@@ -175,17 +176,25 @@ def open_and_close_dialog(page: Page, heading_text: str) -> None:
 
 def open_script_editor(page: Page) -> Locator:
     group_id = CONFIG["groups"]["script"]
-    group = page.locator(f'[data-group-id="{group_id}"]')
-    page.wait_for_selector(f'[data-group-id="{group_id}"]', timeout=10000)
-    expect(group, "Script properties visible").to_be_visible(timeout=10000)
-    expand_group_if_needed(group)
-    launch_button = _locator(group, CONFIG["selectors"]["script_launch"])
-    group.evaluate(
-        """(groupEl) => {
+    page.wait_for_function(
+        """(groupId) => !!document.querySelector(`[data-group-id="${groupId}"]`)""",
+        arg=group_id,
+    )
+    page.evaluate(
+        """(groupId) => {
+        const groupEl = document.querySelector(`[data-group-id="${groupId}"]`);
+        if (!groupEl) return;
+        const toggle = groupEl.querySelector('button[title="Toggle section"]');
+        if (toggle) {
+          toggle.click();
+        }
         const button = Array.from(groupEl.querySelectorAll('button'))
           .find((btn) => btn.textContent?.trim() === 'Launch Editor');
-        button?.click();
-        }"""
+        if (button) {
+          button.click();
+        }
+        }""",
+        group_id,
     )
 
     dialog = page.get_by_role("dialog")

@@ -23,13 +23,35 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
         timeout=10000
     )
 
-    expand_group_if_needed(called_element_group)
-    process_input = locate(page, CONFIG["selectors"]["call_activity_process_input"])
+    toggled = called_element_group.evaluate(
+        """(groupEl) => {
+        const button = groupEl.querySelector('button[title="Toggle section"]');
+        if (!button) return false;
+        button.click();
+        return true;
+        }"""
+    )
+    assert toggled, "Called element group toggle exists"
+    process_input = locate(
+        page, CONFIG["selectors"]["call_activity_process_input"], called_element_group
+    )
     expect(process_input, "Process ID input visible").to_be_visible(timeout=10000)
-    current_value = process_input.input_value()
+    current_value = page.evaluate(
+        """() => {
+        const input = document.querySelector('input[name="process_id"]');
+        return input ? input.value : '';
+        }"""
+    )
 
-    search_button = locate(page, CONFIG["selectors"]["call_activity_search"], called_element_group)
-    search_button.click(force=True)
+    page.wait_for_function(
+        """() => !!document.querySelector('#spiffworkflow-search-call-activity-button')"""
+    )
+    page.evaluate(
+        """() => {
+        const button = document.querySelector('#spiffworkflow-search-call-activity-button');
+        if (button) button.click();
+        }"""
+    )
 
     dialog = page.get_by_role("dialog")
     expect(

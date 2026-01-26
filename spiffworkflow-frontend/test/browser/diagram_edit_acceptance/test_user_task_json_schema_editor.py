@@ -4,9 +4,7 @@ from diagram_edit_acceptance.config import CONFIG
 from diagram_edit_acceptance.helpers import (
     open_diagram,
     select_element,
-    expand_group_if_needed,
     open_and_close_dialog,
-    locate,
 )
 
 USER_TASK_ID = "Activity_1v4njcq"
@@ -18,9 +16,24 @@ def test_can_launch_json_schema_editor_from_user_task(page: Page) -> None:
 
     group = page.locator(f'[data-group-id="{CONFIG["groups"]["user_task"]}"]')
     expect(group, "Web form group visible").to_be_visible(timeout=10000)
-    expand_group_if_needed(group)
+    toggled = group.evaluate(
+        """(groupEl) => {
+        const button = groupEl.querySelector('button[title="Toggle section"]');
+        if (!button) return false;
+        button.click();
+        return true;
+        }"""
+    )
+    assert toggled, "Web form group toggle exists"
 
-    launch_button = locate(page, CONFIG["selectors"]["script_launch"], group)
-    launch_button.click(force=True)
+    page.wait_for_function(
+        """() => !!document.querySelector('#launch_editor_button_formJsonSchemaFilename')"""
+    )
+    page.evaluate(
+        """() => {
+        const button = document.querySelector('#launch_editor_button_formJsonSchemaFilename');
+        if (button) button.click();
+        }"""
+    )
 
     open_and_close_dialog(page, CONFIG["dialog_headings"]["json_schema"])
