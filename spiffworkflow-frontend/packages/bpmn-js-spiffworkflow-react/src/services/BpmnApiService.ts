@@ -37,6 +37,16 @@ export interface BpmnApiService {
   getMessages?(path?: string): Promise<any[]>;
 
   /**
+   * Load process group by identifier
+   */
+  getProcessGroup?(processGroupIdentifier: string): Promise<any>;
+
+  /**
+   * Update process group by identifier
+   */
+  updateProcessGroup?(processGroupIdentifier: string, payload: any): Promise<any>;
+
+  /**
    * Get DMN file list
    */
   getDmnFiles?(): Promise<any[]>;
@@ -173,6 +183,17 @@ export class DefaultBpmnApiService implements BpmnApiService {
 
   async getMessages(path?: string): Promise<any[]> {
     return this.makeRequest(path || '/messages');
+  }
+
+  async getProcessGroup(processGroupIdentifier: string): Promise<any> {
+    return this.makeRequest(`/process-groups/${processGroupIdentifier}`);
+  }
+
+  async updateProcessGroup(processGroupIdentifier: string, payload: any): Promise<any> {
+    return this.makeRequest(`/process-groups/${processGroupIdentifier}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
   }
 
   async getDmnFiles(): Promise<any[]> {

@@ -26,6 +26,12 @@ export default function ProcessSearch({
   placeholderText,
   height = '50px',
 }: ProcessSearchProps) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      onChange(null);
+    }
+  };
+
   const shouldFilter = (options: any) => {
     const { process, inputValue } = options;
     return (
@@ -53,6 +59,7 @@ export default function ProcessSearch({
                 placeholder={placeholderText || 'Choose a process'}
                 variant="outlined"
                 fullWidth
+                onKeyDown={handleKeyDown}
                 slotProps={{
                   input: params.InputProps,
                   htmlInput: params.inputProps,
