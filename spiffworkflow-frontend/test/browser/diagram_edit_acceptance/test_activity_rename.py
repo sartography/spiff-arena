@@ -34,8 +34,12 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     page.keyboard.insert_text(new_label)
 
     page.locator("#canvas").click(position={"x": 10, "y": 10})
+    expect(editor, "Inline label editor closed").to_be_hidden(timeout=10000)
 
-    expect(label, "Label updated in diagram").to_have_text(new_label, timeout=10000)
+    expect(
+        page.locator(f'g[data-element-id="{USER_TASK_ID}"] text').first,
+        "Label updated in diagram",
+    ).to_have_text(new_label, timeout=10000)
 
     save_button = get_save_button(page)
     expect(save_button, "Save enabled after rename").to_be_enabled(timeout=10000)
@@ -45,6 +49,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     )
 
     page.reload()
-    expect(label, "Renamed label persists after reload").to_have_text(
+    reloaded_label = page.locator(f'g[data-element-id="{USER_TASK_ID}"] text').first
+    expect(reloaded_label, "Renamed label persists after reload").to_have_text(
         new_label, timeout=20000
     )
