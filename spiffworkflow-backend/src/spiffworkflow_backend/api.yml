@@ -3205,6 +3205,8 @@ paths:
                 properties:
                   process_model_identifier:
                     type: string
+                  file_name:
+                    type: string
 
   /public/messages/form/{modified_message_name}:
     parameters:
