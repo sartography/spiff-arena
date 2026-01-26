@@ -1274,7 +1274,6 @@ export default function ProcessModelEditDiagram() {
         {unsavedChangesMessage()}
         {saveFileMessage()}
         {appropriateEditor()}
-        <div id="diagram-container" />
       </>
     );
   }

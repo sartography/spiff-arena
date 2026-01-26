@@ -133,6 +133,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const [diagramFileName, setDiagramFileName] = useState<string | null>(null);
+  const [diagramProcessModelId, setDiagramProcessModelId] = useState<
+    string | null
+  >(null);
+  const [diagramLoadError, setDiagramLoadError] = useState<string | null>(null);
 
   const [addingPotentialOwners, setAddingPotentialOwners] =
     useState<boolean>(false);
@@ -361,6 +366,51 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     tab,
     taskSubTab,
   ]);
+
+  useEffect(() => {
+    if (!processInstance) {
+      return;
+    }
+
+    if (processInstance.bpmn_xml_file_contents) {
+      setDiagramFileName(null);
+      setDiagramProcessModelId(null);
+      setDiagramLoadError(null);
+      return;
+    }
+
+    const diagramIdentifier =
+      processInstance.process_model_with_diagram_identifier ||
+      processInstance.process_model_identifier;
+    if (!diagramIdentifier) {
+      return;
+    }
+
+    const modifiedDiagramId =
+      modifyProcessIdentifierForPathParam(diagramIdentifier);
+    setDiagramProcessModelId(modifiedDiagramId);
+
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedDiagramId}`,
+      successCallback: (result: ProcessModel) => {
+        if (result.primary_file_name) {
+          setDiagramFileName(result.primary_file_name);
+          setDiagramLoadError(null);
+        } else {
+          setDiagramLoadError(t('diagram_file_name_editor_error_required'));
+        }
+      },
+      failureCallback: (error: { message?: string } | string) => {
+        if (typeof error === 'string') {
+          setDiagramLoadError(error);
+        } else if (error?.message) {
+          setDiagramLoadError(error.message);
+        } else {
+          setDiagramLoadError(t('failed_to_load_diagram'));
+        }
+      },
+    });
+  }, [processInstance, t]);
 
   const updateSearchParams = (value: string, key: string) => {
     if (value !== undefined) {
@@ -1794,36 +1844,50 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return <CircularProgress size={24} />;
     }
 
+    const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
+    const canLoadFromModel =
+      !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
+    const retrievalError =
+      processInstance.bpmn_xml_file_contents_retrieval_error || '';
     const detailsComponent = (
       <>
         {childrenForErrorObject(
           errorForDisplayFromString(
-            processInstance.bpmn_xml_file_contents_retrieval_error || '',
+            diagramLoadError || retrievalError,
           ),
           t,
         )}
       </>
     );
-    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
-      <Notification
-        title={t('failed_to_load_diagram')}
-        type="error"
-        hideCloseButton
-        allowTogglingFullMessage
-      >
-        {detailsComponent}
-      </Notification>
-    ) : (
+
+    if (!hasDiagramXml && !canLoadFromModel && (diagramLoadError || retrievalError)) {
+      return (
+        <Notification
+          title={t('failed_to_load_diagram')}
+          type="error"
+          hideCloseButton
+          allowTogglingFullMessage
+        >
+          {detailsComponent}
+        </Notification>
+      );
+    }
+
+    return (
       <>
         <ReactDiagramEditor
           diagramType="readonly"
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
           onCallActivityOverlayClick={handleCallActivityNavigate}
           onElementClick={handleClickedDiagramTask}
-          processModelId={processModelId || ''}
+          processModelId={
+            canLoadFromModel
+              ? diagramProcessModelId || ''
+              : processModelId || ''
+          }
           tasks={tasks}
         />
-        <div id="diagram-container" />
       </>
     );
   };

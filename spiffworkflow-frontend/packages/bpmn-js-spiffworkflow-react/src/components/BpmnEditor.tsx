@@ -213,8 +213,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
                     ? 'hidden-properties-panel'
                     : 'js-properties-panel';
             temp.innerHTML = `
-      <div class="content with-diagram bpmn-js-container" id="js-drop-zone" style="height: 100%;">
-        <div class="canvas ${canvasClass}" id="canvas" style="height: 100%;"></div>
+      <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
+        <div class="canvas ${canvasClass}" id="canvas"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
@@ -798,10 +798,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
         // The component only renders the container - the actual diagram is rendered by bpmn-js
         return (
-            <div
-                id="diagram-container"
-                style={{ height: '100%', width: '100%' }}
-            />
+            <div id="diagram-container" style={{ width: '100%' }} />
         );
     },
 );
