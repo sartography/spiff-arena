@@ -25,7 +25,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     target = page.locator(f'g[data-element-id="{USER_TASK_ID}"]')
     expect(target, "Diagram element visible for editing").to_be_visible(timeout=10000)
     label = target.locator("text").first
-    target.dblclick(force=True)
+    label.dblclick(force=True)
 
     editor = page.locator('.djs-direct-editing-content')
     expect(editor, "Inline label editor visible").to_be_visible(timeout=10000)
@@ -33,7 +33,8 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     page.keyboard.press("Meta+A")
     page.keyboard.insert_text(new_label)
 
-    page.locator("#canvas").click(position={"x": 10, "y": 10})
+    # page.keyboard.press("Enter")
+    page.locator("#canvas").click(position={"x": 10, "y": 10}
 
     expect(label, "Label updated in diagram").to_have_text(new_label, timeout=10000)
 

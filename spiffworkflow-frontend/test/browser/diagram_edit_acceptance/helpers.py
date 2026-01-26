@@ -70,8 +70,8 @@ def _element_selected(page: Page, element_id: str) -> bool:
 
 def select_element(page: Page, element_id: str) -> None:
     target = page.locator(f'g[data-element-id="{element_id}"]')
-    label = target.locator(".djs-label")
     hit = target.locator(".djs-hit")
+    label = target.locator(".djs-label")
 
     for _ in range(4):
         page.evaluate(
@@ -81,10 +81,10 @@ def select_element(page: Page, element_id: str) -> None:
           }""",
             element_id,
         )
-        if label.count() > 0:
-            label.first.click(force=True)
-        elif hit.count() > 0:
+        if hit.count() > 0:
             hit.first.click(force=True)
+        elif label.count() > 0:
+            label.first.click(force=True)
         else:
             target.click(force=True)
 
@@ -114,25 +114,20 @@ def select_element(page: Page, element_id: str) -> None:
 
 
 def expand_group_if_needed(group_locator: Locator) -> None:
-    launch_button = group_locator.locator('button:has-text("Launch Editor")')
-    if not launch_button.is_visible():
-        try:
-            group_locator.evaluate(
-                """(group) => {
-                const toggle = group.querySelector('button[title="Toggle section"]');
-                toggle?.click();
-                }"""
-            )
-            return
-        except Exception:
-            pass
-        toggle = group_locator.locator('button[title="Toggle section"]')
-        if toggle.count() > 0:
-            toggle.first.click(force=True)
-            return
-        header = group_locator.locator('.bio-properties-panel-group-header-title')
-        if header.count() > 0:
-            header.first.click(force=True)
+    entries = group_locator.locator(".bio-properties-panel-group-entries")
+    if entries.count() > 0 and entries.is_visible():
+        return
+    toggle = group_locator.locator('button[title="Toggle section"]')
+    if toggle.count() > 0:
+        toggle.first.click(force=True)
+        if entries.count() > 0:
+            expect(entries, "Group entries visible").to_be_visible(timeout=5000)
+        return
+    header = group_locator.locator(".bio-properties-panel-group-header-title")
+    if header.count() > 0:
+        header.first.click(force=True)
+        if entries.count() > 0:
+            expect(entries, "Group entries visible").to_be_visible(timeout=5000)
 
 
 def ensure_group_visible(page: Page, element_id: str, group_id: str) -> None:

@@ -6,6 +6,7 @@ from diagram_edit_acceptance.helpers import (
     select_element,
     expand_group_if_needed,
     locate,
+    ensure_group_visible,
 )
 
 CALL_ACTIVITY_ID = "Activity_0m4kz8c"
@@ -13,7 +14,7 @@ CALL_ACTIVITY_ID = "Activity_0m4kz8c"
 
 def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
     open_diagram(page, CALL_ACTIVITY_ID)
-    select_element(page, CALL_ACTIVITY_ID)
+    ensure_group_visible(page, CALL_ACTIVITY_ID, CONFIG["groups"]["call_activity"])
 
     called_element_group = page.locator(
         f'[data-group-id="{CONFIG["groups"]["call_activity"]}"]'
