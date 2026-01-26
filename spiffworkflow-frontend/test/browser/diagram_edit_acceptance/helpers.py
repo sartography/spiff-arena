@@ -73,6 +73,8 @@ def select_element(page: Page, element_id: str) -> None:
     hit = target.locator(".djs-hit")
     label = target.locator(".djs-label")
 
+    expect(target, "Diagram element visible").to_be_visible(timeout=20000)
+
     for _ in range(4):
         page.evaluate(
             """(id) => {
@@ -82,11 +84,17 @@ def select_element(page: Page, element_id: str) -> None:
             element_id,
         )
         if hit.count() > 0:
-            hit.first.click(force=True)
+            hit.first.dispatch_event("mousedown")
+            hit.first.dispatch_event("mouseup")
+            hit.first.dispatch_event("click")
         elif label.count() > 0:
-            label.first.click(force=True)
+            label.first.dispatch_event("mousedown")
+            label.first.dispatch_event("mouseup")
+            label.first.dispatch_event("click")
         else:
-            target.click(force=True)
+            target.dispatch_event("mousedown")
+            target.dispatch_event("mouseup")
+            target.dispatch_event("click")
 
         if _element_selected(page, element_id):
             return
@@ -115,19 +123,26 @@ def select_element(page: Page, element_id: str) -> None:
 
 def expand_group_if_needed(group_locator: Locator) -> None:
     entries = group_locator.locator(".bio-properties-panel-group-entries")
-    if entries.count() > 0 and entries.is_visible():
+    if entries.count() > 0 and entries.first.is_visible():
         return
-    toggle = group_locator.locator('button[title="Toggle section"]')
-    if toggle.count() > 0:
-        toggle.first.click(force=True)
-        if entries.count() > 0:
-            expect(entries, "Group entries visible").to_be_visible(timeout=5000)
-        return
-    header = group_locator.locator(".bio-properties-panel-group-header-title")
-    if header.count() > 0:
-        header.first.click(force=True)
-        if entries.count() > 0:
-            expect(entries, "Group entries visible").to_be_visible(timeout=5000)
+    action = group_locator.evaluate(
+        """(groupEl) => {
+        const button = groupEl.querySelector('button[title="Toggle section"]');
+        if (button) {
+          button.click();
+          return "toggle";
+        }
+        const header = groupEl.querySelector('.bio-properties-panel-group-header-title');
+        if (header) {
+          header.click();
+          return "header";
+        }
+        return null;
+      }"""
+    )
+    assert action, "Group toggle or header available"
+    if entries.count() > 0:
+        expect(entries.first, "Group entries visible").to_be_visible(timeout=5000)
 
 
 def ensure_group_visible(page: Page, element_id: str, group_id: str) -> None:
@@ -165,7 +180,13 @@ def open_script_editor(page: Page) -> Locator:
     expect(group, "Script properties visible").to_be_visible(timeout=10000)
     expand_group_if_needed(group)
     launch_button = _locator(group, CONFIG["selectors"]["script_launch"])
-    launch_button.click(force=True)
+    group.evaluate(
+        """(groupEl) => {
+        const button = Array.from(groupEl.querySelectorAll('button'))
+          .find((btn) => btn.textContent?.trim() === 'Launch Editor');
+        button?.click();
+        }"""
+    )
 
     dialog = page.get_by_role("dialog")
     expect(
@@ -215,7 +236,13 @@ def open_message_editor(page: Page) -> Locator | None:
     if not CONFIG.get("message_editor", {}).get("opens", True):
         return None
 
-    button.click(force=True)
+    group.evaluate(
+        """(groupEl) => {
+        const button = Array.from(groupEl.querySelectorAll('button'))
+          .find((btn) => /open/i.test(btn.textContent || ''));
+        button?.click();
+        }"""
+    )
     dialog = page.get_by_role("dialog")
     expect(
         dialog.get_by_role(

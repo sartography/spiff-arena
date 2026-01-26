@@ -19,7 +19,9 @@ def test_service_task_operator_visible(page: Page) -> None:
     expect(group, "Service properties group visible").to_be_visible(timeout=10000)
     expand_group_if_needed(group)
 
-    operator_select = locate(page, {"label": "Operator ID"}, group)
+    operator_select = locate(
+        page, CONFIG["selectors"]["service_operator_select"], group
+    )
     expect(operator_select, "Operator ID field visible").to_be_visible(timeout=10000)
 
     operator_select.wait_for(state="visible", timeout=10000)
@@ -47,7 +49,6 @@ def test_service_task_operator_visible(page: Page) -> None:
         f'[data-group-id="{CONFIG["groups"]["service_params"]}"]'
     )
     expect(params_group, "Service parameters group visible").to_be_visible(timeout=10000)
-    expand_group_if_needed(params_group)
 
     url_value = None
     for _ in range(3):

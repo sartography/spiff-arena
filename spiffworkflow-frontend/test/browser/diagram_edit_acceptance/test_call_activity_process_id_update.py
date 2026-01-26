@@ -24,7 +24,8 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
     )
 
     expand_group_if_needed(called_element_group)
-    process_input = locate(page, CONFIG["selectors"]["call_activity_process_input"], called_element_group)
+    process_input = locate(page, CONFIG["selectors"]["call_activity_process_input"])
+    expect(process_input, "Process ID input visible").to_be_visible(timeout=10000)
     current_value = process_input.input_value()
 
     search_button = locate(page, CONFIG["selectors"]["call_activity_search"], called_element_group)
