@@ -36,7 +36,7 @@ export function useProcessReferences(
     return {
       identifier: item.identifier || item.primary_process_id || item.id || '',
       display_name: item.display_name || item.name || '',
-      relative_location: item.relative_location || '',
+      relative_location: item.relative_location || item.location || item.id || '',
       type: item.type || 'process',
       file_name: item.file_name || item.primary_file_name || '',
       properties: item.properties || {},
