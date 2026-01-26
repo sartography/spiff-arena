@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -42,7 +43,28 @@ def login(page: Page, username: str | None = None, password: str | None = None) 
     _locator(page, login_config["username"]).fill(username)
     _locator(page, login_config["password"]).fill(password)
     _locator(page, login_config["submit"]).click()
-    expect(_locator(page, login_config["post_login"])).to_be_visible(timeout=20000)
+    post_login_url = login_config.get("post_login_url")
+    if post_login_url:
+        page.wait_for_url(post_login_url, timeout=20000)
+
+    dialog = page.get_by_role("dialog")
+    if dialog.count() > 0:
+        close_button = dialog.get_by_role(
+            "button",
+            name=re.compile(r"(continue|close|dismiss|ok|got it|start)", re.I),
+        )
+        if close_button.count() > 0:
+            close_button.first.click()
+        else:
+            dialog.get_by_role("button").first.click()
+
+    page.goto(CONFIG["diagram"]["url"])
+
+    loaded_text = CONFIG["diagram"].get("loaded_text")
+    if loaded_text:
+        expect(page.get_by_text(loaded_text), "Diagram loaded").to_be_visible(
+            timeout=20000
+        )
 
 
 @pytest.fixture(scope="session")
