@@ -798,7 +798,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
         // The component only renders the container - the actual diagram is rendered by bpmn-js
         return (
-            <div id="diagram-container" style={{ width: '100%' }} />
+            <div
+                id="diagram-container"
+                style={{ width: '100%', height: '100%' }}
+            />
         );
     },
 );
