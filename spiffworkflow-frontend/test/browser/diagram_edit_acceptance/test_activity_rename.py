@@ -34,7 +34,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     page.keyboard.insert_text(new_label)
 
     # page.keyboard.press("Enter")
-    page.locator("#canvas").click(position={"x": 10, "y": 10}
+    page.locator("#canvas").click(position={"x": 10, "y": 10})
 
     expect(label, "Label updated in diagram").to_have_text(new_label, timeout=10000)
 
