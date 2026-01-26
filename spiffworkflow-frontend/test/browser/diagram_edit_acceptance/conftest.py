@@ -60,12 +60,6 @@ def login(page: Page, username: str | None = None, password: str | None = None) 
 
     page.goto(CONFIG["diagram"]["url"])
 
-    loaded_text = CONFIG["diagram"].get("loaded_text")
-    if loaded_text:
-        expect(page.get_by_text(loaded_text), "Diagram loaded").to_be_visible(
-            timeout=20000
-        )
-
 
 @pytest.fixture(scope="session")
 def storage_state_path(tmp_path_factory: pytest.TempPathFactory) -> Path:

@@ -42,9 +42,14 @@ def open_diagram(page: Page, element_id: str) -> None:
 
     loaded_text = diagram_config.get("loaded_text")
     if loaded_text:
-        expect(page.get_by_text(loaded_text), "Diagram loaded").to_be_visible(
+        file_label = diagram_config.get("file_label_template", "{file}").format(
+            file=loaded_text
+        )
+        entry = page.get_by_text(file_label)
+        expect(entry, "Diagram list entry visible").to_be_visible(
             timeout=20000
         )
+        entry.first.click()
 
     fit_button = _locator(page, diagram_config["fit_button"])
     fit_button.click()
@@ -144,6 +149,26 @@ def expand_group_if_needed(group_locator: Locator) -> None:
     assert action, "Group toggle or header available"
     if entries.count() > 0:
         expect(entries.first, "Group entries visible").to_be_visible(timeout=5000)
+
+
+def expand_entry_if_needed(entry_locator: Locator) -> None:
+    entry_locator.wait_for(state="attached", timeout=10000)
+    inputs = entry_locator.locator("input, textarea")
+    if inputs.count() > 0 and inputs.first.is_visible():
+        return
+    if entry_locator.is_visible():
+        entry_locator.scroll_into_view_if_needed()
+    entry_locator.evaluate(
+        """(entryEl) => {
+        const toggle = entryEl.querySelector('button[title="Toggle list item"]');
+        if (toggle) {
+          toggle.click();
+          return;
+        }
+        const header = entryEl.querySelector('.bio-properties-panel-collapsible-entry-header');
+        header?.click();
+        }"""
+    )
 
 
 def ensure_group_visible(page: Page, element_id: str, group_id: str) -> None:

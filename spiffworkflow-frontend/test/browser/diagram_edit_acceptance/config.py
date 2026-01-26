@@ -9,7 +9,7 @@ CONFIG = {
             f"{BASE_URL}/process-models/"
             "system:diagram-edit-acceptance-test:test-a/files/test-a.bpmn"
         ),
-        "loaded_text": "Process Model File: test-a.bpmn",
+        "loaded_text": "test-a.bpmn",
         "file_label_template": "Process Model File: {file}",
         "fit_button": {"role": "button", "name": "Fit to View"},
     },
