@@ -117,6 +117,122 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
         const diagramFetchedRef = useRef(false);
 
+        const fitViewportWithPaletteOffset = (canvas: any) => {
+            const container = canvas?._container;
+            if (
+                container &&
+                container.clientWidth > 0 &&
+                container.clientHeight > 0
+            ) {
+                canvas.zoom(FitViewport, 'auto');
+            }
+
+            try {
+                const wrapper =
+                    container?.closest('.bpmn-js-container') || container;
+                const palette =
+                    wrapper?.querySelector('.djs-palette') ||
+                    document.querySelector('.djs-palette');
+                if (!palette || !canvas?.viewbox || !canvas?.scroll) {
+                    return;
+                }
+                const paletteRect = palette.getBoundingClientRect();
+                const canvasRect = container.getBoundingClientRect();
+                const overlaps =
+                    paletteRect.right > canvasRect.left &&
+                    paletteRect.left < canvasRect.right &&
+                    paletteRect.bottom > canvasRect.top &&
+                    paletteRect.top < canvasRect.bottom;
+                if (!overlaps) {
+                    return;
+                }
+                const overlapWidth = Math.max(
+                    0,
+                    paletteRect.right - canvasRect.left,
+                );
+                if (!overlapWidth) {
+                    return;
+                }
+                const viewbox = canvas.viewbox();
+                const inner = viewbox?.inner;
+                const outer = viewbox?.outer;
+                const scale = viewbox?.scale || 1;
+                if (
+                    !inner ||
+                    !outer ||
+                    !Number.isFinite(scale) ||
+                    scale <= 0 ||
+                    inner.width <= 0 ||
+                    inner.height <= 0
+                ) {
+                    return;
+                }
+
+                const padding = 12;
+                const desiredLeftPadding = overlapWidth + padding;
+                const leftPaddingPx = (inner.x - viewbox.x) * scale;
+                const rightPaddingPx =
+                    (viewbox.x + viewbox.width - (inner.x + inner.width)) *
+                    scale;
+
+                let deltaPx = desiredLeftPadding - leftPaddingPx;
+                if (deltaPx <= 0) {
+                    return;
+                }
+
+                const maxShiftRight = rightPaddingPx - padding;
+                if (maxShiftRight > 0) {
+                    deltaPx = Math.min(deltaPx, maxShiftRight);
+                    if (Math.abs(deltaPx) < 0.5) {
+                        return;
+                    }
+                    canvas.viewbox({
+                        ...viewbox,
+                        x: viewbox.x - deltaPx / scale,
+                    });
+                    return;
+                }
+
+                const availableWidth = Math.max(
+                    0,
+                    outer.width - overlapWidth - padding * 2,
+                );
+                const availableHeight = Math.max(
+                    0,
+                    outer.height - padding * 2,
+                );
+                if (!availableWidth || !availableHeight) {
+                    return;
+                }
+
+                const targetScale = Math.min(
+                    scale,
+                    availableWidth / inner.width,
+                    availableHeight / inner.height,
+                );
+                if (!Number.isFinite(targetScale) || targetScale <= 0) {
+                    return;
+                }
+
+                const viewboxWidth = outer.width / targetScale;
+                const viewboxHeight = outer.height / targetScale;
+                const availableWidthSvg = (outer.width - overlapWidth) / targetScale;
+                const offsetXSvg = (overlapWidth + padding) / targetScale;
+                const centerX = inner.x + inner.width / 2;
+                const centerY = inner.y + inner.height / 2;
+                const x = centerX - offsetXSvg - availableWidthSvg / 2;
+                const y = centerY - viewboxHeight / 2;
+                canvas.viewbox({
+                    x,
+                    y,
+                    width: viewboxWidth,
+                    height: viewboxHeight,
+                });
+            } catch (error) {
+                console.warn('Failed to offset fit zoom:', error);
+            }
+        };
+
         const zoom = useCallback(
             (amount: number) => {
                 if (diagramModelerState) {
@@ -130,15 +246,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
                         try {
                             if (amount === 0) {
                                 const canvas = modeler.get('canvas');
-                                // Check if canvas has valid dimensions before zooming
-                                const container = canvas._container;
-                                if (
-                                    container &&
-                                    container.clientWidth > 0 &&
-                                    container.clientHeight > 0
-                                ) {
-                                    canvas.zoom(FitViewport, 'auto');
-                                }
+                                fitViewportWithPaletteOffset(canvas);
                             } else {
                                 modeler.get('zoomScroll').stepZoom(amount);
                             }
@@ -518,18 +626,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
                     if (modeler) {
                         const canvas = modeler.get('canvas');
                         // Check if canvas has valid dimensions before zooming
-                        const container = canvas._container;
-                        if (
-                            container &&
-                            container.clientWidth > 0 &&
-                            container.clientHeight > 0
-                        ) {
-                            canvas.zoom(FitViewport, 'auto');
+                                fitViewportWithPaletteOffset(canvas);
+                            }
+                        } catch (error) {
+                            console.warn('Failed to zoom canvas:', error);
                         }
-                    }
-                } catch (error) {
-                    console.warn('Failed to zoom canvas:', error);
-                }
             }, 100);
 
             if (diagramType !== 'dmn') {
@@ -663,14 +764,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
                 const canvas = diagramModelerState.get('canvas');
                 // Check if canvas has valid dimensions before zooming
                 try {
-                    const container = canvas._container;
-                    if (
-                        container &&
-                        container.clientWidth > 0 &&
-                        container.clientHeight > 0
-                    ) {
-                        canvas.zoom(FitViewport, 'auto');
-                    }
+                    fitViewportWithPaletteOffset(canvas);
                 } catch (error) {
                     console.warn('Failed to zoom canvas on import:', error);
                 }
