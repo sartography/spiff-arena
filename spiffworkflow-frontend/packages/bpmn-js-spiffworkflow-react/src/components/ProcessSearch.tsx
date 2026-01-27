@@ -58,13 +58,9 @@ export default function ProcessSearch({
                 label={titleText || 'Process Search'}
                 placeholder={placeholderText || 'Choose a process'}
                 variant="outlined"
-                fullWidth
                 onKeyDown={handleKeyDown}
-                slotProps={{
-                  input: params.InputProps,
-                  htmlInput: params.inputProps,
-                  inputLabel: { shrink: true },
-                }}
+                {...params}
+                InputLabelProps={{ shrink: true }}
               />
             );
           }}

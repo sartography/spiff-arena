@@ -121,7 +121,6 @@ export type {
     ScriptEditorState,
     MarkdownEditorState,
     MessageEditorState,
-    JsonSchemaEditorState,
     ProcessSearchState as ProcessSearchLauncherState,
 } from './hooks/useBpmnEditorLaunchers';
 export type {

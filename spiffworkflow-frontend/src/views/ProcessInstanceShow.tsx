@@ -400,11 +400,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           setDiagramLoadError(t('diagram_file_name_editor_error_required'));
         }
       },
-      failureCallback: (error: { message?: string } | string) => {
-        if (typeof error === 'string') {
-          setDiagramLoadError(error);
-        } else if (error?.message) {
-          setDiagramLoadError(error.message);
+      failureCallback: (err: { message?: string } | string) => {
+        if (typeof err === 'string') {
+          setDiagramLoadError(err);
+        } else if (err?.message) {
+          setDiagramLoadError(err.message);
         } else {
           setDiagramLoadError(t('failed_to_load_diagram'));
         }
@@ -1852,15 +1852,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const detailsComponent = (
       <>
         {childrenForErrorObject(
-          errorForDisplayFromString(
-            diagramLoadError || retrievalError,
-          ),
+          errorForDisplayFromString(diagramLoadError || retrievalError),
           t,
         )}
       </>
     );
 
-    if (!hasDiagramXml && !canLoadFromModel && (diagramLoadError || retrievalError)) {
+    if (
+      !hasDiagramXml &&
+      !canLoadFromModel &&
+      (diagramLoadError || retrievalError)
+    ) {
       return (
         <Notification
           title={t('failed_to_load_diagram')}

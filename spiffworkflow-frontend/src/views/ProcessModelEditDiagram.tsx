@@ -13,7 +13,6 @@ import {
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Button,
   ButtonGroup,
   Stack,
   TextareaAutosize,
@@ -49,7 +48,6 @@ import {
   MessageEditorDialog,
   MarkdownEditorDialog,
   JsonSchemaEditorDialog,
-  DialogShell,
   FileNameEditorDialog,
   ProcessSearchDialog,
   ScriptAssistPanel,
@@ -92,13 +90,11 @@ export default function ProcessModelEditDiagram() {
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
-
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
-
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -174,14 +170,6 @@ export default function ProcessModelEditDiagram() {
     monacoRef.current = monaco;
   }
 
-  interface ScriptUnitTestResult {
-    result: boolean;
-    context?: object;
-    error?: string;
-    line_number?: number;
-    offset?: number;
-  }
-
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -212,22 +200,19 @@ export default function ProcessModelEditDiagram() {
     updateTop,
   } = useDiagramNavigationStack();
 
-  const buildProcessFilePath = useCallback(
-    (item: DiagramNavigationItem) => {
-      return generatePath(
-        '/process-models/:process_model_id/files/:file_name',
-        {
-          process_model_id: item.processModelId,
-          file_name: item.fileName,
-        },
-      );
-    },
-    [],
-  );
+  const buildProcessFilePath = useCallback((item: DiagramNavigationItem) => {
+    return generatePath('/process-models/:process_model_id/files/:file_name', {
+      process_model_id: item.processModelId,
+      file_name: item.fileName,
+    });
+  }, []);
 
-  const handleEditorScriptChange = (value: any) => {
-    setScriptText(value);
-  };
+  const handleEditorScriptChange = useCallback(
+    (value: any) => {
+      setScriptText(value);
+    },
+    [setScriptText],
+  );
 
   const [{ processes }, { refresh: refreshProcesses }] = useProcessReferences({
     apiService: spiffBpmnApiService,
@@ -329,7 +314,7 @@ export default function ProcessModelEditDiagram() {
         setScriptAssistError('Received unexpected response from server.');
       }
     }
-  }, [scriptAssistResult]);
+  }, [scriptAssistResult, handleEditorScriptChange]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -508,11 +493,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const [
-    {
-      currentScriptUnitTest,
-      currentScriptUnitTestIndex,
-      scriptUnitTestResult,
-    },
+    { currentScriptUnitTest, currentScriptUnitTestIndex, scriptUnitTestResult },
     {
       setScriptUnitTestElementWithIndex,
       setPreviousScriptUnitTest,
@@ -1174,7 +1155,9 @@ export default function ProcessModelEditDiagram() {
         onDeleteFile={onDeleteFile}
         onDmnFilesRequested={bpmnEditorCallbacks.onDmnFilesRequested}
         onElementsChanged={onElementsChanged}
-        onJsonSchemaFilesRequested={bpmnEditorCallbacks.onJsonSchemaFilesRequested}
+        onJsonSchemaFilesRequested={
+          bpmnEditorCallbacks.onJsonSchemaFilesRequested
+        }
         onLaunchBpmnEditor={onLaunchBpmnEditor}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { DiagramNavigationItem } from './useDiagramNavigationStack';
-import type { ProcessModel, ProcessReference } from '../types';
+import type { ProcessModel } from '../types';
+import type { ProcessReference } from './useProcessReferences';
 import { findFileNameForReferenceId } from './useBpmnEditorCallbacks';
 
 type UseDiagramNavigationHandlersOptions = {

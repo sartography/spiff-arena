@@ -7,7 +7,10 @@ import { BpmnApiService } from '../../packages/bpmn-js-spiffworkflow-react/src/s
 import HttpService from './HttpService';
 
 export class SpiffBpmnApiService implements BpmnApiService {
-  async loadDiagramFile(processModelId: string, fileName: string): Promise<{ file_contents: string }> {
+  async loadDiagramFile(
+    processModelId: string,
+    fileName: string,
+  ): Promise<{ file_contents: string }> {
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
         path: `/process-models/${processModelId}/files/${fileName}`,
@@ -17,7 +20,11 @@ export class SpiffBpmnApiService implements BpmnApiService {
     });
   }
 
-  async saveDiagramFile(processModelId: string, fileName: string, content: string): Promise<void> {
+  async saveDiagramFile(
+    processModelId: string,
+    fileName: string,
+    content: string,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
         path: `/process-models/${processModelId}/files/${fileName}`,

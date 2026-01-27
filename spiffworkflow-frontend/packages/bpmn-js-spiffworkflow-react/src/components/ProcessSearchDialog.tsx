@@ -1,7 +1,7 @@
 import React from 'react';
 import DialogShell from './DialogShell';
 import ProcessSearch from './ProcessSearch';
-import type { ProcessReference } from '../types';
+import type { ProcessReference } from '../hooks/useProcessReferences';
 
 type ProcessSearchDialogProps = {
   open: boolean;
@@ -23,7 +23,7 @@ export default function ProcessSearchDialog({
   height = '500px',
 }: ProcessSearchDialogProps) {
   return (
-    <DialogShell open={open} onClose={onChange} title={title}>
+    <DialogShell open={open} onClose={() => onChange(null as any)} title={title}>
       <ProcessSearch
         height={height}
         onChange={onChange}

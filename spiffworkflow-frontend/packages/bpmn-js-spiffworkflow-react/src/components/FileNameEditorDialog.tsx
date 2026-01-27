@@ -38,7 +38,7 @@ export default function FileNameEditorDialog({
       className=""
     >
       <Grid container spacing={2}>
-        <Grid size={{ xs: 8 }}>
+        <Grid xs={8}>
           <TextField
             id="process_model_file_name"
             label={label}
@@ -51,7 +51,7 @@ export default function FileNameEditorDialog({
             fullWidth
           />
         </Grid>
-        <Grid size={{ xs: 4 }}>{fileExtension}</Grid>
+        <Grid xs={4}>{fileExtension}</Grid>
       </Grid>
       <ButtonGroup>
         <Button onClick={onSave}>{saveLabel}</Button>
