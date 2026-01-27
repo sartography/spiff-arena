@@ -258,9 +258,11 @@ export default function ReactDiagramEditor({
 
   return (
     <>
-      {userActionOptions()}
+      <div className="diagram-toolbar">
+        <div className="diagram-toolbar__left">{userActionOptions()}</div>
+        <div className="diagram-toolbar__right">{diagramControlButtons()}</div>
+      </div>
       {showReferences()}
-      {diagramControlButtons()}
       <BpmnEditor
         key={`${processModelId}-${fileName || 'new'}-${diagramType}`}
         ref={bpmnEditorRef}

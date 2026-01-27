@@ -49,11 +49,18 @@ export default function DiagramActionBar({
   activeUserElement,
 }: DiagramActionBarProps) {
   return (
-    <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
+    <Stack
+      className="diagram-action-bar"
+      direction="row"
+      spacing={1.5}
+      alignItems="center"
+      sx={{ flexWrap: 'wrap' }}
+    >
       {canSave && onSave ? (
         <Button
           onClick={onSave}
           variant="contained"
+          size="small"
           disabled={saveDisabled}
           data-testid="process-model-file-save-button"
         >
@@ -63,17 +70,17 @@ export default function DiagramActionBar({
       {processInstanceRun || null}
       {canDelete ? deleteButton || null : null}
       {canSetPrimary && onSetPrimary ? (
-        <Button onClick={onSetPrimary} variant="contained">
+        <Button onClick={onSetPrimary} variant="outlined" size="small">
           {setPrimaryLabel}
         </Button>
       ) : null}
       {canDownload && onDownload ? (
-        <Button variant="contained" onClick={onDownload}>
+        <Button variant="outlined" size="small" onClick={onDownload}>
           {downloadLabel}
         </Button>
       ) : null}
       {canViewXml && onViewXml ? (
-        <Button variant="contained" onClick={onViewXml}>
+        <Button variant="outlined" size="small" onClick={onViewXml}>
           {viewXmlLabel}
         </Button>
       ) : null}
