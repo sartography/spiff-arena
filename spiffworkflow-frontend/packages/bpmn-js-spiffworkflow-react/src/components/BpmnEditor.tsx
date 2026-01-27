@@ -1,9 +1,9 @@
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import BpmnViewer from 'bpmn-js/lib/Viewer';
 import {
-    BpmnPropertiesPanelModule,
-    BpmnPropertiesProviderModule,
-    // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
+  BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule,
+  // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
 } from 'bpmn-js-properties-panel';
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
 import CliModule from 'bpmn-js-cli';
@@ -11,18 +11,18 @@ import CliModule from 'bpmn-js-cli';
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
 import DmnModeler from 'dmn-js/lib/Modeler';
 import {
-    DmnPropertiesPanelModule,
-    DmnPropertiesProviderModule,
-    // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
+  DmnPropertiesPanelModule,
+  DmnPropertiesProviderModule,
+  // @ts-expect-error TS(7016) FIXME: Could not find a declaration file
 } from 'dmn-js-properties-panel';
 
 import React, {
-    useEffect,
-    useState,
-    useCallback,
-    forwardRef,
-    useImperativeHandle,
-    useRef,
+  useEffect,
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
 } from 'react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
@@ -52,852 +52,804 @@ import '../styles/bpmn-js-properties-panel.css';
 
 import { BpmnEditorProps, BasicTask } from '../types';
 import {
-    getBpmnProcessIdentifiers,
-    convertSvgElementToHtmlString,
-    makeid,
-    checkTaskCanBeHighlighted,
-    taskIsMultiInstanceChild,
+  getBpmnProcessIdentifiers,
+  convertSvgElementToHtmlString,
+  makeid,
+  checkTaskCanBeHighlighted,
+  taskIsMultiInstanceChild,
 } from '../utils/bpmnHelpers';
 
 import {
-    BpmnJsScriptIcon,
-    CallActivityNavigateArrowUp,
+  BpmnJsScriptIcon,
+  CallActivityNavigateArrowUp,
 } from '../icons/SvgIcons';
 
 const FitViewport = 'fit-viewport';
 
 export interface BpmnEditorRef {
-    getXML: () => Promise<string>;
-    zoom: (amount: number) => void;
-    getModeler: () => any;
+  getXML: () => Promise<string>;
+  zoom: (amount: number) => void;
+  getModeler: () => any;
 }
 
 export type TaskMetadataItem =
-    | string
-    | { name: string; label?: string; description?: string };
+  | string
+  | { name: string; label?: string; description?: string };
 
 const DEFAULT_TASK_METADATA_KEYS: TaskMetadataItem[] = [];
 
 export interface BpmnEditorInternalProps extends BpmnEditorProps {
-    taskMetadataKeys?: TaskMetadataItem[] | null;
+  taskMetadataKeys?: TaskMetadataItem[] | null;
 }
 
 const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
-    (
-        {
-            apiService,
-            processModelId,
-            diagramType,
-            diagramXML,
-            fileName,
-            tasks,
-            url,
-            taskMetadataKeys = DEFAULT_TASK_METADATA_KEYS,
-            onCallActivityOverlayClick,
-            onDataStoresRequested,
-            onDmnFilesRequested,
-            onElementClick,
-            onElementsChanged,
-            onJsonSchemaFilesRequested,
-            onLaunchBpmnEditor,
-            onLaunchDmnEditor,
-            onLaunchJsonSchemaEditor,
-            onLaunchMarkdownEditor,
-            onLaunchScriptEditor,
-            onLaunchMessageEditor,
-            onMessagesRequested,
-            onSearchProcessModels,
-            onServiceTasksRequested,
-        },
-        ref,
-    ) => {
-        const [diagramXMLString, setDiagramXMLString] = useState('');
-        const [diagramModelerState, setDiagramModelerState] =
-            useState<any>(null);
-        const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
-        const diagramFetchedRef = useRef(false);
+  (
+    {
+      apiService,
+      processModelId,
+      diagramType,
+      diagramXML,
+      fileName,
+      tasks,
+      url,
+      taskMetadataKeys = DEFAULT_TASK_METADATA_KEYS,
+      onCallActivityOverlayClick,
+      onDataStoresRequested,
+      onDmnFilesRequested,
+      onElementClick,
+      onElementsChanged,
+      onJsonSchemaFilesRequested,
+      onLaunchBpmnEditor,
+      onLaunchDmnEditor,
+      onLaunchJsonSchemaEditor,
+      onLaunchMarkdownEditor,
+      onLaunchScriptEditor,
+      onLaunchMessageEditor,
+      onMessagesRequested,
+      onSearchProcessModels,
+      onServiceTasksRequested,
+    },
+    ref,
+  ) => {
+    const [diagramXMLString, setDiagramXMLString] = useState('');
+    const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
+    const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
+    const diagramFetchedRef = useRef(false);
 
-        const fitViewportWithPaletteOffset = (canvas: any) => {
-            const container = canvas?._container;
-            if (
-                container &&
-                container.clientWidth > 0 &&
-                container.clientHeight > 0
-            ) {
-                canvas.zoom(FitViewport, 'auto');
-            }
+    const fitViewportWithPaletteOffset = (canvas: any) => {
+      const container = canvas?._container;
+      if (
+        container &&
+        container.clientWidth > 0 &&
+        container.clientHeight > 0
+      ) {
+        canvas.zoom(FitViewport, 'auto');
+      }
 
+      try {
+        const wrapper = container?.closest('.bpmn-js-container') || container;
+        const palette =
+          wrapper?.querySelector('.djs-palette') ||
+          document.querySelector('.djs-palette');
+        if (!palette || !canvas?.viewbox || !canvas?.scroll) {
+          return;
+        }
+        const paletteRect = palette.getBoundingClientRect();
+        const overlapWidth = Math.max(0, paletteRect.width);
+        if (!overlapWidth) {
+          return;
+        }
+        const viewbox = canvas.viewbox();
+        const inner = viewbox?.inner;
+        const outer = viewbox?.outer;
+        const scale = viewbox?.scale || 1;
+        if (
+          !inner ||
+          !outer ||
+          !Number.isFinite(scale) ||
+          scale <= 0 ||
+          inner.width <= 0 ||
+          inner.height <= 0
+        ) {
+          return;
+        }
+
+        // just enough to keep the first element off the left palette
+        const padding = 10;
+
+        const desiredLeftPadding = overlapWidth + padding;
+        const leftPaddingPx = (inner.x - viewbox.x) * scale;
+        const rightPaddingPx =
+          (viewbox.x + viewbox.width - (inner.x + inner.width)) * scale;
+
+        let deltaPx = desiredLeftPadding - leftPaddingPx;
+        if (deltaPx <= 0) {
+          return;
+        }
+
+        const maxShiftRight = rightPaddingPx - padding;
+        if (maxShiftRight > 0) {
+          deltaPx = Math.min(deltaPx, maxShiftRight);
+          if (Math.abs(deltaPx) < 0.5) {
+            return;
+          }
+          canvas.viewbox({
+            ...viewbox,
+            x: viewbox.x - deltaPx / scale,
+          });
+          return;
+        }
+
+        const availableWidth = Math.max(
+          0,
+          outer.width - overlapWidth - padding * 2,
+        );
+        const availableHeight = Math.max(0, outer.height - padding * 2);
+        if (!availableWidth || !availableHeight) {
+          return;
+        }
+
+        const targetScale = Math.min(
+          scale,
+          availableWidth / inner.width,
+          availableHeight / inner.height,
+        );
+        if (!Number.isFinite(targetScale) || targetScale <= 0) {
+          return;
+        }
+
+        const viewboxWidth = outer.width / targetScale;
+        const viewboxHeight = outer.height / targetScale;
+        const availableWidthSvg = (outer.width - overlapWidth) / targetScale;
+        const offsetXSvg = (overlapWidth + padding) / targetScale;
+        const centerX = inner.x + inner.width / 2;
+        const centerY = inner.y + inner.height / 2;
+        const x = centerX - offsetXSvg - availableWidthSvg / 2;
+        const y = centerY - viewboxHeight / 2;
+        canvas.viewbox({
+          x,
+          y,
+          width: viewboxWidth,
+          height: viewboxHeight,
+        });
+      } catch (error) {
+        console.warn('Failed to offset fit zoom:', error);
+      }
+    };
+
+    const zoom = useCallback(
+      (amount: number) => {
+        if (diagramModelerState) {
+          let modeler = diagramModelerState as any;
+          if (diagramType === 'dmn') {
+            modeler = (diagramModelerState as any).getActiveViewer();
+          }
+          if (modeler) {
             try {
-                const wrapper =
-                    container?.closest('.bpmn-js-container') || container;
-                const palette =
-                    wrapper?.querySelector('.djs-palette') ||
-                    document.querySelector('.djs-palette');
-                if (!palette || !canvas?.viewbox || !canvas?.scroll) {
-                    return;
-                }
-                const paletteRect = palette.getBoundingClientRect();
-                const canvasRect = container.getBoundingClientRect();
-                const overlaps =
-                    paletteRect.right > canvasRect.left &&
-                    paletteRect.left < canvasRect.right &&
-                    paletteRect.bottom > canvasRect.top &&
-                    paletteRect.top < canvasRect.bottom;
-                if (!overlaps) {
-                    return;
-                }
-                const overlapWidth = Math.max(
-                    0,
-                    paletteRect.right - canvasRect.left,
-                );
-                if (!overlapWidth) {
-                    return;
-                }
-                const viewbox = canvas.viewbox();
-                const inner = viewbox?.inner;
-                const outer = viewbox?.outer;
-                const scale = viewbox?.scale || 1;
-                if (
-                    !inner ||
-                    !outer ||
-                    !Number.isFinite(scale) ||
-                    scale <= 0 ||
-                    inner.width <= 0 ||
-                    inner.height <= 0
-                ) {
-                    return;
-                }
-
-                const padding = 12;
-                const desiredLeftPadding = overlapWidth + padding;
-                const leftPaddingPx = (inner.x - viewbox.x) * scale;
-                const rightPaddingPx =
-                    (viewbox.x + viewbox.width - (inner.x + inner.width)) *
-                    scale;
-
-                let deltaPx = desiredLeftPadding - leftPaddingPx;
-                if (deltaPx <= 0) {
-                    return;
-                }
-
-                const maxShiftRight = rightPaddingPx - padding;
-                if (maxShiftRight > 0) {
-                    deltaPx = Math.min(deltaPx, maxShiftRight);
-                    if (Math.abs(deltaPx) < 0.5) {
-                        return;
-                    }
-                    canvas.viewbox({
-                        ...viewbox,
-                        x: viewbox.x - deltaPx / scale,
-                    });
-                    return;
-                }
-
-                const availableWidth = Math.max(
-                    0,
-                    outer.width - overlapWidth - padding * 2,
-                );
-                const availableHeight = Math.max(
-                    0,
-                    outer.height - padding * 2,
-                );
-                if (!availableWidth || !availableHeight) {
-                    return;
-                }
-
-                const targetScale = Math.min(
-                    scale,
-                    availableWidth / inner.width,
-                    availableHeight / inner.height,
-                );
-                if (!Number.isFinite(targetScale) || targetScale <= 0) {
-                    return;
-                }
-
-                const viewboxWidth = outer.width / targetScale;
-                const viewboxHeight = outer.height / targetScale;
-                const availableWidthSvg = (outer.width - overlapWidth) / targetScale;
-                const offsetXSvg = (overlapWidth + padding) / targetScale;
-                const centerX = inner.x + inner.width / 2;
-                const centerY = inner.y + inner.height / 2;
-                const x = centerX - offsetXSvg - availableWidthSvg / 2;
-                const y = centerY - viewboxHeight / 2;
-                canvas.viewbox({
-                    x,
-                    y,
-                    width: viewboxWidth,
-                    height: viewboxHeight,
-                });
+              if (amount === 0) {
+                const canvas = modeler.get('canvas');
+                fitViewportWithPaletteOffset(canvas);
+              } else {
+                modeler.get('zoomScroll').stepZoom(amount);
+              }
             } catch (error) {
-                console.warn('Failed to offset fit zoom:', error);
+              console.warn('Failed to zoom:', error);
             }
-        };
+          }
+        }
+      },
+      [diagramModelerState, diagramType],
+    );
 
-        const zoom = useCallback(
-            (amount: number) => {
-                if (diagramModelerState) {
-                    let modeler = diagramModelerState as any;
-                    if (diagramType === 'dmn') {
-                        modeler = (
-                            diagramModelerState as any
-                        ).getActiveViewer();
-                    }
-                    if (modeler) {
-                        try {
-                            if (amount === 0) {
-                                const canvas = modeler.get('canvas');
-                                fitViewportWithPaletteOffset(canvas);
-                            } else {
-                                modeler.get('zoomScroll').stepZoom(amount);
-                            }
-                        } catch (error) {
-                            console.warn('Failed to zoom:', error);
-                        }
-                    }
-                }
-            },
-            [diagramModelerState, diagramType],
+    // Expose methods to parent via ref
+    useImperativeHandle(ref, () => ({
+      getXML: async () => {
+        if (diagramModelerState) {
+          const result = await diagramModelerState.saveXML({
+            format: true,
+          });
+          return result.xml;
+        }
+        return '';
+      },
+      zoom,
+      getModeler: () => diagramModelerState,
+    }));
+
+    /* This restores unresolved references that camunda removes */
+    const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
+      diagramModelerToUse.on('import.parse.complete', (event: any) => {
+        if (!event.references) {
+          return;
+        }
+        const refs = event.references.filter(
+          (r: any) =>
+            r.property === 'bpmn:loopDataInputRef' ||
+            r.property === 'bpmn:loopDataOutputRef',
         );
 
-        // Expose methods to parent via ref
-        useImperativeHandle(ref, () => ({
-            getXML: async () => {
-                if (diagramModelerState) {
-                    const result = await diagramModelerState.saveXML({
-                        format: true,
-                    });
-                    return result.xml;
-                }
-                return '';
-            },
-            zoom,
-            getModeler: () => diagramModelerState,
-        }));
+        const desc =
+          diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
+            'bpmn:ItemAwareElement',
+          );
+        refs.forEach((ref: any) => {
+          const props = {
+            id: ref.id,
+            name: ref.id ? typeof ref.name === 'undefined' : ref.name,
+          };
+          const elem = diagramModelerToUse._moddle.create(desc, props);
+          elem.$parent = ref.element;
+          ref.element.set(ref.property, elem);
+        });
+      });
+      return null;
+    };
 
-        /* This restores unresolved references that camunda removes */
-        const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
-            diagramModelerToUse.on('import.parse.complete', (event: any) => {
-                if (!event.references) {
-                    return;
-                }
-                const refs = event.references.filter(
-                    (r: any) =>
-                        r.property === 'bpmn:loopDataInputRef' ||
-                        r.property === 'bpmn:loopDataOutputRef',
-                );
+    // Initialize the modeler
+    useEffect(() => {
+      let canvasClass = 'diagram-editor-canvas';
+      if (diagramType === 'readonly') {
+        canvasClass = 'diagram-viewer-canvas';
+      }
 
-                const desc =
-                    diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
-                        'bpmn:ItemAwareElement',
-                    );
-                refs.forEach((ref: any) => {
-                    const props = {
-                        id: ref.id,
-                        name: ref.id
-                            ? typeof ref.name === 'undefined'
-                            : ref.name,
-                    };
-                    const elem = diagramModelerToUse._moddle.create(
-                        desc,
-                        props,
-                    );
-                    elem.$parent = ref.element;
-                    ref.element.set(ref.property, elem);
-                });
-            });
-            return null;
-        };
-
-        // Initialize the modeler
-        useEffect(() => {
-            let canvasClass = 'diagram-editor-canvas';
-            if (diagramType === 'readonly') {
-                canvasClass = 'diagram-viewer-canvas';
-            }
-
-            const temp = document.createElement('template');
-            const panelId: string =
-                diagramType === 'readonly'
-                    ? 'hidden-properties-panel'
-                    : 'js-properties-panel';
-            temp.innerHTML = `
+      const temp = document.createElement('template');
+      const panelId: string =
+        diagramType === 'readonly'
+          ? 'hidden-properties-panel'
+          : 'js-properties-panel';
+      temp.innerHTML = `
       <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
         <div class="canvas ${canvasClass}" id="canvas"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
-            const frag = temp.content;
+      const frag = temp.content;
 
-            const diagramContainerElement =
-                document.getElementById('diagram-container');
-            if (diagramContainerElement) {
-                diagramContainerElement.innerHTML = '';
-                diagramContainerElement.appendChild(frag);
-            }
+      const diagramContainerElement =
+        document.getElementById('diagram-container');
+      if (diagramContainerElement) {
+        diagramContainerElement.innerHTML = '';
+        diagramContainerElement.appendChild(frag);
+      }
 
-            let diagramModeler: any = null;
+      let diagramModeler: any = null;
 
-            if (diagramType === 'bpmn') {
-                diagramModeler = new BpmnModeler({
-                    container: '#canvas',
-                    propertiesPanel: {
-                        parent: '#js-properties-panel',
-                    },
-                    additionalModules: [
-                        spiffworkflow,
-                        BpmnPropertiesPanelModule,
-                        BpmnPropertiesProviderModule,
-                        ZoomScrollModule,
-                        CliModule,
-                    ],
-                    cli: {
-                        bindTo: 'cli',
-                    },
-                    moddleExtensions: {
-                        spiffworkflow: spiffModdleExtension,
-                    },
-                });
-            } else if (diagramType === 'dmn') {
-                diagramModeler = new DmnModeler({
-                    container: '#canvas',
-                    drd: {
-                        propertiesPanel: {
-                            parent: '#js-properties-panel',
-                        },
-                        additionalModules: [
-                            DmnPropertiesPanelModule,
-                            DmnPropertiesProviderModule,
-                            ZoomScrollModule,
-                        ],
-                    },
-                });
-            } else if (diagramType === 'readonly') {
-                diagramModeler = new BpmnViewer({
-                    container: '#canvas',
-                    additionalModules: [
-                        KeyboardMoveModule,
-                        MoveCanvasModule,
-                        ZoomScrollModule,
-                    ],
-                });
-            }
+      if (diagramType === 'bpmn') {
+        diagramModeler = new BpmnModeler({
+          container: '#canvas',
+          propertiesPanel: {
+            parent: '#js-properties-panel',
+          },
+          additionalModules: [
+            spiffworkflow,
+            BpmnPropertiesPanelModule,
+            BpmnPropertiesProviderModule,
+            ZoomScrollModule,
+            CliModule,
+          ],
+          cli: {
+            bindTo: 'cli',
+          },
+          moddleExtensions: {
+            spiffworkflow: spiffModdleExtension,
+          },
+        });
+      } else if (diagramType === 'dmn') {
+        diagramModeler = new DmnModeler({
+          container: '#canvas',
+          drd: {
+            propertiesPanel: {
+              parent: '#js-properties-panel',
+            },
+            additionalModules: [
+              DmnPropertiesPanelModule,
+              DmnPropertiesProviderModule,
+              ZoomScrollModule,
+            ],
+          },
+        });
+      } else if (diagramType === 'readonly') {
+        diagramModeler = new BpmnViewer({
+          container: '#canvas',
+          additionalModules: [
+            KeyboardMoveModule,
+            MoveCanvasModule,
+            ZoomScrollModule,
+          ],
+        });
+      }
 
-            function handleLaunchScriptEditor(
-                element: any,
-                script: string,
-                scriptType: string,
-                eventBus: any,
-            ) {
-                if (onLaunchScriptEditor) {
-                    setPerformingXmlUpdates(true);
-                    const modeling = diagramModeler.get('modeling');
-                    onLaunchScriptEditor(
-                        element,
-                        script,
-                        scriptType,
-                        eventBus,
-                        modeling,
-                    );
-                }
-            }
+      function handleLaunchScriptEditor(
+        element: any,
+        script: string,
+        scriptType: string,
+        eventBus: any,
+      ) {
+        if (onLaunchScriptEditor) {
+          setPerformingXmlUpdates(true);
+          const modeling = diagramModeler.get('modeling');
+          onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
+        }
+      }
 
-            function handleLaunchMarkdownEditor(
-                element: any,
-                value: string,
-                eventBus: any,
-            ) {
-                if (onLaunchMarkdownEditor) {
-                    setPerformingXmlUpdates(true);
-                    onLaunchMarkdownEditor(element, value, eventBus);
-                }
-            }
+      function handleLaunchMarkdownEditor(
+        element: any,
+        value: string,
+        eventBus: any,
+      ) {
+        if (onLaunchMarkdownEditor) {
+          setPerformingXmlUpdates(true);
+          onLaunchMarkdownEditor(element, value, eventBus);
+        }
+      }
 
-            function handleElementClick(event: any) {
-                if (onElementClick) {
-                    const canvas = diagramModeler.get('canvas');
-                    const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-                        canvas.getRootElement(),
-                    );
-                    onElementClick(event.element, bpmnProcessIdentifiers);
-                }
-            }
+      function handleElementClick(event: any) {
+        if (onElementClick) {
+          const canvas = diagramModeler.get('canvas');
+          const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+            canvas.getRootElement(),
+          );
+          onElementClick(event.element, bpmnProcessIdentifiers);
+        }
+      }
 
-            function handleServiceTasksRequested(event: any) {
-                if (onServiceTasksRequested) {
-                    onServiceTasksRequested(event);
-                }
-            }
+      function handleServiceTasksRequested(event: any) {
+        if (onServiceTasksRequested) {
+          onServiceTasksRequested(event);
+        }
+      }
 
-            function handleDataStoresRequested(event: any) {
-                if (onDataStoresRequested) {
-                    onDataStoresRequested(event);
-                }
-            }
+      function handleDataStoresRequested(event: any) {
+        if (onDataStoresRequested) {
+          onDataStoresRequested(event);
+        }
+      }
 
-            function createPrePostScriptOverlay(event: any) {
-                if (event.element && event.element.type !== 'bpmn:ScriptTask') {
-                    const preScript =
-                        event.element.businessObject.extensionElements?.values?.find(
-                            (extension: any) =>
-                                extension.$type === 'spiffworkflow:PreScript',
-                        );
-                    const postScript =
-                        event.element.businessObject.extensionElements?.values?.find(
-                            (extension: any) =>
-                                extension.$type === 'spiffworkflow:PostScript',
-                        );
-                    const overlays = diagramModeler.get('overlays');
-                    const scriptIcon = convertSvgElementToHtmlString(
-                        <BpmnJsScriptIcon />,
-                    );
-
-                    if (preScript?.value) {
-                        overlays.add(event.element.id, {
-                            position: {
-                                bottom: 25,
-                                left: 0,
-                            },
-                            html: scriptIcon,
-                        });
-                    }
-                    if (postScript?.value) {
-                        overlays.add(event.element.id, {
-                            position: {
-                                bottom: 25,
-                                right: 25,
-                            },
-                            html: scriptIcon,
-                        });
-                    }
-                }
-            }
-
-            setDiagramModelerState(diagramModeler);
-
-            if (diagramType !== 'readonly') {
-                diagramModeler.on('shape.added', (event: any) => {
-                    createPrePostScriptOverlay(event);
-                });
-            }
-
-            const onMetadataRequested = (event: any) => {
-                event.eventBus.fire('spiff.task_metadata_keys.returned', {
-                    keys: taskMetadataKeys,
-                });
-            };
-
-            diagramModeler.on(
-                'spiff.task_metadata_keys.requested',
-                onMetadataRequested,
+      function createPrePostScriptOverlay(event: any) {
+        if (event.element && event.element.type !== 'bpmn:ScriptTask') {
+          const preScript =
+            event.element.businessObject.extensionElements?.values?.find(
+              (extension: any) => extension.$type === 'spiffworkflow:PreScript',
             );
-
-            diagramModeler.on('spiff.script.edit', (event: any) => {
-                const { error, element, scriptType, script, eventBus } = event;
-                if (error) {
-                    console.error(error);
-                }
-                handleLaunchScriptEditor(element, script, scriptType, eventBus);
-            });
-
-            diagramModeler.on('spiff.markdown.edit', (event: any) => {
-                const { error, element, value, eventBus } = event;
-                if (error) {
-                    console.error(error);
-                }
-                handleLaunchMarkdownEditor(element, value, eventBus);
-            });
-
-            diagramModeler.on('spiff.callactivity.edit', (event: any) => {
-                if (onLaunchBpmnEditor) {
-                    onLaunchBpmnEditor(event.processId);
-                }
-            });
-
-            diagramModeler.on('spiff.file.edit', (event: any) => {
-                const { error, element, value, eventBus } = event;
-                if (error) {
-                    console.error(error);
-                }
-                if (onLaunchJsonSchemaEditor) {
-                    onLaunchJsonSchemaEditor(element, value, eventBus);
-                }
-            });
-
-            diagramModeler.on('spiff.dmn.edit', (event: any) => {
-                if (onLaunchDmnEditor) {
-                    onLaunchDmnEditor(event.value);
-                }
-            });
-
-            diagramModeler.on('element.click', (element: any) => {
-                handleElementClick(element);
-            });
-
-            diagramModeler.on('elements.changed', (event: any) => {
-                if (onElementsChanged) {
-                    onElementsChanged(event);
-                }
-            });
-
-            diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
-                handleServiceTasksRequested(event);
-            });
-
-            diagramModeler.on('spiff.data_stores.requested', (event: any) => {
-                handleDataStoresRequested(event);
-            });
-
-            diagramModeler.on(
-                'spiff.json_schema_files.requested',
-                (event: any) => {
-                    if (onJsonSchemaFilesRequested) {
-                        onJsonSchemaFilesRequested(event);
-                    }
-                },
+          const postScript =
+            event.element.businessObject.extensionElements?.values?.find(
+              (extension: any) =>
+                extension.$type === 'spiffworkflow:PostScript',
             );
+          const overlays = diagramModeler.get('overlays');
+          const scriptIcon = convertSvgElementToHtmlString(
+            <BpmnJsScriptIcon />,
+          );
 
-            diagramModeler.on('spiff.dmn_files.requested', (event: any) => {
-                if (onDmnFilesRequested) {
-                    onDmnFilesRequested(event);
-                }
+          if (preScript?.value) {
+            overlays.add(event.element.id, {
+              position: {
+                bottom: 25,
+                left: 0,
+              },
+              html: scriptIcon,
             });
-
-            diagramModeler.on('spiff.messages.requested', (event: any) => {
-                if (onMessagesRequested) {
-                    onMessagesRequested(event);
-                }
+          }
+          if (postScript?.value) {
+            overlays.add(event.element.id, {
+              position: {
+                bottom: 25,
+                right: 25,
+              },
+              html: scriptIcon,
             });
+          }
+        }
+      }
 
-            diagramModeler.on('spiff.callactivity.search', (event: any) => {
-                if (onSearchProcessModels) {
-                    onSearchProcessModels(
-                        event.value,
-                        event.eventBus,
-                        event.element,
-                    );
-                }
-            });
+      setDiagramModelerState(diagramModeler);
 
-            diagramModeler.on('spiff.message.edit', (event: any) => {
-                if (onLaunchMessageEditor) {
-                    onLaunchMessageEditor(event);
-                }
-            });
+      if (diagramType !== 'readonly') {
+        diagramModeler.on('shape.added', (event: any) => {
+          createPrePostScriptOverlay(event);
+        });
+      }
 
-            // Cleanup: destroy the modeler when component unmounts or when we need a new modeler
-            return () => {
-                if (diagramModeler) {
-                    diagramModeler.destroy();
-                }
-            };
-        }, [
-            diagramType,
-            taskMetadataKeys,
-            onDataStoresRequested,
-            onDmnFilesRequested,
-            onElementClick,
-            onElementsChanged,
-            onJsonSchemaFilesRequested,
-            onLaunchBpmnEditor,
-            onLaunchDmnEditor,
-            onLaunchJsonSchemaEditor,
-            onLaunchMarkdownEditor,
-            onLaunchMessageEditor,
-            onLaunchScriptEditor,
-            onMessagesRequested,
-            onSearchProcessModels,
-            onServiceTasksRequested,
-        ]);
+      const onMetadataRequested = (event: any) => {
+        event.eventBus.fire('spiff.task_metadata_keys.returned', {
+          keys: taskMetadataKeys,
+        });
+      };
 
-        // Display the diagram
-        useEffect(() => {
-            if (!diagramXMLString || !diagramModelerState) {
-                return;
-            }
-            diagramModelerState.importXML(diagramXMLString);
+      diagramModeler.on(
+        'spiff.task_metadata_keys.requested',
+        onMetadataRequested,
+      );
 
-            // Zoom to fit after a short delay to ensure canvas is rendered
-            setTimeout(() => {
-                try {
-                    let modeler = diagramModelerState;
-                    if (diagramType === 'dmn') {
-                        modeler = diagramModelerState.getActiveViewer();
-                    }
-                    if (modeler) {
-                        const canvas = modeler.get('canvas');
-                        // Check if canvas has valid dimensions before zooming
-                                fitViewportWithPaletteOffset(canvas);
-                            }
-                        } catch (error) {
-                            console.warn('Failed to zoom canvas:', error);
-                        }
-            }, 100);
+      diagramModeler.on('spiff.script.edit', (event: any) => {
+        const { error, element, scriptType, script, eventBus } = event;
+        if (error) {
+          console.error(error);
+        }
+        handleLaunchScriptEditor(element, script, scriptType, eventBus);
+      });
 
-            if (diagramType !== 'dmn') {
-                fixUnresolvedReferences(diagramModelerState);
-            }
-        }, [diagramXMLString, diagramModelerState, diagramType]);
+      diagramModeler.on('spiff.markdown.edit', (event: any) => {
+        const { error, element, value, eventBus } = event;
+        if (error) {
+          console.error(error);
+        }
+        handleLaunchMarkdownEditor(element, value, eventBus);
+      });
 
-        // Respond to upstream diagram XML changes (e.g., navigation between files)
-        useEffect(() => {
-            if (!diagramXML || !diagramModelerState) {
-                return;
-            }
-            setDiagramXMLString(diagramXML);
-        }, [diagramXML, diagramModelerState]);
+      diagramModeler.on('spiff.callactivity.edit', (event: any) => {
+        if (onLaunchBpmnEditor) {
+          onLaunchBpmnEditor(event.processId);
+        }
+      });
 
-        // Import done operations
-        useEffect(() => {
-            if (!diagramModelerState) {
-                return undefined;
-            }
-            if (performingXmlUpdates) {
-                return undefined;
-            }
-            // Prevent re-running fetch logic if we've already fetched
-            if (diagramFetchedRef.current) {
-                return undefined;
-            }
+      diagramModeler.on('spiff.file.edit', (event: any) => {
+        const { error, element, value, eventBus } = event;
+        if (error) {
+          console.error(error);
+        }
+        if (onLaunchJsonSchemaEditor) {
+          onLaunchJsonSchemaEditor(element, value, eventBus);
+        }
+      });
 
-            function handleError(err: any) {
-                console.error('ERROR:', err);
-            }
+      diagramModeler.on('spiff.dmn.edit', (event: any) => {
+        if (onLaunchDmnEditor) {
+          onLaunchDmnEditor(event.value);
+        }
+      });
 
-            function highlightBpmnIoElement(
-                canvas: any,
-                task: BasicTask,
-                bpmnIoClassName: string,
-                bpmnProcessIdentifiers: string[],
+      diagramModeler.on('element.click', (element: any) => {
+        handleElementClick(element);
+      });
+
+      diagramModeler.on('elements.changed', (event: any) => {
+        if (onElementsChanged) {
+          onElementsChanged(event);
+        }
+      });
+
+      diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
+        handleServiceTasksRequested(event);
+      });
+
+      diagramModeler.on('spiff.data_stores.requested', (event: any) => {
+        handleDataStoresRequested(event);
+      });
+
+      diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
+        if (onJsonSchemaFilesRequested) {
+          onJsonSchemaFilesRequested(event);
+        }
+      });
+
+      diagramModeler.on('spiff.dmn_files.requested', (event: any) => {
+        if (onDmnFilesRequested) {
+          onDmnFilesRequested(event);
+        }
+      });
+
+      diagramModeler.on('spiff.messages.requested', (event: any) => {
+        if (onMessagesRequested) {
+          onMessagesRequested(event);
+        }
+      });
+
+      diagramModeler.on('spiff.callactivity.search', (event: any) => {
+        if (onSearchProcessModels) {
+          onSearchProcessModels(event.value, event.eventBus, event.element);
+        }
+      });
+
+      diagramModeler.on('spiff.message.edit', (event: any) => {
+        if (onLaunchMessageEditor) {
+          onLaunchMessageEditor(event);
+        }
+      });
+
+      // Cleanup: destroy the modeler when component unmounts or when we need a new modeler
+      return () => {
+        if (diagramModeler) {
+          diagramModeler.destroy();
+        }
+      };
+    }, [
+      diagramType,
+      taskMetadataKeys,
+      onDataStoresRequested,
+      onDmnFilesRequested,
+      onElementClick,
+      onElementsChanged,
+      onJsonSchemaFilesRequested,
+      onLaunchBpmnEditor,
+      onLaunchDmnEditor,
+      onLaunchJsonSchemaEditor,
+      onLaunchMarkdownEditor,
+      onLaunchMessageEditor,
+      onLaunchScriptEditor,
+      onMessagesRequested,
+      onSearchProcessModels,
+      onServiceTasksRequested,
+    ]);
+
+    // Display the diagram
+    useEffect(() => {
+      if (!diagramXMLString || !diagramModelerState) {
+        return;
+      }
+      diagramModelerState.importXML(diagramXMLString);
+
+      // Zoom to fit after a short delay to ensure canvas is rendered
+      setTimeout(() => {
+        try {
+          let modeler = diagramModelerState;
+          if (diagramType === 'dmn') {
+            modeler = diagramModelerState.getActiveViewer();
+          }
+          if (modeler) {
+            const canvas = modeler.get('canvas');
+            // Check if canvas has valid dimensions before zooming
+            fitViewportWithPaletteOffset(canvas);
+          }
+        } catch (error) {
+          console.warn('Failed to zoom canvas:', error);
+        }
+      }, 100);
+
+      if (diagramType !== 'dmn') {
+        fixUnresolvedReferences(diagramModelerState);
+      }
+    }, [diagramXMLString, diagramModelerState, diagramType]);
+
+    // Respond to upstream diagram XML changes (e.g., navigation between files)
+    useEffect(() => {
+      if (!diagramXML || !diagramModelerState) {
+        return;
+      }
+      setDiagramXMLString(diagramXML);
+    }, [diagramXML, diagramModelerState]);
+
+    // Import done operations
+    useEffect(() => {
+      if (!diagramModelerState) {
+        return undefined;
+      }
+      if (performingXmlUpdates) {
+        return undefined;
+      }
+      // Prevent re-running fetch logic if we've already fetched
+      if (diagramFetchedRef.current) {
+        return undefined;
+      }
+
+      function handleError(err: any) {
+        console.error('ERROR:', err);
+      }
+
+      function highlightBpmnIoElement(
+        canvas: any,
+        task: BasicTask,
+        bpmnIoClassName: string,
+        bpmnProcessIdentifiers: string[],
+      ) {
+        if (checkTaskCanBeHighlighted(task)) {
+          try {
+            if (
+              bpmnProcessIdentifiers.includes(
+                task.bpmn_process_definition_identifier,
+              )
             ) {
-                if (checkTaskCanBeHighlighted(task)) {
-                    try {
-                        if (
-                            bpmnProcessIdentifiers.includes(
-                                task.bpmn_process_definition_identifier,
-                            )
-                        ) {
-                            canvas.addMarker(
-                                task.bpmn_identifier,
-                                bpmnIoClassName,
-                            );
-                        }
-                    } catch (bpmnIoError: any) {
-                        if (
-                            bpmnIoError.message !==
-                            "Cannot read properties of undefined (reading 'id')"
-                        ) {
-                            throw bpmnIoError;
-                        }
-                    }
-                }
+              canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
             }
-
-            function addOverlayOnCallActivity(
-                task: BasicTask,
-                bpmnProcessIdentifiers: string[],
+          } catch (bpmnIoError: any) {
+            if (
+              bpmnIoError.message !==
+              "Cannot read properties of undefined (reading 'id')"
             ) {
-                if (
-                    taskIsMultiInstanceChild(task) ||
-                    !onCallActivityOverlayClick ||
-                    diagramType !== 'readonly' ||
-                    !diagramModelerState
-                ) {
-                    return;
-                }
-                function domify(htmlString: string) {
-                    const template = document.createElement('template');
-                    template.innerHTML = htmlString.trim();
-                    return template.content.firstChild;
-                }
-                const createCallActivityOverlay = () => {
-                    const overlays = diagramModelerState.get('overlays');
-                    const icon = convertSvgElementToHtmlString(
-                        <CallActivityNavigateArrowUp />,
-                    );
-                    const button: any = domify(
-                        `<button class="bjs-drilldown">${icon}</button>`,
-                    );
-                    button.addEventListener('click', (newEvent: any) => {
-                        onCallActivityOverlayClick(task, newEvent);
-                    });
-                    button.addEventListener('auxclick', (newEvent: any) => {
-                        onCallActivityOverlayClick(task, newEvent);
-                    });
-                    overlays.add(task.bpmn_identifier, 'drilldown', {
-                        position: {
-                            bottom: -10,
-                            right: -8,
-                        },
-                        html: button,
-                    });
-                };
-                try {
-                    if (
-                        bpmnProcessIdentifiers.includes(
-                            task.bpmn_process_definition_identifier,
-                        )
-                    ) {
-                        createCallActivityOverlay();
-                    }
-                } catch (bpmnIoError: any) {
-                    if (
-                        bpmnIoError.message !==
-                        "Cannot read properties of undefined (reading 'id')"
-                    ) {
-                        throw bpmnIoError;
-                    }
-                }
+              throw bpmnIoError;
             }
+          }
+        }
+      }
 
-            function onImportDone(event: any) {
-                const { error } = event;
+      function addOverlayOnCallActivity(
+        task: BasicTask,
+        bpmnProcessIdentifiers: string[],
+      ) {
+        if (
+          taskIsMultiInstanceChild(task) ||
+          !onCallActivityOverlayClick ||
+          diagramType !== 'readonly' ||
+          !diagramModelerState
+        ) {
+          return;
+        }
+        function domify(htmlString: string) {
+          const template = document.createElement('template');
+          template.innerHTML = htmlString.trim();
+          return template.content.firstChild;
+        }
+        const createCallActivityOverlay = () => {
+          const overlays = diagramModelerState.get('overlays');
+          const icon = convertSvgElementToHtmlString(
+            <CallActivityNavigateArrowUp />,
+          );
+          const button: any = domify(
+            `<button class="bjs-drilldown">${icon}</button>`,
+          );
+          button.addEventListener('click', (newEvent: any) => {
+            onCallActivityOverlayClick(task, newEvent);
+          });
+          button.addEventListener('auxclick', (newEvent: any) => {
+            onCallActivityOverlayClick(task, newEvent);
+          });
+          overlays.add(task.bpmn_identifier, 'drilldown', {
+            position: {
+              bottom: -10,
+              right: -8,
+            },
+            html: button,
+          });
+        };
+        try {
+          if (
+            bpmnProcessIdentifiers.includes(
+              task.bpmn_process_definition_identifier,
+            )
+          ) {
+            createCallActivityOverlay();
+          }
+        } catch (bpmnIoError: any) {
+          if (
+            bpmnIoError.message !==
+            "Cannot read properties of undefined (reading 'id')"
+          ) {
+            throw bpmnIoError;
+          }
+        }
+      }
 
-                if (error) {
-                    handleError(error);
-                    return;
-                }
+      function onImportDone(event: any) {
+        const { error } = event;
 
-                if (diagramType === 'dmn') {
-                    return;
-                }
+        if (error) {
+          handleError(error);
+          return;
+        }
 
-                const canvas = diagramModelerState.get('canvas');
-                // Check if canvas has valid dimensions before zooming
-                try {
-                    fitViewportWithPaletteOffset(canvas);
-                } catch (error) {
-                    console.warn('Failed to zoom canvas on import:', error);
-                }
+        if (diagramType === 'dmn') {
+          return;
+        }
 
-                if (tasks) {
-                    const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-                        canvas.getRootElement(),
-                    );
-                    tasks.forEach((task: BasicTask) => {
-                        let className = '';
-                        if (task.state === 'COMPLETED') {
-                            className = 'completed-task-highlight';
-                        } else if (
-                            ['READY', 'WAITING', 'STARTED'].includes(task.state)
-                        ) {
-                            className = 'active-task-highlight';
-                        } else if (task.state === 'CANCELLED') {
-                            className = 'cancelled-task-highlight';
-                        } else if (task.state === 'ERROR') {
-                            className = 'errored-task-highlight';
-                        }
-                        if (className) {
-                            highlightBpmnIoElement(
-                                canvas,
-                                task,
-                                className,
-                                bpmnProcessIdentifiers,
-                            );
-                        }
-                        if (
-                            task.typename === 'CallActivity' &&
-                            !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
-                        ) {
-                            addOverlayOnCallActivity(
-                                task,
-                                bpmnProcessIdentifiers,
-                            );
-                        }
-                    });
-                }
+        const canvas = diagramModelerState.get('canvas');
+        // Check if canvas has valid dimensions before zooming
+        try {
+          fitViewportWithPaletteOffset(canvas);
+        } catch (error) {
+          console.warn('Failed to zoom canvas on import:', error);
+        }
+
+        if (tasks) {
+          const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+            canvas.getRootElement(),
+          );
+          tasks.forEach((task: BasicTask) => {
+            let className = '';
+            if (task.state === 'COMPLETED') {
+              className = 'completed-task-highlight';
+            } else if (['READY', 'WAITING', 'STARTED'].includes(task.state)) {
+              className = 'active-task-highlight';
+            } else if (task.state === 'CANCELLED') {
+              className = 'cancelled-task-highlight';
+            } else if (task.state === 'ERROR') {
+              className = 'errored-task-highlight';
             }
-
-            function dmnTextHandler(text: string) {
-                const decisionId = `decision_${makeid(7)}`;
-                const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
-                setDiagramXMLString(newText);
+            if (className) {
+              highlightBpmnIoElement(
+                canvas,
+                task,
+                className,
+                bpmnProcessIdentifiers,
+              );
             }
-
-            function bpmnTextHandler(text: string) {
-                const processId = `Process_${makeid(7)}`;
-                const newText = text.replaceAll('{{PROCESS_ID}}', processId);
-                setDiagramXMLString(newText);
-            }
-
-            async function fetchDiagramFromURL(
-                urlToUse: string,
-                textHandler?: (text: string) => void,
+            if (
+              task.typename === 'CallActivity' &&
+              !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
             ) {
-                try {
-                    const text = await apiService.loadDiagramTemplate(urlToUse);
-                    if (textHandler) {
-                        textHandler(text);
-                    } else {
-                        setDiagramXMLString(text);
-                    }
-                } catch (err) {
-                    handleError(err);
-                }
+              addOverlayOnCallActivity(task, bpmnProcessIdentifiers);
             }
+          });
+        }
+      }
 
-            async function fetchDiagramFromJsonAPI() {
-                try {
-                    const result = await apiService.loadDiagramFile(
-                        processModelId,
-                        fileName!,
-                    );
-                    setDiagramXMLString(result.file_contents);
-                } catch (err) {
-                    handleError(err);
-                }
-            }
+      function dmnTextHandler(text: string) {
+        const decisionId = `decision_${makeid(7)}`;
+        const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
+        setDiagramXMLString(newText);
+      }
 
-            (diagramModelerState as any).on('import.done', onImportDone);
+      function bpmnTextHandler(text: string) {
+        const processId = `Process_${makeid(7)}`;
+        const newText = text.replaceAll('{{PROCESS_ID}}', processId);
+        setDiagramXMLString(newText);
+      }
 
-            // Mark that we've initialized the fetch logic
-            diagramFetchedRef.current = true;
+      async function fetchDiagramFromURL(
+        urlToUse: string,
+        textHandler?: (text: string) => void,
+      ) {
+        try {
+          const text = await apiService.loadDiagramTemplate(urlToUse);
+          if (textHandler) {
+            textHandler(text);
+          } else {
+            setDiagramXMLString(text);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      }
 
-            if (diagramXML) {
-                setDiagramXMLString(diagramXML);
-                return undefined;
-            }
-
-            if (!diagramXML) {
-                if (url) {
-                    fetchDiagramFromURL(url);
-                    return undefined;
-                }
-                if (fileName) {
-                    fetchDiagramFromJsonAPI();
-                    return undefined;
-                }
-                let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-                let textHandler = bpmnTextHandler;
-                if (diagramType === 'dmn') {
-                    newDiagramFileName = 'new_dmn_diagram.dmn';
-                    textHandler = dmnTextHandler;
-                }
-                fetchDiagramFromURL(newDiagramFileName, textHandler);
-                return undefined;
-            }
-
-            return undefined;
-        }, [
-            apiService,
-            diagramModelerState,
-            diagramType,
-            diagramXML,
-            fileName,
-            onCallActivityOverlayClick,
-            performingXmlUpdates,
+      async function fetchDiagramFromJsonAPI() {
+        try {
+          const result = await apiService.loadDiagramFile(
             processModelId,
-            tasks,
-            url,
-        ]);
+            fileName!,
+          );
+          setDiagramXMLString(result.file_contents);
+        } catch (err) {
+          handleError(err);
+        }
+      }
 
-        // The component only renders the container - the actual diagram is rendered by bpmn-js
-        return (
-            <div
-                id="diagram-container"
-                style={{ width: '100%', height: '100%' }}
-            />
-        );
-    },
+      (diagramModelerState as any).on('import.done', onImportDone);
+
+      // Mark that we've initialized the fetch logic
+      diagramFetchedRef.current = true;
+
+      if (diagramXML) {
+        setDiagramXMLString(diagramXML);
+        return undefined;
+      }
+
+      if (!diagramXML) {
+        if (url) {
+          fetchDiagramFromURL(url);
+          return undefined;
+        }
+        if (fileName) {
+          fetchDiagramFromJsonAPI();
+          return undefined;
+        }
+        let newDiagramFileName = 'new_bpmn_diagram.bpmn';
+        let textHandler = bpmnTextHandler;
+        if (diagramType === 'dmn') {
+          newDiagramFileName = 'new_dmn_diagram.dmn';
+          textHandler = dmnTextHandler;
+        }
+        fetchDiagramFromURL(newDiagramFileName, textHandler);
+        return undefined;
+      }
+
+      return undefined;
+    }, [
+      apiService,
+      diagramModelerState,
+      diagramType,
+      diagramXML,
+      fileName,
+      onCallActivityOverlayClick,
+      performingXmlUpdates,
+      processModelId,
+      tasks,
+      url,
+    ]);
+
+    // The component only renders the container - the actual diagram is rendered by bpmn-js
+    return (
+      <div id="diagram-container" style={{ width: '100%', height: '100%' }} />
+    );
+  },
 );
 
 BpmnEditor.displayName = 'BpmnEditor';
