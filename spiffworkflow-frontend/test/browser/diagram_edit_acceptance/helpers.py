@@ -128,13 +128,18 @@ def select_element(page: Page, element_id: str) -> None:
 
 def expand_group_if_needed(group_locator: Locator) -> None:
     expect(group_locator, "Group visible").to_be_visible(timeout=10000)
-    entries = group_locator.locator(".bio-properties-panel-group-entries")
-    if entries.count() > 0 and entries.first.is_visible():
-        return
     action = group_locator.evaluate(
         """(groupEl) => {
         const button = groupEl.querySelector('button[title="Toggle section"]');
+        const entries = groupEl.querySelector('.bio-properties-panel-group-entries');
+        if (entries && entries.offsetParent !== null) {
+          return "already";
+        }
         if (button) {
+          const expanded = button.getAttribute('aria-expanded');
+          if (expanded && expanded !== "false") {
+            return "already";
+          }
           button.click();
           return "toggle";
         }
@@ -147,8 +152,6 @@ def expand_group_if_needed(group_locator: Locator) -> None:
       }"""
     )
     assert action, "Group toggle or header available"
-    if entries.count() > 0:
-        expect(entries.first, "Group entries visible").to_be_visible(timeout=5000)
 
 
 def expand_entry_if_needed(entry_locator: Locator) -> None:
@@ -259,7 +262,11 @@ def close_script_editor(page: Page, dialog: Locator, action: str) -> None:
 
 def open_message_editor(page: Page) -> Locator | None:
     group_id = CONFIG["groups"]["message"]
-    group = page.locator(f'[data-group-id="{group_id}"]')
+    group = page.locator(f'[data-group-id="{group_id}"]').or_(
+        page.locator('[data-group-id]').filter(
+            has=_locator(page, CONFIG["selectors"]["message_open"])
+        )
+    ).first
     expect(group, "Message group visible").to_be_visible(timeout=10000)
     expand_group_if_needed(group)
 
