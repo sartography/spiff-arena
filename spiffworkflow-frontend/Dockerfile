@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.13.0-trixie-slim AS base
+FROM node:24-trixie-slim AS base
 
 RUN mkdir /app
 
@@ -43,17 +43,13 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29.5-alpine
+FROM nginx:1-alpine
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
 
 # Upgrade all packages to fix security vulnerabilities
 RUN apk update && apk upgrade
-
-# to fix CVE-2026-22184 security vulnerability:
-# remove this line once the base image has zlib 1.3.2-r0 or higher
-RUN apk add --upgrade zlib
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*

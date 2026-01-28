@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.13.12-slim-trixie AS base
+FROM python:3.13-slim-trixie AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/venv
