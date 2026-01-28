@@ -9,6 +9,7 @@ WORKDIR /app
 # procps for debugging
 # vim ftw
 RUN apt-get update \
+  && apt-get upgrade -y -q \
   && apt-get clean -y \
   && apt-get install -y -q \
   curl \
@@ -47,9 +48,8 @@ FROM nginx:1.29.5-alpine
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
 
-# to fix security vulnerability:
-# remove this line once the base image has the secure version of this lib (10.46)
-RUN apk add --upgrade pcre2
+# Upgrade all packages to fix security vulnerabilities
+RUN apk update && apk upgrade
 
 # to fix CVE-2026-22184 security vulnerability:
 # remove this line once the base image has zlib 1.3.2-r0 or higher
