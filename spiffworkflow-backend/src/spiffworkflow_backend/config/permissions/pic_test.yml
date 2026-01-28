@@ -24,6 +24,16 @@ users:
     email: analyst@example.com
     password: analyst
     preferred_username: analyst
+  ogc:
+    service: local_open_id
+    email: ogc@example.com
+    password: ogc
+    preferred_username: ogc
+  proponent:
+    service: local_open_id
+    email: proponent@example.com
+    password: proponent
+    preferred_username: proponent
   admin:
     service: local_open_id
     email: admin@example.com
@@ -35,14 +45,20 @@ users:
 groups:
   admin:
     users: [ admin@example.com, adminX@bootstrap ]
-  blm-moab:
-    users: [ specialist@example.com ]
-  blm-moab-ao:
-    users: [ approver@example.com ]
-  blm-moab-nepa-coord:
-    users: [ reviewer@example.com ]
-  blm-moab-supervisors:
-    users: [ supervisor@example.com ]
+  approver:
+    users: [ admin@example.com, approver@example.com ]
+  specialist:
+    users: [ admin@example.com, specialist@example.com ]
+  reviewer:
+    users: [ admin@example.com, reviewer@example.com ]
+  supervisor:
+    users: [ admin@example.com, supervisor@example.com ]
+  analyst:
+    users: [ admin@example.com, analyst@example.com ]
+  ogc:
+    users: [ admin@example.com, ogc@example.com ]
+  proponent:
+    users: [ admin@example.com, proponent@example.com ]
 
 permissions:
   # Admins have access to everything.
