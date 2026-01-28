@@ -1,0 +1,89 @@
+users:
+  approver:
+    service: local_open_id
+    email: approver@example.com
+    password: approver
+    preferred_username: approver
+  specialist:
+    service: local_open_id
+    email: specialist@example.com
+    password: specialist
+    preferred_username: specialist
+  reviewer:
+    service: local_open_id
+    email: reviewer@example.com
+    password: reviewer
+    preferred_username: reviewer
+  supervisor:
+    service: local_open_id
+    email: supervisor@example.com
+    password: supervisor
+    preferred_username: supervisor
+  analyst:
+    service: local_open_id
+    email: analyst@example.com
+    password: analyst
+    preferred_username: analyst
+  ogc:
+    service: local_open_id
+    email: ogc@example.com
+    password: ogc
+    preferred_username: ogc
+  proponent:
+    service: local_open_id
+    email: proponent@example.com
+    password: proponent
+    preferred_username: proponent
+  admin:
+    service: local_open_id
+    email: admin@example.com
+    password: admin
+    preferred_username: admin
+  adminX:
+    service: bootstrap
+
+groups:
+  admin:
+    users: [ admin@example.com, adminX@bootstrap ]
+  approver:
+    users: [ admin@example.com, approver@example.com ]
+  specialist:
+    users: [ admin@example.com, specialist@example.com ]
+  reviewer:
+    users: [ admin@example.com, reviewer@example.com ]
+  supervisor:
+    users: [ admin@example.com, supervisor@example.com ]
+  analyst:
+    users: [ admin@example.com, analyst@example.com ]
+  ogc:
+    users: [ admin@example.com, ogc@example.com ]
+  proponent:
+    users: [ admin@example.com, proponent@example.com ]
+
+permissions:
+  # Admins have access to everything.
+  admin:
+    groups: [ admin ]
+    actions: [ all ]
+    uri: /*
+
+  # Everybody can participate in tasks assigned to them.
+  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/permission_url.html
+  basic:
+    groups: [ everybody ]
+    actions: [ all ]
+    uri: BASIC
+
+  # Everyone can see everything (all groups, and processes are visible)
+  read-all-process-groups:
+    groups: [ everybody ]
+    actions: [ read ]
+    uri: PG:ALL
+  read-all-process-models:
+    groups: [ everybody ]
+    actions: [ read ]
+    uri: PM:ALL
+  run-all-process-models:
+    groups: [ everybody ]
+    actions: [ start ]
+    uri: PM:ALL
