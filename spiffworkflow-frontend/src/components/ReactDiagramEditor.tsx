@@ -262,56 +262,46 @@ export default function ReactDiagramEditor({
         className="process-model-header"
         sx={{
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           p: 1,
           borderBottom: 1,
           borderColor: 'divider',
           backgroundColor: 'background.paper',
         }}
       >
-        <Box sx={{ mb: 1 }}>
-          <Typography variant="h6">{t('workflow')}</Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {navigationStack && onNavigate && (
-              <DiagramNavigationBreadcrumbs
-                stack={navigationStack}
-                onNavigate={onNavigate}
-                onDownload={downloadXmlFile}
-                onViewXml={viewXml}
-                canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
-                canViewXml={
-                  canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
-                }
-                downloadLabel={t('diagram_download')}
-                viewXmlLabel={t('diagram_view_xml')}
-              />
-            )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {navigationStack && onNavigate && (
+            <DiagramNavigationBreadcrumbs
+              stack={navigationStack}
+              onNavigate={onNavigate}
+              onDownload={downloadXmlFile}
+              onViewXml={viewXml}
+              canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
+              canViewXml={
+                canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
+              }
+              downloadLabel={t('diagram_download')}
+              viewXmlLabel={t('diagram_view_xml')}
+            />
+          )}
 
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <div
-              className="diagram-toolbar__right"
-              style={{ position: 'static', transform: 'none' }}
-            >
-              {diagramControlButtons()}
-            </div>
-            <div
-              className="diagram-toolbar__left"
-              style={{ position: 'static', padding: 0 }}
-            >
-              {userActionOptions()}
-            </div>
-          </Box>
         </Box>
-      </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <div
+            className="diagram-toolbar__right"
+            style={{ position: 'static', transform: 'none' }}
+          >
+            {diagramControlButtons()}
+          </div>
+          <div
+            className="diagram-toolbar__left"
+            style={{ position: 'static', padding: 0 }}
+          >
+            {userActionOptions()}
+          </div>
+        </Box>
+      </Box >
       {showReferences()}
       <BpmnEditor
         key={`${processModelId}-${fileName || 'new'}-${diagramType}`}

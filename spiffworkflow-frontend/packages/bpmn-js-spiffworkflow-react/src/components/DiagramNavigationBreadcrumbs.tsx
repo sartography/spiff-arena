@@ -58,7 +58,21 @@ export default function DiagramNavigationBreadcrumbs({
   }
 
   return (
-    <Breadcrumbs aria-label="diagram-navigation" className="spiff-breadcrumb">
+    <Breadcrumbs
+      aria-label="diagram-navigation"
+      className="spiff-breadcrumb"
+      sx={{
+        mb: '0 !important',
+        display: 'flex',
+        alignItems: 'center',
+        '& .MuiBreadcrumbs-ol': {
+          alignItems: 'center',
+          m: 0,
+          p: 0,
+          display: 'flex',
+        },
+      }}
+    >
       {stack.map((item, index) => {
         const isLast = index === stack.length - 1;
         const label = labelFor(item);
@@ -66,7 +80,7 @@ export default function DiagramNavigationBreadcrumbs({
         if (isLast) {
           const hasActions = (canDownload && onDownload) || (canViewXml && onViewXml);
           return (
-            <div key={`${item.processModelId}-${item.fileName}`}>
+            <React.Fragment key={`${item.processModelId}-${item.fileName}`}>
               <Chip
                 label={label}
                 color="primary"
@@ -104,7 +118,7 @@ export default function DiagramNavigationBreadcrumbs({
                   )}
                 </Menu>
               )}
-            </div>
+            </React.Fragment>
           );
         }
 
