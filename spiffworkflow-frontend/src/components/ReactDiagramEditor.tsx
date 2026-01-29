@@ -294,9 +294,7 @@ export default function ReactDiagramEditor({
                 viewXmlLabel={t('diagram_view_xml')}
               />
             )}
-            <Typography variant="body2" color="text.secondary">
-              {processModel?.display_name || '...'} / {fileName}
-            </Typography>
+
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <div

@@ -1248,6 +1248,16 @@ export default function ProcessModelEditDiagram() {
       <>
 
 
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            [t('home'), '/'],
+            {
+              entityToExplode: modifiedProcessModelId,
+              entityType: 'process-model-id',
+              linkLastItem: false,
+            },
+          ]}
+        />
         {pageModals()}
 
         {unsavedChangesMessage()}
