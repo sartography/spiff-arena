@@ -36,11 +36,11 @@ groups:
   admin:
     users: [ admin@example.com, adminX@bootstrap, specialist@example.com ]
   blm-moab-ao:
-    users: [ admin@example.com, approver@example.com ]
+    users: [ approver@example.com ]
   blm-moab-nepa-coord:
-    users: [ admin@example.com, reviewer@example.com ]
+    users: [ reviewer@example.com ]
   blm-moab-supervisors:
-    users: [ admin@example.com, supervisor@example.com ]
+    users: [ supervisor@example.com ]
 
 permissions:
   # Admins have access to everything.
