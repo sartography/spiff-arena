@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button } from '@mui/material';
+import { Button, Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +10,9 @@ import {
   DiagramActionBar,
   DiagramZoomControls,
   ProcessReferencesDialog,
+  DiagramNavigationBreadcrumbs,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
+import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow-react/src';
 
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -56,6 +58,8 @@ type OwnProps = {
   saveDiagram?: (..._args: any[]) => any;
   tasks?: BasicTask[] | null;
   url?: string;
+  navigationStack?: DiagramNavigationItem[];
+  onNavigate?: (index: number) => void;
 };
 
 export default function ReactDiagramEditor({
@@ -88,6 +92,8 @@ export default function ReactDiagramEditor({
   saveDiagram,
   tasks,
   url,
+  navigationStack,
+  onNavigate,
 }: OwnProps) {
   const bpmnEditorRef = useRef<BpmnEditorRef>(null);
   const [showingReferences, setShowingReferences] = useState(false);
@@ -150,6 +156,10 @@ export default function ReactDiagramEditor({
     }
   };
 
+  const viewXml = () => {
+    navigate(`/process-models/${processModelId}/form/${fileName}`);
+  };
+
   const canViewXml = fileName !== undefined;
 
   const showReferences = () => {
@@ -206,9 +216,7 @@ export default function ReactDiagramEditor({
       <ProcessInstanceRun processModel={processModel} />
     ) : null;
 
-    const viewXml = () => {
-      navigate(`/process-models/${processModelId}/form/${fileName}`);
-    };
+
 
     return (
       <DiagramActionBar
@@ -224,14 +232,6 @@ export default function ReactDiagramEditor({
         }
         onSetPrimary={handleSetPrimaryFile}
         setPrimaryLabel={t('diagram_set_as_primary_file')}
-        canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
-        onDownload={downloadXmlFile}
-        downloadLabel={t('diagram_download')}
-        canViewXml={
-          canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
-        }
-        onViewXml={viewXml}
-        viewXmlLabel={t('diagram_view_xml')}
         referencesButton={getReferencesButton()}
         processInstanceRun={processInstanceRun}
         activeUserElement={
@@ -249,19 +249,71 @@ export default function ReactDiagramEditor({
         onZoomIn={() => zoom(1)}
         onZoomOut={() => zoom(-1)}
         onZoomFit={() => zoom(0)}
-        zoomInLabel={t('diagram_zoom_in')}
-        zoomOutLabel={t('diagram_zoom_out')}
-        zoomFitLabel={t('diagram_zoom_fit')}
+        zoomInLabel=""
+        zoomOutLabel=""
+        zoomFitLabel=""
       />
     );
   };
 
   return (
     <>
-      <div className="diagram-toolbar">
-        <div className="diagram-toolbar__left">{userActionOptions()}</div>
-        <div className="diagram-toolbar__right">{diagramControlButtons()}</div>
-      </div>
+      <Box
+        className="process-model-header"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          p: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
+        }}
+      >
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="h6">{t('workflow')}</Typography>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {navigationStack && onNavigate && (
+              <DiagramNavigationBreadcrumbs
+                stack={navigationStack}
+                onNavigate={onNavigate}
+                onDownload={downloadXmlFile}
+                onViewXml={viewXml}
+                canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
+                canViewXml={
+                  canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
+                }
+                downloadLabel={t('diagram_download')}
+                viewXmlLabel={t('diagram_view_xml')}
+              />
+            )}
+            <Typography variant="body2" color="text.secondary">
+              {processModel?.display_name || '...'} / {fileName}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <div
+              className="diagram-toolbar__right"
+              style={{ position: 'static', transform: 'none' }}
+            >
+              {diagramControlButtons()}
+            </div>
+            <div
+              className="diagram-toolbar__left"
+              style={{ position: 'static', padding: 0 }}
+            >
+              {userActionOptions()}
+            </div>
+          </Box>
+        </Box>
+      </Box>
       {showReferences()}
       <BpmnEditor
         key={`${processModelId}-${fileName || 'new'}-${diagramType}`}

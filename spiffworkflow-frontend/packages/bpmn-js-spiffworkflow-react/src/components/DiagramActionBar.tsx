@@ -16,10 +16,10 @@ type DiagramActionBarProps = {
   setPrimaryLabel: string;
   canDownload?: boolean;
   onDownload?: () => void;
-  downloadLabel: string;
+  downloadLabel?: string;
   canViewXml?: boolean;
   onViewXml?: () => void;
-  viewXmlLabel: string;
+  viewXmlLabel?: string;
   referencesButton?: ReactNode;
   processInstanceRun?: ReactNode;
   activeUserElement?: ReactNode;

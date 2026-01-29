@@ -330,7 +330,7 @@ export default function ProcessModelEditDiagram() {
       path,
       httpMethod,
       failureCallback: addError,
-      successCallback: (_result: any) => {},
+      successCallback: (_result: any) => { },
     });
   };
 
@@ -1127,7 +1127,17 @@ export default function ProcessModelEditDiagram() {
           fileName={params.file_name}
           onDeleteFile={onDeleteFile}
           processModelId={params.process_model_id || ''}
+
           saveDiagram={saveDiagram}
+          navigationStack={navigationStack}
+          onNavigate={(index) => {
+            const item = navigationStack[index];
+            if (!item) {
+              return;
+            }
+            popToIndex(index);
+            navigate(buildProcessFilePath(item));
+          }}
         />
       );
     }
@@ -1169,7 +1179,17 @@ export default function ProcessModelEditDiagram() {
         onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
+
         saveDiagram={saveDiagram}
+        navigationStack={navigationStack}
+        onNavigate={(index) => {
+          const item = navigationStack[index];
+          if (!item) {
+            return;
+          }
+          popToIndex(index);
+          navigate(buildProcessFilePath(item));
+        }}
       />
     );
   };
@@ -1226,31 +1246,7 @@ export default function ProcessModelEditDiagram() {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            [t('process_groups'), '/process-groups'],
-            {
-              entityToExplode: processModel,
-              entityType: 'process-model',
-              linkLastItem: true,
-            },
-            [processModelFileName],
-          ]}
-        />
-        <h1>
-          {t('process_model_file', { fileName: processModelFileName || '---' })}
-        </h1>
-        <DiagramNavigationBreadcrumbs
-          stack={navigationStack}
-          onNavigate={(index) => {
-            const item = navigationStack[index];
-            if (!item) {
-              return;
-            }
-            popToIndex(index);
-            navigate(buildProcessFilePath(item));
-          }}
-        />
+
 
         {pageModals()}
 
