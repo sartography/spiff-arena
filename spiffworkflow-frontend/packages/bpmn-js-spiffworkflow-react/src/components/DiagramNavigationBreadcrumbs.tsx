@@ -24,7 +24,7 @@ export default function DiagramNavigationBreadcrumbs({
   }
 
   return (
-    <Breadcrumbs aria-label="diagram-navigation">
+    <Breadcrumbs aria-label="diagram-navigation" className="spiff-breadcrumb">
       {stack.map((item, index) => {
         const isLast = index === stack.length - 1;
         const label = labelFor(item);
@@ -38,11 +38,10 @@ export default function DiagramNavigationBreadcrumbs({
             key={`${item.processModelId}-${item.fileName}`}
             component="button"
             variant="body2"
+            underline="none"
             onClick={() => onNavigate(index)}
             sx={{
               cursor: 'pointer',
-              textDecoration: 'none',
-              '&:hover': { textDecoration: 'underline' },
             }}
           >
             {label}

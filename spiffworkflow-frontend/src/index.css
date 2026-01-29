@@ -90,20 +90,24 @@ a.cds--header__menu-item {
   background: lightgrey;
 }
 
+.spiff-breadcrumb .MuiBreadcrumbs-li a {
+  color: #525252;
+  text-decoration: none;
+}
+
 .spiff-breadcrumb .MuiBreadcrumbs-li a:hover {
   color: #525252;
+  text-decoration: none;
 }
 
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited {
   color: #525252;
+  text-decoration: none;
 }
 
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited:hover {
   color: #525252;
-}
-
-.spiff-breadcrumb .MuiBreadcrumbs-li a {
-  color: #525252;
+  text-decoration: none;
 }
 
 .cds--btn--ghost {
