@@ -228,6 +228,7 @@ export default function ReactDiagramEditor({
         deleteButton={deleteButton}
         canSetPrimary={
           !!onSetPrimaryFile &&
+          !isPrimaryFile &&
           ability.can('PUT', targetUris.processModelShowPath)
         }
         onSetPrimary={handleSetPrimaryFile}
@@ -262,6 +263,8 @@ export default function ReactDiagramEditor({
         className="process-model-header"
         sx={{
           display: 'flex',
+          flexWrap: 'wrap',
+          rowGap: 2,
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1,

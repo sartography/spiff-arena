@@ -1147,7 +1147,9 @@ export default function ProcessModelEditDiagram() {
     if (
       processModel &&
       params.file_name &&
-      params.file_name !== processModel.primary_file_name
+      params.file_name !== processModel.primary_file_name &&
+      modifyProcessIdentifierForPathParam(processModel.id) ===
+      modifiedProcessModelId
     ) {
       onSetPrimaryFileCallback = onSetPrimaryFile;
     }
