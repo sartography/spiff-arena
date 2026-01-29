@@ -88,6 +88,7 @@ export default function DiagramNavigationBreadcrumbs({
                 onClick={hasActions ? handleMenuClick : undefined}
                 onDelete={hasActions ? handleMenuClick : undefined}
                 deleteIcon={hasActions ? <ExpandMore /> : undefined}
+                data-testid="diagram-file-chip"
                 sx={{
                   '& .MuiChip-deleteIcon': {
                     color: 'inherit',

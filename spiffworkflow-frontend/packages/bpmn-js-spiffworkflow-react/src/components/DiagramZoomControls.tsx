@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup } from '@mui/material';
+import { Button, ButtonGroup, Tooltip } from '@mui/material';
 import {
   CenterFocusStrongOutlined,
   ZoomIn,
@@ -26,27 +26,30 @@ export default function DiagramZoomControls({
   return (
     <div className="diagram-zoom-controls">
       <ButtonGroup variant="outlined" size="small" aria-label="Diagram zoom">
-        <Button
-          onClick={onZoomIn}
-          startIcon={<ZoomIn fontSize="small" />}
-          aria-label={zoomInLabel}
-        >
-          {zoomInLabel}
-        </Button>
-        <Button
-          onClick={onZoomOut}
-          startIcon={<ZoomOut fontSize="small" />}
-          aria-label={zoomOutLabel}
-        >
-          {zoomOutLabel}
-        </Button>
-        <Button
-          onClick={onZoomFit}
-          startIcon={<CenterFocusStrongOutlined fontSize="small" />}
-          aria-label={zoomFitLabel}
-        >
-          {zoomFitLabel}
-        </Button>
+        <Tooltip title={zoomInLabel}>
+          <Button
+            onClick={onZoomIn}
+            aria-label={zoomInLabel}
+          >
+            <ZoomIn fontSize="small" />
+          </Button>
+        </Tooltip>
+        <Tooltip title={zoomOutLabel}>
+          <Button
+            onClick={onZoomOut}
+            aria-label={zoomOutLabel}
+          >
+            <ZoomOut fontSize="small" />
+          </Button>
+        </Tooltip>
+        <Tooltip title={zoomFitLabel}>
+          <Button
+            onClick={onZoomFit}
+            aria-label={zoomFitLabel}
+          >
+            <CenterFocusStrongOutlined fontSize="small" />
+          </Button>
+        </Tooltip>
       </ButtonGroup>
     </div>
   );

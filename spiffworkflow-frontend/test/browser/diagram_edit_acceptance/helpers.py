@@ -42,14 +42,11 @@ def open_diagram(page: Page, element_id: str) -> None:
 
     loaded_text = diagram_config.get("loaded_text")
     if loaded_text:
-        file_label = diagram_config.get("file_label_template", "{file}").format(
-            file=loaded_text
-        )
-        entry = page.get_by_text(file_label)
-        expect(entry, "Diagram list entry visible").to_be_visible(
-            timeout=20000
-        )
-        entry.first.click()
+        # Check for the file chip that displays the loaded diagram name
+        file_chip_selector = diagram_config.get("file_chip_selector")
+        if file_chip_selector:
+            chip = page.locator(file_chip_selector).filter(has_text=loaded_text)
+            expect(chip, "File chip visible").to_be_visible(timeout=20000)
 
     fit_button = _locator(page, diagram_config["fit_button"])
     fit_button.click()

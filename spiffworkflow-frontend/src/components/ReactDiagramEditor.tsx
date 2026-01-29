@@ -250,9 +250,9 @@ export default function ReactDiagramEditor({
         onZoomIn={() => zoom(1)}
         onZoomOut={() => zoom(-1)}
         onZoomFit={() => zoom(0)}
-        zoomInLabel=""
-        zoomOutLabel=""
-        zoomFitLabel=""
+        zoomInLabel={t('diagram_zoom_in')}
+        zoomOutLabel={t('diagram_zoom_out')}
+        zoomFitLabel={t('diagram_zoom_fit')}
       />
     );
   };
