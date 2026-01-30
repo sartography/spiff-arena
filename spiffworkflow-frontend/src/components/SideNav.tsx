@@ -323,9 +323,9 @@ function SideNav({
                   alignItems: 'center',
                 }}
               >
-              <MuiLink component={Link} to="/" underline="none">
-                <SpiffLogo />
-              </MuiLink>
+                <MuiLink component={Link} to="/" underline="none">
+                  <SpiffLogo />
+                </MuiLink>
               </Typography>
             )}
             <IconButton

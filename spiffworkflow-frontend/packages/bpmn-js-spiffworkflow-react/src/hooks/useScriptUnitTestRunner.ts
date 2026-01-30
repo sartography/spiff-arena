@@ -9,7 +9,6 @@ export interface RunScriptUnitTestOptions {
   currentScriptUnitTest: any;
   scriptElement: any;
   scriptText: string;
-  processModelId: string;
   onResult: (result: any) => void;
   onInvalidJson: () => void;
   beforeRun?: () => void;
@@ -17,13 +16,12 @@ export interface RunScriptUnitTestOptions {
 }
 
 export async function runScriptUnitTest(
-  options: RunScriptUnitTestOptions
+  options: RunScriptUnitTestOptions,
 ): Promise<void> {
   const {
     currentScriptUnitTest,
     scriptElement,
     scriptText,
-    processModelId,
     onResult,
     onInvalidJson,
     beforeRun,

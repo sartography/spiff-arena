@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button, Box, Typography } from '@mui/material';
+import { Button, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 

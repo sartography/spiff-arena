@@ -52,7 +52,6 @@ import {
   ProcessSearchDialog,
   ScriptAssistPanel,
   ScriptEditorDialog,
-  DiagramNavigationBreadcrumbs,
   useDiagramNavigationStack,
   useDiagramNavigationHandlers,
   fireMessageSave,
@@ -67,7 +66,6 @@ import {
   getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
-  unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
@@ -184,8 +182,7 @@ export default function ProcessModelEditDiagram() {
     useState(null);
 
   // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
-  const modifiedProcessModelId = params.process_model_id;
-  const processModelId = unModifyProcessIdentifierForPathParam(params.process_model_id);
+  const modifiedProcessModelId = params.process_model_id || '';
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
@@ -593,7 +590,6 @@ export default function ProcessModelEditDiagram() {
       currentScriptUnitTest,
       scriptElement,
       scriptText,
-      processModelId: modifiedProcessModelId,
       beforeRun: resetUnitTextResult,
       onResult: processScriptUnitTestRunResult,
       onInvalidJson: () => {
@@ -1034,7 +1030,7 @@ export default function ProcessModelEditDiagram() {
       }
       launchJsonSchemaEditor(element, fileName, eventBus);
     },
-    [params.process_model_id, launchJsonSchemaEditor],
+    [params.process_model_id, launchJsonSchemaEditor, modifiedProcessModelId],
   );
 
   const addNewFileIfNotExist = () => {
@@ -1244,7 +1240,6 @@ export default function ProcessModelEditDiagram() {
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
-    const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
         <ProcessBreadcrumb

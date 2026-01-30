@@ -46,13 +46,13 @@ import {
   BpmnEditor,
   BpmnEditorRef,
   DefaultBpmnApiService,
-} from "bpmn-js-spiffworkflow-react";
-import { useRef } from "react";
+} from 'bpmn-js-spiffworkflow-react';
+import { useRef } from 'react';
 
 // Create an API service (or implement your own)
 const apiService = new DefaultBpmnApiService({
-  baseUrl: "/api/v1",
-  templateBaseUrl: "/templates/",
+  baseUrl: '/api/v1',
+  templateBaseUrl: '/templates/',
 });
 
 function MyEditor() {
@@ -60,7 +60,7 @@ function MyEditor() {
 
   const handleSave = async () => {
     const xml = await editorRef.current?.getXML();
-    console.log("Diagram XML:", xml);
+    console.log('Diagram XML:', xml);
   };
 
   return (
@@ -97,7 +97,7 @@ This package uses a clear naming convention to distinguish between two formats o
 ```typescript
 import {
   modifyProcessIdentifierForPathParam,
-  unModifyProcessIdentifierForPathParam
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 
 // Convert slash → colon for URLs
@@ -109,24 +109,6 @@ const canonical = unModifyProcessIdentifierForPathParam('group:subgroup:model');
 // Returns: "group/subgroup/model"
 ```
 
-### Migration from v1.x
-
-If upgrading from version 1.x where the prop was named `processModelId`:
-
-1. Rename the prop: `processModelId` → `modifiedProcessModelId`
-2. Ensure the value is colon-separated (URL-safe format)
-3. If you have slash-separated values, convert them:
-   ```typescript
-   // Before (v1.x)
-   <BpmnEditor processModelId="group/subgroup/model" />
-
-   // After (v2.x) - convert to colon-separated
-   <BpmnEditor modifiedProcessModelId={modifyProcessIdentifierForPathParam("group/subgroup/model")} />
-
-   // Or if already colon-separated (from URL params)
-   <BpmnEditor modifiedProcessModelId="group:subgroup:model" />
-   ```
-
 ## Components
 
 ### BpmnEditor
@@ -135,16 +117,16 @@ The main diagram editor component supporting BPMN, DMN, and read-only viewing.
 
 #### Props
 
-| Prop                      | Type                            | Required | Description                                                        |
-| ------------------------- | ------------------------------- | -------- | ------------------------------------------------------------------ |
-| `apiService`              | `BpmnApiService`                | Yes      | API service for loading/saving diagrams                            |
-| `modifiedProcessModelId`  | `string`                        | Yes      | Colon-separated process model identifier (URL-safe, e.g., "a:b:c") |
-| `diagramType`             | `'bpmn' \| 'dmn' \| 'readonly'` | Yes      | Type of diagram editor                                             |
-| `diagramXML`              | `string \| null`                | No       | Pre-loaded diagram XML (skips API call)                            |
-| `fileName`                | `string`                        | No       | File name to load from API                                         |
-| `url`                     | `string`                        | No       | URL to fetch diagram from                                          |
-| `tasks`                   | `BasicTask[]`                   | No       | Tasks to highlight (for readonly view)                             |
-| `taskMetadataKeys`        | `TaskMetadataItem[]`            | No       | Metadata keys for task configuration                               |
+| Prop                     | Type                            | Required | Description                                                        |
+| ------------------------ | ------------------------------- | -------- | ------------------------------------------------------------------ |
+| `apiService`             | `BpmnApiService`                | Yes      | API service for loading/saving diagrams                            |
+| `modifiedProcessModelId` | `string`                        | Yes      | Colon-separated process model identifier (URL-safe, e.g., "a:b:c") |
+| `diagramType`            | `'bpmn' \| 'dmn' \| 'readonly'` | Yes      | Type of diagram editor                                             |
+| `diagramXML`             | `string \| null`                | No       | Pre-loaded diagram XML (skips API call)                            |
+| `fileName`               | `string`                        | No       | File name to load from API                                         |
+| `url`                    | `string`                        | No       | URL to fetch diagram from                                          |
+| `tasks`                  | `BasicTask[]`                   | No       | Tasks to highlight (for readonly view)                             |
+| `taskMetadataKeys`       | `TaskMetadataItem[]`            | No       | Metadata keys for task configuration                               |
 
 #### Event Handlers
 
@@ -190,11 +172,11 @@ You must provide an API service that implements `BpmnApiService`. You can:
 interface BpmnApiService {
   // Required
   loadDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
   ): Promise<{ file_contents: string }>;
   saveDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
     content: string,
   ): Promise<void>;
@@ -213,22 +195,22 @@ interface BpmnApiService {
 ### Using DefaultBpmnApiService
 
 ```typescript
-import { DefaultBpmnApiService } from "bpmn-js-spiffworkflow-react";
+import { DefaultBpmnApiService } from 'bpmn-js-spiffworkflow-react';
 
 const apiService = new DefaultBpmnApiService({
-  baseUrl: "/api/v1", // Base URL for API calls
-  templateBaseUrl: "/static/", // Base URL for diagram templates
+  baseUrl: '/api/v1', // Base URL for API calls
+  templateBaseUrl: '/static/', // Base URL for diagram templates
   headers: {
     // Custom headers (e.g., auth)
-    Authorization: "Bearer xxx",
+    Authorization: 'Bearer xxx',
   },
   onError: (error) => {
     // Global error handler
-    console.error("API Error:", error);
+    console.error('API Error:', error);
   },
   onUnauthorized: () => {
     // Handle 401 responses
-    window.location.href = "/login";
+    window.location.href = '/login';
   },
 });
 ```
@@ -236,12 +218,12 @@ const apiService = new DefaultBpmnApiService({
 ### Custom Implementation Example
 
 ```typescript
-import { BpmnApiService } from "bpmn-js-spiffworkflow-react";
+import { BpmnApiService } from 'bpmn-js-spiffworkflow-react';
 
 class MyApiService implements BpmnApiService {
-  async loadDiagramFile(processModelId: string, fileName: string) {
+  async loadDiagramFile(modifiedProcessModelId: string, fileName: string) {
     const response = await myHttpClient.get(
-      `/models/${processModelId}/files/${fileName}`,
+      `/models/${modifiedProcessModelId}/files/${fileName}`,
     );
     return { file_contents: response.data.content };
   }
@@ -251,9 +233,12 @@ class MyApiService implements BpmnApiService {
     fileName: string,
     content: string,
   ) {
-    await myHttpClient.put(`/models/${modifiedProcessModelId}/files/${fileName}`, {
-      content,
-    });
+    await myHttpClient.put(
+      `/models/${modifiedProcessModelId}/files/${fileName}`,
+      {
+        content,
+      },
+    );
   }
 
   async loadDiagramTemplate(templateName: string) {
@@ -537,7 +522,7 @@ import {
   isSchemaFile, // Check if filename is schema-related
   SCHEMA_NAME_PATTERN, // Regex for valid schema names
   SCHEMA_EXTENSIONS, // File extension constants
-} from "bpmn-js-spiffworkflow-react";
+} from 'bpmn-js-spiffworkflow-react';
 ```
 
 ---
@@ -551,17 +536,17 @@ For building custom UI around editor features, the package provides headless hoo
 Manages JSON Schema file creation/editing for User Task forms.
 
 ```typescript
-import { useJsonSchemaEditor } from "bpmn-js-spiffworkflow-react";
+import { useJsonSchemaEditor } from 'bpmn-js-spiffworkflow-react';
 
 const [state, actions] = useJsonSchemaEditor({
   open: isModalOpen,
-  fileName: "my-form-schema.json", // empty for new schema
-  processModelId: "my:process", // Colon-separated (URL-safe format)
+  fileName: 'my-form-schema.json', // empty for new schema
+  modifiedProcessModelId: 'my:process', // Colon-separated (URL-safe format)
   apiService: myApiService,
   element: bpmnElement, // for deriving default name
   eventBus: modelerEventBus,
   onClose: () => setModalOpen(false),
-  onSave: () => showSuccess("Saved!"),
+  onSave: () => showSuccess('Saved!'),
   onError: (msg) => showError(msg),
 });
 
@@ -574,11 +559,11 @@ const [state, actions] = useJsonSchemaEditor({
 Manages process search/selection for Call Activity configuration.
 
 ```typescript
-import { useProcessSearch } from "bpmn-js-spiffworkflow-react";
+import { useProcessSearch } from 'bpmn-js-spiffworkflow-react';
 
 const [state, actions] = useProcessSearch({
   apiService: myApiService,
-  onSelect: (process) => console.log("Selected:", process),
+  onSelect: (process) => console.log('Selected:', process),
 });
 
 // state: { isOpen, processes, filteredProcesses, loading, query }
@@ -592,9 +577,9 @@ const [state, actions] = useProcessSearch({
 The package includes necessary CSS. Import in your app:
 
 ```tsx
-import "bpmn-js-spiffworkflow-react";
+import 'bpmn-js-spiffworkflow-react';
 // or specifically:
-import "bpmn-js-spiffworkflow-react/src/styles/bpmn-js-properties-panel.css";
+import 'bpmn-js-spiffworkflow-react/src/styles/bpmn-js-properties-panel.css';
 ```
 
 Additional CSS from bpmn-js is imported automatically.
@@ -604,13 +589,13 @@ Additional CSS from bpmn-js is imported automatically.
 ## Full Example
 
 ```tsx
-import React, { useRef, useState } from "react";
+import React, { useRef, useState } from 'react';
 import {
   BpmnEditor,
   BpmnEditorRef,
   BpmnApiService,
   BasicTask,
-} from "bpmn-js-spiffworkflow-react";
+} from 'bpmn-js-spiffworkflow-react';
 
 // Custom API service implementation
 class MyBpmnApiService implements BpmnApiService {
@@ -626,7 +611,7 @@ class MyBpmnApiService implements BpmnApiService {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.token}`,
         ...options.headers,
       },
@@ -648,7 +633,7 @@ class MyBpmnApiService implements BpmnApiService {
     content: string,
   ) {
     await this.request(`/models/${modifiedProcessModelId}/files/${fileName}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify({ file_contents: content }),
     });
   }
@@ -668,24 +653,24 @@ function ProcessEditor({
 }) {
   const editorRef = useRef<BpmnEditorRef>(null);
   const [apiService] = useState(
-    () => new MyBpmnApiService("/api/v1", "my-token"),
+    () => new MyBpmnApiService('/api/v1', 'my-token'),
   );
 
   const handleSave = async () => {
     const xml = await editorRef.current?.getXML();
     if (xml) {
       await apiService.saveDiagramFile(modifiedProcessModelId, fileName, xml);
-      alert("Saved!");
+      alert('Saved!');
     }
   };
 
   const handleElementClick = (element: any, processIds: string[]) => {
-    console.log("Clicked:", element.id, "in processes:", processIds);
+    console.log('Clicked:', element.id, 'in processes:', processIds);
   };
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "10px" }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '10px' }}>
         <button onClick={handleSave}>Save</button>
         <button onClick={() => editorRef.current?.zoom(1)}>Zoom In</button>
         <button onClick={() => editorRef.current?.zoom(-1)}>Zoom Out</button>
@@ -709,7 +694,7 @@ function ProcessEditor({
 function ProcessViewer({ tasks }: { tasks: BasicTask[] }) {
   const editorRef = useRef<BpmnEditorRef>(null);
   const [apiService] = useState(
-    () => new MyBpmnApiService("/api/v1", "my-token"),
+    () => new MyBpmnApiService('/api/v1', 'my-token'),
   );
 
   return (
@@ -721,7 +706,7 @@ function ProcessViewer({ tasks }: { tasks: BasicTask[] }) {
       fileName="diagram.bpmn"
       tasks={tasks}
       onCallActivityOverlayClick={(task, event) => {
-        console.log("Navigate to subprocess:", task);
+        console.log('Navigate to subprocess:', task);
       }}
     />
   );
