@@ -589,7 +589,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       // FIXME: This prints unnecessary errors to the console when navigating to call activities.
       // This probably means there's a state or refresh issue going on although it doesn't cause an actual issue.
-      diagramModelerState.importXML(diagramXMLString).catch((error) => {
+      diagramModelerState.importXML(diagramXMLString).catch((error: any) => {
         console.error('Failed to import diagram XML:', error);
       });
 
@@ -633,7 +633,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       }
 
       // Check if modeler instance changed
-      const modelerChanged = previousDiagramModelerRef.current !== diagramModelerState;
+      const modelerChanged =
+        previousDiagramModelerRef.current !== diagramModelerState;
 
       // Reset ref only when modeler instance actually changes
       if (modelerChanged) {
@@ -864,9 +865,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
     ]);
 
     // The component only renders the container - the actual diagram is rendered by bpmn-js
-    return (
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-    );
+    return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
   },
 );
 
