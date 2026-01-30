@@ -49,6 +49,7 @@ def open_diagram(page: Page, element_id: str) -> None:
             expect(chip, "File chip visible").to_be_visible(timeout=20000)
 
     fit_button = _locator(page, diagram_config["fit_button"])
+    expect(fit_button, "Fit button visible").to_be_visible(timeout=20000)
     fit_button.click()
 
     expect(

@@ -65,15 +65,19 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
     search_input.press("Enter")
 
     options = dialog.get_by_role("option")
-    if options.count() > 0:
-        option_texts = options.all_text_contents()
-        target_index = 0
-        for idx, text in enumerate(option_texts):
-            if current_value and current_value not in text:
-                target_index = idx
-                break
 
-        options.nth(target_index).click()
+    # Wait for and assert that search results are present
+    expect(options.first, "Search results should be present").to_be_visible(timeout=10000)
+    assert options.count() > 0, f"Expected search results for '{target}', but got no options"
+
+    option_texts = options.all_text_contents()
+    target_index = 0
+    for idx, text in enumerate(option_texts):
+        if current_value and current_value not in text:
+            target_index = idx
+            break
+
+    options.nth(target_index).click()
 
     # call_activity_dialog_confirm is None (no confirm button needed)
     confirm_spec = None
