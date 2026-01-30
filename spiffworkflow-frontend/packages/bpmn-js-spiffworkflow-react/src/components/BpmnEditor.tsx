@@ -582,10 +582,15 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       if (!diagramXMLString || !diagramModelerState) {
         return;
       }
-      diagramModelerState.importXML(diagramXMLString);
+
+      // FIXME: This prints unnecessary errors to the console when navigating to call activities.
+      // This probably means there's a state or refresh issue going on although it doesn't cause an actual issue.
+      diagramModelerState.importXML(diagramXMLString).catch((error) => {
+        console.error('Failed to import diagram XML:', error);
+      });
 
       // Zoom to fit after a short delay to ensure canvas is rendered
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         try {
           let modeler = diagramModelerState;
           if (diagramType === 'dmn') {
@@ -600,6 +605,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           console.warn('Failed to zoom canvas:', error);
         }
       }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }, [diagramXMLString, diagramModelerState, diagramType]);
 
     // Respond to upstream diagram XML changes (e.g., navigation between files)
@@ -618,10 +627,9 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       if (performingXmlUpdates) {
         return undefined;
       }
-      // Prevent re-running fetch logic if we've already fetched
-      if (diagramFetchedRef.current) {
-        return undefined;
-      }
+
+      // Reset ref for new modeler instance
+      diagramFetchedRef.current = false;
 
       function handleError(err: any) {
         console.error('ERROR:', err);
@@ -810,18 +818,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       if (diagramXML) {
         setDiagramXMLString(diagramXML);
-        return undefined;
-      }
-
-      if (!diagramXML) {
-        if (url) {
-          fetchDiagramFromURL(url);
-          return undefined;
-        }
-        if (fileName) {
-          fetchDiagramFromJsonAPI();
-          return undefined;
-        }
+      } else if (url) {
+        fetchDiagramFromURL(url);
+      } else if (fileName) {
+        fetchDiagramFromJsonAPI();
+      } else {
         let newDiagramFileName = 'new_bpmn_diagram.bpmn';
         let textHandler = bpmnTextHandler;
         if (diagramType === 'dmn') {
@@ -829,10 +830,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           textHandler = dmnTextHandler;
         }
         fetchDiagramFromURL(newDiagramFileName, textHandler);
-        return undefined;
       }
 
-      return undefined;
+      return () => {
+        (diagramModelerState as any).off('import.done', onImportDone);
+      };
     }, [
       apiService,
       diagramModelerState,
