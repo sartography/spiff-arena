@@ -247,7 +247,7 @@ def set_script_text(page: Page, dialog: Locator, text: str) -> None:
         return
     editor = dialog.locator(".monaco-editor")
     editor.click()
-    page.keyboard.press("Meta+A")
+    page.keyboard.press("ControlOrMeta+A")
     page.keyboard.press("Backspace")
     page.keyboard.insert_text(text)
 
