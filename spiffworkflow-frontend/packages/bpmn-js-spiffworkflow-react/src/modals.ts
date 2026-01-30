@@ -16,7 +16,3 @@ export type {
   JsonSchemaEditorModalProps,
   ProcessSearchModalProps,
 } from './components/modals';
-
-// Also export BpmnEditorWithModals since it uses modals
-export { default as BpmnEditorWithModals } from './components/BpmnEditorWithModals';
-export type { BpmnEditorWithModalsProps } from './components/BpmnEditorWithModals';
