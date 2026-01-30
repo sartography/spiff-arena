@@ -67,11 +67,11 @@ export function useDiagramNavigationHandlers({
 
   const openProcessReference = useCallback(
     (processReference: ProcessReference, processId: string) => {
-      const processModelId = normalizeRef.current(
+      const modifiedProcessModelId = normalizeRef.current(
         processReference.relative_location,
       );
       const item: DiagramNavigationItem = {
-        processModelId,
+        modifiedProcessModelId,
         fileName: processReference.file_name,
         displayName: processReference.display_name || processId,
       };
@@ -111,7 +111,7 @@ export function useDiagramNavigationHandlers({
       const currentId = currentProcessModelIdRef.current;
       if (file && currentId) {
         const item: DiagramNavigationItem = {
-          processModelId: currentId,
+          modifiedProcessModelId: currentId,
           fileName: file.name,
           displayName: processId,
         };

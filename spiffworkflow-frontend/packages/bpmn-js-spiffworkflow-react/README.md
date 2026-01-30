@@ -69,7 +69,7 @@ function MyEditor() {
       <BpmnEditor
         ref={editorRef}
         apiService={apiService}
-        processModelId="my-process"
+        modifiedProcessModelId="my:process"
         diagramType="bpmn"
         fileName="diagram.bpmn"
       />
@@ -77,6 +77,55 @@ function MyEditor() {
   );
 }
 ```
+
+## Naming Convention: Process Model Identifiers
+
+This package uses a clear naming convention to distinguish between two formats of process model identifiers:
+
+- **`processModelId`** (slash-separated): Canonical hierarchical identifier from API
+  - Format: `"group/subgroup/model"`
+  - Used for display and internal logic
+  - Semantic meaning: hierarchical path
+
+- **`modifiedProcessModelId`** (colon-separated): URL-safe format
+  - Format: `"group:subgroup:model"`
+  - Used for URL path parameters and API calls
+  - Prevents routing issues with slashes in URLs
+
+### Helper Functions
+
+```typescript
+import {
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam
+} from '../helpers';
+
+// Convert slash → colon for URLs
+const urlSafe = modifyProcessIdentifierForPathParam('group/subgroup/model');
+// Returns: "group:subgroup:model"
+
+// Convert colon → slash for display/logic
+const canonical = unModifyProcessIdentifierForPathParam('group:subgroup:model');
+// Returns: "group/subgroup/model"
+```
+
+### Migration from v1.x
+
+If upgrading from version 1.x where the prop was named `processModelId`:
+
+1. Rename the prop: `processModelId` → `modifiedProcessModelId`
+2. Ensure the value is colon-separated (URL-safe format)
+3. If you have slash-separated values, convert them:
+   ```typescript
+   // Before (v1.x)
+   <BpmnEditor processModelId="group/subgroup/model" />
+
+   // After (v2.x) - convert to colon-separated
+   <BpmnEditor modifiedProcessModelId={modifyProcessIdentifierForPathParam("group/subgroup/model")} />
+
+   // Or if already colon-separated (from URL params)
+   <BpmnEditor modifiedProcessModelId="group:subgroup:model" />
+   ```
 
 ## Components
 
@@ -86,16 +135,16 @@ The main diagram editor component supporting BPMN, DMN, and read-only viewing.
 
 #### Props
 
-| Prop               | Type                            | Required | Description                             |
-| ------------------ | ------------------------------- | -------- | --------------------------------------- |
-| `apiService`       | `BpmnApiService`                | Yes      | API service for loading/saving diagrams |
-| `processModelId`   | `string`                        | Yes      | Identifier for the process model        |
-| `diagramType`      | `'bpmn' \| 'dmn' \| 'readonly'` | Yes      | Type of diagram editor                  |
-| `diagramXML`       | `string \| null`                | No       | Pre-loaded diagram XML (skips API call) |
-| `fileName`         | `string`                        | No       | File name to load from API              |
-| `url`              | `string`                        | No       | URL to fetch diagram from               |
-| `tasks`            | `BasicTask[]`                   | No       | Tasks to highlight (for readonly view)  |
-| `taskMetadataKeys` | `TaskMetadataItem[]`            | No       | Metadata keys for task configuration    |
+| Prop                      | Type                            | Required | Description                                                        |
+| ------------------------- | ------------------------------- | -------- | ------------------------------------------------------------------ |
+| `apiService`              | `BpmnApiService`                | Yes      | API service for loading/saving diagrams                            |
+| `modifiedProcessModelId`  | `string`                        | Yes      | Colon-separated process model identifier (URL-safe, e.g., "a:b:c") |
+| `diagramType`             | `'bpmn' \| 'dmn' \| 'readonly'` | Yes      | Type of diagram editor                                             |
+| `diagramXML`              | `string \| null`                | No       | Pre-loaded diagram XML (skips API call)                            |
+| `fileName`                | `string`                        | No       | File name to load from API                                         |
+| `url`                     | `string`                        | No       | URL to fetch diagram from                                          |
+| `tasks`                   | `BasicTask[]`                   | No       | Tasks to highlight (for readonly view)                             |
+| `taskMetadataKeys`        | `TaskMetadataItem[]`            | No       | Metadata keys for task configuration                               |
 
 #### Event Handlers
 
@@ -198,11 +247,11 @@ class MyApiService implements BpmnApiService {
   }
 
   async saveDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
     content: string,
   ) {
-    await myHttpClient.put(`/models/${processModelId}/files/${fileName}`, {
+    await myHttpClient.put(`/models/${modifiedProcessModelId}/files/${fileName}`, {
       content,
     });
   }
@@ -507,7 +556,7 @@ import { useJsonSchemaEditor } from "bpmn-js-spiffworkflow-react";
 const [state, actions] = useJsonSchemaEditor({
   open: isModalOpen,
   fileName: "my-form-schema.json", // empty for new schema
-  processModelId: "my-process",
+  processModelId: "my:process", // Colon-separated (URL-safe format)
   apiService: myApiService,
   element: bpmnElement, // for deriving default name
   eventBus: modelerEventBus,
@@ -586,19 +635,19 @@ class MyBpmnApiService implements BpmnApiService {
     return response;
   }
 
-  async loadDiagramFile(processModelId: string, fileName: string) {
+  async loadDiagramFile(modifiedProcessModelId: string, fileName: string) {
     const response = await this.request(
-      `/models/${processModelId}/files/${fileName}`,
+      `/models/${modifiedProcessModelId}/files/${fileName}`,
     );
     return response.json();
   }
 
   async saveDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
     content: string,
   ) {
-    await this.request(`/models/${processModelId}/files/${fileName}`, {
+    await this.request(`/models/${modifiedProcessModelId}/files/${fileName}`, {
       method: "PUT",
       body: JSON.stringify({ file_contents: content }),
     });
@@ -611,10 +660,10 @@ class MyBpmnApiService implements BpmnApiService {
 }
 
 function ProcessEditor({
-  processModelId,
+  modifiedProcessModelId,
   fileName,
 }: {
-  processModelId: string;
+  modifiedProcessModelId: string;
   fileName: string;
 }) {
   const editorRef = useRef<BpmnEditorRef>(null);
@@ -625,7 +674,7 @@ function ProcessEditor({
   const handleSave = async () => {
     const xml = await editorRef.current?.getXML();
     if (xml) {
-      await apiService.saveDiagramFile(processModelId, fileName, xml);
+      await apiService.saveDiagramFile(modifiedProcessModelId, fileName, xml);
       alert("Saved!");
     }
   };
@@ -646,7 +695,7 @@ function ProcessEditor({
         <BpmnEditor
           ref={editorRef}
           apiService={apiService}
-          processModelId={processModelId}
+          modifiedProcessModelId={modifiedProcessModelId}
           diagramType="bpmn"
           fileName={fileName}
           onElementClick={handleElementClick}
@@ -667,7 +716,7 @@ function ProcessViewer({ tasks }: { tasks: BasicTask[] }) {
     <BpmnEditor
       ref={editorRef}
       apiService={apiService}
-      processModelId="my-process"
+      modifiedProcessModelId="my:process"
       diagramType="readonly"
       fileName="diagram.bpmn"
       tasks={tasks}

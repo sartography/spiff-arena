@@ -67,6 +67,7 @@ import {
   getGroupFromModifiedModelId,
   makeid,
   modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
@@ -182,9 +183,9 @@ export default function ProcessModelEditDiagram() {
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
-  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    (params as any).process_model_id,
-  );
+  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
+  const modifiedProcessModelId = params.process_model_id;
+  const processModelId = unModifyProcessIdentifierForPathParam(params.process_model_id);
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
@@ -202,7 +203,7 @@ export default function ProcessModelEditDiagram() {
 
   const buildProcessFilePath = useCallback((item: DiagramNavigationItem) => {
     return generatePath('/process-models/:process_model_id/files/:file_name', {
-      process_model_id: item.processModelId,
+      process_model_id: item.modifiedProcessModelId,
       file_name: item.fileName,
     });
   }, []);
@@ -266,12 +267,12 @@ export default function ProcessModelEditDiagram() {
       return;
     }
     const currentItem: DiagramNavigationItem = {
-      processModelId: params.process_model_id,
+      modifiedProcessModelId: params.process_model_id,
       fileName: params.file_name,
     };
     const existingIndex = navigationStack.findIndex(
       (item) =>
-        item.processModelId === currentItem.processModelId &&
+        item.modifiedProcessModelId === currentItem.modifiedProcessModelId &&
         item.fileName === currentItem.fileName,
     );
     if (existingIndex === -1) {
@@ -1026,7 +1027,7 @@ export default function ProcessModelEditDiagram() {
       const url = import.meta.env.VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL;
       if (url) {
         window.open(
-          `${url}?processModelId=${params.process_model_id || ''}&fileName=${fileName || ''}`,
+          `${url}?processModelId=${modifiedProcessModelId || ''}&fileName=${fileName || ''}`,
           '_blank',
         );
         return;
@@ -1093,7 +1094,7 @@ export default function ProcessModelEditDiagram() {
         closeLabel={t('close')}
         renderEditor={() => (
           <ReactFormBuilder
-            processModelId={params.process_model_id || ''}
+            modifiedProcessModelId={modifiedProcessModelId || ''}
             fileName={jsonSchemaFileName}
             onFileNameSet={setJsonSchemaFileName}
             canUpdateFiles={ability.can(
@@ -1126,7 +1127,7 @@ export default function ProcessModelEditDiagram() {
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
           onDeleteFile={onDeleteFile}
-          processModelId={params.process_model_id || ''}
+          modifiedProcessModelId={modifiedProcessModelId || ''}
           saveDiagram={saveDiagram}
           navigationStack={navigationStack}
           onNavigate={(index) => {
@@ -1179,7 +1180,7 @@ export default function ProcessModelEditDiagram() {
         onSearchProcessModels={onSearchProcessModels}
         onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
-        processModelId={params.process_model_id || ''}
+        modifiedProcessModelId={modifiedProcessModelId || ''}
         saveDiagram={saveDiagram}
         navigationStack={navigationStack}
         onNavigate={(index) => {

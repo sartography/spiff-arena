@@ -3,22 +3,20 @@
 
 // Modal components
 export {
-    ScriptEditorModal,
-    MarkdownEditorModal,
-    MessageEditorModal,
-    JsonSchemaEditorModal,
-    ProcessSearchModal,
+  ScriptEditorModal,
+  MarkdownEditorModal,
+  MessageEditorModal,
+  JsonSchemaEditorModal,
+  ProcessSearchModal,
 } from './components/modals';
 export type {
-    ScriptEditorModalProps,
-    MarkdownEditorModalProps,
-    MessageEditorModalProps,
-    JsonSchemaEditorModalProps,
-    ProcessSearchModalProps,
+  ScriptEditorModalProps,
+  MarkdownEditorModalProps,
+  MessageEditorModalProps,
+  JsonSchemaEditorModalProps,
+  ProcessSearchModalProps,
 } from './components/modals';
 
 // Also export BpmnEditorWithModals since it uses modals
 export { default as BpmnEditorWithModals } from './components/BpmnEditorWithModals';
-export type {
-    BpmnEditorWithModalsProps,
-} from './components/BpmnEditorWithModals';
+export type { BpmnEditorWithModalsProps } from './components/BpmnEditorWithModals';

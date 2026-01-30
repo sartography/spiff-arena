@@ -65,8 +65,8 @@ export interface UseJsonSchemaEditorOptions {
   open: boolean;
   /** Initial file name (empty for new schema) */
   fileName: string;
-  /** Process model ID for API calls */
-  processModelId: string;
+  /** Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model") */
+  modifiedProcessModelId: string;
   /** API service for file operations */
   apiService: BpmnApiService;
   /** Event bus for firing updates */
@@ -87,12 +87,12 @@ export interface UseJsonSchemaEditorOptions {
  * Apps provide their own UI components
  */
 export function useJsonSchemaEditor(
-  options: UseJsonSchemaEditorOptions
+  options: UseJsonSchemaEditorOptions,
 ): [JsonSchemaEditorState, JsonSchemaEditorActions] {
   const {
     open,
     fileName,
-    processModelId,
+    modifiedProcessModelId,
     apiService,
     eventBus,
     element,
@@ -115,11 +115,13 @@ export function useJsonSchemaEditor(
   const [hasChanges, setHasChanges] = useState(false);
 
   // Derived file names
-  const fileNames = baseName ? getSchemaFileNames(baseName) : {
-    schemaFile: '',
-    uiSchemaFile: '',
-    exampleDataFile: '',
-  };
+  const fileNames = baseName
+    ? getSchemaFileNames(baseName)
+    : {
+        schemaFile: '',
+        uiSchemaFile: '',
+        exampleDataFile: '',
+      };
 
   // Initialize mode and baseName when editor opens
   useEffect(() => {
@@ -142,7 +144,8 @@ export function useJsonSchemaEditor(
 
   // Load files when in edit mode
   useEffect(() => {
-    if (!open || !processModelId || mode !== 'edit' || !baseName) return;
+    if (!open || !modifiedProcessModelId || mode !== 'edit' || !baseName)
+      return;
 
     const loadFiles = async () => {
       setLoading(true);
@@ -153,11 +156,14 @@ export function useJsonSchemaEditor(
       try {
         // Load schema file
         try {
-          const response = await apiService.loadDiagramFile(processModelId, names.schemaFile);
+          const response = await apiService.loadDiagramFile(
+            modifiedProcessModelId,
+            names.schemaFile,
+          );
           setSchemaContent(
             typeof response.file_contents === 'string'
               ? response.file_contents
-              : JSON.stringify(response.file_contents, null, 2)
+              : JSON.stringify(response.file_contents, null, 2),
           );
         } catch {
           setSchemaContent('{}');
@@ -165,11 +171,14 @@ export function useJsonSchemaEditor(
 
         // Load UI schema file
         try {
-          const response = await apiService.loadDiagramFile(processModelId, names.uiSchemaFile);
+          const response = await apiService.loadDiagramFile(
+            modifiedProcessModelId,
+            names.uiSchemaFile,
+          );
           setUiSchemaContent(
             typeof response.file_contents === 'string'
               ? response.file_contents
-              : JSON.stringify(response.file_contents, null, 2)
+              : JSON.stringify(response.file_contents, null, 2),
           );
         } catch {
           setUiSchemaContent('{}');
@@ -177,11 +186,14 @@ export function useJsonSchemaEditor(
 
         // Load example data file
         try {
-          const response = await apiService.loadDiagramFile(processModelId, names.exampleDataFile);
+          const response = await apiService.loadDiagramFile(
+            modifiedProcessModelId,
+            names.exampleDataFile,
+          );
           setExampleDataContent(
             typeof response.file_contents === 'string'
               ? response.file_contents
-              : JSON.stringify(response.file_contents, null, 2)
+              : JSON.stringify(response.file_contents, null, 2),
           );
         } catch {
           setExampleDataContent('{}');
@@ -196,7 +208,7 @@ export function useJsonSchemaEditor(
     };
 
     loadFiles();
-  }, [open, processModelId, apiService, mode, baseName, onError]);
+  }, [open, modifiedProcessModelId, apiService, mode, baseName, onError]);
 
   // Validate JSON
   const validateJson = useCallback((content: string): boolean => {
@@ -242,9 +254,21 @@ export function useJsonSchemaEditor(
     setSaving(true);
     try {
       const names = getSchemaFileNames(newSchemaName);
-      await apiService.saveDiagramFile(processModelId, names.schemaFile, '{}');
-      await apiService.saveDiagramFile(processModelId, names.uiSchemaFile, '{}');
-      await apiService.saveDiagramFile(processModelId, names.exampleDataFile, '{}');
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        names.schemaFile,
+        '{}',
+      );
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        names.uiSchemaFile,
+        '{}',
+      );
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        names.exampleDataFile,
+        '{}',
+      );
 
       setBaseName(newSchemaName);
       setMode('edit');
@@ -262,7 +286,7 @@ export function useJsonSchemaEditor(
     } finally {
       setSaving(false);
     }
-  }, [newSchemaName, apiService, processModelId, onSave, onError]);
+  }, [newSchemaName, apiService, modifiedProcessModelId, onSave, onError]);
 
   // Save all files
   const save = useCallback(async (): Promise<boolean> => {
@@ -286,9 +310,21 @@ export function useJsonSchemaEditor(
 
     setSaving(true);
     try {
-      await apiService.saveDiagramFile(processModelId, fileNames.schemaFile, schemaContent);
-      await apiService.saveDiagramFile(processModelId, fileNames.uiSchemaFile, uiSchemaContent);
-      await apiService.saveDiagramFile(processModelId, fileNames.exampleDataFile, exampleDataContent);
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        fileNames.schemaFile,
+        schemaContent,
+      );
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        fileNames.uiSchemaFile,
+        uiSchemaContent,
+      );
+      await apiService.saveDiagramFile(
+        modifiedProcessModelId,
+        fileNames.exampleDataFile,
+        exampleDataContent,
+      );
 
       setHasChanges(false);
       onSave?.();
@@ -307,7 +343,7 @@ export function useJsonSchemaEditor(
     exampleDataContent,
     fileNames,
     apiService,
-    processModelId,
+    modifiedProcessModelId,
     validateJson,
     onSave,
     onError,

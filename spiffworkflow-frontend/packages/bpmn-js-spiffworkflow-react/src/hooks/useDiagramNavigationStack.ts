@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 
 export type DiagramNavigationItem = {
-  processModelId: string;
+  /** Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model") */
+  modifiedProcessModelId: string;
   fileName: string;
   displayName?: string;
 };

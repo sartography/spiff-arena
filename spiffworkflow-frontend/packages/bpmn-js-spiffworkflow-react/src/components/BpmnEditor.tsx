@@ -86,7 +86,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
   (
     {
       apiService,
-      processModelId,
+      modifiedProcessModelId,
       diagramType,
       diagramXML,
       fileName,
@@ -794,7 +794,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       async function fetchDiagramFromJsonAPI() {
         try {
           const result = await apiService.loadDiagramFile(
-            processModelId,
+            modifiedProcessModelId,
             fileName!,
           );
           setDiagramXMLString(result.file_contents);
@@ -841,7 +841,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       fileName,
       onCallActivityOverlayClick,
       performingXmlUpdates,
-      processModelId,
+      modifiedProcessModelId,
       tasks,
       url,
     ]);

@@ -1883,10 +1883,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
           onCallActivityOverlayClick={handleCallActivityNavigate}
           onElementClick={handleClickedDiagramTask}
-          processModelId={
+          modifiedProcessModelId={
             canLoadFromModel
               ? diagramProcessModelId || ''
-              : processModelId || ''
+              : modifiedProcessModelId || ''
           }
           tasks={tasks}
         />
@@ -1995,7 +1995,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView={false}
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}
@@ -2003,7 +2003,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}

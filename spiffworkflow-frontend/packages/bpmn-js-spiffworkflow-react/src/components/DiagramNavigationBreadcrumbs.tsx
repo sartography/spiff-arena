@@ -51,7 +51,7 @@ export default function DiagramNavigationBreadcrumbs({
     getLabel?.(item) ||
     item.displayName ||
     item.fileName ||
-    item.processModelId;
+    item.modifiedProcessModelId;
 
   if (stack.length === 0) {
     return null;
@@ -80,7 +80,7 @@ export default function DiagramNavigationBreadcrumbs({
         if (isLast) {
           const hasActions = (canDownload && onDownload) || (canViewXml && onViewXml);
           return (
-            <React.Fragment key={`${item.processModelId}-${item.fileName}`}>
+            <React.Fragment key={`${item.modifiedProcessModelId}-${item.fileName}`}>
               <Chip
                 label={label}
                 color="primary"
@@ -125,7 +125,7 @@ export default function DiagramNavigationBreadcrumbs({
 
         return (
           <Link
-            key={`${item.processModelId}-${item.fileName}`}
+            key={`${item.modifiedProcessModelId}-${item.fileName}`}
             component="button"
             variant="body2"
             underline="none"

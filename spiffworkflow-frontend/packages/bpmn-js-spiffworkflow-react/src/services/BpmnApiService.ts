@@ -6,13 +6,18 @@
 export interface BpmnApiService {
   /**
    * Load diagram file from backend
+   * @param modifiedProcessModelId - Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model")
+   * @param fileName - Name of the file to load
    */
-  loadDiagramFile(processModelId: string, fileName: string): Promise<{ file_contents: string }>;
+  loadDiagramFile(modifiedProcessModelId: string, fileName: string): Promise<{ file_contents: string }>;
 
   /**
    * Save diagram file to backend
+   * @param modifiedProcessModelId - Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model")
+   * @param fileName - Name of the file to save
+   * @param content - File content to save
    */
-  saveDiagramFile(processModelId: string, fileName: string, content: string): Promise<void>;
+  saveDiagramFile(modifiedProcessModelId: string, fileName: string, content: string): Promise<void>;
 
   /**
    * Load static diagram template (for new diagrams)
@@ -148,12 +153,12 @@ export class DefaultBpmnApiService implements BpmnApiService {
     return response.json();
   }
 
-  async loadDiagramFile(processModelId: string, fileName: string): Promise<{ file_contents: string }> {
-    return this.makeRequest(`/process-models/${processModelId}/files/${fileName}`);
+  async loadDiagramFile(modifiedProcessModelId: string, fileName: string): Promise<{ file_contents: string }> {
+    return this.makeRequest(`/process-models/${modifiedProcessModelId}/files/${fileName}`);
   }
 
-  async saveDiagramFile(processModelId: string, fileName: string, content: string): Promise<void> {
-    await this.makeRequest(`/process-models/${processModelId}/files/${fileName}`, {
+  async saveDiagramFile(modifiedProcessModelId: string, fileName: string, content: string): Promise<void> {
+    await this.makeRequest(`/process-models/${modifiedProcessModelId}/files/${fileName}`, {
       method: 'PUT',
       body: JSON.stringify({ file_contents: content }),
     });

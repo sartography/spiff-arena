@@ -18,7 +18,10 @@ import {
   ProcessSearchModal,
 } from './modals';
 
-export interface BpmnEditorWithModalsProps extends Omit<BpmnEditorProps, 'apiService'> {
+export interface BpmnEditorWithModalsProps extends Omit<
+  BpmnEditorProps,
+  'apiService'
+> {
   /** API service for loading diagrams and fetching data */
   apiService: BpmnApiService;
 
@@ -29,7 +32,9 @@ export interface BpmnEditorWithModalsProps extends Omit<BpmnEditorProps, 'apiSer
   processes?: ProcessReference[];
 
   /** Callback to refresh processes list */
-  onRefreshProcesses?: (callback?: (processes: ProcessReference[]) => void) => void;
+  onRefreshProcesses?: (
+    callback?: (processes: ProcessReference[]) => void,
+  ) => void;
 
   /** Callback to navigate to a path */
   onNavigate?: (path: string, newTab?: boolean) => void;
@@ -101,7 +106,10 @@ export interface BpmnEditorWithModalsProps extends Omit<BpmnEditorProps, 'apiSer
  * />
  * ```
  */
-const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps>(
+const BpmnEditorWithModals = forwardRef<
+  BpmnEditorRef,
+  BpmnEditorWithModalsProps
+>(
   (
     {
       apiService,
@@ -120,7 +128,7 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
       jsonSchemaEditorChildren,
       processSearchChildren,
       // BpmnEditor props
-      processModelId,
+      modifiedProcessModelId,
       diagramType,
       ...bpmnEditorProps
     },
@@ -133,7 +141,7 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
       onRefreshProcesses,
       onNavigate,
       externalJsonSchemaEditorUrl,
-      processModelId,
+      processModelId: modifiedProcessModelId,
       onRefreshMessages,
       onAddNewFilesIfNotExist,
     };
@@ -153,7 +161,7 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
         <BpmnEditor
           ref={ref}
           apiService={apiService}
-          processModelId={processModelId}
+          modifiedProcessModelId={modifiedProcessModelId}
           diagramType={diagramType}
           {...bpmnEditorProps}
           // Hook up modal actions
@@ -167,7 +175,9 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
           // Hook up API callbacks
           onDataStoresRequested={bpmnEditorCallbacks.onDataStoresRequested}
           onDmnFilesRequested={bpmnEditorCallbacks.onDmnFilesRequested}
-          onJsonSchemaFilesRequested={bpmnEditorCallbacks.onJsonSchemaFilesRequested}
+          onJsonSchemaFilesRequested={
+            bpmnEditorCallbacks.onJsonSchemaFilesRequested
+          }
           onMessagesRequested={bpmnEditorCallbacks.onMessagesRequested}
           onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         />
@@ -187,7 +197,8 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
             script={modalStates.scriptEditor.script}
             scriptType={modalStates.scriptEditor.scriptType}
             scriptName={
-              modalStates.scriptEditor.element?.di?.bpmnElement?.name || 'Script'
+              modalStates.scriptEditor.element?.di?.bpmnElement?.name ||
+              'Script'
             }
             onClose={modalActions.closeScriptEditor}
             onScriptChange={modalActions.updateScriptEditorScript}
@@ -199,7 +210,8 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
             isOpen: modalStates.markdownEditor.isOpen,
             markdown: modalStates.markdownEditor.markdown,
             onClose: modalActions.closeMarkdownEditor,
-            onMarkdownChange: (md: string) => modalActions.updateMarkdownEditorContent(md),
+            onMarkdownChange: (md: string) =>
+              modalActions.updateMarkdownEditorContent(md),
           })
         ) : (
           <MarkdownEditorModal
@@ -214,12 +226,16 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
           isOpen={modalStates.messageEditor.isOpen}
           messageId={modalStates.messageEditor.messageId}
           elementId={modalStates.messageEditor.elementId}
-          correlationProperties={modalStates.messageEditor.correlationProperties}
+          correlationProperties={
+            modalStates.messageEditor.correlationProperties
+          }
           event={modalStates.messageEditor.event}
           onClose={modalActions.closeMessageEditor}
           onSave={() => {
             if (modalStates.messageEditor.event) {
-              modalStates.messageEditor.event.eventBus.fire('spiff.message.save');
+              modalStates.messageEditor.event.eventBus.fire(
+                'spiff.message.save',
+              );
             }
           }}
         >
@@ -229,7 +245,6 @@ const BpmnEditorWithModals = forwardRef<BpmnEditorRef, BpmnEditorWithModalsProps
         <JsonSchemaEditorModal
           isOpen={modalStates.jsonSchemaEditor.isOpen}
           fileName={modalStates.jsonSchemaEditor.fileName}
-          processModelId={processModelId}
           onClose={modalActions.closeJsonSchemaEditor}
           onFileNameChange={modalActions.updateJsonSchemaFileName}
         >

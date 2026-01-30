@@ -8,12 +8,12 @@ import HttpService from './HttpService';
 
 export class SpiffBpmnApiService implements BpmnApiService {
   async loadDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
   ): Promise<{ file_contents: string }> {
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
-        path: `/process-models/${processModelId}/files/${fileName}`,
+        path: `/process-models/${modifiedProcessModelId}/files/${fileName}`,
         successCallback: resolve,
         failureCallback: reject,
       });
@@ -21,13 +21,13 @@ export class SpiffBpmnApiService implements BpmnApiService {
   }
 
   async saveDiagramFile(
-    processModelId: string,
+    modifiedProcessModelId: string,
     fileName: string,
     content: string,
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       HttpService.makeCallToBackend({
-        path: `/process-models/${processModelId}/files/${fileName}`,
+        path: `/process-models/${modifiedProcessModelId}/files/${fileName}`,
         httpMethod: 'PUT',
         postBody: { file_contents: content },
         successCallback: () => resolve(),

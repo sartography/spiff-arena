@@ -28,7 +28,8 @@ export interface ProcessModel {
 }
 
 export interface BpmnEditorProps {
-  processModelId: string;
+  /** Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model") */
+  modifiedProcessModelId: string;
   diagramType: 'bpmn' | 'dmn' | 'readonly';
   apiService: BpmnApiService;
   activeUserElement?: ReactElement;
@@ -71,7 +72,8 @@ export interface DiagramModeler {
 }
 
 export interface BpmnViewerProps {
-  processModelId: string;
+  /** Colon-separated process model identifier (URL-safe format, e.g., "group:subgroup:model") */
+  modifiedProcessModelId: string;
   apiService: BpmnApiService;
   diagramXML?: string | null;
   fileName?: string;

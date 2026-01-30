@@ -29,7 +29,7 @@ import { TASK_METADATA } from '../config';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 
 type OwnProps = {
-  processModelId: string;
+  modifiedProcessModelId: string;
   diagramType: string;
   activeUserElement?: React.ReactElement;
   callers?: ProcessReference[];
@@ -88,7 +88,7 @@ export default function ReactDiagramEditor({
   onSearchProcessModels,
   onServiceTasksRequested,
   onSetPrimaryFile,
-  processModelId,
+  modifiedProcessModelId,
   saveDiagram,
   tasks,
   url,
@@ -147,7 +147,7 @@ export default function ReactDiagramEditor({
       });
       let downloadFileName = fileName;
       if (!downloadFileName) {
-        downloadFileName = `${processModelId}.${diagramType}`;
+        downloadFileName = `${modifiedProcessModelId}.${diagramType}`;
       }
       element.href = URL.createObjectURL(file);
       element.download = downloadFileName;
@@ -157,7 +157,7 @@ export default function ReactDiagramEditor({
   };
 
   const viewXml = () => {
-    navigate(`/process-models/${processModelId}/form/${fileName}`);
+    navigate(`/process-models/${modifiedProcessModelId}/form/${fileName}`);
   };
 
   const canViewXml = fileName !== undefined;
@@ -215,8 +215,6 @@ export default function ReactDiagramEditor({
     const processInstanceRun = processModel ? (
       <ProcessInstanceRun processModel={processModel} />
     ) : null;
-
-
 
     return (
       <DiagramActionBar
@@ -280,15 +278,18 @@ export default function ReactDiagramEditor({
               onNavigate={onNavigate}
               onDownload={downloadXmlFile}
               onViewXml={viewXml}
-              canDownload={ability.can('GET', targetUris.processModelFileShowPath)}
+              canDownload={ability.can(
+                'GET',
+                targetUris.processModelFileShowPath,
+              )}
               canViewXml={
-                canViewXml && ability.can('GET', targetUris.processModelFileShowPath)
+                canViewXml &&
+                ability.can('GET', targetUris.processModelFileShowPath)
               }
               downloadLabel={t('diagram_download')}
               viewXmlLabel={t('diagram_view_xml')}
             />
           )}
-
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <div
@@ -304,13 +305,13 @@ export default function ReactDiagramEditor({
             {userActionOptions()}
           </div>
         </Box>
-      </Box >
+      </Box>
       {showReferences()}
       <BpmnEditor
-        key={`${processModelId}-${fileName || 'new'}-${diagramType}`}
+        key={`${modifiedProcessModelId}-${fileName || 'new'}-${diagramType}`}
         ref={bpmnEditorRef}
         apiService={spiffBpmnApiService}
-        processModelId={processModelId}
+        modifiedProcessModelId={modifiedProcessModelId}
         diagramType={diagramType as 'bpmn' | 'dmn' | 'readonly'}
         diagramXML={diagramXML}
         fileName={fileName}
