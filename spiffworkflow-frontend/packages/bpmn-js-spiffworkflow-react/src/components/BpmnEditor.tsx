@@ -119,6 +119,60 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
     const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
     const diagramFetchedRef = useRef(false);
     const previousDiagramModelerRef = useRef<any>(null);
+    const callbacksRef = useRef({
+      onCallActivityOverlayClick,
+      onDataStoresRequested,
+      onDmnFilesRequested,
+      onElementClick,
+      onElementsChanged,
+      onJsonSchemaFilesRequested,
+      onLaunchBpmnEditor,
+      onLaunchDmnEditor,
+      onLaunchJsonSchemaEditor,
+      onLaunchMarkdownEditor,
+      onLaunchScriptEditor,
+      onLaunchMessageEditor,
+      onMessagesRequested,
+      onSearchProcessModels,
+      onServiceTasksRequested,
+    });
+
+    // Update callbacks ref when callbacks change
+    useEffect(() => {
+      callbacksRef.current = {
+        onCallActivityOverlayClick,
+        onDataStoresRequested,
+        onDmnFilesRequested,
+        onElementClick,
+        onElementsChanged,
+        onJsonSchemaFilesRequested,
+        onLaunchBpmnEditor,
+        onLaunchDmnEditor,
+        onLaunchJsonSchemaEditor,
+        onLaunchMarkdownEditor,
+        onLaunchScriptEditor,
+        onLaunchMessageEditor,
+        onMessagesRequested,
+        onSearchProcessModels,
+        onServiceTasksRequested,
+      };
+    }, [
+      onCallActivityOverlayClick,
+      onDataStoresRequested,
+      onDmnFilesRequested,
+      onElementClick,
+      onElementsChanged,
+      onJsonSchemaFilesRequested,
+      onLaunchBpmnEditor,
+      onLaunchDmnEditor,
+      onLaunchJsonSchemaEditor,
+      onLaunchMarkdownEditor,
+      onLaunchScriptEditor,
+      onLaunchMessageEditor,
+      onMessagesRequested,
+      onSearchProcessModels,
+      onServiceTasksRequested,
+    ]);
 
     const fitViewportWithPaletteOffset = (canvas: any) => {
       const container = canvas?._container;
@@ -369,10 +423,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         scriptType: string,
         eventBus: any,
       ) {
-        if (onLaunchScriptEditor) {
+        if (callbacksRef.current.onLaunchScriptEditor) {
           setPerformingXmlUpdates(true);
           const modeling = diagramModeler.get('modeling');
-          onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
+          callbacksRef.current.onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
         }
       }
 
@@ -381,31 +435,31 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         value: string,
         eventBus: any,
       ) {
-        if (onLaunchMarkdownEditor) {
+        if (callbacksRef.current.onLaunchMarkdownEditor) {
           setPerformingXmlUpdates(true);
-          onLaunchMarkdownEditor(element, value, eventBus);
+          callbacksRef.current.onLaunchMarkdownEditor(element, value, eventBus);
         }
       }
 
       function handleElementClick(event: any) {
-        if (onElementClick) {
+        if (callbacksRef.current.onElementClick) {
           const canvas = diagramModeler.get('canvas');
           const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
             canvas.getRootElement(),
           );
-          onElementClick(event.element, bpmnProcessIdentifiers);
+          callbacksRef.current.onElementClick(event.element, bpmnProcessIdentifiers);
         }
       }
 
       function handleServiceTasksRequested(event: any) {
-        if (onServiceTasksRequested) {
-          onServiceTasksRequested(event);
+        if (callbacksRef.current.onServiceTasksRequested) {
+          callbacksRef.current.onServiceTasksRequested(event);
         }
       }
 
       function handleDataStoresRequested(event: any) {
-        if (onDataStoresRequested) {
-          onDataStoresRequested(event);
+        if (callbacksRef.current.onDataStoresRequested) {
+          callbacksRef.current.onDataStoresRequested(event);
         }
       }
 
@@ -482,8 +536,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       });
 
       diagramModeler.on('spiff.callactivity.edit', (event: any) => {
-        if (onLaunchBpmnEditor) {
-          onLaunchBpmnEditor(event.processId);
+        if (callbacksRef.current.onLaunchBpmnEditor) {
+          callbacksRef.current.onLaunchBpmnEditor(event.processId);
         }
       });
 
@@ -492,14 +546,14 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         if (error) {
           console.error(error);
         }
-        if (onLaunchJsonSchemaEditor) {
-          onLaunchJsonSchemaEditor(element, value, eventBus);
+        if (callbacksRef.current.onLaunchJsonSchemaEditor) {
+          callbacksRef.current.onLaunchJsonSchemaEditor(element, value, eventBus);
         }
       });
 
       diagramModeler.on('spiff.dmn.edit', (event: any) => {
-        if (onLaunchDmnEditor) {
-          onLaunchDmnEditor(event.value);
+        if (callbacksRef.current.onLaunchDmnEditor) {
+          callbacksRef.current.onLaunchDmnEditor(event.value);
         }
       });
 
@@ -508,8 +562,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       });
 
       diagramModeler.on('elements.changed', (event: any) => {
-        if (onElementsChanged) {
-          onElementsChanged(event);
+        if (callbacksRef.current.onElementsChanged) {
+          callbacksRef.current.onElementsChanged(event);
         }
       });
 
@@ -522,32 +576,32 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       });
 
       diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
-        if (onJsonSchemaFilesRequested) {
-          onJsonSchemaFilesRequested(event);
+        if (callbacksRef.current.onJsonSchemaFilesRequested) {
+          callbacksRef.current.onJsonSchemaFilesRequested(event);
         }
       });
 
       diagramModeler.on('spiff.dmn_files.requested', (event: any) => {
-        if (onDmnFilesRequested) {
-          onDmnFilesRequested(event);
+        if (callbacksRef.current.onDmnFilesRequested) {
+          callbacksRef.current.onDmnFilesRequested(event);
         }
       });
 
       diagramModeler.on('spiff.messages.requested', (event: any) => {
-        if (onMessagesRequested) {
-          onMessagesRequested(event);
+        if (callbacksRef.current.onMessagesRequested) {
+          callbacksRef.current.onMessagesRequested(event);
         }
       });
 
       diagramModeler.on('spiff.callactivity.search', (event: any) => {
-        if (onSearchProcessModels) {
-          onSearchProcessModels(event.value, event.eventBus, event.element);
+        if (callbacksRef.current.onSearchProcessModels) {
+          callbacksRef.current.onSearchProcessModels(event.value, event.eventBus, event.element);
         }
       });
 
       diagramModeler.on('spiff.message.edit', (event: any) => {
-        if (onLaunchMessageEditor) {
-          onLaunchMessageEditor(event);
+        if (callbacksRef.current.onLaunchMessageEditor) {
+          callbacksRef.current.onLaunchMessageEditor(event);
         }
       });
 
@@ -562,24 +616,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           diagramModeler.destroy();
         }
       };
-    }, [
-      diagramType,
-      taskMetadataKeys,
-      onDataStoresRequested,
-      onDmnFilesRequested,
-      onElementClick,
-      onElementsChanged,
-      onJsonSchemaFilesRequested,
-      onLaunchBpmnEditor,
-      onLaunchDmnEditor,
-      onLaunchJsonSchemaEditor,
-      onLaunchMarkdownEditor,
-      onLaunchMessageEditor,
-      onLaunchScriptEditor,
-      onMessagesRequested,
-      onSearchProcessModels,
-      onServiceTasksRequested,
-    ]);
+    }, [diagramType, taskMetadataKeys]);
 
     // Display the diagram
     useEffect(() => {
@@ -683,7 +720,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       ) {
         if (
           taskIsMultiInstanceChild(task) ||
-          !onCallActivityOverlayClick ||
+          !callbacksRef.current.onCallActivityOverlayClick ||
           diagramType !== 'readonly' ||
           !diagramModelerState
         ) {
@@ -703,10 +740,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
             `<button class="bjs-drilldown">${icon}</button>`,
           );
           button.addEventListener('click', (newEvent: any) => {
-            onCallActivityOverlayClick(task, newEvent);
+            callbacksRef.current.onCallActivityOverlayClick!(task, newEvent);
           });
           button.addEventListener('auxclick', (newEvent: any) => {
-            onCallActivityOverlayClick(task, newEvent);
+            callbacksRef.current.onCallActivityOverlayClick!(task, newEvent);
           });
           overlays.add(task.bpmn_identifier, 'drilldown', {
             position: {
@@ -857,7 +894,6 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       diagramType,
       diagramXML,
       fileName,
-      onCallActivityOverlayClick,
       performingXmlUpdates,
       modifiedProcessModelId,
       tasks,
