@@ -10,6 +10,7 @@ CONFIG = {
             "system:diagram-edit-acceptance-test:test-a/files/test-a.bpmn"
         ),
         "loaded_text": "test-a.bpmn",
+        "file_label_template": "Process Model File: {file}",
         "file_chip_selector": '[data-testid="diagram-file-chip"]',
         "fit_button": {"role": "button", "name": "Fit to View"},
     },

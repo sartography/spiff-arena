@@ -330,7 +330,7 @@ export default function ProcessModelEditDiagram() {
       path,
       httpMethod,
       failureCallback: addError,
-      successCallback: (_result: any) => { },
+      successCallback: (_result: any) => {},
     });
   };
 
@@ -1127,7 +1127,6 @@ export default function ProcessModelEditDiagram() {
           fileName={params.file_name}
           onDeleteFile={onDeleteFile}
           processModelId={params.process_model_id || ''}
-
           saveDiagram={saveDiagram}
           navigationStack={navigationStack}
           onNavigate={(index) => {
@@ -1149,7 +1148,7 @@ export default function ProcessModelEditDiagram() {
       params.file_name &&
       params.file_name !== processModel.primary_file_name &&
       modifyProcessIdentifierForPathParam(processModel.id) ===
-      modifiedProcessModelId
+        modifiedProcessModelId
     ) {
       onSetPrimaryFileCallback = onSetPrimaryFile;
     }
@@ -1181,7 +1180,6 @@ export default function ProcessModelEditDiagram() {
         onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         processModelId={params.process_model_id || ''}
-
         saveDiagram={saveDiagram}
         navigationStack={navigationStack}
         onNavigate={(index) => {
@@ -1248,8 +1246,6 @@ export default function ProcessModelEditDiagram() {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
-
-
         <ProcessBreadcrumb
           hotCrumbs={[
             [t('home'), '/'],
