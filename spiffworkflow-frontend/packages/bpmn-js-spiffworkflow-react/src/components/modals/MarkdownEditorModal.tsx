@@ -25,7 +25,7 @@ export function MarkdownEditorModal({
 
   return (
     <Dialog
-      className="wide-dialog"
+      className="bpmn-editor-wide-dialog"
       open={isOpen}
       onClose={onClose}
       aria-labelledby="markdown-editor-title"

@@ -55,7 +55,7 @@ export default function ScriptEditorDialog({
 }: ScriptEditorDialogProps) {
     return (
         <DialogShell
-            className="wide-dialog"
+            className="bpmn-editor-wide-dialog"
             open={open}
             onClose={onClose}
             title={title}

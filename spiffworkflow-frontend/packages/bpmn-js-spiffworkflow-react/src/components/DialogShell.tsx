@@ -18,7 +18,7 @@ export default function DialogShell({
   title,
   titleId = 'modal-modal-title',
   descriptionId = 'modal-modal-description',
-  className = 'wide-dialog',
+  className = 'bpmn-editor-wide-dialog',
   children,
   footer,
 }: DialogShellProps) {

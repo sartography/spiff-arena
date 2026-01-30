@@ -30,6 +30,7 @@ export default function ScriptAssistPanel({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         style={{ width: '100%' }}
+        aria-label={placeholder}
       />
       <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
         {error ? <div style={{ color: 'red' }}>{error}</div> : null}

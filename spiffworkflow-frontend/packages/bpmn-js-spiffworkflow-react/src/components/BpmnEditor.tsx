@@ -298,7 +298,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           ? 'hidden-properties-panel'
           : 'js-properties-panel';
       temp.innerHTML = `
-      <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
+      <div class="bpmn-properties-content with-diagram bpmn-js-container" id="js-drop-zone">
         <div class="canvas ${canvasClass}" id="canvas"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>

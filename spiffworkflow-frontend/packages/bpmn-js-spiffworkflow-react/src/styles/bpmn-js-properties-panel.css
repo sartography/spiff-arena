@@ -22,14 +22,14 @@
     min-height: 100%;
 }
 
-/* Content container rules - NOT scoped because they control parent structure */
-.content {
+/* Content container rules - scoped to avoid global conflicts */
+.bpmn-properties-content {
     position: relative;
     width: 100%;
     height: 100%;
     display: flex;
 }
-.content > .message {
+.bpmn-properties-content > .message {
     width: 100%;
     height: 100%;
     text-align: center;
@@ -37,38 +37,38 @@
     font-size: 16px;
     color: #111;
 }
-.content > .message .note {
+.bpmn-properties-content > .message .note {
     vertical-align: middle;
     text-align: center;
     display: table-cell;
 }
-.content > .message.error .details {
+.bpmn-properties-content > .message.error .details {
     max-width: 500px;
     font-size: 12px;
     margin: 20px auto;
     text-align: left;
     color: #bd2828;
 }
-.content > .message.error pre {
+.bpmn-properties-content > .message.error pre {
     border: solid 1px #bd2828;
     background: #fefafa;
     padding: 10px;
     color: #bd2828;
 }
-.content:not(.with-error) .error,
-.content.with-error .intro,
-.content.with-diagram .intro {
+.bpmn-properties-content:not(.with-error) .error,
+.bpmn-properties-content.with-error .intro,
+.bpmn-properties-content.with-diagram .intro {
     display: none;
 }
-.content .canvas {
+.bpmn-properties-content .canvas {
     width: 100%;
 }
-.content .canvas,
-.content .properties-panel-parent {
+.bpmn-properties-content .canvas,
+.bpmn-properties-content .properties-panel-parent {
     display: none;
 }
-.content.with-diagram .canvas,
-.content.with-diagram .properties-panel-parent {
+.bpmn-properties-content.with-diagram .canvas,
+.bpmn-properties-content.with-diagram .properties-panel-parent {
     display: block;
 }
 
@@ -97,12 +97,13 @@
 .properties-panel-parent .buttons a.active {
     opacity: 1;
 }
-.djs-palette.two-column.open {
-    width: 96px !important;
+/* Scoped palette width override for this editor instance */
+.bpmn-properties-content .djs-palette.two-column.open {
+    width: 96px;
 }
 
-/* .wide-dialog .css-1b5j1yj-MuiPaper-root-MuiDialog-paper { */
-.wide-dialog .MuiPaper-root {
+/* Scoped dialog styles for BPMN editor dialogs only */
+.bpmn-editor-wide-dialog .MuiPaper-root {
     max-width: 100%;
     min-width: 70%;
 }

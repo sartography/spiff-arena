@@ -25,7 +25,7 @@ export function JsonSchemaEditorModal({
   if (children) {
     return (
       <Dialog
-        className="wide-dialog"
+        className="bpmn-editor-wide-dialog"
         open={isOpen}
         onClose={onClose}
         aria-labelledby="json-schema-editor-title"
@@ -40,7 +40,7 @@ export function JsonSchemaEditorModal({
   // Otherwise provide simple default implementation
   return (
     <Dialog
-      className="wide-dialog"
+      className="bpmn-editor-wide-dialog"
       open={isOpen}
       onClose={onClose}
       aria-labelledby="json-schema-editor-title"

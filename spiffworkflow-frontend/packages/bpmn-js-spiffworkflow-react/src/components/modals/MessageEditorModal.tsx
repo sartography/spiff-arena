@@ -31,7 +31,7 @@ export function MessageEditorModal({
   if (children) {
     return (
       <Dialog
-        className="wide-dialog"
+        className="bpmn-editor-wide-dialog"
         open={isOpen}
         onClose={onClose}
         aria-labelledby="message-editor-title"
@@ -57,7 +57,7 @@ export function MessageEditorModal({
   // Simple default implementation
   return (
     <Dialog
-      className="wide-dialog"
+      className="bpmn-editor-wide-dialog"
       open={isOpen}
       onClose={onClose}
       aria-labelledby="message-editor-title"

@@ -24,7 +24,7 @@ export function ProcessSearchModal({
   if (children) {
     return (
       <Dialog
-        className="wide-dialog"
+        className="bpmn-editor-wide-dialog"
         open={isOpen}
         onClose={() => onClose(null)}
         aria-labelledby="process-search-title"
@@ -39,7 +39,7 @@ export function ProcessSearchModal({
   // Otherwise provide simple default implementation
   return (
     <Dialog
-      className="wide-dialog"
+      className="bpmn-editor-wide-dialog"
       open={isOpen}
       onClose={() => onClose(null)}
       aria-labelledby="process-search-title"

@@ -287,8 +287,8 @@ a.cds--header__menu-item {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .app-logo {
@@ -1090,7 +1090,7 @@ div.retrievalExpressionsForm {
 }
 
 .task-instance-modal-row-item {
-  padding-top: .5rem;
+  padding-top: 0.5rem;
   font-size: 14px;
 }
 
@@ -1216,4 +1216,9 @@ div.retrievalExpressionsForm {
 
 .reports-search-text-field {
   min-width: 100%;
+}
+
+.wide-dialog .MuiPaper-root {
+  max-width: 100%;
+  min-width: 70%;
 }

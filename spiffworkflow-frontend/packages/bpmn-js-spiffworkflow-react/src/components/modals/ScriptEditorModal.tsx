@@ -66,7 +66,7 @@ export function ScriptEditorModal({
 
   return (
     <Dialog
-      className="wide-dialog"
+      className="bpmn-editor-wide-dialog"
       open={isOpen}
       onClose={onClose}
       aria-labelledby="script-editor-title"
