@@ -256,7 +256,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       getModeler: () => diagramModelerState,
     }));
 
-    /* This restores unresolved references that camunda removes */
+    /* This restores unresolved references that bpmn-js removes */
     const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
       diagramModelerToUse.on('import.parse.complete', (event: any) => {
         if (!event.references) {
@@ -547,6 +547,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         }
       });
 
+      // Register the import.parse.complete handler before any importXML calls
+      if (diagramType !== 'dmn') {
+        fixUnresolvedReferences(diagramModeler);
+      }
+
       // Cleanup: destroy the modeler when component unmounts or when we need a new modeler
       return () => {
         if (diagramModeler) {
@@ -595,10 +600,6 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           console.warn('Failed to zoom canvas:', error);
         }
       }, 100);
-
-      if (diagramType !== 'dmn') {
-        fixUnresolvedReferences(diagramModelerState);
-      }
     }, [diagramXMLString, diagramModelerState, diagramType]);
 
     // Respond to upstream diagram XML changes (e.g., navigation between files)

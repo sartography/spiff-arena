@@ -76,6 +76,22 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
             if current_value and current_value not in text:
                 target_index = idx
                 break
+
+        # Ensure we select a different option when allow_same_process_id is False
+        allow_same = CONFIG.get("call_activity", {}).get("allow_same_process_id", False)
+        if not allow_same and options.count() > 1:
+            if current_value and current_value in option_texts[target_index]:
+                # Try to find first option that doesn't contain current_value
+                found_different = False
+                for idx, text in enumerate(option_texts):
+                    if current_value not in text:
+                        target_index = idx
+                        found_different = True
+                        break
+                # If all options contain current_value, pick a different index
+                if not found_different and target_index == 0:
+                    target_index = 1
+
         options.nth(target_index).click()
 
     confirm_spec = CONFIG["selectors"].get("call_activity_dialog_confirm")
