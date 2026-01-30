@@ -665,18 +665,20 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       if (!diagramModelerState) {
         return undefined;
       }
-      if (performingXmlUpdates) {
-        return undefined;
-      }
 
       // Check if modeler instance changed
       const modelerChanged =
         previousDiagramModelerRef.current !== diagramModelerState;
 
-      // Reset ref only when modeler instance actually changes
+      // Reset state when modeler instance actually changes
       if (modelerChanged) {
         diagramFetchedRef.current = false;
         previousDiagramModelerRef.current = diagramModelerState;
+        setPerformingXmlUpdates(false);
+      }
+
+      if (performingXmlUpdates) {
+        return undefined;
       }
 
       // Early return if already initialized (prevents re-fetch on tasks/other deps changes)
