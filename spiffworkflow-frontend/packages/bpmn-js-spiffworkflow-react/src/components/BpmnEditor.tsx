@@ -118,6 +118,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
     const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
     const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
     const diagramFetchedRef = useRef(false);
+    const previousDiagramModelerRef = useRef<any>(null);
 
     const fitViewportWithPaletteOffset = (canvas: any) => {
       const container = canvas?._container;
@@ -631,8 +632,19 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         return undefined;
       }
 
-      // Reset ref for new modeler instance
-      diagramFetchedRef.current = false;
+      // Check if modeler instance changed
+      const modelerChanged = previousDiagramModelerRef.current !== diagramModelerState;
+
+      // Reset ref only when modeler instance actually changes
+      if (modelerChanged) {
+        diagramFetchedRef.current = false;
+        previousDiagramModelerRef.current = diagramModelerState;
+      }
+
+      // Early return if already initialized (prevents re-fetch on tasks/other deps changes)
+      if (diagramFetchedRef.current) {
+        return undefined;
+      }
 
       function handleError(err: any) {
         console.error('ERROR:', err);
