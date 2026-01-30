@@ -27,7 +27,6 @@ export function ProcessSearchModal({
         className="bpmn-editor-wide-dialog"
         open={isOpen}
         onClose={() => onClose(null)}
-        aria-labelledby="process-search-title"
         maxWidth="md"
         fullWidth
       >

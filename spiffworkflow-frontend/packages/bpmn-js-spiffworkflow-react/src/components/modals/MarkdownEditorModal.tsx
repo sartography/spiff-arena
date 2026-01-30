@@ -29,7 +29,6 @@ export function MarkdownEditorModal({
       open={isOpen}
       onClose={onClose}
       aria-labelledby="markdown-editor-title"
-      aria-describedby="markdown-editor-description"
       maxWidth="lg"
       fullWidth
     >

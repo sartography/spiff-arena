@@ -64,7 +64,9 @@ export const convertSvgElementToHtmlString = (svgElement: ReactElement): string 
   flushSync(() => {
     root.render(svgElement);
   });
-  return div.innerHTML;
+  const html = div.innerHTML;
+  root.unmount();
+  return html;
 };
 
 /**

@@ -17,7 +17,7 @@ export default function DialogShell({
   onClose,
   title,
   titleId = 'modal-modal-title',
-  descriptionId = 'modal-modal-description',
+  descriptionId,
   className = 'bpmn-editor-wide-dialog',
   children,
   footer,
@@ -32,7 +32,7 @@ export default function DialogShell({
       open={open}
       onClose={onClose}
       aria-labelledby={titleId}
-      aria-describedby={descriptionId}
+      {...(descriptionId && { 'aria-describedby': descriptionId })}
     >
       <Box sx={{ p: 4 }}>
         {title ? <h2 id={titleId}>{title}</h2> : null}

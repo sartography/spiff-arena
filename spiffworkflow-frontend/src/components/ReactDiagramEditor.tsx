@@ -149,10 +149,17 @@ export default function ReactDiagramEditor({
       if (!downloadFileName) {
         downloadFileName = `${modifiedProcessModelId}.${diagramType}`;
       }
-      element.href = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(file);
+      element.href = objectUrl;
       element.download = downloadFileName;
       document.body.appendChild(element);
       element.click();
+
+      // Clean up: revoke URL and remove element after download starts
+      setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+        document.body.removeChild(element);
+      }, 100);
     }
   };
 

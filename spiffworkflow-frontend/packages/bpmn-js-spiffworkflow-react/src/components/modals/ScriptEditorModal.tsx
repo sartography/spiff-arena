@@ -70,7 +70,6 @@ export function ScriptEditorModal({
       open={isOpen}
       onClose={onClose}
       aria-labelledby="script-editor-title"
-      aria-describedby="script-editor-description"
       maxWidth="lg"
       fullWidth
     >
