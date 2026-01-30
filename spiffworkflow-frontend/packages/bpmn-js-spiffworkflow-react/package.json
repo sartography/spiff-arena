@@ -5,6 +5,18 @@
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    },
+    "./modals": {
+      "types": "./dist/modals.d.ts",
+      "import": "./dist/modals.esm.js",
+      "require": "./dist/modals.js"
+    }
+  },
   "files": [
     "dist",
     "README.md"

@@ -258,7 +258,7 @@ The following endpoints are used by `DefaultBpmnApiService`. Implement these in 
 
 #### Load Diagram File
 
-```
+```http
 GET /process-models/{process_model_id}/files/{file_name}
 ```
 
@@ -272,7 +272,7 @@ GET /process-models/{process_model_id}/files/{file_name}
 
 #### Save Diagram File
 
-```
+```http
 PUT /process-models/{process_model_id}/files/{file_name}
 ```
 
@@ -288,7 +288,7 @@ PUT /process-models/{process_model_id}/files/{file_name}
 
 #### Load Diagram Template
 
-```
+```http
 GET /{template_name}
 ```
 
@@ -331,7 +331,7 @@ These endpoints enable additional editor features. If not implemented, the corre
 
 Used for service task autocomplete in the properties panel.
 
-```
+```http
 GET /service-tasks
 ```
 
@@ -356,7 +356,7 @@ GET /service-tasks
 
 Used for data store reference selection.
 
-```
+```http
 GET /data-stores
 ```
 
@@ -376,7 +376,7 @@ GET /data-stores
 
 Used for message event configuration.
 
-```
+```http
 GET /messages
 ```
 
@@ -396,7 +396,7 @@ GET /messages
 
 Used for business rule task DMN file selection.
 
-```
+```http
 GET /dmn-files
 ```
 
@@ -416,7 +416,7 @@ GET /dmn-files
 
 Used for user task form selection.
 
-```
+```http
 GET /json-schema-files
 ```
 
@@ -436,7 +436,7 @@ GET /json-schema-files
 
 Used for call activity process selection.
 
-```
+```http
 GET /process-models?search={query}
 ```
 

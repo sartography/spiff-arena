@@ -4,16 +4,16 @@ import typescript from '@rollup/plugin-typescript';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import postcss from 'rollup-plugin-postcss';
 
-export default {
-  input: 'src/index.ts',
+const createConfig = (input, outputName) => ({
+  input,
   output: [
     {
-      file: 'dist/index.js',
+      file: `dist/${outputName}.js`,
       format: 'cjs',
       sourcemap: true
     },
     {
-      file: 'dist/index.esm.js',
+      file: `dist/${outputName}.esm.js`,
       format: 'esm',
       sourcemap: true
     }
@@ -26,7 +26,10 @@ export default {
     }),
     commonjs(),
     typescript({
-      tsconfig: './tsconfig.json'
+      tsconfig: './tsconfig.json',
+      declaration: true,
+      declarationDir: 'dist',
+      rootDir: 'src'
     }),
     postcss({
       extract: true,
@@ -34,4 +37,9 @@ export default {
     })
   ],
   external: ['react', 'react-dom']
-};
+});
+
+export default [
+  createConfig('src/index.ts', 'index'),
+  createConfig('src/modals.ts', 'modals')
+];
