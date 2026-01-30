@@ -275,7 +275,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         refs.forEach((ref: any) => {
           const props = {
             id: ref.id,
-            name: ref.id ? typeof ref.name === 'undefined' : ref.name,
+            name: typeof ref.name === 'undefined' ? ref.id : ref.name,
           };
           const elem = diagramModelerToUse._moddle.create(desc, props);
           elem.$parent = ref.element;
