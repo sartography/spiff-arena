@@ -20,13 +20,24 @@ import mysql.connector
 
 
 def connect_to_db():
-    """Connect to the MySQL database."""
+    """Connect to the MySQL database using environment variables."""
+    # Require sensitive credentials from environment
+    db_password = os.environ.get("DB_PASSWORD")
+    if not db_password:
+        print("ERROR: DB_PASSWORD environment variable is required")
+        sys.exit(1)
+
+    # Read other connection parameters from environment
+    db_host = os.environ.get("DB_HOST", "localhost")
+    db_user = os.environ.get("DB_USER", "root")
+    db_name = os.environ.get("DB_NAME", "spiffworkflow_backend_local_development")
+
     try:
         connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="spiffworkflow_backend_local_development",
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
             autocommit=True,
             use_unicode=True,
             charset="utf8mb4",
@@ -36,8 +47,9 @@ def connect_to_db():
         print(f"Error connecting to database: {err}")
         print("Suggestions:")
         print("- Make sure MySQL is running")
-        print("- Verify database exists: spiffworkflow_backend_local_development")
+        print(f"- Verify database exists: {db_name}")
         print("- Check MySQL server sort_buffer_size if you get memory errors")
+        print("- Ensure DB_PASSWORD, DB_HOST, DB_USER, DB_NAME environment variables are set correctly")
         sys.exit(1)
 
 
