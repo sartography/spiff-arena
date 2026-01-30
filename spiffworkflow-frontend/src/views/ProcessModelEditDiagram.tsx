@@ -198,6 +198,8 @@ export default function ProcessModelEditDiagram() {
     updateTop,
   } = useDiagramNavigationStack();
 
+  const prevNavigationKeyRef = useRef<string>('');
+
   const buildProcessFilePath = useCallback((item: DiagramNavigationItem) => {
     return generatePath('/process-models/:process_model_id/files/:file_name', {
       process_model_id: item.modifiedProcessModelId,
@@ -263,6 +265,12 @@ export default function ProcessModelEditDiagram() {
     if (!params.process_model_id || !params.file_name) {
       return;
     }
+    const currentKey = `${params.process_model_id}:${params.file_name}`;
+    if (prevNavigationKeyRef.current === currentKey) {
+      return;
+    }
+    prevNavigationKeyRef.current = currentKey;
+
     const currentItem: DiagramNavigationItem = {
       modifiedProcessModelId: params.process_model_id,
       fileName: params.file_name,
@@ -279,13 +287,8 @@ export default function ProcessModelEditDiagram() {
     if (existingIndex !== navigationStack.length - 1) {
       popToIndex(existingIndex);
     }
-  }, [
-    navigationStack,
-    params.file_name,
-    params.process_model_id,
-    popToIndex,
-    resetNavigation,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.file_name, params.process_model_id, popToIndex, resetNavigation]);
 
   useEffect(() => {
     if (!processModelFile) {
@@ -1015,9 +1018,9 @@ export default function ProcessModelEditDiagram() {
       navigateTo: navigate,
       buildProcessFilePath,
       buildDmnListPath: (processModelId) =>
-        generatePath('/process-models/:process_model_id/files?file_type=dmn', {
+        generatePath('/process-models/:process_model_id/files', {
           process_model_id: processModelId || null,
-        }),
+        }) + '?file_type=dmn',
     });
 
   const onLaunchJsonSchemaEditor = useCallback(

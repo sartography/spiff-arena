@@ -36,7 +36,7 @@ export default function MessageEditorDialog({
     >
       <Box sx={{ p: 4 }}>
         <h2 id="modal-modal-title">{title}</h2>
-        {description ? <p>{description}</p> : null}
+        {description ? <p id="modal-modal-description">{description}</p> : null}
         <div data-color-mode="light">{renderEditor()}</div>
         <Button onClick={onSave}>{saveLabel}</Button>
         <Button onClick={onClose}>{closeLabel}</Button>

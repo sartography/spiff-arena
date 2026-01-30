@@ -71,14 +71,14 @@ export default function ScriptEditorDialog({
                 <TabPanel value={tabValue} index={0}>
                     {renderScript()}
                 </TabPanel>
-                {renderUnitTests ? (
+                {assistEnabled && assistTabLabel && renderAssist ? (
                     <TabPanel value={tabValue} index={1}>
-                        {renderUnitTests()}
+                        {renderAssist()}
                     </TabPanel>
                 ) : null}
-                {assistEnabled && renderAssist ? (
-                    <TabPanel value={tabValue} index={2}>
-                        {renderAssist()}
+                {renderUnitTests ? (
+                    <TabPanel value={tabValue} index={assistEnabled && assistTabLabel ? 2 : 1}>
+                        {renderUnitTests()}
                     </TabPanel>
                 ) : null}
             </Box>
