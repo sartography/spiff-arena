@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, TextField } from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { Button, ButtonGroup, TextField, Box } from '@mui/material';
 import DialogShell from './DialogShell';
 
 type FileNameEditorDialogProps = {
@@ -11,7 +10,7 @@ type FileNameEditorDialogProps = {
   fileExtension?: string;
   errorText?: string;
   onChange: (value: string) => void;
-  onSave: () => void;
+  onSave: (event?: any) => void;
   onCancel: () => void;
   saveLabel: string;
   cancelLabel: string;
@@ -37,8 +36,8 @@ export default function FileNameEditorDialog({
       title={title}
       className=""
     >
-      <Grid container spacing={2}>
-        <Grid xs={8}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Box sx={{ flex: 2 }}>
           <TextField
             id="process_model_file_name"
             label={label}
@@ -50,9 +49,9 @@ export default function FileNameEditorDialog({
             autoFocus
             fullWidth
           />
-        </Grid>
-        <Grid xs={4}>{fileExtension}</Grid>
-      </Grid>
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>{fileExtension}</Box>
+      </Box>
       <ButtonGroup>
         <Button onClick={onSave}>{saveLabel}</Button>
         <Button onClick={onCancel}>{cancelLabel}</Button>

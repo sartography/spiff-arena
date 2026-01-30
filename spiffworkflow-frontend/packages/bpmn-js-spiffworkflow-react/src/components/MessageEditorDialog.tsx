@@ -4,7 +4,7 @@ import { Box, Button, Dialog } from '@mui/material';
 type MessageEditorDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (event?: any) => void;
   title: string;
   description?: string;
   saveLabel: string;

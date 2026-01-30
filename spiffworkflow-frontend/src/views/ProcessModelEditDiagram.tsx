@@ -500,6 +500,8 @@ export default function ProcessModelEditDiagram() {
       updateExpectedOutputJson,
       setScriptUnitTestResult,
       resetScriptUnitTestResult,
+      setCurrentScriptUnitTest,
+      setCurrentScriptUnitTestIndex,
     },
   ] = useScriptUnitTestsState({ getScriptUnitTestElements });
 
@@ -892,7 +894,7 @@ export default function ProcessModelEditDiagram() {
         scriptTabLabel={t('diagram_script_editor_tab_script_editor')}
         assistTabLabel={t('diagram_script_editor_tab_script_assist')}
         unitTestsTabLabel={t('diagram_script_editor_tab_unit_tests')}
-        assistEnabled={scriptAssistEnabled}
+        assistEnabled={scriptAssistEnabled ?? false}
         renderScript={scriptEditor}
         renderUnitTests={scriptUnitTestEditorElement}
         renderAssist={scriptEditorWithAssist}
@@ -929,7 +931,7 @@ export default function ProcessModelEditDiagram() {
             height={500}
             highlightEnable={false}
             value={markdownText}
-            onChange={setMarkdownText}
+            onChange={(value) => setMarkdownText(value || '')}
             components={{
               textarea: markdownEditorTextArea,
             }}
@@ -1030,7 +1032,7 @@ export default function ProcessModelEditDiagram() {
       }
       launchJsonSchemaEditor(element, fileName, eventBus);
     },
-    [params.process_model_id, launchJsonSchemaEditor, modifiedProcessModelId],
+    [launchJsonSchemaEditor, modifiedProcessModelId],
   );
 
   const addNewFileIfNotExist = () => {

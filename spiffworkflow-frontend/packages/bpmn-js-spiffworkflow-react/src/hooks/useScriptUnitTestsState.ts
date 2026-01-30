@@ -14,6 +14,8 @@ export interface ScriptUnitTestActions {
   updateExpectedOutputJson: (value: any, element: any, modeling: any) => void;
   setScriptUnitTestResult: (result: any) => void;
   resetScriptUnitTestResult: () => void;
+  setCurrentScriptUnitTest: (test: any) => void;
+  setCurrentScriptUnitTestIndex: (index: number) => void;
 }
 
 export interface UseScriptUnitTestsStateOptions {
@@ -110,6 +112,8 @@ export function useScriptUnitTestsState(
       updateExpectedOutputJson,
       setScriptUnitTestResult,
       resetScriptUnitTestResult,
+      setCurrentScriptUnitTest,
+      setCurrentScriptUnitTestIndex,
     },
   ];
 }
