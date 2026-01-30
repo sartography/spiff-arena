@@ -64,9 +64,12 @@ def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
         if confirm_spec:
             locate(page, confirm_spec, dialog).click()
 
-    expected_label = CONFIG["diagram"]["file_label_template"].format(file="test-b.bpmn")
+    # Check that we navigated to the called process model using the file chip selector
+    file_chip_selector = CONFIG["diagram"]["file_chip_selector"]
+    expected_filename = "test-b.bpmn"
+    chip = page.locator(file_chip_selector).filter(has_text=expected_filename)
     expect(
-        page.get_by_text(expected_label),
+        chip,
         "Navigated to called process model",
     ).to_be_visible(timeout=20000)
     expect(

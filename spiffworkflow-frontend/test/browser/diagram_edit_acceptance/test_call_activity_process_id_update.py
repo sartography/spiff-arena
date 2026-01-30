@@ -96,8 +96,11 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
     if not allow_same:
         assert updated_value != current_value, "Process ID should update after selection"
 
-    expected_label = CONFIG["diagram"]["file_label_template"].format(file="test-a.bpmn")
+    # Check that we stayed on the current diagram using the file chip selector
+    file_chip_selector = CONFIG["diagram"]["file_chip_selector"]
+    expected_filename = "test-a.bpmn"
+    chip = page.locator(file_chip_selector).filter(has_text=expected_filename)
     expect(
-        page.get_by_text(expected_label),
+        chip,
         "Selection should not navigate away from current diagram",
     ).to_be_visible(timeout=10000)
