@@ -18,7 +18,7 @@ SCRIPT_TASK_ID = "Activity_0qpzdpu"
 
 def test_can_edit_script_task_using_launch_editor(page: Page) -> None:
     open_diagram(page, SCRIPT_TASK_ID)
-    ensure_group_visible(page, SCRIPT_TASK_ID, CONFIG["groups"]["script"])
+    ensure_group_visible(page, SCRIPT_TASK_ID, "group-spiff_script")
 
     dialog = open_script_editor(page)
     updated_script = "a = 2"
@@ -30,7 +30,7 @@ def test_can_edit_script_task_using_launch_editor(page: Page) -> None:
     expect(save_button, "Save enabled after script change").to_be_enabled(timeout=10000)
     save_button.click()
 
-    ensure_group_visible(page, SCRIPT_TASK_ID, CONFIG["groups"]["script"])
+    ensure_group_visible(page, SCRIPT_TASK_ID, "group-spiff_script")
     dialog = open_script_editor(page)
     updated_text = ""
     for _ in range(3):

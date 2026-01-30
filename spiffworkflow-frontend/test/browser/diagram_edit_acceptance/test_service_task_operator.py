@@ -17,9 +17,9 @@ SERVICE_TASK_ID = "Activity_1wbmh1r"
 
 def test_service_task_operator_visible(page: Page) -> None:
     open_diagram(page, SERVICE_TASK_ID)
-    ensure_group_visible(page, SERVICE_TASK_ID, CONFIG["groups"]["service"])
+    ensure_group_visible(page, SERVICE_TASK_ID, "group-service_task_properties")
 
-    group = page.locator(f'[data-group-id="{CONFIG["groups"]["service"]}"]')
+    group = page.locator('[data-group-id="group-service_task_properties"]')
     expect(group, "Service properties group visible").to_be_visible(timeout=10000)
     select_element(page, SERVICE_TASK_ID)
     expand_group_if_needed(group)
@@ -31,9 +31,7 @@ def test_service_task_operator_visible(page: Page) -> None:
     operator_select = locate(group, CONFIG["selectors"]["service_operator_select"])
     expect(operator_select, "Operator ID field visible").to_be_visible(timeout=10000)
 
-    params_group = page.locator(
-        f'[data-group-id="{CONFIG["groups"]["service_params"]}"]'
-    )
+    params_group = page.locator('[data-group-id="group-serviceTaskParameters"]')
     expect(params_group, "Service parameters group visible").to_be_visible(timeout=10000)
     expand_group_if_needed(params_group)
 

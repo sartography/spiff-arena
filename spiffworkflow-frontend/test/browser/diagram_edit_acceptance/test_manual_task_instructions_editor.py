@@ -16,7 +16,7 @@ def test_can_launch_instructions_editor_from_manual_task(page: Page) -> None:
     open_diagram(page, MANUAL_TASK_ID)
     select_element(page, MANUAL_TASK_ID)
 
-    group = page.locator(f'[data-group-id="{CONFIG["groups"]["instructions"]}"]')
+    group = page.locator('[data-group-id="group-instructions"]')
     expect(group, "Instructions group visible").to_be_visible(timeout=10000)
     expand_group_if_needed(group)
 

@@ -14,11 +14,9 @@ CALL_ACTIVITY_ID = "Activity_0m4kz8c"
 
 def test_call_activity_search_updates_process_id_without_navigation(page: Page) -> None:
     open_diagram(page, CALL_ACTIVITY_ID)
-    ensure_group_visible(page, CALL_ACTIVITY_ID, CONFIG["groups"]["call_activity"])
+    ensure_group_visible(page, CALL_ACTIVITY_ID, "group-called_element")
 
-    called_element_group = page.locator(
-        f'[data-group-id="{CONFIG["groups"]["call_activity"]}"]'
-    )
+    called_element_group = page.locator('[data-group-id="group-called_element"]')
     expect(called_element_group, "Called Element section visible").to_be_visible(
         timeout=10000
     )
@@ -32,9 +30,7 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
         }"""
     )
     assert toggled, "Called element group toggle exists"
-    process_input = locate(
-        page, CONFIG["selectors"]["call_activity_process_input"], called_element_group
-    )
+    process_input = locate(page, {"css": 'input[name="process_id"]'}, called_element_group)
     expect(process_input, "Process ID input visible").to_be_visible(timeout=10000)
     current_value = page.evaluate(
         """() => {
@@ -56,7 +52,7 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
     dialog = page.get_by_role("dialog")
     expect(
         dialog.get_by_role(
-            "heading", name=CONFIG["dialog_headings"]["call_activity"]
+            "heading", name="Select Process Model"
         ),
         "Process search dialog opened",
     ).to_be_visible(timeout=10000)
@@ -94,7 +90,8 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
 
         options.nth(target_index).click()
 
-    confirm_spec = CONFIG["selectors"].get("call_activity_dialog_confirm")
+    # call_activity_dialog_confirm is None (no confirm button needed)
+    confirm_spec = None
     if confirm_spec:
         locate(page, confirm_spec, dialog).click()
     if dialog.is_visible():
@@ -104,7 +101,7 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
 
     select_element(page, CALL_ACTIVITY_ID)
     expand_group_if_needed(called_element_group)
-    process_input = locate(page, CONFIG["selectors"]["call_activity_process_input"], called_element_group)
+    process_input = locate(page, {"css": 'input[name="process_id"]'}, called_element_group)
     updated_value = process_input.input_value()
     assert updated_value, "Process ID should not be empty after selection"
 

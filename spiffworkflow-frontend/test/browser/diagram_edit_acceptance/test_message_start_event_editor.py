@@ -17,4 +17,4 @@ def test_can_open_message_editor_from_start_event(page: Page) -> None:
 
     dialog = open_message_editor(page)
     if dialog:
-        open_and_close_dialog(page, CONFIG["dialog_headings"]["message"])
+        open_and_close_dialog(page, "Message Editor")
