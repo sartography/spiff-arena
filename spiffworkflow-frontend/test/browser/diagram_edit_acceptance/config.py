@@ -27,9 +27,6 @@ CONFIG = {
     },
     "save_button": {
         "test_id": "process-model-file-save-button",
-        "role_name": "Save",
-    },
-    "groups": {
     },
     "selectors": {
         "call_activity_open": {"role": "button", "name": "Launch Editor"},
@@ -50,6 +47,5 @@ CONFIG = {
         "close_button": "close",
     },
     "message_editor": {"opens": True},
-    "call_activity": {"allow_same_process_id": True},
     "call_activity_dialog_closes": False,
 }

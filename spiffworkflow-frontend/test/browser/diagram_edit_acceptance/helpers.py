@@ -32,7 +32,7 @@ def get_save_button(page: Page) -> Locator:
     test_id = save_config.get("test_id")
     if test_id:
         return page.get_by_test_id(test_id)
-    return page.get_by_role("button", name=save_config.get("role_name", "Save"))
+    return page.get_by_role("button", name="Save")  # Both apps use "Save"
 
 
 def open_diagram(page: Page, element_id: str) -> None:

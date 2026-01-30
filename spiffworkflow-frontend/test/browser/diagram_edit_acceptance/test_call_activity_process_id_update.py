@@ -73,21 +73,6 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
                 target_index = idx
                 break
 
-        # Ensure we select a different option when allow_same_process_id is False
-        allow_same = CONFIG.get("call_activity", {}).get("allow_same_process_id", False)
-        if not allow_same and options.count() > 1:
-            if current_value and current_value in option_texts[target_index]:
-                # Try to find first option that doesn't contain current_value
-                found_different = False
-                for idx, text in enumerate(option_texts):
-                    if current_value not in text:
-                        target_index = idx
-                        found_different = True
-                        break
-                # If all options contain current_value, pick a different index
-                if not found_different and target_index == 0:
-                    target_index = 1
-
         options.nth(target_index).click()
 
     # call_activity_dialog_confirm is None (no confirm button needed)
@@ -105,9 +90,7 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
     updated_value = process_input.input_value()
     assert updated_value, "Process ID should not be empty after selection"
 
-    allow_same = CONFIG.get("call_activity", {}).get("allow_same_process_id", False)
-    if not allow_same:
-        assert updated_value != current_value, "Process ID should update after selection"
+    # Both apps have allow_same_process_id: True, so we don't assert that the value must change
 
     # Check that we stayed on the current diagram using the file chip selector
     file_chip_selector = CONFIG["diagram"]["file_chip_selector"]
