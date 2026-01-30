@@ -14,7 +14,7 @@ def test_can_launch_json_schema_editor_from_user_task(page: Page) -> None:
     open_diagram(page, USER_TASK_ID)
     select_element(page, USER_TASK_ID)
 
-    group = page.locator(f'[data-group-id="{CONFIG["groups"]["user_task"]}"]')
+    group = page.locator('[data-group-id="group-user_task_properties"]')
     expect(group, "Web form group visible").to_be_visible(timeout=10000)
     toggled = group.evaluate(
         """(groupEl) => {

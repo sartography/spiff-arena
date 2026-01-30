@@ -12,11 +12,9 @@ CALL_ACTIVITY_ID = "Activity_0m4kz8c"
 
 def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
     open_diagram(page, CALL_ACTIVITY_ID)
-    ensure_group_visible(page, CALL_ACTIVITY_ID, CONFIG["groups"]["call_activity"])
+    ensure_group_visible(page, CALL_ACTIVITY_ID, "group-called_element")
 
-    called_element_group = page.locator(
-        f'[data-group-id="{CONFIG["groups"]["call_activity"]}"]'
-    )
+    called_element_group = page.locator('[data-group-id="group-called_element"]')
     expect(called_element_group, "Called Element section visible").to_be_visible(
         timeout=10000
     )
@@ -50,7 +48,7 @@ def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
     if dialog.is_visible():
         expect(
             dialog.get_by_role(
-                "heading", name=CONFIG["dialog_headings"]["call_activity"]
+                "heading", name="Select Process Model"
             ),
             "Process selection dialog opened",
         ).to_be_visible(timeout=10000)
@@ -60,7 +58,8 @@ def test_can_search_and_select_process_for_call_activity(page: Page) -> None:
         search_input.fill("test-b")
         search_input.press("ArrowDown")
         search_input.press("Enter")
-        confirm_spec = CONFIG["selectors"].get("call_activity_dialog_confirm")
+        # call_activity_dialog_confirm is None (no confirm button needed)
+        confirm_spec = None
         if confirm_spec:
             locate(page, confirm_spec, dialog).click()
 

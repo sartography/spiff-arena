@@ -200,7 +200,7 @@ def open_and_close_dialog(page: Page, heading_text: str) -> None:
 
 
 def open_script_editor(page: Page) -> Locator:
-    group_id = CONFIG["groups"]["script"]
+    group_id = "group-spiff_script"
     page.wait_for_function(
         """(groupId) => !!document.querySelector(`[data-group-id="${groupId}"]`)""",
         arg=group_id,
@@ -258,7 +258,7 @@ def close_script_editor(page: Page, dialog: Locator, action: str) -> None:
 
 
 def open_message_editor(page: Page) -> Locator | None:
-    group_id = CONFIG["groups"]["message"]
+    group_id = "group-messages"
     group = page.locator(f'[data-group-id="{group_id}"]').or_(
         page.locator('[data-group-id]').filter(
             has=_locator(page, CONFIG["selectors"]["message_open"])
@@ -284,7 +284,7 @@ def open_message_editor(page: Page) -> Locator | None:
     dialog = page.get_by_role("dialog")
     expect(
         dialog.get_by_role(
-            "heading", name=re.compile(CONFIG["dialog_headings"]["message"], re.I)
+            "heading", name=re.compile("Message Editor", re.I)
         ),
         "Message editor dialog opened",
     ).to_be_visible(timeout=10000)
