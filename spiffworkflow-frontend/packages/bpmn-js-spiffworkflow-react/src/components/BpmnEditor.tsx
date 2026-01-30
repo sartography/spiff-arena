@@ -23,6 +23,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useId,
 } from 'react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
@@ -111,6 +112,8 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
     },
     ref,
   ) => {
+    const instanceId = useId().replace(/:/g, '-');
+    const containerRef = useRef<HTMLDivElement>(null);
     const [diagramXMLString, setDiagramXMLString] = useState('');
     const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
     const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
@@ -293,20 +296,20 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       }
 
       const temp = document.createElement('template');
+      const canvasId = `canvas-${instanceId}`;
       const panelId: string =
         diagramType === 'readonly'
-          ? 'hidden-properties-panel'
-          : 'js-properties-panel';
+          ? `hidden-properties-panel-${instanceId}`
+          : `js-properties-panel-${instanceId}`;
       temp.innerHTML = `
-      <div class="bpmn-properties-content with-diagram bpmn-js-container" id="js-drop-zone">
-        <div class="canvas ${canvasClass}" id="canvas"></div>
+      <div class="bpmn-properties-content with-diagram bpmn-js-container" id="js-drop-zone-${instanceId}">
+        <div class="canvas ${canvasClass}" id="${canvasId}"></div>
         <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
       const frag = temp.content;
 
-      const diagramContainerElement =
-        document.getElementById('diagram-container');
+      const diagramContainerElement = containerRef.current;
       if (diagramContainerElement) {
         diagramContainerElement.innerHTML = '';
         diagramContainerElement.appendChild(frag);
@@ -316,9 +319,9 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       if (diagramType === 'bpmn') {
         diagramModeler = new BpmnModeler({
-          container: '#canvas',
+          container: `#${canvasId}`,
           propertiesPanel: {
-            parent: '#js-properties-panel',
+            parent: `#${panelId}`,
           },
           additionalModules: [
             spiffworkflow,
@@ -336,10 +339,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         });
       } else if (diagramType === 'dmn') {
         diagramModeler = new DmnModeler({
-          container: '#canvas',
+          container: `#${canvasId}`,
           drd: {
             propertiesPanel: {
-              parent: '#js-properties-panel',
+              parent: `#${panelId}`,
             },
             additionalModules: [
               DmnPropertiesPanelModule,
@@ -350,7 +353,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         });
       } else if (diagramType === 'readonly') {
         diagramModeler = new BpmnViewer({
-          container: '#canvas',
+          container: `#${canvasId}`,
           additionalModules: [
             KeyboardMoveModule,
             MoveCanvasModule,
@@ -850,7 +853,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
     // The component only renders the container - the actual diagram is rendered by bpmn-js
     return (
-      <div id="diagram-container" style={{ width: '100%', height: '100%' }} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     );
   },
 );
