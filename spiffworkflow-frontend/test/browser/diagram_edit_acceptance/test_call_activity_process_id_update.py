@@ -57,27 +57,30 @@ def test_call_activity_search_updates_process_id_without_navigation(page: Page) 
         "Process search dialog opened",
     ).to_be_visible(timeout=10000)
 
-    target = "test-a" if current_value.endswith("_test_b") else "test-b"
+    target = "Process_diagram_edit_acceptance_test_a" if current_value.endswith("_test_b") else "Process_diagram_edit_acceptance_test_b"
     search_input = locate(page, CONFIG["selectors"]["call_activity_search_input"], dialog)
     search_input.click()
     search_input.fill(target)
     search_input.press("ArrowDown")
     search_input.press("Enter")
 
-    options = dialog.get_by_role("option")
+    # After pressing Enter, the first option is selected and the dropdown closes
+    # Wait for the process_id input to be updated with the selected value
+    page.wait_for_function(
+        f"""() => {{
+        const input = document.querySelector('input[name="process_id"]');
+        return input && input.value === '{target}';
+        }}"""
+    )
 
-    # Wait for and assert that search results are present
-    expect(options.first, "Search results should be present").to_be_visible(timeout=10000)
-    assert options.count() > 0, f"Expected search results for '{target}', but got no options"
-
-    option_texts = options.all_text_contents()
-    target_index = 0
-    for idx, text in enumerate(option_texts):
-        if current_value and current_value not in text:
-            target_index = idx
-            break
-
-    options.nth(target_index).click()
+    # Verify the value was updated correctly
+    selected_value = page.evaluate(
+        """() => {
+        const input = document.querySelector('input[name="process_id"]');
+        return input ? input.value : '';
+        }"""
+    )
+    assert selected_value == target, f"Expected process_id to be '{target}', but got '{selected_value}'"
 
     # call_activity_dialog_confirm is None (no confirm button needed)
     confirm_spec = None

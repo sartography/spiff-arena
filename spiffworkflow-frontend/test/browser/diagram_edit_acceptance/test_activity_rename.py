@@ -19,6 +19,13 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     open_diagram(page, USER_TASK_ID)
     select_element(page, USER_TASK_ID)
 
+    # Wait for the label to have text starting with "user task" before reading it
+    import re
+    label_element = page.locator(f'g[data-element-id="{USER_TASK_ID}"] text').first
+    expect(label_element, "Label should be loaded").to_have_text(
+        re.compile(r"^user task"), timeout=10000
+    )
+
     current_label = get_label_text(page)
     new_label = "user task edited" if current_label != "user task edited" else "user task"
 
@@ -33,7 +40,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     page.keyboard.press("Meta+A")
     page.keyboard.insert_text(new_label)
 
-    page.locator("#canvas").click(position={"x": 10, "y": 10})
+    page.locator(".canvas").click(position={"x": 10, "y": 10})
     expect(editor, "Inline label editor closed").to_be_hidden(timeout=10000)
 
     expect(
