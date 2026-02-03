@@ -324,20 +324,29 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         environment = CustomScriptEngineEnvironment.create(default_globals)
         super().__init__(environment=environment)
 
-    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
+    def __get_process_instance_id(self):
+        tld = current_app.config.get("THREAD_LOCAL_DATA")
+        process_instance_id = None
+        if tld:
+            if hasattr(tld, "process_instance_id"):
+                process_instance_id = tld.process_instance_id
+        return process_instance_id
+
+    def __get_process_model_identifier(self):
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_model_identifier = None
-        process_instance_id = None
         if tld:
             if hasattr(tld, "process_model_identifier"):
                 process_model_identifier = tld.process_model_identifier
-            if hasattr(tld, "process_instance_id"):
-                process_instance_id = tld.process_instance_id
+        return process_model_identifier
+
+
+    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
         script_attributes_context = ScriptAttributesContext(
             task=task,
             environment_identifier=current_app.config["ENV_IDENTIFIER"],
-            process_instance_id=process_instance_id,
-            process_model_identifier=process_model_identifier,
+            process_instance_id=self.__get_process_instance_id(),
+            process_model_identifier=self.__get_process_model_identifier(),
         )
         return Script.generate_augmented_list(script_attributes_context)
 
@@ -392,7 +401,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         operation_params: dict[str, Any],
         spiff_task: SpiffTask,
     ) -> str:
-        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task)
+        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task, self.__get_process_instance_id())
 
 
 SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])

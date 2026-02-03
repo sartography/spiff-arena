@@ -5,7 +5,7 @@ from typing import Any
 
 import requests
 import sentry_sdk
-from flask import current_app
+from flask import current_app, url_for
 from flask import g
 from security import safe_requests  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
@@ -186,7 +186,7 @@ class ServiceTaskDelegate:
             cls.catch_error_codes(spiff_task, error_dict)
 
     @classmethod
-    def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask) -> str:
+    def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask, process_instance_id) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
@@ -194,9 +194,12 @@ class ServiceTaskDelegate:
         with sentry_sdk.start_span(op="connector_by_name", name=operator_identifier):
             with sentry_sdk.start_span(op="call-connector", name=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
+                params["spiff__process_instance_id"] = process_instance_id
+                params["spiff__task_id"] = spiff_task.id
                 params["spiff__task_data"] = task_data
+                api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
+                params["spiff__callback_url"] = f"{api_path_prefix}/tasks/{process_instance_id}/{spiff_task.id}"
                 params = DefaultRegistry().convert(params)  # Avoid serlization errors by using the same coverter as the core lib.
-
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}

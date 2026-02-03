@@ -2880,7 +2880,7 @@ paths:
       tags:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
-      summary: Update the form data for a tasks
+      summary: Complete the task, submitting data as required.
       requestBody:
         required: false
         content:
