@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.13.7-slim-trixie AS base
+FROM python:3.13-slim-trixie AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/venv
@@ -24,6 +24,7 @@ FROM base AS deployment
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
 # libpq5 in order to be able to use postgres at runtime
 RUN apt-get update \
+  && apt-get upgrade -y -q \
   && apt-get clean -y \
   && apt-get install -y -q git-core curl procps default-mysql-client vim-tiny jq libpq5 libkrb5support0 libexpat1 \
   && rm -rf /var/lib/apt/lists/*
@@ -46,6 +47,7 @@ RUN pip install uv==0.6.16
 # default-libmysqlclient-dev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
+  && apt-get upgrade -y -q \
   && apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 COPY . /app
