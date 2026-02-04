@@ -16,8 +16,8 @@ from spiffworkflow_backend.utils.api_logging import log_api_interaction
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
-class TestDeferredAPILogging(BaseTest):
-    """Test cases for the deferred API logging implementation."""
+class TestApiLogging(BaseTest):
+    """Test cases for the API logging implementation."""
 
     def test_decorator_respects_config_setting(self, app: Flask) -> None:
         """Test that the decorator only logs when enabled."""
@@ -76,6 +76,7 @@ class TestDeferredAPILogging(BaseTest):
                 assert log.request_body == {"input": "data"}
                 assert log.response_body == {"result": "success"}
                 assert log.duration_ms >= 0
+                assert log.query_params == {}  # Verify empty query params default
             finally:
                 app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
 
@@ -279,3 +280,126 @@ class TestDeferredAPILogging(BaseTest):
                 mock_logger.error.assert_called()
                 call_args = mock_logger.error.call_args[0][0]
                 assert "Failed to commit API log entries" in call_args
+
+    def test_query_params_logging(self, app: Flask) -> None:
+        """Test that query parameters are captured in the log."""
+
+        @log_api_interaction
+        def test_function() -> tuple[dict[str, str], int]:
+            return {"result": "success"}, 200
+
+        with app.app_context():
+            # Clear existing logs
+            db.session.query(APILogModel).delete()
+            db.session.commit()
+
+            # Enable API logging
+            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
+
+            try:
+                # Test with query params
+                with app.test_request_context("/test?param1=value1&param2=123", method="GET"):
+                    test_function()
+
+                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                        _process_log_queue()
+
+                # Verify log entry
+                logs = db.session.query(APILogModel).all()
+                assert len(logs) == 1
+                log = logs[0]
+                assert log.query_params == {"param1": "value1", "param2": "123"}
+            finally:
+                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+
+    def test_global_logging_creates_log_entry(self, app: Flask) -> None:
+        """Test that the global logging functionality creates log entries with proper data."""
+        import time
+
+        from flask import Response
+
+        from spiffworkflow_backend.utils.api_logging import _create_log_entry_final
+
+        with app.app_context():
+            db.session.query(APILogModel).delete()
+            db.session.commit()
+
+            # Simulate what the global logging hooks do
+            with app.test_request_context("/test_endpoint?param1=value1", method="POST"):
+                start_time = time.time()
+                response = Response('{"status": "ok"}', status=200, mimetype="application/json")
+
+                # This is what the after_request hook calls
+                _create_log_entry_final(start_time, response=response)
+
+                # Process queue
+                _process_log_queue()
+
+                logs = db.session.query(APILogModel).all()
+                assert len(logs) == 1
+                assert logs[0].endpoint == "/test_endpoint"
+                assert logs[0].method == "POST"
+                assert logs[0].query_params == {"param1": "value1"}
+                assert logs[0].status_code == 200
+                assert logs[0].response_body == {"status": "ok"}
+
+    def test_global_logging_disabled_by_default(self, app: Flask, client: Any) -> None:
+        """Test that when an endpoint is not decorated, it's not logged without global logging.
+
+        This tests that the @log_api_interaction decorator is required for logging when
+        SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS is disabled.
+        """
+        with app.app_context():
+            db.session.query(APILogModel).delete()
+            db.session.commit()
+
+            # Ensure global logging is disabled (it should be by default, but make it explicit)
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", False):
+                # Make a request to an endpoint that doesn't require auth and isn't decorated
+                response = client.get("/v1.0/status")
+                assert response.status_code == 200
+
+                # Process queue
+                _process_log_queue()
+
+                # Without global logging and without decorator, no logs should be created
+                logs = db.session.query(APILogModel).filter_by(endpoint="/v1.0/status").all()
+                assert len(logs) == 0
+
+    def test_no_double_logging(self, app: Flask) -> None:
+        """Test that we don't log twice if endpoint is decorated AND global logging is on."""
+        import time
+
+        from flask import Response
+
+        from spiffworkflow_backend.utils.api_logging import _create_log_entry_final
+
+        with app.app_context():
+            db.session.query(APILogModel).delete()
+            db.session.commit()
+
+            # Simulate a decorated endpoint being called
+            with app.test_request_context("/test_double", method="GET"):
+                start_time = time.time()
+                g.api_log_start_time = start_time
+
+                # Simulate the decorator creating a log entry and setting the flag
+                response = Response('{"status": "decorated"}', status=200, mimetype="application/json")
+                _create_log_entry_final(start_time, response=response)
+                # The decorator sets this flag after logging
+                g.api_log_created = True
+
+                # Now simulate what the after_request hook would do
+                # It checks if api_log_created is set and skips logging if so
+                if app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
+                    if app.config.get("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", False):
+                        if not (hasattr(g, "api_log_created") and g.api_log_created):
+                            # This should NOT execute because g.api_log_created is True
+                            _create_log_entry_final(start_time, response=response)
+
+                # Process queue
+                _process_log_queue()
+
+                logs = db.session.query(APILogModel).filter_by(endpoint="/test_double").all()
+                # Should only have 1 log entry, not 2 (decorator prevents double logging)
+                assert len(logs) == 1

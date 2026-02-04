@@ -186,6 +186,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", default=False)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
