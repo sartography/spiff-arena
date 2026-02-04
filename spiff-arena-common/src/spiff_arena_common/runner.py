@@ -20,7 +20,7 @@ from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter, Spiff
 from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ServiceTask, UserTask
 from SpiffWorkflow.util.task import TaskFilter, TaskState
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 class CustomManualTask(ManualTask):
     def _run(self, task):
@@ -217,6 +217,18 @@ def _advance_workflow(workflow, task, strategy_name):
         elif strategy_name == "greedy":
             if task.task_spec.__class__.__name__.startswith("Custom"):
                 break
+            if missing_lazy_load_specs(workflow):
+                break
+        elif strategy_name == "unittest":
+            if task.task_spec.__class__.__name__.startswith("Custom"):
+                stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
+                if not stack:
+                    break
+                expected = stack.pop()
+                if task.task_spec.name != expected["id"]:
+                    break
+                task.run()
+                task.data.update(expected["data"])
             if missing_lazy_load_specs(workflow):
                 break
 
