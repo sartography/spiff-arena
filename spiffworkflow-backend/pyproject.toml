@@ -79,7 +79,7 @@ dev = [
     "pytest-random-order >= 1.1.0",
     "pytest-flask-sqlalchemy >= 1.1.0",
     "pytest-xdist == 3.8.0",
-    "bandit == 1.9.2",
+    "bandit == 1.9.3",
     "pre-commit-hooks >= 5.0.0",
     "Pygments >= 2.19.1",
     # type hinting stuff
