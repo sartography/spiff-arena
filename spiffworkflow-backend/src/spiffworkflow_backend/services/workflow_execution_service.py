@@ -304,10 +304,12 @@ class ExecutionStrategy:
             if exceptions:
                 # Try to use ExceptionGroup (Python 3.11+), fall back to raising first exception
                 try:
-                    exception_strings = [str(exception) for exception in exceptions]
-                    msg = f"{len(exceptions)} task(s) failed during parallel {exception_strings}"
-
-                    raise ExceptionGroup(msg, exceptions)
+                    if len(exceptions) == 1:
+                        raise exceptions[0]
+                    else:
+                        exception_strings = [str(exception) for exception in exceptions]
+                        msg = f"{len(exceptions)} task(s) failed during parallel {exception_strings}"
+                        raise ExceptionGroup(msg, exceptions)
                 except NameError:
                     if len(exceptions) > 1:
                         for exc in exceptions[1:]:

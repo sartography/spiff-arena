@@ -15,15 +15,15 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 #    * Assure con Provide an API endpoint and a new UI component that lnector gets process in
 #      stance id, the task id, the callback url. (done)
 # 2) Test Post Request
-#    * Test built-in function that provides a callback url
+#    * Test built-in function that provides a callback url (done)
 # 3) General Test
-#    * Assure that a 202 request results in the process being in a waiting state.
-#    * Assure that a call to the call-back url results in the process completing.
+#    * Assure that a 202 request results in the process being in a waiting state. (done)
+#    * Assure that a call to the call-back url results in the process completing. (done)
 # 4) Error handling
-#    * If the process is successfully able to complete all engine steps, a 200 message should be returned
-#    * If an error occurs completing engine steps, a 500 error should be returned for the call-back
-#    * If a timeout occurs (a timer event cancels the call back, then we return an error message that
-#       the task is no longer active.
+#    * If the process is successfully able to complete all engine steps, a 200 message should be returned (done)
+#    * If an error occurs completing engine steps, a 400 error should be returned for the call-back, and
+#      the process should be in an error state. (done)
+#    * If the task is no longer waiting, we receive an error, but the process is not placed in an error state. (done)
 # 5) Reporting
 #    * Provide an API endpoint and a new UI component that lists all processes that are waiting on a callback.
 # 6) After implementation
@@ -67,7 +67,7 @@ class TestLongRunningService(BaseTest):
             assert json_data["spiff__process_instance_id"] == process_instance.id
             assert process_instance.status == "complete"
 
-    def test__202_response(
+    def test__202_success_response(
         self,
         app: Flask,
         client: TestClient,
@@ -95,10 +95,96 @@ class TestLongRunningService(BaseTest):
 
         # Execute the callback url to complete the process
         content = {"do_not_fail": True}
-        client.put(
+        response = client.put(
             callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
         )
+        assert response.status_code == 200
+        response_dict = response.json()
+        assert response_dict["state"] == "COMPLETED"
+        assert response_dict["type"] == "Default End Event"
+
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"
 
-        # Now post to callback url to complete the process
+    def test__202_error_response(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """When a callback provides data that causes a subsequent task to fail, the process should go to error state."""
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+            call_kwargs = mock_post.call_args.kwargs
+            json_data = call_kwargs.get("json", {})
+            callback_url = json_data["spiff__callback_url"]
+
+        # Execute the callback WITHOUT "do_not_fail" - the script task after the service task
+        # will raise a KeyError, which should put the process in an error state.
+        content = {"some_other_key": True}
+        response = client.put(
+            callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
+        )
+        response_dict = response.json()
+        assert response.status_code == 400
+        assert response_dict["title"] == "unexpected_workflow_exception"
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "error"
+
+    def test__202_canceled_response(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """When the service task that would receive a callback is no longer active, we return an error message and the
+        process is not modified."""
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+            call_kwargs = mock_post.call_args.kwargs
+            json_data = call_kwargs.get("json", {})
+            callback_url = json_data["spiff__callback_url"]
+
+        processor.send_bpmn_event(
+            {"name": "CANCEL", "typename": "SignalEventDefinition", "variable": None, "expression": None, "description": None}
+        )
+        assert process_instance.status == "complete"
+
+        # Execute the callback, which should not be completed, because it received a canel signal event.
+        content = {"do_not_fail": True}
+        response = client.put(
+            callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
+        )
+        assert response.status_code == 400
+        response_dict = response.json()
+        assert response_dict["title"] == "not_waiting_for_callback"
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"  # It should not be changed to an error, it should remain completed.

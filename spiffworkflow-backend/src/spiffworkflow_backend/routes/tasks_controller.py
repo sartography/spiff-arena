@@ -465,6 +465,8 @@ def task_submit_callback(
         if body is None:
             body = {}
         response_item = _complete_service_task_callback(process_instance_id, task_guid, execution_mode)
+        if "next_task" in response_item:
+            response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)
 
 

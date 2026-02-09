@@ -512,9 +512,17 @@ def _complete_service_task_callback(
     'http_status', and 'operator_identifier' fields.
     """
 
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if not request.is_json:
+        raise ApiError(
+            error_code="invalid_mimetype",
+            message="This endpoint must be called with a json mimetype.",
+            status_code=400,
+        )
 
-    with sentry_sdk.start_span(op="task", name="complete_form_task"):
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    error = None
+
+    with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
             if ProcessInstanceMigrator.run(process_instance):
                 # Refresh the process instance to get any updates from migration
@@ -526,39 +534,40 @@ def _complete_service_task_callback(
             spiff_task = _get_spiff_task_from_processor(task_guid, processor)
 
             # assure we are waiting for a callback.
-            if spiff_task.state != TaskState.STARTED or not isinstance(spiff_task.task_spec, ServiceTask):
-                raise ApiError(
-                    error_code="not_waiting_for_callback",
-                    message="This process instance is not waiting for a callback.",
-                    status_code=400,
-                )
+            if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
+                queue_process_instance_if_appropriate(process_instance, execution_mode)
 
-            queue_process_instance_if_appropriate(process_instance, execution_mode)
-
-            # Set the result variable with the parsed response, just like CustomServiceTask._execute does
-            result_variable = spiff_task.task_spec.result_variable
-            if request.is_json:
+                # Set the result variable with the parsed response, just like CustomServiceTask._execute does
+                result_variable = spiff_task.task_spec.result_variable
                 content = request.json
                 if "body" in content:
                     content = content["body"]
                 if result_variable:
                     spiff_task.data[result_variable] = content
+
+                # Mark the task as completed
+                spiff_task.complete()
+
+                # Run the engine steps.
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                    execution_strategy_name = "greedy"
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
             else:
-                raise ApiError(
-                    error_code="invalid_mimetype",
-                    message=("This endpoint must be called with a json mimetype."),
+                error = ApiError(
+                    error_code="not_waiting_for_callback",
+                    message="This process instance is not waiting for a callback.",
                     status_code=400,
                 )
+        if error:
+            raise error  # Raise the erro outside the process intance queue service, so we don't error out the process.
 
-            # Mark the task as completed
-            spiff_task.complete()
+        if processor.next_task():
+            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+            task.process_model_uses_queued_execution = queue_enabled_for_process_model()
+            return {"next_task": task}
 
-            # Run the engine steps.
-            execution_strategy_name = None
-            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                execution_strategy_name = "greedy"
-            processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
-
+    # next_task always returns something, even if the instance is complete, so we never get here
     return {
         "ok": True,
         "process_model_identifier": process_instance.process_model_identifier,

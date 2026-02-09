@@ -27,11 +27,20 @@
       <bpmn:outgoing>Flow_0mfkpga</bpmn:outgoing>
       <bpmn:script>response["do_not_fail"]</bpmn:script>
     </bpmn:scriptTask>
+    <bpmn:endEvent id="Event_0o6mzm3">
+      <bpmn:incoming>Flow_1qtwe4o</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1qtwe4o" sourceRef="Event_0ss1sat" targetRef="Event_0o6mzm3" />
+    <bpmn:boundaryEvent id="Event_0ss1sat" attachedToRef="Task_1747924731738">
+      <bpmn:outgoing>Flow_1qtwe4o</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0srd3qo" signalRef="CANCEL" />
+    </bpmn:boundaryEvent>
     <bpmn:textAnnotation id="TextAnnotation_0h0k6x0">
       <bpmn:text>This will raise an error if the response does not include the variable do_not_fail</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_11fzgfx" associationDirection="None" sourceRef="Activity_03sneo2" targetRef="TextAnnotation_0h0k6x0" />
   </bpmn:process>
+  <bpmn:signal id="CANCEL" name="CANCEL" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="service_task">
       <bpmndi:BPMNShape id="StartEvent_1747924731738_di" bpmnElement="StartEvent_1747924731738">
@@ -46,6 +55,12 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1toxg6r_di" bpmnElement="Activity_03sneo2">
         <dc:Bounds x="550" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0o6mzm3_di" bpmnElement="Event_0o6mzm3">
+        <dc:Bounds x="492" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01ad517_di" bpmnElement="Event_0ss1sat">
+        <dc:Bounds x="432" y="182" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_0h0k6x0_di" bpmnElement="TextAnnotation_0h0k6x0">
         <dc:Bounds x="650" y="40" width="187" height="55" />
@@ -66,6 +81,11 @@
       <bpmndi:BPMNEdge id="Association_11fzgfx_di" bpmnElement="Association_11fzgfx">
         <di:waypoint x="638" y="120" />
         <di:waypoint x="662" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qtwe4o_di" bpmnElement="Flow_1qtwe4o">
+        <di:waypoint x="450" y="218" />
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="492" y="250" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
