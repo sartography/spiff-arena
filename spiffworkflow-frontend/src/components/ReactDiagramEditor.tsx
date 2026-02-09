@@ -277,6 +277,8 @@ export default function ReactDiagramEditor({
           borderColor: 'divider',
           backgroundColor: 'background.paper',
         }}
+        data-testid="process-model-file-show"
+        data-filename={fileName}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {navigationStack && onNavigate && (
