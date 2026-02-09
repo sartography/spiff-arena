@@ -212,7 +212,7 @@ def test_tester(files):
         specs, err = specs_from_xml([file])
         assert err is None
         parsed.append((file[0], specs))
-    [ctx, result, output] = run_tests(parsed)
+    ctx, result, output = run_tests(parsed)
 
     assert result.wasSuccessful()
     assert result.testsRun == 1
@@ -220,12 +220,12 @@ def test_tester(files):
 
     _, tally = task_coverage(ctx)
     for id, f in ctx.files:
-        [completed, all, percent] = tally.breakdown[id]
+        completed, all, percent = tally.breakdown[id]
         assert completed == 6
         assert all == 6
         assert percent == int(100)
     
-    [completed, all, percent] = tally.result
+    completed, all, percent = tally.result
     assert completed == 6
     assert all == 6
     assert percent == int(100)
