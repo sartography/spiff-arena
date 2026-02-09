@@ -11,7 +11,9 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask.wrappers import Response
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
@@ -29,6 +31,7 @@ from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedErro
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
@@ -495,6 +498,74 @@ def _prepare_form_data(
         ) from exception
 
 
+def _complete_service_task_callback(
+    process_instance_id: int,
+    task_guid: str,
+    execution_mode: str | None = None,
+) -> dict:
+    """Complete a service task that is waiting for a callback after returning 202.
+
+    This is called when a long-running service task returns a 202 (Accepted) response,
+    leaving the task in STARTED state. The connector later calls back with the result.
+
+    The body should contain the connector response format with 'body', 'mimetype',
+    'http_status', and 'operator_identifier' fields.
+    """
+
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
+    with sentry_sdk.start_span(op="task", name="complete_form_task"):
+        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+            if ProcessInstanceMigrator.run(process_instance):
+                # Refresh the process instance to get any updates from migration
+                db.session.refresh(process_instance)
+
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+            )
+            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
+
+            # assure we are waiting for a callback.
+            if spiff_task.state != TaskState.STARTED or not isinstance(spiff_task.task_spec, ServiceTask):
+                raise ApiError(
+                    error_code="not_waiting_for_callback",
+                    message="This process instance is not waiting for a callback.",
+                    status_code=400,
+                )
+
+            queue_process_instance_if_appropriate(process_instance, execution_mode)
+
+            # Set the result variable with the parsed response, just like CustomServiceTask._execute does
+            result_variable = spiff_task.task_spec.result_variable
+            if request.is_json:
+                content = request.json
+                if "body" in content:
+                    content = content["body"]
+                if result_variable:
+                    spiff_task.data[result_variable] = content
+            else:
+                raise ApiError(
+                    error_code="invalid_mimetype",
+                    message=("This endpoint must be called with a json mimetype."),
+                    status_code=400,
+                )
+
+            # Mark the task as completed
+            spiff_task.complete()
+
+            # Run the engine steps.
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
+            processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+
+    return {
+        "ok": True,
+        "process_model_identifier": process_instance.process_model_identifier,
+        "process_instance_id": process_instance_id,
+    }
+
+
 def _task_submit_shared(
     process_instance_id: int,
     task_guid: str,
@@ -513,7 +584,7 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
@@ -669,7 +740,7 @@ def _get_task_model_for_request(
 
     can_complete = False
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
     except (
         HumanTaskNotFoundError,

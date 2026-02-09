@@ -2944,6 +2944,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /tasks/{process_instance_id}/{task_guid}/callback:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    put:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_submit_callback
+      summary: Complete a service task that was started and is awaiting completion through a callback.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
   /tasks/{process_instance_id}/{task_guid}/allows-guest:
     parameters:
       - name: task_guid

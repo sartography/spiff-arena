@@ -324,7 +324,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         environment = CustomScriptEngineEnvironment.create(default_globals)
         super().__init__(environment=environment)
 
-    def __get_process_instance_id(self):
+    def __get_process_instance_id(self) -> Any | None:
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_instance_id = None
         if tld:
@@ -332,14 +332,13 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                 process_instance_id = tld.process_instance_id
         return process_instance_id
 
-    def __get_process_model_identifier(self):
+    def __get_process_model_identifier(self) -> Any | None:
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_model_identifier = None
         if tld:
             if hasattr(tld, "process_model_identifier"):
                 process_model_identifier = tld.process_model_identifier
         return process_model_identifier
-
 
     def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
         script_attributes_context = ScriptAttributesContext(

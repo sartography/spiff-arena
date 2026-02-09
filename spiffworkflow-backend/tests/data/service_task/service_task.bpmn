@@ -25,8 +25,7 @@
     <bpmn:scriptTask id="Activity_03sneo2" name="Script with possible error">
       <bpmn:incoming>Flow_066i73q</bpmn:incoming>
       <bpmn:outgoing>Flow_0mfkpga</bpmn:outgoing>
-      <bpmn:script>body = json.loads(response["body"])
-body["do_not_fail"]</bpmn:script>
+      <bpmn:script>response["do_not_fail"]</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:textAnnotation id="TextAnnotation_0h0k6x0">
       <bpmn:text>This will raise an error if the response does not include the variable do_not_fail</bpmn:text>

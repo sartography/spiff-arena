@@ -20,3 +20,4 @@ __pycache__/
 
 sample-process-models/
 agent_setup_script_has_completed_successfully
+/venv

@@ -46,6 +46,7 @@ from spiffworkflow_backend.models.task_draft_data import TaskDraftDataDict
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.process_api_blueprint import _complete_service_task_callback
 from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
@@ -454,6 +455,19 @@ def task_submit(
         return make_response(jsonify(response_item), 200)
 
 
+def task_submit_callback(
+    process_instance_id: int,
+    task_guid: str,
+    body: dict[str, Any] | None = None,
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit"):
+        if body is None:
+            body = {}
+        response_item = _complete_service_task_callback(process_instance_id, task_guid, execution_mode)
+        return make_response(jsonify(response_item), 200)
+
+
 def process_instance_progress(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
@@ -750,7 +764,7 @@ def task_save_draft(
         )
 
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
     except HumanTaskAlreadyCompletedError:
         return make_response(jsonify({"ok": True}), 200)
 

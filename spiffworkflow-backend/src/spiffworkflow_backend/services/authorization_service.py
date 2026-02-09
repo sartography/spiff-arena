@@ -404,7 +404,7 @@ class AuthorizationService:
         return False
 
     @staticmethod
-    def assert_user_can_complete_task(
+    def assert_user_can_complete_human_task(
         process_instance_id: int,
         task_guid: str,
         user: UserModel,

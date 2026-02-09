@@ -62,7 +62,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = True
             mock_post.return_value.text = '{"error_stuff": "WE ERRORED"}'
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_invalid_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_invalid_operation", {}, spiff_task, process_instance.id)
             message_regex = (
                 r"The service did not find the requested resource\..*A critical component \(The connector proxy\) is"
                 r" not responding correctly"
@@ -84,7 +84,7 @@ class TestServiceTaskDelegate(BaseTest):
 
         with patch("requests.post", side_effect=Exception("mocked error")):
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(str(connector_proxy_error.value), "Exception", "mocked error", 500)
 
     def test_call_connector_on_json_loads_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -104,7 +104,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = True
             mock_post.return_value.text = return_text
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(
                 str(connector_proxy_error.value), "ServiceTaskOperatorReturnedInvalidJsonError", return_text, 200
             )
@@ -138,7 +138,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = False
             mock_post.return_value.text = json.dumps(connector_response)
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(str(connector_proxy_error.value), "OurTestError", "We errored", 500)
 
     def test_call_connector_can_succeed(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -166,7 +166,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.status_code = 200
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
-            result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             assert result is not None
             assert json.loads(result) == {
                 **connector_response["command_response"],

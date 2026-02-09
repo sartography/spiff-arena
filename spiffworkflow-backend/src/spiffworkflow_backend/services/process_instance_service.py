@@ -722,7 +722,7 @@ class ProcessInstanceService:
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, str(spiff_task.id), user)
 
         # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
         if (
@@ -840,7 +840,7 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_task(processor.process_instance_model.id, task_guid, g.user)
+            AuthorizationService.assert_user_can_complete_human_task(processor.process_instance_model.id, task_guid, g.user)
             can_complete = True
         except HumanTaskAlreadyCompletedError:
             can_complete = False
