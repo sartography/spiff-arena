@@ -78,7 +78,7 @@ def slurp(file):
     with open(file) as f:
         return f.read()
 
-def testCtx(parsed):
+def test_ctx(parsed):
     ctx = TestCtx([], {}, [], [])
     for (file, specs) in parsed:
         if file.endswith("_test.bpmn"):
@@ -95,7 +95,7 @@ def testCtx(parsed):
     return ctx
 
 def run_tests(parsed):
-    ctx = testCtx(parsed)
+    ctx = test_ctx(parsed)
     suite = unittest.TestSuite()
     suite.addTests(ctx.test_cases)
     stream = io.StringIO()

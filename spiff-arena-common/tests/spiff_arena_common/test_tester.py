@@ -1,4 +1,3 @@
-import json
 import pytest
 
 from spiff_arena_common.coverage import task_coverage
