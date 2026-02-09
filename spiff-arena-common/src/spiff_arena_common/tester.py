@@ -94,7 +94,7 @@ def testCtx(parsed):
     ctx.tests.sort()
     return ctx
 
-def runTests(parsed):
+def run_tests(parsed):
     ctx = testCtx(parsed)
     suite = unittest.TestSuite()
     suite.addTests(ctx.test_cases)
@@ -102,10 +102,10 @@ def runTests(parsed):
     result = unittest.TextTestRunner(stream=stream).run(suite)
     return TestRun(ctx, result, stream.getvalue())
     
-def runTestsInDir(dir):
+def run_tests_in_dir(dir):
     parsed = []
     for file in files_to_parse(dir):
         specs, err = specs_from_xml([(file, slurp(file))])
         assert not err
         parsed.append((file, specs))
-    return runTests(parsed)
+    return run_tests(parsed)

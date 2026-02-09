@@ -1,7 +1,8 @@
 import json
 import pytest
 
-from spiff_arena_common.runner import advance_workflow, specs_from_xml
+from spiff_arena_common.runner import specs_from_xml
+from spiff_arena_common.tester import run_tests
 
 ut = ("ut.bpmn", """
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
@@ -49,7 +50,7 @@ ut = ("ut.bpmn", """
 </bpmn:definitions>
 """)
 
-test_ut = ("test-ut.bpmn", """
+ut_test = ("ut_test.bpmn", """
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:process id="Process_1770132558798" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1770132558798">
@@ -202,17 +203,16 @@ spiff_testResult = test()</bpmn:script>
 @pytest.mark.parametrize(
     "files",
     [
-        ([test_ut, ut]),
+        ([ut, ut_test]),
     ]
 )
 def test_tester(files):
-    specs, err = specs_from_xml(files)
-    assert err is None
-    
-    result = json.loads(advance_workflow(specs, {}, None, "unittest", None))
-    assert result["status"] == "ok"
-    assert result["completed"]
+    parsed = []
+    for file in files:
+        specs, err = specs_from_xml([file])
+        assert err is None
+        parsed.append((file[0], specs))
+    [ctx, result, output] = run_tests(parsed)
 
-    test_result = result["result"]["spiff_testResult"]
-    assert test_result["wasSuccessful"]
-    assert test_result["testsRun"] == 1
+    assert result.wasSuccessful()
+    assert result.testsRun == 1
