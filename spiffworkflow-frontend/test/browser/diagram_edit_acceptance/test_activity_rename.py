@@ -37,7 +37,7 @@ def test_can_rename_activity_by_double_clicking_label(page: Page) -> None:
     editor = page.locator('.djs-direct-editing-content')
     expect(editor, "Inline label editor visible").to_be_visible(timeout=10000)
 
-    page.keyboard.press("Meta+A")
+    page.keyboard.press("ControlOrMeta+A")
     page.keyboard.insert_text(new_label)
 
     page.locator(".canvas").click(position={"x": 10, "y": 10})
