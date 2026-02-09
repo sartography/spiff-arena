@@ -88,7 +88,7 @@ def test_can_create_new_bpmn_dmn_json_files(page: Page):
         page.get_by_role("button", name="Save Changes").click()
         test_element = page.get_by_test_id("process-model-file-show")
         expect(test_element).to_be_visible(timeout=10000)
-        expect(test_element).to_have_attribute("data-filename", f"{file_name}.bpmn")
+        expect(test_element).to_have_attribute("data-filename", f"{file_name}.{ext}")
 
         # Return to model detail via breadcrumb link
         page.get_by_test_id("process-model-breadcrumb-link").click()

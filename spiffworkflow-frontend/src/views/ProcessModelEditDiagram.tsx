@@ -1249,14 +1249,15 @@ export default function ProcessModelEditDiagram() {
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
-            [t('home'), '/'],
+            [t('process_groups'), '/process-groups'],
             {
-              entityToExplode: modifiedProcessModelId,
-              entityType: 'process-model-id',
-              linkLastItem: false,
+              entityToExplode: processModel,
+              entityType: 'process-model',
+              linkLastItem: true,
             },
           ]}
         />
+
         {pageModals()}
 
         {unsavedChangesMessage()}
