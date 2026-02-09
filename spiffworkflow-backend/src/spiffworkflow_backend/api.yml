@@ -2126,6 +2126,35 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/awaiting-callback:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.tasks_controller.tasks_awaiting_callback
+      summary: returns the list of service tasks that are currently waiting for a callback.
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
   /tasks/for-me:
     parameters:
       - name: page

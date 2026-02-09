@@ -208,7 +208,7 @@ class ServiceTaskDelegate:
             with sentry_sdk.start_span(op="call-connector", name=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__process_instance_id"] = process_instance_id
-                params["spiff__task_id"] = spiff_task.id
+                params["spiff__task_id"] = str(spiff_task.id)
                 params["spiff__task_data"] = task_data
                 api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
                 params["spiff__callback_url"] = (

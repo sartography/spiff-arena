@@ -25,16 +25,33 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 #      the process should be in an error state. (done)
 #    * If the task is no longer waiting, we receive an error, but the process is not placed in an error state. (done)
 # 5) Reporting
-#    * Provide an API endpoint and a new UI component that lists all processes that are waiting on a callback.
+#    * Provide an API endpoint and a new UI component that lists all processes that are waiting on a callback. (done)
 # 6) After implementation
 #    * Click test to assure the process does not compete in the ui
 #    * Be sure to add documentation on all of this
-# 7) Invalid callbacks should not put the process in an error state.  Assure this is true.
+# 7) Invalid callbacks should not put the process in an error state.  Assure this is true. (done)
 # 8) Test execution mode flag is respected.
 # 9) Assure someone without permissions can not call the url
 
 
 class TestLongRunningService(BaseTest):
+    def assert_tasks_awaiting_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        user: UserModel,
+        expected_count: int,
+    ) -> None:
+        """Call the tasks/awaiting-callback endpoint and assert the expected number of tasks are returned."""
+        response = client.get(
+            "/v1.0/tasks/awaiting-callback",
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["pagination"]["total"] == expected_count
+        assert len(response_json["results"]) == expected_count
+
     def test_connector_receives_additional_metadata(
         self,
         app: Flask,
@@ -65,7 +82,13 @@ class TestLongRunningService(BaseTest):
             assert "spiff__task_id" in json_data, "task_id should exist in POST data"
             assert "spiff__callback_url" in json_data, "callback_url should exist in POST data"
             assert json_data["spiff__process_instance_id"] == process_instance.id
+
+            # If it is not a successful 200 (and not a 202) the the process should be fully completed without any
+            # additional call.
             assert process_instance.status == "complete"
+
+            # No tasks should be awaiting a call back.
+            self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
     def test__202_success_response(
         self,
@@ -92,6 +115,10 @@ class TestLongRunningService(BaseTest):
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
             callback_url = json_data["spiff__callback_url"]
+            processor.save()
+
+        # One task should be awaiting callback
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
 
         # Execute the callback url to complete the process
         content = {"do_not_fail": True}
@@ -105,6 +132,9 @@ class TestLongRunningService(BaseTest):
 
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"
+
+        # No tasks should be awaiting callback
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
     def test__202_error_response(
         self,
@@ -133,6 +163,9 @@ class TestLongRunningService(BaseTest):
             json_data = call_kwargs.get("json", {})
             callback_url = json_data["spiff__callback_url"]
 
+        # One task should be awaiting callback
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
         # Execute the callback WITHOUT "do_not_fail" - the script task after the service task
         # will raise a KeyError, which should put the process in an error state.
         content = {"some_other_key": True}
@@ -144,6 +177,9 @@ class TestLongRunningService(BaseTest):
         assert response_dict["title"] == "unexpected_workflow_exception"
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "error"
+
+        # The process instance is in a state of error, which should mean the task is no longer waiting.
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
     def test__202_canceled_response(
         self,
@@ -173,10 +209,16 @@ class TestLongRunningService(BaseTest):
             json_data = call_kwargs.get("json", {})
             callback_url = json_data["spiff__callback_url"]
 
+        # One task should be awaiting callback
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
         processor.send_bpmn_event(
             {"name": "CANCEL", "typename": "SignalEventDefinition", "variable": None, "expression": None, "description": None}
         )
         assert process_instance.status == "complete"
+
+        # No task should be awaiting callback
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
         # Execute the callback, which should not be completed, because it received a canel signal event.
         content = {"do_not_fail": True}

@@ -212,6 +212,35 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
     return _get_tasks(page=page, per_page=per_page)
 
 
+def tasks_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+    task_models = (
+        TaskModel.query.join(TaskDefinitionModel)
+        .join(ProcessInstanceModel)
+        .filter(
+            TaskModel.state == "STARTED",
+            TaskDefinitionModel.typename == "ServiceTask",
+            ProcessInstanceModel.process_initiator_id == user_id,
+            ProcessInstanceModel.status == "waiting",
+        )
+        .order_by(
+            desc(TaskModel.process_instance_id)  # type: ignore
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    response_json = {
+        "results": task_models.items,
+        "pagination": {
+            "count": len(task_models.items),
+            "total": task_models.total,
+            "pages": task_models.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(
         processes_started_by_user=False,
