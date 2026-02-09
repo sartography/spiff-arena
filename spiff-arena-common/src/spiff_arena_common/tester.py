@@ -7,7 +7,7 @@ from collections import namedtuple
 from spiff_arena_common.runner import advance_workflow, specs_from_xml
 
 Test = namedtuple("Test", ["file", "specs"])
-TestCtx = namedtuple("TestCtx", ["files", "specs", "tests"])
+TestCtx = namedtuple("TestCtx", ["files", "specs", "tests", "test_cases"])
 
 class BpmnTestCase(unittest.TestCase):
     def __init__(self, file, specs, specs_by_id):
@@ -77,10 +77,11 @@ def slurp(file):
         return f.read()
 
 def testCtx(parsed):
-    ctx = TestCtx([], {}, [])
+    ctx = TestCtx([], {}, [], [])
     for (file, specs) in parsed:
         if file.endswith("_test.bpmn"):
             ctx.tests.append(Test(file, specs))
+            ctx.test_cases.append(BpmnTestCase(file, specs, ctx.specs))
         else:
             d = json.loads(specs)
             id = d["spec"]["name"]
