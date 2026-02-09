@@ -216,3 +216,4 @@ def test_tester(files):
 
     assert result.wasSuccessful()
     assert result.testsRun == 1
+    assert output
