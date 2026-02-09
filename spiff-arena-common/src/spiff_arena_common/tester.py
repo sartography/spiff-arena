@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import unittest
@@ -8,6 +9,7 @@ from spiff_arena_common.runner import advance_workflow, specs_from_xml
 
 Test = namedtuple("Test", ["file", "specs"])
 TestCtx = namedtuple("TestCtx", ["files", "specs", "tests", "test_cases"])
+TestRun = namedtuple("TestRun", ["ctx", "result", "output"])
 
 class BpmnTestCase(unittest.TestCase):
     def __init__(self, file, specs, specs_by_id):
@@ -92,10 +94,18 @@ def testCtx(parsed):
     ctx.tests.sort()
     return ctx
 
-def dirTestCtx(dir):
+def runTests(parsed):
+    ctx = testCtx(parsed)
+    suite = unittest.TestSuite()
+    suite.addTests(ctx.test_cases)
+    stream = io.StringIO()
+    result = unittest.TextTestRunner(stream=stream).run(suite)
+    return TestRun(ctx, result, stream.getvalue())
+    
+def runTestsInDir(dir):
     parsed = []
     for file in files_to_parse(dir):
         specs, err = specs_from_xml([(file, slurp(file))])
         assert not err
         parsed.append((file, specs))
-    return testCtx(parsed)
+    return runTests(parsed)
