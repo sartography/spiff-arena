@@ -1,6 +1,7 @@
 import json
 import pytest
 
+from spiff_arena_common.coverage import task_coverage
 from spiff_arena_common.runner import specs_from_xml
 from spiff_arena_common.tester import run_tests
 
@@ -217,3 +218,16 @@ def test_tester(files):
     assert result.wasSuccessful()
     assert result.testsRun == 1
     assert output
+
+    _, tally = task_coverage(ctx)
+    for id, f in ctx.files:
+        [completed, all, percent] = tally.breakdown[id]
+        assert completed == 6
+        assert all == 6
+        assert percent == int(100)
+    
+    [completed, all, percent] = tally.result
+    assert completed == 6
+    assert all == 6
+    assert percent == int(100)
+
