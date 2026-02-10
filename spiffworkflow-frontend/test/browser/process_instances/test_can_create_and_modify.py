@@ -5,29 +5,20 @@ from helpers.login import login, logout, BASE_URL
 
 
 def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
-    # Open DMN decision table editor and update text
     page.locator(f"g[data-element-id='{element_id}']").click()
     page.locator(".dmn-icon-decision-table").click()
-    item = page.get_by_text(old_text)
-    # Clear existing text (if editable)
-    try:
-        item.fill("")
-    except Exception:
-        item.click()
-        page.keyboard.press("Control+A")
-        page.keyboard.press("Backspace")
-    # Click outside to focus
     test_element = page.get_by_test_id("process-model-file-show")
     expect(test_element).to_be_visible(timeout=10000)
-    # Type new text with quotes
-    item.type(f'"{new_text}"')
-    # Wait for content to update
+    item = page.get_by_text(old_text)
+    item.click()
+    page.keyboard.press("Control+A")
+    page.keyboard.press("Backspace")
+    page.keyboard.type(f'"{new_text}"')
     page.wait_for_timeout(500)
     page.get_by_test_id("process-model-file-save-button").click()
 
 
 def update_bpmn_python_script(page, python_script, element_id="process_script"):
-    # Open BPMN Python script editor and update script
     page.locator(f"g[data-element-id='{element_id}']").click()
     # Click on the Script tab in properties panel
     page.locator(".bio-properties-panel-group-header-title").filter(
