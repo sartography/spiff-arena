@@ -490,6 +490,7 @@ def task_submit_callback(
     body: dict[str, Any] | None = None,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
+
     with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit"):
         if body is None:
             body = {}

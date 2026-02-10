@@ -26,12 +26,12 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 #    * If the task is no longer waiting, we receive an error, but the process is not placed in an error state. (done)
 # 5) Reporting
 #    * Provide an API endpoint and a new UI component that lists all processes that are waiting on a callback. (done)
-# 6) After implementation
+# 6) Invalid callbacks should not put the process in an error state.  Assure this is true. (done)
+# 7) Test execution mode flag is respected. (done)
+# 8) Assure someone without permissions can not call the url (done)
+# 9) After implementation
 #    * Click test to assure the process does not compete in the ui
 #    * Be sure to add documentation on all of this
-# 7) Invalid callbacks should not put the process in an error state.  Assure this is true. (done)
-# 8) Test execution mode flag is respected.
-# 9) Assure someone without permissions can not call the url
 
 
 class TestLongRunningService(BaseTest):
@@ -230,3 +230,51 @@ class TestLongRunningService(BaseTest):
         assert response_dict["title"] == "not_waiting_for_callback"
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"  # It should not be changed to an error, it should remain completed.
+
+    def test__202_permissions(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """ Assure that when a different user makes the call it is not accepted."""
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+            call_kwargs = mock_post.call_args.kwargs
+            json_data = call_kwargs.get("json", {})
+            callback_url = json_data["spiff__callback_url"]
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+        content = {"do_not_fail": True}
+
+        # Execute the callback, as a different user
+        user = self.find_or_create_user("joe")
+        response = client.put(
+            callback_url, headers=self.logged_in_headers(user, {"mimetype": "application/json"}), json=content
+        )
+        assert response.status_code == 403
+        response_dict = response.json()
+        assert response_dict["title"] == "not_authorized"
+
+        # Execute the callback, without any authentication
+        response = client.put(callback_url, headers={"mimetype": "application/json"}, json=content)
+        assert response.status_code == 403
+        response_dict = response.json()
+        assert response_dict["title"] == "not_authorized"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "waiting"  # It should not be changed to an error, it should remain completed.
