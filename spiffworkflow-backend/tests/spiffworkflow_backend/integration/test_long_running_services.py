@@ -238,7 +238,7 @@ class TestLongRunningService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """ Assure that when a different user makes the call it is not accepted."""
+        """Assure that when a different user makes the call it is not accepted."""
         process_model_id = "test_group/service_task"
         process_model = load_test_spec(
             process_model_id=process_model_id,
@@ -263,9 +263,7 @@ class TestLongRunningService(BaseTest):
 
         # Execute the callback, as a different user
         user = self.find_or_create_user("joe")
-        response = client.put(
-            callback_url, headers=self.logged_in_headers(user, {"mimetype": "application/json"}), json=content
-        )
+        response = client.put(callback_url, headers=self.logged_in_headers(user, {"mimetype": "application/json"}), json=content)
         assert response.status_code == 403
         response_dict = response.json()
         assert response_dict["title"] == "not_authorized"
