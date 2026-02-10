@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 from json import JSONDecodeError
 from typing import Any
 
@@ -24,6 +25,8 @@ from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectorProxyError(Exception):
@@ -66,6 +69,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
             # The request was accepted for processing but is not complete and we will now wait for a callback.
             return None
         except Exception as e:
+            logger.exception("Error executing Service Task '%s': %s", self.operation_name, str(e))
             wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
             wte.add_note(str(e))
             raise wte from e
