@@ -519,14 +519,6 @@ def _complete_service_task_callback(
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     error = None
 
-    principal = _find_principal_or_raise()
-    if process_instance.process_initiator_id != principal.user_id:
-        raise ApiError(
-            error_code="not_authorized",
-            message="This may only be called by the user that initiated the process",
-            status_code=403,
-        )
-
     with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
             if ProcessInstanceMigrator.run(process_instance):
