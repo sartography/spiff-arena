@@ -45,6 +45,7 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -542,8 +543,8 @@ def _complete_service_task_callback(
                 if result_variable:
                     spiff_task.data[result_variable] = content
 
-                # Mark the task as completed
-                spiff_task.complete()
+                user = UserModel.query.filter_by(id=g.user.id).first()
+                processor.complete_task(spiff_task, user)
 
                 # Run the engine steps.
                 execution_strategy_name = None

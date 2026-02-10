@@ -1198,7 +1198,7 @@ class TestProcessInstanceProcessor(BaseTest):
         non_manual_spiff_task = processor.bpmn_process_instance.get_tasks(manual=False)[0]
         assert human_task_one.task_guid != str(non_manual_spiff_task.id)
         with pytest.raises(TaskMismatchError):
-            processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)
+            processor.complete_task(non_manual_spiff_task, user=process_instance.process_initiator, human_task=human_task_one)
 
     def test_can_run_multiinstance_tasks_with_human_task(
         self,
@@ -1218,19 +1218,19 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"

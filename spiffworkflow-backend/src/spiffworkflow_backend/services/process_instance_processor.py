@@ -35,6 +35,7 @@ from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
 # fix for StandardLoopTask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -1055,7 +1056,7 @@ class ProcessInstanceProcessor:
                 f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
             )
             human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
-            self.complete_task(spiff_task, human_task=human_task, user=user)
+            self.complete_task(spiff_task, user=user, human_task=human_task)
         elif execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
@@ -1446,16 +1447,17 @@ class ProcessInstanceProcessor:
         }
         return task_json
 
-    def complete_task(self, spiff_task: SpiffTask, human_task: HumanTaskModel, user: UserModel) -> None:
-        if str(spiff_task.id) != human_task.task_guid:
+    def complete_task(self, spiff_task: SpiffTask, user: UserModel, human_task: HumanTaskModel | None = None) -> None:
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        if task_model is None:
+            raise TaskNotFoundError(
+                f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {spiff_task.id}"
+            )
+
+        if human_task and str(spiff_task.id) != human_task.task_guid:
             raise TaskMismatchError(
                 f"Given spiff task ({spiff_task.task_spec.bpmn_id} - {spiff_task.id}) and human task ({human_task.task_name} -"
                 f" {human_task.task_guid}) must match"
-            )
-        task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
-        if task_model is None:
-            raise TaskNotFoundError(
-                f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {human_task.task_id}"
             )
 
         run_started_at = time.time()
@@ -1463,17 +1465,22 @@ class ProcessInstanceProcessor:
         task_exception = None
         task_event = ProcessInstanceEventType.task_completed.value
         try:
-            self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+            if isinstance(spiff_task.task_spec, ServiceTask) and spiff_task.state == TaskState.STARTED:
+                # We are manually completing a service task, we should not execute it. Just mark it as complete.
+                spiff_task.complete()
+            else:
+                self.bpmn_process_instance.run_task_from_id(spiff_task.id)
         except Exception as ex:
             task_exception = ex
             task_event = ProcessInstanceEventType.task_failed.value
 
         task_model.end_in_seconds = time.time()
 
-        human_task.completed_by_user_id = user.id
-        human_task.completed = True
-        human_task.task_status = TaskState.get_name(spiff_task.state)
-        db.session.add(human_task)
+        if human_task:
+            human_task.completed_by_user_id = user.id
+            human_task.completed = True
+            human_task.task_status = TaskState.get_name(spiff_task.state)
+            db.session.add(human_task)
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
@@ -1490,7 +1497,7 @@ class ProcessInstanceProcessor:
             self.process_instance_model,
             task_event,
             task_guid=task_model.guid,
-            user_id=user.id,
+            user=user,
             exception=task_exception,
             log_event=False,
         )

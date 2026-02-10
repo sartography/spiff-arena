@@ -801,7 +801,7 @@ class ProcessInstanceService:
         a multi-instance task.
         """
         ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        processor.complete_task(spiff_task, human_task, user=user)
+        processor.complete_task(spiff_task, user=user, human_task=human_task)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if should_queue_process_instance(execution_mode):

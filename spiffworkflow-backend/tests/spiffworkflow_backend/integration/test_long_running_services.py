@@ -4,6 +4,7 @@ from unittest.mock import patch
 from flask import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -30,7 +31,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 # 7) Test execution mode flag is respected. (done)
 # 8) Assure someone without permissions can not call the url (done)
 # 9) After implementation
-#    * Click test to assure the process does not compete in the ui
+#    * Click test to assure the process does not compete in the ui (done)
 #    * Be sure to add documentation on all of this
 
 
@@ -115,6 +116,7 @@ class TestLongRunningService(BaseTest):
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
             callback_url = json_data["spiff__callback_url"]
+            spiff__task_id = json_data["spiff__task_id"]
             processor.save()
 
         # One task should be awaiting callback
@@ -135,6 +137,26 @@ class TestLongRunningService(BaseTest):
 
         # No tasks should be awaiting callback
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
+
+        # logging information should be properly collected
+        headers = self.logged_in_headers(with_super_admin_user)
+        log_response = client.get(
+            f"/v1.0/logs/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}?events=true",
+            headers=headers,
+        )
+        assert log_response.status_code == 200
+        logs = log_response.json()
+        assert logs
+
+        service_task_logs = [log for log in logs["results"] if log["bpmn_task_type"] == "ServiceTask"]
+        assert len(service_task_logs) == 1
+        assert service_task_logs[0]["event_type"] == "task_completed"
+        assert service_task_logs[0]["username"] == with_super_admin_user.username
+
+        # The task in the database should be marked as completed
+        task_model = TaskModel.query.filter_by(guid=spiff__task_id).first()
+        assert task_model is not None
+        assert task_model.state == "COMPLETED"
 
     def test__202_error_response(
         self,
@@ -180,6 +202,7 @@ class TestLongRunningService(BaseTest):
 
         # The process instance is in a state of error, which should mean the task is no longer waiting.
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
+
 
     def test__202_canceled_response(
         self,
