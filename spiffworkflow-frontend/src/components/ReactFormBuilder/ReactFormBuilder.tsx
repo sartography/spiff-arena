@@ -48,7 +48,7 @@ function FormErrorFallback({ error }: ErrorProps) {
 }
 
 type OwnProps = {
-  processModelId: string;
+  modifiedProcessModelId: string;
   fileName: string;
   onFileNameSet: (fileName: string) => void;
   canCreateFiles: boolean;
@@ -57,7 +57,7 @@ type OwnProps = {
 };
 
 export default function ReactFormBuilder({
-  processModelId,
+  modifiedProcessModelId,
   fileName,
   onFileNameSet,
   canCreateFiles,
@@ -179,7 +179,7 @@ export default function ReactFormBuilder({
       return;
     }
     let httpMethod = 'PUT';
-    let url = `/process-models/${processModelId}/files`;
+    let url = `/process-models/${modifiedProcessModelId}/files`;
     if (create && canCreateFiles) {
       httpMethod = 'POST';
     } else if (canUpdateFiles) {
@@ -321,7 +321,7 @@ export default function ReactFormBuilder({
 
   function fetchSchema() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${SCHEMA_EXTENSION}`,
       successCallback: (response: any) => {
@@ -336,7 +336,7 @@ export default function ReactFormBuilder({
 
   function fetchUI() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${UI_EXTENSION}`,
       successCallback: setJsonUiFromResponseJson,
@@ -348,7 +348,7 @@ export default function ReactFormBuilder({
 
   function fetchExampleData() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${DATA_EXTENSION}`,
       successCallback: setDataFromResponseJson,

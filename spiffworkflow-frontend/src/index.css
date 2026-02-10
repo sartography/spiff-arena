@@ -90,20 +90,24 @@ a.cds--header__menu-item {
   background: lightgrey;
 }
 
+.spiff-breadcrumb .MuiBreadcrumbs-li a {
+  color: #525252;
+  text-decoration: none;
+}
+
 .spiff-breadcrumb .MuiBreadcrumbs-li a:hover {
   color: #525252;
+  text-decoration: none;
 }
 
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited {
   color: #525252;
+  text-decoration: none;
 }
 
 .spiff-breadcrumb .MuiBreadcrumbs-li a:visited:hover {
   color: #525252;
-}
-
-.spiff-breadcrumb .MuiBreadcrumbs-li a {
-  color: #525252;
+  text-decoration: none;
 }
 
 .cds--btn--ghost {
@@ -283,8 +287,8 @@ a.cds--header__menu-item {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .app-logo {
@@ -1086,7 +1090,7 @@ div.retrievalExpressionsForm {
 }
 
 .task-instance-modal-row-item {
-  padding-top: .5rem;
+  padding-top: 0.5rem;
   font-size: 14px;
 }
 
@@ -1159,11 +1163,62 @@ div.retrievalExpressionsForm {
   left: 6px;
 }
 
-.diagram-control-buttons {
-  margin-bottom: .5rem;
-  margin-top: .5rem;
+.diagram-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e3e6ea;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  margin: 12px 0;
+}
+
+.diagram-toolbar__left {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+.diagram-toolbar__right {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.diagram-action-bar {
+  margin: 0;
+}
+
+.diagram-zoom-controls {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .diagram-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .diagram-toolbar__right {
+    justify-content: flex-start;
+  }
+}
+
+[data-theme='dark'] .diagram-toolbar {
+  background: #121212;
+  border: 1px solid #424242;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .reports-search-text-field {
   min-width: 100%;
+}
+
+.wide-dialog .MuiPaper-root {
+  max-width: 100%;
+  min-width: 70%;
 }
