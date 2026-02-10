@@ -284,7 +284,12 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
-        <h1>{t('process_model_file', { fileName: processModelFileName })}</h1>
+        <h1
+          data-testid="process-model-file-show"
+          data-filename={processModelFileName}
+        >
+          {t('process_model_file', { fileName: processModelFileName })}
+        </h1>
         {newFileNameBox()}
         {saveFileMessage()}
 

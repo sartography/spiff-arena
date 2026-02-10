@@ -26,3 +26,4 @@ node_modules
 /spiffworkflow_backend.svg
 /.venv
 /build
+/api_logs_dump

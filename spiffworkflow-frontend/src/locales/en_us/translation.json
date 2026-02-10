@@ -501,6 +501,7 @@
   "viewing_process_instance_at_time_when": "Viewing process instance at the time when",
   "waiting_for": "Waiting for",
   "was_active": "was active",
+  "workflow": "Workflow",
   "workflows_created_by_me": "Workflows created by me",
   "yes": "Yes"
 }
