@@ -203,7 +203,6 @@ class TestLongRunningService(BaseTest):
         # The process instance is in a state of error, which should mean the task is no longer waiting.
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
-
     def test__202_canceled_response(
         self,
         app: Flask,
