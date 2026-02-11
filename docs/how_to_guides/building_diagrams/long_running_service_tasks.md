@@ -1,4 +1,4 @@
-# Long Running Service Tasks
+# Long-Running Service Tasks
 
 For many cases, a service task responds immediately -- you might call one to get additional information for a form, send a text message, or update data in a database.
 In all these cases the service task makes the call and moves on automatically.
