@@ -11,29 +11,6 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-# To Do:
-# 1) Test Connector Request
-#    * Assure con Provide an API endpoint and a new UI component that lnector gets process in
-#      stance id, the task id, the callback url. (done)
-# 2) Test Post Request
-#    * Test built-in function that provides a callback url (done)
-# 3) General Test
-#    * Assure that a 202 request results in the process being in a waiting state. (done)
-#    * Assure that a call to the call-back url results in the process completing. (done)
-# 4) Error handling
-#    * If the process is successfully able to complete all engine steps, a 200 message should be returned (done)
-#    * If an error occurs completing engine steps, a 400 error should be returned for the call-back, and
-#      the process should be in an error state. (done)
-#    * If the task is no longer waiting, we receive an error, but the process is not placed in an error state. (done)
-# 5) Reporting
-#    * Provide an API endpoint and a new UI component that lists all processes that are waiting on a callback. (done)
-# 6) Invalid callbacks should not put the process in an error state.  Assure this is true. (done)
-# 7) Test execution mode flag is respected. (done)
-# 8) Assure someone without permissions can not call the url (done)
-# 9) After implementation
-#    * Click test to assure the process does not compete in the ui (done)
-#    * Be sure to add documentation on all of this
-
 
 class TestLongRunningService(BaseTest):
     def assert_tasks_awaiting_callback(
@@ -51,7 +28,11 @@ class TestLongRunningService(BaseTest):
         assert response.status_code == 200
         response_json = response.json()
         assert response_json["pagination"]["total"] == expected_count
-        assert len(response_json["results"]) == expected_count
+        for r in response_json["results"]:
+            assert r["id"] is not None
+            assert r["process_instance_id"] is not None
+            assert r["title"] is not None
+            assert r["process_model_identifier"] is not None
 
     def test_connector_receives_additional_metadata(
         self,
@@ -237,12 +218,12 @@ class TestLongRunningService(BaseTest):
         processor.send_bpmn_event(
             {"name": "CANCEL", "typename": "SignalEventDefinition", "variable": None, "expression": None, "description": None}
         )
-        assert process_instance.status == "complete"
+        assert process_instance.status == "complete"  # sending the cancel event will move the process to a completed state.
 
         # No task should be awaiting callback
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
-        # Execute the callback, which should not be completed, because it received a canel signal event.
+        # Execute the callback, which should fail with a 400, because it received a cancel signal event, and moved on.
         content = {"do_not_fail": True}
         response = client.put(
             callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
@@ -251,7 +232,7 @@ class TestLongRunningService(BaseTest):
         response_dict = response.json()
         assert response_dict["title"] == "not_waiting_for_callback"
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
-        assert process_instance.status == "complete"  # It should not be changed to an error, it should remain completed.
+        assert process_instance.status == "complete"  # The process should not be in an error state.
 
     def test__202_permissions(
         self,

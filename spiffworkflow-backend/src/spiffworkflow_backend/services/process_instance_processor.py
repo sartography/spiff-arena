@@ -1450,9 +1450,7 @@ class ProcessInstanceProcessor:
     def complete_task(self, spiff_task: SpiffTask, user: UserModel, human_task: HumanTaskModel | None = None) -> None:
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         if task_model is None:
-            raise TaskNotFoundError(
-                f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {spiff_task.id}"
-            )
+            raise TaskNotFoundError(f"Cannot find a task with guid {spiff_task.id}")
 
         if human_task and str(spiff_task.id) != human_task.task_guid:
             raise TaskMismatchError(

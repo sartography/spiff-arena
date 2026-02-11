@@ -224,7 +224,8 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
 def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     user_id = g.user.id
     task_models = (
-        TaskModel.query.join(TaskDefinitionModel)
+        db.session.query(TaskModel)  # type: ignore
+        .join(TaskDefinitionModel)
         .join(ProcessInstanceModel)
         .filter(
             TaskModel.state == "STARTED",
@@ -232,14 +233,41 @@ def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> f
             ProcessInstanceModel.process_initiator_id == user_id,
             ProcessInstanceModel.status == "waiting",
         )
+        .add_columns(
+            TaskModel.guid,
+            TaskModel.state,
+            TaskModel.process_instance_id,
+            TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.typename,
+            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.process_model_display_name,
+        )
         .order_by(
             desc(TaskModel.process_instance_id)  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
+    results = []
+    for row in task_models.items:
+        results.append(
+            {
+                "id": row.guid,
+                "name": row.bpmn_identifier,
+                "title": row.task_name or row.bpmn_identifier,
+                "type": row.typename,
+                "state": row.state,
+                "process_instance_id": row.process_instance_id,
+                "process_instance_status": row.process_instance_status,
+                "process_model_identifier": row.process_model_identifier,
+                "process_model_display_name": row.process_model_display_name,
+            }
+        )
+
     response_json = {
-        "results": task_models.items,
+        "results": results,
         "pagination": {
             "count": len(task_models.items),
             "total": task_models.total,
@@ -570,12 +598,9 @@ def _complete_service_task_callback(
 def task_submit_callback(
     process_instance_id: int,
     task_guid: str,
-    body: dict[str, Any] | None = None,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit"):
-        if body is None:
-            body = {}
+    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.task_submit_callback"):
         response_item = _complete_service_task_callback(process_instance_id, task_guid, execution_mode)
         if "next_task" in response_item:
             response_item = response_item["next_task"]

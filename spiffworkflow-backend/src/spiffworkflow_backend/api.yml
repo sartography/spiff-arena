@@ -2224,9 +2224,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Task"
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
 
   /tasks/for-me:
     parameters:
@@ -3053,7 +3058,7 @@ paths:
       - name: task_guid
         in: path
         required: true
-        description: The unique id of an existing process group.
+        description: The unique guid of a task.
         schema:
           type: string
       - name: process_instance_id
