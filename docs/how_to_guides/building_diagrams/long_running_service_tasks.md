@@ -21,7 +21,7 @@ The result data will be stored in the service task's configured result variable,
 
 ### Example Callback Request
 
-```http
+```text
 PUT <spiff__callback_url>
 Content-Type: application/json
 
@@ -38,7 +38,7 @@ If the response includes a `body` key, SpiffWorkflow will use the value of `body
 
 SpiffWorkflow provides an endpoint to list all service tasks that are currently waiting for a callback:
 
-```http
+```text
 GET /tasks/awaiting-callback
 ```
 
