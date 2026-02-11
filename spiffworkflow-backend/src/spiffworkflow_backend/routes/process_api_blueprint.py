@@ -11,9 +11,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask import request
 from flask.wrappers import Response
-from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
@@ -31,7 +29,6 @@ from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedErro
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
-from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
@@ -45,7 +42,6 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -497,80 +493,6 @@ def _prepare_form_data(
                 status_code=400,
             )
         ) from exception
-
-
-def _complete_service_task_callback(
-    process_instance_id: int,
-    task_guid: str,
-    execution_mode: str | None = None,
-) -> dict:
-    """Complete a service task that is waiting for a callback after returning 202.
-
-    This is called when a long-running service task returns a 202 (Accepted) response,
-    leaving the task in STARTED state. The connector later calls back with the result.
-    """
-
-    if not request.is_json:
-        raise ApiError(
-            error_code="invalid_mimetype",
-            message="This endpoint must be called with a json mimetype.",
-            status_code=400,
-        )
-
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    error = None
-
-    with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
-        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-            if ProcessInstanceMigrator.run(process_instance):
-                # Refresh the process instance to get any updates from migration
-                db.session.refresh(process_instance)
-
-            processor = ProcessInstanceProcessor(
-                process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
-            )
-            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
-
-            # assure we are waiting for a callback.
-            if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
-                queue_process_instance_if_appropriate(process_instance, execution_mode)
-
-                # Set the result variable with the parsed response, just like CustomServiceTask._execute does
-                result_variable = spiff_task.task_spec.result_variable
-                content = request.json
-                if "body" in content:
-                    content = content["body"]
-                if result_variable:
-                    spiff_task.data[result_variable] = content
-
-                user = UserModel.query.filter_by(id=g.user.id).first()
-                processor.complete_task(spiff_task, user)
-
-                # Run the engine steps.
-                execution_strategy_name = None
-                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                    execution_strategy_name = "greedy"
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
-            else:
-                error = ApiError(
-                    error_code="not_waiting_for_callback",
-                    message="This process instance is not waiting for a callback.",
-                    status_code=400,
-                )
-        if error:
-            raise error  # Raise the erro outside the process intance queue service, so we don't error out the process.
-
-        if processor.next_task():
-            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-            task.process_model_uses_queued_execution = queue_enabled_for_process_model()
-            return {"next_task": task}
-
-    # next_task always returns something, even if the instance is complete, so we never get here
-    return {
-        "ok": True,
-        "process_model_identifier": process_instance.process_model_identifier,
-        "process_instance_id": process_instance_id,
-    }
 
 
 def _task_submit_shared(
