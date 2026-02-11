@@ -46,6 +46,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -731,18 +732,27 @@ class WorkflowExecutionService:
 
     def queue_waiting_receive_messages(self) -> None:
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events)
+        waiting_message_events = list(filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events))
+
+        waiting_message_names = {event.name for event in waiting_message_events}
+
+        # Cancel any ready message instances that no longer have corresponding waiting events
+        existing_ready_messages = MessageInstanceModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            message_type="receive",
+            status="ready",
+        ).all()
+        existing_ready_message_names = set()
+        for message_instance in existing_ready_messages:
+            if message_instance.name not in waiting_message_names:
+                message_instance.status = MessageStatuses.cancelled.value
+                db.session.add(message_instance)
+            else:
+                existing_ready_message_names.add(message_instance.name)
+
         for event in waiting_message_events:
             # Ensure we are only creating one active message instance for each waiting message
-            if (
-                MessageInstanceModel.query.filter_by(
-                    process_instance_id=self.process_instance_model.id,
-                    message_type="receive",
-                    name=event.name,
-                    status="ready",
-                ).count()
-                > 0
-            ):
+            if event.name in existing_ready_message_names:
                 continue
 
             # Create a new Message Instance
