@@ -97,7 +97,7 @@ class SpiffLogHandler(SocketHandler):
                     "parent",
                 ]
             elif record.name == "spiff.workflow":
-                properties = ["workflow_spec", "completed", "success", "parent_task_id"]
+                properties = ["workflow_spec", "completed", "success", "parent_task_id", "root"]
             elif record.name == "spiff.data":
                 properties = ["workflow_spec", "task_spec", "task_id", "task_type"]
             elif record.name == "spiff.event":

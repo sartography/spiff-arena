@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.script_attributes_context import ScriptAttribu
 from spiffworkflow_backend.scripts.script import Script
 
 
-class GetMarkdownFileDownloadLink(Script):
+class MarkdownFileDownloadLink(Script):
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
@@ -44,3 +44,8 @@ class GetMarkdownFileDownloadLink(Script):
         link = f"[{label}]({url})"
 
         return link
+
+
+# Backwards compatibility class - same functionality with "Get" prefix
+class GetMarkdownFileDownloadLink(MarkdownFileDownloadLink):
+    pass
