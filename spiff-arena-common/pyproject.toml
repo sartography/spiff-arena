@@ -1,6 +1,6 @@
 [project]
 name = "spiff-arena-common"
-version = "0.1.6"
+version = "0.1.8"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"

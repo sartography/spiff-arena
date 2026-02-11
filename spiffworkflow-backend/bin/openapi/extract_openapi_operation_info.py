@@ -289,11 +289,12 @@ def print_operation_info(info: dict) -> None:
 def get_default_spec_path() -> str:
     """
     Determine the default path to api.yml relative to this script.
-    Assumes the script is in bin/ and api.yml is in src/spiffworkflow_backend/api.yml
+    Assumes the script is in bin/openapi/ and api.yml is in src/spiffworkflow_backend/api.yml
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Go up one level from bin/ to the project root
-    project_root = os.path.dirname(script_dir)
+    # Go up two levels from bin/openapi/ to the project root
+    bin_dir = os.path.dirname(script_dir)
+    project_root = os.path.dirname(bin_dir)
     # Construct path to api.yml
     api_path = os.path.join(project_root, "src", "spiffworkflow_backend", "api.yml")
     return api_path

@@ -31,6 +31,7 @@ on:
   push:
     branches:
       - main
+      - bpmn-js-spiffworkflow-react
     tags: [v*]
 
 jobs:
