@@ -560,6 +560,8 @@ def _complete_service_task_that_is_waiting_for_callback(
                 # Set the result variable with the parsed response, just like CustomServiceTask._execute does
                 result_variable = spiff_task.task_spec.result_variable
                 content = request.json
+                if content is None:
+                    content = {}
                 if "body" in content:
                     content = content["body"]
                 if result_variable:
