@@ -20,9 +20,9 @@ class TestLongRunningService(BaseTest):
         user: UserModel,
         expected_count: int,
     ) -> None:
-        """Call the tasks/awaiting-callback endpoint and assert the expected number of tasks are returned."""
+        """Call the tasks/service-tasks-awaiting-callback endpoint and assert the expected number of tasks are returned."""
         response = client.get(
-            "/v1.0/tasks/awaiting-callback",
+            "/v1.0/tasks/service-tasks-awaiting-callback",
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 200

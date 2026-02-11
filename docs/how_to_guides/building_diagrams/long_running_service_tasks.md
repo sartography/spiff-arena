@@ -39,7 +39,7 @@ If the response includes a `body` key, SpiffWorkflow will use the value of `body
 SpiffWorkflow provides an endpoint to list all service tasks that are currently waiting for a callback:
 
 ```text
-GET /tasks/awaiting-callback
+GET /tasks/service-tasks-awaiting-callback
 ```
 
 This can be useful for monitoring and debugging long-running processes. 

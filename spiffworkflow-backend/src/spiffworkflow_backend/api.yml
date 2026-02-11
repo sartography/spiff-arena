@@ -2199,7 +2199,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /tasks/awaiting-callback:
+  /tasks/service-tasks-awaiting-callback:
     parameters:
       - name: page
         in: query
@@ -3070,7 +3070,7 @@ paths:
     put:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.tasks_controller.task_submit_callback
+      operationId: spiffworkflow_backend.routes.tasks_controller.service_task_submit_callback
       summary: Complete a service task that was started and is awaiting completion through a callback.
       requestBody:
         required: false
