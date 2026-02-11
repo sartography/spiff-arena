@@ -552,7 +552,7 @@ def _complete_service_task_callback(
                     status_code=400,
                 )
         if error:
-            raise error  # Raise the erro outside the process intance queue service, so we don't error out the process.
+            raise error  # Raise the error outside the process intance queue service, so we don't error out the process.
 
         if processor.next_task():
             task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
