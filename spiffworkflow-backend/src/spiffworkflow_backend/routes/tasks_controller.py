@@ -212,7 +212,7 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
     return _get_tasks(page=page, per_page=per_page)
 
 
-def task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     user_id = g.user.id
     task_models = (
         TaskModel.query.join(TaskDefinitionModel)

@@ -2216,7 +2216,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_awaiting_callback
+      operationId: spiffworkflow_backend.routes.tasks_controller.service_task_list_awaiting_callback
       summary: returns the list of service tasks that are currently waiting for a callback.
       responses:
         "200":
