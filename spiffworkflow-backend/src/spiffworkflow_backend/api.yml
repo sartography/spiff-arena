@@ -2199,6 +2199,40 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/service-tasks-awaiting-callback:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.tasks_controller.service_task_list_awaiting_callback
+      summary: returns the list of service tasks that are currently waiting for a callback.
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
   /tasks/for-me:
     parameters:
       - name: page
@@ -2955,7 +2989,7 @@ paths:
       tags:
         - Tasks
       operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
-      summary: Update the form data for a tasks
+      summary: Complete the task, submitting data as required.
       requestBody:
         required: false
         content:
@@ -3018,6 +3052,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+
+  /tasks/{process_instance_id}/{task_guid}/callback:
+    parameters:
+      - name: task_guid
+        in: path
+        required: true
+        description: The unique guid of a task.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    put:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.service_task_submit_callback
+      summary: Complete a service task that was started and is awaiting completion through a callback.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
 
   /tasks/{process_instance_id}/{task_guid}/allows-guest:
     parameters:

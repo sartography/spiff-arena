@@ -722,7 +722,7 @@ class ProcessInstanceService:
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, str(spiff_task.id), user)
 
         # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
         if (
@@ -801,7 +801,7 @@ class ProcessInstanceService:
         a multi-instance task.
         """
         ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        processor.complete_task(spiff_task, human_task, user=user)
+        processor.complete_task(spiff_task, user=user, human_task=human_task)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if should_queue_process_instance(execution_mode):
@@ -840,7 +840,7 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_task(processor.process_instance_model.id, task_guid, g.user)
+            AuthorizationService.assert_user_can_complete_human_task(processor.process_instance_model.id, task_guid, g.user)
             can_complete = True
         except HumanTaskAlreadyCompletedError:
             can_complete = False

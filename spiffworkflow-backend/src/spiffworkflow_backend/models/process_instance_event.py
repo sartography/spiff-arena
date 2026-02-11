@@ -49,6 +49,7 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False, index=True)
 
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
+    user = relationship("UserModel", foreign_keys=[user_id])
 
     error_details = relationship("ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete")  # type: ignore
     migration_details = relationship(

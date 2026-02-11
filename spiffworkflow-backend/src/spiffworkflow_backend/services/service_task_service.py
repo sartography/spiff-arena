@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 from json import JSONDecodeError
 from typing import Any
 
@@ -25,12 +26,20 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
 
+logger = logging.getLogger(__name__)
+
 
 class ConnectorProxyError(Exception):
     pass
 
 
 class UncaughtServiceTaskError(Exception):
+    pass
+
+
+# Raised if we receive a 202 from a service task and need to wait for a response
+# this is not an error, but an exception to normal behavior.
+class Accepted202Exception(Exception):  # noqa N818
     pass
 
 
@@ -46,7 +55,7 @@ def connector_proxy_url() -> Any:
 
 
 class CustomServiceTask(ServiceTask):  # type: ignore
-    def _execute(self, spiff_task: SpiffTask) -> bool:
+    def _execute(self, spiff_task: SpiffTask) -> bool | None:
         def evaluate(param: dict) -> dict:
             param["value"] = spiff_task.workflow.script_engine.evaluate(spiff_task, param["value"])
             return param
@@ -56,12 +65,18 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
         try:
             result = spiff_task.workflow.script_engine.call_service(self.operation_name, evaluated_params, spiff_task)
+        except Accepted202Exception:
+            # The request was accepted for processing but is not complete and we will now wait for a callback.
+            return None
         except Exception as e:
+            logger.exception("Error executing Service Task '%s': %s", self.operation_name, str(e))
             wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
             wte.add_note(str(e))
             raise wte from e
+
         parsed_result = json.loads(result)
         spiff_task.data[self.result_variable] = parsed_result
+
         return True
 
 
@@ -186,7 +201,9 @@ class ServiceTaskDelegate:
             cls.catch_error_codes(spiff_task, error_dict)
 
     @classmethod
-    def call_connector(cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask) -> str:
+    def call_connector(
+        cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask, process_instance_id: int | None
+    ) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
@@ -194,9 +211,16 @@ class ServiceTaskDelegate:
         with sentry_sdk.start_span(op="connector_by_name", name=operator_identifier):
             with sentry_sdk.start_span(op="call-connector", name=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
+                params["spiff__process_instance_id"] = process_instance_id
+                params["spiff__task_id"] = str(spiff_task.id)
                 params["spiff__task_data"] = task_data
-                params = DefaultRegistry().convert(params)  # Avoid serlization errors by using the same coverter as the core lib.
-
+                api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
+                params["spiff__callback_url"] = (
+                    f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}{api_path_prefix}/tasks/{process_instance_id}/{spiff_task.id}/callback"
+                )
+                params = DefaultRegistry().convert(
+                    params
+                )  # Avoid serialization errors by using the same converter as the core lib.
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}
@@ -218,6 +242,11 @@ class ServiceTaskDelegate:
                             "message": str(exception),
                         }
                     }
+
+                # If a 202 is returned, then the message was accepted, but is incomplete, and we need to wait for
+                # callback.
+                if status_code == 202:
+                    raise Accepted202Exception()
 
                 if "error" not in parsed_response:
                     try:
