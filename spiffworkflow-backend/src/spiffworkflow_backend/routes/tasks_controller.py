@@ -521,7 +521,7 @@ def task_submit(
         return make_response(jsonify(response_item), 200)
 
 
-def _complete_service_task_callback(
+def _complete_service_task_that_is_waiting_for_callback(
     process_instance_id: int,
     task_guid: str,
     execution_mode: str | None = None,
@@ -601,7 +601,7 @@ def service_task_submit_callback(
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", name="tasks_controller.service_task_submit_callback"):
-        response_item = _complete_service_task_callback(process_instance_id, task_guid, execution_mode)
+        response_item = _complete_service_task_that_is_waiting_for_callback(process_instance_id, task_guid, execution_mode)
         if "next_task" in response_item:
             response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)
