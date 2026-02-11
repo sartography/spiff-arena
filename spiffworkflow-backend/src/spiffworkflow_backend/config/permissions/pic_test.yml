@@ -34,7 +34,9 @@ users:
 
 groups:
   admin:
-    users: [ admin@example.com, adminX@bootstrap, specialist@example.com ]
+    users: [ admin@example.com, adminX@bootstrap ]
+  blm-moab:
+    users: [ specialist@example.com ]
   blm-moab-ao:
     users: [ approver@example.com ]
   blm-moab-nepa-coord:
