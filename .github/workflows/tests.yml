@@ -178,14 +178,7 @@ jobs:
       #   run: ./bin/recreate_db clean rmall
 
       - name: Setup Mysql
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 3306
-          container port: 3306
-          mysql version: "8.0"
-          mysql database: "spiffworkflow_backend_unit_testing"
-          mysql root password: password
-          collation server: "utf8mb4_0900_as_cs"
+        run: docker run --name mysql-spiff -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=spiffworkflow_backend_unit_testing -d mysql:8.0 --collation-server=utf8mb4_0900_as_cs
         if: matrix.database == 'mysql'
 
       - name: Setup Postgres
