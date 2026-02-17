@@ -71,7 +71,6 @@ class CustomParser(SpiffBpmnParser):
     OVERRIDE_PARSER_CLASSES.update({full_tag("serviceTask"): (ServiceTaskParser, CustomServiceTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("userTask"): (SpiffTaskParser, CustomUserTask)})
 
-SPIFF_CONFIG[JSONFileDataStore] = JSONFileDataStoreConverter
 
 SPIFF_CONFIG[CustomManualTask] = CustomManualTaskConverter
 SPIFF_CONFIG[CustomNoneTask] = CustomNoneTaskConverter
