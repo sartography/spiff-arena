@@ -90,8 +90,10 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
     if (
         queue_enabled_for_process_model()
         and current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
-        and current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
-        != updated_process_instance.process_model_identifier
+        and (
+            current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+            != updated_process_instance.process_model_identifier
+        )
     ):
         async_result = celery.current_app.send_task(
             CELERY_TASK_EVENT_NOTIFIER,

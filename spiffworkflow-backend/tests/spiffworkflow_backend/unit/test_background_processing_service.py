@@ -159,7 +159,7 @@ class TestBackgroundProcessingService(BaseTest):
                 processor.do_engine_steps(save=True)
                 mock.assert_called_with(
                     CELERY_TASK_EVENT_NOTIFIER,
-                    (process_instance.id, process_instance.process_model_identifier, "human_task_available"),
+                    (process_instance.id, process_instance.process_model_identifier, "human_tasks_changed"),
                 )
                 assert mock.call_count == 1
 
