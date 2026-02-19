@@ -238,3 +238,11 @@ For production use, implement:
 - consistent error objects in `error`
 - exception handling for upstream failures and parsing errors
 - timeouts and retry policies appropriate for your environment
+
+---
+
+## API Key Authentication
+
+If SpiffArena is configured with a `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY`, it will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the connector proxy.
+Your connector proxy implementation can validate this header to restrict access to authorized SpiffArena instances only.
+See [Configure a Connector Proxy](../../how_to_guides/deployment/configure_a_connector_proxy) for how to set the key.
