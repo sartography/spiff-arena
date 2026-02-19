@@ -303,8 +303,6 @@ class ServiceTaskService:
     @staticmethod
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
-        current_app.logger.info(f"Looking for connector at {connector_proxy_url()}")
-        current_app.logger.info(f"Headers are {connector_proxy_api_key_headers()}")
         try:
             response = safe_requests.get(
                 f"{connector_proxy_url()}/v1/commands",
