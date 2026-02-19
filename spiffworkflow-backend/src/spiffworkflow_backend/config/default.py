@@ -98,6 +98,7 @@ SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS = re.split(
 
 ### service task connector proxy
 config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", default="http://localhost:7004")
+config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", default=None)
 config_from_env(
     "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPEAHEAD_URL",
     default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
