@@ -3098,10 +3098,11 @@ class TestProcessApi(BaseTest):
             "http_status": 200,
             "operator_identifier": "http/GetRequestV2",
         }
-        with patch("requests.post") as mock_post:
-            mock_post.return_value.status_code = 200
-            mock_post.return_value.ok = True
-            mock_post.return_value.text = json.dumps(connector_response)
+        with patch("spiffworkflow_backend.connectors.http_connector.do") as mock_http_do:
+            mock_http_do.return_value.status_code = 200
+            mock_http_do.return_value.text = json.dumps(
+                {"command_response": connector_response, "command_response_version": 2, "error": None}
+            )
             processor.do_engine_steps(save=True)
         self.complete_next_manual_task(processor, execution_mode="synchronous")
         self.complete_next_manual_task(processor, execution_mode="synchronous", data={"firstName": "Chuck"})

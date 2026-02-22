@@ -176,6 +176,100 @@ class TestServiceTaskDelegate(BaseTest):
                 **{"operator_identifier": "my_operation"},
             }
 
+    def test_call_connector_uses_local_http_connector_for_v2_http_commands(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": {
+                "body": json.dumps({"ok": True}),
+                "mimetype": "application/json",
+            },
+            "error": None,
+            "command_response_version": 2,
+        }
+
+        with (
+            patch("spiffworkflow_backend.connectors.http_connector.do") as mock_http_do,
+            patch("requests.post") as mock_post,
+        ):
+            mock_http_do.return_value.status_code = 200
+            mock_http_do.return_value.text = json.dumps(connector_response)
+            result = ServiceTaskDelegate.call_connector(
+                "http/GetRequestV2",
+                {"url": {"value": "https://example.com"}},
+                spiff_task,
+                process_instance.id,
+            )
+
+            assert result is not None
+            assert mock_http_do.called
+            mock_post.assert_not_called()
+
+    def test_call_connector_retries_without_spiff_metadata_on_unexpected_keyword_argument(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        unexpected_kwarg_response: ConnectorProxyResponseDict = {
+            "command_response": {
+                "body": "{}",
+                "mimetype": "application/json",
+            },
+            "error": {
+                "error_code": "TypeError",
+                "message": "GetRequestV2.__init__() got an unexpected keyword argument 'spiff__callback_url'",
+            },
+            "command_response_version": 2,
+        }
+        success_response: ConnectorProxyResponseDict = {
+            "command_response": {
+                "body": json.dumps({"ok": True}),
+                "mimetype": "application/json",
+            },
+            "error": None,
+            "command_response_version": 2,
+        }
+
+        first_response = Response()
+        first_response.status_code = 500
+        first_response._content = json.dumps(unexpected_kwarg_response).encode()
+        second_response = Response()
+        second_response.status_code = 200
+        second_response._content = json.dumps(success_response).encode()
+
+        with patch("requests.post", side_effect=[first_response, second_response]) as mock_post:
+            result = ServiceTaskDelegate.call_connector(
+                "example/Example",
+                {"message": {"value": "hello"}},
+                spiff_task,
+                process_instance.id,
+            )
+
+            assert mock_post.call_count == 2
+            first_call_json = mock_post.call_args_list[0].kwargs["json"]
+            second_call_json = mock_post.call_args_list[1].kwargs["json"]
+            assert any(k.startswith("spiff__") for k in first_call_json.keys())
+            assert not any(k.startswith("spiff__") for k in second_call_json.keys())
+            assert result is not None
+
     def test_can_capture_error_on_correct_multinstance_task(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/multiinstance_with_inner_error_boundary_event",
@@ -214,8 +308,8 @@ class TestServiceTaskDelegate(BaseTest):
         failing_object.status_code = 200
         failing_object._content = json.dumps(failing_connector_response).encode()
 
-        with patch("requests.post") as mock_post:
-            mock_post.side_effect = [successful_object, successful_object, failing_object, successful_object]
+        with patch("spiffworkflow_backend.connectors.http_connector.do") as mock_http_do:
+            mock_http_do.side_effect = [successful_object, successful_object, failing_object, successful_object]
             processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"
         relevant_tasks = (

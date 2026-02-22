@@ -140,11 +140,17 @@ _rw_params = [
 
 _config = {
     "http/DeleteRequest": {"params": _rw_params, "handler": "delete"},
+    "http/DeleteRequestV2": {"params": _rw_params, "handler": "delete"},
     "http/GetRequest": {"params": _ro_params, "handler": "get"},
+    "http/GetRequestV2": {"params": _ro_params, "handler": "get"},
     "http/HeadRequest": {"params": _ro_params, "handler": "head"},
+    "http/HeadRequestV2": {"params": _ro_params, "handler": "head"},
     "http/PatchRequest": {"params": _rw_params, "handler": "patch"},
+    "http/PatchRequestV2": {"params": _rw_params, "handler": "patch"},
     "http/PostRequest": {"params": _rw_params, "handler": "post"},
+    "http/PostRequestV2": {"params": _rw_params, "handler": "post"},
     "http/PutRequest": {"params": _rw_params, "handler": "put"},
+    "http/PutRequestV2": {"params": _rw_params, "handler": "put"},
 }
 
 commands = [{"id": k, "parameters": v["params"]} for k, v in _config.items()]

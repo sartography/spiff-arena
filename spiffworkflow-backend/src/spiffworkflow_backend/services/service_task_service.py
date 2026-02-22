@@ -90,6 +90,24 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
 class ServiceTaskDelegate:
     @classmethod
+    def should_retry_without_spiff_metadata(
+        cls,
+        parsed_response: dict,
+        response_text: str,
+        status_code: int,
+    ) -> bool:
+        if status_code < 300:
+            return False
+
+        error_message = ""
+        if isinstance(parsed_response.get("error"), dict):
+            error_message = str(parsed_response["error"].get("message", ""))
+        elif response_text:
+            error_message = response_text
+
+        return "unexpected keyword argument" in error_message and "spiff__" in error_message
+
+    @classmethod
     def handle_template_substitutions(cls, value: Any) -> Any:
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
@@ -232,46 +250,66 @@ class ServiceTaskDelegate:
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}
-                try:
-                    if http_connector.does(operator_identifier):
-                        proxied_response = http_connector.do(operator_identifier, params)
-                    else:
-                        # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
-                        proxied_response = requests.post(
-                            call_url,
-                            json=params,
-                            headers=connector_proxy_api_key_headers(),
-                            timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
-                        )
+                param_variants = [params]
+                if not http_connector.does(operator_identifier):
+                    param_variants.append({k: v for k, v in params.items() if not k.startswith("spiff__")})
 
-                    status_code = proxied_response.status_code
-                    response_text = proxied_response.text
-                except Exception as exception:
-                    # in case proxied_response.text fails we do not want to lose the original status code
-                    status_code = status_code or 500
-                    parsed_response = {
-                        "error": {
-                            "error_code": exception.__class__.__name__,
-                            "message": str(exception),
-                        }
-                    }
-
-                # If a 202 is returned, then the message was accepted, but is incomplete, and we need to wait for
-                # callback.
-                if status_code == 202:
-                    raise Accepted202Exception()
-
-                if "error" not in parsed_response:
+                for attempt_index, attempted_params in enumerate(param_variants):
+                    response_text = ""
+                    status_code = 0
+                    parsed_response = {}
                     try:
-                        # if the connector proxy does not return json, something horrible happened
-                        parsed_response = json.loads(response_text or "{}")
-                    except JSONDecodeError:
+                        if http_connector.does(operator_identifier):
+                            proxied_response = http_connector.do(operator_identifier, attempted_params)
+                        else:
+                            # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
+                            proxied_response = requests.post(
+                                call_url,
+                                json=attempted_params,
+                                headers=connector_proxy_api_key_headers(),
+                                timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+                            )
+
+                        status_code = proxied_response.status_code
+                        response_text = proxied_response.text
+                    except Exception as exception:
+                        # in case proxied_response.text fails we do not want to lose the original status code
+                        status_code = status_code or 500
                         parsed_response = {
                             "error": {
-                                "error_code": "ServiceTaskOperatorReturnedInvalidJsonError",
-                                "message": response_text,
+                                "error_code": exception.__class__.__name__,
+                                "message": str(exception),
                             }
                         }
+
+                    # If a 202 is returned, then the message was accepted, but is incomplete, and we need to wait for callback.
+                    if status_code == 202:
+                        raise Accepted202Exception()
+
+                    if "error" not in parsed_response:
+                        try:
+                            # if the connector proxy does not return json, something horrible happened
+                            parsed_response = json.loads(response_text or "{}")
+                        except JSONDecodeError:
+                            parsed_response = {
+                                "error": {
+                                    "error_code": "ServiceTaskOperatorReturnedInvalidJsonError",
+                                    "message": response_text,
+                                }
+                            }
+
+                    should_retry = (
+                        attempt_index == 0
+                        and len(param_variants) > 1
+                        and cls.should_retry_without_spiff_metadata(parsed_response, response_text, status_code)
+                    )
+                    if should_retry:
+                        current_app.logger.warning(
+                            "Retrying connector '%s' without spiff metadata due to unexpected keyword argument.",
+                            operator_identifier,
+                        )
+                        continue
+                    break
 
                 if "spiff__logs" in parsed_response:
                     for log in parsed_response["spiff__logs"]:
