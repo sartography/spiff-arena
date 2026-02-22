@@ -4,9 +4,9 @@ from unittest.mock import patch
 from flask import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
