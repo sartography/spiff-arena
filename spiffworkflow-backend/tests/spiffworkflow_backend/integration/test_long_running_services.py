@@ -6,6 +6,7 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -13,6 +14,35 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestLongRunningService(BaseTest):
+    def test_service_task_connector_call_has_no_active_db_transaction(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            connector_response = {"do_not_fail": True}
+
+            def _mock_post(*args: object, **kwargs: object) -> object:
+                assert db.session().get_transaction() is None
+
+                class _Response:
+                    status_code = 200
+                    ok = True
+                    text = json.dumps(connector_response)
+
+                return _Response()
+
+            with patch("requests.post", side_effect=_mock_post):
+                processor.do_engine_steps(save=True)
+
     def assert_tasks_awaiting_callback(
         self,
         app: Flask,

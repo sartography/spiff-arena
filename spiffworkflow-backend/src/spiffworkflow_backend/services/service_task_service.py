@@ -22,6 +22,7 @@ from spiffworkflow_connector_command.command_interface import CommandErrorDict
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -213,6 +214,10 @@ class ServiceTaskDelegate:
         cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask, process_instance_id: int | None
     ) -> str:
         """Calls a connector via the configured proxy."""
+        # Avoid holding row locks while waiting on external connector I/O.
+        if db.session().get_transaction() is not None:
+            db.session.commit()
+
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
         task_data = spiff_task.data

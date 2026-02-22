@@ -60,6 +60,18 @@ if [[ -n "$database_password" ]]; then
   database_host_args="${database_host_args} -p${database_password}"
 fi
 
+if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "postgres" ]]; then
+  if [[ "$database_username" == "root" ]]; then
+    database_username="spiffworkflow_backend"
+  fi
+  if [[ -z "$database_password" ]]; then
+    database_password="spiffworkflow_backend"
+  fi
+  if [[ -z "$database_port" ]]; then
+    database_port="5432"
+  fi
+fi
+
 # uncomment this line to fix branching conflicts
 # uv run flask db merge heads -m "merging heads"
 
@@ -68,6 +80,94 @@ function run_command_on_mysql_databases {
   for database_name in $databases_to_run_on; do
     mysql $database_host_args -e "$command $database_name"
   done
+}
+
+function can_connect_to_postgres_server {
+  PGPASSWORD="$database_password" psql \
+    -h "$database_host" \
+    -p "$database_port" \
+    -U "$database_username" \
+    -d postgres \
+    -v ON_ERROR_STOP=1 \
+    -c "select 1" >/dev/null 2>&1
+}
+
+function run_psql_command {
+  local database_name="$1"
+  local command="$2"
+  PGPASSWORD="$database_password" psql \
+    -h "$database_host" \
+    -p "$database_port" \
+    -U "$database_username" \
+    -d "$database_name" \
+    -v ON_ERROR_STOP=1 \
+    -c "$command"
+}
+
+function create_postgres_database_if_missing {
+  local database_name="$1"
+  local exists
+  exists=$(
+    PGPASSWORD="$database_password" psql \
+      -h "$database_host" \
+      -p "$database_port" \
+      -U "$database_username" \
+      -d postgres \
+      -tAc "select 1 from pg_database where datname = '$database_name'"
+  )
+  if [[ "$exists" != "1" ]]; then
+    PGPASSWORD="$database_password" createdb \
+      -h "$database_host" \
+      -p "$database_port" \
+      -U "$database_username" \
+      "$database_name"
+  fi
+}
+
+function run_command_on_postgres_databases {
+  local command="$1"
+  for database_name in $databases_to_run_on; do
+    if [[ "$command" == "DROP DATABASE IF EXISTS" ]]; then
+      run_psql_command postgres "DROP DATABASE IF EXISTS \"$database_name\" WITH (FORCE)"
+    elif [[ "$command" == "CREATE DATABASE IF NOT EXISTS" ]]; then
+      create_postgres_database_if_missing "$database_name"
+    else
+      echo >&2 "ERROR: Unsupported postgres command: $command"
+      exit 1
+    fi
+  done
+}
+
+function start_docker_postgres_if_needed {
+  local container_name="postgres-spiff"
+  local container_regex="^postgres-spiff$"
+  if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
+    echo ":: Found postgres container - $container_name"
+    if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
+      echo ":: Stopping running container - $container_name"
+      docker stop $container_name
+    fi
+    echo ":: Removing stopped container - $container_name"
+    docker rm $container_name
+  fi
+  docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
+  echo "Waiting for PostgreSQL to be ready..."
+  max_attempts=30 # Wait for up to 30 seconds
+  attempt_num=1
+  until docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1" >/dev/null 2>&1; do
+    if [ "${attempt_num}" -ge "${max_attempts}" ]; then
+      echo >&2 "ERROR: PostgreSQL did not become ready after ${max_attempts} attempts."
+      exit 1
+    fi
+    echo "PostgreSQL not ready yet, waiting 1 second... (Attempt ${attempt_num}/${max_attempts})"
+    sleep 1
+    attempt_num=$((attempt_num + 1))
+  done
+  echo "PostgreSQL is ready."
+  if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1" >/dev/null 2>&1; then
+    # create other db. spiffworkflow_backend_unit_testing came with the docker run.
+    docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
+  fi
 }
 
 tasks=""
@@ -86,38 +186,11 @@ if [[ "${1:-}" == "clean" ]]; then
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
     run_command_on_mysql_databases "DROP DATABASE IF EXISTS"
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
-    # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
-    # start postgres in background with one db
-    container_name="postgres-spiff"
-    container_regex="^postgres-spiff$"
-    if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
-      echo ":: Found postgres container - $container_name"
-      if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
-        echo ":: Stopping running container - $container_name"
-        docker stop $container_name
-      fi
-      echo ":: Removing stopped container - $container_name"
-      docker rm $container_name
-    fi
-    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
-      docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-      echo "Waiting for PostgreSQL to be ready..."
-      max_attempts=30 # Wait for up to 30 seconds
-      attempt_num=1
-      until docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1" >/dev/null 2>&1; do
-        if [ "${attempt_num}" -ge "${max_attempts}" ]; then
-          echo >&2 "ERROR: PostgreSQL did not become ready after ${max_attempts} attempts."
-          exit 1
-        fi
-        echo "PostgreSQL not ready yet, waiting 1 second... (Attempt ${attempt_num}/${max_attempts})"
-        sleep 1
-        attempt_num=$((attempt_num + 1))
-      done
-      echo "PostgreSQL is ready."
-    fi
-    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1" >/dev/null 2>&1; then
-      # create other db. spiffworkflow_backend_unit_testing came with the docker run.
-      docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
+    if can_connect_to_postgres_server; then
+      run_command_on_postgres_databases "DROP DATABASE IF EXISTS"
+    else
+      # fallback for environments where postgres is not running locally
+      start_docker_postgres_if_needed
     fi
   fi
   tasks="$tasks upgrade"
@@ -131,6 +204,13 @@ fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
   run_command_on_mysql_databases "CREATE DATABASE IF NOT EXISTS"
+elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "postgres" ]]; then
+  if can_connect_to_postgres_server; then
+    run_command_on_postgres_databases "CREATE DATABASE IF NOT EXISTS"
+  else
+    # fallback for environments where postgres is not running locally
+    start_docker_postgres_if_needed
+  fi
 fi
 
 for task in $tasks; do
