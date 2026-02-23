@@ -58,7 +58,7 @@ class TestOnboarding(BaseTest):
         # Assure no residual process model is left behind if it executes and completes without additinal user tasks
         assert len(ProcessInstanceModel.query.all()) == 0
 
-    def skip_test_persists_if_user_task_encountered(
+    def test_persists_if_user_task_encountered(
         self,
         app: Flask,
         client: TestClient,
