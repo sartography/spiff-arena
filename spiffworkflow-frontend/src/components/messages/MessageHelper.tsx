@@ -1,5 +1,28 @@
 import { ProcessGroup } from '../../interfaces';
 
+export const findNearestAncestorLocation = (
+  currentLocation: string,
+  candidateLocations: string[],
+) => {
+  const normalizedCurrentLocation = currentLocation.replace(/(^\/+|\/+$)/g, '');
+
+  const matchingLocations = candidateLocations.filter((candidateLocation) => {
+    const normalizedCandidate = candidateLocation.replace(/(^\/+|\/+$)/g, '');
+    return (
+      normalizedCurrentLocation === normalizedCandidate ||
+      normalizedCurrentLocation.startsWith(`${normalizedCandidate}/`)
+    );
+  });
+
+  if (matchingLocations.length === 0) {
+    return null;
+  }
+
+  return matchingLocations.sort(
+    (a: string, b: string) => b.length - a.length,
+  )[0];
+};
+
 export const getPropertiesForMessage = (
   messageId: string,
   processGroup: ProcessGroup,

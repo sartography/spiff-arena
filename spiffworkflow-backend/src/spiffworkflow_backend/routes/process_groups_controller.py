@@ -24,6 +24,21 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
 
+def _strip_message_model_metadata(messages: dict[str, Any] | None) -> dict[str, Any] | None:
+    if messages is None:
+        return None
+
+    sanitized_messages: dict[str, Any] = {}
+    for identifier, message_definition in messages.items():
+        if not isinstance(message_definition, dict):
+            sanitized_messages[identifier] = message_definition
+            continue
+
+        sanitized_messages[identifier] = {k: v for k, v in message_definition.items() if k not in {"id", "location"}}
+
+    return sanitized_messages
+
+
 def process_group_create(body: dict) -> flask.wrappers.Response:
     process_group = ProcessGroup.from_dict(body)
 
@@ -71,6 +86,8 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     body_filtered = {
         include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
     }
+    if "messages" in body_filtered:
+        body_filtered["messages"] = _strip_message_model_metadata(body.get("messages"))
 
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
     if not ProcessModelService.is_process_group_identifier(process_group_id):
@@ -83,8 +100,16 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     process_group = ProcessGroup.from_dict({"id": process_group_id, **body_filtered})
     ProcessModelService.update_process_group(process_group)
 
+    process_group_with_message_metadata = ProcessGroup.from_dict(
+        {
+            "id": process_group_id,
+            "display_name": process_group.display_name,
+            "messages": body.get("messages"),
+        }
+    )
+
     all_message_models: dict[tuple[str, str], MessageModel] = {}
-    MessageDefinitionService.collect_message_models(process_group, process_group_id, all_message_models)
+    MessageDefinitionService.collect_message_models(process_group_with_message_metadata, process_group_id, all_message_models)
     MessageDefinitionService.delete_message_models_at_location(process_group_id)
     db.session.commit()
     MessageDefinitionService.save_all_message_models(all_message_models)

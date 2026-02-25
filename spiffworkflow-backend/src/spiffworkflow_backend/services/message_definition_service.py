@@ -14,8 +14,20 @@ class MessageDefinitionService:
         cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup
     ) -> MessageModel | None:
         schema = message_definition.get("schema", "{}")
+        message_location = message_definition.get("location", process_group.id)
+        message_id = message_definition.get("id")
+        if isinstance(message_id, str) and message_id.isdigit():
+            message_id = int(message_id)
 
-        return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
+        existing_model = MessageModel.query.filter_by(identifier=identifier, location=message_location).first()
+        existing_message_id = existing_model.id if existing_model else None
+        resolved_message_id = message_id if message_id is not None else existing_message_id
+
+        message_model = MessageModel(identifier=identifier, location=message_location, schema=schema)
+        if resolved_message_id is not None:
+            message_model.id = resolved_message_id
+
+        return message_model
 
     @classmethod
     def _correlation_property_models_from_message_definition(
@@ -67,7 +79,19 @@ class MessageDefinitionService:
     @classmethod
     def save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
         for message_model in all_message_models.values():
-            db.session.add(message_model)
+            correlation_property_models = list(message_model.correlation_properties)
+            message_model_to_merge = MessageModel(
+                identifier=message_model.identifier,
+                location=message_model.location,
+                schema=message_model.schema,
+            )
+            if message_model.id is not None:
+                message_model_to_merge.id = message_model.id
 
-            for correlation_property_model in message_model.correlation_properties:
+            merged_message_model: MessageModel = db.session.merge(message_model_to_merge)
+            db.session.flush()
+
+            MessageCorrelationPropertyModel.query.filter_by(message_id=merged_message_model.id).delete()
+            for correlation_property_model in correlation_property_models:
+                correlation_property_model.message_id = merged_message_model.id
                 db.session.add(correlation_property_model)

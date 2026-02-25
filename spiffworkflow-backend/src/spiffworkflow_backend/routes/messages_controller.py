@@ -36,6 +36,7 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
 
     def message_response(message: MessageModel) -> dict[str, Any]:
         return {
+            "id": message.id,
             "identifier": message.identifier,
             "location": message.location,
             "schema": message.schema,
