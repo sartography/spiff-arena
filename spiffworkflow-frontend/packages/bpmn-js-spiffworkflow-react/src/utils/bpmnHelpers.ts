@@ -43,7 +43,9 @@ const getChildProcesses = (bpmnElement: any): string[] => {
  * Get child processes from MODDLE element
  * Note: bpmn:SubProcess shape elements do not have children, they have flowElements
  */
-const getChildProcessesFromModdleElement = (bpmnModdleElement: any): string[] => {
+const getChildProcessesFromModdleElement = (
+  bpmnModdleElement: any,
+): string[] => {
   let childProcesses: string[] = [bpmnModdleElement.id];
   bpmnModdleElement.flowElements.forEach((c: any) => {
     if (c.$type === 'bpmn:SubProcess') {
@@ -58,7 +60,9 @@ const getChildProcessesFromModdleElement = (bpmnModdleElement: any): string[] =>
  * Convert React SVG element to HTML string for overlays
  * Uses createRoot and flushSync to render React component to DOM
  */
-export const convertSvgElementToHtmlString = (svgElement: ReactElement): string => {
+export const convertSvgElementToHtmlString = (
+  svgElement: ReactElement,
+): string => {
   const div = document.createElement('div');
   const root = createRoot(div);
   flushSync(() => {
@@ -74,7 +78,8 @@ export const convertSvgElementToHtmlString = (svgElement: ReactElement): string 
  */
 export const makeid = (length: number): string => {
   let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const charactersLength = characters.length;
   let counter = 0;
   while (counter < length) {
@@ -97,13 +102,12 @@ export const taskIsMultiInstanceChild = (task: any): boolean => {
 export const checkTaskCanBeHighlighted = (task: any): boolean => {
   const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
   const taskBpmnId = task.bpmn_identifier;
+  const taskDefinitionBpmnId = task.task_definition_properties_json?.bpmn_id;
 
   return (
     !taskIsMultiInstanceChild(task) &&
+    !!taskDefinitionBpmnId &&
     !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
-    !taskBpmnId.match(/EndJoin/) &&
-    !taskBpmnId.match(/BoundaryEventParent/) &&
-    !taskBpmnId.match(/BoundaryEventJoin/) &&
-    !taskBpmnId.match(/BoundaryEventSplit/)
+    taskDefinitionBpmnId === taskBpmnId
   );
 };

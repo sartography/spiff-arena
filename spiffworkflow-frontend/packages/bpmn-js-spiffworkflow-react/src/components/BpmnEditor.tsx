@@ -426,7 +426,13 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         if (callbacksRef.current.onLaunchScriptEditor) {
           setPerformingXmlUpdates(true);
           const modeling = diagramModeler.get('modeling');
-          callbacksRef.current.onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
+          callbacksRef.current.onLaunchScriptEditor(
+            element,
+            script,
+            scriptType,
+            eventBus,
+            modeling,
+          );
         }
       }
 
@@ -447,7 +453,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
             canvas.getRootElement(),
           );
-          callbacksRef.current.onElementClick(event.element, bpmnProcessIdentifiers);
+          callbacksRef.current.onElementClick(
+            event.element,
+            bpmnProcessIdentifiers,
+          );
         }
       }
 
@@ -547,7 +556,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           console.error(error);
         }
         if (callbacksRef.current.onLaunchJsonSchemaEditor) {
-          callbacksRef.current.onLaunchJsonSchemaEditor(element, value, eventBus);
+          callbacksRef.current.onLaunchJsonSchemaEditor(
+            element,
+            value,
+            eventBus,
+          );
         }
       });
 
@@ -595,7 +608,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       diagramModeler.on('spiff.callactivity.search', (event: any) => {
         if (callbacksRef.current.onSearchProcessModels) {
-          callbacksRef.current.onSearchProcessModels(event.value, event.eventBus, event.element);
+          callbacksRef.current.onSearchProcessModels(
+            event.value,
+            event.eventBus,
+            event.element,
+          );
         }
       });
 
@@ -697,20 +714,19 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         bpmnProcessIdentifiers: string[],
       ) {
         if (checkTaskCanBeHighlighted(task)) {
-          try {
-            if (
-              bpmnProcessIdentifiers.includes(
-                task.bpmn_process_definition_identifier,
-              )
-            ) {
+          if (
+            bpmnProcessIdentifiers.includes(
+              task.bpmn_process_definition_identifier,
+            )
+          ) {
+            try {
               canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
-            }
-          } catch (bpmnIoError: any) {
-            if (
-              bpmnIoError.message !==
-              "Cannot read properties of undefined (reading 'id')"
-            ) {
-              throw bpmnIoError;
+            } catch (bpmnIoError: any) {
+              // Highlighting is best-effort; never break diagram rendering if marker application fails.
+              console.warn('Failed to add marker for BPMN element:', {
+                bpmnIdentifier: task.bpmn_identifier,
+                error: bpmnIoError,
+              });
             }
           }
         }
