@@ -45,6 +45,10 @@ Use the same backend env var set for all three containers, including Celery sett
 
 You do not need container-specific Celery env var differences for this split; `./bin/start_celery_worker` sets worker-only runtime flags internally.
 
+If you use Redis for the Celery broker and/or result backend, a Redis container/service must also be running and reachable by all three backend containers. Example broker URL:
+
+- `SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL=redis://spiff-redis:6379`
+
 ## Configuration
 
 The app uses sqlalchemy and supports mysql, postgres, or sqlite.
