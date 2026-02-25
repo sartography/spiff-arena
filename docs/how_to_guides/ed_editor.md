@@ -127,8 +127,8 @@ config = {
 - `connectorProxyUrl`
   The connector proxy base URL used for service calls.
 
-- `connectorProxyApiKey` *(optional)*
-  If your connector proxy requires an API key, set it here. The editor will include it as a `Spiff-Connector-Proxy-Api-Key` header on requests to the proxy. See [Configure a Connector Proxy](../deployment/configure_a_connector_proxy) for details.
+- `connectorProxyApiKey` _(optional)_
+  If your connector proxy requires an API key, set it here. The editor will include it as a `Spiff-Connector-Proxy-Api-Key` header on requests to the proxy. See [Configure a Connector Proxy](./deployment/configure_a_connector_proxy) for details.
 
 - `owner`
   The GitHub user or organization that owns the repository.
@@ -172,3 +172,4 @@ config = {
   }
 }
 ```
+
