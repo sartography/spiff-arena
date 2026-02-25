@@ -65,7 +65,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "check": "npm run typecheck && npm run -- lint:fix && npm run test",
+    "check": "npm run typecheck && npm run lint:fix && npm run test",
     "sync-bpmn-package": "rsync -av --delete packages/bpmn-js-spiffworkflow-react/ ../../bpmn-js-spiffworkflow-react/ --exclude node_modules --exclude dist --exclude .git --exclude .gitignore --exclude .npmignore",
     "format": "prettier --write --list-different src/**/*.[tj]s{,x}",
     "lint:fix": "./node_modules/.bin/eslint --fix src --ext .js,.jsx,.ts,.tsx",
