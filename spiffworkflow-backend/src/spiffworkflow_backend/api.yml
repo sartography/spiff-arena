@@ -3157,7 +3157,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
-  /message-models-list:
+  /all-message-models:
     get:
       tags:
         - Messages

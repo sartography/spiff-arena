@@ -124,7 +124,7 @@ class TestMessages(BaseTest):
         self.copy_example_process_models()
         DataSetupService.refresh_process_model_caches()
         response = client.get(
-            "/v1.0/message-models-list",
+            "/v1.0/all-message-models",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
         )
         assert response.status_code == 200

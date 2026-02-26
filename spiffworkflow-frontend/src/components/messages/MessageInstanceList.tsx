@@ -111,7 +111,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     });
 
     HttpService.makeCallToBackend({
-      path: `/message-models-list`,
+      path: `/all-message-models`,
       successCallback: (result: any) => {
         const items = result.messages;
         setMessageModelAvailableItems(items);
