@@ -116,6 +116,16 @@ const PROCESS_STATUSES = [
   'waiting',
 ];
 
+const MESSAGE_STATUSES = [
+  'ready',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+];
+
+const MESSAGE_TYPES = ['send', 'receive'];
+
 // with time: yyyy-MM-dd HH:mm:ss
 let generalDateFormat = getConfigValue('DATE_FORMAT');
 if (generalDateFormat === null) {
@@ -170,6 +180,8 @@ export {
   DATE_RANGE_DELIMITER,
   DATE_TIME_FORMAT,
   DOCUMENTATION_URL,
+  MESSAGE_STATUSES,
+  MESSAGE_TYPES,
   PROCESS_STATUSES,
   SPIFF_ENVIRONMENT,
   TASK_METADATA,
