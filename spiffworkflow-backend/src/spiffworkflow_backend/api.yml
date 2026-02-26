@@ -3157,6 +3157,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
+  /message-models-list:
+    get:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.messages_controller.message_model_list_all
+      summary: Get a list of message models
+      responses:
+        "200":
+          description: A list of message models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
   /message-models/{relative_location}:
     parameters:
       - name: relative_location
@@ -3210,6 +3224,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
+    post:
+      operationId: spiffworkflow_backend.routes.messages_controller.message_instance_search
+      summary: Returns a list of process instances matching the search criteria
+      tags:
+        - Process Instances
+      requestBody:
+        description: Filtering criteria for search
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                process_model_identifier:
+                  type: string
+                  nullable: true
+                  description: Process Model
+                message_model_identifier:
+                  type: string
+                  nullable: true
+                  description: Message Model
+                message_type:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                  description: Send or receive message
+                message_status:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                  description: Message status
+                created_after:
+                  type: integer
+                  nullable: true
+                  description: Messages sent or received after timestamp
+                created_before:
+                  type: integer
+                  nullable: true
+                  description: Messages sent or received before timestamp
+      responses:
+        "200":
+          description: A filtered list of messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
 
   /messages/{modified_message_name}:
     parameters:

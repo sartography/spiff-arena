@@ -5,6 +5,7 @@ import flask.wrappers
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
+from flask_sqlalchemy.pagination import QueryPagination
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -16,18 +17,7 @@ from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
 
-def message_model_list_from_root() -> flask.wrappers.Response:
-    return message_model_list()
-
-
-def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
-    # Returns all the messages and correlation properties that exist at the given
-    # relative location or higher in the directory tree.
-
-    loc = relative_location.replace(":", "/") if relative_location else ""
-    locations = UpsearchService.upsearch_locations(loc)
-    messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
-
+def get_message_models(messages: list[MessageModel]) -> flask.wrappers.Response:
     def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
         return {
             "identifier": correlation_property.identifier,
@@ -43,6 +33,36 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
         }
 
     return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
+
+
+def message_model_list_all() -> flask.wrappers.Response:
+    return get_message_models(MessageModel.query.all())
+
+
+def message_model_list_from_root() -> flask.wrappers.Response:
+    return message_model_list()
+
+
+def message_model_list(relative_location: str | None = None) -> flask.wrappers.Response:
+    # Returns all the messages and correlation properties that exist at the given
+    # relative location or higher in the directory tree.
+
+    loc = relative_location.replace(":", "/") if relative_location else ""
+    locations = UpsearchService.upsearch_locations(loc)
+    messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
+    return get_message_models(messages)
+
+
+def create_message_instance_response(message_instances: QueryPagination) -> flask.Response:
+    response_json = {
+        "results": message_instances.items,
+        "pagination": {
+            "count": len(message_instances.items),
+            "total": message_instances.total,
+            "pages": message_instances.pages,
+        },
+    }
+    return make_response(jsonify(response_json), 200)
 
 
 def message_instance_list(
@@ -68,17 +88,51 @@ def message_instance_list(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+    return create_message_instance_response(message_instances)
 
-    response_json = {
-        "results": message_instances.items,
-        "pagination": {
-            "count": len(message_instances.items),
-            "total": message_instances.total,
-            "pages": message_instances.pages,
-        },
-    }
 
-    return make_response(jsonify(response_json), 200)
+def message_instance_search(
+    body: dict[str, Any],
+    process_instance_id: int | None = None,
+    page: int = 1,
+    per_page: int = 100,
+) -> flask.wrappers.Response:
+    message_instances_query = MessageInstanceModel.query
+    if process_instance_id:
+        message_instances_query = message_instances_query.filter_by(process_instance_id=process_instance_id)
+
+    if body["name"] is not None:
+        message_instances_query = message_instances_query.filter_by(name=body["name"])
+    if body["message_type"] is not None and len(body["message_type"]):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.message_type.in_(body["message_type"]))  # type: ignore
+    if body["status"] is not None and len(body["status"]):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.status.in_(body["status"]))  # type: ignore
+    if body["created_after"] is not None:
+        message_instances_query = message_instances_query.filter(
+            MessageInstanceModel.created_at_in_seconds >= body["created_after"]
+        )
+    if body["created_before"] is not None:
+        message_instances_query = message_instances_query.filter(
+            MessageInstanceModel.created_at_in_seconds <= body["created_before"]
+        )
+    if body["process_model_identifier"] is not None:
+        message_instances_query = message_instances_query.filter(
+            ProcessInstanceModel.process_model_identifier == body["process_model_identifier"]
+        )
+
+    message_instances = (
+        message_instances_query.order_by(
+            MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
+            MessageInstanceModel.id.desc(),  # type: ignore
+        )
+        .outerjoin(ProcessInstanceModel)  # Not all messages were created by a process
+        .add_columns(
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.process_model_display_name,
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    return create_message_instance_response(message_instances)
 
 
 # body: {
