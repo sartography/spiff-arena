@@ -45,6 +45,34 @@ type OwnProps = {
 
 const paginationQueryParamPrefix = 'message-list';
 
+const isValidIsoDate = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const dateObject = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(dateObject.getTime())) {
+    return false;
+  }
+  return dateObject.toISOString().slice(0, 10) === value;
+};
+
+const normalizeDateInputValue = (value: string): string => {
+  if (!value) {
+    return '';
+  }
+  return isValidIsoDate(value) ? value : '';
+};
+
+const normalizeTimeInputValue = (value: string): string => {
+  if (!value) {
+    return '';
+  }
+  if (/^\d{2}:\d{2}$/.test(value) || /^\d{2}:\d{2}:\d{2}$/.test(value)) {
+    return value;
+  }
+  return '';
+};
+
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const { t } = useTranslation();
   const [messageInstances, setMessageInstances] = useState([]);
@@ -113,11 +141,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     if (startDate == '') {
       setCreatedAfter(null);
     } else if (startDate) {
-      setCreatedAfter(
+      const createdAfterInSeconds =
         DateAndTimeService.convertDateAndTimeStringsToSeconds(
           startDate,
           startTime || '00:00:00',
-        ),
+        );
+      setCreatedAfter(
+        Number.isFinite(createdAfterInSeconds) ? createdAfterInSeconds : null,
       );
     }
   }, [startDate, startTime]);
@@ -127,11 +157,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       setCreatedBefore(null);
     }
     if (endDate) {
-      setCreatedBefore(
+      const createdBeforeInSeconds =
         DateAndTimeService.convertDateAndTimeStringsToSeconds(
           endDate,
           endTime || '00:00:00',
-        ),
+        );
+      setCreatedBefore(
+        Number.isFinite(createdBeforeInSeconds) ? createdBeforeInSeconds : null,
       );
     }
   }, [endDate, endTime]);
@@ -327,7 +359,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={`${t('created_after')} ${t('date')}`}
               type="date"
               value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+              onChange={(event) =>
+                setStartDate(normalizeDateInputValue(event.target.value))
+              }
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
@@ -337,7 +371,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={t('time')}
               type="time"
               value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
+              onChange={(event) =>
+                setStartTime(normalizeTimeInputValue(event.target.value))
+              }
               slotProps={{
                 inputLabel: { shrink: true },
                 htmlInput: { step: 60 },
@@ -350,7 +386,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={`${t('created_before')} ${t('date')}`}
               type="date"
               value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
+              onChange={(event) =>
+                setEndDate(normalizeDateInputValue(event.target.value))
+              }
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
@@ -360,7 +398,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={t('time')}
               type="time"
               value={endTime}
-              onChange={(event) => setEndTime(event.target.value)}
+              onChange={(event) =>
+                setEndTime(normalizeTimeInputValue(event.target.value))
+              }
               slotProps={{
                 inputLabel: { shrink: true },
                 htmlInput: { step: 60 },
