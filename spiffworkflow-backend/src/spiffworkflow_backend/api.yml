@@ -3229,7 +3229,7 @@ paths:
       operationId: spiffworkflow_backend.routes.messages_controller.message_instance_search
       summary: Returns a list of process instances matching the search criteria
       tags:
-        - Process Instances
+        - Messages
       requestBody:
         description: Filtering criteria for search
         required: true
