@@ -35,18 +35,6 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     return _get_message_models(messages)
 
 
-def create_message_instance_response(message_instances: QueryPagination) -> flask.Response:
-    response_json = {
-        "results": message_instances.items,
-        "pagination": {
-            "count": len(message_instances.items),
-            "total": message_instances.total,
-            "pages": message_instances.pages,
-        },
-    }
-    return make_response(jsonify(response_json), 200)
-
-
 def message_instance_list(
     process_instance_id: int | None = None,
     page: int = 1,
@@ -70,7 +58,7 @@ def message_instance_list(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    return create_message_instance_response(message_instances)
+    return _create_message_instance_response(message_instances)
 
 
 def message_instance_search(
@@ -121,7 +109,7 @@ def message_instance_search(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    return create_message_instance_response(message_instances)
+    return _create_message_instance_response(message_instances)
 
 
 # body: {
@@ -178,3 +166,15 @@ def _get_message_models(messages: list[MessageModel]) -> flask.wrappers.Response
         }
 
     return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
+
+
+def _create_message_instance_response(message_instances: QueryPagination) -> flask.Response:
+    response_json = {
+        "results": message_instances.items,
+        "pagination": {
+            "count": len(message_instances.items),
+            "total": message_instances.total,
+            "pages": message_instances.pages,
+        },
+    }
+    return make_response(jsonify(response_json), 200)
