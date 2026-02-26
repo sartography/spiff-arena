@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorOutline, FilterAlt as FilterIcon } from '@mui/icons-material';
 import {
+  Autocomplete,
   Table,
   TableBody,
   TableCell,
@@ -17,14 +18,8 @@ import {
   Typography,
   Grid,
   IconButton,
+  TextField,
 } from '@mui/material';
-import {
-  ComboBox,
-  MultiSelect,
-  DatePicker,
-  DatePickerInput,
-  TimePicker,
-} from '@carbon/react';
 
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
@@ -41,13 +36,8 @@ import { ProcessModel, MessageInstance, MessageModel } from '../../interfaces';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import SpiffTooltip from '../SpiffTooltip';
 
-import ProcessModelSearchCarbon from '../ProcessModelSearchCarbon';
-import {
-  MESSAGE_STATUSES,
-  MESSAGE_TYPES,
-  DATE_FORMAT_CARBON,
-  DATE_FORMAT_FOR_DISPLAY,
-} from '../../config';
+import ProcessModelSearch from '../ProcessModelSearch';
+import { MESSAGE_STATUSES, MESSAGE_TYPES } from '../../config';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -71,14 +61,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
   const [messageModelAvailableItems, setMessageModelAvailableItems] = useState<
-    any[]
+    MessageModel[]
   >([]);
-  const [messageModelSelection, setMessageModelSelection] = useState<
-    any | null
-  >(null);
+  const [messageModelSelection, setMessageModelSelection] =
+    useState<MessageModel | null>(null);
   const [messageTypeOptions, setMessageTypeOptions] = useState<string[]>([]);
-  const [messageTypeSelection, setMessageTypeSelection] = useState<any | null>(
-    null,
+  const [messageTypeSelection, setMessageTypeSelection] = useState<string[]>(
+    [],
   );
   const [messageStatusOptions, setMessageStatusOptions] = useState<string[]>(
     [],
@@ -88,12 +77,10 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   >([]);
   const [startDate, setStartDate] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
-  const [startTimeInvalid, setStartTimeInvalid] = useState<boolean>(false);
   const [endDate, setEndDate] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
-  const [endTimeInvalid, setEndTimeInvalid] = useState<boolean>(false);
-  const [createdAfter, setCreatedAfter] = useState<string | null>(null);
-  const [createdBefore, setCreatedBefore] = useState<string | null>(null);
+  const [createdAfter, setCreatedAfter] = useState<number | null>(null);
+  const [createdBefore, setCreatedBefore] = useState<number | null>(null);
 
   useEffect(() => {
     function parseAvailableProcessModels(result: any) {
@@ -125,7 +112,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   useEffect(() => {
     if (startDate == '') {
       setCreatedAfter(null);
-    } else if (startDate && !startTimeInvalid) {
+    } else if (startDate) {
       setCreatedAfter(
         DateAndTimeService.convertDateAndTimeStringsToSeconds(
           startDate,
@@ -133,13 +120,13 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         ),
       );
     }
-  }, [startDate, startTime, startTimeInvalid]);
+  }, [startDate, startTime]);
 
   useEffect(() => {
     if (endDate == '') {
       setCreatedBefore(null);
     }
-    if (endDate && !endTimeInvalid) {
+    if (endDate) {
       setCreatedBefore(
         DateAndTimeService.convertDateAndTimeStringsToSeconds(
           endDate,
@@ -147,7 +134,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         ),
       );
     }
-  }, [endDate, endTime, endTimeInvalid]);
+  }, [endDate, endTime]);
 
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
@@ -170,8 +157,9 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
         ? processModelSelection.id
         : null,
       name: messageModelSelection ? messageModelSelection.identifier : null,
-      message_type: messageTypeSelection || null,
-      status: messageStatusSelection || null,
+      message_type:
+        messageTypeSelection.length > 0 ? messageTypeSelection : null,
+      status: messageStatusSelection.length > 0 ? messageStatusSelection : null,
       created_after: createdAfter,
       created_before: createdBefore,
     };
@@ -244,7 +232,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const showFilters = () => {
     const elements = [];
     elements.push(
-      <Grid container fullWidth justifyContent="flex-end">
+      <Grid container justifyContent="flex-end">
         <SpiffTooltip title={t('filter_options')}>
           <IconButton
             data-testid="filter-section-expand-toggle"
@@ -259,129 +247,123 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     );
     if (filtersVisible) {
       elements.push(
-        <Grid container fullWidth className="with-bottom-margin" spacing={1}>
-          <Grid>
-            <ProcessModelSearchCarbon
-              onChange={(selection: any) =>
-                setProcessModelSelection(selection.selectedItem)
+        <Grid container className="with-bottom-margin" spacing={1}>
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <ProcessModelSearch
+              onChange={(selection: ProcessModel | null) =>
+                setProcessModelSelection(selection)
               }
               processModels={processModelAvailableItems}
               selectedItem={processModelSelection}
               truncateProcessModelDisplayName
             />
           </Grid>
-          <Grid>
-            <ComboBox
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <Autocomplete
               id="message-model-select"
               className="process-model-search-combobox"
-              titleText={t('name')}
-              placeHolder={t('choose_a_message')}
-              items={messageModelAvailableItems}
-              itemToString={(item: MessageModel) => {
-                if (item) {
-                  return `${item.identifier} (${item.location})`;
-                }
-              }}
-              selectedItem={messageModelSelection}
-              onChange={(selection: any) =>
-                setMessageModelSelection(selection.selectedItem)
+              options={messageModelAvailableItems}
+              getOptionLabel={(item: MessageModel) =>
+                `${item.identifier} (${item.location})`
               }
+              value={messageModelSelection}
+              onChange={(_event, value) => setMessageModelSelection(value)}
+              isOptionEqualToValue={(option, value) =>
+                option.identifier === value.identifier &&
+                option.location === value.location
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('name')}
+                  placeholder={t('choose_a_message')}
+                />
+              )}
             />
           </Grid>
-          <Grid>
-            <MultiSelect
-              label={t('choose_type')}
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <Autocomplete
+              multiple
               className="message-type-select"
               id="message-instance-type-select"
-              titleText={t('type')}
-              items={messageTypeOptions}
-              onChange={(selection: any) =>
-                setMessageTypeSelection(selection.selectedItems)
-              }
-              itemToString={(item: any) => getMessageType(item)}
-              selectionFeedback="top-after-reopen"
-              selectedItems={messageTypeSelection}
+              options={messageTypeOptions}
+              value={messageTypeSelection}
+              onChange={(_event, value) => setMessageTypeSelection(value)}
+              getOptionLabel={(item: string) => getMessageType(item)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('type')}
+                  placeholder={t('choose_type')}
+                />
+              )}
             />
           </Grid>
-          <Grid>
-            <MultiSelect
-              label={t('choose_status')}
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <Autocomplete
+              multiple
               className="message-status-select"
               id="message-instance-status-select"
-              titleText={t('status')}
-              items={messageStatusOptions}
-              onChange={(selection: any) =>
-                setMessageStatusSelection(selection.selectedItems)
-              }
-              itemToString={(item: any) => getProcessStatus(item)}
-              selectionFeedback="top-after-reopen"
-              selectedItems={messageStatusSelection}
+              options={messageStatusOptions}
+              value={messageStatusSelection}
+              onChange={(_event, value) => setMessageStatusSelection(value)}
+              getOptionLabel={(item: string) => getProcessStatus(item)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('status')}
+                  placeholder={t('choose_status')}
+                />
+              )}
             />
           </Grid>
         </Grid>,
       );
       elements.push(
-        <Grid container fullWidth className="with-bottom-margin" spacing={1}>
-          <Grid>
-            <DatePicker
+        <Grid container className="with-bottom-margin" spacing={1}>
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <TextField
               id="start-date"
-              datePickerType="single"
-              dateFormat={DATE_FORMAT_CARBON}
+              label={`${t('created_after')} ${t('date')}`}
+              type="date"
               value={startDate}
-            >
-              <DatePickerInput
-                id="start-date-input"
-                labelText={`${t('created_after')} ${t('date')}`}
-                type="text"
-                size="md"
-                autocomplete="off"
-                allowInput={false}
-                placeHolder={DATE_FORMAT_FOR_DISPLAY}
-                onChange={(ev: any) => setStartDate(ev.target.value)}
-              />
-            </DatePicker>
+              onChange={(event) => setStartDate(event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
-          <Grid>
-            <TimePicker
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <TextField
               id="start-time-input"
-              labelText={t('time')}
-              pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
+              label={t('time')}
+              type="time"
               value={startTime}
-              invalid={startTimeInvalid}
-              onChange={(ev: any) => {
-                setStartTimeInvalid(!ev.target.validity.valid);
-                setStartTime(ev.target.value);
+              onChange={(event) => setStartTime(event.target.value)}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { step: 60 },
               }}
             />
           </Grid>
-          <Grid>
-            <DatePicker
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <TextField
               id="end-date"
-              datePickerType="single"
-              dateFormat={DATE_FORMAT_CARBON}
+              label={`${t('created_before')} ${t('date')}`}
+              type="date"
               value={endDate}
-            >
-              <DatePickerInput
-                id="end-date-input"
-                labelText={`${t('created_before')} ${t('date')}`}
-                type="text"
-                size="md"
-                autocomplete="off"
-                allowInput={false}
-                placeHolder={DATE_FORMAT_FOR_DISPLAY}
-                onChange={(ev: any) => setEndDate(ev.target.value)}
-              />
-            </DatePicker>
+              onChange={(event) => setEndDate(event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
-          <Grid>
-            <TimePicker
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <TextField
               id="end-time-input"
-              labelText={t('time')}
+              label={t('time')}
+              type="time"
               value={endTime}
-              invalid={endTimeInvalid}
-              onChange={(ev: any) => {
-                setEndTimeInvalid(!ev.target.validity.valid);
-                setEndTime(ev.target.value);
+              onChange={(event) => setEndTime(event.target.value)}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { step: 60 },
               }}
             />
           </Grid>

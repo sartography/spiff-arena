@@ -1,7 +1,11 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
-import { ElementForArray, ProcessInstance } from './interfaces';
+import {
+  ElementForArray,
+  MessageInstance,
+  ProcessInstance,
+} from './interfaces';
 import i18n from './i18n';
 
 export const DEFAULT_PER_PAGE = 50;
