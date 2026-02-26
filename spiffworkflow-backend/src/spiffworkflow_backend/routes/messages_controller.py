@@ -17,26 +17,8 @@ from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
 
-def get_message_models(messages: list[MessageModel]) -> flask.wrappers.Response:
-    def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
-        return {
-            "identifier": correlation_property.identifier,
-            "retrieval_expression": correlation_property.retrieval_expression,
-        }
-
-    def message_response(message: MessageModel) -> dict[str, Any]:
-        return {
-            "identifier": message.identifier,
-            "location": message.location,
-            "schema": message.schema,
-            "correlation_properties": [correlation_property_response(cp) for cp in message.correlation_properties],
-        }
-
-    return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
-
-
 def message_model_list_all() -> flask.wrappers.Response:
-    return get_message_models(MessageModel.query.all())
+    return _get_message_models(MessageModel.query.all())
 
 
 def message_model_list_from_root() -> flask.wrappers.Response:
@@ -50,7 +32,7 @@ def message_model_list(relative_location: str | None = None) -> flask.wrappers.R
     loc = relative_location.replace(":", "/") if relative_location else ""
     locations = UpsearchService.upsearch_locations(loc)
     messages = db.session.query(MessageModel).filter(MessageModel.location.in_(locations)).order_by(MessageModel.identifier).all()  # type: ignore
-    return get_message_models(messages)
+    return _get_message_models(messages)
 
 
 def create_message_instance_response(message_instances: QueryPagination) -> flask.Response:
@@ -101,23 +83,30 @@ def message_instance_search(
     if process_instance_id:
         message_instances_query = message_instances_query.filter_by(process_instance_id=process_instance_id)
 
-    if body["name"] is not None:
-        message_instances_query = message_instances_query.filter_by(name=body["name"])
-    if body["message_type"] is not None and len(body["message_type"]):
-        message_instances_query = message_instances_query.filter(MessageInstanceModel.message_type.in_(body["message_type"]))  # type: ignore
-    if body["status"] is not None and len(body["status"]):
-        message_instances_query = message_instances_query.filter(MessageInstanceModel.status.in_(body["status"]))  # type: ignore
-    if body["created_after"] is not None:
+    name = body.get("name")
+    if name is not None and isinstance(name, str):
+        message_instances_query = message_instances_query.filter_by(name=name)
+
+    message_type = body.get("message_type")
+    if message_type and isinstance(message_type, list | tuple):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.message_type.in_(message_type))  # type: ignore
+
+    status = body.get("status")
+    if status and isinstance(status, list | tuple):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.status.in_(status))  # type: ignore
+
+    created_after = body.get("created_after")
+    if created_after is not None and isinstance(created_after, int | float):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.created_at_in_seconds >= created_after)
+
+    created_before = body.get("created_before")
+    if created_before is not None and isinstance(created_before, int | float):
+        message_instances_query = message_instances_query.filter(MessageInstanceModel.created_at_in_seconds <= created_before)
+
+    process_model_identifier = body.get("process_model_identifier")
+    if process_model_identifier is not None and isinstance(process_model_identifier, str):
         message_instances_query = message_instances_query.filter(
-            MessageInstanceModel.created_at_in_seconds >= body["created_after"]
-        )
-    if body["created_before"] is not None:
-        message_instances_query = message_instances_query.filter(
-            MessageInstanceModel.created_at_in_seconds <= body["created_before"]
-        )
-    if body["process_model_identifier"] is not None:
-        message_instances_query = message_instances_query.filter(
-            ProcessInstanceModel.process_model_identifier == body["process_model_identifier"]
+            ProcessInstanceModel.process_model_identifier == process_model_identifier
         )
 
     message_instances = (
@@ -171,3 +160,21 @@ def get_process_model_for_message(modified_message_name: str) -> flask.wrappers.
         "file_name": message_triggerable_process_model.file_name,
     }
     return make_response(jsonify(process_model_response), 200)
+
+
+def _get_message_models(messages: list[MessageModel]) -> flask.wrappers.Response:
+    def correlation_property_response(correlation_property: MessageCorrelationPropertyModel) -> dict[str, str]:
+        return {
+            "identifier": correlation_property.identifier,
+            "retrieval_expression": correlation_property.retrieval_expression,
+        }
+
+    def message_response(message: MessageModel) -> dict[str, Any]:
+        return {
+            "identifier": message.identifier,
+            "location": message.location,
+            "schema": message.schema,
+            "correlation_properties": [correlation_property_response(cp) for cp in message.correlation_properties],
+        }
+
+    return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)
