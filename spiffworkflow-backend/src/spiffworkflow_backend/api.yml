@@ -3227,7 +3227,7 @@ paths:
 
     post:
       operationId: spiffworkflow_backend.routes.messages_controller.message_instance_search
-      summary: Returns a list of process instances matching the search criteria
+      summary: Returns a list of message instances matching the search criteria
       tags:
         - Messages
       requestBody:
@@ -3273,7 +3273,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
-
 
   /messages/{modified_message_name}:
     parameters:
