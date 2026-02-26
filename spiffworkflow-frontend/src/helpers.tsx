@@ -259,6 +259,13 @@ export const getProcessStatus = (processInstance: ProcessInstance | string) => {
   return i18n.t(`status_${processInstance.status}`);
 };
 
+export const getMessageType = (messageInstance: MessageInstance | string) => {
+  if (typeof messageInstance === 'string') {
+    return i18n.t(`message_type_${messageInstance}`);
+  }
+  return i18n.t(`message_type_${messageInstance.message_type}`);
+};
+
 export const getLastMilestoneFromProcessInstance = (
   processInstance: ProcessInstance,
   value: any = undefined,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ErrorOutline } from '@mui/icons-material';
+import { ErrorOutline, FilterAlt as FilterIcon } from '@mui/icons-material';
 import {
   Table,
   TableBody,
@@ -15,19 +15,39 @@ import {
   DialogContent,
   DialogContentText,
   Typography,
+  Grid,
+  IconButton,
 } from '@mui/material';
+import {
+  ComboBox,
+  MultiSelect,
+  DatePicker,
+  DatePickerInput,
+  TimePicker,
+} from '@carbon/react';
+
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../PaginationForTable';
 import ProcessBreadcrumb from '../ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
+  getProcessStatus,
+  getMessageType,
   modifyProcessIdentifierForPathParam,
 } from '../../helpers';
 import HttpService from '../../services/HttpService';
 import { FormatProcessModelDisplayName } from '../MiniComponents';
-import { MessageInstance } from '../../interfaces';
+import { ProcessModel, MessageInstance, MessageModel } from '../../interfaces';
 import DateAndTimeService from '../../services/DateAndTimeService';
 import SpiffTooltip from '../SpiffTooltip';
+
+import ProcessModelSearchCarbon from '../ProcessModelSearchCarbon';
+import {
+  MESSAGE_STATUSES,
+  MESSAGE_TYPES,
+  DATE_FORMAT_CARBON,
+  DATE_FORMAT_FOR_DISPLAY,
+} from '../../config';
 
 type OwnProps = {
   processInstanceId?: number;
@@ -43,6 +63,91 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
 
   const [messageInstanceForModal, setMessageInstanceForModal] =
     useState<MessageInstance | null>(null);
+
+  const [filtersVisible, setFiltersVisible] = useState<boolean>(false);
+  const [processModelAvailableItems, setProcessModelAvailableItems] = useState<
+    ProcessModel[]
+  >([]);
+  const [processModelSelection, setProcessModelSelection] =
+    useState<ProcessModel | null>(null);
+  const [messageModelAvailableItems, setMessageModelAvailableItems] = useState<
+    any[]
+  >([]);
+  const [messageModelSelection, setMessageModelSelection] = useState<
+    any | null
+  >(null);
+  const [messageTypeOptions, setMessageTypeOptions] = useState<string[]>([]);
+  const [messageTypeSelection, setMessageTypeSelection] = useState<any | null>(
+    null,
+  );
+  const [messageStatusOptions, setMessageStatusOptions] = useState<string[]>(
+    [],
+  );
+  const [messageStatusSelection, setMessageStatusSelection] = useState<
+    string[]
+  >([]);
+  const [startDate, setStartDate] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [startTimeInvalid, setStartTimeInvalid] = useState<boolean>(false);
+  const [endDate, setEndDate] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
+  const [endTimeInvalid, setEndTimeInvalid] = useState<boolean>(false);
+  const [createdAfter, setCreatedAfter] = useState<string | null>(null);
+  const [createdBefore, setCreatedBefore] = useState<string | null>(null);
+
+  useEffect(() => {
+    function parseAvailableProcessModels(result: any) {
+      const items = result.results.map((item: any) => {
+        const label = `${item.id}`;
+        Object.assign(item, { label });
+        return item;
+      });
+      setProcessModelAvailableItems(items);
+    }
+
+    HttpService.makeCallToBackend({
+      path: `/process-models?per_page=1500&recursive=true&include_parent_groups=true`,
+      successCallback: parseAvailableProcessModels,
+    });
+
+    HttpService.makeCallToBackend({
+      path: `/message-models-list`,
+      successCallback: (result: any) => {
+        const items = result.messages;
+        setMessageModelAvailableItems(items);
+      },
+    });
+
+    setMessageTypeOptions(MESSAGE_TYPES);
+    setMessageStatusOptions(MESSAGE_STATUSES);
+  }, []);
+
+  useEffect(() => {
+    if (startDate == '') {
+      setCreatedAfter(null);
+    } else if (startDate && !startTimeInvalid) {
+      setCreatedAfter(
+        DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          startDate,
+          startTime || '00:00:00',
+        ),
+      );
+    }
+  }, [startDate, startTime, startTimeInvalid]);
+
+  useEffect(() => {
+    if (endDate == '') {
+      setCreatedBefore(null);
+    }
+    if (endDate && !endTimeInvalid) {
+      setCreatedBefore(
+        DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          endDate,
+          endTime || '00:00:00',
+        ),
+      );
+    }
+  }, [endDate, endTime, endTimeInvalid]);
 
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
@@ -60,11 +165,33 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       queryParamString += `&process_instance_id=${processInstanceId}`;
     }
 
+    const body = {
+      process_model_identifier: processModelSelection
+        ? processModelSelection.id
+        : null,
+      name: messageModelSelection ? messageModelSelection.identifier : null,
+      message_type: messageTypeSelection || null,
+      status: messageStatusSelection || null,
+      created_after: createdAfter,
+      created_before: createdBefore,
+    };
+
     HttpService.makeCallToBackend({
       path: `/messages?${queryParamString}`,
+      httpMethod: 'POST',
+      postBody: body,
       successCallback: setMessageInstanceListFromResult,
     });
-  }, [processInstanceId, searchParams]);
+  }, [
+    processInstanceId,
+    searchParams,
+    processModelSelection,
+    messageModelSelection,
+    messageTypeSelection,
+    messageStatusSelection,
+    createdAfter,
+    createdBefore,
+  ]);
 
   const handleCorrelationDisplayClose = () => {
     setMessageInstanceForModal(null);
@@ -114,6 +241,156 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
     return null;
   };
 
+  const showFilters = () => {
+    const elements = [];
+    elements.push(
+      <Grid container fullWidth justifyContent="flex-end">
+        <SpiffTooltip title={t('filter_options')}>
+          <IconButton
+            data-testid="filter-section-expand-toggle"
+            color="primary"
+            aria-label={t('filter_options')}
+            onClick={() => setFiltersVisible(!filtersVisible)}
+          >
+            <FilterIcon />
+          </IconButton>
+        </SpiffTooltip>
+      </Grid>,
+    );
+    if (filtersVisible) {
+      elements.push(
+        <Grid container fullWidth className="with-bottom-margin" spacing={1}>
+          <Grid>
+            <ProcessModelSearchCarbon
+              onChange={(selection: any) =>
+                setProcessModelSelection(selection.selectedItem)
+              }
+              processModels={processModelAvailableItems}
+              selectedItem={processModelSelection}
+              truncateProcessModelDisplayName
+            />
+          </Grid>
+          <Grid>
+            <ComboBox
+              id="message-model-select"
+              className="process-model-search-combobox"
+              titleText={t('name')}
+              placeHolder={t('choose_a_message')}
+              items={messageModelAvailableItems}
+              itemToString={(item: MessageModel) => {
+                if (item) {
+                  return `${item.identifier} (${item.location})`;
+                }
+              }}
+              selectedItem={messageModelSelection}
+              onChange={(selection: any) =>
+                setMessageModelSelection(selection.selectedItem)
+              }
+            />
+          </Grid>
+          <Grid>
+            <MultiSelect
+              label={t('choose_type')}
+              className="message-type-select"
+              id="message-instance-type-select"
+              titleText={t('type')}
+              items={messageTypeOptions}
+              onChange={(selection: any) =>
+                setMessageTypeSelection(selection.selectedItems)
+              }
+              itemToString={(item: any) => getMessageType(item)}
+              selectionFeedback="top-after-reopen"
+              selectedItems={messageTypeSelection}
+            />
+          </Grid>
+          <Grid>
+            <MultiSelect
+              label={t('choose_status')}
+              className="message-status-select"
+              id="message-instance-status-select"
+              titleText={t('status')}
+              items={messageStatusOptions}
+              onChange={(selection: any) =>
+                setMessageStatusSelection(selection.selectedItems)
+              }
+              itemToString={(item: any) => getProcessStatus(item)}
+              selectionFeedback="top-after-reopen"
+              selectedItems={messageStatusSelection}
+            />
+          </Grid>
+        </Grid>,
+      );
+      elements.push(
+        <Grid container fullWidth className="with-bottom-margin" spacing={1}>
+          <Grid>
+            <DatePicker
+              id="start-date"
+              datePickerType="single"
+              dateFormat={DATE_FORMAT_CARBON}
+              value={startDate}
+            >
+              <DatePickerInput
+                id="start-date-input"
+                labelText={`${t('created_after')} ${t('date')}`}
+                type="text"
+                size="md"
+                autocomplete="off"
+                allowInput={false}
+                placeHolder={DATE_FORMAT_FOR_DISPLAY}
+                onChange={(ev: any) => setStartDate(ev.target.value)}
+              />
+            </DatePicker>
+          </Grid>
+          <Grid>
+            <TimePicker
+              id="start-time-input"
+              labelText={t('time')}
+              pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
+              value={startTime}
+              invalid={startTimeInvalid}
+              onChange={(ev: any) => {
+                setStartTimeInvalid(!ev.target.validity.valid);
+                setStartTime(ev.target.value);
+              }}
+            />
+          </Grid>
+          <Grid>
+            <DatePicker
+              id="end-date"
+              datePickerType="single"
+              dateFormat={DATE_FORMAT_CARBON}
+              value={endDate}
+            >
+              <DatePickerInput
+                id="end-date-input"
+                labelText={`${t('created_before')} ${t('date')}`}
+                type="text"
+                size="md"
+                autocomplete="off"
+                allowInput={false}
+                placeHolder={DATE_FORMAT_FOR_DISPLAY}
+                onChange={(ev: any) => setEndDate(ev.target.value)}
+              />
+            </DatePicker>
+          </Grid>
+          <Grid>
+            <TimePicker
+              id="end-time-input"
+              labelText={t('time')}
+              value={endTime}
+              invalid={endTimeInvalid}
+              onChange={(ev: any) => {
+                setEndTimeInvalid(!ev.target.validity.valid);
+                setEndTime(ev.target.value);
+              }}
+            />
+          </Grid>
+        </Grid>,
+      );
+    }
+    return elements;
+  };
+
   const buildTable = () => {
     const rows = messageInstances.map((row: MessageInstance) => {
       let errorIcon = null;
@@ -148,7 +425,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           <TableCell>{processLink}</TableCell>
           <TableCell>{instanceLink}</TableCell>
           <TableCell>{row.name}</TableCell>
-          <TableCell>{row.message_type}</TableCell>
+          <TableCell>{getMessageType(row.message_type)}</TableCell>
           <TableCell>{row.counterpart_id}</TableCell>
           <TableCell>
             <SpiffTooltip title={errorTitle}>
@@ -161,7 +438,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               </Button>
             </SpiffTooltip>
           </TableCell>
-          <TableCell>{row.status}</TableCell>
+          <TableCell>{getProcessStatus(row.status)}</TableCell>
           <TableCell>
             {DateAndTimeService.convertSecondsToFormattedDateTime(
               row.created_at_in_seconds,
@@ -225,6 +502,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       <>
         {breadcrumbElement}
         {correlationsDisplayModal()}
+        {showFilters()}
         <PaginationForTable
           page={page}
           perPage={perPage}
