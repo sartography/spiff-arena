@@ -3148,28 +3148,28 @@ paths:
       tags:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_model_list_from_root
-      summary: Get a list of message models
+      summary: Get a list of message models from the root location
       responses:
         "200":
-          description: A list of message models
+          description: A list of message models with their correlation properties
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                $ref: "#/components/schemas/MessageModelListResponse"
 
   /all-message-models:
     get:
       tags:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_model_list_all
-      summary: Get a list of message models
+      summary: Get a list of all message models
       responses:
         "200":
-          description: A list of message models
+          description: A list of all message models with their correlation properties
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                $ref: "#/components/schemas/MessageModelListResponse"
 
   /message-models/{relative_location}:
     parameters:
@@ -3183,14 +3183,14 @@ paths:
       tags:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_model_list
-      summary: Get a list of message models
+      summary: Get a list of message models at the specified location
       responses:
         "200":
-          description: A list of message models
+          description: A list of message models with their correlation properties at the specified location and higher in the directory tree
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                $ref: "#/components/schemas/MessageModelListResponse"
 
   /messages:
     parameters:
@@ -4034,6 +4034,53 @@ components:
         pages:
           type: integer
           description: Total number of pages
+
+    MessageCorrelationProperty:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: Unique identifier for the correlation property
+        retrieval_expression:
+          type: string
+          description: Expression used to retrieve the correlation value
+      required:
+        - identifier
+        - retrieval_expression
+
+    MessageModel:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: Unique identifier for the message model
+        location:
+          type: string
+          description: Location path where the message model is defined
+        schema:
+          type: object
+          description: JSON schema defining the structure of the message payload
+        correlation_properties:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageCorrelationProperty"
+          description: List of correlation properties used for message correlation
+      required:
+        - identifier
+        - location
+        - schema
+        - correlation_properties
+
+    MessageModelListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageModel"
+          description: List of message models
+      required:
+        - messages
 
     ReportMetadataColumn:
       type: object
