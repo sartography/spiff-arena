@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorOutline, FilterAlt as FilterIcon } from '@mui/icons-material';
 import {
@@ -45,34 +51,6 @@ type OwnProps = {
 
 const paginationQueryParamPrefix = 'message-list';
 
-const isValidIsoDate = (value: string): boolean => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-  const dateObject = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(dateObject.getTime())) {
-    return false;
-  }
-  return dateObject.toISOString().slice(0, 10) === value;
-};
-
-const normalizeDateInputValue = (value: string): string => {
-  if (!value) {
-    return '';
-  }
-  return isValidIsoDate(value) ? value : '';
-};
-
-const normalizeTimeInputValue = (value: string): string => {
-  if (!value) {
-    return '';
-  }
-  if (/^\d{2}:\d{2}$/.test(value) || /^\d{2}:\d{2}:\d{2}$/.test(value)) {
-    return value;
-  }
-  return '';
-};
-
 export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const { t } = useTranslation();
   const [messageInstances, setMessageInstances] = useState([]);
@@ -109,6 +87,16 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
   const [endTime, setEndTime] = useState<string>('');
   const [createdAfter, setCreatedAfter] = useState<number | null>(null);
   const [createdBefore, setCreatedBefore] = useState<number | null>(null);
+
+  const updateValidatedInputValue = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    setter: Dispatch<SetStateAction<string>>,
+  ) => {
+    const input = event.target as HTMLInputElement;
+    if (input.value === '' || input.validity.valid) {
+      setter(input.value);
+    }
+  };
 
   useEffect(() => {
     function parseAvailableProcessModels(result: any) {
@@ -360,7 +348,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               type="date"
               value={startDate}
               onChange={(event) =>
-                setStartDate(normalizeDateInputValue(event.target.value))
+                updateValidatedInputValue(event, setStartDate)
               }
               slotProps={{ inputLabel: { shrink: true } }}
             />
@@ -372,7 +360,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               type="time"
               value={startTime}
               onChange={(event) =>
-                setStartTime(normalizeTimeInputValue(event.target.value))
+                updateValidatedInputValue(event, setStartTime)
               }
               slotProps={{
                 inputLabel: { shrink: true },
@@ -386,9 +374,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={`${t('created_before')} ${t('date')}`}
               type="date"
               value={endDate}
-              onChange={(event) =>
-                setEndDate(normalizeDateInputValue(event.target.value))
-              }
+              onChange={(event) => updateValidatedInputValue(event, setEndDate)}
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
@@ -398,9 +384,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
               label={t('time')}
               type="time"
               value={endTime}
-              onChange={(event) =>
-                setEndTime(normalizeTimeInputValue(event.target.value))
-              }
+              onChange={(event) => updateValidatedInputValue(event, setEndTime)}
               slotProps={{
                 inputLabel: { shrink: true },
                 htmlInput: { step: 60 },
