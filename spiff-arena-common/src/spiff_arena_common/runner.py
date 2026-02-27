@@ -7,7 +7,7 @@ import uuid
 
 import jsonschema
 
-from spiff_arena_common.data_stores import JSONFileDataStore, JSONFileDataStoreConverter
+from spiff_arena_common.data_stores import JSONFileDataStore
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
