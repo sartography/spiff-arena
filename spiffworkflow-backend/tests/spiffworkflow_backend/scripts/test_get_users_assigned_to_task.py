@@ -80,5 +80,5 @@ class TestGetUsersAssignedToTask(BaseTest):
             process_model_identifier="test_process_model",
         )
 
-        with pytest.raises(ValueError, match="Expected task_guid key argument"):
+        with pytest.raises(ValueError, match="Expected task_guid as first argument or keyword argument"):
             GetUsersAssignedToTask().run(script_attributes_context)
