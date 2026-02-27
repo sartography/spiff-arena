@@ -433,7 +433,7 @@ wheels = [
 
 [[package]]
 name = "spiff-arena-common"
-version = "0.1.8"
+version = "0.1.9"
 source = { editable = "spiff-arena-common" }
 
 [[package]]
