@@ -929,7 +929,7 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
 
         new_human_tasks = []
-        initial_human_tasks = HumanTaskModel.query.filter_by(
+        existing_tasks_no_longer_ready_or_waiting = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -972,10 +972,10 @@ class ProcessInstanceProcessor:
                         ui_form_file_name = properties["formUiSchemaFilename"]
 
                 human_task = None
-                for at in initial_human_tasks:
+                for at in existing_tasks_no_longer_ready_or_waiting:
                     if at.task_id == str(ready_or_waiting_task.id):
                         human_task = at
-                        initial_human_tasks.remove(at)
+                        existing_tasks_no_longer_ready_or_waiting.remove(at)
 
                 if human_task is None:
                     task_guid = str(ready_or_waiting_task.id)
@@ -1008,11 +1008,11 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-        if len(new_human_tasks) > 0:
-            queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
+        if len(new_human_tasks) > 0 or len(existing_tasks_no_longer_ready_or_waiting) > 0:
+            queue_event_notifier_if_appropriate(self.process_instance_model, "human_tasks_changed")
 
-        if len(initial_human_tasks) > 0:
-            for at in initial_human_tasks:
+        if len(existing_tasks_no_longer_ready_or_waiting) > 0:
+            for at in existing_tasks_no_longer_ready_or_waiting:
                 at.completed = True
                 db.session.add(at)
         db.session.commit()

@@ -54,6 +54,14 @@ def connector_proxy_url() -> Any:
     return current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"]
 
 
+def connector_proxy_api_key_headers() -> dict:
+    """Returns headers with Spiff-Connector-Proxy-Api-Key if a connector proxy API key is configured."""
+    api_key = current_app.config.get("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY")
+    if api_key:
+        return {"Spiff-Connector-Proxy-Api-Key": api_key}
+    return {}
+
+
 class CustomServiceTask(ServiceTask):  # type: ignore
     def _execute(self, spiff_task: SpiffTask) -> bool | None:
         def evaluate(param: dict) -> dict:
@@ -229,7 +237,12 @@ class ServiceTaskDelegate:
                         proxied_response = http_connector.do(operator_identifier, params)
                     else:
                         # this will raise on ConnectionError - like a bad url, and maybe limited other scenarios
-                        proxied_response = requests.post(call_url, json=params, timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT)
+                        proxied_response = requests.post(
+                            call_url,
+                            json=params,
+                            headers=connector_proxy_api_key_headers(),
+                            timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+                        )
 
                     status_code = proxied_response.status_code
                     response_text = proxied_response.text
@@ -291,7 +304,11 @@ class ServiceTaskService:
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
         try:
-            response = safe_requests.get(f"{connector_proxy_url()}/v1/commands", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(
+                f"{connector_proxy_url()}/v1/commands",
+                headers=connector_proxy_api_key_headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
 
             if response.status_code != 200:
                 return []
@@ -306,7 +323,11 @@ class ServiceTaskService:
     def authentication_list() -> Any:
         """Returns a list of available authentications."""
         try:
-            response = safe_requests.get(f"{connector_proxy_url()}/v1/auths", timeout=HTTP_REQUEST_TIMEOUT_SECONDS)
+            response = safe_requests.get(
+                f"{connector_proxy_url()}/v1/auths",
+                headers=connector_proxy_api_key_headers(),
+                timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
 
             if response.status_code != 200:
                 return []

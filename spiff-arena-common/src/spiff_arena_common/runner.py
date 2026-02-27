@@ -7,6 +7,8 @@ import uuid
 
 import jsonschema
 
+from spiff_arena_common.data_stores import JSONFileDataStore
+
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
@@ -59,6 +61,10 @@ class CustomUserTaskConverter(SpiffBpmnTaskConverter):
         super().__init__(target_class, registry, typename)
 
 class CustomParser(SpiffBpmnParser):
+    DATA_STORE_CLASSES = {
+        "JSONFileDataStore": JSONFileDataStore,
+    }
+    
     OVERRIDE_PARSER_CLASSES = SpiffBpmnParser.OVERRIDE_PARSER_CLASSES
     OVERRIDE_PARSER_CLASSES.update({full_tag("manualTask"): (SpiffTaskParser, CustomManualTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("task"): (SpiffTaskParser, CustomNoneTask)})

@@ -322,10 +322,11 @@ class SpecFileService(FileSystemService):
                     raise ProcessModelFileInvalidError(
                         f"Message model is already used to start process model {existing_model_identifier}"
                     )
-                elif message_triggerable_process_model.file_name is None:
+                elif message_triggerable_process_model.file_name != ref.file_name:
                     message_triggerable_process_model.file_name = ref.file_name
                     db.session.add(message_triggerable_process_model)
-                current_triggerable_processes.remove(message_triggerable_process_model)
+                if message_triggerable_process_model in current_triggerable_processes:
+                    current_triggerable_processes.remove(message_triggerable_process_model)
         for trigger_pm in current_triggerable_processes:
             db.session.delete(trigger_pm)
 
