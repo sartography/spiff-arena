@@ -109,3 +109,15 @@ def run_tests_in_dir(dir):
         assert not err
         parsed.append((file, specs))
     return run_tests(parsed)
+
+def run_test_cases(tests):
+    suite = unittest.TestSuite()
+    suite.addTests(tests)
+    stream = io.StringIO()
+    result = unittest.TextTestRunner(stream=stream).run(suite)
+
+    return {
+        "testsRun": result.testsRun,
+        "wasSuccessful": result.wasSuccessful(),
+        "output": stream.getvalue(),
+    }
