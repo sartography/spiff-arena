@@ -129,6 +129,7 @@ class UserService:
             user_group_assignemnt = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
             db.session.add(user_group_assignemnt)
             db.session.commit()
+            cls.update_human_task_assignments_for_user(user, new_group_ids={group.id}, old_group_ids=set())
 
     @classmethod
     def add_waiting_group_assignment(
@@ -313,6 +314,7 @@ class UserService:
             raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_id})"))
         db.session.delete(user_group_assignment)
         db.session.commit()
+        cls.update_human_task_assignments_for_user(user, new_group_ids=set(), old_group_ids={group_id})
 
     @classmethod
     def find_or_create_guest_user(cls, username: str = SPIFF_GUEST_USER, group_identifier: str = SPIFF_GUEST_GROUP) -> UserModel:
