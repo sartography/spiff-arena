@@ -28,7 +28,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
     lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id), index=True)
-    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
+    completed_by_user_id: int | None = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
 
     completed_by_user = relationship("UserModel", foreign_keys=[completed_by_user_id], viewonly=True)
 
