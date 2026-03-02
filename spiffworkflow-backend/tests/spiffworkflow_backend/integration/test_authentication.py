@@ -282,7 +282,15 @@ class TestAuthentication(BaseTest):
             assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
             assert isinstance(state_dict["pkce_id"], str)
 
-    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask) -> None:
+    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask, mocker: MockerFixture) -> None:
+        # Mock the redirect URI method since we're testing PKCE validation, not URL building.
+        # There's some bad interaction with another test depnding on test order.
+        # Not sure if it's about connexion and url building, etc.
+        mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.AuthenticationService.get_redirect_uri_for_login_to_server",
+            return_value="https://example.com/v1.0/login_return",
+        )
+
         with app.test_request_context(
             "/some/path",
             base_url="https://example.com/",  # this is what request.host_url will be based on

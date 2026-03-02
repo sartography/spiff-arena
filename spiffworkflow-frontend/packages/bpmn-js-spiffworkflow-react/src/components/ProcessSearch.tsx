@@ -1,15 +1,21 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Autocomplete, TextField } from '@mui/material';
-import { ProcessReference } from '../interfaces';
-import { truncateString } from '../helpers';
+import { ProcessReference } from '../hooks/useProcessReferences';
 
-type OwnProps = {
+type ProcessSearchProps = {
   onChange: (..._args: any[]) => any;
   processes: ProcessReference[];
   selectedItem?: ProcessReference | null;
   titleText?: string;
+  placeholderText?: string;
   height?: string;
+};
+
+const truncateString = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, maxLength - 3)}...`;
 };
 
 export default function ProcessSearch({
@@ -17,9 +23,15 @@ export default function ProcessSearch({
   selectedItem,
   onChange,
   titleText,
+  placeholderText,
   height = '50px',
-}: OwnProps) {
-  const { t } = useTranslation();
+}: ProcessSearchProps) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      onChange(null);
+    }
+  };
+
   const shouldFilter = (options: any) => {
     const { process, inputValue } = options;
     return (
@@ -43,15 +55,12 @@ export default function ProcessSearch({
           renderInput={(params) => {
             return (
               <TextField
-                label={titleText || t('process_search')}
-                placeholder={t('choose_a_process')}
+                label={titleText || 'Process Search'}
+                placeholder={placeholderText || 'Choose a process'}
                 variant="outlined"
-                fullWidth
-                slotProps={{
-                  input: params.InputProps,
-                  htmlInput: params.inputProps,
-                  inputLabel: { shrink: true },
-                }}
+                onKeyDown={handleKeyDown}
+                {...params}
+                InputLabelProps={{ shrink: true }}
               />
             );
           }}

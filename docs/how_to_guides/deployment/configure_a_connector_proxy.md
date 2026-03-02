@@ -32,6 +32,28 @@ docker compose down
 docker compose up -d
 ```
 
+## Securing the Connector Proxy with an API Key
+
+If your Connector Proxy is publicly accessible (for example, deployed as an AWS Lambda function with a public URL), you can restrict access to it using an API key.
+When configured, SpiffArena's backend will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the proxy.
+Your connector proxy can then validate this header and reject requests that don't include the correct key.
+
+Set the API key using the `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY` environment variable:
+
+```yaml
+SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY: "your-secret-api-key"
+```
+
+When this variable is set, all requests from the SpiffArena backend to the connector proxy (command discovery, authentication listing, and command execution) will include:
+
+```
+Spiff-Connector-Proxy-Api-Key: your-secret-api-key
+```
+
+If the variable is not set, no API key header is sent and access is unrestricted (suitable for connector proxies on private networks).
+
+See [Connector Proxy](../../explanation/dev/connector_proxy) for details on how to validate this header in your own connector proxy implementation.
+
 ## Testing
 
 Create a new process model as described in the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/).

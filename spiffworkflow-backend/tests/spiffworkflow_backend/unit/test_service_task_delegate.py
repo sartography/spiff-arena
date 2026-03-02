@@ -1,5 +1,6 @@
 import json
 import re
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +15,9 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
+from spiffworkflow_backend.services.service_task_service import connector_proxy_api_key_headers
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -62,7 +65,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = True
             mock_post.return_value.text = '{"error_stuff": "WE ERRORED"}'
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_invalid_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_invalid_operation", {}, spiff_task, process_instance.id)
             message_regex = (
                 r"The service did not find the requested resource\..*A critical component \(The connector proxy\) is"
                 r" not responding correctly"
@@ -84,7 +87,7 @@ class TestServiceTaskDelegate(BaseTest):
 
         with patch("requests.post", side_effect=Exception("mocked error")):
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(str(connector_proxy_error.value), "Exception", "mocked error", 500)
 
     def test_call_connector_on_json_loads_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -104,7 +107,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = True
             mock_post.return_value.text = return_text
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(
                 str(connector_proxy_error.value), "ServiceTaskOperatorReturnedInvalidJsonError", return_text, 200
             )
@@ -138,7 +141,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.ok = False
             mock_post.return_value.text = json.dumps(connector_response)
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
-                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(str(connector_proxy_error.value), "OurTestError", "We errored", 500)
 
     def test_call_connector_can_succeed(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
@@ -166,7 +169,7 @@ class TestServiceTaskDelegate(BaseTest):
             mock_post.return_value.status_code = 200
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
-            result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task)
+            result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             assert result is not None
             assert json.loads(result) == {
                 **connector_response["command_response"],
@@ -237,6 +240,78 @@ class TestServiceTaskDelegate(BaseTest):
                 successful += 1
         assert successful == 3
         assert failed == 1
+
+    def test_connector_proxy_api_key_headers_returns_empty_dict_when_not_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", None):
+            result = connector_proxy_api_key_headers()
+            assert result == {}
+
+    def test_connector_proxy_api_key_headers_returns_header_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "my-secret-key"):
+            result = connector_proxy_api_key_headers()
+            assert result == {"Spiff-Connector-Proxy-Api-Key": "my-secret-key"}
+
+    def test_call_connector_sends_api_key_header_when_configured(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        command_response: CommandResponseDict = {
+            "body": json.dumps({"we_did_it": True}),
+            "mimetype": "application/json",
+        }
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": command_response,
+            "error": None,
+            "command_response_version": 2,
+        }
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 200
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps(connector_response)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
+                _, call_kwargs = mock_post.call_args
+                assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
+
+    def test_available_connectors_sends_api_key_header_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "connector1"}])
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
+            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+                mock_safe_requests.get.return_value = mock_response
+                ServiceTaskService.available_connectors()
+                _, call_kwargs = mock_safe_requests.get.call_args
+                assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
+
+    def test_authentication_list_sends_api_key_header_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "auth1"}])
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
+            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+                mock_safe_requests.get.return_value = mock_response
+                ServiceTaskService.authentication_list()
+                _, call_kwargs = mock_safe_requests.get.call_args
+                assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text

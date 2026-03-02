@@ -1,69 +1,20 @@
-import BpmnModeler from 'bpmn-js/lib/Modeler';
-import BpmnViewer from 'bpmn-js/lib/Viewer';
-import {
-  BpmnPropertiesPanelModule,
-  BpmnPropertiesProviderModule,
-  // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
-} from 'bpmn-js-properties-panel';
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... RemoFve this comment to see the full error message
-import CliModule from 'bpmn-js-cli';
-
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
-import DmnModeler from 'dmn-js/lib/Modeler';
-import {
-  DmnPropertiesPanelModule,
-  DmnPropertiesProviderModule,
-  // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'dmn-... Remove this comment to see the full error message
-} from 'dmn-js-properties-panel';
-
-import React, { useEffect, useState, useCallback } from 'react';
-import { Modal, UnorderedList, Link } from '@carbon/react';
-import { Button, IconButton, Stack } from '@mui/material';
-
-import 'bpmn-js/dist/assets/diagram-js.css';
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-import '../bpmn-js-properties-panel.css';
-import 'bpmn-js/dist/assets/bpmn-js.css';
-
-import 'dmn-js/dist/assets/diagram-js.css';
-import 'dmn-js/dist/assets/dmn-js-decision-table-controls.css';
-import 'dmn-js/dist/assets/dmn-js-decision-table.css';
-import 'dmn-js/dist/assets/dmn-js-drd.css';
-import 'dmn-js/dist/assets/dmn-js-literal-expression.css';
-import 'dmn-js/dist/assets/dmn-js-shared.css';
-import 'dmn-js/dist/assets/dmn-font/css/dmn-embedded.css';
-import 'dmn-js-properties-panel/dist/assets/properties-panel.css';
-
-// @ts-expect-error TS(7016) FIXME
-import spiffworkflow from 'bpmn-js-spiffworkflow/app/spiffworkflow';
-import 'bpmn-js-spiffworkflow/app/css/app.css';
-
-import spiffModdleExtension from 'bpmn-js-spiffworkflow/app/spiffworkflow/moddle/spiffworkflow.json';
-
-import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
-import MoveCanvasModule from 'diagram-js/lib/navigation/movecanvas';
-import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
-
+import React, { useRef, useState } from 'react';
+import { Button, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { Can } from '@casl/react';
+// Import from the extracted package
 import {
-  ZoomIn,
-  ZoomOut,
-  CenterFocusStrongOutlined,
-} from '@mui/icons-material';
-import BpmnJsScriptIcon from '../icons/bpmn_js_script_icon.svg';
-import CallActivityNavigateArrowUp from '../icons/call_activity_navigate_arrow_up.svg';
-import HttpService from '../services/HttpService';
+  BpmnEditor,
+  BpmnEditorRef,
+  DiagramActionBar,
+  DiagramZoomControls,
+  ProcessReferencesDialog,
+  DiagramNavigationBreadcrumbs,
+} from '../../packages/bpmn-js-spiffworkflow-react/src';
+import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow-react/src';
 
-import ConfirmButton from './ConfirmButton';
-import {
-  convertSvgElementToHtmlString,
-  getBpmnProcessIdentifiers,
-  makeid,
-  modifyProcessIdentifierForPathParam,
-} from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
@@ -72,12 +23,13 @@ import {
   BasicTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import SpiffTooltip from './SpiffTooltip';
 import ProcessInstanceRun from './ProcessInstanceRun';
+import ConfirmButton from './ConfirmButton';
 import { TASK_METADATA } from '../config';
+import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 
 type OwnProps = {
-  processModelId: string;
+  modifiedProcessModelId: string;
   diagramType: string;
   activeUserElement?: React.ReactElement;
   callers?: ProcessReference[];
@@ -106,11 +58,10 @@ type OwnProps = {
   saveDiagram?: (..._args: any[]) => any;
   tasks?: BasicTask[] | null;
   url?: string;
+  navigationStack?: DiagramNavigationItem[];
+  onNavigate?: (index: number) => void;
 };
 
-const FitViewport = 'fit-viewport';
-
-// https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
   activeUserElement,
   callers,
@@ -137,14 +88,15 @@ export default function ReactDiagramEditor({
   onSearchProcessModels,
   onServiceTasksRequested,
   onSetPrimaryFile,
-  processModelId,
+  modifiedProcessModelId,
   saveDiagram,
   tasks,
   url,
+  navigationStack,
+  onNavigate,
 }: OwnProps) {
-  const [diagramXMLString, setDiagramXMLString] = useState('');
-  const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
-  const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
+  const bpmnEditorRef = useRef<BpmnEditorRef>(null);
+  const [showingReferences, setShowingReferences] = useState(false);
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {};
@@ -161,621 +113,16 @@ export default function ReactDiagramEditor({
 
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
-
-  const [showingReferences, setShowingReferences] = useState(false);
   const { t } = useTranslation();
 
-  const zoom = useCallback(
-    (amount: number) => {
-      if (diagramModelerState) {
-        let modeler = diagramModelerState as any;
-        if (diagramType === 'dmn') {
-          modeler = (diagramModelerState as any).getActiveViewer();
-        }
-        if (modeler) {
-          if (amount === 0) {
-            const canvas = modeler.get('canvas');
-            canvas.zoom(FitViewport, 'auto');
-          } else {
-            modeler.get('zoomScroll').stepZoom(amount);
-          }
-        }
-      }
-    },
-    [diagramModelerState, diagramType],
-  );
-
-  /* This restores unresolved references that camunda removes, I wish we could move this to the bpmn-io extensions */
-  // @ts-ignore
-  const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
-    // @ts-ignore
-    diagramModelerToUse.on('import.parse.complete', (event) => {
-      if (!event.references) {
-        return;
-      }
-      const refs = event.references.filter(
-        (r: any) =>
-          r.property === 'bpmn:loopDataInputRef' ||
-          r.property === 'bpmn:loopDataOutputRef',
-      );
-
-      const desc = diagramModelerToUse._moddle.registry.getEffectiveDescriptor(
-        'bpmn:ItemAwareElement',
-      );
-      refs.forEach((ref: any) => {
-        const props = {
-          id: ref.id,
-          name: ref.id ? typeof ref.name === 'undefined' : ref.name,
-        };
-        const elem = diagramModelerToUse._moddle.create(desc, props);
-        elem.$parent = ref.element;
-        ref.element.set(ref.property, elem);
-      });
-    });
+  const zoom = (amount: number) => {
+    bpmnEditorRef.current?.zoom(amount);
   };
 
-  // get the xml and set the modeler
-  useEffect(() => {
-    let canvasClass = 'diagram-editor-canvas';
-    if (diagramType === 'readonly') {
-      canvasClass = 'diagram-viewer-canvas';
-    }
-
-    const temp = document.createElement('template');
-    const panelId: string =
-      diagramType === 'readonly'
-        ? 'hidden-properties-panel'
-        : 'js-properties-panel';
-    temp.innerHTML = `
-      <div class="content with-diagram bpmn-js-container" id="js-drop-zone">
-        <div class="canvas ${canvasClass}" id="canvas"></div>
-        <div class="properties-panel-parent" id="${panelId}"></div>
-      </div>
-    `;
-    const frag = temp.content;
-
-    const diagramContainerElement =
-      document.getElementById('diagram-container');
-    if (diagramContainerElement) {
-      diagramContainerElement.innerHTML = '';
-      diagramContainerElement.appendChild(frag);
-    }
-
-    let diagramModeler: any = null;
-
-    if (diagramType === 'bpmn') {
-      diagramModeler = new BpmnModeler({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-        propertiesPanel: {
-          parent: '#js-properties-panel',
-        },
-        additionalModules: [
-          spiffworkflow,
-          BpmnPropertiesPanelModule,
-          BpmnPropertiesProviderModule,
-          ZoomScrollModule,
-          CliModule,
-        ],
-        cli: {
-          bindTo: 'cli',
-        },
-        moddleExtensions: {
-          spiffworkflow: spiffModdleExtension,
-        },
-      });
-    } else if (diagramType === 'dmn') {
-      diagramModeler = new DmnModeler({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-        drd: {
-          propertiesPanel: {
-            parent: '#js-properties-panel',
-          },
-          additionalModules: [
-            DmnPropertiesPanelModule,
-            DmnPropertiesProviderModule,
-            ZoomScrollModule,
-          ],
-        },
-      });
-    } else if (diagramType === 'readonly') {
-      diagramModeler = new BpmnViewer({
-        container: '#canvas',
-        keyboard: {
-          bindTo: document,
-        },
-
-        // taken from the non-modeling components at
-        //  bpmn-js/lib/Modeler.js
-        additionalModules: [
-          KeyboardMoveModule,
-          MoveCanvasModule,
-          // TouchModule,
-          ZoomScrollModule,
-        ],
-      });
-    }
-
-    function handleLaunchScriptEditor(
-      element: any,
-      script: string,
-      scriptType: string,
-      eventBus: any,
-    ) {
-      if (onLaunchScriptEditor) {
-        setPerformingXmlUpdates(true);
-        const modeling = diagramModeler.get('modeling');
-        onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
-      }
-    }
-
-    function handleLaunchMarkdownEditor(
-      element: any,
-      value: string,
-      eventBus: any,
-    ) {
-      if (onLaunchMarkdownEditor) {
-        setPerformingXmlUpdates(true);
-        onLaunchMarkdownEditor(element, value, eventBus);
-      }
-    }
-
-    function handleElementClick(event: any) {
-      if (onElementClick) {
-        const canvas = diagramModeler.get('canvas');
-        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement(),
-        );
-        onElementClick(event.element, bpmnProcessIdentifiers);
-      }
-    }
-
-    function handleServiceTasksRequested(event: any) {
-      if (onServiceTasksRequested) {
-        onServiceTasksRequested(event);
-      }
-    }
-
-    function handleDataStoresRequested(event: any) {
-      if (onDataStoresRequested) {
-        onDataStoresRequested(event);
-      }
-    }
-
-    function createPrePostScriptOverlay(event: any) {
-      // avoid setting on script tasks because it's unnecessary but shouldn't actually cause issues
-      if (event.element && event.element.type !== 'bpmn:ScriptTask') {
-        const preScript =
-          event.element.businessObject.extensionElements?.values?.find(
-            (extension: any) => extension.$type === 'spiffworkflow:PreScript',
-          );
-        const postScript =
-          event.element.businessObject.extensionElements?.values?.find(
-            (extension: any) => extension.$type === 'spiffworkflow:PostScript',
-          );
-        const overlays = diagramModeler.get('overlays');
-        const scriptIcon = convertSvgElementToHtmlString(<BpmnJsScriptIcon />);
-
-        if (preScript?.value) {
-          overlays.add(event.element.id, {
-            position: {
-              bottom: 25,
-              left: 0,
-            },
-            html: scriptIcon,
-          });
-        }
-        if (postScript?.value) {
-          overlays.add(event.element.id, {
-            position: {
-              bottom: 25,
-              right: 25,
-            },
-            html: scriptIcon,
-          });
-        }
-      }
-    }
-
-    setDiagramModelerState(diagramModeler);
-
-    if (diagramType !== 'readonly') {
-      diagramModeler.on('shape.added', (event: any) => {
-        createPrePostScriptOverlay(event);
-      });
-    }
-
-    const onMetadataRequested = (event: any) => {
-      event.eventBus.fire('spiff.task_metadata_keys.returned', {
-        keys: TASK_METADATA,
-      });
-    };
-
-    diagramModeler.on(
-      'spiff.task_metadata_keys.requested',
-      onMetadataRequested,
-    );
-
-    diagramModeler.on('spiff.script.edit', (event: any) => {
-      const { error, element, scriptType, script, eventBus } = event;
-      if (error) {
-        console.error(error);
-      }
-      handleLaunchScriptEditor(element, script, scriptType, eventBus);
-    });
-
-    diagramModeler.on('spiff.markdown.edit', (event: any) => {
-      const { error, element, value, eventBus } = event;
-      if (error) {
-        console.error(error);
-      }
-      handleLaunchMarkdownEditor(element, value, eventBus);
-    });
-
-    diagramModeler.on('spiff.callactivity.edit', (event: any) => {
-      if (onLaunchBpmnEditor) {
-        onLaunchBpmnEditor(event.processId);
-      }
-    });
-
-    diagramModeler.on('spiff.file.edit', (event: any) => {
-      const { error, element, value, eventBus } = event;
-      if (error) {
-        console.error(error);
-      }
-      if (onLaunchJsonSchemaEditor) {
-        onLaunchJsonSchemaEditor(element, value, eventBus);
-      }
-    });
-
-    diagramModeler.on('spiff.dmn.edit', (event: any) => {
-      if (onLaunchDmnEditor) {
-        onLaunchDmnEditor(event.value);
-      }
-    });
-
-    // 'element.hover',
-    // 'element.out',
-    // 'element.click',
-    // 'element.dblclick',
-    // 'element.mousedown',
-    // 'element.mouseup',
-    diagramModeler.on('element.click', (element: any) => {
-      handleElementClick(element);
-    });
-    diagramModeler.on('elements.changed', (event: any) => {
-      if (onElementsChanged) {
-        onElementsChanged(event);
-      }
-    });
-
-    diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
-      handleServiceTasksRequested(event);
-    });
-
-    diagramModeler.on('spiff.data_stores.requested', (event: any) => {
-      handleDataStoresRequested(event);
-    });
-
-    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
-      if (onJsonSchemaFilesRequested) {
-        onJsonSchemaFilesRequested(event);
-      }
-    });
-
-    diagramModeler.on('spiff.dmn_files.requested', (event: any) => {
-      if (onDmnFilesRequested) {
-        onDmnFilesRequested(event);
-      }
-    });
-
-    diagramModeler.on('spiff.messages.requested', (event: any) => {
-      if (onMessagesRequested) {
-        onMessagesRequested(event);
-      }
-    });
-
-    diagramModeler.on('spiff.json_schema_files.requested', (event: any) => {
-      handleServiceTasksRequested(event);
-    });
-
-    diagramModeler.on('spiff.callactivity.search', (event: any) => {
-      if (onSearchProcessModels) {
-        onSearchProcessModels(event.value, event.eventBus, event.element);
-      }
-    });
-
-    diagramModeler.on('spiff.message.edit', (event: any) => {
-      if (onLaunchMessageEditor) {
-        onLaunchMessageEditor(event);
-      }
-    });
-  }, [
-    diagramType,
-    onDataStoresRequested,
-    onDmnFilesRequested,
-    onElementClick,
-    onElementsChanged,
-    onJsonSchemaFilesRequested,
-    onLaunchBpmnEditor,
-    onLaunchDmnEditor,
-    onLaunchJsonSchemaEditor,
-    onLaunchMarkdownEditor,
-    onLaunchMessageEditor,
-    onLaunchScriptEditor,
-    onMessagesRequested,
-    onSearchProcessModels,
-    onServiceTasksRequested,
-  ]);
-
-  // display the diagram
-  useEffect(() => {
-    if (!diagramXMLString || !diagramModelerState) {
-      return;
-    }
-    diagramModelerState.importXML(diagramXMLString);
-    zoom(0);
-    if (diagramType !== 'dmn') {
-      fixUnresolvedReferences(diagramModelerState);
-    }
-  }, [diagramXMLString, diagramModelerState, diagramType, zoom]);
-
-  // import done operations
-  useEffect(() => {
-    // These seem to be system tasks that cannot be highlighted
-    const taskSpecsThatCannotBeHighlighted = ['Root', 'Start', 'End'];
-
-    if (!diagramModelerState) {
-      return undefined;
-    }
-    if (performingXmlUpdates) {
-      return undefined;
-    }
-
-    function handleError(err: any) {
-      console.error('ERROR:', err);
-    }
-
-    function taskIsMultiInstanceChild(task: BasicTask) {
-      // if a task has a runtime_info and iteration then assume it's a child task
-      return Object.hasOwn(task.runtime_info || {}, 'iteration');
-    }
-
-    function checkTaskCanBeHighlighted(task: BasicTask) {
-      const taskBpmnId = task.bpmn_identifier;
-      return (
-        !taskIsMultiInstanceChild(task) &&
-        !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
-        !taskBpmnId.match(/EndJoin/) &&
-        !taskBpmnId.match(/BoundaryEventParent/) &&
-        !taskBpmnId.match(/BoundaryEventJoin/) &&
-        !taskBpmnId.match(/BoundaryEventSplit/)
-      );
-    }
-
-    function highlightBpmnIoElement(
-      canvas: any,
-      task: BasicTask,
-      bpmnIoClassName: string,
-      bpmnProcessIdentifiers: string[],
-    ) {
-      if (checkTaskCanBeHighlighted(task)) {
-        try {
-          if (
-            bpmnProcessIdentifiers.includes(
-              task.bpmn_process_definition_identifier,
-            )
-          ) {
-            canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
-          }
-        } catch (bpmnIoError: any) {
-          // the task list also contains task for processes called from call activities which will
-          // not exist in this diagram so just ignore them for now.
-          if (
-            bpmnIoError.message !==
-            "Cannot read properties of undefined (reading 'id')"
-          ) {
-            throw bpmnIoError;
-          }
-        }
-      }
-    }
-
-    function addOverlayOnCallActivity(
-      task: BasicTask,
-      bpmnProcessIdentifiers: string[],
-    ) {
-      if (
-        taskIsMultiInstanceChild(task) ||
-        !onCallActivityOverlayClick ||
-        diagramType !== 'readonly' ||
-        !diagramModelerState
-      ) {
-        return;
-      }
-      function domify(htmlString: string) {
-        const template = document.createElement('template');
-        template.innerHTML = htmlString.trim();
-        return template.content.firstChild;
-      }
-      const createCallActivityOverlay = () => {
-        const overlays = diagramModelerState.get('overlays');
-        const icon = convertSvgElementToHtmlString(
-          <CallActivityNavigateArrowUp />,
-        );
-        const button: any = domify(
-          `<button class="bjs-drilldown">${icon}</button>`,
-        );
-        button.addEventListener('click', (newEvent: any) => {
-          onCallActivityOverlayClick(task, newEvent);
-        });
-        button.addEventListener('auxclick', (newEvent: any) => {
-          onCallActivityOverlayClick(task, newEvent);
-        });
-        overlays.add(task.bpmn_identifier, 'drilldown', {
-          position: {
-            bottom: -10,
-            right: -8,
-          },
-          html: button,
-        });
-      };
-      try {
-        if (
-          bpmnProcessIdentifiers.includes(
-            task.bpmn_process_definition_identifier,
-          )
-        ) {
-          createCallActivityOverlay();
-        }
-      } catch (bpmnIoError: any) {
-        // the task list also contains task for processes called from call activities which will
-        // not exist in this diagram so just ignore them for now.
-        if (
-          bpmnIoError.message !==
-          "Cannot read properties of undefined (reading 'id')"
-        ) {
-          throw bpmnIoError;
-        }
-      }
-    }
-
-    function onImportDone(event: any) {
-      const { error } = event;
-
-      if (error) {
-        handleError(error);
-        return;
-      }
-
-      if (diagramType === 'dmn') {
-        return;
-      }
-
-      const canvas = diagramModelerState.get('canvas');
-      canvas.zoom(FitViewport, 'auto'); // Concerned this might bug out somehow.
-
-      // highlighting a field
-      // Option 3 at:
-      //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
-      if (tasks) {
-        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement(),
-        );
-        tasks.forEach((task: BasicTask) => {
-          let className = '';
-          if (task.state === 'COMPLETED') {
-            className = 'completed-task-highlight';
-          } else if (['READY', 'WAITING', 'STARTED'].includes(task.state)) {
-            className = 'active-task-highlight';
-          } else if (task.state === 'CANCELLED') {
-            className = 'cancelled-task-highlight';
-          } else if (task.state === 'ERROR') {
-            className = 'errored-task-highlight';
-          }
-          if (className) {
-            highlightBpmnIoElement(
-              canvas,
-              task,
-              className,
-              bpmnProcessIdentifiers,
-            );
-          }
-          if (
-            task.typename === 'CallActivity' &&
-            !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
-          ) {
-            addOverlayOnCallActivity(task, bpmnProcessIdentifiers);
-          }
-        });
-      }
-    }
-
-    function dmnTextHandler(text: string) {
-      const decisionId = `decision_${makeid(7)}`;
-      const newText = text.replaceAll('{{DECISION_ID}}', decisionId);
-      setDiagramXMLString(newText);
-    }
-
-    function bpmnTextHandler(text: string) {
-      const processId = `Process_${makeid(7)}`;
-      const newText = text.replaceAll('{{PROCESS_ID}}', processId);
-      setDiagramXMLString(newText);
-    }
-
-    function fetchDiagramFromURL(
-      urlToUse: any,
-      textHandler?: (text: string) => void,
-    ) {
-      fetch(urlToUse)
-        .then((response) => response.text())
-        .then(textHandler)
-        .catch((err) => handleError(err));
-    }
-
-    function setDiagramXMLStringFromResponseJson(result: any) {
-      setDiagramXMLString(result.file_contents);
-    }
-
-    function fetchDiagramFromJsonAPI() {
-      HttpService.makeCallToBackend({
-        path: `/process-models/${processModelId}/files/${fileName}`,
-        successCallback: setDiagramXMLStringFromResponseJson,
-      });
-    }
-    (diagramModelerState as any).on('import.done', onImportDone);
-
-    if (diagramXML) {
-      setDiagramXMLString(diagramXML);
-      return undefined;
-    }
-
-    if (!diagramXML) {
-      if (url) {
-        fetchDiagramFromURL(url);
-        return undefined;
-      }
-      if (fileName) {
-        fetchDiagramFromJsonAPI();
-        return undefined;
-      }
-      let newDiagramFileName = 'new_bpmn_diagram.bpmn';
-      let textHandler = bpmnTextHandler;
-      if (diagramType === 'dmn') {
-        newDiagramFileName = 'new_dmn_diagram.dmn';
-        textHandler = dmnTextHandler;
-      }
-      fetchDiagramFromURL(`/${newDiagramFileName}`, textHandler);
-      return undefined;
-    }
-
-    return () => {
-      (diagramModelerState as any).destroy();
-    };
-  }, [
-    diagramModelerState,
-    diagramType,
-    diagramXML,
-    fileName,
-    onCallActivityOverlayClick,
-    performingXmlUpdates,
-    processModelId,
-    tasks,
-    url,
-  ]);
-
-  function handleSave() {
-    if (saveDiagram) {
-      (diagramModelerState as any)
-        .saveXML({ format: true })
-        .then((xmlObject: any) => {
-          saveDiagram(xmlObject.xml);
-        });
+  async function handleSave() {
+    if (saveDiagram && bpmnEditorRef.current) {
+      const xml = await bpmnEditorRef.current.getXML();
+      saveDiagram(xml);
     }
   }
 
@@ -791,23 +138,33 @@ export default function ReactDiagramEditor({
     }
   }
 
-  const downloadXmlFile = () => {
-    (diagramModelerState as any)
-      .saveXML({ format: true })
-      .then((xmlObject: any) => {
-        const element = document.createElement('a');
-        const file = new Blob([xmlObject.xml], {
-          type: 'application/xml',
-        });
-        let downloadFileName = fileName;
-        if (!downloadFileName) {
-          downloadFileName = `${processModelId}.${diagramType}`;
-        }
-        element.href = URL.createObjectURL(file);
-        element.download = downloadFileName;
-        document.body.appendChild(element);
-        element.click();
+  const downloadXmlFile = async () => {
+    if (bpmnEditorRef.current) {
+      const xml = await bpmnEditorRef.current.getXML();
+      const element = document.createElement('a');
+      const file = new Blob([xml], {
+        type: 'application/xml',
       });
+      let downloadFileName = fileName;
+      if (!downloadFileName) {
+        downloadFileName = `${modifiedProcessModelId}.${diagramType}`;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      element.href = objectUrl;
+      element.download = downloadFileName;
+      document.body.appendChild(element);
+      element.click();
+
+      // Clean up: revoke URL and remove element after download starts
+      setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+        document.body.removeChild(element);
+      }, 100);
+    }
+  };
+
+  const viewXml = () => {
+    navigate(`/process-models/${modifiedProcessModelId}/form/${fileName}`);
   };
 
   const canViewXml = fileName !== undefined;
@@ -817,28 +174,17 @@ export default function ReactDiagramEditor({
       return null;
     }
     return (
-      <Modal
+      <ProcessReferencesDialog
         open={showingReferences}
-        modalHeading={t('diagram_process_model_references')}
-        onRequestClose={() => setShowingReferences(false)}
-        passiveModal
-      >
-        <UnorderedList>
-          {callers.map((ref: ProcessReference) => (
-            <li key={`list-${ref.relative_location}`}>
-              <Link
-                size="lg"
-                href={`/process-models/${modifyProcessIdentifierForPathParam(
-                  ref.relative_location,
-                )}`}
-              >
-                {`${ref.display_name}`}
-              </Link>{' '}
-              ({ref.relative_location})
-            </li>
-          ))}
-        </UnorderedList>
-      </Modal>
+        onClose={() => setShowingReferences(false)}
+        title={t('diagram_process_model_references')}
+        references={callers}
+        buildHref={(ref) =>
+          `/process-models/${modifyProcessIdentifierForPathParam(
+            ref.relative_location,
+          )}`
+        }
+      />
     );
   };
 
@@ -860,121 +206,143 @@ export default function ReactDiagramEditor({
   };
 
   const userActionOptions = () => {
-    if (diagramType !== 'readonly') {
-      return (
-        <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
-          <Can
-            I="PUT"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            <Button
-              onClick={handleSave}
-              variant="contained"
-              disabled={disableSaveButton}
-              data-testid="process-model-file-save-button"
-            >
-              {t('save')}
-            </Button>
-          </Can>
-          {processModel && <ProcessInstanceRun processModel={processModel} />}
-          <Can
-            I="DELETE"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {fileName && !isPrimaryFile && (
-              <ConfirmButton
-                description={t('delete_file_description', { file: fileName })}
-                onConfirmation={handleDelete}
-                buttonLabel={t('delete')}
-              />
-            )}
-          </Can>
-          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            {onSetPrimaryFile && (
-              <Button onClick={handleSetPrimaryFile} variant="contained">
-                {t('diagram_set_as_primary_file')}
-              </Button>
-            )}
-          </Can>
-          <Can
-            I="GET"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            <Button variant="contained" onClick={downloadXmlFile}>
-              {t('diagram_download')}
-            </Button>
-          </Can>
-          <Can
-            I="GET"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {canViewXml && (
-              <Button
-                variant="contained"
-                onClick={() => {
-                  navigate(
-                    `/process-models/${processModelId}/form/${fileName}`,
-                  );
-                }}
-              >
-                {t('diagram_view_xml')}
-              </Button>
-            )}
-          </Can>
-          {getReferencesButton()}
-          {/* only show other users if the current user can save the current diagram */}
-          <Can
-            I="PUT"
-            a={targetUris.processModelFileShowPath}
-            ability={ability}
-          >
-            {activeUserElement || null}
-          </Can>
-        </Stack>
-      );
+    if (diagramType === 'readonly') {
+      return null;
     }
-    return null;
+
+    const deleteButton =
+      fileName && !isPrimaryFile ? (
+        <ConfirmButton
+          description={t('delete_file_description', { file: fileName })}
+          onConfirmation={handleDelete}
+          buttonLabel={t('delete')}
+        />
+      ) : null;
+
+    const processInstanceRun = processModel ? (
+      <ProcessInstanceRun processModel={processModel} />
+    ) : null;
+
+    return (
+      <DiagramActionBar
+        canSave={ability.can('PUT', targetUris.processModelFileShowPath)}
+        onSave={handleSave}
+        saveDisabled={disableSaveButton}
+        saveLabel={t('save')}
+        canDelete={ability.can('DELETE', targetUris.processModelFileShowPath)}
+        deleteButton={deleteButton}
+        canSetPrimary={
+          !!onSetPrimaryFile &&
+          !isPrimaryFile &&
+          ability.can('PUT', targetUris.processModelShowPath)
+        }
+        onSetPrimary={handleSetPrimaryFile}
+        setPrimaryLabel={t('diagram_set_as_primary_file')}
+        referencesButton={getReferencesButton()}
+        processInstanceRun={processInstanceRun}
+        activeUserElement={
+          ability.can('PUT', targetUris.processModelFileShowPath)
+            ? activeUserElement
+            : null
+        }
+      />
+    );
   };
 
   const diagramControlButtons = () => {
-    // align the title to the bottom so it doesn't cover up the Save button
-    // when mousing through them
     return (
-      <div className="diagram-control-buttons">
-        <SpiffTooltip title={t('diagram_zoom_in')} placement="bottom">
-          <IconButton aria-label={t('diagram_zoom_in')} onClick={() => zoom(1)}>
-            <ZoomIn />
-          </IconButton>
-        </SpiffTooltip>
-        <SpiffTooltip title={t('diagram_zoom_out')} placement="bottom">
-          <IconButton
-            aria-label={t('diagram_zoom_out')}
-            onClick={() => zoom(-1)}
-          >
-            <ZoomOut />
-          </IconButton>
-        </SpiffTooltip>
-        <SpiffTooltip title={t('diagram_zoom_fit')} placement="bottom">
-          <IconButton
-            aria-label={t('diagram_zoom_fit')}
-            onClick={() => zoom(0)}
-          >
-            <CenterFocusStrongOutlined />
-          </IconButton>
-        </SpiffTooltip>
-      </div>
+      <DiagramZoomControls
+        onZoomIn={() => zoom(1)}
+        onZoomOut={() => zoom(-1)}
+        onZoomFit={() => zoom(0)}
+        zoomInLabel={t('diagram_zoom_in')}
+        zoomOutLabel={t('diagram_zoom_out')}
+        zoomFitLabel={t('diagram_zoom_fit')}
+      />
     );
   };
 
   return (
     <>
-      {userActionOptions()}
+      <Box
+        className="process-model-header"
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          rowGap: 2,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
+        }}
+        data-testid="process-model-file-show"
+        data-filename={fileName}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {navigationStack && onNavigate && (
+            <DiagramNavigationBreadcrumbs
+              stack={navigationStack}
+              onNavigate={onNavigate}
+              onDownload={downloadXmlFile}
+              onViewXml={viewXml}
+              canDownload={ability.can(
+                'GET',
+                targetUris.processModelFileShowPath,
+              )}
+              canViewXml={
+                canViewXml &&
+                ability.can('GET', targetUris.processModelFileShowPath)
+              }
+              downloadLabel={t('diagram_download')}
+              viewXmlLabel={t('diagram_view_xml')}
+            />
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <div
+            className="diagram-toolbar__right"
+            style={{ position: 'static', transform: 'none' }}
+          >
+            {diagramControlButtons()}
+          </div>
+          <div
+            className="diagram-toolbar__left"
+            style={{ position: 'static', padding: 0 }}
+          >
+            {userActionOptions()}
+          </div>
+        </Box>
+      </Box>
       {showReferences()}
-      {diagramControlButtons()}
+      <BpmnEditor
+        key={`${modifiedProcessModelId}-${fileName || 'new'}-${diagramType}`}
+        ref={bpmnEditorRef}
+        apiService={spiffBpmnApiService}
+        modifiedProcessModelId={modifiedProcessModelId}
+        diagramType={diagramType as 'bpmn' | 'dmn' | 'readonly'}
+        diagramXML={diagramXML}
+        fileName={fileName}
+        tasks={tasks}
+        url={url}
+        taskMetadataKeys={TASK_METADATA}
+        onCallActivityOverlayClick={onCallActivityOverlayClick}
+        onDataStoresRequested={onDataStoresRequested}
+        onDmnFilesRequested={onDmnFilesRequested}
+        onElementClick={onElementClick}
+        onElementsChanged={onElementsChanged}
+        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onLaunchBpmnEditor={onLaunchBpmnEditor}
+        onLaunchDmnEditor={onLaunchDmnEditor}
+        onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
+        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
+        onLaunchScriptEditor={onLaunchScriptEditor}
+        onLaunchMessageEditor={onLaunchMessageEditor}
+        onMessagesRequested={onMessagesRequested}
+        onSearchProcessModels={onSearchProcessModels}
+        onServiceTasksRequested={onServiceTasksRequested}
+      />
     </>
   );
 }

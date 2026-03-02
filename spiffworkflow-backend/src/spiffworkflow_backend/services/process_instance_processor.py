@@ -35,6 +35,7 @@ from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
 # fix for StandardLoopTask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -324,20 +325,28 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         environment = CustomScriptEngineEnvironment.create(default_globals)
         super().__init__(environment=environment)
 
-    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
+    def __get_process_instance_id(self) -> Any | None:
+        tld = current_app.config.get("THREAD_LOCAL_DATA")
+        process_instance_id = None
+        if tld:
+            if hasattr(tld, "process_instance_id"):
+                process_instance_id = tld.process_instance_id
+        return process_instance_id
+
+    def __get_process_model_identifier(self) -> Any | None:
         tld = current_app.config.get("THREAD_LOCAL_DATA")
         process_model_identifier = None
-        process_instance_id = None
         if tld:
             if hasattr(tld, "process_model_identifier"):
                 process_model_identifier = tld.process_model_identifier
-            if hasattr(tld, "process_instance_id"):
-                process_instance_id = tld.process_instance_id
+        return process_model_identifier
+
+    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
         script_attributes_context = ScriptAttributesContext(
             task=task,
             environment_identifier=current_app.config["ENV_IDENTIFIER"],
-            process_instance_id=process_instance_id,
-            process_model_identifier=process_model_identifier,
+            process_instance_id=self.__get_process_instance_id(),
+            process_model_identifier=self.__get_process_model_identifier(),
         )
         return Script.generate_augmented_list(script_attributes_context)
 
@@ -392,7 +401,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         operation_params: dict[str, Any],
         spiff_task: SpiffTask,
     ) -> str:
-        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task)
+        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task, self.__get_process_instance_id())
 
 
 SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
@@ -920,7 +929,7 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
 
         new_human_tasks = []
-        initial_human_tasks = HumanTaskModel.query.filter_by(
+        existing_tasks_no_longer_ready_or_waiting = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -963,10 +972,10 @@ class ProcessInstanceProcessor:
                         ui_form_file_name = properties["formUiSchemaFilename"]
 
                 human_task = None
-                for at in initial_human_tasks:
+                for at in existing_tasks_no_longer_ready_or_waiting:
                     if at.task_id == str(ready_or_waiting_task.id):
                         human_task = at
-                        initial_human_tasks.remove(at)
+                        existing_tasks_no_longer_ready_or_waiting.remove(at)
 
                 if human_task is None:
                     task_guid = str(ready_or_waiting_task.id)
@@ -999,11 +1008,11 @@ class ProcessInstanceProcessor:
                         )
                         db.session.add(human_task_user)
 
-        if len(new_human_tasks) > 0:
-            queue_event_notifier_if_appropriate(self.process_instance_model, "human_task_available")
+        if len(new_human_tasks) > 0 or len(existing_tasks_no_longer_ready_or_waiting) > 0:
+            queue_event_notifier_if_appropriate(self.process_instance_model, "human_tasks_changed")
 
-        if len(initial_human_tasks) > 0:
-            for at in initial_human_tasks:
+        if len(existing_tasks_no_longer_ready_or_waiting) > 0:
+            for at in existing_tasks_no_longer_ready_or_waiting:
                 at.completed = True
                 db.session.add(at)
         db.session.commit()
@@ -1047,7 +1056,7 @@ class ProcessInstanceProcessor:
                 f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
             )
             human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
-            self.complete_task(spiff_task, human_task=human_task, user=user)
+            self.complete_task(spiff_task, user=user, human_task=human_task)
         elif execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
@@ -1438,16 +1447,15 @@ class ProcessInstanceProcessor:
         }
         return task_json
 
-    def complete_task(self, spiff_task: SpiffTask, human_task: HumanTaskModel, user: UserModel) -> None:
-        if str(spiff_task.id) != human_task.task_guid:
+    def complete_task(self, spiff_task: SpiffTask, user: UserModel, human_task: HumanTaskModel | None = None) -> None:
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        if task_model is None:
+            raise TaskNotFoundError(f"Cannot find a task with guid {spiff_task.id}")
+
+        if human_task and str(spiff_task.id) != human_task.task_guid:
             raise TaskMismatchError(
                 f"Given spiff task ({spiff_task.task_spec.bpmn_id} - {spiff_task.id}) and human task ({human_task.task_name} -"
                 f" {human_task.task_guid}) must match"
-            )
-        task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
-        if task_model is None:
-            raise TaskNotFoundError(
-                f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {human_task.task_id}"
             )
 
         run_started_at = time.time()
@@ -1455,17 +1463,22 @@ class ProcessInstanceProcessor:
         task_exception = None
         task_event = ProcessInstanceEventType.task_completed.value
         try:
-            self.bpmn_process_instance.run_task_from_id(spiff_task.id)
+            if isinstance(spiff_task.task_spec, ServiceTask) and spiff_task.state == TaskState.STARTED:
+                # We are manually completing a service task, we should not execute it. Just mark it as complete.
+                spiff_task.complete()
+            else:
+                self.bpmn_process_instance.run_task_from_id(spiff_task.id)
         except Exception as ex:
             task_exception = ex
             task_event = ProcessInstanceEventType.task_failed.value
 
         task_model.end_in_seconds = time.time()
 
-        human_task.completed_by_user_id = user.id
-        human_task.completed = True
-        human_task.task_status = TaskState.get_name(spiff_task.state)
-        db.session.add(human_task)
+        if human_task:
+            human_task.completed_by_user_id = user.id
+            human_task.completed = True
+            human_task.task_status = TaskState.get_name(spiff_task.state)
+            db.session.add(human_task)
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
@@ -1482,7 +1495,7 @@ class ProcessInstanceProcessor:
             self.process_instance_model,
             task_event,
             task_guid=task_model.guid,
-            user_id=user.id,
+            user=user,
             exception=task_exception,
             log_event=False,
         )

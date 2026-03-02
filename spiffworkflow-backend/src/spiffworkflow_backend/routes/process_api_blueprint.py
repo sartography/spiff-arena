@@ -513,7 +513,7 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+    AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
@@ -669,7 +669,7 @@ def _get_task_model_for_request(
 
     can_complete = False
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
     except (
         HumanTaskNotFoundError,

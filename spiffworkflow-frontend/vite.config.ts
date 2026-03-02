@@ -54,9 +54,9 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        // carbon creates this warning and it's not worth fixing
-        silenceDeprecations: ['mixed-decls'],
+        // carbon creates these warnings
+        silenceDeprecations: ['if-function'],
       },
-    }
-  }
+    },
+  },
 });

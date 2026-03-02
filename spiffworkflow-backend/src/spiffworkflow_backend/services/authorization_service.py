@@ -59,6 +59,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/logs", "relevant_permissions": ["read"]},
     {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},
     {"path": "/message-models", "relevant_permissions": ["read"]},
+    {"path": "/all-message-models", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
@@ -404,7 +405,7 @@ class AuthorizationService:
         return False
 
     @staticmethod
-    def assert_user_can_complete_task(
+    def assert_user_can_complete_human_task(
         process_instance_id: int,
         task_guid: str,
         user: UserModel,
@@ -677,6 +678,8 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/message-models"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/all-message-models"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))

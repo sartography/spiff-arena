@@ -1,0 +1,74 @@
+{
+  "name": "bpmn-js-spiffworkflow-react",
+  "version": "0.1.0",
+  "description": "React components for BPMN/DMN diagram editing, built on bpmn-js-spiffworkflow",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    },
+    "./modals": {
+      "types": "./dist/modals.d.ts",
+      "import": "./dist/modals.esm.js",
+      "require": "./dist/modals.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "bpmn-js": "^17.0.0 || ^18.0.0",
+    "bpmn-js-properties-panel": "^5.0.0",
+    "bpmn-js-spiffworkflow": "*",
+    "dmn-js": "^17.0.0",
+    "dmn-js-properties-panel": "^3.0.0",
+    "diagram-js": "^14.0.0 || ^15.0.0"
+  },
+  "dependencies": {
+    "bpmn-js-cli": "^2.4.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.1",
+    "rollup": "^4.27.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "typescript": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sartography/bpmn-js-spiffworkflow-react.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sartography/bpmn-js-spiffworkflow-react/issues"
+  },
+  "homepage": "https://github.com/sartography/bpmn-js-spiffworkflow-react#readme",
+  "keywords": [
+    "bpmn",
+    "bpmn-js",
+    "spiffworkflow",
+    "react",
+    "diagram",
+    "editor",
+    "dmn"
+  ]
+}

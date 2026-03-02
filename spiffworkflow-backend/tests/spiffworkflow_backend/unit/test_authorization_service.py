@@ -101,6 +101,7 @@ class TestAuthorizationService(BaseTest):
                 ("/logs/some-process-group:some-process-model:*", "read"),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
                 ("/message-models/some-process-group:some-process-model:*", "read"),
+                ("/all-message-models/some-process-group:some-process-model:*", "read"),
                 ("/process-data/some-process-group:some-process-model:*", "read"),
                 (
                     "/process-data-file-download/some-process-group:some-process-model:*",
@@ -202,6 +203,7 @@ class TestAuthorizationService(BaseTest):
                 ),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
                 ("/message-models/some-process-group:some-process-model/*", "read"),
+                ("/all-message-models/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
                 (
                     "/process-instance-migrate/some-process-group:some-process-model/*",
@@ -550,6 +552,8 @@ class TestAuthorizationService(BaseTest):
                 ("/frontend-access", "read"),
                 ("/logs/*", "read"),
                 ("/messages", "read"),
+                ("/message-models", "read"),
+                ("/all-message-models", "read"),
                 ("/messages/*", "create"),
                 ("/messages/*", "read"),
                 ("/process-data-file-download/*", "read"),

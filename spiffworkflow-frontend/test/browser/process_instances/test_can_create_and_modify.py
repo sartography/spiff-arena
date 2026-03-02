@@ -5,31 +5,25 @@ from helpers.login import login, logout, BASE_URL
 
 
 def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
-    # Open DMN decision table editor and update text
     page.locator(f"g[data-element-id='{element_id}']").click()
     page.locator(".dmn-icon-decision-table").click()
+    test_element = page.get_by_test_id("process-model-file-show")
+    expect(test_element).to_be_visible(timeout=10000)
     item = page.get_by_text(old_text)
-    # Clear existing text (if editable)
-    try:
-        item.fill("")
-    except Exception:
-        item.click()
-        page.keyboard.press("Control+A")
-        page.keyboard.press("Backspace")
-    # Click outside to focus
-    page.get_by_text("Process Model File:", exact=False).click()
-    # Type new text with quotes
-    item.type(f'"{new_text}"')
-    # Wait for content to update
+    item.click()
+    page.keyboard.press("Control+A")
+    page.keyboard.press("Backspace")
+    page.keyboard.type(f'"{new_text}"')
     page.wait_for_timeout(500)
     page.get_by_test_id("process-model-file-save-button").click()
 
 
 def update_bpmn_python_script(page, python_script, element_id="process_script"):
-    # Open BPMN Python script editor and update script
     page.locator(f"g[data-element-id='{element_id}']").click()
     # Click on the Script tab in properties panel
-    page.locator(".bio-properties-panel-group-header-title").filter(has_text="Script").click()
+    page.locator(".bio-properties-panel-group-header-title").filter(
+        has_text="Script"
+    ).click()
     textarea = page.locator('textarea[name="pythonScript_bpmn:script"]')
     textarea.fill(python_script)
     page.wait_for_timeout(500)
@@ -47,12 +41,18 @@ def test_can_create_and_modify(page: Page):
     # 2. Navigate to the process model show page
     page.goto(f"{BASE_URL}/process-groups")
     page.get_by_text("Shared Resources", exact=False).first.click()
-    expect(page.get_by_test_id("process-group-breadcrumb-Shared Resources")).to_be_visible()
+    expect(
+        page.get_by_test_id("process-group-breadcrumb-Shared Resources")
+    ).to_be_visible()
     page.get_by_text("Acceptance Tests Group One", exact=False).first.click()
-    expect(page.get_by_test_id("process-group-breadcrumb-Acceptance Tests Group One")).to_be_visible()
+    expect(
+        page.get_by_test_id("process-group-breadcrumb-Acceptance Tests Group One")
+    ).to_be_visible()
     model_name = "Acceptance Tests Model 1"
     page.get_by_test_id(f"process-model-card-{model_name}").first.click()
-    expect(page.get_by_text(f"Process Model: {model_name}", exact=False)).to_be_visible()
+    expect(
+        page.get_by_text(f"Process Model: {model_name}", exact=False)
+    ).to_be_visible()
     model_url = page.url
 
     # Test constants
@@ -105,7 +105,9 @@ def test_can_create_and_modify(page: Page):
     # 7. Modify BPMN Python script and run
     page.get_by_test_id("process-model-files").click()
     page.get_by_test_id(f"edit-file-{bpmn_file.replace('.', '-')}").click()
-    expect(page.get_by_text(f"Process Model File: {bpmn_file}", exact=False)).to_be_visible()
+    test_element = page.get_by_test_id("process-model-file-show")
+    expect(test_element).to_be_visible(timeout=10000)
+    expect(test_element).to_have_attribute("data-filename", bpmn_file)
     update_bpmn_python_script(page, new_python_script)
     page.get_by_text(model_name, exact=False).click()
     page.wait_for_url(model_url, timeout=10000)

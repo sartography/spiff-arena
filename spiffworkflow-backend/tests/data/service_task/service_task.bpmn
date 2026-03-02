@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="service_task" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1747924731738">
+      <bpmn:outgoing>Flow1_1747924731738</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_1747924731738">
+      <bpmn:incoming>Flow_0mfkpga</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow1_1747924731738" sourceRef="StartEvent_1747924731738" targetRef="Task_1747924731738" />
+    <bpmn:sequenceFlow id="Flow_066i73q" sourceRef="Task_1747924731738" targetRef="Activity_03sneo2" />
+    <bpmn:serviceTask id="Task_1747924731738" name="Service Call">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="ed/GetFiles" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="process_id" type="str" value="&#34;a&#34;" />
+            <spiffworkflow:parameter id="encoding" type="str" value="&#34;b&#34;" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow1_1747924731738</bpmn:incoming>
+      <bpmn:outgoing>Flow_066i73q</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0mfkpga" sourceRef="Activity_03sneo2" targetRef="EndEvent_1747924731738" />
+    <bpmn:scriptTask id="Activity_03sneo2" name="Script with possible error">
+      <bpmn:incoming>Flow_066i73q</bpmn:incoming>
+      <bpmn:outgoing>Flow_0mfkpga</bpmn:outgoing>
+      <bpmn:script>response["do_not_fail"]</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="Event_0o6mzm3">
+      <bpmn:incoming>Flow_1qtwe4o</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1qtwe4o" sourceRef="Event_0ss1sat" targetRef="Event_0o6mzm3" />
+    <bpmn:boundaryEvent id="Event_0ss1sat" attachedToRef="Task_1747924731738">
+      <bpmn:outgoing>Flow_1qtwe4o</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0srd3qo" signalRef="CANCEL" />
+    </bpmn:boundaryEvent>
+    <bpmn:textAnnotation id="TextAnnotation_0h0k6x0">
+      <bpmn:text>This will raise an error if the response does not include the variable do_not_fail</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_11fzgfx" associationDirection="None" sourceRef="Activity_03sneo2" targetRef="TextAnnotation_0h0k6x0" />
+  </bpmn:process>
+  <bpmn:signal id="CANCEL" name="CANCEL" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="service_task">
+      <bpmndi:BPMNShape id="StartEvent_1747924731738_di" bpmnElement="StartEvent_1747924731738">
+        <dc:Bounds x="292" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1747924731738_di" bpmnElement="EndEvent_1747924731738">
+        <dc:Bounds x="702" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0de5ywt_di" bpmnElement="Task_1747924731738">
+        <dc:Bounds x="390" y="120" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1toxg6r_di" bpmnElement="Activity_03sneo2">
+        <dc:Bounds x="550" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0o6mzm3_di" bpmnElement="Event_0o6mzm3">
+        <dc:Bounds x="492" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01ad517_di" bpmnElement="Event_0ss1sat">
+        <dc:Bounds x="432" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0h0k6x0_di" bpmnElement="TextAnnotation_0h0k6x0">
+        <dc:Bounds x="650" y="40" width="187" height="55" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow1_1747924731738_di" bpmnElement="Flow1_1747924731738">
+        <di:waypoint x="328" y="160" />
+        <di:waypoint x="390" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_066i73q_di" bpmnElement="Flow_066i73q">
+        <di:waypoint x="490" y="160" />
+        <di:waypoint x="550" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mfkpga_di" bpmnElement="Flow_0mfkpga">
+        <di:waypoint x="650" y="160" />
+        <di:waypoint x="702" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_11fzgfx_di" bpmnElement="Association_11fzgfx">
+        <di:waypoint x="638" y="120" />
+        <di:waypoint x="662" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qtwe4o_di" bpmnElement="Flow_1qtwe4o">
+        <di:waypoint x="450" y="218" />
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="492" y="250" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

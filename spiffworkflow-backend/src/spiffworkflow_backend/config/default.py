@@ -98,6 +98,7 @@ SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS = re.split(
 
 ### service task connector proxy
 config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", default="http://localhost:7004")
+config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", default=None)
 config_from_env(
     "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPEAHEAD_URL",
     default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
@@ -186,6 +187,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", default=False)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")

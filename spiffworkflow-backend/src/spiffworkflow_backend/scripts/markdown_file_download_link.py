@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.script_attributes_context import ScriptAttribu
 from spiffworkflow_backend.scripts.script import Script
 
 
-class GetMarkdownFileDownloadLink(Script):
+class MarkdownFileDownloadLink(Script):
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
@@ -35,7 +35,7 @@ class GetMarkdownFileDownloadLink(Script):
         modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(process_model_identifier)
         process_instance_id = script_attributes_context.process_instance_id
         if process_instance_id is None:
-            raise self.get_proces_instance_id_is_missing_error("save_process_instance_metadata")
+            raise self.get_proces_instance_id_is_missing_error("markdown_file_download_link")
         backend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
         api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
         endpoint = f"process-data-file-download/{modified_process_model_identifier}/{process_instance_id}/{digest}"
@@ -44,3 +44,8 @@ class GetMarkdownFileDownloadLink(Script):
         link = f"[{label}]({url})"
 
         return link
+
+
+# Backwards compatibility class - same functionality with "Get" prefix
+class GetMarkdownFileDownloadLink(MarkdownFileDownloadLink):
+    pass
