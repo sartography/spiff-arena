@@ -1,13 +1,13 @@
 class HSTSResponse:
-    def __init__(self, app):
+    def __init__(self, app) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope, receive, send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
-        async def send_wrapper(message):
+        async def send_wrapper(message) -> None:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
 
