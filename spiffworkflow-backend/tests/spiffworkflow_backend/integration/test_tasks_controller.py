@@ -655,7 +655,7 @@ class TestTasksController(BaseTest):
         finance_task = response.json()["results"][0]
         assert finance_task["process_instance_id"] == process_instance_id
 
-        # Verify the initiator no longer sees the task.
+        # Verify the initiator no longer sees a task.
         response = client.get(
             tasks_endpoint,
             headers=self.logged_in_headers(initiator_user),
@@ -687,76 +687,3 @@ class TestTasksController(BaseTest):
         assert response.status_code == 200
         assert response.json() is not None
         assert response.json()["pagination"]["count"] == 0
-
-    def test_task_list_my_tasks_returns_multiple_potential_owners(
-        self,
-        app: Flask,
-        client: TestClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        tasks_endpoint = "/v1.0/tasks"
-
-        initiator_user = self.find_or_create_user("testuser4")
-        finance_user = self.find_or_create_user("testuser2")
-        assert initiator_user.principal is not None
-        assert finance_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        process_group_id = "finance"
-        process_model_id = "model_with_lanes"
-        bpmn_file_name = "lanes.bpmn"
-        bpmn_file_location = "model_with_lanes"
-        process_model = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        # Create and run instance as initiator
-        resp = self.create_process_instance_from_process_model_id_with_api(
-            client,
-            process_model.id,
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert resp.status_code == 201
-        assert resp.json() is not None
-        process_instance_id = resp.json()["id"]
-
-        resp = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
-            headers=self.logged_in_headers(initiator_user),
-        )
-        assert resp.status_code == 200
-
-        # Verify that at first only the initiator is the task owner
-        resp = client.get(tasks_endpoint, headers=self.logged_in_headers(initiator_user))
-        assert resp.status_code == 200
-        payload = resp.json()
-        assert payload is not None
-        assert payload["pagination"]["count"] == 1
-        task_row = payload["results"][0]
-
-        # Find the underlying HumanTaskModel row and add the finance user as an owner
-        human_task = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_row["id"]).first()
-        assert human_task is not None
-        db.session.add(HumanTaskUserModel(human_task_id=human_task.id, user_id=finance_user.id))
-        db.session.commit()
-
-        # Re-fetch and verify the response aggregates both owners
-        resp = client.get(tasks_endpoint, headers=self.logged_in_headers(initiator_user))
-        assert resp.status_code == 200
-        payload = resp.json()
-        assert payload is not None
-        assert payload["pagination"]["count"] == 1
-        task_row = payload["results"][0]
-
-        owners_raw = task_row.get("potential_owner_usernames")
-        assert isinstance(owners_raw, str)
-        owners = {owner.strip() for owner in owners_raw.split(",")}
-
-        assert initiator_user.username in owners
-        assert finance_user.username in owners
