@@ -2,6 +2,7 @@ import os
 
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.middleware.asgi_proxy_fix import ASGIProxyFix
+from spiffworkflow_backend.middleware.hsts import HSTSResponse
 from spiffworkflow_backend.services.acceptance_test_fixtures import load_acceptance_test_fixtures
 
 connexion_app = create_app()
@@ -18,6 +19,9 @@ if connexion_app.app.config["SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX"]:
 
 if num_proxies > 0:
     connexion_app.add_middleware(ASGIProxyFix, x_for=num_proxies, x_proto=num_proxies, x_host=num_proxies, x_prefix=num_proxies)
+
+if connexion_app.app.config["SPIFFWORKFLOW_BACKEND_ENABLE_HSTS"]:
+    connexion_app.add_middleware(HSTSResponse)
 
 # this is in here because when we put it in the create_app function,
 # it also loaded when we were running migrations, which resulted in a chicken/egg thing.
