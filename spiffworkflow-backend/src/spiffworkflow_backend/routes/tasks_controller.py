@@ -90,8 +90,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
     principal = _find_principal_or_raise()
 
     process_initiator_user = aliased(UserModel)
-    lane_group = aliased(GroupModel)
-    human_task_group = aliased(GroupModel)
+
     # This alias is only used for aggregating "all assignees"
     htum_all = aliased(HumanTaskUserModel)
     assigned_user_all = aliased(UserModel)
@@ -101,6 +100,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         .group_by(HumanTaskModel.id)
         .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
         .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
+        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
         # Filter my tasks to avoid duplication, but use a separate join to get all assignees for the task
         .filter(
@@ -113,9 +113,6 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         )
         .outerjoin(htum_all, htum_all.human_task_id == HumanTaskModel.id)
         .outerjoin(assigned_user_all, assigned_user_all.id == htum_all.user_id)
-        .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
-        .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
-        .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
     )
 
     if process_instance_id is not None:
@@ -125,7 +122,6 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         )
 
     potential_owner_usernames = _get_potential_owner_usernames(assigned_user_all)
-    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
@@ -147,7 +143,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
-        assigned_group_identifiers,
+        func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
         potential_owner_usernames,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
