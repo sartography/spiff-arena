@@ -19,6 +19,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import desc
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
@@ -89,27 +90,31 @@ def task_allows_guest(
 # this is currently not used by the Frontend
 def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
-    assigned_user = aliased(UserModel)
+
     process_initiator_user = aliased(UserModel)
+
+    # This alias is only used for aggregating "all assignees"
+    htum_all = aliased(HumanTaskUserModel)
+    assigned_user_all = aliased(UserModel)
+
     human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .group_by(HumanTaskModel.id)
-        .join(
-            ProcessInstanceModel,
-            ProcessInstanceModel.id == HumanTaskModel.process_instance_id,
-        )
-        .join(
-            process_initiator_user,
-            process_initiator_user.id == ProcessInstanceModel.process_initiator_id,
-        )
-        .join(
-            HumanTaskUserModel,
-            HumanTaskUserModel.human_task_id == HumanTaskModel.id,
-        )
-        .filter(HumanTaskUserModel.user_id == principal.user_id)
-        .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
-        .filter(HumanTaskModel.completed == False)  # noqa: E712
+        .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
+        .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
         .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
+        # Filter my tasks to avoid duplication, but use a separate join to get all assignees for the task
+        .filter(
+            exists().where(
+                and_(
+                    HumanTaskUserModel.human_task_id == HumanTaskModel.id,
+                    HumanTaskUserModel.user_id == principal.user_id,
+                )
+            )
+        )
+        .outerjoin(htum_all, htum_all.human_task_id == HumanTaskModel.id)
+        .outerjoin(assigned_user_all, assigned_user_all.id == htum_all.user_id)
     )
 
     if process_instance_id is not None:
@@ -118,7 +123,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
             ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
-    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    potential_owner_usernames = _get_potential_owner_usernames(assigned_user_all)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
@@ -141,7 +146,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
         func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
-        potential_owner_usernames_from_group_concat_or_similar,
+        potential_owner_usernames,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
     response_json = {
