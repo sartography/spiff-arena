@@ -23,6 +23,11 @@ on:
       - .github/workflows/tests.yml
       - .github/workflows/constraints.txt
 
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: spiffworkflow-backend
