@@ -1,25 +1,13 @@
-from starlette.types import ASGIApp
-from starlette.types import Message
-from starlette.types import Receive
-from starlette.types import Scope
-from starlette.types import Send
-
-
 class HSTSResponse:
-    def __init__(self, app: ASGIApp) -> None:
-        self.app: ASGIApp = app
+    def __init__(self, app):
+        self.app = app
 
-    async def __call__(
-        self,
-        scope: Scope,
-        receive: Receive,
-        send: Send,
-    ) -> None:
+    async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
-        async def send_wrapper(message: Message) -> None:
+        async def send_wrapper(message):
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
 
