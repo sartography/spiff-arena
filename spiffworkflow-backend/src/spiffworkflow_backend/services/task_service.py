@@ -135,10 +135,12 @@ class TaskService:
         self.task_models: dict[str, TaskModel] = {}
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
+        self.dirty_bpmn_process_updates: dict[str, tuple[BpmnWorkflow, BpmnProcessModel]] = {}
 
         self.run_started_at: float | None = run_started_at
 
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
+        self.flush_dirty_bpmn_process_updates()
         db.session.bulk_save_objects(self.bpmn_processes.values())
         db.session.bulk_save_objects(self.task_models.values())
         if save_process_instance_events:
@@ -216,7 +218,6 @@ class TaskService:
         bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
 
         self.update_task_model(task_model, spiff_task)
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -258,7 +259,7 @@ class TaskService:
             ]
             task_model.task_definition_id = task_definition.id
 
-        self.update_bpmn_process(spiff_task.workflow, bpmn_process, bpmn_process_json_data)
+        self.mark_bpmn_process_update_dirty(spiff_task.workflow, bpmn_process)
         return task_model
 
     def update_bpmn_process(
@@ -266,6 +267,20 @@ class TaskService:
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
         bpmn_process_json_data: dict | None = None,
+    ) -> None:
+        self._update_bpmn_process_internal(
+            spiff_workflow=spiff_workflow,
+            bpmn_process=bpmn_process,
+            bpmn_process_json_data=bpmn_process_json_data,
+            recurse_parents=True,
+        )
+
+    def _update_bpmn_process_internal(
+        self,
+        spiff_workflow: BpmnWorkflow,
+        bpmn_process: BpmnProcessModel,
+        bpmn_process_json_data: dict | None = None,
+        recurse_parents: bool = True,
     ) -> None:
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
@@ -277,15 +292,45 @@ class TaskService:
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
-        if spiff_workflow.parent_task_id and bpmn_process.direct_parent_process_id:
+        if recurse_parents and spiff_workflow.parent_task_id and bpmn_process.direct_parent_process_id:
             direct_parent_bpmn_process = self.bpmn_subprocess_id_mapping[bpmn_process.direct_parent_process_id]
-            self.update_bpmn_process(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
+            self._update_bpmn_process_internal(spiff_workflow.parent_workflow, direct_parent_bpmn_process)
 
         if self.force_update_definitions is True:
             bpmn_process_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_workflow.spec.name][
                 "bpmn_process_definition"
             ]
             bpmn_process.bpmn_process_definition_id = bpmn_process_definition.id
+
+    def mark_bpmn_process_update_dirty(self, spiff_workflow: BpmnWorkflow, bpmn_process: BpmnProcessModel) -> None:
+        """Record this BPMN process (and parents) for one-time update before persistence."""
+        current_workflow = spiff_workflow
+        current_bpmn_process = bpmn_process
+
+        while True:
+            dirty_key = str(current_bpmn_process.id or current_bpmn_process.guid or "top_level")
+            self.dirty_bpmn_process_updates[dirty_key] = (current_workflow, current_bpmn_process)
+
+            if not current_workflow.parent_task_id or not current_bpmn_process.direct_parent_process_id:
+                break
+
+            current_bpmn_process = self.bpmn_subprocess_id_mapping[current_bpmn_process.direct_parent_process_id]
+            current_workflow = current_workflow.parent_workflow
+
+    def flush_dirty_bpmn_process_updates(self) -> None:
+        """Apply deferred BPMN process updates exactly once per touched process."""
+        if not self.dirty_bpmn_process_updates:
+            return
+
+        for dirty_update in self.dirty_bpmn_process_updates.values():
+            spiff_workflow, bpmn_process = dirty_update
+            self._update_bpmn_process_internal(
+                spiff_workflow=spiff_workflow,
+                bpmn_process=bpmn_process,
+                recurse_parents=False,
+            )
+
+        self.dirty_bpmn_process_updates.clear()
 
     def update_task_model(
         self,
