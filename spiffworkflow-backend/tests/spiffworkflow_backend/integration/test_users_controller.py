@@ -87,3 +87,4 @@ class TestUsersController(BaseTest):
             assert "email" in u
             assert "display_name" in u
             assert "username" in u
+            assert "id" in u
