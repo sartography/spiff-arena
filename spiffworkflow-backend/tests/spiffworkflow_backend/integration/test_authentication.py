@@ -325,8 +325,8 @@ class TestAuthentication(BaseTest):
         # On creation, SpiffworkflowBaseDBModel automatically sets created_at_in_seconds to "now."
         # We override the timestamps to control expiry behavior explicitly.
         now = round(time.time())
-        expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds
-        non_expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds + 1
+        expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds - 5
+        non_expired.created_at_in_seconds = now - max_pkce_verifier_time_in_seconds + 5
         db.session.commit()
 
         assert PkceCodeVerifierModel.query.count() == 2
