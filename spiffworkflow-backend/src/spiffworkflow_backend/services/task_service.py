@@ -217,8 +217,6 @@ class TaskService:
 
         self.update_task_model(task_model, spiff_task)
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_task.workflow)
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -260,22 +258,22 @@ class TaskService:
             ]
             task_model.task_definition_id = task_definition.id
 
-        self.update_bpmn_process(spiff_task.workflow, bpmn_process)
+        self.update_bpmn_process(spiff_task.workflow, bpmn_process, bpmn_process_json_data)
         return task_model
 
     def update_bpmn_process(
         self,
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
+        bpmn_process_json_data: dict | None = None,
     ) -> None:
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+        if bpmn_process_json_data is None:
+            bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
@@ -441,8 +439,6 @@ class TaskService:
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(
             bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict
         )
-        if bpmn_process_json_data is not None:
-            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
         if top_level_process is None:
             self.process_instance.bpmn_process = bpmn_process
@@ -552,7 +548,7 @@ class TaskService:
         bpmn_process: BpmnProcessModel,
         bpmn_process_data_dict: dict | None = None,
         bpmn_process_instance: BpmnWorkflow | None = None,
-    ) -> JsonDataDict | None:
+    ) -> JsonDataDict:
         data_dict_to_use = bpmn_process_data_dict
         if bpmn_process_instance is not None:
             data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
@@ -560,10 +556,10 @@ class TaskService:
             data_dict_to_use = {}
         bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
         bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict | None = None
+        json_data_dict: JsonDataDict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            json_data_dict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
             bpmn_process.json_data_hash = bpmn_process_data_hash
+            self.json_data_dicts[bpmn_process_data_hash] = json_data_dict
         return json_data_dict
 
     @classmethod
@@ -809,5 +805,6 @@ class TaskService:
     def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer) -> dict:
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
         # this helps to convert items like datetime objects to be json serializable
-        converted_data: dict = serializer.registry.convert(user_defined_state)
+        # clean first to remove callables (e.g., KKV data store getters)
+        converted_data: dict = serializer.registry.convert(serializer.registry.clean(user_defined_state))
         return converted_data
