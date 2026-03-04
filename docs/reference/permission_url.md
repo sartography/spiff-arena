@@ -126,4 +126,5 @@ It provides administrator-level permissions, allowing the user to perform any ac
   /user-groups/for-current-user:
   /users/exists/by-username:
   /users/search:
+  /users/in-group:
 ```

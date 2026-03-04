@@ -5,7 +5,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -52,8 +51,6 @@ class TestUsersController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        AuthorizationService.import_permissions_from_yaml_file()
-
         # Create a group and add users to it
         group_name = "coolest_group"
         group = GroupModel(identifier=group_name)
