@@ -166,6 +166,7 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_all_permissions                    | Gets all permissions currently in the system.                                                                                                                  |
 | get_current_task_info                  | Returns information about the current task.                                                                                                                    |
 | get_current_user                       | Returns the current user.                                                                                                                                      |
+| get_users_assigned_to_task             | Returns all users assigned to the task.                     |
 | get_data_sizes                         | Returns information about the size of task data.                                                                                                               |
 | get_encoded_file_data                  | Returns the encoded file data. This is a very expensive call.                                                                                                  |
 | get_env                                | Returns the current environment (e.g., testing, staging, production).                                                                                          |
