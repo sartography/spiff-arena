@@ -754,7 +754,9 @@ class TestTasksController(BaseTest):
         assert payload["pagination"]["count"] == 1
         task_row = payload["results"][0]
 
-        owners = task_row.get("potential_owner_usernames")
+        owners_raw = task_row.get("potential_owner_usernames")
+        assert isinstance(owners_raw, str)
+        owners = {owner.strip() for owner in owners_raw.split(",")}
 
         assert initiator_user.username in owners
         assert finance_user.username in owners
