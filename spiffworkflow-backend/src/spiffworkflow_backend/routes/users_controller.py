@@ -7,6 +7,8 @@ from flask import jsonify
 from flask import make_response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -39,3 +41,24 @@ def user_group_list_for_current_user() -> flask.wrappers.Response:
         i.identifier for i in groups if i.identifier != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
     ]
     return make_response(jsonify(sorted(group_identifiers)), 200)
+
+
+def users_in_group(group_name: str) -> flask.wrappers.Response:
+    group = GroupModel.query.filter_by(identifier=group_name).first()
+
+    if group is None:
+        return make_response(jsonify([]), 200)
+
+    users = (
+        db.session.query(
+            UserModel.id,
+            UserModel.username,
+            UserModel.email,
+            UserModel.display_name,
+        )
+        .join(GroupModel.users)  # type: ignore[no-untyped-call]
+        .filter(GroupModel.identifier == group_name)
+        .all()
+    )
+
+    return make_response(jsonify(users), 200)

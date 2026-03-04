@@ -2433,6 +2433,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /users/in-group:
+    get:
+      tags:
+        - Users
+      operationId: spiffworkflow_backend.routes.users_controller.users_in_group
+      summary: Returns all users in a group.
+      parameters:
+        - name: group_name
+          in: query
+          required: true
+          description: Identifier of the group
+          schema:
+            type: string
+      responses:
+        "200":
+          description: list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+
   /user-groups/for-current-user:
     get:
       tags:
@@ -4137,22 +4158,16 @@ components:
           type: array
     User:
       properties:
-        uid:
+        id:
           type: string
-        email_address:
+        email:
           type: string
         display_name:
           type: string
-        affiliation:
-          type: string
-        eppn:
-          type: string
-        first_name:
-          type: string
-        last_name:
-          type: string
-        title:
-          type: string
+    UserList:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
     DataModel:
       properties:
         id:
