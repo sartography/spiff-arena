@@ -348,10 +348,15 @@ class TaskService:
             )
 
         new_properties_json = self.serializer.to_dict(spiff_task)
-
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
-        spiff_task_data = new_properties_json.pop("data")
+
+        # Use spiff_task.data directly, which has fully materialized data
+        # While SpiffWorkflow serialization does optimations to reduce duplication, we handle that optimization differently.
+        new_properties_json.pop("data", None)
+        new_properties_json.pop("delta", None)
+        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
+
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskState.get_name(new_properties_json["state"])
