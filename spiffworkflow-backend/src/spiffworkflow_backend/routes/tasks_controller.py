@@ -87,7 +87,7 @@ def task_allows_guest(
     return make_response(jsonify({"allows_guest": allows_guest}), 200)
 
 
-# this is currently not used by the Frontend
+# this is currently used by the ProcessInstanceShow page on the frontend
 def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
 
@@ -283,6 +283,7 @@ def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> f
     return make_response(jsonify(response_json), 200)
 
 
+# DEPRECATED: used to drive old homepage
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(
         processes_started_by_user=False,
@@ -292,6 +293,7 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
     )
 
 
+# DEPRECATED: used to drive old homepage
 def task_list_for_my_groups(
     user_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
