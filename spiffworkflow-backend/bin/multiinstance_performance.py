@@ -220,7 +220,7 @@ class TestMultiinstancePerformanceBottlenecks(BaseTest):
 
         try:
             # Get source BPMN and create modified copy in temp directory
-            test_data_dir = Path(__file__).parent.parent.parent / "data" / "multiinstance_with_data"
+            test_data_dir = Path(__file__).parent.parent / "tests" / "data" / "multiinstance_with_data"
             source_bpmn = test_data_dir / "multiinstance_with_data.bpmn"
 
             with open(source_bpmn) as f:
