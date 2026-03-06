@@ -355,7 +355,7 @@ class TaskService:
         # While SpiffWorkflow serialization does optimations to reduce duplication, we handle that optimization differently.
         new_properties_json.pop("data", None)
         new_properties_json.pop("delta", None)
-        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
+        spiff_task_data = self.serializer.registry.convert(spiff_task.data)  # surprisingly expensive call.
 
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
@@ -486,6 +486,7 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
+        # Not sure why this lince is required, as we no longer use it's return value
         self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict)
 
         if top_level_process is None:
@@ -852,7 +853,7 @@ class TaskService:
     @classmethod
     def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer) -> dict:
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
-        # this helps to convert items like datetime objects to be json serializable
-        # clean first to remove callables (e.g., KKV data store getters)
-        converted_data: dict = serializer.registry.convert(serializer.registry.clean(user_defined_state))
+        # this helps to convert items like datetime objects to be json serializable.
+        # this is a surprisingly expensive call if you do it a great deal.
+        converted_data: dict = serializer.registry.convert(user_defined_state)
         return converted_data
