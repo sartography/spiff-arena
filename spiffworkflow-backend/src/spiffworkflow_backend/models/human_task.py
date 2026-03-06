@@ -81,7 +81,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
                 break
 
         # If not directly assigned, check if user is in any of the assigned groups
-        if not can_complete and hasattr(task, "human_task_groups"):
+        if not can_complete and task.human_task_groups:
             user_group_ids = {uga.group_id for uga in g.user.user_group_assignments}
             for htg in task.human_task_groups:
                 if htg.group_id in user_group_ids:
