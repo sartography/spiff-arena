@@ -255,6 +255,48 @@ class TestProcessInstanceProcessor(BaseTest):
         ).all()
         assert len(testuser1_assignments_after) == 1
 
+    def test_does_not_fail_when_lane_owners_references_empty_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        first_task = process_instance.active_human_tasks[0]
+        assert first_task.task_name == "initiator_one"
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:finance-approvers-empty"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+        assert finance_task.lane_assignment_id is not None
+        assert len(finance_task.potential_owners) == 0
+
+        group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
+        assert len(group_rows) == 1
+        assert group_rows[0].group.identifier == "finance-approvers-empty"
+
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,

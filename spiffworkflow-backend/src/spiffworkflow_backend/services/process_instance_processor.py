@@ -868,7 +868,9 @@ class ProcessInstanceProcessor:
                 if not has_groups:
                     lane_owner_group_ids.append(group_model.id)
 
-                if not potential_owners and not lane_owner_usernames_waiting:
+                # If explicit owner groups were provided, allow zero current users so future group membership
+                # changes can grant access without failing workflow execution.
+                if not potential_owners and not lane_owner_usernames_waiting and not has_groups:
                     self.raise_if_no_potential_owners(
                         potential_owners,
                         (
@@ -1525,10 +1527,11 @@ class ProcessInstanceProcessor:
             human_task.task_status = TaskState.get_name(spiff_task.state)
             db.session.add(human_task)
 
-        # Cleanup only the waiting user assignments when task is completed
-        # Keep HumanTaskGroupModel entries for historical record of group assignments
-        # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
-        HumanTaskUserWaitingModel.query.filter_by(human_task_id=human_task.id).delete()
+        if human_task:
+            # Cleanup only the waiting user assignments when task is completed
+            # Keep HumanTaskGroupModel entries for historical record of group assignments
+            # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
+            HumanTaskUserWaitingModel.query.filter_by(human_task_id=human_task.id).delete()
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
