@@ -1117,11 +1117,10 @@ def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: 
         # This ensures we get identifiers from both sources
         lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
         htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
-        # Use concat_ws to combine, which handles nulls gracefully
-        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
     else:
         # For mysql/sqlite, aggregate both columns separately then combine
         lane_agg = func.group_concat(func.distinct(lane_group.identifier))
         htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-        # Use concat_ws to combine, which handles nulls gracefully
-        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+
+    # Use concat_ws to combine, which handles nulls gracefully
+    return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")

@@ -1527,7 +1527,6 @@ class ProcessInstanceProcessor:
             human_task.task_status = TaskState.get_name(spiff_task.state)
             db.session.add(human_task)
 
-        if human_task:
             # Cleanup only the waiting user assignments when task is completed
             # Keep HumanTaskGroupModel entries for historical record of group assignments
             # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
