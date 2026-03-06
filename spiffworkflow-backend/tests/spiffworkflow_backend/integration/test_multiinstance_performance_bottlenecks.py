@@ -15,9 +15,13 @@ from pathlib import Path
 import pytest
 from flask.app import Flask
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
+from SpiffWorkflow.task import Task as SpiffTask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
+from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -62,11 +66,25 @@ class BottleneckInstrumenter:
         setattr(cls, method_name, wrapper)
 
     def install(self):
-        """Install instrumentation on key methods.
-
-        These are called sequentially inside update_task_models_with_spiff_tasks
-        and save_objects_to_database, so timings do not overlap.
-        """
+        """Install instrumentation on key methods."""
+        # spiff_run loop internals
+        self._patch_instance_method(
+            SpiffTask, "run",
+            self._create_timer("SpiffTask.run"),
+        )
+        self._patch_instance_method(
+            BpmnWorkflow, "refresh_waiting_tasks",
+            self._create_timer("refresh_waiting"),
+        )
+        self._patch_instance_method(
+            ExecutionStrategy, "get_ready_engine_steps",
+            self._create_timer("get_ready_steps"),
+        )
+        self._patch_instance_method(
+            TaskModelSavingDelegate, "did_complete_task",
+            self._create_timer("did_complete_task"),
+        )
+        # after_engine_steps internals
         self._patch_instance_method(
             BpmnWorkflowSerializer, "to_dict",
             self._create_timer("serializer.to_dict"),
@@ -195,7 +213,7 @@ class TestMultiinstancePerformanceBottlenecks(BaseTest):
         cls.instrumenter.uninstall()
         cls.instrumenter.print_summary()
 
-    @pytest.mark.parametrize("loop_count", [100])
+    @pytest.mark.parametrize("loop_count", [20,200])
     def test_bottleneck_analysis(
         self,
         app: Flask,
@@ -240,7 +258,9 @@ class TestMultiinstancePerformanceBottlenecks(BaseTest):
 
             from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
+            t0 = time.perf_counter()
             processor = ProcessInstanceProcessor(process_instance)
+            processor_init_time = time.perf_counter() - t0
 
             start_time = time.perf_counter()
             processor.do_engine_steps(save=False, execution_strategy_name="greedy")
@@ -248,16 +268,21 @@ class TestMultiinstancePerformanceBottlenecks(BaseTest):
 
             self.instrumenter.report(loop_count, total_time)
 
-            # Print update_task_model internal breakdown
-            task_service = processor.execution_strategy_delegate.task_service
-            print(f"\n  update_task_model internals:")
-            print(f"    props_json lookup:  {task_service._perf_props_json:.3f}s")
-            print(f"    convert(task.data): {task_service._perf_convert_data:.3f}s")
-            print(f"    python_env:         {task_service._perf_python_env:.3f}s")
-            print(f"    json hash/update:   {task_service._perf_json_hash:.3f}s")
-            accounted = (task_service._perf_props_json + task_service._perf_convert_data
-                         + task_service._perf_python_env + task_service._perf_json_hash)
-            print(f"    accounted:          {accounted:.3f}s")
+            # Print update_task_model breakdown
+            ts = processor.execution_strategy_delegate.task_service
+            print(f"\n  update_task_model_with_spiff_task breakdown:")
+            print(f"    find_or_create:       {ts._perf_find_or_create:.3f}s")
+            print(f"    update_task_model():  {ts._perf_update_task_model_inner:.3f}s")
+            print(f"      props_json lookup:  {ts._perf_props_json:.3f}s")
+            print(f"      convert(task.data): {ts._perf_convert_data:.3f}s")
+            print(f"      python_env:         {ts._perf_python_env:.3f}s")
+            print(f"      json hash/update:   {ts._perf_json_hash:.3f}s")
+            print(f"    events:               {ts._perf_events:.3f}s")
+            print(f"    mark_dirty:           {ts._perf_mark_dirty:.3f}s")
+            wrapper_total = (ts._perf_find_or_create + ts._perf_update_task_model_inner
+                             + ts._perf_events + ts._perf_mark_dirty)
+            print(f"    wrapper accounted:    {wrapper_total:.3f}s")
+            print(f"\n  ProcessInstanceProcessor.__init__: {processor_init_time:.3f}s")
 
         finally:
             if Path(temp_dir).exists():

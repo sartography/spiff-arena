@@ -150,6 +150,11 @@ class TaskService:
         self._perf_convert_data: float = 0.0
         self._perf_python_env: float = 0.0
         self._perf_json_hash: float = 0.0
+        # perf instrumentation for update_task_model_with_spiff_task wrapper
+        self._perf_find_or_create: float = 0.0
+        self._perf_update_task_model_inner: float = 0.0
+        self._perf_events: float = 0.0
+        self._perf_mark_dirty: float = 0.0
 
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         self.flush_dirty_bpmn_process_updates()
@@ -218,7 +223,7 @@ class TaskService:
             self.update_task_model_with_spiff_task(stt['spiff_task'],
                                                      process_dict,
                                                    {'start_in_seconds':stt['start_in_seconds'], 'end_in_seconds': stt['end_in_seconds']},
-                                                   True)
+                                                   True, True)
 
 
 
@@ -230,7 +235,9 @@ class TaskService:
         process_dict: dict,
         start_and_end_times: StartAndEndTimes | None = None,
         store_process_instance_events: bool = True,
+        disable_search: bool = False,
     ) -> TaskModel:
+        _t = time.perf_counter()
         new_bpmn_process = None
         if str(spiff_task.id) in self.task_models:
             task_model = self.task_models[str(spiff_task.id)]
@@ -239,13 +246,17 @@ class TaskService:
                 new_bpmn_process,
                 task_model,
             ) = self.find_or_create_task_model_from_spiff_task(
-                spiff_task, process_dict
+                spiff_task, process_dict, disable_search
             )
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
+        self._perf_find_or_create += time.perf_counter() - _t
 
+        _t = time.perf_counter()
         self.update_task_model(task_model, spiff_task, process_dict)
+        self._perf_update_task_model_inner += time.perf_counter() - _t
+
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -256,6 +267,7 @@ class TaskService:
         if task_model.state == "ERROR":
             task_model.end_in_seconds = time.time()
 
+        _t = time.perf_counter()
         # let failed tasks raise and we will log the event then.
         # avoid creating events for the same state transition multiple times to avoid multiple cancelled events
         if (
@@ -280,6 +292,7 @@ class TaskService:
                 log_event=False,  # Log this in the execution service instead
             )
             self.process_instance_events[task_model.guid] = process_instance_event
+        self._perf_events += time.perf_counter() - _t
 
         if self.force_update_definitions is True:
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
@@ -287,7 +300,10 @@ class TaskService:
             ]
             task_model.task_definition_id = task_definition.id
 
+        _t = time.perf_counter()
         self.mark_bpmn_process_update_dirty(spiff_task.workflow, bpmn_process)
+        self._perf_mark_dirty += time.perf_counter() - _t
+
         return task_model
 
     def update_bpmn_process(
@@ -408,11 +424,11 @@ class TaskService:
 
         # Use spiff_task.data directly, which has fully materialized data
         # While SpiffWorkflow serialization does optimations to reduce duplication, we handle that optimization differently.
-        new_properties_json.pop("data", None)
+        spiff_task_data = new_properties_json.pop("data", None)
         new_properties_json.pop("delta", None)
 
         _t = time.perf_counter()
-        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
+#        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
         self._perf_convert_data += time.perf_counter() - _t
 
         _t = time.perf_counter()
@@ -441,9 +457,13 @@ class TaskService:
         self,
         spiff_task: SpiffTask,
         bpmn_process_dict: dict,
+        disable_search : bool = False,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+
+        task_model: TaskModel | None = None
+        if not disable_search:
+            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task, bpmn_process_dict)
