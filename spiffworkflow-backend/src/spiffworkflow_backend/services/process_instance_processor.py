@@ -854,7 +854,10 @@ class ProcessInstanceProcessor:
                             if user_assignment.user_id not in seen_potential_owner_ids:
                                 seen_potential_owner_ids.add(user_assignment.user_id)
                                 potential_owners.append(
-                                    {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": user_assignment.user_id}
+                                    {
+                                        "added_by": HumanTaskUserAddedBy.lane_assignment.value,
+                                        "user_id": user_assignment.user_id,
+                                    }
                                 )
                     else:
                         username_or_email = str(owner_entry)

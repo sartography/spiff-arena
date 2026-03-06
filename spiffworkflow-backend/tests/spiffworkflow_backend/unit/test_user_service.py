@@ -12,6 +12,50 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUserService(BaseTest):
+    def test_group_membership_change_does_not_remove_explicit_lane_owner_assignment(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        explicit_owner_user = self.find_or_create_user("explicit_owner_user")
+        process_initiator = self.find_or_create_user("process_initiator")
+        lane_group = UserService.find_or_create_group("lane_group")
+
+        process_instance = ProcessInstanceModel(
+            process_initiator=process_initiator,
+            process_model_identifier="test/process",
+            process_model_display_name="Test Process",
+        )
+        db.session.add(process_instance)
+        db.session.flush()
+
+        human_task = HumanTaskModel(
+            process_instance_id=process_instance.id,
+            task_id="task_1",
+            task_name="Task 1",
+            task_type="UserTask",
+            task_status="READY",
+            lane_assignment_id=lane_group.id,
+        )
+        db.session.add(human_task)
+        db.session.flush()
+        db.session.add(
+            HumanTaskUserModel(
+                user_id=explicit_owner_user.id,
+                human_task_id=human_task.id,
+                added_by=HumanTaskUserAddedBy.lane_owner.value,
+            )
+        )
+        db.session.commit()
+
+        UserService.add_user_to_group(explicit_owner_user, lane_group)
+        UserService.remove_user_from_group(explicit_owner_user, lane_group.id)
+
+        assignment = HumanTaskUserModel.query.filter_by(user_id=explicit_owner_user.id, human_task_id=human_task.id).first()
+        assert assignment is not None
+        assert assignment.added_by == HumanTaskUserAddedBy.lane_owner.value
+
     def test_group_membership_change_does_not_assign_explicit_lane_owner_group_task_via_lane_group(
         self,
         app: Flask,
@@ -85,7 +129,7 @@ class TestUserService(BaseTest):
             HumanTaskUserModel(
                 user_id=user_two.id,
                 human_task_id=human_task.id,
-                added_by=HumanTaskUserAddedBy.lane_owner.value,
+                added_by=HumanTaskUserAddedBy.lane_assignment.value,
             )
         )
         db.session.commit()

@@ -399,6 +399,60 @@ class TestProcessInstanceProcessor(BaseTest):
         ).all()
         assert len(waiting_rows) == 1
 
+    def test_lane_group_only_user_cannot_complete_task_when_lane_owners_uses_explicit_groups(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        group_one_user = self.find_or_create_user("group_one_user")
+        lane_group_only_user = self.find_or_create_user("lane_group_only_user")
+
+        group_one = UserService.find_or_create_group("group-one")
+        UserService.find_or_create_group("group-two")
+        lane_group = UserService.find_or_create_group("Finance Team")
+        UserService.add_user_to_group(group_one_user, group_one)
+        UserService.add_user_to_group(lane_group_only_user, lane_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:group-one", "group:group-two"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        finance_spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            finance_task.task_name, processor.bpmn_process_instance
+        )
+        with pytest.raises(UserDoesNotHaveAccessToTaskError):
+            ProcessInstanceService.complete_form_task(
+                processor,
+                finance_spiff_task,
+                {},
+                lane_group_only_user,
+                finance_task,
+            )
+
+        ProcessInstanceService.complete_form_task(
+            processor,
+            finance_spiff_task,
+            {},
+            group_one_user,
+            finance_task,
+        )
+
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,

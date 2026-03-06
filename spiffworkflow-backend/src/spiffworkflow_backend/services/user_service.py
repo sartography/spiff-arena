@@ -316,6 +316,11 @@ class UserService:
         current_user_group_ids = {uga.group_id for uga in user.user_group_assignments}
 
         for assignment in potential_assignments_to_delete.values():
+            # Keep explicit username/email lane_owner assignments on group membership changes.
+            # Group-derived assignments are stored as lane_assignment.
+            if assignment.added_by == HumanTaskUserAddedBy.lane_owner.value:
+                continue
+
             human_task = assignment.human_task
 
             # Collect all group IDs this task is assigned to (from both sources)
