@@ -290,7 +290,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.active_human_tasks) == 1
         finance_task = process_instance.active_human_tasks[0]
         assert finance_task.task_name == "finance_approval"
-        assert finance_task.lane_assignment_id is not None
+        assert finance_task.lane_assignment_id is None
         assert len(finance_task.potential_owners) == 0
 
         group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
@@ -300,8 +300,6 @@ class TestProcessInstanceProcessor(BaseTest):
         explicit_group = GroupModel.query.filter_by(identifier="finance-approvers-empty").first()
         assert lane_group is not None
         assert explicit_group is not None
-        assert finance_task.lane_assignment_id == explicit_group.id
-        assert finance_task.lane_assignment_id != lane_group.id
 
     def test_deduplicates_group_entries_in_lane_owners(
         self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None

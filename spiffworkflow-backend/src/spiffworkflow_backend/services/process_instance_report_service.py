@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
@@ -282,6 +283,8 @@ class ProcessInstanceReportService:
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
             lane_group = aliased(GroupModel)
+            human_task_group_model = aliased(HumanTaskGroupModel)
+            human_task_group = aliased(GroupModel)
             human_task_query = (
                 HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict["id"], completed=False)
                 .group_by(HumanTaskModel.id)
@@ -291,13 +294,25 @@ class ProcessInstanceReportService:
                 )
                 .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
                 .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
+                .outerjoin(human_task_group_model, human_task_group_model.human_task_id == HumanTaskModel.id)
+                .outerjoin(human_task_group, human_task_group.id == human_task_group_model.group_id)
             )
             if restrict_human_tasks_to_user is not None:
                 human_task_query = human_task_query.filter(HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id)
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
-            assigned_group_identifier = lane_group.identifier.label("assigned_user_group_identifier")
-            if current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
-                assigned_group_identifier = func.max(lane_group.identifier).label("assigned_user_group_identifier")
+            db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
+            if db_type == "postgres":
+                lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
+                htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
+                assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
+                    "assigned_user_group_identifier"
+                )
+            else:
+                lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+                htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+                assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
+                    "assigned_user_group_identifier"
+                )
             human_task = (
                 human_task_query.add_columns(
                     HumanTaskModel.task_id,
@@ -409,12 +424,20 @@ class ProcessInstanceReportService:
         process_status: str | None = None,
         instances_with_tasks_waiting_for_me: bool | None = False,
     ) -> Query:
-        group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
+        human_task_group_alias = aliased(HumanTaskGroupModel)
+        group_model_join_condition = or_(
+            GroupModel.id == HumanTaskModel.lane_assignment_id,
+            GroupModel.id == human_task_group_alias.group_id,
+        )
         if user_group_identifier:
-            group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
+            group_model_join_condition = and_(group_model_join_condition, GroupModel.identifier == user_group_identifier)
 
         if human_task_already_joined is False:
             process_instance_query = process_instance_query.join(HumanTaskModel)  # type: ignore
+        process_instance_query = process_instance_query.outerjoin(  # type: ignore
+            human_task_group_alias,
+            human_task_group_alias.human_task_id == HumanTaskModel.id,
+        )
         if process_status is not None:
             non_active_statuses = [s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()]
             if len(non_active_statuses) == 0:
@@ -430,7 +453,7 @@ class ProcessInstanceReportService:
                         ),
                     )
 
-        process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))  # type: ignore
+        process_instance_query = process_instance_query.join(GroupModel, group_model_join_condition)  # type: ignore
         process_instance_query = process_instance_query.join(  # type: ignore
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,
@@ -458,11 +481,19 @@ class ProcessInstanceReportService:
         )
 
         user_group_assignment_alias = aliased(UserGroupAssignmentModel)
+        human_task_group_alias = aliased(HumanTaskGroupModel)
+        process_instance_query = process_instance_query.outerjoin(  # type: ignore
+            human_task_group_alias,
+            human_task_group_alias.human_task_id == HumanTaskModel.id,
+        )
         process_instance_query = process_instance_query.outerjoin(  # type: ignore
             user_group_assignment_alias,
             and_(
-                user_group_assignment_alias.group_id == HumanTaskModel.lane_assignment_id,
                 user_group_assignment_alias.user_id == user.id,
+                or_(
+                    user_group_assignment_alias.group_id == HumanTaskModel.lane_assignment_id,
+                    user_group_assignment_alias.group_id == human_task_group_alias.group_id,
+                ),
             ),
         )
 
@@ -470,7 +501,10 @@ class ProcessInstanceReportService:
             and_(
                 ProcessInstanceModel.process_initiator_id != user.id,
                 or_(
-                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    and_(
+                        HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                        human_task_group_alias.human_task_id.is_(None),
+                    ),
                     user_group_assignment_alias.group_id.is_(None),
                 ),
             )
