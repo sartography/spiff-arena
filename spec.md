@@ -50,6 +50,9 @@
 - Phase 1: add table + service, no behavior change (`task_based` default).
 - Phase 2: dual-read capability in code, still writing old way.
 - Phase 3: enable `blob_based` for selected process instances/tenants.
+  - Add a nullable `workflow_storage_strategy` column on `process_instance`; resolve strategy as per-instance override first, global env default second.
+  - For selected instances, write and verify blob data, then set `workflow_storage_strategy='blob_based'`.
+  - Roll back an instance by setting `workflow_storage_strategy='task_based'` without changing global defaults.
 - Phase 4: migrate old instances, validate parity, deprecate `TaskModel` writes.
 - Phase 5: remove `TaskModel` reads when confidence is high.
 
