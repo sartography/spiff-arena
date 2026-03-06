@@ -296,6 +296,43 @@ class TestProcessInstanceProcessor(BaseTest):
         group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
         assert len(group_rows) == 1
         assert group_rows[0].group.identifier == "finance-approvers-empty"
+        lane_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        explicit_group = GroupModel.query.filter_by(identifier="finance-approvers-empty").first()
+        assert lane_group is not None
+        assert explicit_group is not None
+        assert finance_task.lane_assignment_id == explicit_group.id
+        assert finance_task.lane_assignment_id != lane_group.id
+
+    def test_deduplicates_group_entries_in_lane_owners(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:dedupe-reviewers", "group:dedupe-reviewers"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
+        assert len(group_rows) == 1
+        assert group_rows[0].group.identifier == "dedupe-reviewers"
 
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,

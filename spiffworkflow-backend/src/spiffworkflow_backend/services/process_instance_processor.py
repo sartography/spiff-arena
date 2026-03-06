@@ -845,7 +845,8 @@ class ProcessInstanceProcessor:
                     if isinstance(owner_entry, str) and owner_entry.startswith("group:"):
                         group_identifier = owner_entry[6:]
                         owner_group = UserService.find_or_create_group(group_identifier)
-                        lane_owner_group_ids.append(owner_group.id)
+                        if owner_group.id not in lane_owner_group_ids:
+                            lane_owner_group_ids.append(owner_group.id)
                         has_groups = True
 
                         for user_assignment in owner_group.user_group_assignments:
@@ -864,8 +865,11 @@ class ProcessInstanceProcessor:
                         else:
                             lane_owner_usernames_waiting.append(username_or_email)
 
-                # If no groups were specified, include the lane name group for backward compatibility
-                if not has_groups:
+                # If groups were specified explicitly, make the first one the lane assignment id.
+                if has_groups:
+                    lane_assignment_id = lane_owner_group_ids[0]
+                # If no groups were specified, include the lane name group for backward compatibility.
+                else:
                     lane_owner_group_ids.append(group_model.id)
 
                 # If explicit owner groups were provided, allow zero current users so future group membership

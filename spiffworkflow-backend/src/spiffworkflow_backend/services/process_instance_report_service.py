@@ -296,6 +296,8 @@ class ProcessInstanceReportService:
                 human_task_query = human_task_query.filter(HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id)
             potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
             assigned_group_identifier = lane_group.identifier.label("assigned_user_group_identifier")
+            if current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
+                assigned_group_identifier = func.max(lane_group.identifier).label("assigned_user_group_identifier")
             human_task = (
                 human_task_query.add_columns(
                     HumanTaskModel.task_id,
