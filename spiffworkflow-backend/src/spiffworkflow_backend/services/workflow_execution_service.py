@@ -58,7 +58,7 @@ from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.task_service import StartAndEndTimes
+from spiffworkflow_backend.services.task_service import StartAndEndTimes, SpiffTaskAndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -356,6 +356,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self._last_completed_spiff_task: SpiffTask | None = None
         self.spiff_tasks_to_process: set[UUID] = set()
         self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
+        self.completed_spiff_task_cache: list[SpiffTaskAndTimes] = []
 
         self.task_service = TaskService(
             process_instance=self.process_instance,
@@ -377,13 +378,20 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
+        end_in_seconds = time.time()
         if self._should_update_task_model():
             # NOTE: used with process-all-tasks and process-children-of-last-task
-            task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
+#            task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happened")
-            task_model.start_in_seconds = self.current_task_start_in_seconds
-            task_model.end_in_seconds = time.time()
+#            task_model.start_in_seconds = self.current_task_start_in_seconds
+#            task_model.end_in_seconds = end_in_seconds
+
+            self.completed_spiff_task_cache.append({
+                "spiff_task": spiff_task,
+                "start_in_seconds": self.current_task_start_in_seconds,
+                "end_in_seconds": end_in_seconds,
+            })
 
         metadata = ProcessModelService.extract_metadata(
             self.process_instance.process_model_identifier,
@@ -457,6 +465,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.add_object_to_db_session(bpmn_process_instance)
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.task_service.update_task_models_with_spiff_tasks(self.completed_spiff_task_cache, bpmn_process_instance)
         pass
 
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:

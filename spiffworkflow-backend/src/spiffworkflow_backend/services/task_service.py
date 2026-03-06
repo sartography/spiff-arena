@@ -39,6 +39,12 @@ class StartAndEndTimes(TypedDict):
     start_in_seconds: float | None
     end_in_seconds: float | None
 
+class SpiffTaskAndTimes(TypedDict):
+    spiff_task: SpiffTask
+    start_in_seconds: float | None
+    end_in_seconds: float | None
+
+
 
 class TaskModelError(Exception):
     """Copied from SpiffWorkflow.exceptions.WorkflowTaskException.
@@ -139,6 +145,12 @@ class TaskService:
 
         self.run_started_at: float | None = run_started_at
 
+        # perf instrumentation for update_task_model internals
+        self._perf_props_json: float = 0.0
+        self._perf_convert_data: float = 0.0
+        self._perf_python_env: float = 0.0
+        self._perf_json_hash: float = 0.0
+
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         self.flush_dirty_bpmn_process_updates()
         db.session.bulk_save_objects(self.bpmn_processes.values())
@@ -197,9 +209,25 @@ class TaskService:
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
 
+    def update_task_models_with_spiff_tasks(self, tasks_and_times: list[SpiffTaskAndTimes], bpmn_process_instance: BpmnWorkflow) -> None:
+
+        process_dict = self.serializer.to_dict(bpmn_process_instance)
+
+
+        for stt in tasks_and_times:
+            self.update_task_model_with_spiff_task(stt['spiff_task'],
+                                                     process_dict,
+                                                   {'start_in_seconds':stt['start_in_seconds'], 'end_in_seconds': stt['end_in_seconds']},
+                                                   True)
+
+
+
+
+
     def update_task_model_with_spiff_task(
         self,
         spiff_task: SpiffTask,
+        process_dict: dict,
         start_and_end_times: StartAndEndTimes | None = None,
         store_process_instance_events: bool = True,
     ) -> TaskModel:
@@ -211,13 +239,13 @@ class TaskService:
                 new_bpmn_process,
                 task_model,
             ) = self.find_or_create_task_model_from_spiff_task(
-                spiff_task,
+                spiff_task, process_dict
             )
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         bpmn_process = new_bpmn_process or task_model.bpmn_process or self.bpmn_subprocess_id_mapping[task_model.bpmn_process_id]
 
-        self.update_task_model(task_model, spiff_task)
+        self.update_task_model(task_model, spiff_task, process_dict)
         self.task_models[task_model.guid] = task_model
 
         if start_and_end_times:
@@ -336,6 +364,7 @@ class TaskService:
         self,
         task_model: TaskModel,
         spiff_task: SpiffTask,
+        process_dict: dict | None = None,
     ) -> None:
         """Updates properties_json and data on given task_model.
 
@@ -347,7 +376,33 @@ class TaskService:
                 f"Given spiff task ({spiff_task.task_spec.bpmn_id} - {spiff_task.id}) and task ({task_model.guid}) must match"
             )
 
-        new_properties_json = self.serializer.to_dict(spiff_task)
+        _t = time.perf_counter()
+        if process_dict:
+            task_id_str = str(spiff_task.id)
+            if task_id_str in process_dict["tasks"]:
+                new_properties_json = process_dict["tasks"][task_id_str]
+            else:
+                # Task is in a subprocess. Walk up via parent_task_id to find the correct subprocess dict.
+                # Subprocesses can be deeply nested, so we collect the chain of parent_task_ids and then
+                # traverse down from the top-level process_dict.
+                parent_ids: list[str] = []
+                workflow = spiff_task.workflow
+                while workflow.parent_task_id is not None:
+                    parent_ids.append(str(workflow.parent_task_id))
+                    parent_workflow = workflow.parent_workflow
+                    if parent_workflow is None:
+                        break
+                    workflow = parent_workflow
+
+                subprocess_dict = process_dict
+                for parent_id in reversed(parent_ids):
+                    subprocess_dict = subprocess_dict["subprocesses"][parent_id]
+
+                new_properties_json = subprocess_dict["tasks"][task_id_str]
+        else:
+            new_properties_json = self.serializer.to_dict(spiff_task)  ## !!!!!!!!! THIS IS THE PROBLEM.
+        self._perf_props_json += time.perf_counter() - _t
+
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
 
@@ -355,17 +410,27 @@ class TaskService:
         # While SpiffWorkflow serialization does optimations to reduce duplication, we handle that optimization differently.
         new_properties_json.pop("data", None)
         new_properties_json.pop("delta", None)
-        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
 
+        _t = time.perf_counter()
+        spiff_task_data = self.serializer.registry.convert(spiff_task.data)
+        self._perf_convert_data += time.perf_counter() - _t
+
+        _t = time.perf_counter()
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
+        self._perf_python_env += time.perf_counter() - _t
+
         task_model.properties_json = new_properties_json
         task_model.state = TaskState.get_name(new_properties_json["state"])
+
+        _t = time.perf_counter()
         json_data_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, spiff_task_data, "json_data_hash"
         )
         python_env_dict = self.__class__.update_json_data_on_db_model_and_return_dict_if_updated(
             task_model, python_env_data_dict, "python_env_data_hash"
         )
+        self._perf_json_hash += time.perf_counter() - _t
+
         if json_data_dict is not None:
             self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
         if python_env_dict is not None:
@@ -375,12 +440,13 @@ class TaskService:
     def find_or_create_task_model_from_spiff_task(
         self,
         spiff_task: SpiffTask,
+        bpmn_process_dict: dict,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
         task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
-            bpmn_process = self.task_bpmn_process(spiff_task)
+            bpmn_process = self.task_bpmn_process(spiff_task, bpmn_process_dict)
             task_definition = self.bpmn_definition_to_task_definitions_mappings[spiff_task.workflow.spec.name][
                 spiff_task.task_spec.name
             ]
@@ -396,6 +462,7 @@ class TaskService:
     def task_bpmn_process(
         self,
         spiff_task: SpiffTask,
+        bpmn_process_dict: dict,
     ) -> BpmnProcessModel:
         subprocess_guid, spiff_subprocess = self.__class__._task_subprocess(spiff_task)
         bpmn_process: BpmnProcessModel | None = None
@@ -406,7 +473,7 @@ class TaskService:
             if self.process_instance.bpmn_process_id is None:
                 spiff_workflow = spiff_task.workflow.top_workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.to_dict(spiff_workflow),
+                    bpmn_process_dict=bpmn_process_dict,
                     spiff_workflow=spiff_workflow,
                 )
         else:
@@ -416,7 +483,7 @@ class TaskService:
             if bpmn_process is None:
                 spiff_workflow = spiff_task.workflow
                 bpmn_process = self.add_bpmn_process(
-                    bpmn_process_dict=self.serializer.to_dict(spiff_subprocess),
+                    bpmn_process_dict=bpmn_process_dict["subprocesses"][subprocess_guid],
                     top_level_process=self.process_instance.bpmn_process,
                     bpmn_process_guid=subprocess_guid,
                     spiff_workflow=spiff_workflow,
@@ -435,15 +502,10 @@ class TaskService:
         It will also add tasks and relating json_data entries if the bpmn_process is new.
         It returns tasks and json data records in dictionaries to be added to the session later.
         """
-        tasks = bpmn_process_dict.pop("tasks")
-        bpmn_process_data_dict = bpmn_process_dict.pop("data")
+        tasks = bpmn_process_dict.get("tasks")
+        bpmn_process_data_dict = bpmn_process_dict["data"]
 
-        if "subprocesses" in bpmn_process_dict:
-            bpmn_process_dict.pop("subprocesses")
-        if "spec" in bpmn_process_dict:
-            bpmn_process_dict.pop("spec")
-        if "subprocess_specs" in bpmn_process_dict:
-            bpmn_process_dict.pop("subprocess_specs")
+        _BPMN_PROCESS_EXCLUDED_KEYS = {"data", "subprocesses", "spec", "subprocess_specs"}
 
         bpmn_process = None
         if top_level_process is not None and bpmn_process_guid is not None:
@@ -484,7 +546,7 @@ class TaskService:
 
                 bpmn_process.direct_parent_process_id = direct_bpmn_process_parent.id
 
-        bpmn_process.properties_json = bpmn_process_dict
+        bpmn_process.properties_json = {k: v for k, v in bpmn_process_dict.items() if k not in _BPMN_PROCESS_EXCLUDED_KEYS}
 
         bpmn_process_json_data = self.update_task_data_on_bpmn_process(
             bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict
@@ -499,11 +561,13 @@ class TaskService:
         # to ensure we have an id.
         db.session.add(bpmn_process)
 
+
         if bpmn_process_is_new:
             self.add_tasks_to_bpmn_process(
                 tasks=tasks,
                 spiff_workflow=spiff_workflow,
                 bpmn_process=bpmn_process,
+                process_dict=bpmn_process_dict
             )
             if bpmn_process.guid is not None:
                 self.bpmn_subprocess_mapping[bpmn_process.guid] = bpmn_process
@@ -516,6 +580,7 @@ class TaskService:
         tasks: dict,
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
+        process_dict: dict | None = None,
     ) -> None:
         for task_id, _task_properties in tasks.items():
             # we are going to avoid saving likely and maybe tasks to the db.
@@ -532,7 +597,7 @@ class TaskService:
                     spiff_task,
                     self.bpmn_definition_to_task_definitions_mappings,
                 )
-            self.update_task_model(task_model, spiff_task)
+            self.update_task_model(task_model, spiff_task, process_dict)
             self.task_models[task_model.guid] = task_model
 
     def update_all_tasks_from_spiff_tasks(
@@ -856,5 +921,5 @@ class TaskService:
         user_defined_state = spiff_task.workflow.script_engine.environment.user_defined_state()
         # this helps to convert items like datetime objects to be json serializable
         # clean first to remove callables (e.g., KKV data store getters)
-        converted_data: dict = serializer.registry.convert(serializer.registry.clean(user_defined_state))
+        converted_data: dict = serializer.registry.convert(user_defined_state)
         return converted_data

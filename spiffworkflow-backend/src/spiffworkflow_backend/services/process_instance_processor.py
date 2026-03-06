@@ -1259,6 +1259,7 @@ class ProcessInstanceProcessor:
             bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             task_model_mapping=self.task_model_mapping,
         )
+        self.execution_strategy_delegate = task_model_delegate
 
         if execution_strategy is None:
             if execution_strategy_name is None:
