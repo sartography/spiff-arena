@@ -834,6 +834,7 @@ class ProcessInstanceProcessor:
         else:
             # Automatically create the group if it doesn't exist (includes principal creation)
             group_model = UserService.find_or_create_group(task_lane)
+            lane_assignment_id = group_model.id
 
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
                 # Parse lane_owners entries for groups and users
@@ -864,14 +865,6 @@ class ProcessInstanceProcessor:
                         else:
                             lane_owner_usernames_waiting.append(username_or_email)
 
-                # If groups were specified explicitly, keep lane_assignment_id unset and use HumanTaskGroupModel.
-                if has_groups:
-                    lane_assignment_id = None
-                # If no groups were specified, include the lane name group for backward compatibility.
-                else:
-                    lane_assignment_id = group_model.id
-                    lane_owner_group_ids.append(group_model.id)
-
                 # If explicit owner groups were provided, allow zero current users so future group membership
                 # changes can grant access without failing workflow execution.
                 if not potential_owners and not lane_owner_usernames_waiting and not has_groups:
@@ -884,8 +877,6 @@ class ProcessInstanceProcessor:
                         ),
                     )
             else:
-                lane_assignment_id = group_model.id
-                lane_owner_group_ids.append(group_model.id)
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
