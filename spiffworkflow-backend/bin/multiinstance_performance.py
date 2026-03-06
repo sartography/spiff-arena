@@ -4,7 +4,7 @@ Standalone script - run with: uv run python bin/multiinstance_performance.py
 
 Measures:
 1. SpiffTask.run() - Pure SpiffWorkflow execution
-2. update_bpmn_process() - BPMN process updates (includes workflow data serialization)
+2. update_task_model() - BPMN process updates (includes workflow data serialization)
 3. find_or_create_task_model() - Task model lookup and creation
 4. Other - Unaccounted framework overhead
 """
@@ -77,15 +77,15 @@ class BottleneckInstrumenter:
 
     def __init__(self):
         self.spiff_run_count = 0
-        self.update_bpmn_process_count = 0
+        self.update_task_model_count = 0
         self.find_or_create_count = 0
 
         self.spiff_run_time = 0.0
-        self.update_bpmn_process_time = 0.0
+        self.update_task_model_time = 0.0
         self.find_or_create_time = 0.0
 
         self.original_spiff_run = SpiffTask.run
-        self.original_update_bpmn_process = TaskService.update_bpmn_process
+        self.original_update_task_model = TaskService.update_task_model
         self.original_find_or_create = TaskService.find_or_create_task_model_from_spiff_task
 
         self.results: list[dict] = []
@@ -100,11 +100,11 @@ class BottleneckInstrumenter:
             instrumenter.spiff_run_count += 1
             return result
 
-        def instrumented_update_bpmn_process(service_self, spiff_workflow, bpmn_process):
+        def instrumented_update_task_model(service_self, task_model, spiff_task):
             start = time.time()
-            result = instrumenter.original_update_bpmn_process(service_self, spiff_workflow, bpmn_process)
-            instrumenter.update_bpmn_process_time += time.time() - start
-            instrumenter.update_bpmn_process_count += 1
+            result = instrumenter.original_update_task_model(service_self, task_model, spiff_task)
+            instrumenter.update_task_model_time += time.time() - start
+            instrumenter.update_task_model_count += 1
             return result
 
         def instrumented_find_or_create(service_self, spiff_task):
@@ -115,20 +115,20 @@ class BottleneckInstrumenter:
             return result
 
         SpiffTask.run = instrumented_spiff_run
-        TaskService.update_bpmn_process = instrumented_update_bpmn_process
+        TaskService.update_task_model = instrumented_update_task_model
         TaskService.find_or_create_task_model_from_spiff_task = instrumented_find_or_create
 
     def uninstall(self):
         SpiffTask.run = self.original_spiff_run
-        TaskService.update_bpmn_process = self.original_update_bpmn_process
+        TaskService.update_task_model = self.original_update_task_model
         TaskService.find_or_create_task_model_from_spiff_task = self.original_find_or_create
 
     def reset(self):
         self.spiff_run_count = 0
-        self.update_bpmn_process_count = 0
+        self.update_task_model_count = 0
         self.find_or_create_count = 0
         self.spiff_run_time = 0.0
-        self.update_bpmn_process_time = 0.0
+        self.update_task_model_time = 0.0
         self.find_or_create_time = 0.0
 
     def record(self, loop_count: int, total_time: float):
@@ -138,8 +138,8 @@ class BottleneckInstrumenter:
                 "total_time": total_time,
                 "spiff_run_time": self.spiff_run_time,
                 "spiff_run_count": self.spiff_run_count,
-                "update_bpmn_time": self.update_bpmn_process_time,
-                "update_bpmn_count": self.update_bpmn_process_count,
+                "update_task_time": self.update_task_model_time,
+                "update_task_count": self.update_task_model_count,
                 "find_create_time": self.find_or_create_time,
                 "find_create_count": self.find_or_create_count,
             }
@@ -155,7 +155,7 @@ class BottleneckInstrumenter:
         print("=" * 120)
 
         print(
-            f"{'Items':<8} {'Total':>8}   {'SpiffTask.run()':>28}   {'update_bpmn_process()':>28}   "
+            f"{'Items':<8} {'Total':>8}   {'SpiffTask.run()':>28}   {'update_task_model()':>28}   "
             f"{'find_or_create()':>28}   {'Other':>16}"
         )
         print(
@@ -171,19 +171,19 @@ class BottleneckInstrumenter:
             spiff_ms = (r["spiff_run_time"] / r["spiff_run_count"] * 1000) if r["spiff_run_count"] > 0 else 0
             spiff_pct = (r["spiff_run_time"] / total * 100) if total > 0 else 0
 
-            bpmn_ms = (r["update_bpmn_time"] / r["update_bpmn_count"] * 1000) if r["update_bpmn_count"] > 0 else 0
-            bpmn_pct = (r["update_bpmn_time"] / total * 100) if total > 0 else 0
+            task_ms = (r["update_task_time"] / r["update_task_count"] * 1000) if r["update_task_count"] > 0 else 0
+            task_pct = (r["update_task_time"] / total * 100) if total > 0 else 0
 
             find_ms = (r["find_create_time"] / r["find_create_count"] * 1000) if r["find_create_count"] > 0 else 0
             find_pct = (r["find_create_time"] / total * 100) if total > 0 else 0
 
-            other_time = total - r["spiff_run_time"] - r["update_bpmn_time"] - r["find_create_time"]
+            other_time = total - r["spiff_run_time"] - r["update_task_time"] - r["find_create_time"]
             other_pct = (other_time / total * 100) if total > 0 else 0
 
             print(
                 f"{r['loop_count']:<8} {total:>8.2f}   "
                 f"{r['spiff_run_count']:>7} {r['spiff_run_time']:>7.2f} {spiff_pct:>5.1f} {spiff_ms:>6.2f}   "
-                f"{r['update_bpmn_count']:>7} {r['update_bpmn_time']:>7.2f} {bpmn_pct:>5.1f} {bpmn_ms:>6.2f}   "
+                f"{r['update_task_count']:>7} {r['update_task_time']:>7.2f} {task_pct:>5.1f} {task_ms:>6.2f}   "
                 f"{r['find_create_count']:>7} {r['find_create_time']:>7.2f} {find_pct:>5.1f} {find_ms:>6.2f}   "
                 f"{other_time:>7.2f} {other_pct:>5.1f}"
             )
@@ -194,7 +194,7 @@ class BottleneckInstrumenter:
             baseline = self.results[0]
             print(f"\nScaling Analysis (vs {baseline['loop_count']} items baseline):")
             print(
-                f"{'Items':<8} {'Expected':>10} {'Total':>10} {'SpiffTask':>10} {'update_bpmn':>12} "
+                f"{'Items':<8} {'Expected':>10} {'Total':>10} {'SpiffTask':>10} {'update_task':>12} "
                 f"{'find_create':>12} {'Other':>10}"
             )
             print("-" * 74)
@@ -203,21 +203,21 @@ class BottleneckInstrumenter:
                 expected = r["loop_count"] / baseline["loop_count"]
                 total_scale = r["total_time"] / baseline["total_time"] if baseline["total_time"] > 0 else 0
                 spiff_scale = r["spiff_run_time"] / baseline["spiff_run_time"] if baseline["spiff_run_time"] > 0 else 0
-                bpmn_scale = r["update_bpmn_time"] / baseline["update_bpmn_time"] if baseline["update_bpmn_time"] > 0 else 0
+                task_scale = r["update_task_time"] / baseline["update_task_time"] if baseline["update_task_time"] > 0 else 0
                 find_scale = r["find_create_time"] / baseline["find_create_time"] if baseline["find_create_time"] > 0 else 0
 
                 baseline_other = (
                     baseline["total_time"]
                     - baseline["spiff_run_time"]
-                    - baseline["update_bpmn_time"]
+                    - baseline["update_task_time"]
                     - baseline["find_create_time"]
                 )
-                current_other = r["total_time"] - r["spiff_run_time"] - r["update_bpmn_time"] - r["find_create_time"]
+                current_other = r["total_time"] - r["spiff_run_time"] - r["update_task_time"] - r["find_create_time"]
                 other_scale = current_other / baseline_other if baseline_other > 0 else 0
 
                 print(
                     f"{r['loop_count']:<8} {expected:>9.1f}x {total_scale:>9.1f}x {spiff_scale:>9.1f}x "
-                    f"{bpmn_scale:>11.1f}x {find_scale:>11.1f}x {other_scale:>9.1f}x"
+                    f"{task_scale:>11.1f}x {find_scale:>11.1f}x {other_scale:>9.1f}x"
                 )
 
         print("\n")
