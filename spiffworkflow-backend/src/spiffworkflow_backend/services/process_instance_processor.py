@@ -928,6 +928,18 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
+        self._save_process_instance_state()
+        self._initialize_process_start_time_if_needed()
+
+        metadata = self.extract_metadata()
+        self._handle_process_completion(metadata)
+
+        db.session.add(self.process_instance_model)
+        self._process_human_tasks(metadata)
+        db.session.commit()
+
+    def _save_process_instance_state(self) -> None:
+        """Update process instance status and save BPMN process definition."""
         self.process_instance_model.spiff_serializer_version = SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
@@ -942,10 +954,13 @@ class ProcessInstanceProcessor:
         }
         BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
 
+    def _initialize_process_start_time_if_needed(self) -> None:
+        """Set the process start time if not already set."""
         if self.process_instance_model.start_in_seconds is None:
             self.process_instance_model.start_in_seconds = round(time.time())
 
-        metadata = self.extract_metadata()
+    def _handle_process_completion(self, metadata: dict) -> None:
+        """Handle process completion if the workflow is complete."""
         if self.process_instance_model.end_in_seconds is None:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_model.end_in_seconds = round(time.time())
@@ -960,10 +975,10 @@ class ProcessInstanceProcessor:
                 LoggingService.log_event(ProcessInstanceEventType.process_instance_completed.value, log_extras)
                 queue_event_notifier_if_appropriate(self.process_instance_model, "process_instance_complete")
 
-        db.session.add(self.process_instance_model)
-
+    def _process_human_tasks(self, metadata: dict) -> None:
+        """Process all human tasks, creating new ones and completing old ones."""
         new_human_tasks = []
-        existing_tasks_no_longer_ready_or_waiting = HumanTaskModel.query.filter_by(
+        existing_human_tasks_no_longer_ready_or_waiting = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -975,94 +990,152 @@ class ProcessInstanceProcessor:
             # filter out non-usertasks
             task_spec = ready_or_waiting_task.task_spec
             if task_spec.manual:
-                potential_owner_hash = self.get_potential_owners_from_task(ready_or_waiting_task)
-                extensions = task_spec.extensions
-
-                # in the xml, it's the id attribute. this identifies the process where the activity lives.
-                # if it's in a subprocess, it's the inner process.
-                bpmn_process_identifier = ready_or_waiting_task.workflow.spec.name
-
-                form_file_name = None
-                ui_form_file_name = None
-                json_metadata = {}
-                if "taskMetadataValues" in extensions:
-                    task_metadata_values = extensions["taskMetadataValues"]
-                    # Process each taskMetadataValue using the script engine
-                    for key, value in task_metadata_values.items():
-                        try:
-                            json_metadata[key] = self._script_engine.evaluate(ready_or_waiting_task, value)
-                        except Exception as e:
-                            current_app.logger.warning(
-                                f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
-                            )
-                            msg = f"Failed to evaluate taskMetadataValue {key}: {e}"
-                            json_metadata[f"{key}_error"] = msg
-
-                if "properties" in extensions:
-                    properties = extensions["properties"]
-                    if "formJsonSchemaFilename" in properties:
-                        form_file_name = properties["formJsonSchemaFilename"]
-                    if "formUiSchemaFilename" in properties:
-                        ui_form_file_name = properties["formUiSchemaFilename"]
-
-                human_task = None
-                for at in existing_tasks_no_longer_ready_or_waiting:
-                    if at.task_id == str(ready_or_waiting_task.id):
-                        human_task = at
-                        existing_tasks_no_longer_ready_or_waiting.remove(at)
-
-                if human_task is None:
-                    task_guid = str(ready_or_waiting_task.id)
-                    task_model = TaskModel.query.filter_by(guid=task_guid).first()
-                    if task_model is None:
-                        raise TaskNotFoundError(f"Could not find task for human task with guid: {task_guid}")
-
-                    human_task = HumanTaskModel(
-                        process_instance_id=self.process_instance_model.id,
-                        process_model_display_name=self.process_instance_model.process_model_display_name,
-                        bpmn_process_identifier=bpmn_process_identifier,
-                        form_file_name=form_file_name,
-                        ui_form_file_name=ui_form_file_name,
-                        task_guid=task_model.guid,
-                        task_id=task_guid,
-                        task_name=ready_or_waiting_task.task_spec.bpmn_id,
-                        task_title=self.__class__.truncate_string(ready_or_waiting_task.task_spec.bpmn_name, 255),
-                        task_type=ready_or_waiting_task.task_spec.__class__.__name__,
-                        task_status=TaskState.get_name(ready_or_waiting_task.state),
-                        lane_assignment_id=potential_owner_hash["lane_assignment_id"],
-                        lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
-                        json_metadata=json_metadata,
-                    )
-                    db.session.add(human_task)
+                human_task = self._process_ready_or_waiting_task(
+                    ready_or_waiting_task, existing_human_tasks_no_longer_ready_or_waiting
+                )
+                if human_task is not None:
                     new_human_tasks.append(human_task)
 
-                    for potential_owner in potential_owner_hash["potential_owners"]:
-                        human_task_user = HumanTaskUserModel(
-                            user_id=potential_owner["user_id"], added_by=potential_owner["added_by"], human_task=human_task
-                        )
-                        db.session.add(human_task_user)
-
-                    for group_id in potential_owner_hash["lane_owner_group_ids"]:
-                        human_task_group = HumanTaskGroupModel(human_task=human_task, group_id=group_id)
-                        db.session.add(human_task_group)
-
-                    for username in potential_owner_hash.get("lane_owner_usernames_waiting", []):
-                        human_task_user_waiting = HumanTaskUserWaitingModel(human_task=human_task, username=username)
-                        db.session.add(human_task_user_waiting)
-
-        if len(new_human_tasks) > 0 or len(existing_tasks_no_longer_ready_or_waiting) > 0:
+        if len(new_human_tasks) > 0 or len(existing_human_tasks_no_longer_ready_or_waiting) > 0:
             queue_event_notifier_if_appropriate(self.process_instance_model, "human_tasks_changed")
 
+        self._complete_existing_human_tasks(existing_human_tasks_no_longer_ready_or_waiting)
+
+    def _process_ready_or_waiting_task(
+        self, ready_or_waiting_task: SpiffTask, existing_human_tasks_no_longer_ready_or_waiting: list[HumanTaskModel]
+    ) -> HumanTaskModel | None:
+        """Process a single ready or waiting task, creating a human task if needed."""
+        potential_owner_hash = self.get_potential_owners_from_task(ready_or_waiting_task)
+        extensions = ready_or_waiting_task.task_spec.extensions
+
+        # in the xml, it's the id attribute. this identifies the process where the activity lives.
+        # if it's in a subprocess, it's the inner process.
+        bpmn_process_identifier = ready_or_waiting_task.workflow.spec.name
+
+        json_metadata = self._extract_task_metadata_from_extensions(ready_or_waiting_task, extensions)
+        form_file_name, ui_form_file_name = self._extract_form_properties_from_extensions(extensions)
+
+        human_task = self._find_existing_human_task(ready_or_waiting_task, existing_human_tasks_no_longer_ready_or_waiting)
+
+        if human_task is None:
+            return self._create_new_human_task(
+                ready_or_waiting_task,
+                potential_owner_hash,
+                bpmn_process_identifier,
+                form_file_name,
+                ui_form_file_name,
+                json_metadata,
+            )
+        return None
+
+    def _extract_task_metadata_from_extensions(self, ready_or_waiting_task: SpiffTask, extensions: dict) -> dict:
+        """Extract and evaluate task metadata from task extensions."""
+        json_metadata = {}
+        if "taskMetadataValues" in extensions:
+            task_metadata_values = extensions["taskMetadataValues"]
+            # Process each taskMetadataValue using the script engine
+            for key, value in task_metadata_values.items():
+                try:
+                    json_metadata[key] = self._script_engine.evaluate(ready_or_waiting_task, value)
+                except Exception as e:
+                    current_app.logger.warning(
+                        f"Failed to evaluate taskMetadataValue {key} for task {ready_or_waiting_task.task_spec.name}: {e}"
+                    )
+                    msg = f"Failed to evaluate taskMetadataValue {key}: {e}"
+                    json_metadata[f"{key}_error"] = msg
+        return json_metadata
+
+    def _extract_form_properties_from_extensions(self, extensions: dict) -> tuple[str | None, str | None]:
+        """Extract form file names from task extensions."""
+        form_file_name = None
+        ui_form_file_name = None
+        if "properties" in extensions:
+            properties = extensions["properties"]
+            if "formJsonSchemaFilename" in properties:
+                form_file_name = properties["formJsonSchemaFilename"]
+            if "formUiSchemaFilename" in properties:
+                ui_form_file_name = properties["formUiSchemaFilename"]
+        return form_file_name, ui_form_file_name
+
+    def _find_existing_human_task(
+        self, ready_or_waiting_task: SpiffTask, existing_tasks_no_longer_ready_or_waiting: list[HumanTaskModel]
+    ) -> HumanTaskModel | None:
+        """Find and remove an existing human task from the list if it matches the ready/waiting task."""
+        for at in existing_tasks_no_longer_ready_or_waiting:
+            if at.task_id == str(ready_or_waiting_task.id):
+                existing_tasks_no_longer_ready_or_waiting.remove(at)
+                return at
+        return None
+
+    def _create_new_human_task(
+        self,
+        ready_or_waiting_task: SpiffTask,
+        potential_owner_hash: PotentialOwnerIdList,
+        bpmn_process_identifier: str,
+        form_file_name: str | None,
+        ui_form_file_name: str | None,
+        json_metadata: dict,
+    ) -> HumanTaskModel:
+        """Create a new human task with all associated user and group assignments."""
+        task_guid = str(ready_or_waiting_task.id)
+        task_model = TaskModel.query.filter_by(guid=task_guid).first()
+        if task_model is None:
+            raise TaskNotFoundError(f"Could not find task for human task with guid: {task_guid}")
+
+        human_task = HumanTaskModel(
+            process_instance_id=self.process_instance_model.id,
+            process_model_display_name=self.process_instance_model.process_model_display_name,
+            bpmn_process_identifier=bpmn_process_identifier,
+            form_file_name=form_file_name,
+            ui_form_file_name=ui_form_file_name,
+            task_guid=task_model.guid,
+            task_id=task_guid,
+            task_name=ready_or_waiting_task.task_spec.bpmn_id,
+            task_title=self.__class__.truncate_string(ready_or_waiting_task.task_spec.bpmn_name, 255),
+            task_type=ready_or_waiting_task.task_spec.__class__.__name__,
+            task_status=TaskState.get_name(ready_or_waiting_task.state),
+            lane_assignment_id=potential_owner_hash["lane_assignment_id"],
+            lane_name=self.__class__.truncate_string(ready_or_waiting_task.task_spec.lane, 255),
+            json_metadata=json_metadata,
+        )
+        db.session.add(human_task)
+
+        self._add_human_task_assignments(human_task, potential_owner_hash)
+
+        return human_task
+
+    def _add_human_task_assignments(self, human_task: HumanTaskModel, potential_owner_hash: PotentialOwnerIdList) -> None:
+        """Add user and group assignments to a human task."""
+        for potential_owner in potential_owner_hash["potential_owners"]:
+            human_task_user = HumanTaskUserModel(
+                user_id=potential_owner["user_id"], added_by=potential_owner["added_by"], human_task=human_task
+            )
+            db.session.add(human_task_user)
+
+        for group_id in potential_owner_hash["lane_owner_group_ids"]:
+            human_task_group = HumanTaskGroupModel(human_task=human_task, group_id=group_id)
+            db.session.add(human_task_group)
+
+        for username in potential_owner_hash.get("lane_owner_usernames_waiting", []):
+            human_task_user_waiting = HumanTaskUserWaitingModel(human_task=human_task, username=username)
+            db.session.add(human_task_user_waiting)
+
+    def _complete_existing_human_tasks(self, existing_tasks_no_longer_ready_or_waiting: list[HumanTaskModel]) -> None:
+        """Mark existing human tasks as completed and clean up their waiting assignments."""
         if len(existing_tasks_no_longer_ready_or_waiting) > 0:
             for at in existing_tasks_no_longer_ready_or_waiting:
                 at.completed = True
                 db.session.add(at)
+                self.cleanup_human_task_waiting_assignments(at.id)
 
-                # Cleanup only the waiting user assignments when task is completed
-                # Keep HumanTaskGroupModel entries for historical record of group assignments
-                # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
-                HumanTaskUserWaitingModel.query.filter_by(human_task_id=at.id).delete()
-        db.session.commit()
+    def cleanup_human_task_waiting_assignments(self, human_task_id: int) -> None:
+        """Remove waiting user assignments for a completed human task.
+
+        Cleanup only the waiting user assignments when task is completed.
+        Keep HumanTaskGroupModel entries for historical record of group assignments.
+        Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks.
+        """
+        HumanTaskUserWaitingModel.query.filter_by(human_task_id=human_task_id).delete()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
         """Get a serialized version of a task spec."""
@@ -1527,10 +1600,7 @@ class ProcessInstanceProcessor:
             human_task.task_status = TaskState.get_name(spiff_task.state)
             db.session.add(human_task)
 
-            # Cleanup only the waiting user assignments when task is completed
-            # Keep HumanTaskGroupModel entries for historical record of group assignments
-            # Only delete HumanTaskUserWaitingModel entries since they're only relevant for pending tasks
-            HumanTaskUserWaitingModel.query.filter_by(human_task_id=human_task.id).delete()
+            self.cleanup_human_task_waiting_assignments(human_task.id)
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
