@@ -514,6 +514,7 @@ class TestAuthorizationService(BaseTest):
                 ("/process-instances/for-me", "create"),
                 ("/process-instances/for-me/*", "read"),
                 ("/process-instances/report-metadata", "read"),
+                ("/process-instances/unique-milestone-names", "read"),
                 ("/process-instances/reports/*", "create"),
                 ("/process-instances/reports/*", "delete"),
                 ("/process-instances/reports/*", "read"),

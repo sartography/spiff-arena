@@ -135,12 +135,17 @@ export default function ProcessInstanceListTableWithFilters({
   const { t } = useTranslation();
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceUniqueMilestoneNamesPath]: ['GET'],
     [targetUris.userSearch]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
+  const canReadUniqueMilestoneNames: boolean = ability.can(
+    'GET',
+    targetUris.processInstanceUniqueMilestoneNamesPath,
+  );
 
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
     null,
@@ -463,13 +468,17 @@ export default function ProcessInstanceListTableWithFilters({
       setProcessStatusAllOptions(processStatusAllOptionsArray);
 
       // Fetch distinct milestone values for filtering
-      HttpService.makeCallToBackend({
-        path: `/process-instances/unique-milestone-names`,
-        httpMethod: 'GET',
-        successCallback: (lastMilestoneArray: string[]) => {
-          setLastMilestones(lastMilestoneArray.sort());
-        },
-      });
+      if (canReadUniqueMilestoneNames) {
+        HttpService.makeCallToBackend({
+          path: `/process-instances/unique-milestone-names`,
+          httpMethod: 'GET',
+          successCallback: (lastMilestoneArray: string[]) => {
+            setLastMilestones(lastMilestoneArray.sort());
+          },
+        });
+      } else {
+        setLastMilestones([]);
+      }
 
       getReportMetadataWithReportHash();
     }
@@ -489,6 +498,7 @@ export default function ProcessInstanceListTableWithFilters({
   }, [
     filtersEnabled,
     getReportMetadataWithReportHash,
+    canReadUniqueMilestoneNames,
     permissionsLoaded,
 
     // watch the variant prop so when switching between the "For Me" and "All" pi list tables

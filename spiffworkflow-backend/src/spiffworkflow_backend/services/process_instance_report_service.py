@@ -619,6 +619,35 @@ class ProcessInstanceReportService:
         return process_instance_query
 
     @classmethod
+    def unique_milestone_names_for_user(cls, user: UserModel) -> list[str]:
+        # Scope milestone names to process instances related to the requesting user.
+        process_instance_query = cls.get_basic_query([])
+        process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(  # type: ignore
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == user.id,
+            ),
+        )
+        process_instance_query = process_instance_query.filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == user.id,
+            )
+        )
+        milestone_column = ProcessInstanceModel.__table__.c.last_milestone_bpmn_name
+        rows = (
+            process_instance_query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name)
+            .filter(
+                milestone_column.is_not(None),
+                milestone_column != "",
+            )
+            .distinct()
+            .all()
+        )
+        return sorted([row[0] for row in rows if row[0] is not None])
+
+    @classmethod
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,

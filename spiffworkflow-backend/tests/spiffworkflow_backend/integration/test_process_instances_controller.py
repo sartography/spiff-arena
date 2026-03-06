@@ -235,3 +235,40 @@ class TestProcessInstancesController(BaseTest):
 
         assert None not in milestone_names
         assert "" not in milestone_names
+
+    def test_unique_milestone_name_list_is_scoped_to_requesting_user_relation(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "runs_without_input/sample",
+            process_model_source_directory="sample",
+        )
+        user_one = self.create_user_with_permission(
+            username="user_one",
+            target_uri="/process-instances/unique-milestone-names",
+            permission_names=["read"],
+        )
+        user_two = self.find_or_create_user(username="user_two")
+
+        user_one_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
+        )
+        user_one_instance.last_milestone_bpmn_name = "User One Milestone"
+
+        user_two_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
+        user_two_instance.last_milestone_bpmn_name = "User Two Milestone"
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/process-instances/unique-milestone-names",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        milestone_names = response.json()
+        assert "User One Milestone" in milestone_names
+        assert "User Two Milestone" not in milestone_names
