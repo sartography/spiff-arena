@@ -433,6 +433,7 @@ class ProcessInstanceReportService:
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,
         )
+        process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
 
         return process_instance_query
 

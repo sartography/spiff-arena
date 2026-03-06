@@ -227,37 +227,48 @@ class UserService:
     def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
         current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
         current_human_task_ids = [ca.human_task_id for ca in current_assignments]
+        group_based_assignment_filter = or_(
+            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_owner.value,
+        )
 
         # Find tasks assigned to new groups via either lane_assignment_id (legacy) or HumanTaskGroupModel (new)
         human_tasks_legacy = (
-            HumanTaskModel.query.outerjoin(HumanTaskUserModel)
-            .filter(
+            HumanTaskModel.query.filter(
                 HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
                 HumanTaskModel.completed == False,  # noqa: E712
+            )
+            .filter(~HumanTaskModel.human_task_users.any(HumanTaskUserModel.user_id == user.id))
+            .filter(
                 or_(
-                    and_(
-                        HumanTaskUserModel.user_id != user.id,
-                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                    # Group membership updates should target lane-assignment tasks, not username-only lane_owner tasks.
+                    ~HumanTaskModel.human_task_users.any(),
+                    HumanTaskModel.human_task_users.any(
+                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value
                     ),
-                    HumanTaskUserModel.user_id == None,  # noqa: E711
-                ),
+                )
             )
             .all()
         )
 
         human_tasks_new = (
             HumanTaskModel.query.join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
-            .outerjoin(HumanTaskUserModel, HumanTaskModel.id == HumanTaskUserModel.human_task_id)
             .filter(
                 HumanTaskGroupModel.group_id.in_(new_group_ids),
                 HumanTaskModel.completed == False,  # noqa: E712
+            )
+            .filter(~HumanTaskModel.human_task_users.any(HumanTaskUserModel.user_id == user.id))
+            .filter(
                 or_(
-                    and_(
-                        HumanTaskUserModel.user_id != user.id,
-                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                    # Explicit group mapping (group differs from lane_assignment_id).
+                    HumanTaskGroupModel.group_id != HumanTaskModel.lane_assignment_id,
+                    # Tasks with no lane assignment id but explicit HumanTaskGroup rows.
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    # Backward-compatible lane-assignment tasks.
+                    HumanTaskModel.human_task_users.any(
+                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value
                     ),
-                    HumanTaskUserModel.user_id == None,  # noqa: E711
-                ),
+                )
             )
             .all()
         )
@@ -278,7 +289,7 @@ class UserService:
             HumanTaskUserModel.query.join(HumanTaskModel)
             .filter(
                 HumanTaskUserModel.user_id == user.id,
-                HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                group_based_assignment_filter,
                 HumanTaskModel.lane_assignment_id.in_(old_group_ids),  # type: ignore
                 HumanTaskModel.completed == False,  # noqa: E712
             )
@@ -290,7 +301,7 @@ class UserService:
             .join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
             .filter(
                 HumanTaskUserModel.user_id == user.id,
-                HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+                group_based_assignment_filter,
                 HumanTaskGroupModel.group_id.in_(old_group_ids),
                 HumanTaskModel.completed == False,  # noqa: E712
             )

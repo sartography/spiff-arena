@@ -3,12 +3,67 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUserService(BaseTest):
+    def test_group_membership_changes_update_lane_owner_group_assignments(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_one = self.find_or_create_user("user_one")
+        user_two = self.find_or_create_user("user_two")
+        lane_group = UserService.find_or_create_group("lane_group")
+        reviewers_group = UserService.find_or_create_group("reviewers")
+        UserService.add_user_to_group(user_two, reviewers_group)
+
+        process_instance = ProcessInstanceModel(
+            process_initiator=user_two,
+            process_model_identifier="test/process",
+            process_model_display_name="Test Process",
+        )
+        db.session.add(process_instance)
+        db.session.flush()
+
+        human_task = HumanTaskModel(
+            process_instance_id=process_instance.id,
+            task_id="task_1",
+            task_name="Task 1",
+            task_type="UserTask",
+            task_status="READY",
+            lane_assignment_id=lane_group.id,
+        )
+        db.session.add(human_task)
+        db.session.flush()
+
+        db.session.add(HumanTaskGroupModel(human_task_id=human_task.id, group_id=reviewers_group.id))
+        db.session.add(
+            HumanTaskUserModel(
+                user_id=user_two.id,
+                human_task_id=human_task.id,
+                added_by=HumanTaskUserAddedBy.lane_owner.value,
+            )
+        )
+        db.session.commit()
+
+        UserService.add_user_to_group(user_one, reviewers_group)
+
+        user_one_assignment = HumanTaskUserModel.query.filter_by(user_id=user_one.id, human_task_id=human_task.id).first()
+        assert user_one_assignment is not None
+
+        UserService.remove_user_from_group(user_one, reviewers_group.id)
+        user_one_assignment_after_removal = HumanTaskUserModel.query.filter_by(
+            user_id=user_one.id, human_task_id=human_task.id
+        ).first()
+        assert user_one_assignment_after_removal is None
+
     def test_assigning_a_group_to_a_user_before_the_user_is_created(
         self,
         app: Flask,
