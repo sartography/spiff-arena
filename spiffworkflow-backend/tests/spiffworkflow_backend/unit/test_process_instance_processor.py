@@ -25,6 +25,7 @@ from spiffworkflow_backend.routes.tasks_controller import task_data_update
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -331,6 +332,72 @@ class TestProcessInstanceProcessor(BaseTest):
         group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
         assert len(group_rows) == 1
         assert group_rows[0].group.identifier == "dedupe-reviewers"
+
+    def test_deduplicates_potential_owner_users_from_group_and_explicit_entries(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        repeated_owner = self.find_or_create_user("repeated_owner")
+        dup_group = UserService.find_or_create_group("dup-group")
+        UserService.add_user_to_group(repeated_owner, dup_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:dup-group", repeated_owner.username]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        assignment_rows = HumanTaskUserModel.query.filter_by(human_task_id=finance_task.id, user_id=repeated_owner.id).all()
+        assert len(assignment_rows) == 1
+
+    def test_deduplicates_waiting_usernames_from_lane_owners(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["future_user@example.com", "future_user@example.com"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        waiting_rows = HumanTaskUserWaitingModel.query.filter_by(
+            human_task_id=finance_task.id, username="future_user@example.com"
+        ).all()
+        assert len(waiting_rows) == 1
 
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,

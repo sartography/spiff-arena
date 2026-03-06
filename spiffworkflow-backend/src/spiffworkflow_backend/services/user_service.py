@@ -238,6 +238,7 @@ class UserService:
                 HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
                 HumanTaskModel.completed == False,  # noqa: E712
             )
+            .filter(~HumanTaskModel.human_task_groups.any())
             .filter(~HumanTaskModel.human_task_users.any(HumanTaskUserModel.user_id == user.id))
             .filter(
                 or_(

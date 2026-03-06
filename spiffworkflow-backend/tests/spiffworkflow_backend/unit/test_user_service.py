@@ -12,6 +12,43 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestUserService(BaseTest):
+    def test_group_membership_change_does_not_assign_explicit_lane_owner_group_task_via_lane_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        lane_group_user = self.find_or_create_user("lane_group_user")
+        process_initiator = self.find_or_create_user("process_initiator")
+        lane_group = UserService.find_or_create_group("lane_group")
+        explicit_owner_group = UserService.find_or_create_group("explicit_owner_group")
+
+        process_instance = ProcessInstanceModel(
+            process_initiator=process_initiator,
+            process_model_identifier="test/process",
+            process_model_display_name="Test Process",
+        )
+        db.session.add(process_instance)
+        db.session.flush()
+
+        human_task = HumanTaskModel(
+            process_instance_id=process_instance.id,
+            task_id="task_1",
+            task_name="Task 1",
+            task_type="UserTask",
+            task_status="READY",
+            lane_assignment_id=lane_group.id,
+        )
+        db.session.add(human_task)
+        db.session.flush()
+        db.session.add(HumanTaskGroupModel(human_task_id=human_task.id, group_id=explicit_owner_group.id))
+        db.session.commit()
+
+        UserService.add_user_to_group(lane_group_user, lane_group)
+
+        assignment = HumanTaskUserModel.query.filter_by(user_id=lane_group_user.id, human_task_id=human_task.id).first()
+        assert assignment is None
+
     def test_group_membership_changes_update_lane_owner_group_assignments(
         self,
         app: Flask,

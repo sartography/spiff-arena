@@ -820,6 +820,8 @@ class ProcessInstanceProcessor:
         lane_assignment_id = None
         lane_owner_group_ids: list[int] = []
         lane_owner_usernames_waiting: list[str] = []
+        seen_potential_owner_ids: set[int] = set()
+        seen_waiting_usernames: set[str] = set()
 
         if "allowGuest" in task.task_spec.extensions and task.task_spec.extensions["allowGuest"] == "true":
             guest_user = UserService.find_or_create_guest_user()
@@ -849,20 +851,26 @@ class ProcessInstanceProcessor:
                         has_groups = True
 
                         for user_assignment in owner_group.user_group_assignments:
-                            potential_owners.append(
-                                {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": user_assignment.user_id}
-                            )
+                            if user_assignment.user_id not in seen_potential_owner_ids:
+                                seen_potential_owner_ids.add(user_assignment.user_id)
+                                potential_owners.append(
+                                    {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": user_assignment.user_id}
+                                )
                     else:
                         username_or_email = str(owner_entry)
                         lane_owner_user = UserModel.query.filter(
                             or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
                         ).first()
                         if lane_owner_user is not None:
-                            potential_owners.append(
-                                {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
-                            )
+                            if lane_owner_user.id not in seen_potential_owner_ids:
+                                seen_potential_owner_ids.add(lane_owner_user.id)
+                                potential_owners.append(
+                                    {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
+                                )
                         else:
-                            lane_owner_usernames_waiting.append(username_or_email)
+                            if username_or_email not in seen_waiting_usernames:
+                                seen_waiting_usernames.add(username_or_email)
+                                lane_owner_usernames_waiting.append(username_or_email)
 
                 # If explicit owner groups were provided, allow zero current users so future group membership
                 # changes can grant access without failing workflow execution.
