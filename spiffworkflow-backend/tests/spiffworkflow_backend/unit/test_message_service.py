@@ -1,4 +1,5 @@
 import time
+from uuid import UUID
 
 from flask import Flask
 from flask import g
@@ -90,6 +91,41 @@ class TestMessageService(BaseTest):
         message_instances = MessageInstanceModel.query.all()
         assert len(message_instances) == 1
         assert message_instances[0].correlation_keys == {"MainCorrelationKey": {"uid": 1}}
+
+    def test_receive_message_is_canceled_if_process_is_no_longer_waiting(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/test_message_process",
+            process_model_source_directory="message",
+            bpmn_file_name="message-receive-cancel.bpmn",
+        )
+        user = self.find_or_create_user("initiator_user")
+        process_instance = self.create_process_instance_from_process_model(process_model, user=user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # This is typically called in a background cron process, so we will manually call it
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+
+        # Assure that we have one message receive waiting
+        message_instances = MessageInstanceModel.query.filter_by(message_type="receive", status="ready").all()
+        assert len(message_instances) == 1
+
+        # Complete the manual task, which means the message should no longer be waiting.
+        assert len(process_instance.active_human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        assert len(process_instance.active_human_tasks) == 1, "expected 1 active human task"
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, user, human_task_one)
+
+        # Assure that we no longer have a message waiting.
+        message_instances = MessageInstanceModel.query.filter_by(message_type="receive", status="ready").all()
+        assert len(message_instances) == 0
 
     def test_single_conversation_between_two_processes(
         self,

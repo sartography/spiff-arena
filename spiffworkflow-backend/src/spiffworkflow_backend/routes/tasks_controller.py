@@ -9,24 +9,34 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask import stream_with_context
 from flask.wrappers import Response
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import desc
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -52,6 +62,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_principal_o
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+from spiffworkflow_backend.routes.process_api_blueprint import _get_spiff_task_from_processor
 from spiffworkflow_backend.routes.process_api_blueprint import _get_task_model_for_request
 from spiffworkflow_backend.routes.process_api_blueprint import _get_task_model_from_guid_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _munge_form_ui_schema_based_on_hidden_fields_in_task_data
@@ -78,31 +89,34 @@ def task_allows_guest(
     return make_response(jsonify({"allows_guest": allows_guest}), 200)
 
 
-# this is currently not used by the Frontend
+# this is currently used by the ProcessInstanceShow page on the frontend
 def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
-    assigned_user = aliased(UserModel)
+
     process_initiator_user = aliased(UserModel)
     lane_group = aliased(GroupModel)
     human_task_group = aliased(GroupModel)
+    # This alias is only used for aggregating "all assignees"
+    htum_all = aliased(HumanTaskUserModel)
+    assigned_user_all = aliased(UserModel)
+
     human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .group_by(HumanTaskModel.id)
-        .join(
-            ProcessInstanceModel,
-            ProcessInstanceModel.id == HumanTaskModel.process_instance_id,
-        )
-        .join(
-            process_initiator_user,
-            process_initiator_user.id == ProcessInstanceModel.process_initiator_id,
-        )
-        .join(
-            HumanTaskUserModel,
-            HumanTaskUserModel.human_task_id == HumanTaskModel.id,
-        )
-        .filter(HumanTaskUserModel.user_id == principal.user_id)
-        .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
+        .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
+        .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
+        # Filter my tasks to avoid duplication, but use a separate join to get all assignees for the task
+        .filter(
+            exists().where(
+                and_(
+                    HumanTaskUserModel.human_task_id == HumanTaskModel.id,
+                    HumanTaskUserModel.user_id == principal.user_id,
+                )
+            )
+        )
+        .outerjoin(htum_all, htum_all.human_task_id == HumanTaskModel.id)
+        .outerjoin(assigned_user_all, assigned_user_all.id == htum_all.user_id)
         .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
         .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
         .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
@@ -114,7 +128,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
             ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
-    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    potential_owner_usernames = _get_potential_owner_usernames(assigned_user_all)
     assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
@@ -138,7 +152,7 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
         assigned_group_identifiers,
-        potential_owner_usernames_from_group_concat_or_similar,
+        potential_owner_usernames,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
     response_json = {
@@ -218,6 +232,64 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
     return _get_tasks(page=page, per_page=per_page)
 
 
+def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+    task_models = (
+        db.session.query(TaskModel)  # type: ignore
+        .join(TaskDefinitionModel)
+        .join(ProcessInstanceModel)
+        .filter(
+            TaskModel.state == "STARTED",
+            TaskDefinitionModel.typename == "ServiceTask",
+            ProcessInstanceModel.process_initiator_id == user_id,
+            ProcessInstanceModel.status == "waiting",
+        )
+        .add_columns(
+            TaskModel.guid,
+            TaskModel.state,
+            TaskModel.process_instance_id,
+            TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.typename,
+            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.process_model_display_name,
+        )
+        .order_by(
+            desc(TaskModel.process_instance_id)  # type: ignore
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    results = []
+    for row in task_models.items:
+        results.append(
+            {
+                "id": row.guid,
+                "name": row.bpmn_identifier,
+                "title": row.task_name or row.bpmn_identifier,
+                "type": row.typename,
+                "state": row.state,
+                "process_instance_id": row.process_instance_id,
+                "process_instance_status": row.process_instance_status,
+                "process_model_identifier": row.process_model_identifier,
+                "process_model_display_name": row.process_model_display_name,
+            }
+        )
+
+    response_json = {
+        "results": results,
+        "pagination": {
+            "count": len(task_models.items),
+            "total": task_models.total,
+            "pages": task_models.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
+# DEPRECATED: used to drive old homepage
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(
         processes_started_by_user=False,
@@ -227,6 +299,7 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
     )
 
 
+# DEPRECATED: used to drive old homepage
 def task_list_for_my_groups(
     user_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
@@ -457,6 +530,94 @@ def task_submit(
         if "next_task_assigned_to_me" in response_item:
             response_item = response_item["next_task_assigned_to_me"]
         elif "next_task" in response_item:
+            response_item = response_item["next_task"]
+        return make_response(jsonify(response_item), 200)
+
+
+def _complete_service_task_that_is_waiting_for_callback(
+    process_instance_id: int,
+    task_guid: str,
+    execution_mode: str | None = None,
+) -> dict:
+    """Complete a service task that is waiting for a callback after returning 202.
+
+    This is called when a long-running service task returns a 202 (Accepted) response,
+    leaving the task in STARTED state. The connector later calls back with the result.
+    """
+
+    if not request.is_json:
+        raise ApiError(
+            error_code="invalid_mimetype",
+            message="This endpoint must be called with a json mimetype.",
+            status_code=400,
+        )
+
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    error = None
+
+    with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
+        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+            if ProcessInstanceMigrator.run(process_instance):
+                # Refresh the process instance to get any updates from migration
+                db.session.refresh(process_instance)
+
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+            )
+            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
+
+            # assure we are waiting for a callback.
+            if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
+                queue_process_instance_if_appropriate(process_instance, execution_mode)
+
+                # Set the result variable with the parsed response, just like CustomServiceTask._execute does
+                result_variable = spiff_task.task_spec.result_variable
+                content = request.json
+                if content is None:
+                    content = {}
+                if "body" in content:
+                    content = content["body"]
+                if result_variable:
+                    spiff_task.data[result_variable] = content
+
+                user = UserModel.query.filter_by(id=g.user.id).first()
+                processor.complete_task(spiff_task, user)
+
+                # Run the engine steps.
+                execution_strategy_name = None
+                if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                    execution_strategy_name = "greedy"
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+            else:
+                error = ApiError(
+                    error_code="not_waiting_for_callback",
+                    message="This process instance is not waiting for a callback.",
+                    status_code=400,
+                )
+        if error:
+            raise error  # Raise the error outside the process intance queue service, so we don't error out the process.
+
+        if processor.next_task():
+            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+            task.process_model_uses_queued_execution = queue_enabled_for_process_model()
+            return {"next_task": task}
+
+    # next_task always returns something, even if the instance is complete, so we never get here
+    return {
+        "ok": True,
+        "process_model_identifier": process_instance.process_model_identifier,
+        "process_instance_id": process_instance_id,
+    }
+
+
+def service_task_submit_callback(
+    process_instance_id: int,
+    task_guid: str,
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.service_task_submit_callback"):
+        response_item = _complete_service_task_that_is_waiting_for_callback(process_instance_id, task_guid, execution_mode)
+        if "next_task" in response_item:
             response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)
 
@@ -757,7 +918,7 @@ def task_save_draft(
         )
 
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
     except HumanTaskAlreadyCompletedError:
         return make_response(jsonify({"ok": True}), 200)
 

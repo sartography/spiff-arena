@@ -59,6 +59,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/logs", "relevant_permissions": ["read"]},
     {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},
     {"path": "/message-models", "relevant_permissions": ["read"]},
+    {"path": "/all-message-models", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
@@ -404,7 +405,7 @@ class AuthorizationService:
         return False
 
     @staticmethod
-    def assert_user_can_complete_task(
+    def assert_user_can_complete_human_task(
         process_instance_id: int,
         task_guid: str,
         user: UserModel,
@@ -480,11 +481,9 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
-        new_user = False
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             user_model = UserService().create_user(**user_attributes)
-            new_user = True
         else:
             # Update with the latest information
             user_db_model_changed = False
@@ -517,9 +516,6 @@ class AuthorizationService:
                         old_group_ids.add(group_id)
                         UserService.remove_user_from_group(user_model, group_id)
 
-        # Track group IDs before and after YAML import to catch changes from configuration
-        group_ids_before_yaml_import = {g.id for g in user_model.groups}
-
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
         # the user will immediately need permissions to use the site.
@@ -530,22 +526,6 @@ class AuthorizationService:
 
         # Refresh the groups relationship to get the latest from the database
         db.session.expire(user_model, ["groups"])
-        # Calculate which groups were added/removed by YAML configuration changes
-        group_ids_after_yaml_import = {g.id for g in user_model.groups}
-        yaml_added_group_ids = group_ids_after_yaml_import - group_ids_before_yaml_import
-        yaml_removed_group_ids = group_ids_before_yaml_import - group_ids_after_yaml_import
-
-        # Combine YAML changes with OpenID changes
-        new_group_ids.update(yaml_added_group_ids)
-        old_group_ids.update(yaml_removed_group_ids)
-
-        if new_user:
-            new_group_ids.update({g.id for g in user_model.groups})
-
-        if len(new_group_ids) > 0 or len(old_group_ids) > 0:
-            UserService.update_human_task_assignments_for_user(
-                user_model, new_group_ids=new_group_ids, old_group_ids=old_group_ids
-            )
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore
@@ -677,6 +657,8 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/message-models"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/all-message-models"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))

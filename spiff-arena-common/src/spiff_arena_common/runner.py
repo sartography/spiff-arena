@@ -7,6 +7,8 @@ import uuid
 
 import jsonschema
 
+from spiff_arena_common.data_stores import JSONFileDataStore
+
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
@@ -20,7 +22,7 @@ from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter, Spiff
 from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ServiceTask, UserTask
 from SpiffWorkflow.util.task import TaskFilter, TaskState
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 class CustomManualTask(ManualTask):
     def _run(self, task):
@@ -59,6 +61,10 @@ class CustomUserTaskConverter(SpiffBpmnTaskConverter):
         super().__init__(target_class, registry, typename)
 
 class CustomParser(SpiffBpmnParser):
+    DATA_STORE_CLASSES = {
+        "JSONFileDataStore": JSONFileDataStore,
+    }
+    
     OVERRIDE_PARSER_CLASSES = SpiffBpmnParser.OVERRIDE_PARSER_CLASSES
     OVERRIDE_PARSER_CLASSES.update({full_tag("manualTask"): (SpiffTaskParser, CustomManualTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("task"): (SpiffTaskParser, CustomNoneTask)})
@@ -217,6 +223,18 @@ def _advance_workflow(workflow, task, strategy_name):
         elif strategy_name == "greedy":
             if task.task_spec.__class__.__name__.startswith("Custom"):
                 break
+            if missing_lazy_load_specs(workflow):
+                break
+        elif strategy_name == "unittest":
+            if task.task_spec.__class__.__name__.startswith("Custom"):
+                stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
+                if not stack:
+                    break
+                expected = stack.pop()
+                if task.task_spec.name != expected["id"]:
+                    break
+                task.run()
+                task.data.update(expected["data"])
             if missing_lazy_load_specs(workflow):
                 break
 

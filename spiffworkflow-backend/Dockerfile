@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.13.7-slim-trixie AS base
+FROM python:3.13.12-slim-trixie AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/venv
@@ -30,7 +30,7 @@ RUN apt-get update \
 
 # keep pip up to date
 RUN pip install --upgrade pip
-RUN pip install uv==0.6.16
+RUN pip install uv==0.10.0
 
 # Avoid host:container file ownership issues
 RUN git config --global --add safe.directory '*'
@@ -41,7 +41,7 @@ RUN git config --global --add safe.directory '*'
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-RUN pip install uv==0.6.16
+RUN pip install uv==0.10.0
 
 # default-libmysqlclient-dev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib, psycopg2. See also libpq5 above in deployment image.

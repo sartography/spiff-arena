@@ -43,7 +43,7 @@ import DateAndTimeService from '../services/DateAndTimeService';
 type OwnProps = {
   variant: string; // 'all' or 'for-me'
   isEventsView: boolean;
-  processModelId: string;
+  modifiedProcessModelId: string;
   processInstanceId: number;
 };
 
@@ -65,7 +65,7 @@ const style = {
 export default function ProcessInstanceLogList({
   variant,
   isEventsView = true,
-  processModelId,
+  modifiedProcessModelId,
   processInstanceId,
 }: OwnProps) {
   const [clearAll, setClearAll] = useState<boolean>(false);
@@ -101,9 +101,9 @@ export default function ProcessInstanceLogList({
     shouldDisplayClearButton = true;
   }
 
-  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${processModelId}`;
+  let processInstanceShowPageBaseUrl = `/process-instances/for-me/${modifiedProcessModelId}`;
   if (variant === 'all') {
-    processInstanceShowPageBaseUrl = `/process-instances/${processModelId}`;
+    processInstanceShowPageBaseUrl = `/process-instances/${modifiedProcessModelId}`;
   }
   const taskNameHeader = isEventsView ? t('task_name') : t('milestone');
   const tableType = isEventsView ? 'events' : 'milestones';
@@ -170,7 +170,7 @@ export default function ProcessInstanceLogList({
       typeaheadQueryParamString = '?task_type=IntermediateThrowEvent';
     }
     HttpService.makeCallToBackend({
-      path: `/v1.0/logs/typeahead-filter-values/${processModelId}/${processInstanceId}${typeaheadQueryParamString}`,
+      path: `/v1.0/logs/typeahead-filter-values/${modifiedProcessModelId}/${processInstanceId}${typeaheadQueryParamString}`,
       successCallback: (result: any) => {
         setTaskTypes(result.task_types);
         setEventTypes(result.event_types);
@@ -181,7 +181,7 @@ export default function ProcessInstanceLogList({
   }, [
     searchParams,
     processInstanceId,
-    processModelId,
+    modifiedProcessModelId,
     targetUris.processInstanceLogListPath,
     isEventsView,
     paginationQueryParamPrefix,

@@ -10,4 +10,5 @@ overview_of_builtin_examples
 use_executable_and_nonexecutable_tasks
 bpmn_unit_tests
 file_upload
+long_running_service_tasks
 ```
