@@ -4,7 +4,7 @@ import os
 
 from flask.app import Flask
 from SpiffWorkflow.bpmn.serializer.migration.version_1_3 import update_data_objects  # type: ignore
-from sqlalchemy import or_, false
+from sqlalchemy import or_
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM
@@ -28,8 +28,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 class TestProcessInstanceMigrator(BaseTest):
     def _remove_empty_delta_fields(self, data: dict | list) -> None:
-        """Remove delta fields from serialized workflow data for comparison.
-        """
+        """Remove delta fields from serialized workflow data for comparison."""
         if isinstance(data, dict):
             # Remove delta field if present (we store full data, not deltas)
             if "delta" in data:
@@ -37,11 +36,11 @@ class TestProcessInstanceMigrator(BaseTest):
 
             # Recursively process nested structures
             for value in list(data.values()):
-                if isinstance(value, (dict, list)):
+                if isinstance(value, dict | list):
                     self._remove_empty_delta_fields(value)
         elif isinstance(data, list):
             for item in data:
-                if isinstance(item, (dict, list)):
+                if isinstance(item, dict | list):
                     self._remove_empty_delta_fields(item)
 
     def test_data_migrations_directory_has_not_changed(
@@ -228,7 +227,9 @@ class TestProcessInstanceMigrator(BaseTest):
         self.complete_next_manual_task(processor, execution_mode="synchronous")
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
-    def _import_bpmn_json_for_test(self, app: Flask, bpmn_json_file_name: str, process_model: ProcessModelInfo, assert_match:bool=True) -> tuple:
+    def _import_bpmn_json_for_test(
+        self, app: Flask, bpmn_json_file_name: str, process_model: ProcessModelInfo, assert_match: bool = True
+    ) -> tuple:
         bpmn_json_file = os.path.join(
             app.instance_path,
             "..",

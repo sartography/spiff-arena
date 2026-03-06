@@ -288,7 +288,7 @@ class TaskService:
         bpmn_process.properties_json = new_properties_json
 
         if bpmn_process_json_data is None:
-            bpmn_process_json_data = self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
+            self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
@@ -486,9 +486,7 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_json_data = self.update_task_data_on_bpmn_process(
-            bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict
-        )
+        self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict=bpmn_process_data_dict)
 
         if top_level_process is None:
             self.process_instance.bpmn_process = bpmn_process
