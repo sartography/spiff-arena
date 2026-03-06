@@ -35,7 +35,7 @@ Each Pool requires Lane configuration, even if it contains just a single Lane.
 
 ## Methods to Assign Lane Owners
 
-There are two primary methods to specify who owns a Lane (i.e., who can complete tasks in that Lane):
+There are three primary methods to specify who owns a Lane (i.e., who can complete tasks in that Lane):
 
 ### Method 1: Using User Groups
 
