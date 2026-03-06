@@ -183,7 +183,7 @@ class UserService:
 
     @classmethod
     def apply_waiting_human_task_assignments(cls, user: UserModel) -> None:
-        """Apply any waiting human task assignments when user signs in.
+        """Apply any waiting human task assignments.
 
         When lane_owners specifies a username/email that doesn't exist, we store
         the assignment in HumanTaskUserWaitingModel. When the user signs in,
@@ -200,7 +200,6 @@ class UserService:
         )
 
         for waiting in waiting_assignments:
-            # Check if user is already assigned to this task
             existing = HumanTaskUserModel.query.filter_by(
                 human_task_id=waiting.human_task_id,
                 user_id=user.id,
