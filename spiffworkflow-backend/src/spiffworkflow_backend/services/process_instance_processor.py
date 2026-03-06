@@ -837,7 +837,6 @@ class ProcessInstanceProcessor:
             lane_assignment_id = group_model.id
 
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
-                # Parse lane_owners entries for groups and users
                 lane_owners_list = task.data["lane_owners"][task_lane]
                 has_groups = False
 
