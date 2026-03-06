@@ -42,9 +42,7 @@ def load_test_spec(process_model_id: str, process_model_source_directory: str) -
 
     bpmn_file_name_with_extension = os.path.basename(process_model_id) + ".bpmn"
 
-    file_glob = os.path.join(
-        current_app.instance_path, "..", "..", "tests", "data", process_model_source_directory, "*.*"
-    )
+    file_glob = os.path.join(current_app.instance_path, "..", "..", "tests", "data", process_model_source_directory, "*.*")
 
     files = sorted(glob_module.glob(file_glob))
     if len(files) == 0:
@@ -296,7 +294,7 @@ def clean_db():
 
 def main():
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
-    os.environ["FLASK_SESSION_SECRET_KEY"] = "e7711a3ba96c46c68e084a86952de16f"
+    os.environ["FLASK_SESSION_SECRET_KEY"] = "e7711a3ba96c46c68e084a86952de16f"  # noqa: S105
 
     from spiffworkflow_backend import create_app
 
