@@ -1,4 +1,6 @@
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from uuid import UUID
 
 import pytest
@@ -661,6 +663,14 @@ class TestProcessInstanceProcessor(BaseTest):
             nonlocal rollback_called
             rollback_called = True
 
+        @contextmanager
+        def _fake_dequeued(*args: object, **kwargs: object) -> Iterator[None]:
+            yield
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.routes.tasks_controller.ProcessInstanceQueueService.dequeued",
+            _fake_dequeued,
+        )
         monkeypatch.setattr(db.session, "commit", _raise_commit_error)
         monkeypatch.setattr(db.session, "rollback", _track_rollback)
 
@@ -674,6 +684,56 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert exc.value.error_code == "update_task_data_error"
         assert rollback_called is True
+
+    def test_task_data_update_uses_process_instance_lock_for_blob_storage(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/simple_form",
+            process_model_source_directory="simple_form",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        ready_task = processor.get_ready_user_tasks()[0]
+
+        processor.suspend()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance is not None
+        processor = ProcessInstanceProcessor(
+            process_instance,
+            include_task_data_for_completed_tasks=True,
+            include_completed_subprocesses=True,
+        )
+        WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+        process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+        db.session.add(process_instance)
+        db.session.commit()
+
+        dequeued_called = False
+
+        @contextmanager
+        def _fake_dequeued(*args: object, **kwargs: object) -> Iterator[None]:
+            nonlocal dequeued_called
+            dequeued_called = True
+            yield
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.routes.tasks_controller.ProcessInstanceQueueService.dequeued",
+            _fake_dequeued,
+        )
+
+        task_data_update(
+            process_instance.id,
+            process_model.id,
+            str(ready_task.id),
+            {"new_task_data": json.dumps({"updated": True})},
+        )
+
+        assert dequeued_called is True
 
     def test_step_through_gateway(
         self,

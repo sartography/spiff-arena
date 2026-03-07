@@ -715,7 +715,7 @@ class TaskService:
         return process_path
 
     @classmethod
-    def task_definition_id_path_from_task_model(cls, task_model: TaskModel) -> str:
+    def task_definition_id_path_from_task_model(cls, task_model: TaskModelForDraftData) -> str:
         if task_model.bpmn_process is None:
             raise BpmnProcessNotFoundError(f"Cannot find bpmn process for task with guid {task_model.guid}.")
         full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")

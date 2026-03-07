@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from collections.abc import Generator
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 import sentry_sdk
@@ -75,6 +76,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.task_service import TaskModelForDraftData
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
@@ -349,32 +351,33 @@ def task_data_update(
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
             if WorkflowStorageService.is_blob_based_for_instance(process_instance):
-                processor = ProcessInstanceProcessor(
-                    process_instance,
-                    include_task_data_for_completed_tasks=True,
-                    include_completed_subprocesses=True,
-                )
-                spiff_task = processor.get_task_by_guid(task_guid)
-                if spiff_task is None:
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
+                with ProcessInstanceQueueService.dequeued(process_instance):
+                    processor = ProcessInstanceProcessor(
+                        process_instance,
+                        include_task_data_for_completed_tasks=True,
+                        include_completed_subprocesses=True,
                     )
-                spiff_task.data = new_task_data_dict
-                WorkflowStorageService.save_workflow(process_instance, processor.serialize())
-                ProcessInstanceTmpService.add_event_to_process_instance(
-                    process_instance,
-                    ProcessInstanceEventType.task_data_edited.value,
-                    task_guid=task_guid,
-                )
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not update the Instance. Original error is {e}",
-                    ) from e
+                    spiff_task = processor.get_task_by_guid(task_guid)
+                    if spiff_task is None:
+                        raise ApiError(
+                            error_code="update_task_data_error",
+                            message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
+                        )
+                    spiff_task.data = new_task_data_dict
+                    WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+                    ProcessInstanceTmpService.add_event_to_process_instance(
+                        process_instance,
+                        ProcessInstanceEventType.task_data_edited.value,
+                        task_guid=task_guid,
+                    )
+                    try:
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        raise ApiError(
+                            error_code="update_task_data_error",
+                            message=f"Could not update the Instance. Original error is {e}",
+                        ) from e
             else:
                 task_model = TaskModel.query.filter_by(guid=task_guid).first()
                 if task_model is None:
@@ -979,7 +982,7 @@ def task_save_draft(
         return make_response(jsonify({"ok": True}), 200)
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    task_definition_id_path = TaskService.task_definition_id_path_from_task_model(task_model)
+    task_definition_id_path = TaskService.task_definition_id_path_from_task_model(cast(TaskModelForDraftData, task_model))
     task_draft_data_dict: TaskDraftDataDict = {
         "process_instance_id": process_instance.id,
         "task_definition_id_path": task_definition_id_path,
@@ -995,7 +998,7 @@ def task_save_draft(
     except OperationalError as exception:
         db.session.rollback()
         if "Deadlock" in str(exception):
-            task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+            task_draft_data = TaskService.task_draft_data_from_task_model(cast(TaskModelForDraftData, task_model))
             # if we do not find a task_draft_data record, that means it was deleted when the form was submitted
             # and we therefore have no need to save draft data
             if task_draft_data is not None:

@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_task_model_for_request
 from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
@@ -24,6 +25,8 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_storage_service import SyntheticTaskModel
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 
 def message_form_show(
@@ -122,7 +125,16 @@ def form_submit(
     if "next_task_assigned_to_me" in response_item:
         next_task_assigned_to_me = response_item["next_task_assigned_to_me"]
     elif "next_task" in response_item:
-        task_model = TaskModel.query.filter_by(guid=str(response_item["next_task"].id)).first()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        if process_instance is None:
+            raise (
+                ApiError(
+                    error_code="process_instance_not_found",
+                    message=f"Could not find process instance '{process_instance_id}'.",
+                    status_code=404,
+                )
+            )
+        task_model = _get_task_for_process_instance_or_raise(process_instance, str(response_item["next_task"].id))
         if _assign_task_if_guest(task_model):
             next_task_assigned_to_me = response_item["next_task"]
 
@@ -191,9 +203,10 @@ def _get_form_and_prepare_data(
     task_model = None
     extension_list = extensions
     if task_guid and process_instance:
-        task_model = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance.id).first()
+        task_model = _get_task_for_process_instance_or_raise(process_instance, task_guid)
         task_model.data = task_model.json_data()
-        extension_list = TaskService.get_extensions_from_task_model(task_model)
+        task_definition_properties = task_model.task_definition.properties_json
+        extension_list = task_definition_properties["extensions"] if "extensions" in task_definition_properties else {}
 
     revision = None
     if process_instance:
@@ -229,7 +242,23 @@ def _get_form_and_prepare_data(
     return form_contents
 
 
-def _assign_task_if_guest(task_model: TaskModel) -> bool:
+def _get_task_for_process_instance_or_raise(
+    process_instance: ProcessInstanceModel,
+    task_guid: str,
+) -> TaskModel | SyntheticTaskModel:
+    try:
+        return WorkflowStorageService.get_task(task_guid=task_guid, process_instance=process_instance)
+    except TaskNotFoundError as ex:
+        raise (
+            ApiError(
+                error_code="task_not_found",
+                message=f"Could not find task '{task_guid}' in process_instance {process_instance.id}.",
+                status_code=400,
+            )
+        ) from ex
+
+
+def _assign_task_if_guest(task_model: TaskModel | SyntheticTaskModel) -> bool:
     if not task_model.allows_guest(task_model.process_instance_id):
         return False
 

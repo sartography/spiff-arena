@@ -14,6 +14,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
+from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
@@ -394,7 +395,7 @@ def _process_instance_task_list(
     This is how we know what the state of each task is and how to color things.
     """
     if WorkflowStorageService.is_blob_based_for_instance(process_instance):
-        task_models = WorkflowStorageService.list_tasks(process_instance)
+        blob_task_models = WorkflowStorageService.list_tasks(process_instance)
 
         if bpmn_process_guid is not None:
             bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
@@ -408,19 +409,19 @@ def _process_instance_task_list(
                 )
             bpmn_process_descendants = TaskService.bpmn_process_and_descendants([bpmn_process])
             bpmn_process_descendant_guids = {descendant.guid for descendant in bpmn_process_descendants}
-            task_models = [t for t in task_models if t["bpmn_process_guid"] in bpmn_process_descendant_guids]
+            blob_task_models = [t for t in blob_task_models if t["bpmn_process_guid"] in bpmn_process_descendant_guids]
 
-        to_task_model = None
-        task_models_of_parent_bpmn_processes_guids: list[str] = []
+        blob_to_task_model = None
+        blob_task_models_of_parent_bpmn_processes_guids: list[str] = []
         if to_task_guid is not None:
-            to_task_model = next((t for t in task_models if t["guid"] == to_task_guid), None)
-            if to_task_model is None:
+            blob_to_task_model = next((t for t in blob_task_models if t["guid"] == to_task_guid), None)
+            if blob_to_task_model is None:
                 raise ApiError(
                     error_code="task_not_found",
                     message=f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'",
                     status_code=400,
                 )
-            if to_task_model["state"] not in ["COMPLETED", "ERROR"]:
+            if blob_to_task_model["state"] not in ["COMPLETED", "ERROR"]:
                 raise ApiError(
                     error_code="task_cannot_be_viewed_at",
                     message=(
@@ -429,24 +430,24 @@ def _process_instance_task_list(
                     ),
                     status_code=400,
                 )
-            task_models_of_parent_bpmn_processes_guids = WorkflowStorageService.parent_subprocess_task_guids_for_task(
+            blob_task_models_of_parent_bpmn_processes_guids = WorkflowStorageService.parent_subprocess_task_guids_for_task(
                 task_guid=to_task_guid, process_instance=process_instance
             )
 
             to_task_model_parent = []
-            if to_task_model["runtime_info"] and (
-                "instance" in to_task_model["runtime_info"] or "iteration" in to_task_model["runtime_info"]
+            if blob_to_task_model["runtime_info"] and (
+                "instance" in blob_to_task_model["runtime_info"] or "iteration" in blob_to_task_model["runtime_info"]
             ):
-                to_task_model_parent = [to_task_model["properties_json"]["parent"]]
-            task_models = [
+                to_task_model_parent = [blob_to_task_model["properties_json"]["parent"]]
+            blob_task_models = [
                 tm
-                for tm in task_models
+                for tm in blob_task_models
                 if (
-                    tm["guid"] in task_models_of_parent_bpmn_processes_guids + to_task_model_parent
+                    tm["guid"] in blob_task_models_of_parent_bpmn_processes_guids + to_task_model_parent
                     or (
                         tm["end_in_seconds"] is not None
-                        and to_task_model["end_in_seconds"] is not None
-                        and tm["end_in_seconds"] <= to_task_model["end_in_seconds"]
+                        and blob_to_task_model["end_in_seconds"] is not None
+                        and tm["end_in_seconds"] <= blob_to_task_model["end_in_seconds"]
                     )
                 )
             ]
@@ -457,7 +458,7 @@ def _process_instance_task_list(
             relevant_subprocess_guids = {bpmn_process_guid, None}
             bpmn_process_cache: dict[str | None, list[str]] = {}
 
-            for task_model in task_models:
+            for task_model in blob_task_models:
                 task_bpmn_process_guid = task_model["bpmn_process_guid"]
                 if task_bpmn_process_guid not in bpmn_process_cache:
                     if task_bpmn_process_guid is None:
@@ -473,9 +474,7 @@ def _process_instance_task_list(
                 else:
                     full_bpmn_process_path = bpmn_process_cache[task_bpmn_process_guid]
 
-                row_key = (
-                    f"{':::'.join(full_bpmn_process_path)}:::{task_model['bpmn_identifier']}"
-                )
+                row_key = f"{':::'.join(full_bpmn_process_path)}:::{task_model['bpmn_identifier']}"
                 if task_model["runtime_info"] and (
                     "instance" in task_model["runtime_info"] or "iteration" in task_model["runtime_info"]
                 ):
@@ -491,27 +490,27 @@ def _process_instance_task_list(
                     if task_model["typename"] in ["SubWorkflowTask", "CallActivity"]:
                         relevant_subprocess_guids.add(task_model["guid"])
 
-            task_models = [
+            blob_task_models = [
                 task_model
                 for task_model in list(most_recent_tasks.values()) + additional_tasks
                 if task_model["bpmn_process_guid"] in relevant_subprocess_guids
             ]
 
-        if to_task_model is not None:
-            for task_model in task_models:
+        if blob_to_task_model is not None:
+            for task_model in blob_task_models:
                 end_in_seconds = float(task_model["end_in_seconds"]) if task_model["end_in_seconds"] is not None else None
                 to_end_in_seconds = (
-                    float(to_task_model["end_in_seconds"]) if to_task_model["end_in_seconds"] is not None else None
+                    float(blob_to_task_model["end_in_seconds"]) if blob_to_task_model["end_in_seconds"] is not None else None
                 )
-                if to_task_model["guid"] == task_model["guid"] and task_model["state"] in ["COMPLETED", "ERROR"]:
+                if blob_to_task_model["guid"] == task_model["guid"] and task_model["state"] in ["COMPLETED", "ERROR"]:
                     TaskService.reset_task_model_dict(task_model, state="READY")
                 elif (end_in_seconds is None or to_end_in_seconds is None or to_end_in_seconds < end_in_seconds) and task_model[
                     "guid"
-                ] in task_models_of_parent_bpmn_processes_guids:
+                ] in blob_task_models_of_parent_bpmn_processes_guids:
                     TaskService.reset_task_model_dict(task_model, state="WAITING")
-            return make_response(jsonify(task_models), 200)
+            return make_response(jsonify(blob_task_models), 200)
 
-        return make_response(jsonify(task_models), 200)
+        return make_response(jsonify(blob_task_models), 200)
 
     bpmn_process_ids = []
     bpmn_process = None
@@ -539,18 +538,18 @@ def _process_instance_task_list(
         TaskModel.state.not_in(["LIKELY", "MAYBE"]),  # type: ignore
     )
 
-    to_task_model: TaskModel | None = None
-    task_models_of_parent_bpmn_processes_guids: list[str] = []
+    to_task_model_db: TaskModel | None = None
+    task_models_of_parent_bpmn_processes_guids_db: list[str] = []
     if to_task_guid is not None:
-        to_task_model = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
-        if to_task_model is None:
+        to_task_model_db = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
+        if to_task_model_db is None:
             raise ApiError(
                 error_code="task_not_found",
                 message=f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'",
                 status_code=400,
             )
 
-        if to_task_model.state not in ["COMPLETED", "ERROR"]:
+        if to_task_model_db.state not in ["COMPLETED", "ERROR"]:
             # TODO: find a better term for viewing at task state
             raise ApiError(
                 error_code="task_cannot_be_viewed_at",
@@ -564,18 +563,24 @@ def _process_instance_task_list(
         (
             _parent_bpmn_processes,
             task_models_of_parent_bpmn_processes,
-        ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model)
-        task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
-        if to_task_model.runtime_info and ("instance" in to_task_model.runtime_info or "iteration" in to_task_model.runtime_info):
-            to_task_model_parent = [to_task_model.properties_json["parent"]]
+        ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model_db)
+        task_models_of_parent_bpmn_processes_guids_db = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
+        if to_task_model_db.runtime_info and (
+            "instance" in to_task_model_db.runtime_info or "iteration" in to_task_model_db.runtime_info
+        ):
+            to_task_model_parent = [to_task_model_db.properties_json["parent"]]
         else:
             to_task_model_parent = []
-        task_model_query = task_model_query.filter(
-            or_(
-                TaskModel.end_in_seconds <= to_task_model.end_in_seconds,  # type: ignore
-                TaskModel.guid.in_(task_models_of_parent_bpmn_processes_guids + to_task_model_parent),  # type: ignore
+        query_filters = [TaskModel.guid.in_(task_models_of_parent_bpmn_processes_guids_db + to_task_model_parent)]  # type: ignore
+        if to_task_model_db.end_in_seconds is not None:
+            to_task_model_end_in_seconds = float(to_task_model_db.end_in_seconds)
+            query_filters.append(
+                and_(
+                    TaskModel.end_in_seconds.is_not(None),  # type: ignore
+                    TaskModel.end_in_seconds <= to_task_model_end_in_seconds,  # type: ignore
+                )
             )
-        )
+        task_model_query = task_model_query.filter(or_(*query_filters))
 
     bpmn_process_alias = aliased(BpmnProcessModel)
     direct_parent_bpmn_process_alias = aliased(BpmnProcessModel)
@@ -616,61 +621,63 @@ def _process_instance_task_list(
     if len(bpmn_process_ids) > 0:
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
-    task_models = task_model_query.all()
+    task_model_rows = task_model_query.all()
     if most_recent_tasks_only:
-        most_recent_tasks: dict[str, TaskModel] = {}
-        additional_tasks = []
+        most_recent_tasks_db: dict[str, TaskModel] = {}
+        additional_tasks_db = []
 
         # if you have a loop and there is a subprocess, and you are going around for the second time,
         # ignore the tasks in the "first loop" subprocess
         relevant_subprocess_guids = {bpmn_process_guid, None}
 
-        bpmn_process_cache: dict[str, list[str]] = {}
-        for task_model in task_models:
-            if task_model.bpmn_process_guid not in bpmn_process_cache:
+        bpmn_process_cache_db: dict[str, list[str]] = {}
+        for task_model in task_model_rows:
+            if task_model.bpmn_process_guid not in bpmn_process_cache_db:
                 bpmn_process = BpmnProcessModel.query.filter_by(guid=task_model.bpmn_process_guid).first()
                 full_bpmn_process_path = TaskService.full_bpmn_process_path(bpmn_process)
-                bpmn_process_cache[task_model.bpmn_process_guid] = full_bpmn_process_path
+                bpmn_process_cache_db[task_model.bpmn_process_guid] = full_bpmn_process_path
             else:
-                full_bpmn_process_path = bpmn_process_cache[task_model.bpmn_process_guid]
+                full_bpmn_process_path = bpmn_process_cache_db[task_model.bpmn_process_guid]
 
             row_key = f"{':::'.join(full_bpmn_process_path)}:::{task_model.bpmn_identifier}"
             if task_model.runtime_info and ("instance" in task_model.runtime_info or "iteration" in task_model.runtime_info):
                 # This handles adding all instances of a MI and iterations of loop tasks
-                additional_tasks.append(task_model)
+                additional_tasks_db.append(task_model)
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
             elif (
-                row_key not in most_recent_tasks
-                or most_recent_tasks[row_key].properties_json["last_state_change"]
+                row_key not in most_recent_tasks_db
+                or most_recent_tasks_db[row_key].properties_json["last_state_change"]
                 < task_model.properties_json["last_state_change"]
             ):
-                most_recent_tasks[row_key] = task_model
+                most_recent_tasks_db[row_key] = task_model
 
                 # we may need to remove guids for tasks that are no longer considered most recent but that may not matter
                 # since any task like would no longer be in the list anyway and therefore will not be returned
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
                     relevant_subprocess_guids.add(task_model.guid)
 
-        task_models = [
+        task_model_rows = [
             task_model
-            for task_model in list(most_recent_tasks.values()) + additional_tasks
+            for task_model in list(most_recent_tasks_db.values()) + additional_tasks_db
             if task_model.bpmn_process_guid in relevant_subprocess_guids
         ]
 
-    if to_task_model is not None:
-        task_models_dict = json.loads(current_app.json.dumps(task_models))
+    if to_task_model_db is not None:
+        task_models_dict = json.loads(current_app.json.dumps(task_model_rows))
         for task_model in task_models_dict:
             end_in_seconds = float(task_model["end_in_seconds"]) if task_model["end_in_seconds"] is not None else None
-            if to_task_model.guid == task_model["guid"] and task_model["state"] in ["COMPLETED", "ERROR"]:
+            if to_task_model_db.guid == task_model["guid"] and task_model["state"] in ["COMPLETED", "ERROR"]:
                 TaskService.reset_task_model_dict(task_model, state="READY")
             elif (
-                end_in_seconds is None or to_task_model.end_in_seconds is None or to_task_model.end_in_seconds < end_in_seconds
-            ) and task_model["guid"] in task_models_of_parent_bpmn_processes_guids:
+                end_in_seconds is None
+                or to_task_model_db.end_in_seconds is None
+                or to_task_model_db.end_in_seconds < end_in_seconds
+            ) and task_model["guid"] in task_models_of_parent_bpmn_processes_guids_db:
                 TaskService.reset_task_model_dict(task_model, state="WAITING")
         return make_response(jsonify(task_models_dict), 200)
 
-    return make_response(jsonify(task_models), 200)
+    return make_response(jsonify(task_model_rows), 200)
 
 
 def process_instance_reset(

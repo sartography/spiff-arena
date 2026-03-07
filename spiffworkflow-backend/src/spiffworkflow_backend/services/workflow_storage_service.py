@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import time
 from typing import Any
+from typing import cast
 from uuid import UUID
 
 from flask import current_app
@@ -68,6 +69,18 @@ class SyntheticTaskModel:
     def get_data(self) -> dict:
         return {**self.python_env_data(), **self.json_data()}
 
+    def allows_guest(self, process_instance_id: int) -> bool:
+        properties_json = self.task_definition.properties_json
+        if (
+            "extensions" in properties_json
+            and "allowGuest" in properties_json["extensions"]
+            and properties_json["extensions"]["allowGuest"] == "true"
+            and self.process_instance_id == int(process_instance_id)
+            and self.state != "COMPLETED"
+        ):
+            return True
+        return False
+
 
 class WorkflowStorageService:
     TASK_BASED = "task_based"
@@ -93,7 +106,7 @@ class WorkflowStorageService:
         record = WorkflowBlobStorageModel.query.filter_by(process_instance_id=process_instance.id).first()
         if record is None:
             return None
-        return copy.deepcopy(record.workflow_data)
+        return cast(dict, copy.deepcopy(record.workflow_data))
 
     @classmethod
     def save_workflow(cls, process_instance: ProcessInstanceModel, workflow_dict: dict) -> WorkflowBlobStorageModel:
@@ -112,7 +125,7 @@ class WorkflowStorageService:
             record.updated_at_in_seconds = round(time.time())
 
         db.session.add(record)
-        return record
+        return cast(WorkflowBlobStorageModel, record)
 
     @classmethod
     def get_task(cls, task_guid: str, process_instance: ProcessInstanceModel) -> TaskModel | SyntheticTaskModel:
@@ -263,7 +276,9 @@ class WorkflowStorageService:
 
     @classmethod
     def _workflow_to_guid_mapping(cls, processor: Any) -> dict[int, str | None]:
-        workflow_to_guid = {id(workflow): str(guid) for guid, workflow in processor.bpmn_process_instance.subprocesses.items()}
+        workflow_to_guid: dict[int, str | None] = {
+            id(workflow): str(guid) for guid, workflow in processor.bpmn_process_instance.subprocesses.items()
+        }
         workflow_to_guid[id(processor.bpmn_process_instance)] = None
         return workflow_to_guid
 
@@ -277,11 +292,11 @@ class WorkflowStorageService:
     ) -> BpmnProcessModel | None:
         workflow_guid = workflow_to_guid.get(id(spiff_task.workflow))
         if workflow_guid is None:
-            return process_instance.bpmn_process
-        bpmn_process = processor.bpmn_subprocess_mapping.get(workflow_guid)
+            return cast(BpmnProcessModel | None, process_instance.bpmn_process)
+        bpmn_process = cast(BpmnProcessModel | None, processor.bpmn_subprocess_mapping.get(workflow_guid))
         if bpmn_process is not None:
             return bpmn_process
-        return BpmnProcessModel.query.filter_by(guid=workflow_guid).first()
+        return cast(BpmnProcessModel | None, BpmnProcessModel.query.filter_by(guid=workflow_guid).first())
 
     @classmethod
     def _converted_user_defined_state(cls, processor: Any) -> dict:

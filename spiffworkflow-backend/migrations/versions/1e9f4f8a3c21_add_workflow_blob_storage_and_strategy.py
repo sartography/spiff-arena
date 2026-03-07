@@ -8,6 +8,7 @@ Create Date: 2026-03-06 00:00:00.000000
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -25,7 +26,7 @@ def upgrade():
     op.create_table(
         'workflow_blob_storage',
         sa.Column('process_instance_id', sa.Integer(), nullable=False),
-        sa.Column('workflow_data', sa.JSON(), nullable=False),
+        sa.Column('workflow_data', sa.JSON().with_variant(postgresql.JSONB(), "postgresql"), nullable=False),
         sa.Column('serializer_version', sa.String(length=50), nullable=True),
         sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
         sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),

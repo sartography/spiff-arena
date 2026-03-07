@@ -1698,10 +1698,9 @@ class ProcessInstanceProcessor:
         db.session.commit()
 
     def check_all_tasks(self) -> None:
-        if (
-            current_app.config["SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"] is not True
-            or WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model)
-        ):
+        if current_app.config[
+            "SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"
+        ] is not True or WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model):
             return
         tasks = TaskModel.query.filter_by(process_instance_id=self.process_instance_model.id).all()
         missing_child_guids = []

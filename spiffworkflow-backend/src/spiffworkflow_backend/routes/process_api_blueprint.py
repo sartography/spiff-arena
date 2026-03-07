@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import Any
 from typing import TypedDict
+from typing import cast
 
 import flask.wrappers
 import sentry_sdk
@@ -55,8 +56,10 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
+from spiffworkflow_backend.services.task_service import TaskModelForDraftData
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+from spiffworkflow_backend.services.workflow_storage_service import SyntheticTaskModel
 from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 process_api_blueprint = Blueprint("process_api", __name__)
@@ -454,7 +457,10 @@ def _get_process_model_for_instantiation(
 
 
 def _prepare_form_data(
-    form_file: str, process_model: ProcessModelInfo, task_model: TaskModel | None = None, revision: str | None = None
+    form_file: str,
+    process_model: ProcessModelInfo,
+    task_model: TaskModel | SyntheticTaskModel | None = None,
+    revision: str | None = None,
 ) -> dict:
     try:
         form_contents = GitService.get_file_contents_for_revision_if_git_revision(
@@ -555,7 +561,10 @@ def _task_submit_shared(
 
     # A human task may not always have a persisted TaskModel row (blob storage strategy),
     # so fall back to storage service task lookup by guid.
-    task_model = human_task.task_model
+    task_model: TaskModel | SyntheticTaskModel | None = cast(
+        TaskModel | None,
+        TaskModel.query.filter_by(guid=human_task.task_id, process_instance_id=process_instance.id).first(),
+    )
     if task_model is None:
         try:
             task_model = WorkflowStorageService.get_task(task_guid=human_task.task_id, process_instance=process_instance)
@@ -565,7 +574,7 @@ def _task_submit_shared(
     # delete draft data when we submit a task to ensure cycling back to the task contains the
     # most up-to-date data
     if task_model is not None:
-        task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+        task_draft_data = TaskService.task_draft_data_from_task_model(cast(TaskModelForDraftData, task_model))
         if task_draft_data is not None:
             db.session.delete(task_draft_data)
             db.session.commit()
@@ -638,7 +647,7 @@ def _get_spiff_task_from_processor(
     return spiff_task
 
 
-def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:
+def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel | SyntheticTaskModel:
     if process_instance_id is None:
         task_model = TaskModel.query.filter_by(guid=task_guid).first()
         if task_model is None:
@@ -647,7 +656,7 @@ def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int 
                 message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
                 status_code=400,
             )
-        return task_model
+        return cast(TaskModel, task_model)
 
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     try:
@@ -664,7 +673,7 @@ def _get_task_model_for_request(
     process_instance_id: int,
     task_guid: str = "next",
     with_form_data: bool = False,
-) -> TaskModel:
+) -> TaskModel | SyntheticTaskModel:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if process_instance.status == ProcessInstanceStatus.suspended.value:
@@ -697,16 +706,26 @@ def _get_task_model_for_request(
     task_model.typename = task_definition.typename
     task_model.can_complete = can_complete
     task_model.name_for_display = TaskService.get_name_for_display(task_definition)
-    extensions = TaskService.get_extensions_from_task_model(task_model)
+    extensions: dict = task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
 
     if with_form_data:
-        task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
+        task_bpmn_process = task_model.bpmn_process
+        if task_bpmn_process is None:
+            raise ApiError(
+                error_code="task_bpmn_process_not_found",
+                message=f"Cannot find bpmn process for task '{task_model.guid}'",
+                status_code=400,
+            )
+        task_process_identifier = task_bpmn_process.bpmn_process_definition.bpmn_identifier
         process_model_with_form = process_model
 
         refs = SpecFileService.get_references_for_process(process_model_with_form)
         all_processes = [i.identifier for i in refs]
         if task_process_identifier not in all_processes:
-            top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
+            if isinstance(task_model, TaskModel):
+                top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
+            else:
+                top_bpmn_process = task_bpmn_process
             bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
                 top_bpmn_process.bpmn_process_definition.bpmn_identifier
             )
@@ -725,7 +744,7 @@ def _get_task_model_for_request(
             if "formUiSchemaFilename" in properties:
                 form_ui_schema_file_name = properties["formUiSchemaFilename"]
 
-        task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+        task_draft_data = TaskService.task_draft_data_from_task_model(cast(TaskModelForDraftData, task_model))
 
         saved_form_data = None
         if task_draft_data is not None:

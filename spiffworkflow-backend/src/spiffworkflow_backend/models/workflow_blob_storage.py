@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
@@ -12,7 +13,7 @@ class WorkflowBlobStorageModel(SpiffworkflowBaseDBModel):
     __tablename__ = "workflow_blob_storage"
 
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), primary_key=True)  # type: ignore
-    workflow_data: dict = db.Column(db.JSON, nullable=False)
+    workflow_data: dict = db.Column(db.JSON().with_variant(JSONB, "postgresql"), nullable=False)
     serializer_version: str = db.Column(db.String(50), nullable=True)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
