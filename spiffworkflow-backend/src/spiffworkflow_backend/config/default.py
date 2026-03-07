@@ -253,6 +253,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_FILE_DATA_FILESYSTEM_PAT
 # timeouts for process instances locks as they are run to avoid stale locks
 config_from_env("SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", default="600")
 config_from_env("SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS", default="300")
+config_from_env("SPIFFWORKFLOW_BACKEND_WORKFLOW_STORAGE_STRATEGY", default="task_based")
 
 ### other
 config_from_env(

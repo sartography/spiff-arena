@@ -1,4 +1,5 @@
 import json
+from typing import Any
 from uuid import UUID
 
 from flask.app import Flask
@@ -11,11 +12,14 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
+from spiffworkflow_backend.routes.tasks_controller import task_allows_guest
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -760,3 +764,91 @@ class TestTasksController(BaseTest):
 
         assert initiator_user.username in owners
         assert finance_user.username in owners
+
+    def test_task_show_and_submit_with_blob_storage_strategy(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.create_user_with_permission("super_admin")
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            user,
+            process_group_id="test_group",
+            process_model_id="simple_form",
+        )
+
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 201
+        assert response.json() is not None
+        process_instance_id = int(response.json()["id"])
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        processor = ProcessInstanceProcessor(
+            process_instance,
+            include_task_data_for_completed_tasks=True,
+            include_completed_subprocesses=True,
+        )
+        WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+        process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+        db.session.add(process_instance)
+        db.session.commit()
+
+        response = client.get("/v1.0/tasks", headers=self.logged_in_headers(user))
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert len(response.json()["results"]) == 1
+        task_id = response.json()["results"][0]["id"]
+
+        response = client.get(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}?with_form_data=true",
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        returned_id = response.json().get("id", response.json().get("guid"))
+        assert returned_id == task_id
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(user, additional_headers={"Content-Type": "application/json"}),
+            json={"HEY": "blob data"},
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        assert WorkflowStorageService.load_workflow(process_instance) is not None
+
+    def test_task_allows_guest_returns_false_when_task_lookup_raises_not_found(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: Any,
+    ) -> None:
+        process_instance = ProcessInstanceModel(id=123)
+
+        def _raise_not_found(*args: Any, **kwargs: Any) -> None:
+            raise TaskNotFoundError("missing")
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.routes.tasks_controller._find_process_instance_by_id_or_raise",
+            lambda process_instance_id: process_instance,
+        )
+        monkeypatch.setattr(WorkflowStorageService, "get_task", _raise_not_found)
+
+        response = task_allows_guest(process_instance_id=process_instance.id, task_guid="00000000-0000-0000-0000-000000000000")
+        assert response.status_code == 200
+        assert response.get_json() == {"allows_guest": False}

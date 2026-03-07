@@ -51,6 +51,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataDict
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
@@ -75,6 +76,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 
 def task_allows_guest(
@@ -82,8 +84,22 @@ def task_allows_guest(
     task_guid: str,
 ) -> flask.wrappers.Response:
     allows_guest = False
-    if process_instance_id and task_guid and TaskModel.task_guid_allows_guest(task_guid, process_instance_id):
-        allows_guest = True
+    if process_instance_id and task_guid:
+        process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+        try:
+            task_model = WorkflowStorageService.get_task(task_guid=task_guid, process_instance=process_instance)
+        except TaskNotFoundError:
+            task_model = None
+        if task_model is not None and task_model.task_definition is not None:
+            properties_json = task_model.task_definition.properties_json
+            if (
+                "extensions" in properties_json
+                and "allowGuest" in properties_json["extensions"]
+                and properties_json["extensions"]["allowGuest"] == "true"
+                and task_model.process_instance_id == int(process_instance_id)
+                and task_model.state != "COMPLETED"
+            ):
+                allows_guest = True
     return make_response(jsonify({"allows_guest": allows_guest}), 200)
 
 
@@ -312,7 +328,8 @@ def task_data_show(
 ) -> flask.wrappers.Response:
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_model.data = task_model.json_data()
-    return make_response(jsonify(task_model), 200)
+    payload = task_model if isinstance(task_model, TaskModel) else task_model.__dict__
+    return make_response(jsonify(payload), 200)
 
 
 def task_data_update(
@@ -328,34 +345,54 @@ def task_data_update(
                 f"The process instance needs to be suspended to update the task-data. It is currently: {process_instance.status}"
             )
 
-        task_model = TaskModel.query.filter_by(guid=task_guid).first()
-        if task_model is None:
-            raise ApiError(
-                error_code="update_task_data_error",
-                message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
-            )
-
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
-                task_model, new_task_data_dict, "json_data_hash"
-            )
-            if json_data_dict is not None:
-                JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+            if WorkflowStorageService.is_blob_based_for_instance(process_instance):
+                processor = ProcessInstanceProcessor(
+                    process_instance,
+                    include_task_data_for_completed_tasks=True,
+                    include_completed_subprocesses=True,
+                )
+                spiff_task = processor.get_task_by_guid(task_guid)
+                if spiff_task is None:
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
+                    )
+                spiff_task.data = new_task_data_dict
+                WorkflowStorageService.save_workflow(process_instance, processor.serialize())
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance,
                     ProcessInstanceEventType.task_data_edited.value,
                     task_guid=task_guid,
                 )
-            try:
                 db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                raise ApiError(
-                    error_code="update_task_data_error",
-                    message=f"Could not update the Instance. Original error is {e}",
-                ) from e
+            else:
+                task_model = TaskModel.query.filter_by(guid=task_guid).first()
+                if task_model is None:
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
+                    )
+                json_data_dict = TaskService.update_json_data_on_db_model_and_return_dict_if_updated(
+                    task_model, new_task_data_dict, "json_data_hash"
+                )
+                if json_data_dict is not None:
+                    JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+                    ProcessInstanceTmpService.add_event_to_process_instance(
+                        process_instance,
+                        ProcessInstanceEventType.task_data_edited.value,
+                        task_guid=task_guid,
+                    )
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
     else:
         raise ApiError(
             error_code="update_task_data_error",
@@ -372,6 +409,23 @@ def task_instance_list(
     process_instance_id: int,
     task_guid: str,
 ) -> Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    if WorkflowStorageService.is_blob_based_for_instance(process_instance):
+        try:
+            task_rows = WorkflowStorageService.list_task_instances(task_guid, process_instance)
+        except TaskNotFoundError as ex:
+            raise ApiError(
+                error_code="task_not_found",
+                message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
+                status_code=400,
+            ) from ex
+
+        sorted_task_rows = sorted(
+            task_rows,
+            key=lambda task_model: task_model["properties_json"]["last_state_change"],
+        )
+        return make_response(jsonify(sorted_task_rows), 200)
+
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_model_instances = (
         TaskModel.query.filter_by(task_definition_id=task_model.task_definition.id, bpmn_process_id=task_model.bpmn_process_id)
@@ -508,7 +562,8 @@ def task_show(
         task_guid=task_guid,
         with_form_data=with_form_data,
     )
-    return make_response(jsonify(task_model), 200)
+    payload = task_model if isinstance(task_model, TaskModel) else task_model.__dict__
+    return make_response(jsonify(payload), 200)
 
 
 def task_submit(

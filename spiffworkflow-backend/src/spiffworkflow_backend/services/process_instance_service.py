@@ -59,6 +59,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model_cycle import ProcessModelCycleModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
@@ -79,6 +80,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from spiffworkflow_backend.services.workflow_service import WorkflowService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 FileDataGenerator = Generator[tuple[dict | list, str | int, str], None, None]
@@ -734,8 +736,8 @@ class ProcessInstanceService:
         ):
             # The form_schema should already be associated with the task through the task_show endpoint
             # and passed as part of the task model's form_schema property
-            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-            if task_model is not None:
+            try:
+                task_model = WorkflowStorageService.get_task(str(spiff_task.id), process_instance)
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
                 # Try to get the task's form schema
@@ -772,6 +774,11 @@ class ProcessInstanceService:
 
                     # Raise API error with validation details
                     raise ApiError(error_code="task_data_validation_error", message=error_message, status_code=400) from error
+            except TaskNotFoundError:
+                current_app.logger.warning(
+                    "Skipping task data schema validation because task model could not be found.",
+                    extra={"task_guid": str(spiff_task.id), "process_instance_id": process_instance.id},
+                )
 
         # Process file data and merge form data
         cls.save_file_data_and_replace_with_digest_references(

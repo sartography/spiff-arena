@@ -42,6 +42,7 @@ from spiffworkflow_backend.models.process_instance_file_data import ProcessInsta
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -56,6 +57,7 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -633,17 +635,25 @@ def _get_spiff_task_from_processor(
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:
-    task_model_query = TaskModel.query.filter_by(guid=task_guid)
-    if process_instance_id is not None:
-        task_model_query = task_model_query.filter_by(process_instance_id=process_instance_id)
-    task_model: TaskModel | None = task_model_query.first()
-    if task_model is None:
+    if process_instance_id is None:
+        task_model = TaskModel.query.filter_by(guid=task_guid).first()
+        if task_model is None:
+            raise ApiError(
+                error_code="task_not_found",
+                message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
+                status_code=400,
+            )
+        return task_model
+
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    try:
+        return WorkflowStorageService.get_task(task_guid=task_guid, process_instance=process_instance)
+    except TaskNotFoundError as ex:
         raise ApiError(
             error_code="task_not_found",
             message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
             status_code=400,
-        )
-    return task_model
+        ) from ex
 
 
 def _get_task_model_for_request(

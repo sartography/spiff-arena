@@ -91,6 +91,7 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskRunnab
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -763,6 +764,7 @@ class ProcessInstanceProcessor:
     ) -> tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
+        load_from_blob = WorkflowStorageService.is_blob_based_for_instance(process_instance_model)
         if process_instance_model.spiffworkflow_fully_initialized():
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
@@ -770,17 +772,32 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
-                    bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-                    include_completed_subprocesses=include_completed_subprocesses,
-                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                    task_model_mapping=task_model_mapping,
-                    bpmn_subprocess_mapping=bpmn_subprocess_mapping,
-                    spiff_serializer_version=process_instance_model.spiff_serializer_version,
-                    bpmn_process_definition=process_instance_model.bpmn_process_definition,
-                    bpmn_process=process_instance_model.bpmn_process,
-                    bpmn_process_definition_id=process_instance_model.bpmn_process_definition_id,
-                )
+                if load_from_blob:
+                    full_bpmn_process_dict = WorkflowStorageService.load_workflow(process_instance_model) or {}
+
+                if not full_bpmn_process_dict:
+                    full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
+                        bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+                        include_completed_subprocesses=include_completed_subprocesses,
+                        include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                        task_model_mapping=task_model_mapping,
+                        bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+                        spiff_serializer_version=process_instance_model.spiff_serializer_version,
+                        bpmn_process_definition=process_instance_model.bpmn_process_definition,
+                        bpmn_process=process_instance_model.bpmn_process,
+                        bpmn_process_definition_id=process_instance_model.bpmn_process_definition_id,
+                    )
+                elif process_instance_model.bpmn_process_definition is not None:
+                    spiff_bpmn_process_dict: dict = {"subprocess_specs": {}}
+                    BpmnProcessService.get_definition_dict_for_bpmn_process_definition(
+                        process_instance_model.bpmn_process_definition,
+                        bpmn_definition_to_task_definitions_mappings,
+                    )
+                    BpmnProcessService.set_definition_dict_for_bpmn_subprocess_definitions(
+                        process_instance_model.bpmn_process_definition,
+                        spiff_bpmn_process_dict,
+                        bpmn_definition_to_task_definitions_mappings,
+                    )
                 # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
                 process_copy = copy.deepcopy(full_bpmn_process_dict)
                 bpmn_process_instance = BpmnProcessService.serializer.from_dict(process_copy)
@@ -979,17 +996,13 @@ class ProcessInstanceProcessor:
 
                 if human_task is None:
                     task_guid = str(ready_or_waiting_task.id)
-                    task_model = TaskModel.query.filter_by(guid=task_guid).first()
-                    if task_model is None:
-                        raise TaskNotFoundError(f"Could not find task for human task with guid: {task_guid}")
-
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=self.process_instance_model.process_model_display_name,
                         bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
-                        task_guid=task_model.guid,
+                        task_guid=task_guid,
                         task_id=task_guid,
                         task_name=ready_or_waiting_task.task_spec.bpmn_id,
                         task_title=self.__class__.truncate_string(ready_or_waiting_task.task_spec.bpmn_name, 255),
@@ -1015,6 +1028,9 @@ class ProcessInstanceProcessor:
             for at in existing_tasks_no_longer_ready_or_waiting:
                 at.completed = True
                 db.session.add(at)
+
+        if WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model):
+            WorkflowStorageService.save_workflow(self.process_instance_model, self.serialize())
         db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> dict:
@@ -1072,15 +1088,16 @@ class ProcessInstanceProcessor:
             execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
             self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
 
-        spiff_tasks = self.bpmn_process_instance.get_tasks()
-        task_service = TaskService(
-            process_instance=self.process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
-        )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
+        if not WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model):
+            spiff_tasks = self.bpmn_process_instance.get_tasks()
+            task_service = TaskService(
+                process_instance=self.process_instance_model,
+                serializer=BpmnProcessService.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+                task_model_mapping=self.task_model_mapping,
+            )
+            task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
         ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
 
         self.save()
@@ -1108,14 +1125,15 @@ class ProcessInstanceProcessor:
             if str(dt.id) in processor.bpmn_subprocess_mapping:
                 del processor.bpmn_subprocess_mapping[str(dt.id)]
 
-        task_service = TaskService(
-            process_instance=processor.process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
-            task_model_mapping=processor.task_model_mapping,
-            bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
-        )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
+        if not WorkflowStorageService.is_blob_based_for_instance(process_instance):
+            task_service = TaskService(
+                process_instance=processor.process_instance_model,
+                serializer=BpmnProcessService.serializer,
+                bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
+                task_model_mapping=processor.task_model_mapping,
+                bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
+            )
+            task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
         # Save the process
         processor.save()
@@ -1448,9 +1466,12 @@ class ProcessInstanceProcessor:
         return task_json
 
     def complete_task(self, spiff_task: SpiffTask, user: UserModel, human_task: HumanTaskModel | None = None) -> None:
-        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-        if task_model is None:
-            raise TaskNotFoundError(f"Cannot find a task with guid {spiff_task.id}")
+        use_blob_storage = WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model)
+        task_model = None
+        if not use_blob_storage:
+            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+            if task_model is None:
+                raise TaskNotFoundError(f"Cannot find a task with guid {spiff_task.id}")
 
         if human_task and str(spiff_task.id) != human_task.task_guid:
             raise TaskMismatchError(
@@ -1459,7 +1480,6 @@ class ProcessInstanceProcessor:
             )
 
         run_started_at = time.time()
-        task_model.start_in_seconds = run_started_at
         task_exception = None
         task_event = ProcessInstanceEventType.task_completed.value
         try:
@@ -1472,29 +1492,32 @@ class ProcessInstanceProcessor:
             task_exception = ex
             task_event = ProcessInstanceEventType.task_failed.value
 
-        task_model.end_in_seconds = time.time()
-
         if human_task:
             human_task.completed_by_user_id = user.id
             human_task.completed = True
             human_task.task_status = TaskState.get_name(spiff_task.state)
             db.session.add(human_task)
 
-        task_service = TaskService(
-            process_instance=self.process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            run_started_at=run_started_at,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
-        )
-        task_service.update_task_model(task_model, spiff_task)
-        JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
+        if not use_blob_storage:
+            if task_model is None:
+                raise TaskNotFoundError(f"Cannot find a task with guid {spiff_task.id}")
+            task_model.start_in_seconds = run_started_at
+            task_model.end_in_seconds = time.time()
+            task_service = TaskService(
+                process_instance=self.process_instance_model,
+                serializer=BpmnProcessService.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                run_started_at=run_started_at,
+                bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+                task_model_mapping=self.task_model_mapping,
+            )
+            task_service.update_task_model(task_model, spiff_task)
+            JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
             task_event,
-            task_guid=task_model.guid,
+            task_guid=str(spiff_task.id),
             user=user,
             exception=task_exception,
             log_event=False,
@@ -1515,17 +1538,18 @@ class ProcessInstanceProcessor:
         # and therefore we need to process its parent since the current task will not
         # know what is actually going on.
         # Basically "triggered" means "this task is not part of the task spec outputs"
-        if spiff_task.triggered is True:
-            spiff_task_to_process = spiff_task.parent
-            task_service.update_task_model_with_spiff_task(spiff_task_to_process)
+        if not use_blob_storage:
+            if spiff_task.triggered is True:
+                spiff_task_to_process = spiff_task.parent
+                task_service.update_task_model_with_spiff_task(spiff_task_to_process)
 
-        tasks_to_update = self.bpmn_process_instance.get_tasks(updated_ts=run_started_at)
-        for spiff_task_to_update in tasks_to_update:
-            if spiff_task_to_update.id != spiff_task.id:
-                task_service.update_task_model_with_spiff_task(spiff_task_to_update)
-        self.task_model_mapping, self.bpmn_subprocess_mapping = task_service.get_guid_to_db_object_mappings()
+            tasks_to_update = self.bpmn_process_instance.get_tasks(updated_ts=run_started_at)
+            for spiff_task_to_update in tasks_to_update:
+                if spiff_task_to_update.id != spiff_task.id:
+                    task_service.update_task_model_with_spiff_task(spiff_task_to_update)
+            self.task_model_mapping, self.bpmn_subprocess_mapping = task_service.get_guid_to_db_object_mappings()
 
-        task_service.save_objects_to_database()
+            task_service.save_objects_to_database()
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
@@ -1610,28 +1634,29 @@ class ProcessInstanceProcessor:
         self.bpmn_process_instance.cancel()
         spiff_tasks = self.bpmn_process_instance.get_tasks()
 
-        task_service = TaskService(
-            process_instance=self.process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
-        )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
-
-        # we may want to move this to task_service.update_all_tasks_from_spiff_tasks,
-        # but not sure it's always good to it.
-        # for cancelled tasks, spiff only returns tasks that were cancelled,
-        # not the ones that were deleted so we have to find them
-        spiff_task_guids = [str(st.id) for st in spiff_tasks]
-        tasks_no_longer_in_spiff = TaskModel.query.filter(
-            and_(
-                TaskModel.process_instance_id == self.process_instance_model.id,
-                TaskModel.guid.not_in(spiff_task_guids),  # type: ignore
+        if not WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model):
+            task_service = TaskService(
+                process_instance=self.process_instance_model,
+                serializer=BpmnProcessService.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+                task_model_mapping=self.task_model_mapping,
             )
-        ).all()
-        for task in tasks_no_longer_in_spiff:
-            db.session.delete(task)
+            task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
+
+            # we may want to move this to task_service.update_all_tasks_from_spiff_tasks,
+            # but not sure it's always good to it.
+            # for cancelled tasks, spiff only returns tasks that were cancelled,
+            # not the ones that were deleted so we have to find them
+            spiff_task_guids = [str(st.id) for st in spiff_tasks]
+            tasks_no_longer_in_spiff = TaskModel.query.filter(
+                and_(
+                    TaskModel.process_instance_id == self.process_instance_model.id,
+                    TaskModel.guid.not_in(spiff_task_guids),  # type: ignore
+                )
+            ).all()
+            for task in tasks_no_longer_in_spiff:
+                db.session.delete(task)
 
         self.save()
 
@@ -1673,7 +1698,10 @@ class ProcessInstanceProcessor:
         db.session.commit()
 
     def check_all_tasks(self) -> None:
-        if current_app.config["SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"] is not True:
+        if (
+            current_app.config["SPIFFWORKFLOW_BACKEND_DEBUG_TASK_CONSISTENCY"] is not True
+            or WorkflowStorageService.is_blob_based_for_instance(self.process_instance_model)
+        ):
             return
         tasks = TaskModel.query.filter_by(process_instance_id=self.process_instance_model.id).all()
         missing_child_guids = []

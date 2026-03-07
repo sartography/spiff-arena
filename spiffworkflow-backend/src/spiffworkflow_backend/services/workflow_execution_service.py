@@ -60,6 +60,7 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
@@ -357,14 +358,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.spiff_tasks_to_process: set[UUID] = set()
         self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
 
-        self.task_service = TaskService(
-            process_instance=self.process_instance,
-            serializer=self.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            run_started_at=time.time(),
-            task_model_mapping=task_model_mapping,
-            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
-        )
+        self.task_service = None
+        if self._should_update_task_model():
+            self.task_service = TaskService(
+                process_instance=self.process_instance,
+                serializer=self.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                run_started_at=time.time(),
+                task_model_mapping=task_model_mapping,
+                bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+            )
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
@@ -379,6 +382,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
             # NOTE: used with process-all-tasks and process-children-of-last-task
+            if self.task_service is None:
+                raise Exception("TaskService should be initialized when task model updates are enabled")
             task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happened")
@@ -449,9 +454,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             | TaskState.STARTED
             | TaskState.ERROR,
         ):
-            self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+            if self.task_service is not None:
+                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
-        self.task_service.save_objects_to_database()
+        if self.task_service is not None:
+            self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.add_object_to_db_session(bpmn_process_instance)
@@ -463,11 +470,15 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.after_engine_steps(bpmn_process_instance)
 
     def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
+        if self.task_service is None:
+            return ({}, {})
         return self.task_service.get_guid_to_db_object_mappings()
 
     def _should_update_task_model(self) -> bool:
         """No reason to save task model stuff if the process instance isn't persistent."""
-        return self.process_instance.persistence_level != "none"
+        return self.process_instance.persistence_level != "none" and not WorkflowStorageService.is_blob_based_for_instance(
+            self.process_instance
+        )
 
     def last_completed_spiff_task(self) -> SpiffTask | None:
         return self._last_completed_spiff_task

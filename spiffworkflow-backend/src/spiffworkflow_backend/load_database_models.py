@@ -119,5 +119,6 @@ from spiffworkflow_backend.models.feature_flag import (
 )  # noqa: F401
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel  # noqa: F401
 from spiffworkflow_backend.models.api_log_model import APILogModel  # noqa: F401
+from spiffworkflow_backend.models.workflow_blob_storage import WorkflowBlobStorageModel  # noqa: F401
 
 add_listeners()
