@@ -9,11 +9,88 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstancesController(BaseTest):
+    def test_task_info_to_task_guid_excludes_unfinished_tasks_in_blob_mode(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.create_user_with_permission("super_admin")
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            user,
+            process_group_id="test_group",
+            process_model_id="step_through_gateway",
+        )
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 201
+        assert response.json() is not None
+        process_instance_id = int(response.json()["id"])
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        processor = ProcessInstanceProcessor(process_instance)
+        self.complete_next_manual_task(processor)
+        processor.save()
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        processor = ProcessInstanceProcessor(
+            process_instance,
+            include_task_data_for_completed_tasks=True,
+            include_completed_subprocesses=True,
+        )
+        WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+        process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+        db.session.add(process_instance)
+        db.session.commit()
+
+        response = client.get(
+            (
+                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}"
+                f"/{process_instance_id}/task-info?most_recent_tasks_only=true"
+            ),
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        task_list = response.json()
+        target_task = next((task for task in task_list if task["state"] in ["COMPLETED", "ERROR"]), None)
+        assert target_task is not None
+
+        unfinished_guids = [
+            task["guid"] for task in task_list if task["end_in_seconds"] is None and task["guid"] != target_task["guid"]
+        ]
+        assert len(unfinished_guids) > 0
+
+        response = client.get(
+            (
+                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}"
+                f"/{process_instance_id}/task-info?most_recent_tasks_only=true&to_task_guid={target_task['guid']}"
+            ),
+            headers=self.logged_in_headers(user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        historical_task_guids = {task["guid"] for task in response.json()}
+        for unfinished_guid in unfinished_guids:
+            assert unfinished_guid not in historical_task_guids
+
     def test_find_by_id(
         self,
         app: Flask,

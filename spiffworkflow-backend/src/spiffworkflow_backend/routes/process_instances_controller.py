@@ -442,10 +442,12 @@ def _process_instance_task_list(
                 tm
                 for tm in task_models
                 if (
-                    tm["end_in_seconds"] is None
-                    or to_task_model["end_in_seconds"] is None
-                    or tm["end_in_seconds"] <= to_task_model["end_in_seconds"]
-                    or tm["guid"] in task_models_of_parent_bpmn_processes_guids + to_task_model_parent
+                    tm["guid"] in task_models_of_parent_bpmn_processes_guids + to_task_model_parent
+                    or (
+                        tm["end_in_seconds"] is not None
+                        and to_task_model["end_in_seconds"] is not None
+                        and tm["end_in_seconds"] <= to_task_model["end_in_seconds"]
+                    )
                 )
             ]
 
@@ -453,11 +455,26 @@ def _process_instance_task_list(
             most_recent_tasks: dict[str, dict] = {}
             additional_tasks = []
             relevant_subprocess_guids = {bpmn_process_guid, None}
+            bpmn_process_cache: dict[str | None, list[str]] = {}
 
             for task_model in task_models:
+                task_bpmn_process_guid = task_model["bpmn_process_guid"]
+                if task_bpmn_process_guid not in bpmn_process_cache:
+                    if task_bpmn_process_guid is None:
+                        bpmn_process = process_instance.bpmn_process
+                    else:
+                        bpmn_process = BpmnProcessModel.query.filter_by(guid=task_bpmn_process_guid).first()
+
+                    if bpmn_process is None:
+                        full_bpmn_process_path = [task_model["bpmn_process_definition_identifier"]]
+                    else:
+                        full_bpmn_process_path = TaskService.full_bpmn_process_path(bpmn_process)
+                    bpmn_process_cache[task_bpmn_process_guid] = full_bpmn_process_path
+                else:
+                    full_bpmn_process_path = bpmn_process_cache[task_bpmn_process_guid]
+
                 row_key = (
-                    f"{task_model['bpmn_process_definition_identifier']}:::{task_model['bpmn_process_guid']}:::"
-                    f"{task_model['bpmn_identifier']}"
+                    f"{':::'.join(full_bpmn_process_path)}:::{task_model['bpmn_identifier']}"
                 )
                 if task_model["runtime_info"] and (
                     "instance" in task_model["runtime_info"] or "iteration" in task_model["runtime_info"]

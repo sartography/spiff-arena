@@ -553,18 +553,22 @@ def _task_submit_shared(
             )
         queue_process_instance_if_appropriate(process_instance, execution_mode)
 
-    # currently task_model has the potential to be None. This should be removable once
-    # we backfill the human_task table for task_guid and make that column not nullable
-    task_model: TaskModel | None = human_task.task_model
+    # A human task may not always have a persisted TaskModel row (blob storage strategy),
+    # so fall back to storage service task lookup by guid.
+    task_model = human_task.task_model
     if task_model is None:
-        task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
+        try:
+            task_model = WorkflowStorageService.get_task(task_guid=human_task.task_id, process_instance=process_instance)
+        except TaskNotFoundError:
+            task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
 
     # delete draft data when we submit a task to ensure cycling back to the task contains the
     # most up-to-date data
-    task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
-    if task_draft_data is not None:
-        db.session.delete(task_draft_data)
-        db.session.commit()
+    if task_model is not None:
+        task_draft_data = TaskService.task_draft_data_from_task_model(task_model)
+        if task_draft_data is not None:
+            db.session.delete(task_draft_data)
+            db.session.commit()
 
     next_human_task_assigned_to_me = TaskService.next_human_task_for_user(process_instance_id, principal.user_id)
     if next_human_task_assigned_to_me:
@@ -573,7 +577,7 @@ def _task_submit_shared(
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
-    if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
+    if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"] and task_model is not None:
         guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
         return {"guest_confirmation": guest_confirmation}
 

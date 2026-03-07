@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from hashlib import sha256
+from typing import Protocol
 from typing import TypedDict
 from uuid import UUID
 
@@ -29,7 +30,6 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
@@ -38,6 +38,13 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 class StartAndEndTimes(TypedDict):
     start_in_seconds: float | None
     end_in_seconds: float | None
+
+
+class TaskModelForDraftData(Protocol):
+    process_instance_id: int
+    task_definition_id: int
+    bpmn_process: BpmnProcessModel | None
+    guid: str | None
 
 
 class TaskModelError(Exception):
@@ -683,26 +690,42 @@ class TaskService:
     @classmethod
     def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel, definition_column: str = "bpmn_identifier") -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
-        bpmn_process_identifiers: list[str] = []
-        if bpmn_process.guid:
-            task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
-            if task_model is None:
-                raise TaskNotFoundError(f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}.")
-            (
-                parent_bpmn_processes,
-                _task_models_of_parent_bpmn_processes,
-            ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
-            for parent_bpmn_process in parent_bpmn_processes:
-                bpmn_process_identifiers.append(getattr(parent_bpmn_process.bpmn_process_definition, definition_column))
-        bpmn_process_identifiers.append(getattr(bpmn_process.bpmn_process_definition, definition_column))
-        return bpmn_process_identifiers
+        process_path = cls.full_bpmn_process_model_path(bpmn_process)
+        return [getattr(path_item.bpmn_process_definition, definition_column) for path_item in process_path]
+
+    @classmethod
+    def full_bpmn_process_model_path(cls, bpmn_process: BpmnProcessModel) -> list[BpmnProcessModel]:
+        """Returns the bpmn process ancestry path from top-level process to the given process."""
+        process_path = [bpmn_process]
+        current_process = bpmn_process
+        seen_ids = {bpmn_process.id}
+        while current_process.direct_parent_process_id is not None:
+            parent_process = BpmnProcessModel.query.filter_by(id=current_process.direct_parent_process_id).first()
+            if parent_process is None:
+                raise BpmnProcessNotFoundError(
+                    f"Cannot find direct parent process with id {current_process.direct_parent_process_id}."
+                )
+            if parent_process.id in seen_ids:
+                break
+            process_path.append(parent_process)
+            seen_ids.add(parent_process.id)
+            current_process = parent_process
+
+        process_path.reverse()
+        return process_path
+
+    @classmethod
+    def task_definition_id_path_from_task_model(cls, task_model: TaskModel) -> str:
+        if task_model.bpmn_process is None:
+            raise BpmnProcessNotFoundError(f"Cannot find bpmn process for task with guid {task_model.guid}.")
+        full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")
+        return f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
 
     @classmethod
     def task_draft_data_from_task_model(
-        cls, task_model: TaskModel, create_if_not_exists: bool = False
+        cls, task_model: TaskModelForDraftData, create_if_not_exists: bool = False
     ) -> TaskDraftDataModel | None:
-        full_bpmn_process_id_path = cls.full_bpmn_process_path(task_model.bpmn_process, "id")
-        task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+        task_definition_id_path = cls.task_definition_id_path_from_task_model(task_model)
         task_draft_data: TaskDraftDataModel | None = TaskDraftDataModel.query.filter_by(
             process_instance_id=task_model.process_instance_id, task_definition_id_path=task_definition_id_path
         ).first()

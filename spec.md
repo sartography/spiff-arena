@@ -1,5 +1,7 @@
 # Implementation Plan Summary (Task Table -> Workflow Blob)
 
+note: Partially implemented, but keep going.
+
 1. Decision to lock first
 
 - Treat this as two strategies only:

@@ -367,7 +367,14 @@ def task_data_update(
                     ProcessInstanceEventType.task_data_edited.value,
                     task_guid=task_guid,
                 )
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
             else:
                 task_model = TaskModel.query.filter_by(guid=task_guid).first()
                 if task_model is None:
@@ -972,8 +979,7 @@ def task_save_draft(
         return make_response(jsonify({"ok": True}), 200)
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    full_bpmn_process_id_path = TaskService.full_bpmn_process_path(task_model.bpmn_process, "id")
-    task_definition_id_path = f"{':'.join(map(str, full_bpmn_process_id_path))}:{task_model.task_definition_id}"
+    task_definition_id_path = TaskService.task_definition_id_path_from_task_model(task_model)
     task_draft_data_dict: TaskDraftDataDict = {
         "process_instance_id": process_instance.id,
         "task_definition_id_path": task_definition_id_path,

@@ -2,6 +2,7 @@ from flask import Flask
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -110,6 +111,62 @@ class TestTaskService(BaseTest):
         assert len(task_models) == 1
         assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == "Level3"
         assert task_models[0].task_definition.bpmn_identifier == "level3"
+
+    def test_full_bpmn_process_path_uses_direct_parent_chain_when_subprocess_task_row_missing(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn_file_names = [
+            "call_activity_level_3",
+            "call_activity_level_2b",
+            "call_activity_level_2",
+        ]
+        for bpmn_file_name in bpmn_file_names:
+            load_test_spec(
+                f"test_group/{bpmn_file_name}",
+                process_model_source_directory="call_activity_nested",
+                bpmn_file_name=bpmn_file_name,
+            )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == "complete"
+
+        bpmn_process_level_2b = (
+            BpmnProcessModel.query.join(BpmnProcessDefinitionModel)
+            .filter(BpmnProcessDefinitionModel.bpmn_identifier == "Level2b")
+            .order_by(BpmnProcessModel.id)
+            .first()
+        )
+        assert bpmn_process_level_2b is not None
+        assert bpmn_process_level_2b.guid is not None
+
+        subprocess_task_model = TaskModel.query.filter_by(guid=bpmn_process_level_2b.guid).first()
+        assert subprocess_task_model is not None
+        db.session.delete(subprocess_task_model)
+        db.session.commit()
+
+        full_bpmn_process_path = TaskService.full_bpmn_process_path(bpmn_process_level_2b)
+        assert full_bpmn_process_path == ["Level1", "Level2", "Level2b"]
+
+        task_model_level_2b = (
+            TaskModel.query.join(TaskDefinitionModel)
+            .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
+            .first()
+        )
+        assert task_model_level_2b is not None
+
+        task_definition_id_path = TaskService.task_definition_id_path_from_task_model(task_model_level_2b)
+        expected_process_id_path = TaskService.full_bpmn_process_path(task_model_level_2b.bpmn_process, "id")
+        assert (
+            task_definition_id_path == f"{':'.join(map(str, expected_process_id_path))}:{task_model_level_2b.task_definition_id}"
+        )
 
     def test_bpmn_process_for_called_activity_or_top_level_process(
         self,
