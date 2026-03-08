@@ -78,6 +78,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import TaskModelForDraftData
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_storage_service import SyntheticTaskModel
 from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 
 
@@ -330,7 +331,7 @@ def task_data_show(
 ) -> flask.wrappers.Response:
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_model.data = task_model.json_data()
-    payload = task_model if isinstance(task_model, TaskModel) else task_model.__dict__
+    payload = task_model if isinstance(task_model, TaskModel) else _serialize_synthetic_task_model(task_model)
     return make_response(jsonify(payload), 200)
 
 
@@ -572,8 +573,36 @@ def task_show(
         task_guid=task_guid,
         with_form_data=with_form_data,
     )
-    payload = task_model if isinstance(task_model, TaskModel) else task_model.__dict__
+    payload = task_model if isinstance(task_model, TaskModel) else _serialize_synthetic_task_model(task_model)
     return make_response(jsonify(payload), 200)
+
+
+def _serialize_synthetic_task_model(task_model: SyntheticTaskModel) -> dict[str, Any]:
+    """Return task payload matching task API shape without leaking internal fields."""
+    return {
+        "guid": task_model.guid,
+        "bpmn_process_id": task_model.bpmn_process_id,
+        "process_instance_id": task_model.process_instance_id,
+        "task_definition_id": task_model.task_definition_id,
+        "state": task_model.state,
+        "properties_json": task_model.properties_json,
+        "json_data_hash": None,
+        "python_env_data_hash": None,
+        "runtime_info": task_model.runtime_info,
+        "start_in_seconds": task_model.start_in_seconds,
+        "end_in_seconds": task_model.end_in_seconds,
+        "data": task_model.data,
+        "saved_form_data": task_model.saved_form_data,
+        "form_schema": task_model.form_schema,
+        "form_ui_schema": task_model.form_ui_schema,
+        "process_model_display_name": task_model.process_model_display_name,
+        "process_model_identifier": task_model.process_model_identifier,
+        "typename": task_model.typename,
+        "can_complete": task_model.can_complete,
+        "extensions": task_model.extensions,
+        "name_for_display": task_model.name_for_display,
+        "signal_buttons": task_model.signal_buttons,
+    }
 
 
 def task_submit(

@@ -819,6 +819,10 @@ class TestTasksController(BaseTest):
         assert response.json() is not None
         returned_id = response.json().get("id", response.json().get("guid"))
         assert returned_id == task_id
+        assert "_task_data" not in response.json()
+        assert "_python_env_data" not in response.json()
+        assert "task_definition" not in response.json()
+        assert "bpmn_process" not in response.json()
 
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{task_id}",

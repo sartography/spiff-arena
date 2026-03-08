@@ -5,12 +5,31 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.workflow_storage_service import SyntheticTaskModel
 from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestWorkflowStorageService(BaseTest):
+    def test_synthetic_task_sets_end_time_for_cancelled_state(self) -> None:
+        dummy_task_definition = type("DummyTaskDefinition", (), {"id": 11})()
+        properties_json = {"last_state_change": 123456}
+
+        synthetic_task = SyntheticTaskModel(
+            guid="guid-1",
+            process_instance_id=99,
+            task_definition=dummy_task_definition,
+            bpmn_process=None,
+            state="CANCELLED",
+            properties_json=properties_json,
+            runtime_info=None,
+            task_data=None,
+            python_env_data=None,
+        )
+
+        assert synthetic_task.end_in_seconds == 123456
+
     def test_strategy_resolution_prefers_process_instance_override(
         self,
         app: Flask,

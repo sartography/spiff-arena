@@ -45,7 +45,12 @@ class SyntheticTaskModel:
         self._task_data = task_data or {}
         self._python_env_data = python_env_data or {}
         self.start_in_seconds = properties_json.get("last_state_change")
-        self.end_in_seconds = properties_json.get("last_state_change") if state in ["COMPLETED", "ERROR"] else None
+        finished_states = {
+            TaskState.get_name(TaskState.COMPLETED),
+            TaskState.get_name(TaskState.ERROR),
+            TaskState.get_name(TaskState.CANCELLED),
+        }
+        self.end_in_seconds = properties_json.get("last_state_change") if state in finished_states else None
 
         # dynamically-populated fields used in request handlers
         self.data: dict | None = None

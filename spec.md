@@ -1,6 +1,7 @@
 # Implementation Plan Summary (Task Table -> Workflow Blob)
 
 note: Partially implemented, but keep going.
+note: feel free to check .cecli/runs for details of past runs
 
 1. Decision to lock first
 

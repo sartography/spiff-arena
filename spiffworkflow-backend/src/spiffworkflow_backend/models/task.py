@@ -50,7 +50,12 @@ class TaskModel(SpiffworkflowBaseDBModel):
     guid: str = db.Column(db.String(36), nullable=False, index=True, primary_key=True, unique=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
-    human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
+    human_tasks = relationship(
+        "HumanTaskModel",
+        back_populates="task_model",
+        cascade="delete",
+        primaryjoin="TaskModel.guid == foreign(HumanTaskModel.task_guid)",
+    )
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json

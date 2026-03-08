@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from flask import g
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import foreign
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
@@ -41,8 +42,13 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
-    task_guid: str = db.Column(ForeignKey(TaskModel.guid), nullable=True, index=True)
-    task_model = relationship(TaskModel)
+    task_guid: str = db.Column(db.String(36), nullable=True, index=True)
+    task_model = relationship(
+        TaskModel,
+        primaryjoin=lambda: foreign(HumanTaskModel.task_guid) == TaskModel.guid,  # type: ignore[no-untyped-call]
+        back_populates="human_tasks",
+        foreign_keys=lambda: [HumanTaskModel.task_guid],
+    )
 
     task_id: str = db.Column(db.String(50))  # guid
     task_name: str = db.Column(db.String(255))  # bpmn id
