@@ -266,12 +266,10 @@ class TaskService:
         self,
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
-        bpmn_process_json_data: dict | None = None,
     ) -> None:
         self._update_bpmn_process_internal(
             spiff_workflow=spiff_workflow,
             bpmn_process=bpmn_process,
-            bpmn_process_json_data=bpmn_process_json_data,
             recurse_parents=True,
         )
 
@@ -279,7 +277,6 @@ class TaskService:
         self,
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
-        bpmn_process_json_data: dict | None = None,
         recurse_parents: bool = True,
     ) -> None:
         new_properties_json = copy.copy(bpmn_process.properties_json)
@@ -287,8 +284,7 @@ class TaskService:
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
-        if bpmn_process_json_data is None:
-            self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
+        self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
 
         self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
 
