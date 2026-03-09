@@ -224,15 +224,9 @@ class UserService:
         return None
 
     @classmethod
-    def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
-        current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
-        current_human_task_ids = [ca.human_task_id for ca in current_assignments]
-        group_based_assignment_filter = or_(
-            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
-            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_owner.value,
-        )
-
-        # Find tasks assigned to new groups via either lane_assignment_id (legacy) or HumanTaskGroupModel (new)
+    def _get_tasks_for_new_groups(cls, user: UserModel, new_group_ids: set[int]) -> list[HumanTaskModel]:
+        """Find tasks assigned to new groups via legacy lane_assignment_id or HumanTaskGroupModel."""
+        # Legacy: tasks using lane_assignment_id
         human_tasks_legacy = (
             HumanTaskModel.query.filter(
                 HumanTaskModel.lane_assignment_id.in_(new_group_ids),  # type: ignore
@@ -252,6 +246,7 @@ class UserService:
             .all()
         )
 
+        # New: tasks using HumanTaskGroupModel
         human_tasks_new = (
             HumanTaskModel.query.join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
             .filter(
@@ -274,18 +269,24 @@ class UserService:
             .all()
         )
 
-        # Combine and deduplicate tasks from both sources
-        all_human_tasks = {ht.id: ht for ht in human_tasks_legacy + human_tasks_new}.values()
+        return list({ht.id: ht for ht in human_tasks_legacy + human_tasks_new}.values())
 
-        for human_task in all_human_tasks:
-            if human_task.id not in current_human_task_ids:
+    @classmethod
+    def _add_user_to_new_tasks(cls, user: UserModel, tasks: list[HumanTaskModel], current_task_ids: list[int]) -> None:
+        """Add user assignments to tasks they don't already have access to."""
+        for human_task in tasks:
+            if human_task.id not in current_task_ids:
                 human_task_user = HumanTaskUserModel(
                     user_id=user.id, human_task_id=human_task.id, added_by=HumanTaskUserAddedBy.lane_assignment.value
                 )
                 db.session.add(human_task_user)
 
-        # Remove assignments from tasks associated with old groups via either method
-        # But only if the user is no longer in ANY group associated with the task
+    @classmethod
+    def _get_assignments_for_old_groups(
+        cls, user: UserModel, old_group_ids: set[int], group_based_assignment_filter: Any
+    ) -> dict[int, HumanTaskUserModel]:
+        """Find assignments from old groups that may need removal."""
+        # Legacy: assignments via lane_assignment_id
         human_task_assignments_legacy = (
             HumanTaskUserModel.query.join(HumanTaskModel)
             .filter(
@@ -297,6 +298,7 @@ class UserService:
             .all()
         )
 
+        # New: assignments via HumanTaskGroupModel
         human_task_assignments_new = (
             HumanTaskUserModel.query.join(HumanTaskModel)
             .join(HumanTaskGroupModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
@@ -309,35 +311,59 @@ class UserService:
             .all()
         )
 
-        # Combine and deduplicate potential assignments to delete
-        potential_assignments_to_delete = {a.id: a for a in human_task_assignments_legacy + human_task_assignments_new}
+        return {a.id: a for a in human_task_assignments_legacy + human_task_assignments_new}
 
-        # Get all group ids the user currently belongs to
-        current_user_group_ids = {uga.group_id for uga in user.user_group_assignments}
+    @classmethod
+    def _get_task_group_ids(cls, human_task: HumanTaskModel) -> set[int]:
+        """Collect all group IDs assigned to a task from both legacy and new sources."""
+        task_group_ids = set()
 
-        for assignment in potential_assignments_to_delete.values():
+        # Add legacy lane_assignment_id if present
+        if human_task.lane_assignment_id is not None:
+            task_group_ids.add(human_task.lane_assignment_id)
+
+        # Add groups from HumanTaskGroupModel
+        task_group_ids.update(htg.group_id for htg in human_task.human_task_groups)
+
+        return task_group_ids
+
+    @classmethod
+    def _remove_assignments_without_group_access(
+        cls, assignments: dict[int, HumanTaskUserModel], current_user_group_ids: set[int]
+    ) -> None:
+        """Remove assignments where user no longer has group access, preserving explicit lane_owner assignments."""
+        for assignment in assignments.values():
             # Keep explicit username/email lane_owner assignments on group membership changes.
             # Group-derived assignments are stored as lane_assignment.
             if assignment.added_by == HumanTaskUserAddedBy.lane_owner.value:
                 continue
 
-            human_task = assignment.human_task
-
-            # Collect all group IDs this task is assigned to (from both sources)
-            task_group_ids = set()
-
-            # Add legacy lane_assignment_id if present
-            if human_task.lane_assignment_id is not None:
-                task_group_ids.add(human_task.lane_assignment_id)
-
-            # Add groups from HumanTaskGroupModel
-            task_group_ids.update(htg.group_id for htg in human_task.human_task_groups)
+            task_group_ids = cls._get_task_group_ids(assignment.human_task)
 
             # Check if user still has access via any of the assigned groups
             still_has_access = bool(task_group_ids & current_user_group_ids)
 
             if not still_has_access:
                 db.session.delete(assignment)
+
+    @classmethod
+    def update_human_task_assignments_for_user(cls, user: UserModel, new_group_ids: set[int], old_group_ids: set[int]) -> None:
+        """Update user's task assignments when their group membership changes."""
+        current_assignments = HumanTaskUserModel.query.filter_by(user_id=user.id).all()
+        current_human_task_ids = [ca.human_task_id for ca in current_assignments]
+        group_based_assignment_filter = or_(
+            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value,
+            HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_owner.value,
+        )
+
+        # Add user to tasks from new groups
+        new_tasks = cls._get_tasks_for_new_groups(user, new_group_ids)
+        cls._add_user_to_new_tasks(user, new_tasks, current_human_task_ids)
+
+        # Remove assignments from old groups if user no longer has access
+        current_user_group_ids = {uga.group_id for uga in user.user_group_assignments}
+        potential_assignments_to_delete = cls._get_assignments_for_old_groups(user, old_group_ids, group_based_assignment_filter)
+        cls._remove_assignments_without_group_access(potential_assignments_to_delete, current_user_group_ids)
 
         db.session.commit()
 
