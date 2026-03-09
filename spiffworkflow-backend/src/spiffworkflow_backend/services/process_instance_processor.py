@@ -869,6 +869,13 @@ class ProcessInstanceProcessor:
                                 potential_owners.append(
                                     {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
                                 )
+                            else:
+                                # Upgrade existing lane_assignment entry to lane_owner to prevent
+                                # group cleanup from removing explicitly listed users
+                                for owner in potential_owners:
+                                    if owner["user_id"] == lane_owner_user.id:
+                                        owner["added_by"] = HumanTaskUserAddedBy.lane_owner.value
+                                        break
                         else:
                             if owner_entry not in seen_waiting_usernames:
                                 seen_waiting_usernames.add(owner_entry)

@@ -367,6 +367,53 @@ class TestProcessInstanceProcessor(BaseTest):
         assignment_rows = HumanTaskUserModel.query.filter_by(human_task_id=finance_task.id, user_id=repeated_owner.id).all()
         assert len(assignment_rows) == 1
 
+    def test_explicit_owner_overrides_group_membership_in_added_by_field(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        """Test that explicit lane_owners upgrade added_by from lane_assignment to lane_owner.
+
+        When a user appears both in a group (group:...) and as an explicit entry,
+        the added_by field should be set to lane_owner to prevent group cleanup
+        from removing explicitly listed users.
+        """
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        explicit_owner = self.find_or_create_user("explicit_owner")
+        owner_group = UserService.find_or_create_group("owner-group")
+        UserService.add_user_to_group(explicit_owner, owner_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:owner-group", explicit_owner.username]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        assignment_rows = HumanTaskUserModel.query.filter_by(human_task_id=finance_task.id, user_id=explicit_owner.id).all()
+
+        # Should have exactly one row (deduplication works)
+        assert len(assignment_rows) == 1
+
+        # The added_by field should be lane_owner, not lane_assignment
+        # This ensures group cleanup won't remove explicitly listed users
+        assert assignment_rows[0].added_by == HumanTaskUserAddedBy.lane_owner.value
+
     def test_deduplicates_waiting_usernames_from_lane_owners(
         self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
     ) -> None:
