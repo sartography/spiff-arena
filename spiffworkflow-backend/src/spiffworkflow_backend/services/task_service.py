@@ -778,7 +778,38 @@ class TaskService:
         return extensions
 
     @classmethod
-    def get_ready_signals_with_button_labels(cls, process_instance_id: int, associated_task_guid: str) -> list[dict]:
+    def get_ready_signals_with_button_labels(
+        cls,
+        process_instance_id: int,
+        associated_task_guid: str,
+        process_instance: ProcessInstanceModel | None = None,
+    ) -> list[dict]:
+        from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
+
+        process_instance_to_use = process_instance or ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        if process_instance_to_use is not None and WorkflowStorageService.is_blob_based_for_instance(process_instance_to_use):
+            all_task_rows = WorkflowStorageService.list_tasks(process_instance_to_use)
+            waiting_task_rows = [task_row for task_row in all_task_rows if task_row["state"] == "WAITING"]
+            task_rows_by_guid = {str(task_row["guid"]): task_row for task_row in all_task_rows}
+            result: list[dict] = []
+            for task_row in waiting_task_rows:
+                task_definition_properties = task_row.get("task_definition_properties_json", {})
+                blob_extensions = task_definition_properties.get("extensions", {})
+                blob_event_definition = task_definition_properties.get("event_definition", {})
+
+                if "signalButtonLabel" not in blob_extensions or "name" not in blob_event_definition:
+                    continue
+
+                parent_guid = task_row.get("properties_json", {}).get("parent")
+                parent_task_row = task_rows_by_guid.get(str(parent_guid)) if parent_guid is not None else None
+                if parent_task_row is None:
+                    continue
+
+                parent_children = parent_task_row.get("properties_json", {}).get("children", [])
+                if associated_task_guid in parent_children:
+                    result.append({"event": blob_event_definition, "label": blob_extensions["signalButtonLabel"]})
+            return result
+
         waiting_tasks: list[TaskModel] = TaskModel.query.filter_by(state="WAITING", process_instance_id=process_instance_id).all()
         result = []
         for task_model in waiting_tasks:

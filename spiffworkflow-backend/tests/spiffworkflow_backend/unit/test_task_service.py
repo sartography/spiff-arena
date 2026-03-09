@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -270,6 +271,39 @@ class TestTaskService(BaseTest):
         assert spiff_task is not None
 
         events = TaskService.get_ready_signals_with_button_labels(process_instance.id, str(spiff_task.id))
+        assert len(events) == 1
+        signal_event = events[0]
+        assert signal_event["event"]["name"] == "eat_spam"
+        assert signal_event["event"]["typename"] == "SignalEventDefinition"
+        assert signal_event["label"] == "Eat Spam"
+
+    def test_get_button_labels_for_waiting_signal_event_tasks_in_blob_mode(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/signal_event_extensions",
+            process_model_source_directory="signal_event_extensions",
+            bpmn_file_name="signal_event_extensions",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier("my_manual_task", processor.bpmn_process_instance)
+        assert spiff_task is not None
+
+        WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+        process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+        db.session.add(process_instance)
+        TaskModel.query.filter_by(process_instance_id=process_instance.id).delete()
+        db.session.commit()
+
+        events = TaskService.get_ready_signals_with_button_labels(
+            process_instance.id,
+            str(spiff_task.id),
+            process_instance=process_instance,
+        )
         assert len(events) == 1
         signal_event = events[0]
         assert signal_event["event"]["name"] == "eat_spam"

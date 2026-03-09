@@ -94,11 +94,21 @@ def message_form_submit(
         matching_start_tasks = [t for t in start_tasks if t.task_spec.event_definition.name == receiver_message.name]
         if len(matching_start_tasks) > 0:
             spiff_task = matching_start_tasks[0]
-            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+            task_data: dict | None = None
+            try:
+                task_data = WorkflowStorageService.get_task(
+                    task_guid=str(spiff_task.id),
+                    process_instance=process_instance,
+                ).get_data()
+            except TaskNotFoundError:
+                task_model = TaskModel.query.filter_by(guid=str(spiff_task.id), process_instance_id=process_instance.id).first()
+                if task_model is not None:
+                    task_data = task_model.get_data()
             spiff_task_extensions = spiff_task.task_spec.extensions
-            if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
+            if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"] and task_data:
                 confirmation_message_markdown = JinjaService.render_jinja_template(
-                    spiff_task.task_spec.extensions["guestConfirmation"], task_model
+                    spiff_task.task_spec.extensions["guestConfirmation"],
+                    task_data=task_data,
                 )
 
     response_json = {

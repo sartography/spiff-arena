@@ -685,6 +685,34 @@ class TestProcessInstanceProcessor(BaseTest):
         assert exc.value.error_code == "update_task_data_error"
         assert rollback_called is True
 
+    def test_can_rehydrate_from_blob_when_bpmn_process_id_is_null(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/simple_form",
+            process_model_source_directory="simple_form",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(
+            process_instance,
+            include_task_data_for_completed_tasks=True,
+            include_completed_subprocesses=True,
+        )
+        processor.do_engine_steps(save=True)
+        original_task_guid = str(processor.get_ready_user_tasks()[0].id)
+
+        WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+        process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+        process_instance.bpmn_process_id = None
+        db.session.add(process_instance)
+        db.session.commit()
+
+        db.session.refresh(process_instance)
+        rehydrated_processor = ProcessInstanceProcessor(process_instance)
+        assert rehydrated_processor.get_task_by_guid(original_task_guid) is not None
+
     def test_task_data_update_uses_process_instance_lock_for_blob_storage(
         self,
         app: Flask,

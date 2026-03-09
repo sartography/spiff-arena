@@ -56,7 +56,7 @@ note: feel free to check .cecli/runs for details of past runs
   - Add a nullable `workflow_storage_strategy` column on `process_instance`; resolve strategy as per-instance override first, global env default second.
   - For selected instances, write and verify blob data, then set `workflow_storage_strategy='blob_based'`.
   - Roll back an instance by setting `workflow_storage_strategy='task_based'` without changing global defaults.
-- Phase 4: migrate old instances, validate parity, deprecate `TaskModel` writes.
+- Phase 4: FUTURE: migrate old instances, validate parity, deprecate `TaskModel` writes.
 - Phase 5: remove `TaskModel` reads when confidence is high.
 
 8. Testing focus

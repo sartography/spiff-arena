@@ -765,16 +765,16 @@ class ProcessInstanceProcessor:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         load_from_blob = WorkflowStorageService.is_blob_based_for_instance(process_instance_model)
-        if process_instance_model.spiffworkflow_fully_initialized():
+        if load_from_blob:
+            full_bpmn_process_dict = WorkflowStorageService.load_workflow(process_instance_model) or {}
+
+        if process_instance_model.spiffworkflow_fully_initialized() or full_bpmn_process_dict:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                if load_from_blob:
-                    full_bpmn_process_dict = WorkflowStorageService.load_workflow(process_instance_model) or {}
-
                 if not full_bpmn_process_dict:
                     full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
                         bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,

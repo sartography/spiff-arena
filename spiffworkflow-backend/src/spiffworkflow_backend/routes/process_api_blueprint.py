@@ -735,7 +735,9 @@ def _get_task_model_for_request(
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
-        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id, task_model.guid)
+        task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(
+            process_instance_id, task_model.guid, process_instance=process_instance
+        )
 
         if "properties" in extensions:
             properties = extensions["properties"]

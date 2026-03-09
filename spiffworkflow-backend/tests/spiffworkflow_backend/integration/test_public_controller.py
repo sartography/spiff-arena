@@ -8,6 +8,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -80,6 +81,43 @@ class TestPublicController(BaseTest):
         assert response.json()["form"] is None
         assert response.json()["confirmation_message_markdown"] == "# Thanks\n\nWe hear you. Your name is **MyName**."
         assert response.json()["task_guid"] is None
+
+    def test_can_submit_to_public_message_submit_with_blob_storage(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        original_strategy = app.config.get("SPIFFWORKFLOW_BACKEND_WORKFLOW_STORAGE_STRATEGY")
+        app.config["SPIFFWORKFLOW_BACKEND_WORKFLOW_STORAGE_STRATEGY"] = WorkflowStorageService.BLOB_BASED
+        try:
+            group_info: list[GroupPermissionsDict] = [
+                {
+                    "users": [],
+                    "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                    "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
+                }
+            ]
+            AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+            process_model = load_test_spec(
+                process_model_id="test_group/message-start-event-with-form",
+                process_model_source_directory="message-start-event-with-form",
+            )
+            process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
+            url = f"/v1.0/public/messages/submit/{process_group_identifier}:bounty_start?execution_mode=synchronous"
+
+            response = client.post(
+                url,
+                json={"firstName": "BlobName"},
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status_code == 200
+            assert response.json() is not None
+            assert response.json()["form"] is None
+            assert response.json()["confirmation_message_markdown"] == "# Thanks\n\nWe hear you. Your name is **BlobName**."
+            assert response.json()["task_guid"] is None
+        finally:
+            app.config["SPIFFWORKFLOW_BACKEND_WORKFLOW_STORAGE_STRATEGY"] = original_strategy
 
     def test_can_submit_to_public_message_submit_and_get_and_submit_subsequent_form(
         self,

@@ -225,6 +225,64 @@ class TestLongRunningService(BaseTest):
         response_json = response.json()
         assert response_json["pagination"]["total"] == 1
 
+    def test_service_tasks_awaiting_callback_paginates_mixed_task_and_blob_strategies(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        # task_based waiting callback instance
+        with app.test_request_context():
+            task_based_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            task_based_processor = ProcessInstanceProcessor(task_based_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                task_based_processor.do_engine_steps(save=True)
+            assert task_based_instance.status == "waiting"
+
+        # blob_based waiting callback instance
+        with app.test_request_context():
+            blob_based_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            blob_based_processor = ProcessInstanceProcessor(blob_based_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                blob_based_processor.do_engine_steps(save=True)
+            assert blob_based_instance.status == "waiting"
+            WorkflowStorageService.save_workflow(blob_based_instance, blob_based_processor.serialize())
+            blob_based_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+            db.session.add(blob_based_instance)
+            TaskModel.query.filter_by(process_instance_id=blob_based_instance.id).delete()
+            db.session.commit()
+
+        page_1_response = client.get(
+            "/v1.0/tasks/service-tasks-awaiting-callback?page=1&per_page=1",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert page_1_response.status_code == 200
+        page_1_json = page_1_response.json()
+        assert page_1_json["pagination"]["total"] == 2
+        assert page_1_json["pagination"]["count"] == 1
+
+        page_2_response = client.get(
+            "/v1.0/tasks/service-tasks-awaiting-callback?page=2&per_page=1",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert page_2_response.status_code == 200
+        page_2_json = page_2_response.json()
+        assert page_2_json["pagination"]["total"] == 2
+        assert page_2_json["pagination"]["count"] == 1
+
     def test__202_canceled_response(
         self,
         app: Flask,
