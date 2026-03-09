@@ -134,7 +134,6 @@ jobs:
           exit-code: 1 # Fail the workflow if critical vulnerabilities are found
           timeout: 15m0s
           ignore-unfixed: true
-          skip-files: /app/src/spiffworkflow_backend/config/openid/rsa_keys.py
       - name: Check if Trivy results exist
         if: always()
         # trivy will fail if vulnerabilities are found but we need to upload them anyway

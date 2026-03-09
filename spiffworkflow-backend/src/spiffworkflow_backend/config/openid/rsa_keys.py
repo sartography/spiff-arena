@@ -1,5 +1,6 @@
 # These configs are specifically for the open id server run from backend.
 # This should only be used for development and demonstration. SHOULD NOT BE USED IN PROD.
+# trivy:ignore:hardcoded-credentials
 class OpenIdConfigsForDevOnly:
     private_key = """-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCB34SwG3IFKAzf
