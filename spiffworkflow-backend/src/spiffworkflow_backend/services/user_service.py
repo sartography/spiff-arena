@@ -254,18 +254,6 @@ class UserService:
                 HumanTaskModel.completed == False,  # noqa: E712
             )
             .filter(~HumanTaskModel.human_task_users.any(HumanTaskUserModel.user_id == user.id))
-            .filter(
-                or_(
-                    # Explicit group mapping (group differs from lane_assignment_id).
-                    HumanTaskGroupModel.group_id != HumanTaskModel.lane_assignment_id,
-                    # Tasks with no lane assignment id but explicit HumanTaskGroup rows.
-                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                    # Backward-compatible lane-assignment tasks.
-                    HumanTaskModel.human_task_users.any(
-                        HumanTaskUserModel.added_by == HumanTaskUserAddedBy.lane_assignment.value
-                    ),
-                )
-            )
             .all()
         )
 
@@ -315,15 +303,17 @@ class UserService:
 
     @classmethod
     def _get_task_group_ids(cls, human_task: HumanTaskModel) -> set[int]:
-        """Collect all group IDs assigned to a task from both legacy and new sources."""
-        task_group_ids = set()
+        """Collect all group IDs assigned to a task from both legacy and new sources.
 
-        # Add legacy lane_assignment_id if present
-        if human_task.lane_assignment_id is not None:
+        If explicit HumanTaskGroupModel rows exist, they are authoritative and
+        lane_assignment_id is ignored.
+        """
+        task_group_ids: set[int] = set()
+
+        if human_task.human_task_groups:
+            task_group_ids.update(htg.group_id for htg in human_task.human_task_groups)
+        elif human_task.lane_assignment_id is not None:
             task_group_ids.add(human_task.lane_assignment_id)
-
-        # Add groups from HumanTaskGroupModel
-        task_group_ids.update(htg.group_id for htg in human_task.human_task_groups)
 
         return task_group_ids
 
