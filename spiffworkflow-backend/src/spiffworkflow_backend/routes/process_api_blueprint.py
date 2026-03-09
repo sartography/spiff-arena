@@ -587,7 +587,11 @@ def _task_submit_shared(
     # and there is nothing else for them to do
     spiff_task_extensions = spiff_task.task_spec.extensions
     if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"] and task_model is not None:
-        guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
+        guest_confirmation = JinjaService.render_jinja_template(
+            spiff_task_extensions["guestConfirmation"],
+            task=task_model,
+            task_data=task_model.get_data(),
+        )
         return {"guest_confirmation": guest_confirmation}
 
     if processor.next_task():

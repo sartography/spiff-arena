@@ -105,10 +105,10 @@ def message_form_submit(
                 if task_model is not None:
                     task_data = task_model.get_data()
             spiff_task_extensions = spiff_task.task_spec.extensions
-            if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"] and task_data:
+            if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
                 confirmation_message_markdown = JinjaService.render_jinja_template(
                     spiff_task.task_spec.extensions["guestConfirmation"],
-                    task_data=task_data,
+                    task_data=task_data or {},
                 )
 
     response_json = {
