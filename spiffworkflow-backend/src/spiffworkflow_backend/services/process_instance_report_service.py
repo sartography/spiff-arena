@@ -320,7 +320,7 @@ class ProcessInstanceReportService:
                 htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
                 combined = (
                     func.coalesce(lane_agg, "")
-                    + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")
+                    + case([(and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", ")], else_="")
                     + func.coalesce(htg_agg, "")
                 )
                 assigned_group_identifier = func.nullif(combined, "").label("assigned_user_group_identifier")

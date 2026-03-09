@@ -1133,7 +1133,7 @@ def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: 
         # Manually concatenate with separator, handling NULLs
         combined = (
             func.coalesce(lane_agg, "")
-            + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")
+            + case([(and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", ")], else_="")
             + func.coalesce(htg_agg, "")
         )
         return func.nullif(combined, "").label("assigned_user_group_identifier")
