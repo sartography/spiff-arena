@@ -93,7 +93,8 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
+        assert len(human_task.human_task_groups) == 1
+        assert human_task.human_task_groups[0].group_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user
 
@@ -123,7 +124,7 @@ class TestProcessInstanceProcessor(BaseTest):
 
         The lanes.bpmn file has a finance_team lane. This test deliberately does NOT
         create that group beforehand. The system should automatically create the group
-        when it encounters the lane, set lane_assignment_id to the new group, and
+        when it encounters the lane, add it via HumanTaskGroupModel, and
         have empty potential_owners (since the group has no users yet).
         """
         initiator_user = self.find_or_create_user("initiator_user")
@@ -168,8 +169,10 @@ class TestProcessInstanceProcessor(BaseTest):
         assert finance_group_after is not None
         assert finance_group_after.identifier == finance_team_lane_identifier
 
-        # lane_assignment_id should be set to the newly created group
-        assert finance_task.lane_assignment_id == finance_group_after.id
+        # The group should be tracked via HumanTaskGroupModel instead of lane_assignment_id
+        assert finance_task.lane_assignment_id is None
+        assert len(finance_task.human_task_groups) == 1
+        assert finance_task.human_task_groups[0].group_id == finance_group_after.id
 
         # potential_owners should be empty since the group has no users
         assert len(finance_task.potential_owners) == 0
@@ -554,7 +557,8 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
+        assert len(human_task.human_task_groups) == 1
+        assert human_task.human_task_groups[0].group_id == finance_group.id
         assert len(human_task.potential_owners) == 2
         assert human_task.potential_owners == [finance_user_three, finance_user_four]
 
@@ -567,7 +571,8 @@ class TestProcessInstanceProcessor(BaseTest):
         assert human_task.completed_by_user_id == finance_user_three.id
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
+        assert len(human_task.human_task_groups) == 1
+        assert human_task.human_task_groups[0].group_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user_four
 
