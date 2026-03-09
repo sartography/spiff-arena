@@ -843,7 +843,7 @@ class ProcessInstanceProcessor:
                 has_groups = False
 
                 for owner_entry in lane_owners_list:
-                    if isinstance(owner_entry, str) and owner_entry.startswith("group:"):
+                    if owner_entry.startswith("group:"):
                         group_identifier = owner_entry[6:]
                         owner_group = UserService.find_or_create_group(group_identifier)
                         if owner_group.id not in lane_owner_group_ids:
@@ -860,9 +860,8 @@ class ProcessInstanceProcessor:
                                     }
                                 )
                     else:
-                        username_or_email = str(owner_entry)
                         lane_owner_user = UserModel.query.filter(
-                            or_(UserModel.username == username_or_email, UserModel.email == username_or_email)
+                            or_(UserModel.username == owner_entry, UserModel.email == owner_entry)
                         ).first()
                         if lane_owner_user is not None:
                             if lane_owner_user.id not in seen_potential_owner_ids:
@@ -871,9 +870,9 @@ class ProcessInstanceProcessor:
                                     {"added_by": HumanTaskUserAddedBy.lane_owner.value, "user_id": lane_owner_user.id}
                                 )
                         else:
-                            if username_or_email not in seen_waiting_usernames:
-                                seen_waiting_usernames.add(username_or_email)
-                                lane_owner_usernames_waiting.append(username_or_email)
+                            if owner_entry not in seen_waiting_usernames:
+                                seen_waiting_usernames.add(owner_entry)
+                                lane_owner_usernames_waiting.append(owner_entry)
 
                 # If explicit owner groups were provided, allow zero current users so future group membership
                 # changes can grant access without failing workflow execution.
