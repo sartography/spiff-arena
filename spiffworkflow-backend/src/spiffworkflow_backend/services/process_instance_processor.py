@@ -817,7 +817,6 @@ class ProcessInstanceProcessor:
                 task_lane = task_spec.lane
 
         potential_owners: list[PotentialOwner] = []
-        lane_assignment_id = None
         lane_owner_group_ids: list[int] = []
         lane_owner_usernames_waiting: list[str] = []
         seen_potential_owner_ids: set[int] = set()
@@ -836,7 +835,6 @@ class ProcessInstanceProcessor:
         else:
             # Automatically create the group if it doesn't exist (includes principal creation)
             group_model = UserService.find_or_create_group(task_lane)
-            lane_assignment_id = group_model.id
 
             if "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
                 lane_owners_list = task.data["lane_owners"][task_lane]
@@ -893,6 +891,8 @@ class ProcessInstanceProcessor:
                         ),
                     )
             else:
+                # When lane_owners is not specified, use the lane group itself
+                lane_owner_group_ids.append(group_model.id)
                 potential_owners = [
                     {"added_by": HumanTaskUserAddedBy.lane_assignment.value, "user_id": i.user_id}
                     for i in group_model.user_group_assignments
@@ -900,7 +900,7 @@ class ProcessInstanceProcessor:
 
         return {
             "potential_owners": potential_owners,
-            "lane_assignment_id": lane_assignment_id,
+            "lane_assignment_id": None,
             "lane_owner_group_ids": lane_owner_group_ids,
             "lane_owner_usernames_waiting": lane_owner_usernames_waiting if lane_owner_usernames_waiting else [],
         }
