@@ -104,7 +104,7 @@ be-tests: be-clear-log-file
 	$(IN_BACKEND) uv run pytest $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
 be-tests-par: be-clear-log-file
-	$(IN_BACKEND) uv run pytest -s -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
+	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
 co-tests:
 	$(IN_ARENA) uv run pytest $(ARGS) spiff-arena-common/tests/spiff_arena_common/$(JUST)

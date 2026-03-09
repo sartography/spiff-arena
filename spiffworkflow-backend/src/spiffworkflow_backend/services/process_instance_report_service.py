@@ -7,6 +7,7 @@ import sqlalchemy
 from flask import current_app
 from flask_sqlalchemy.query import Query
 from sqlalchemy import and_
+from sqlalchemy import case
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -307,12 +308,22 @@ class ProcessInstanceReportService:
                 assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
                     "assigned_user_group_identifier"
                 )
-            else:
+            elif db_type == "mysql":
                 lane_agg = func.group_concat(func.distinct(lane_group.identifier))
                 htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
                 assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
                     "assigned_user_group_identifier"
                 )
+            else:
+                # For sqlite, which doesn't support concat_ws, manually concatenate
+                lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+                htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+                combined = (
+                    func.coalesce(lane_agg, "")
+                    + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")
+                    + func.coalesce(htg_agg, "")
+                )
+                assigned_group_identifier = func.nullif(combined, "").label("assigned_user_group_identifier")
             human_task = (
                 human_task_query.add_columns(
                     HumanTaskModel.task_id,

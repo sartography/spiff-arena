@@ -44,7 +44,6 @@ class TestJsonSchemaValidation(BaseTest):
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            print("RESPONSE", response.text)
             assert response.status_code == 200
             tasks_json = response.json()
             assert tasks_json.get("results"), tasks_json
@@ -97,7 +96,6 @@ class TestJsonSchemaValidation(BaseTest):
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            print("RESPONSE", response.text)
             assert response.status_code == 200
             tasks_json = response.json()
             assert tasks_json.get("results"), tasks_json
@@ -153,7 +151,6 @@ class TestJsonSchemaValidation(BaseTest):
                 "/v1.0/tasks",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
-            print("RESPONSE", response.text)
             assert response.status_code == 200
             tasks_json = response.json()
             assert tasks_json.get("results"), tasks_json

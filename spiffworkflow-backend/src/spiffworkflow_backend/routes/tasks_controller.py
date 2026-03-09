@@ -18,6 +18,7 @@ from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
+from sqlalchemy import case
 from sqlalchemy import desc
 from sqlalchemy import exists
 from sqlalchemy import func
@@ -1117,10 +1118,22 @@ def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: 
         # This ensures we get identifiers from both sources
         lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
         htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
-    else:
-        # For mysql/sqlite, aggregate both columns separately then combine
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+    elif db_type == "mysql":
+        # For mysql, aggregate both columns separately then combine
         lane_agg = func.group_concat(func.distinct(lane_group.identifier))
         htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-
-    # Use concat_ws to combine, which handles nulls gracefully
-    return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+    else:
+        # For sqlite, which doesn't support concat_ws, manually concatenate
+        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+        # Manually concatenate with separator, handling NULLs
+        combined = (
+            func.coalesce(lane_agg, "")
+            + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")
+            + func.coalesce(htg_agg, "")
+        )
+        return func.nullif(combined, "").label("assigned_user_group_identifier")
