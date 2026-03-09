@@ -247,55 +247,81 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
 
 def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     user_id = g.user.id
-    task_models = (
-        db.session.query(TaskModel)  # type: ignore
-        .join(TaskDefinitionModel)
-        .join(ProcessInstanceModel)
-        .filter(
-            TaskModel.state == "STARTED",
-            TaskDefinitionModel.typename == "ServiceTask",
+    process_instances = (
+        ProcessInstanceModel.query.filter(
             ProcessInstanceModel.process_initiator_id == user_id,
             ProcessInstanceModel.status == "waiting",
         )
-        .add_columns(
-            TaskModel.guid,
-            TaskModel.state,
-            TaskModel.process_instance_id,
-            TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
-            TaskDefinitionModel.bpmn_identifier,
-            TaskDefinitionModel.typename,
-            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_model_display_name,
-        )
-        .order_by(
-            desc(TaskModel.process_instance_id)  # type: ignore
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
+        .order_by(desc(ProcessInstanceModel.id))  # type: ignore
+        .all()
     )
 
-    results = []
-    for row in task_models.items:
-        results.append(
-            {
-                "id": row.guid,
-                "name": row.bpmn_identifier,
-                "title": row.task_name or row.bpmn_identifier,
-                "type": row.typename,
-                "state": row.state,
-                "process_instance_id": row.process_instance_id,
-                "process_instance_status": row.process_instance_status,
-                "process_model_identifier": row.process_model_identifier,
-                "process_model_display_name": row.process_model_display_name,
-            }
-        )
+    results: list[dict[str, str | int]] = []
+    for process_instance in process_instances:
+        if WorkflowStorageService.is_blob_based_for_instance(process_instance):
+            for task_row in WorkflowStorageService.list_tasks(process_instance):
+                if task_row["state"] != "STARTED" or task_row["typename"] != "ServiceTask":
+                    continue
+                results.append(
+                    {
+                        "id": task_row["guid"],
+                        "name": task_row["bpmn_identifier"],
+                        "title": task_row["bpmn_name"] or task_row["bpmn_identifier"],
+                        "type": task_row["typename"],
+                        "state": task_row["state"],
+                        "process_instance_id": process_instance.id,
+                        "process_instance_status": process_instance.status,
+                        "process_model_identifier": process_instance.process_model_identifier,
+                        "process_model_display_name": process_instance.process_model_display_name,
+                    }
+                )
+        else:
+            task_models = (
+                db.session.query(TaskModel)  # type: ignore
+                .join(TaskDefinitionModel)
+                .filter(
+                    TaskModel.process_instance_id == process_instance.id,
+                    TaskModel.state == "STARTED",
+                    TaskDefinitionModel.typename == "ServiceTask",
+                )
+                .add_columns(
+                    TaskModel.guid,
+                    TaskModel.state,
+                    TaskModel.process_instance_id,
+                    TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
+                    TaskDefinitionModel.bpmn_identifier,
+                    TaskDefinitionModel.typename,
+                )
+                .all()
+            )
+
+            for row in task_models:
+                results.append(
+                    {
+                        "id": row.guid,
+                        "name": row.bpmn_identifier,
+                        "title": row.task_name or row.bpmn_identifier,
+                        "type": row.typename,
+                        "state": row.state,
+                        "process_instance_id": row.process_instance_id,
+                        "process_instance_status": process_instance.status,
+                        "process_model_identifier": process_instance.process_model_identifier,
+                        "process_model_display_name": process_instance.process_model_display_name,
+                    }
+                )
+
+    results = sorted(results, key=lambda result: int(result["process_instance_id"]), reverse=True)
+    start = max((page - 1) * per_page, 0)
+    end = start + per_page
+    paged_results = results[start:end]
+    pages = (len(results) + per_page - 1) // per_page if per_page > 0 else 0
 
     response_json = {
-        "results": results,
+        "results": paged_results,
         "pagination": {
-            "count": len(task_models.items),
-            "total": task_models.total,
-            "pages": task_models.pages,
+            "count": len(paged_results),
+            "total": len(results),
+            "pages": pages,
         },
     }
 

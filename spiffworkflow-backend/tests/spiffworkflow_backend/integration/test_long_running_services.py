@@ -4,10 +4,12 @@ from unittest.mock import patch
 from flask import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.workflow_storage_service import WorkflowStorageService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -183,6 +185,45 @@ class TestLongRunningService(BaseTest):
 
         # The process instance is in a state of error, which should mean the task is no longer waiting.
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
+
+    def test_service_tasks_awaiting_callback_in_blob_mode(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+
+            assert process_instance.status == "waiting"
+            WorkflowStorageService.save_workflow(process_instance, processor.serialize())
+            process_instance.workflow_storage_strategy = WorkflowStorageService.BLOB_BASED
+            db.session.add(process_instance)
+
+            # Simulate blob-only reads by removing task rows.
+            TaskModel.query.filter_by(process_instance_id=process_instance.id).delete()
+            db.session.commit()
+
+        response = client.get(
+            "/v1.0/tasks/service-tasks-awaiting-callback",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["pagination"]["total"] == 1
 
     def test__202_canceled_response(
         self,

@@ -11,7 +11,6 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
-from sqlalchemy import and_
 from sqlalchemy import asc
 
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
@@ -630,24 +629,27 @@ class TaskService:
 
     @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
-        bpmn_process_ids = [p.id for p in bpmn_processes]
-        direct_children = BpmnProcessModel.query.filter(
-            BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)  # type: ignore
-        ).all()
-        direct_children = (
-            BpmnProcessModel.query.join(TaskModel, TaskModel.guid == BpmnProcessModel.guid)
-            .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-            .filter(
-                and_(
-                    TaskDefinitionModel.typename == "SubWorkflowTask",
-                    TaskModel.bpmn_process_id.in_(bpmn_process_ids),  # type: ignore
-                )
-            )
-            .all()
-        )
-        if len(direct_children) > 0:
-            return bpmn_processes + cls.bpmn_process_and_descendants(direct_children)
-        return bpmn_processes
+        if len(bpmn_processes) == 0:
+            return []
+
+        all_processes = list(bpmn_processes)
+        seen_process_ids = {bpmn_process.id for bpmn_process in bpmn_processes}
+        frontier = list(bpmn_processes)
+
+        while len(frontier) > 0:
+            parent_process_ids = [bpmn_process.id for bpmn_process in frontier]
+            direct_children = BpmnProcessModel.query.filter(
+                BpmnProcessModel.direct_parent_process_id.in_(parent_process_ids)  # type: ignore
+            ).all()
+            frontier = []
+            for child in direct_children:
+                if child.id in seen_process_ids:
+                    continue
+                seen_process_ids.add(child.id)
+                all_processes.append(child)
+                frontier.append(child)
+
+        return all_processes
 
     @classmethod
     def task_models_of_parent_bpmn_processes(

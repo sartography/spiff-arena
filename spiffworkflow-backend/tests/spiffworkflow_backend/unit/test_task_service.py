@@ -168,6 +168,48 @@ class TestTaskService(BaseTest):
             task_definition_id_path == f"{':'.join(map(str, expected_process_id_path))}:{task_model_level_2b.task_definition_id}"
         )
 
+    def test_bpmn_process_and_descendants_uses_direct_parent_relationship_in_blob_mode(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn_file_names = [
+            "call_activity_level_3",
+            "call_activity_level_2b",
+            "call_activity_level_2",
+        ]
+        for bpmn_file_name in bpmn_file_names:
+            load_test_spec(
+                f"test_group/{bpmn_file_name}",
+                process_model_source_directory="call_activity_nested",
+                bpmn_file_name=bpmn_file_name,
+            )
+        process_model = load_test_spec(
+            "test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="call_activity_nested",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        assert process_instance.status == "complete"
+        assert process_instance.bpmn_process is not None
+
+        subprocesses = BpmnProcessModel.query.filter(
+            BpmnProcessModel.top_level_process_id == process_instance.bpmn_process.id
+        ).all()
+        for subprocess in subprocesses:
+            if subprocess.guid is not None:
+                task_model = TaskModel.query.filter_by(guid=subprocess.guid).first()
+                if task_model is not None:
+                    db.session.delete(task_model)
+        db.session.commit()
+
+        descendants = TaskService.bpmn_process_and_descendants([process_instance.bpmn_process])
+        descendant_identifiers = [descendant.bpmn_process_definition.bpmn_identifier for descendant in descendants]
+        assert descendant_identifiers[0] == "Level1"
+        assert {"Level1", "Level2", "Level3", "Level2b"}.issubset(set(descendant_identifiers))
+
     def test_bpmn_process_for_called_activity_or_top_level_process(
         self,
         app: Flask,
