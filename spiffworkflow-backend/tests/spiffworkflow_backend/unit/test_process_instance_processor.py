@@ -414,6 +414,19 @@ class TestProcessInstanceProcessor(BaseTest):
         # This ensures group cleanup won't remove explicitly listed users
         assert assignment_rows[0].added_by == HumanTaskUserAddedBy.lane_owner.value
 
+        # Now remove the user from the group to simulate group membership cleanup
+        UserService.remove_user_from_group(explicit_owner, owner_group.id)
+
+        # Verify the assignment still exists and is still marked as lane_owner
+        assignment_after_removal = HumanTaskUserModel.query.filter_by(
+            human_task_id=finance_task.id, user_id=explicit_owner.id
+        ).first()
+        assert assignment_after_removal is not None
+        assert assignment_after_removal.added_by == HumanTaskUserAddedBy.lane_owner.value
+
+        # Verify the user is still a potential owner (can complete the task)
+        assert explicit_owner in finance_task.potential_owners
+
     def test_deduplicates_waiting_usernames_from_lane_owners(
         self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
     ) -> None:
