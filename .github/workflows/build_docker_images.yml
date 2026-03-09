@@ -140,6 +140,7 @@ jobs:
         run: |
           if [ -f "trivy-results.sarif" ]; then
             echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
+            cat "trivy-results.sarif"
           else
             echo "Trivy results file not found. Skipping upload."
             echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
