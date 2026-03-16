@@ -9,6 +9,7 @@ import {
   Box,
   Typography,
   TextField,
+  TextareaAutosize,
   Stack,
 } from '@mui/material';
 import { Can } from '@casl/react';
@@ -240,6 +241,11 @@ export default function ReactFormEditor() {
 
   const editorArea = () => {
     if (fileExtension === 'md') {
+
+      const createTextarea = (props: any) => {
+        return <TextareaAutosize {...props} />;
+      };
+
       return (
         <div data-color-mode="light">
           <MDEditor
@@ -247,6 +253,9 @@ export default function ReactFormEditor() {
             highlightEnable={false}
             value={processModelFileContents || ''}
             onChange={(value) => setProcessModelFileContents(value || '')}
+            components={{
+              textarea: createTextarea,
+            }}
           />
         </div>
       );
