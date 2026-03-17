@@ -199,6 +199,32 @@ class TaskService:
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
 
+    def sync_parents_for_deleted_spiff_tasks(self, deleted_spiff_tasks: list[SpiffTask]) -> None:
+        """Persist parent task structure even when deleted children did not bump parent timestamps."""
+        for deleted_spiff_task in deleted_spiff_tasks:
+            parent_spiff_task = deleted_spiff_task.parent
+            while parent_spiff_task is not None:
+                self.update_task_model_with_spiff_task(
+                    spiff_task=parent_spiff_task,
+                    store_process_instance_events=False,
+                )
+                parent_spiff_task = parent_spiff_task.parent
+
+    def prune_missing_child_references(self, valid_task_guids: set[str]) -> None:
+        """Drop child links that point outside the current workflow snapshot before bulk save."""
+        for task_model in self.task_models.values():
+            children = task_model.properties_json.get("children")
+            if not children:
+                continue
+
+            valid_children = [child_guid for child_guid in children if child_guid in valid_task_guids]
+            if len(valid_children) == len(children):
+                continue
+
+            new_properties_json = copy.copy(task_model.properties_json)
+            new_properties_json["children"] = valid_children
+            task_model.properties_json = new_properties_json
+
     def update_task_model_with_spiff_task(
         self,
         spiff_task: SpiffTask,
@@ -569,6 +595,8 @@ class TaskService:
         for bpmn_process in bpmn_processes_to_delete:
             db.session.delete(bpmn_process)
 
+        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks)
+
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE
         spiff_tasks_updated = {}
@@ -577,6 +605,8 @@ class TaskService:
                 spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         for _id, spiff_task in spiff_tasks_updated.items():
             self.update_task_model_with_spiff_task(spiff_task)
+
+        self.prune_missing_child_references({str(spiff_task.id) for spiff_task in spiff_tasks})
 
         self.save_objects_to_database()
 

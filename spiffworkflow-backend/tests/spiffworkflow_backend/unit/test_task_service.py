@@ -1,3 +1,6 @@
+from types import SimpleNamespace
+from typing import Any
+
 from flask import Flask
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -176,3 +179,42 @@ class TestTaskService(BaseTest):
         assert signal_event["event"]["name"] == "eat_spam"
         assert signal_event["event"]["typename"] == "SignalEventDefinition"
         assert signal_event["label"] == "Eat Spam"
+
+    def test_sync_parents_for_deleted_spiff_tasks_updates_ancestors(
+        self,
+        app: Flask,
+    ) -> None:
+        task_service: Any = TaskService.__new__(TaskService)
+        updated_guids: list[str] = []
+
+        def capture_update(spiff_task: SimpleNamespace, store_process_instance_events: bool = True) -> None:
+            updated_guids.append(spiff_task.id)
+
+        task_service.update_task_model_with_spiff_task = capture_update
+
+        grandparent = SimpleNamespace(id="grandparent", parent=None)
+        parent = SimpleNamespace(id="parent", parent=grandparent)
+        deleted = SimpleNamespace(id="deleted", parent=parent)
+
+        TaskService.sync_parents_for_deleted_spiff_tasks(task_service, [deleted])
+
+        assert updated_guids == ["parent", "grandparent"]
+
+    def test_prune_missing_child_references_removes_dangling_guids(
+        self,
+        app: Flask,
+    ) -> None:
+        task_service: Any = TaskService.__new__(TaskService)
+        task_service.task_models = {
+            "parent": SimpleNamespace(
+                properties_json={"children": ["child_a", "missing_child", "child_b"]},
+            ),
+            "untouched": SimpleNamespace(
+                properties_json={"children": ["child_c"]},
+            ),
+        }
+
+        TaskService.prune_missing_child_references(task_service, {"parent", "child_a", "child_b", "child_c"})
+
+        assert task_service.task_models["parent"].properties_json["children"] == ["child_a", "child_b"]
+        assert task_service.task_models["untouched"].properties_json["children"] == ["child_c"]
