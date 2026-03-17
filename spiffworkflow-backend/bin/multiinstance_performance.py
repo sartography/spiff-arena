@@ -9,7 +9,6 @@ Measures:
 4. Other - Unaccounted framework overhead
 """
 
-import glob as glob_module
 import os
 import shutil
 import tempfile
@@ -31,8 +30,8 @@ from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 
 
-def load_test_spec(process_model_id: str, process_model_source_directory: str) -> ProcessModelInfo:
-    """Load a BPMN process model from a directory in tests/data."""
+def load_test_spec(process_model_id: str, source_dir: Path) -> ProcessModelInfo:
+    """Load a BPMN process model from a source directory."""
     spec = ProcessModelInfo(
         id=process_model_id,
         display_name=process_model_id,
@@ -42,17 +41,15 @@ def load_test_spec(process_model_id: str, process_model_source_directory: str) -
 
     bpmn_file_name_with_extension = os.path.basename(process_model_id) + ".bpmn"
 
-    file_glob = os.path.join(current_app.instance_path, "..", "..", "tests", "data", process_model_source_directory, "*.*")
-
-    files = sorted(glob_module.glob(file_glob))
+    files = sorted(source_dir.iterdir())
     if len(files) == 0:
-        raise Exception(f"Could not find any files with file_glob: {file_glob}")
+        raise Exception(f"Could not find any files in source directory: {source_dir}")
 
     all_references = []
     for file_path in files:
-        if os.path.isdir(file_path):
+        if file_path.is_dir():
             continue
-        filename = os.path.basename(file_path)
+        filename = file_path.name
         is_primary = filename.lower() == bpmn_file_name_with_extension
         with open(file_path, "rb") as f:
             data = f.read()
@@ -225,7 +222,6 @@ def run_single_test(instrumenter: BottleneckInstrumenter, loop_count: int):
     """Run a single performance test for the given loop count."""
     test_data_dir = Path(__file__).parent.parent / "tests" / "data" / "multiinstance_with_data"
     source_bpmn = test_data_dir / "multiinstance_with_data.bpmn"
-    dest_dir = test_data_dir.parent / f"multiinstance_{loop_count}"
     temp_dir = tempfile.mkdtemp()
 
     try:
@@ -233,6 +229,10 @@ def run_single_test(instrumenter: BottleneckInstrumenter, loop_count: int):
             bpmn_content = f.read()
 
         modified_content = bpmn_content.replace("items = [item]*100", f"items = [item]*{loop_count}")
+        modified_content = modified_content.replace('id="Process_3no3Cw9"', f'id="Process_multiinstance_{loop_count}"', 1)
+        modified_content = modified_content.replace(
+            'bpmnElement="Process_3no3Cw9"', f'bpmnElement="Process_multiinstance_{loop_count}"', 1
+        )
 
         variant_dir = Path(temp_dir) / f"multiinstance_{loop_count}"
         variant_dir.mkdir(parents=True, exist_ok=True)
@@ -241,13 +241,9 @@ def run_single_test(instrumenter: BottleneckInstrumenter, loop_count: int):
         with open(variant_bpmn, "w") as f:
             f.write(modified_content)
 
-        if dest_dir.exists():
-            shutil.rmtree(dest_dir)
-        shutil.copytree(variant_dir, dest_dir)
-
         process_model = load_test_spec(
             process_model_id=f"test_group/multiinstance_{loop_count}",
-            process_model_source_directory=f"multiinstance_{loop_count}",
+            source_dir=variant_dir,
         )
 
         user = UserService.create_user("perf_test_user", "internal", "perf_test_user")
@@ -276,13 +272,12 @@ def run_single_test(instrumenter: BottleneckInstrumenter, loop_count: int):
     finally:
         if Path(temp_dir).exists():
             shutil.rmtree(temp_dir)
-        if dest_dir.exists():
-            shutil.rmtree(dest_dir)
 
 
 def clean_db():
     """Clear all tables for a fresh test run."""
     from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+    from spiffworkflow_backend.services.file_system_service import FileSystemService
 
     meta = db.metadata
     db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
@@ -290,6 +285,11 @@ def clean_db():
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())
     db.session.commit()
+
+    root_path = Path(FileSystemService.root_path())
+    if root_path.exists():
+        shutil.rmtree(root_path)
+    root_path.mkdir(parents=True, exist_ok=True)
 
 
 def main():
@@ -301,6 +301,8 @@ def main():
     connexion_app = create_app()
 
     with connexion_app.app.app_context():
+        isolated_spec_root = tempfile.mkdtemp(prefix="spiff-multiinstance-specs-")
+        current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = isolated_spec_root
         loop_counts = [20, 100, 200, 300]
 
         instrumenter = BottleneckInstrumenter()
@@ -312,6 +314,7 @@ def main():
                 run_single_test(instrumenter, loop_count)
         finally:
             instrumenter.uninstall()
+            shutil.rmtree(isolated_spec_root, ignore_errors=True)
 
         instrumenter.print_summary()
 
