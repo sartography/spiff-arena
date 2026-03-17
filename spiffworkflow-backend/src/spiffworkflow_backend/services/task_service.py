@@ -199,11 +199,24 @@ class TaskService:
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
 
-    def sync_parents_for_deleted_spiff_tasks(self, deleted_spiff_tasks: list[SpiffTask]) -> None:
+    def sync_parents_for_deleted_spiff_tasks(
+        self,
+        deleted_spiff_tasks: list[SpiffTask],
+        deleted_task_guids: set[str],
+    ) -> None:
         """Persist parent task structure even when deleted children did not bump parent timestamps."""
+        seen_parent_guids: set[str] = set()
         for deleted_spiff_task in deleted_spiff_tasks:
             parent_spiff_task = deleted_spiff_task.parent
             while parent_spiff_task is not None:
+                parent_guid = str(parent_spiff_task.id)
+                if parent_guid in deleted_task_guids:
+                    parent_spiff_task = parent_spiff_task.parent
+                    continue
+                if parent_guid in seen_parent_guids:
+                    parent_spiff_task = parent_spiff_task.parent
+                    continue
+                seen_parent_guids.add(parent_guid)
                 self.update_task_model_with_spiff_task(
                     spiff_task=parent_spiff_task,
                     store_process_instance_events=False,
@@ -365,7 +378,8 @@ class TaskService:
             new_properties_json["parent"] = None
 
         serialized_task_data = new_properties_json.pop("data", None)
-        has_delta = new_properties_json.get("delta") is not None
+        # Older Spiff serializers may omit "delta"; keep a compatibility fast path for that case.
+        has_delta = "delta" in new_properties_json
         new_properties_json.pop("delta", None)
         if serialized_task_data is not None and not has_delta:
             spiff_task_data = serialized_task_data
@@ -595,7 +609,7 @@ class TaskService:
         for bpmn_process in bpmn_processes_to_delete:
             db.session.delete(bpmn_process)
 
-        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks)
+        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks, set(deleted_task_guids))
 
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE

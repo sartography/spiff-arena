@@ -180,7 +180,7 @@ class TestTaskService(BaseTest):
         assert signal_event["event"]["typename"] == "SignalEventDefinition"
         assert signal_event["label"] == "Eat Spam"
 
-    def test_sync_parents_for_deleted_spiff_tasks_updates_ancestors(
+    def test_sync_parents_for_deleted_spiff_tasks_updates_ancestors_once_and_skips_deleted_ancestors(
         self,
         app: Flask,
     ) -> None:
@@ -193,12 +193,17 @@ class TestTaskService(BaseTest):
         task_service.update_task_model_with_spiff_task = capture_update
 
         grandparent = SimpleNamespace(id="grandparent", parent=None)
-        parent = SimpleNamespace(id="parent", parent=grandparent)
-        deleted = SimpleNamespace(id="deleted", parent=parent)
+        deleted_parent = SimpleNamespace(id="deleted_parent", parent=grandparent)
+        deleted_a = SimpleNamespace(id="deleted_a", parent=deleted_parent)
+        deleted_b = SimpleNamespace(id="deleted_b", parent=deleted_parent)
 
-        TaskService.sync_parents_for_deleted_spiff_tasks(task_service, [deleted])
+        TaskService.sync_parents_for_deleted_spiff_tasks(
+            task_service,
+            [deleted_a, deleted_b],
+            {"deleted_a", "deleted_b", "deleted_parent"},
+        )
 
-        assert updated_guids == ["parent", "grandparent"]
+        assert updated_guids == ["grandparent"]
 
     def test_prune_missing_child_references_removes_dangling_guids(
         self,
