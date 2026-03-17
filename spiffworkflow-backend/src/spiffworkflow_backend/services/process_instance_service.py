@@ -47,6 +47,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -862,10 +863,24 @@ class ProcessInstanceService:
         if can_complete is False:
             human_task = HumanTaskModel.query.filter_by(task_id=task_guid).first()
             if human_task is not None:
+                # Collect group identifiers from both sources
+                group_identifiers = []
+
+                # Check for group assignment via HumanTaskGroupModel (preferred, supports multiple groups)
+                task_groups = HumanTaskGroupModel.query.filter_by(human_task_id=human_task.id).all()
+                for task_group in task_groups:
+                    group = GroupModel.query.filter_by(id=task_group.group_id).first()
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                # Also check legacy lane_assignment_id for backwards compatibility
                 if human_task.lane_assignment_id is not None:
                     group = GroupModel.query.filter_by(id=human_task.lane_assignment_id).first()
-                    if group is not None:
-                        assigned_user_group_identifier = group.identifier
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                if group_identifiers:
+                    assigned_user_group_identifier = ",".join(group_identifiers)
                 elif len(human_task.potential_owners) > 0:
                     user_list = [u.email for u in human_task.potential_owners]
                     potential_owner_usernames = ",".join(user_list)

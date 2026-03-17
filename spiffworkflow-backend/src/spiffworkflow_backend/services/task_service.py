@@ -268,19 +268,6 @@ class TaskService:
         self.mark_bpmn_process_update_dirty(spiff_task.workflow, bpmn_process)
         return task_model
 
-    def update_bpmn_process(
-        self,
-        spiff_workflow: BpmnWorkflow,
-        bpmn_process: BpmnProcessModel,
-        bpmn_process_json_data: dict | None = None,
-    ) -> None:
-        self._update_bpmn_process_internal(
-            spiff_workflow=spiff_workflow,
-            bpmn_process=bpmn_process,
-            bpmn_process_json_data=bpmn_process_json_data,
-            recurse_parents=True,
-        )
-
     def _update_bpmn_process_internal(
         self,
         spiff_workflow: BpmnWorkflow,
