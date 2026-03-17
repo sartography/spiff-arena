@@ -369,6 +369,34 @@ export default function ReactFormBuilder({
     updateStrUi(JSON.stringify(tempUI, null, 2));
   }
 
+  function addOptionsToSchema(schema: any, data: any) {
+    const newSchema = { ...schema };
+    if (typeof schema.properties === 'object') {
+      Object.keys(schema.properties).map((key) => {
+        const item = newSchema.properties[key];
+        if (
+          Array.isArray(item.anyOf) &&
+          item.anyOf.length > 0 &&
+          typeof item.anyOf[0] === 'string'
+        ) {
+          const name = item.anyOf[0].replace('options_from_task_data_var:', '');
+          if (Array.isArray(data[name])) {
+            item.anyOf = data[name].map((opt) => {
+              return {
+                type: 'string',
+                enum: [opt.value],
+                title: opt.label,
+              };
+            });
+          } else {
+            item.anyOf = [];
+          }
+        }
+      });
+    }
+    return newSchema;
+  }
+
   if (!isReady()) {
     if (fileName !== '' && !fetchFailed) {
       fetchExampleData();
@@ -528,7 +556,7 @@ export default function ReactFormBuilder({
             key="custom_form"
             formData={formData}
             onChange={(e: any) => updateData(e.formData)}
-            schema={postJsonSchema}
+            schema={addOptionsToSchema(postJsonSchema, formData)}
             uiSchema={postJsonUI}
           />
         </ErrorBoundary>

@@ -241,7 +241,6 @@ export default function ReactFormEditor() {
 
   const editorArea = () => {
     if (fileExtension === 'md') {
-
       const createTextarea = (props: any) => {
         return <TextareaAutosize {...props} />;
       };
