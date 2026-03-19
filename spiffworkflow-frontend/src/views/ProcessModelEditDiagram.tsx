@@ -29,6 +29,10 @@ import {
   Info,
 } from '@mui/icons-material';
 
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { indentUnit } from '@codemirror/language';
+
 import { Can } from '@casl/react';
 import { Editor, DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
@@ -161,13 +165,6 @@ export default function ProcessModelEditDiagram() {
     markdownEditorState,
     jsonSchemaEditorState,
   });
-
-  function handleEditorDidMount(editor: any, monaco: any) {
-    // here is the editor instance
-    // you can store it in `useRef` for further usage
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-  }
 
   const params = useParams();
   const navigate = useNavigate();
@@ -771,8 +768,8 @@ export default function ProcessModelEditDiagram() {
                   height={500}
                   width="auto"
                   defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
                   defaultValue={inputJson}
+                  options={Object.assign(jsonEditorOptions(), {})}
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
@@ -801,16 +798,14 @@ export default function ProcessModelEditDiagram() {
 
   /* Main python script editor user works in */
   const editorWindow = () => {
+
     return (
-      <Editor
-        height={500}
+      <CodeMirror
+        height={'500px'}
         width="auto"
-        options={generalEditorOptions()}
-        defaultLanguage="python"
-        defaultValue={scriptText}
         value={scriptText}
+        extensions={[python(), indentUnit.of('    ')]}
         onChange={handleEditorScriptChange}
-        onMount={handleEditorDidMount}
       />
     );
   };
