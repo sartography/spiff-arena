@@ -20,15 +20,11 @@
 
 name: Snyk Security
 
-# on:
-#   push:
-#     branches: ["main" ]
-#   pull_request:
-#     branches: ["main"]
-# on:
-#   - push
-#   - pull_request
 on:
+  push:
+    branches: ["main" ]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch: # allow running on demand
   schedule:
     - cron: "0 14 * * 2" # Every Tuesday at 1PM UTC (9AM/10AM eastern)
