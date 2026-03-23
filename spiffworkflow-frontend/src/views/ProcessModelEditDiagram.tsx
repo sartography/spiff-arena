@@ -31,10 +31,11 @@ import {
 
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
+import { json } from '@codemirror/lang-json';
 import { indentUnit } from '@codemirror/language';
 
 import { Can } from '@casl/react';
-import { Editor, DiffEditor } from '@monaco-editor/react';
+import { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -531,21 +532,6 @@ export default function ProcessModelEditDiagram() {
     updateExpectedOutputJson(value, scriptElement, scriptModeling);
   };
 
-  const generalEditorOptions = () => {
-    return {
-      glyphMargin: false,
-      folding: false,
-      lineNumbersMinChars: 0,
-    };
-  };
-
-  const jsonEditorOptions = () => {
-    return Object.assign(generalEditorOptions(), {
-      minimap: { enabled: false },
-      folding: true,
-    });
-  };
-
   const processScriptUnitTestRunResult = (result: any) => {
     if ('result' in result) {
       setScriptUnitTestResult(result);
@@ -764,12 +750,11 @@ export default function ProcessModelEditDiagram() {
             <Grid size={{ xs: 6 }}>
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
-                <Editor
-                  height={500}
+                <CodeMirror
+                  height={'500ps'}
                   width="auto"
-                  defaultLanguage="json"
-                  defaultValue={inputJson}
-                  options={Object.assign(jsonEditorOptions(), {})}
+                  value={inputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
@@ -779,12 +764,11 @@ export default function ProcessModelEditDiagram() {
                 {t('diagram_script_editor_unit_test_expected_output_json')}
               </div>
               <div>
-                <Editor
-                  height={500}
+                <CodeMirror
+                  height={'500px'}
                   width="auto"
-                  defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
-                  defaultValue={outputJson}
+                  value={outputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitOutputChange}
                 />
               </div>

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import CodeMirror from '@uiw/react-codemirror';
+import { json } from '@codemirror/lang-json';
+import { xml } from '@codemirror/lang-xml';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -259,12 +261,18 @@ export default function ReactFormEditor() {
         </div>
       );
     }
+    const extensions = [];
+    if (editorDefaultLanguage == 'json') {
+      extensions.push(json());
+    } else if (editorDefaultLanguage == 'xml') {
+      extensions.push(xml());
+    }
     return (
-      <Editor
+      <CodeMirror
         height={600}
         width="auto"
-        defaultLanguage={editorDefaultLanguage}
-        defaultValue={processModelFileContents || ''}
+        value={processModelFileContents || ''}
+        extensions={extensions}
         onChange={(value) => setProcessModelFileContents(value || '')}
       />
     );

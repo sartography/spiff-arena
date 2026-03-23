@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Editor, loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
+import CodeMirror from '@uiw/react-codemirror';
+import { json } from '@codemirror/lang-json';
+import { EditorState } from '@codemirror/state';
+import { EditorView } from 'codemirror';
 
 import merge from 'lodash/merge';
 
@@ -22,8 +24,6 @@ import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
 import CustomForm from '../CustomForm';
 import { Notification } from '../Notification';
-
-loader.config({ monaco });
 
 type ErrorProps = {
   error: Error;
@@ -88,24 +88,6 @@ export default function ReactFormBuilder({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
-
-  /**
-   * This section gives us direct pointers to the monoco editors so that
-   * we can update their values.  Using state variables directly on the monoco editor
-   * causes the cursor to jump to the bottom if two letters are pressed simultaneously.
-   */
-  const schemaEditorRef = useRef(null);
-  const uiEditorRef = useRef(null);
-  const dataEditorRef = useRef(null);
-  function handleSchemaEditorDidMount(editor: any) {
-    schemaEditorRef.current = editor;
-  }
-  function handleUiEditorDidMount(editor: any) {
-    uiEditorRef.current = editor;
-  }
-  function handleDataEditorDidMount(editor: any) {
-    dataEditorRef.current = editor;
-  }
 
   useEffect(() => {
     if (pythonWorker === null) {
@@ -456,6 +438,12 @@ export default function ReactFormBuilder({
       </Grid>
     );
   }
+  const extensions = [json()];
+  if (!canUpdateFiles) {
+    extensions.push(EditorState.readOnly.of(true));
+    extensions.push(EditorView.editable.of(false));
+    extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
+  }
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -478,17 +466,15 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <Editor
-                height={600}
+              <CodeMirror
+                height={'600px'}
                 width="auto"
-                defaultLanguage="json"
-                defaultValue={strSchema}
+                value={strSchema}
+                extensions={extensions}
                 onChange={(value) => {
                   updateStrFileDebounce(value || '');
                   setStrSchema(value || '');
                 }}
-                onMount={handleSchemaEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
@@ -504,17 +490,15 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <Editor
-                height={600}
+              <CodeMirror
+                height={'600px'}
                 width="auto"
-                defaultLanguage="json"
-                defaultValue={strUI}
+                value={strUI}
+                extensions={extensions}
                 onChange={(value) => {
                   updateStrUIFileDebounce(value || '');
                   setStrUI(value || '');
                 }}
-                onMount={handleUiEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
@@ -523,17 +507,15 @@ export default function ReactFormBuilder({
               <Typography variant="body1">
                 {t('data_view_description')}
               </Typography>
-              <Editor
-                height={600}
+              <CodeMirror
+                height={'600px'}
                 width="auto"
-                defaultLanguage="json"
-                defaultValue={strFormData}
+                value={strFormData}
+                extensions={extensions}
                 onChange={(value) => {
                   updateFormDataFileDebounce(value || '');
                   updateDataFromStr(value || '');
                 }}
-                onMount={handleDataEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
