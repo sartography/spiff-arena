@@ -281,6 +281,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", defau
 config_from_env("SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX", default=0)
 config_from_env("SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX")
 
+# whether or not to enable HSTS
+config_from_env("SPIFFWORKFLOW_BACKEND_ENABLE_HSTS")
+
 # only for DEBUGGING - turn off threaded task execution.
 config_from_env("SPIFFWORKFLOW_BACKEND_USE_THREADS_FOR_TASK_EXECUTION", default=True)
 
