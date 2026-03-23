@@ -30,12 +30,14 @@ import {
 } from '@mui/icons-material';
 
 import CodeMirror from '@uiw/react-codemirror';
+import CodeMirrorMerge from 'react-codemirror-merge';
 import { python } from '@codemirror/lang-python';
 import { json } from '@codemirror/lang-json';
 import { indentUnit } from '@codemirror/language';
+import { EditorView } from 'codemirror';
+import { EditorState } from '@codemirror/state';
 
 import { Can } from '@casl/react';
-import { DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -639,15 +641,18 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <DiffEditor
-            height={200}
-            width="auto"
-            originalLanguage="json"
-            modifiedLanguage="json"
-            options={Object.assign(jsonEditorOptions(), {})}
-            original={outputJson}
-            modified={contextJson}
-          />
+          <CodeMirrorMerge>
+            <CodeMirrorMerge.Original
+              height={'200px'}
+              width="auto"
+              value={outputJson}
+              extensions={[json()]}
+            />
+            <CodeMirrorMerge.Modified
+              value={contextJson}
+              extensions={[json(), EditorView.editable.of(false), EditorState.readOnly.of(true)]}
+            />
+          </CodeMirrorMerge>
         );
       }
       return (
