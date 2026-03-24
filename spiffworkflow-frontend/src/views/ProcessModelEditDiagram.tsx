@@ -756,7 +756,7 @@ export default function ProcessModelEditDiagram() {
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
                 <CodeMirror
-                  height={'500ps'}
+                  height={'500px'}
                   width="auto"
                   value={inputJson}
                   extensions={[json()]}

@@ -269,7 +269,7 @@ export default function ReactFormEditor() {
     }
     return (
       <CodeMirror
-        height={600}
+        height={'600px'}
         width="auto"
         value={processModelFileContents || ''}
         extensions={extensions}
