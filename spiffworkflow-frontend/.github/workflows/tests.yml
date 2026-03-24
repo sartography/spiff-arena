@@ -6,6 +6,11 @@ on:
 
 # https://docs.github.com/en/actions/using-workflows/reusing-workflows
 
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest

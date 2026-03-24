@@ -118,6 +118,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
     const [diagramModelerState, setDiagramModelerState] = useState<any>(null);
     const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
     const diagramFetchedRef = useRef(false);
+    const importQueueRef = useRef<Promise<void>>(Promise.resolve());
     const previousDiagramModelerRef = useRef<any>(null);
     const callbacksRef = useRef({
       onCallActivityOverlayClick,
@@ -426,7 +427,13 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         if (callbacksRef.current.onLaunchScriptEditor) {
           setPerformingXmlUpdates(true);
           const modeling = diagramModeler.get('modeling');
-          callbacksRef.current.onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
+          callbacksRef.current.onLaunchScriptEditor(
+            element,
+            script,
+            scriptType,
+            eventBus,
+            modeling,
+          );
         }
       }
 
@@ -447,7 +454,10 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
             canvas.getRootElement(),
           );
-          callbacksRef.current.onElementClick(event.element, bpmnProcessIdentifiers);
+          callbacksRef.current.onElementClick(
+            event.element,
+            bpmnProcessIdentifiers,
+          );
         }
       }
 
@@ -547,7 +557,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
           console.error(error);
         }
         if (callbacksRef.current.onLaunchJsonSchemaEditor) {
-          callbacksRef.current.onLaunchJsonSchemaEditor(element, value, eventBus);
+          callbacksRef.current.onLaunchJsonSchemaEditor(
+            element,
+            value,
+            eventBus,
+          );
         }
       });
 
@@ -595,7 +609,11 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       diagramModeler.on('spiff.callactivity.search', (event: any) => {
         if (callbacksRef.current.onSearchProcessModels) {
-          callbacksRef.current.onSearchProcessModels(event.value, event.eventBus, event.element);
+          callbacksRef.current.onSearchProcessModels(
+            event.value,
+            event.eventBus,
+            event.element,
+          );
         }
       });
 
@@ -626,9 +644,21 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
 
       // FIXME: This prints unnecessary errors to the console when navigating to call activities.
       // This probably means there's a state or refresh issue going on although it doesn't cause an actual issue.
-      diagramModelerState.importXML(diagramXMLString).catch((error: any) => {
-        console.error('Failed to import diagram XML:', error);
-      });
+      let cancelled = false;
+      const modeler = diagramModelerState;
+      const xmlToImport = diagramXMLString;
+
+      importQueueRef.current = importQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (cancelled) {
+            return;
+          }
+          await modeler.importXML(xmlToImport);
+        })
+        .catch((error: any) => {
+          console.error('Failed to import diagram XML:', error);
+        });
 
       // Zoom to fit after a short delay to ensure canvas is rendered
       const timeoutId = window.setTimeout(() => {
@@ -648,6 +678,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       }, 100);
 
       return () => {
+        cancelled = true;
         clearTimeout(timeoutId);
       };
     }, [diagramXMLString, diagramModelerState, diagramType]);
@@ -697,20 +728,19 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
         bpmnProcessIdentifiers: string[],
       ) {
         if (checkTaskCanBeHighlighted(task)) {
-          try {
-            if (
-              bpmnProcessIdentifiers.includes(
-                task.bpmn_process_definition_identifier,
-              )
-            ) {
+          if (
+            bpmnProcessIdentifiers.includes(
+              task.bpmn_process_definition_identifier,
+            )
+          ) {
+            try {
               canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
-            }
-          } catch (bpmnIoError: any) {
-            if (
-              bpmnIoError.message !==
-              "Cannot read properties of undefined (reading 'id')"
-            ) {
-              throw bpmnIoError;
+            } catch (bpmnIoError: any) {
+              // Highlighting is best-effort; never break diagram rendering if marker application fails.
+              console.warn('Failed to add marker for BPMN element:', {
+                bpmnIdentifier: task.bpmn_identifier,
+                error: bpmnIoError,
+              });
             }
           }
         }

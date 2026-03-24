@@ -264,6 +264,13 @@ export interface ReferenceCache {
   properties: any;
 }
 
+export interface MessageModel {
+  identifier: string;
+  location: string;
+  schema: string;
+  correlation_properties: any;
+}
+
 export interface MessageInstance {
   correlation_keys: any;
   counterpart_id: number;
