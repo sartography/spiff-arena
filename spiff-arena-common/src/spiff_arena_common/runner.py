@@ -227,14 +227,44 @@ def _advance_workflow(workflow, task, strategy_name):
                 break
         elif strategy_name == "unittest":
             if task.task_spec.__class__.__name__.startswith("Custom"):
-                stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
-                if not stack:
-                    break
-                expected = stack.pop()
-                if task.task_spec.name != expected["id"]:
-                    break
-                task.run()
-                task.data.update(expected["data"])
+                # Check for file-based fixture first (ed recording playback)
+                fixture_file = task.data.get("spiff_testFixture_file")
+                if fixture_file:
+                    # File-based fixture: read from disk and manage index
+                    # Stack is consumed from the end, so index starts at len(stack)-1
+                    try:
+                        with open(fixture_file) as f:
+                            fixture = json.load(f)
+                        stack = fixture.get("pendingTaskStack", [])
+
+                        # Default to last element if no index set
+                        if "spiff_testFixture_index" not in task.data:
+                            index = len(stack) - 1
+                        else:
+                            index = task.data["spiff_testFixture_index"]
+
+                        if index < 0 or index >= len(stack):
+                            break
+                        expected = stack[index]
+                        if task.task_spec.name != expected["id"]:
+                            break
+                        task.run()
+                        task.data.update(expected["data"])
+                        # Decrement index for next task (moving backwards through stack)
+                        task.data["spiff_testFixture_index"] = index - 1
+                    except Exception as e:
+                        logging.error(f"Failed to load test fixture from {fixture_file}: {e}")
+                        break
+                else:
+                    # Fallback to inline fixture (process-models compatibility)
+                    stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
+                    if not stack:
+                        break
+                    expected = stack.pop()
+                    if task.task_spec.name != expected["id"]:
+                        break
+                    task.run()
+                    task.data.update(expected["data"])
             if missing_lazy_load_specs(workflow):
                 break
 
