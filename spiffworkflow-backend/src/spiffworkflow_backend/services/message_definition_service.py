@@ -21,7 +21,18 @@ class MessageDefinitionService:
 
         existing_model = MessageModel.query.filter_by(identifier=identifier, location=message_location).first()
         existing_message_id = existing_model.id if existing_model else None
-        resolved_message_id = message_id if message_id is not None else existing_message_id
+
+        if message_id is not None:
+            model_by_id = MessageModel.query.filter_by(id=message_id).first()
+            if model_by_id is not None and (model_by_id.identifier != identifier or model_by_id.location != message_location):
+                raise ValueError(
+                    f"Supplied message_id {message_id} belongs to a different message"
+                    f" ('{model_by_id.identifier}' at '{model_by_id.location}')."
+                    f" Cannot reuse this id for '{identifier}' at '{message_location}'."
+                )
+            resolved_message_id = message_id
+        else:
+            resolved_message_id = existing_message_id
 
         message_model = MessageModel(identifier=identifier, location=message_location, schema=schema)
         if resolved_message_id is not None:
