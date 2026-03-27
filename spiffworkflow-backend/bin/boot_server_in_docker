@@ -65,6 +65,7 @@ worker_count=4
 if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
   worker_count=1
 fi
+export SERVER_WORKER_COUNT="$worker_count"
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then

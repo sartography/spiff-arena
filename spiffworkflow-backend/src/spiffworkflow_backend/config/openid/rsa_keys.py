@@ -2,6 +2,89 @@
 # This should only be used for development and demonstration. SHOULD NOT BE USED IN PROD.
 
 import os
+import tempfile
+from pathlib import Path
+
+
+def _expected_worker_count() -> int:
+    configured_count = os.getenv("SERVER_WORKER_COUNT", "1")
+    try:
+        return int(configured_count)
+    except ValueError:
+        return 1
+
+
+def _key_cache_dir() -> Path:
+    configured_dir = os.getenv("OPENID_KEY_CACHE_DIR")
+    if configured_dir:
+        return Path(configured_dir)
+    return Path(tempfile.gettempdir()) / "spiffworkflow-dev-openid-keys"
+
+
+def _key_paths() -> tuple[Path, Path, Path]:
+    key_dir = _key_cache_dir()
+    return (
+        key_dir / "openid-private.pem",
+        key_dir / "openid-public.pem",
+        key_dir / ".lock",
+    )
+
+
+def _read_key_pair_from_files(private_key_path: Path, public_key_path: Path) -> tuple[str, str] | None:
+    if private_key_path.exists() and public_key_path.exists():
+        return (private_key_path.read_text(), public_key_path.read_text())
+    return None
+
+
+def _load_or_create_file_backed_keys_with_lock() -> tuple[str, str]:
+    private_key_path, public_key_path, lock_path = _key_paths()
+    private_key_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with lock_path.open("w") as lock_file:
+        import fcntl
+
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+        existing_keys = _read_key_pair_from_files(private_key_path, public_key_path)
+        if existing_keys is not None:
+            return existing_keys
+
+        private_key, public_key = _generate_keys()
+        private_key_path.write_text(private_key)
+        public_key_path.write_text(public_key)
+        os.chmod(private_key_path, 0o600)
+        os.chmod(public_key_path, 0o644)
+        return (private_key, public_key)
+
+
+def _load_or_create_file_backed_keys_without_lock() -> tuple[str, str]:
+    private_key_path, public_key_path, _lock_path = _key_paths()
+    private_key_path.parent.mkdir(parents=True, exist_ok=True)
+
+    existing_keys = _read_key_pair_from_files(private_key_path, public_key_path)
+    if existing_keys is not None:
+        return existing_keys
+
+    private_key, public_key = _generate_keys()
+    private_key_path.write_text(private_key)
+    public_key_path.write_text(public_key)
+    os.chmod(private_key_path, 0o600)
+    os.chmod(public_key_path, 0o644)
+    return (private_key, public_key)
+
+
+def _load_or_create_file_backed_keys() -> tuple[str, str]:
+    try:
+        import fcntl  # noqa: F401
+    except ImportError as err:
+        if _expected_worker_count() > 1:
+            raise RuntimeError(
+                "Built-in OpenID dev keys require OPENID_PRIVATE_KEY and OPENID_PUBLIC_KEY "
+                "when running with multiple workers on platforms without fcntl-based file locking."
+            ) from err
+        return _load_or_create_file_backed_keys_without_lock()
+
+    return _load_or_create_file_backed_keys_with_lock()
 
 
 def _generate_keys() -> tuple[str, str]:
@@ -32,15 +115,14 @@ def _generate_keys() -> tuple[str, str]:
 
 
 def _initialize_keys() -> tuple[str, str]:
-    """Initialize keys from environment or generate them."""
+    """Initialize keys from environment or load a shared cached keypair."""
     private_key = os.getenv("OPENID_PRIVATE_KEY")
     public_key = os.getenv("OPENID_PUBLIC_KEY")
 
-    if not private_key or not public_key:
-        # Generate keys if not provided via environment
-        private_key, public_key = _generate_keys()
+    if private_key and public_key:
+        return (private_key, public_key)
 
-    return private_key, public_key
+    return _load_or_create_file_backed_keys()
 
 
 class OpenIdConfigsForDevOnly:
