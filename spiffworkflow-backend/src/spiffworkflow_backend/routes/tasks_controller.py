@@ -410,6 +410,15 @@ def manual_complete_task(
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
+    if process_instance.status != ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="complete_task",
+            message=(
+                f"Process Instance must have status '{ProcessInstanceStatus.suspended.value}' to complete tasks like this."
+                f"Instance {process_instance_id} had '{process_instance.status}'."
+            ),
+        )
+
     if process_instance:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
