@@ -34,6 +34,12 @@ import {
   SettingsApplicationsSharp,
   Extension,
   Flag,
+  History,
+  Science,
+  Group,
+  Analytics,
+  Dashboard,
+  Palette,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -74,6 +80,15 @@ const routeIdentifiers = {
   DATA_STORES: 'dataStores',
   MESSAGES: 'messages',
   CONFIGURATION: 'configuration',
+};
+
+const extensionIconAllowlist: Record<string, ReactElement> = {
+  analytics: <Analytics />,
+  dashboard: <Dashboard />,
+  history: <History />,
+  palette: <Palette />,
+  people: <Group />,
+  test_tube: <Science />,
 };
 
 function SideNav({
@@ -239,7 +254,9 @@ function SideNav({
     }
     navItems.push({
       text: uxElement.label,
-      icon: <Extension />,
+      icon: uxElement.icon
+        ? extensionIconAllowlist[uxElement.icon] || <Extension />
+        : <Extension />,
       route: navItemPage,
       id: uxElement.page,
     });

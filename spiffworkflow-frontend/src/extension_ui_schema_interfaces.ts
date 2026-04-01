@@ -77,6 +77,7 @@ export interface UiSchemaUxElement {
   display_location: UiSchemaDisplayLocation;
   location_specific_configs?: UiSchemaLocationSpecificConfig;
   tooltip?: string;
+  icon?: string;
 }
 
 export interface UiSchemaForm {
