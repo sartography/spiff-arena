@@ -3,7 +3,47 @@
 
 import os
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
+
+
+def _validate_private_key_pem(private_key: str) -> None:
+    from cryptography.hazmat.primitives import serialization
+
+    serialization.load_pem_private_key(private_key.encode(), password=None)
+
+
+def _validate_public_key_pem(public_key: str) -> None:
+    from cryptography.hazmat.primitives import serialization
+
+    serialization.load_pem_public_key(public_key.encode())
+
+
+def _validate_key_pair(private_key: str, public_key: str) -> tuple[str, str] | None:
+    from cryptography.exceptions import UnsupportedAlgorithm
+
+    try:
+        _validate_private_key_pem(private_key)
+        _validate_public_key_pem(public_key)
+    except (TypeError, ValueError, UnsupportedAlgorithm):
+        return None
+    return (private_key, public_key)
+
+
+def _write_validated_pem_atomically(path: Path, pem_contents: str, mode: int, validator: Callable[[str], None]) -> None:
+    validator(pem_contents)
+    with tempfile.NamedTemporaryFile("w", dir=path.parent, prefix=f"{path.name}.", suffix=".tmp", delete=False) as tmp_file:
+        tmp_file.write(pem_contents)
+        tmp_file.flush()
+        os.fsync(tmp_file.fileno())
+        tmp_path = Path(tmp_file.name)
+
+    try:
+        os.chmod(tmp_path, mode)
+        tmp_path.replace(path)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
 
 
 def _expected_worker_count() -> int:
@@ -32,7 +72,7 @@ def _key_paths() -> tuple[Path, Path, Path]:
 
 def _read_key_pair_from_files(private_key_path: Path, public_key_path: Path) -> tuple[str, str] | None:
     if private_key_path.exists() and public_key_path.exists():
-        return (private_key_path.read_text(), public_key_path.read_text())
+        return _validate_key_pair(private_key_path.read_text(), public_key_path.read_text())
     return None
 
 
@@ -50,10 +90,8 @@ def _load_or_create_file_backed_keys_with_lock() -> tuple[str, str]:
             return existing_keys
 
         private_key, public_key = _generate_keys()
-        private_key_path.write_text(private_key)
-        public_key_path.write_text(public_key)
-        os.chmod(private_key_path, 0o600)
-        os.chmod(public_key_path, 0o644)
+        _write_validated_pem_atomically(private_key_path, private_key, 0o600, _validate_private_key_pem)
+        _write_validated_pem_atomically(public_key_path, public_key, 0o644, _validate_public_key_pem)
         return (private_key, public_key)
 
 
@@ -66,10 +104,8 @@ def _load_or_create_file_backed_keys_without_lock() -> tuple[str, str]:
         return existing_keys
 
     private_key, public_key = _generate_keys()
-    private_key_path.write_text(private_key)
-    public_key_path.write_text(public_key)
-    os.chmod(private_key_path, 0o600)
-    os.chmod(public_key_path, 0o644)
+    _write_validated_pem_atomically(private_key_path, private_key, 0o600, _validate_private_key_pem)
+    _write_validated_pem_atomically(public_key_path, public_key, 0o644, _validate_public_key_pem)
     return (private_key, public_key)
 
 
@@ -119,8 +155,16 @@ def _initialize_keys() -> tuple[str, str]:
     private_key = os.getenv("OPENID_PRIVATE_KEY")
     public_key = os.getenv("OPENID_PUBLIC_KEY")
 
+    if private_key and not public_key:
+        raise RuntimeError("OPENID_PRIVATE_KEY is set but OPENID_PUBLIC_KEY is missing.")
+
+    if public_key and not private_key:
+        raise RuntimeError("OPENID_PUBLIC_KEY is set but OPENID_PRIVATE_KEY is missing.")
+
     if private_key and public_key:
-        return (private_key, public_key)
+        validated_key_pair = _validate_key_pair(private_key, public_key)
+        if validated_key_pair is not None:
+            return validated_key_pair
 
     return _load_or_create_file_backed_keys()
 
