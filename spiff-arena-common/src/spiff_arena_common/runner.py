@@ -215,6 +215,9 @@ def _advance_workflow(workflow, task, strategy_name):
             task.run()
         workflow.refresh_waiting_tasks()
 
+        if missing_lazy_load_specs(workflow):
+            break
+
         task = next_task(workflow, TaskState.READY)
         if not task:
             break
@@ -222,8 +225,6 @@ def _advance_workflow(workflow, task, strategy_name):
             break
         elif strategy_name == "greedy":
             if task.task_spec.__class__.__name__.startswith("Custom"):
-                break
-            if missing_lazy_load_specs(workflow):
                 break
         elif strategy_name == "unittest":
             if task.task_spec.__class__.__name__.startswith("Custom"):
@@ -265,8 +266,6 @@ def _advance_workflow(workflow, task, strategy_name):
                         break
                     task.run()
                     task.data.update(expected["data"])
-            if missing_lazy_load_specs(workflow):
-                break
 
     step = build_response(workflow, None)
     return step
