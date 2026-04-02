@@ -6,6 +6,7 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
+from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -26,20 +27,14 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _validate_private_key_pem(cls, private_key: str) -> None:
-        from cryptography.hazmat.primitives import serialization
-
         serialization.load_pem_private_key(private_key.encode(), password=None)
 
     @classmethod
     def _validate_public_key_pem(cls, public_key: str) -> None:
-        from cryptography.hazmat.primitives import serialization
-
         serialization.load_pem_public_key(public_key.encode())
 
     @classmethod
     def _validate_key_pair(cls, private_key: str, public_key: str) -> tuple[str, str] | None:
-        from cryptography.exceptions import UnsupportedAlgorithm
-
         try:
             cls._validate_private_key_pem(private_key)
             cls._validate_public_key_pem(public_key)
