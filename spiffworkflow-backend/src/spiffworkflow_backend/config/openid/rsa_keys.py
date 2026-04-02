@@ -124,8 +124,9 @@ class OpenIdConfigsForDevOnly:
         if not HAS_FCNTL:
             if cls._expected_worker_count() > 1:
                 raise RuntimeError(
-                    "Built-in OpenID dev keys require OPENID_PRIVATE_KEY and OPENID_PUBLIC_KEY "
-                    "when running with multiple workers on platforms without fcntl-based file locking."
+                    "Built-in OpenID dev keys require SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY "
+                    "and SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY when running with multiple workers "
+                    "on platforms without fcntl-based file locking."
                 )
             return cls._load_or_create_file_backed_keys_without_lock()
 
@@ -157,22 +158,27 @@ class OpenIdConfigsForDevOnly:
     @classmethod
     def _initialize_keys(cls) -> tuple[str, str]:
         """Initialize keys from environment or load a shared cached keypair."""
-        private_key = os.getenv("OPENID_PRIVATE_KEY")
-        public_key = os.getenv("OPENID_PUBLIC_KEY")
+        private_key = os.getenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY")
+        public_key = os.getenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY")
 
         if private_key and not public_key:
-            raise RuntimeError("OPENID_PRIVATE_KEY is set but OPENID_PUBLIC_KEY is missing.")
+            raise RuntimeError(
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY is set but SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY is missing."
+            )
 
         if public_key and not private_key:
-            raise RuntimeError("OPENID_PUBLIC_KEY is set but OPENID_PRIVATE_KEY is missing.")
+            raise RuntimeError(
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY is set but SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY is missing."
+            )
 
         if private_key and public_key:
             validated_key_pair = cls._validate_key_pair(private_key, public_key)
             if validated_key_pair is not None:
                 return validated_key_pair
             raise RuntimeError(
-                "OPENID_PRIVATE_KEY and OPENID_PUBLIC_KEY are set but contain invalid key data. "
-                "Provide valid PEM-encoded RSA keys or unset these variables to use generated keys."
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY and SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY "
+                "are set but contain invalid key data. Provide valid PEM-encoded RSA keys or unset "
+                "these variables to use generated keys."
             )
 
         return cls._load_or_create_file_backed_keys()

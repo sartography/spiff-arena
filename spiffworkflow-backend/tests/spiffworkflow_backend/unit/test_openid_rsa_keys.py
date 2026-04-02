@@ -32,8 +32,8 @@ def test_write_validated_pem_atomically_rejects_invalid_pem(tmp_path: Path) -> N
 
 
 def test_initialize_keys_raises_on_invalid_env_key_pair(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("OPENID_PRIVATE_KEY", "truncated-private-key")
-    monkeypatch.setenv("OPENID_PUBLIC_KEY", "truncated-public-key")
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY", "truncated-private-key")
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY", "truncated-public-key")
 
     with pytest.raises(RuntimeError, match="invalid key data"):
         rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
@@ -42,18 +42,18 @@ def test_initialize_keys_raises_on_invalid_env_key_pair(monkeypatch: pytest.Monk
 def test_initialize_keys_raises_when_public_key_env_var_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     private_key, _public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
 
-    monkeypatch.setenv("OPENID_PRIVATE_KEY", private_key)
-    monkeypatch.delenv("OPENID_PUBLIC_KEY", raising=False)
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY", private_key)
+    monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY", raising=False)
 
-    with pytest.raises(RuntimeError, match="OPENID_PUBLIC_KEY"):
+    with pytest.raises(RuntimeError, match="SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY"):
         rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
 
 
 def test_initialize_keys_raises_when_private_key_env_var_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     _private_key, public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
 
-    monkeypatch.delenv("OPENID_PRIVATE_KEY", raising=False)
-    monkeypatch.setenv("OPENID_PUBLIC_KEY", public_key)
+    monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY", raising=False)
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY", public_key)
 
-    with pytest.raises(RuntimeError, match="OPENID_PRIVATE_KEY"):
+    with pytest.raises(RuntimeError, match="SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY"):
         rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
