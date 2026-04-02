@@ -231,28 +231,29 @@ def _advance_workflow(workflow, task, strategy_name):
                 # Check for file-based fixture first (ed recording playback)
                 fixture_file = task.data.get("spiff_testFixture_file")
                 if fixture_file:
-                    # File-based fixture: read from disk and manage index
-                    # Stack is consumed from the end, so index starts at len(stack)-1
+                    # File-based fixture: read from disk and manage index.
+                    # Index is stored in workflow.data (shared across all tasks) to ensure
+                    # the counter stays synchronized even when tasks are created ahead of time.
                     try:
                         with open(fixture_file) as f:
                             fixture = json.load(f)
                         stack = fixture.get("pendingTaskStack", [])
 
-                        # Default to last element if no index set
-                        if "spiff_testFixture_index" not in task.data:
+                        if "spiff_testFixture_index" not in workflow.data:
                             index = len(stack) - 1
                         else:
-                            index = task.data["spiff_testFixture_index"]
+                            index = workflow.data["spiff_testFixture_index"]
 
                         if index < 0 or index >= len(stack):
                             break
+
                         expected = stack[index]
                         if task.task_spec.name != expected["id"]:
                             break
+
                         task.run()
                         task.data.update(expected["data"])
-                        # Decrement index for next task (moving backwards through stack)
-                        task.data["spiff_testFixture_index"] = index - 1
+                        workflow.data["spiff_testFixture_index"] = index - 1
                     except Exception as e:
                         logging.error(f"Failed to load test fixture from {fixture_file}: {e}")
                         break
