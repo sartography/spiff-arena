@@ -10,6 +10,15 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+try:
+    # fcntl is not available on Windows. With multiple workers, file locking is required
+    # to prevent race conditions when generating keys. For single worker, locking is unnecessary.
+    import fcntl
+
+    HAS_FCNTL = True
+except ImportError:
+    HAS_FCNTL = False
+
 
 class OpenIdConfigsForDevOnly:
     @classmethod
@@ -87,8 +96,6 @@ class OpenIdConfigsForDevOnly:
         private_key_path.parent.mkdir(parents=True, exist_ok=True)
 
         with lock_path.open("w") as lock_file:
-            import fcntl
-
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
             existing_keys = cls._read_key_pair_from_files(private_key_path, public_key_path)
@@ -116,14 +123,12 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _load_or_create_file_backed_keys(cls) -> tuple[str, str]:
-        try:
-            import fcntl  # noqa: F401
-        except ImportError as err:
+        if not HAS_FCNTL:
             if cls._expected_worker_count() > 1:
                 raise RuntimeError(
                     "Built-in OpenID dev keys require OPENID_PRIVATE_KEY and OPENID_PUBLIC_KEY "
                     "when running with multiple workers on platforms without fcntl-based file locking."
-                ) from err
+                )
             return cls._load_or_create_file_backed_keys_without_lock()
 
         return cls._load_or_create_file_backed_keys_with_lock()
