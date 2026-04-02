@@ -39,7 +39,7 @@ def test_initialize_keys_ignores_invalid_env_key_pair(monkeypatch: pytest.Monkey
     monkeypatch.setattr(
         rsa_keys.OpenIdConfigsForDevOnly,
         "_load_or_create_file_backed_keys",
-        lambda cls: (fallback_private_key, fallback_public_key),
+        classmethod(lambda cls: (fallback_private_key, fallback_public_key)),
     )
 
     assert rsa_keys.OpenIdConfigsForDevOnly._initialize_keys() == (fallback_private_key, fallback_public_key)
