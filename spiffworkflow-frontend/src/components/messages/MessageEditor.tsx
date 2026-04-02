@@ -242,7 +242,7 @@ export function MessageEditor({
         matchingMessageModels.map((messageModel) => {
           return {
             id: messageModel.id,
-            label: `${messageModel.location} (${messageModel.identifier})`,
+            label: `${messageModel.identifier} (${messageModel.location})`,
             message: messageModel,
           };
         });
@@ -352,13 +352,15 @@ export function MessageEditor({
         useExistingSharedMessageId: {
           type: 'string',
           title: t('use_existing_shared_message'),
-          enum: [
-            NO_SHARED_MESSAGE_OPTION,
-            ...sharedMessageOptions.map((o) => String(o.id)),
-          ],
-          enumNames: [
-            t('do_not_use_existing_shared_message'),
-            ...sharedMessageOptions.map((o) => o.label),
+          oneOf: [
+            {
+              const: NO_SHARED_MESSAGE_OPTION,
+              title: t('do_not_use_existing_shared_message'),
+            },
+            ...sharedMessageOptions.map((sharedMessageOption) => ({
+              const: String(sharedMessageOption.id),
+              title: sharedMessageOption.label,
+            })),
           ],
           description: t('use_existing_shared_message_description'),
         },

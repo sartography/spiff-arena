@@ -33,11 +33,17 @@ vi.mock('react-i18next', () => {
 
 vi.mock('../CustomForm', () => {
   return {
-    default: ({ formData }: any) => (
-      <div data-testid="selected-shared-message">
-        {formData.useExistingSharedMessageId}
-      </div>
-    ),
+    default: ({ formData, schema }: any) => {
+      const selectedValue = formData.useExistingSharedMessageId;
+      const selectedOption = schema.properties.useExistingSharedMessageId.oneOf.find(
+        (option: any) => option.const === selectedValue,
+      );
+      return (
+        <div data-testid="selected-shared-message">
+          {selectedOption?.title || selectedValue}
+        </div>
+      );
+    },
   };
 });
 
@@ -100,7 +106,7 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
-      '1441',
+      'request-for-information-received (order)',
     );
   });
 });
