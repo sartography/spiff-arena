@@ -1,7 +1,10 @@
 import DateAndTimeService from './DateAndTimeService';
+import { TimeAgo } from '../helpers/timeago';
 
 const spiffFormatFunctions: { [key: string]: Function } = {
   convert_seconds_to_date_time_for_display: DateAndTimeService.formatDateTime,
+  convert_seconds_to_time_ago_for_display: (value: string) =>
+    TimeAgo.inWords(Number(value)),
   convert_seconds_to_duration_for_display:
     DateAndTimeService.formatDurationForDisplay,
   convert_date_to_date_for_display:
