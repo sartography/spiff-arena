@@ -21,6 +21,9 @@ except ImportError:
 
 
 class OpenIdConfigsForDevOnly:
+    private_key: str
+    public_key: str
+
     @classmethod
     def _validate_private_key_pem(cls, private_key: str) -> None:
         from cryptography.hazmat.primitives import serialization
@@ -175,5 +178,6 @@ class OpenIdConfigsForDevOnly:
 
         return cls._load_or_create_file_backed_keys()
 
-    # Initialize keys at module load time
-    private_key, public_key = _initialize_keys()
+
+# Initialize keys at module load time
+OpenIdConfigsForDevOnly.private_key, OpenIdConfigsForDevOnly.public_key = OpenIdConfigsForDevOnly._initialize_keys()

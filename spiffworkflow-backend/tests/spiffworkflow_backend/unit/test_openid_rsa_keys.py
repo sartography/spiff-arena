@@ -9,22 +9,22 @@ def test_read_key_pair_from_files_returns_none_for_truncated_pems(tmp_path: Path
     private_key_path = tmp_path / "openid-private.pem"
     public_key_path = tmp_path / "openid-public.pem"
 
-    private_key, public_key = rsa_keys._generate_keys()
+    private_key, public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
     private_key_path.write_text(private_key[:40])
     public_key_path.write_text(public_key[:40])
 
-    assert rsa_keys._read_key_pair_from_files(private_key_path, public_key_path) is None
+    assert rsa_keys.OpenIdConfigsForDevOnly._read_key_pair_from_files(private_key_path, public_key_path) is None
 
 
 def test_write_validated_pem_atomically_rejects_invalid_pem(tmp_path: Path) -> None:
     private_key_path = tmp_path / "openid-private.pem"
 
     with pytest.raises(ValueError):
-        rsa_keys._write_validated_pem_atomically(
+        rsa_keys.OpenIdConfigsForDevOnly._write_validated_pem_atomically(
             private_key_path,
             "not-a-valid-private-key",
             0o600,
-            rsa_keys._validate_private_key_pem,
+            rsa_keys.OpenIdConfigsForDevOnly._validate_private_key_pem,
         )
 
     assert not private_key_path.exists()
@@ -32,34 +32,34 @@ def test_write_validated_pem_atomically_rejects_invalid_pem(tmp_path: Path) -> N
 
 
 def test_initialize_keys_ignores_invalid_env_key_pair(monkeypatch: pytest.MonkeyPatch) -> None:
-    fallback_private_key, fallback_public_key = rsa_keys._generate_keys()
+    fallback_private_key, fallback_public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
 
     monkeypatch.setenv("OPENID_PRIVATE_KEY", "truncated-private-key")
     monkeypatch.setenv("OPENID_PUBLIC_KEY", "truncated-public-key")
     monkeypatch.setattr(
-        rsa_keys,
+        rsa_keys.OpenIdConfigsForDevOnly,
         "_load_or_create_file_backed_keys",
-        lambda: (fallback_private_key, fallback_public_key),
+        lambda cls: (fallback_private_key, fallback_public_key),
     )
 
-    assert rsa_keys._initialize_keys() == (fallback_private_key, fallback_public_key)
+    assert rsa_keys.OpenIdConfigsForDevOnly._initialize_keys() == (fallback_private_key, fallback_public_key)
 
 
 def test_initialize_keys_raises_when_public_key_env_var_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    private_key, _public_key = rsa_keys._generate_keys()
+    private_key, _public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
 
     monkeypatch.setenv("OPENID_PRIVATE_KEY", private_key)
     monkeypatch.delenv("OPENID_PUBLIC_KEY", raising=False)
 
     with pytest.raises(RuntimeError, match="OPENID_PUBLIC_KEY"):
-        rsa_keys._initialize_keys()
+        rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
 
 
 def test_initialize_keys_raises_when_private_key_env_var_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    _private_key, public_key = rsa_keys._generate_keys()
+    _private_key, public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
 
     monkeypatch.delenv("OPENID_PRIVATE_KEY", raising=False)
     monkeypatch.setenv("OPENID_PUBLIC_KEY", public_key)
 
     with pytest.raises(RuntimeError, match="OPENID_PRIVATE_KEY"):
-        rsa_keys._initialize_keys()
+        rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
