@@ -74,6 +74,9 @@ export function MessageEditor({
   correlationProperties,
   elementId,
 }: OwnProps) {
+  const currentGroupLocation = unModifyProcessIdentifierForPathParam(
+    modifiedProcessGroupIdentifier,
+  );
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [currentFormData, setCurrentFormData] =
     useState<MessageEditorFormData | null>(null);
@@ -181,15 +184,17 @@ export function MessageEditor({
 
       const selectedSharedMessageOption =
         sharedMessageOptionsById[formData.useExistingSharedMessageId || ''];
-      if (selectedSharedMessageOption) {
-        updatedMessagesForId.id = selectedSharedMessageOption.message.id;
-        updatedMessagesForId.location = formData.processGroupIdentifier;
+      const shouldInheritAncestorSharedMessage =
+        selectedSharedMessageOption != null &&
+        selectedSharedMessageOption.message.location !== currentGroupLocation;
+
+      if (shouldInheritAncestorSharedMessage) {
+        delete processGroupForUpdate.messages[newMessageId];
       } else {
         delete updatedMessagesForId.id;
         delete updatedMessagesForId.location;
+        processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
       }
-
-      processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
       if (oldMessageId !== newMessageId) {
         delete processGroupForUpdate.messages[oldMessageId];
       }
@@ -212,6 +217,7 @@ export function MessageEditor({
       handleProcessGroupUpdateResponse,
       modifiedProcessGroupIdentifier,
       processGroup,
+      currentGroupLocation,
       sharedMessageOptionsById,
       updateCorrelationPropertiesOnProcessGroup,
       t,
@@ -219,10 +225,6 @@ export function MessageEditor({
   );
 
   useEffect(() => {
-    const currentGroupLocation = unModifyProcessIdentifierForPathParam(
-      modifiedProcessGroupIdentifier,
-    );
-
     const setInitialFormData = (
       newProcessGroup: ProcessGroup,
       matchingMessageModels: MessageModelResponse[],
