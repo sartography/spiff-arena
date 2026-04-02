@@ -1219,6 +1219,7 @@ export default function ProcessModelEditDiagram() {
           <Notification
             title={t('diagram_notifications_unsaved_changes_title')}
             type="error"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             data-testid="process-model-file-changed"
             hideCloseButton
           >
