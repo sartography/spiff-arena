@@ -1,6 +1,5 @@
 # These configs are specifically for the open id server run from backend.
 # This should only be used for development and demonstration. SHOULD NOT BE USED IN PROD.
-
 import os
 import tempfile
 from collections.abc import Callable
@@ -10,6 +9,7 @@ from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from flask import current_app
 
 try:
     # fcntl is not available on Windows. With multiple workers, file locking is required
@@ -60,7 +60,7 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _expected_worker_count(cls) -> int:
-        configured_count = os.getenv("SERVER_WORKER_COUNT", "1")
+        configured_count = current_app.config.get("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", 1)
         try:
             return int(configured_count)
         except ValueError:
@@ -68,7 +68,7 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _key_cache_dir(cls) -> Path:
-        configured_dir = os.getenv("OPENID_KEY_CACHE_DIR")
+        configured_dir = os.getenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
         if configured_dir:
             return Path(configured_dir)
         return Path(tempfile.gettempdir()) / "spiffworkflow-dev-openid-keys"
