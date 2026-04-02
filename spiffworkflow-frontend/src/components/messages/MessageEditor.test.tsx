@@ -222,4 +222,56 @@ describe('MessageEditor', () => {
     expect(updateCall).toBeTruthy();
     expect(updateCall.postBody.messages).toEqual({});
   });
+
+  it('does not show the unsynced warning for an inherited ancestor message', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order/survey"
+        messageId="request-for-information-received"
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[
+          {
+            id: 'survey_id',
+            retrievalExpression: 'survey_id',
+          },
+        ]}
+        elementId="Task_1"
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order/survey');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order/survey');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Survey',
+        messages: {},
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [
+          {
+            id: 1441,
+            identifier: 'request-for-information-received',
+            location: 'order',
+            schema: {},
+            correlation_properties: [
+              {
+                identifier: 'survey_id',
+                retrieval_expression: 'survey_id',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    expect(screen.queryByText('save_warning_message')).not.toBeInTheDocument();
+  });
 });

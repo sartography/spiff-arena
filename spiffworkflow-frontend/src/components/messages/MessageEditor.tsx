@@ -291,21 +291,22 @@ export function MessageEditor({
       processGroupResult: ProcessGroup,
       messageModelsResult: { messages: MessageModelResponse[] },
     ) => {
-      const newIsSynced = areCorrelationPropertiesInSync(
-        processGroupResult,
-        messageId,
-        correlationProperties,
-      );
-      setDisplayNotSyncedMessage(!newIsSynced);
-      setProcessGroup(processGroupResult);
-      setCurrentMessageId(messageId);
-      setPageTitle([processGroupResult.display_name]);
-
       const matchingMessageModels = (messageModelsResult.messages || []).filter(
         (messageModel) => {
           return messageModel.identifier === messageId;
         },
       );
+      const newIsSynced = areCorrelationPropertiesInSync(
+        processGroupResult,
+        messageId,
+        correlationProperties,
+        currentGroupLocation,
+        matchingMessageModels,
+      );
+      setDisplayNotSyncedMessage(!newIsSynced);
+      setProcessGroup(processGroupResult);
+      setCurrentMessageId(messageId);
+      setPageTitle([processGroupResult.display_name]);
       setInitialFormData(processGroupResult, matchingMessageModels);
     };
 
