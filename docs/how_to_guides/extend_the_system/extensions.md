@@ -39,44 +39,112 @@ To create your own custom extension, follow these steps:
 As an example, we have created an extension that adds a link to the profile menu in the top right and also adds a new "Support" page to the app so that users of the application know who to talk to if they have issues.
 You can find the full example [on GitHub](https://github.com/sartography/sample-process-models/tree/sample-models-1/extensions/support).
 
-Notice how the `display_location` "user_profile_item" tells it that the link belongs in the user profile menu (this is the top right menu where the logout link can be found).
-Also, notice that the extension uischema defines a page ("/support") and defines the list of components that should show up on this page.
-In this case, that is just a single MarkdownRenderer, which defines how to contact people.
+With the current `1.0` schema, navigation intent, route overrides, and CSS assets are split apart more cleanly:
+
+- `navigation`: items that appear in the primary nav, user menu, or configuration tabs
+- `routes`: app routes that should render extension-defined pages
+- `assets.stylesheets`: CSS files to inject globally
+- `pages`: the extension page definitions themselves
+
+For example, a nav item that renders an extension page now looks like this:
+
+```json
+{
+  "version": "1.0",
+  "navigation": [
+    {
+      "label": "Support",
+      "location": "user_menu",
+      "target": {
+        "type": "extension_page",
+        "path": "/support"
+      }
+    }
+  ],
+  "pages": {
+    "/support": {
+      "components": [
+        {
+          "name": "MarkdownRenderer",
+          "arguments": {
+            "source": "SPIFF_PROCESS_MODEL_FILE:::support-markdown.md"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+And a direct nav link to an existing app route can now be modeled without a fake extension page:
+
+```json
+{
+  "version": "1.0",
+  "navigation": [
+    {
+      "label": "Analytics",
+      "location": "primary_nav",
+      "icon": "analytics",
+      "target": {
+        "type": "path",
+        "path": "/analytics"
+      }
+    }
+  ]
+}
+```
+
+SpiffArena still supports older `0.1` and `0.2` extension schemas, but `1.0` is the preferred format for new work.
 
 An entirely new application feature with frontend and backend components can be implemented using an extension.
 [This TypeScript interface file](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-frontend/src/extension_ui_schema_interfaces.ts) codifies the configuration of the extension uischema.
+
+To migrate older extension UI schema files, use:
+
+```bash
+python3 ./bin/migrate_extension_uischema.py --write ~/sample-process-models/extensions
+```
+
+The migrator is a single-file `uv` script and can also print converted output without modifying files:
+
+```bash
+python3 ./bin/migrate_extension_uischema.py --stdout path/to/extension_uischema.json
+```
 
 ## Adding Custom CSS with Extensions
 
 Extensions can include custom CSS files to style their components or even modify global styling. To add custom CSS to your extension:
 
 1. Create a CSS file within your extension process model directory (e.g., `styles.css`)
-2. Specify the `css` display location and reference the CSS file in `location_specific_configs.css_file` in your `extension_uischema.json`:
+2. Specify the stylesheet in `assets.stylesheets` in your `extension_uischema.json`:
 
 ```json
 {
-  "version": "0.2",
+  "version": "1.0",
+  "navigation": [
+    {
+      "label": "Your Extension",
+      "location": "primary_nav",
+      "target": {
+        "type": "extension_page",
+        "path": "/your-page"
+      }
+    }
+  ],
+  "assets": {
+    "stylesheets": [
+      {
+        "file": "styles.css"
+      }
+    ]
+  },
   "pages": {
     "/your-page": {
       "header": "Your Extension",
       "components": []
     }
-  },
-  "ux_elements": [
-    {
-      "label": "Your Extension",
-      "page": "/your-page",
-      "display_location": "primary_nav_item"
-    },
-    {
-      "label": "Custom Styling",
-      "page": "/your-page",
-      "display_location": "css",
-      "location_specific_configs": {
-        "css_file": "styles.css"
-      }
-    }
-  ]
+  }
 }
 ```
 

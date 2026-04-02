@@ -248,7 +248,9 @@ function SideNav({
   ];
 
   const extensionHeaderMenuItemElement = (uxElement: UiSchemaUxElement) => {
-    const navItemPage = `/extensions${uxElement.page}`;
+    const navItemPage = uxElement.use_full_page_path
+      ? uxElement.page
+      : `/extensions${uxElement.page}`;
     if (location.pathname === navItemPage) {
       selectedTab = uxElement.page;
     }

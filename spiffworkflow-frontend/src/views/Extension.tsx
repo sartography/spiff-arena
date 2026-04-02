@@ -24,6 +24,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 import SpiffTabs from '../components/SpiffTabs';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import ExtensionUiSchemaService from '../services/ExtensionUiSchemaService';
 
 type OwnProps = {
   pageIdentifier?: string;
@@ -61,6 +62,18 @@ export default function Extension({
   >(null);
 
   const { addError, removeError } = useAPIError();
+
+  const resetExtensionPageState = useCallback(() => {
+    setProcessModel(null);
+    setFormData(null);
+    setFormButtonsDisabled(false);
+    setProcessedTaskData(null);
+    setMarkdownToRenderOnSubmit(null);
+    setMarkdownToRenderOnLoad(null);
+    setUiSchemaPageDefinition(null);
+    setReadyForComponentsToDisplay(false);
+    setUiSchemaPageComponents(null);
+  }, []);
 
   const supportedComponents: SupportedComponentList = {
     CustomForm,
@@ -144,9 +157,10 @@ export default function Extension({
         extensionUiSchemaFile &&
         (extensionUiSchemaFile as ProcessFile).file_contents
       ) {
-        const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-          (extensionUiSchemaFile as any).file_contents,
-        );
+        const extensionUiSchema: ExtensionUiSchema =
+          ExtensionUiSchemaService.normalize(
+            JSON.parse((extensionUiSchemaFile as any).file_contents),
+          );
 
         let pageIdentifierToUse = pageIdentifier;
         if (!pageIdentifierToUse) {
@@ -156,6 +170,7 @@ export default function Extension({
           extensionUiSchema.pages &&
           Object.keys(extensionUiSchema.pages).includes(pageIdentifierToUse)
         ) {
+          resetExtensionPageState();
           const pageDefinition = extensionUiSchema.pages[pageIdentifierToUse];
           setUiSchemaPageDefinition(pageDefinition);
           setUiSchemaPageComponents(pageDefinition.components || null);
@@ -197,10 +212,12 @@ export default function Extension({
       filesByName,
       processLoadResult,
       pageIdentifier,
+      resetExtensionPageState,
     ],
   );
 
   useEffect(() => {
+    resetExtensionPageState();
     const processExtensionResult = (processModels: ProcessModel[]) => {
       processModels.forEach((pm: ProcessModel) => {
         let extensionUiSchemaFile: ProcessFile | null = null;
@@ -217,7 +234,11 @@ export default function Extension({
       path: targetUris.extensionListPath,
       successCallback: processExtensionResult,
     });
-  }, [setConfigsIfDesiredSchemaFile, targetUris.extensionListPath]);
+  }, [
+    resetExtensionPageState,
+    setConfigsIfDesiredSchemaFile,
+    targetUris.extensionListPath,
+  ]);
 
   const processSubmitResult = (
     pageComponent: UiSchemaPageComponent,

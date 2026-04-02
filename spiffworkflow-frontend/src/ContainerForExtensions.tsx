@@ -25,6 +25,7 @@ import {
   UiSchemaDisplayLocation,
   UiSchemaUxElement,
 } from './extension_ui_schema_interfaces';
+import ExtensionUiSchemaService from './services/ExtensionUiSchemaService';
 import HttpService from './services/HttpService';
 import BaseRoutes from './views/BaseRoutes';
 import BackendIsDown from './views/BackendIsDown';
@@ -157,9 +158,10 @@ export default function ContainerForExtensions() {
         );
         if (extensionUiSchemaFile && extensionUiSchemaFile.file_contents) {
           try {
-            const extensionUiSchema: ExtensionUiSchema = JSON.parse(
-              extensionUiSchemaFile.file_contents,
-            );
+            const extensionUiSchema: ExtensionUiSchema =
+              ExtensionUiSchemaService.normalize(
+                JSON.parse(extensionUiSchemaFile.file_contents),
+              );
             if (
               extensionUiSchema &&
               extensionUiSchema.ux_elements &&

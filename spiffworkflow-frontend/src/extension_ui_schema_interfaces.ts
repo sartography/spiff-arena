@@ -7,7 +7,7 @@
 import { FunctionComponent } from 'react';
 
 // Current version of the extension uischema.
-export type ExtensionUiSchemaVersion = '0.1' | '0.2';
+export type ExtensionUiSchemaVersion = '0.1' | '0.2' | '1.0';
 
 // All locations that can be specified to display the link to use the extensions.
 export enum UiSchemaDisplayLocation {
@@ -78,6 +78,7 @@ export interface UiSchemaUxElement {
   location_specific_configs?: UiSchemaLocationSpecificConfig;
   tooltip?: string;
   icon?: string;
+  use_full_page_path?: boolean;
 }
 
 export interface UiSchemaForm {
