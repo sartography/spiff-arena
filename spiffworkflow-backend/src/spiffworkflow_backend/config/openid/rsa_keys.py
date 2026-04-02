@@ -170,6 +170,10 @@ class OpenIdConfigsForDevOnly:
             validated_key_pair = cls._validate_key_pair(private_key, public_key)
             if validated_key_pair is not None:
                 return validated_key_pair
+            raise RuntimeError(
+                "OPENID_PRIVATE_KEY and OPENID_PUBLIC_KEY are set but contain invalid key data. "
+                "Provide valid PEM-encoded RSA keys or unset these variables to use generated keys."
+            )
 
         return cls._load_or_create_file_backed_keys()
 

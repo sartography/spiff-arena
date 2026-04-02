@@ -31,18 +31,12 @@ def test_write_validated_pem_atomically_rejects_invalid_pem(tmp_path: Path) -> N
     assert list(tmp_path.iterdir()) == []
 
 
-def test_initialize_keys_ignores_invalid_env_key_pair(monkeypatch: pytest.MonkeyPatch) -> None:
-    fallback_private_key, fallback_public_key = rsa_keys.OpenIdConfigsForDevOnly._generate_keys()
-
+def test_initialize_keys_raises_on_invalid_env_key_pair(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENID_PRIVATE_KEY", "truncated-private-key")
     monkeypatch.setenv("OPENID_PUBLIC_KEY", "truncated-public-key")
-    monkeypatch.setattr(
-        rsa_keys.OpenIdConfigsForDevOnly,
-        "_load_or_create_file_backed_keys",
-        classmethod(lambda cls: (fallback_private_key, fallback_public_key)),
-    )
 
-    assert rsa_keys.OpenIdConfigsForDevOnly._initialize_keys() == (fallback_private_key, fallback_public_key)
+    with pytest.raises(RuntimeError, match="invalid key data"):
+        rsa_keys.OpenIdConfigsForDevOnly._initialize_keys()
 
 
 def test_initialize_keys_raises_when_public_key_env_var_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
