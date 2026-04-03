@@ -352,30 +352,66 @@ export default function ReactFormBuilder({
   }
 
   function addOptionsToSchema(schema: any, data: any) {
-    const newSchema = { ...schema };
-    if (typeof schema.properties === 'object') {
-      Object.keys(schema.properties).map((key) => {
-        const item = newSchema.properties[key];
-        if (
-          Array.isArray(item.anyOf) &&
-          item.anyOf.length > 0 &&
-          typeof item.anyOf[0] === 'string'
-        ) {
-          const name = item.anyOf[0].replace('options_from_task_data_var:', '');
-          if (Array.isArray(data[name])) {
-            item.anyOf = data[name].map((opt) => {
-              return {
-                type: 'string',
-                enum: [opt.value],
-                title: opt.label,
-              };
-            });
-          } else {
-            item.anyOf = [];
+    const sentinelPrefix = 'options_from_task_data_var:';
+    const newSchema =
+      typeof structuredClone === 'function'
+        ? structuredClone(schema)
+        : JSON.parse(JSON.stringify(schema));
+
+    const mapTaskDataOptions = (name: string) => {
+      if (!Array.isArray(data?.[name])) {
+        return [];
+      }
+      return data[name].map((opt: any) => ({
+        type: 'string',
+        enum: [opt.value],
+        title: opt.label,
+      }));
+    };
+
+    const walkSchema = (node: any): void => {
+      if (Array.isArray(node)) {
+        node.forEach((entry) => walkSchema(entry));
+        return;
+      }
+
+      if (!node || typeof node !== 'object') {
+        return;
+      }
+
+      if (Array.isArray(node.anyOf)) {
+        node.anyOf = node.anyOf.flatMap((entry: any) => {
+          if (
+            typeof entry === 'string' &&
+            entry.startsWith(sentinelPrefix)
+          ) {
+            const name = entry.replace(sentinelPrefix, '');
+            return mapTaskDataOptions(name);
           }
+          walkSchema(entry);
+          return [entry];
+        });
+      }
+
+      if (node.properties && typeof node.properties === 'object') {
+        Object.values(node.properties).forEach((property) => {
+          walkSchema(property);
+        });
+      }
+
+      if (node.items) {
+        walkSchema(node.items);
+      }
+
+      Object.entries(node).forEach(([key, value]) => {
+        if (key === 'properties' || key === 'items' || key === 'anyOf') {
+          return;
         }
+        walkSchema(value);
       });
-    }
+    };
+
+    walkSchema(newSchema);
     return newSchema;
   }
 
