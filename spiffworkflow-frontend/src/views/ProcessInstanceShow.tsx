@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { json } from '@codemirror/lang-json';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from 'codemirror';
-import CodeMirror from '@uiw/react-codemirror';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
   useParams,
   useNavigate,
@@ -191,8 +191,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     permissionRequestData,
   );
   const { t } = useTranslation();
-  const theme = useTheme();
-  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -1405,15 +1403,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : (
           <>
             <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <CodeMirror
+            <ThemedCodeMirror
               height={`${heightInEm}rem`}
-              width="auto"
               value={taskDataToDisplay}
               extensions={extensions}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
               }}
-              theme={codeMirrorTheme}
             />
           </>
         )}
@@ -1454,13 +1450,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (eventTextEditorEnabled) {
       className = '';
       editor = (
-        <CodeMirror
+        <ThemedCodeMirror
           height={'300px'}
-          width="auto"
           value={eventPayload}
           extensions={[json()]}
           onChange={(value: any) => setEventPayload(value || '{}')}
-          theme={codeMirrorTheme}
         />
       );
     }

@@ -1,15 +1,12 @@
-import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
-import { useTheme } from '@mui/material';
 import HttpService from '../services/HttpService';
+import ThemedCodeMirror from './ThemedCodeMirror';
 
 export default function AuthenticationConfiguration() {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const [authConfig, setAuthConfig] = useState('');
 
@@ -42,13 +39,10 @@ export default function AuthenticationConfiguration() {
       <br />
       <h2>{t('local_configuration')}</h2>
       <br />
-      <CodeMirror
-        height={'600px'}
-        width="auto"
+      <ThemedCodeMirror
         value={authConfig || ''}
         extensions={[json()]}
         onChange={(value) => setAuthConfig(value || '')}
-        theme={codeMirrorTheme}
       />
     </>
   );
