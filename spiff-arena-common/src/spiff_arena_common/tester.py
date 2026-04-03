@@ -66,57 +66,13 @@ class BpmnTestCase(unittest.TestCase):
             self.assertIn("pending_tasks", r)
             pending = r["pending_tasks"]
             if len(pending) == 0:
+                # This indicates a workflow logic issue (not completed but no pending tasks)
                 error_msg = f"Test file: {self.file}\n"
-                error_msg += f"Expected pending tasks but found none.\n"
-                error_msg += f"Status: {r.get('status')}, Completed: {completed}\n"
-
-                # Extract error information from state
-                found_errors = False
-                if self.state:
-                    state_obj = json.loads(self.state) if isinstance(self.state, str) else self.state
-
-                    # Check for task errors in the state
-                    if "tasks" in state_obj:
-                        for task_id, task_data in state_obj["tasks"].items():
-                            if isinstance(task_data, dict):
-                                # Check for error or exception in task
-                                if task_data.get("state") == 128:  # ERROR state
-                                    found_errors = True
-                                    error_msg += f"\nTask in ERROR state:\n"
-                                    error_msg += f"  Task ID: {task_id}\n"
-                                    error_msg += f"  Task spec: {task_data.get('task_spec', 'unknown')}\n"
-                                    if task_data.get("internal_data"):
-                                        internal = task_data["internal_data"]
-                                        if internal.get("error"):
-                                            error_msg += f"  Error: {internal['error']}\n"
-                                        if internal.get("exception"):
-                                            error_msg += f"  Exception: {internal['exception']}\n"
-
-                                # Also check data for error information
-                                if task_data.get("data"):
-                                    task_data_dict = task_data["data"]
-                                    if task_data_dict.get("error"):
-                                        found_errors = True
-                                        error_msg += f"\nTask data contains error:\n"
-                                        error_msg += f"  Task ID: {task_id}\n"
-                                        error_msg += f"  Error: {task_data_dict['error']}\n"
-
-                # Show error_tasks from response if available
-                if r.get("error_tasks"):
-                    found_errors = True
-                    error_msg += f"\nError tasks: {json.dumps(r.get('error_tasks'), indent=2)}\n"
-
-                if r.get("message"):
-                    found_errors = True
-                    error_msg += f"\nMessage: {r.get('message')}\n"
-
-                # If no specific errors found, show the response for debugging
-                if not found_errors:
-                    response_copy = dict(r)
-                    if 'state' in response_copy:
-                        del response_copy['state']
-                    error_msg += f"\nFull response:\n{json.dumps(response_copy, indent=2)}\n"
-
+                error_msg += f"Expected pending tasks but found none (workflow not completed but stuck).\n"
+                response_copy = dict(r)
+                if 'state' in response_copy:
+                    del response_copy['state']  # Exclude large state object
+                error_msg += f"Response:\n{json.dumps(response_copy, indent=2)}\n"
                 self.fail(error_msg)
             self.assertGreater(len(pending), 0)
             self.assertIn("data", pending[0])
