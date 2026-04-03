@@ -71,7 +71,6 @@ import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
   getGroupFromModifiedModelId,
-  makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
@@ -102,10 +101,6 @@ export default function ProcessModelEditDiagram() {
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
-  const editorRef = useRef(null);
-  const monacoRef = useRef(null);
-
-  const failingScriptLineClassNamePrefix = 'failingScriptLineError';
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
@@ -464,16 +459,6 @@ export default function ProcessModelEditDiagram() {
 
   const resetUnitTextResult = () => {
     resetScriptUnitTestResult();
-    const styleSheet = document.styleSheets[0];
-    const ruleList = styleSheet.cssRules;
-    for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
-      const regexp = new RegExp(
-        `^.${failingScriptLineClassNamePrefix}_.*::after `,
-      );
-      if (ruleList[ii].cssText.match(regexp)) {
-        styleSheet.deleteRule(ii);
-      }
-    }
   };
 
   // Note: API-based callbacks are now provided by useBpmnEditorCallbacks hook
@@ -537,41 +522,8 @@ export default function ProcessModelEditDiagram() {
   const processScriptUnitTestRunResult = (result: any) => {
     if ('result' in result) {
       setScriptUnitTestResult(result);
-      if (
-        result.line_number &&
-        result.error &&
-        editorRef.current &&
-        monacoRef.current
-      ) {
-        const currentClassName = `${failingScriptLineClassNamePrefix}_${makeid(
-          7,
-        )}`;
-
-        // document.documentElement.style.setProperty causes the content property to go away
-        // so add the rule dynamically instead of changing a property variable
-        document.styleSheets[0].addRule(
-          `.${currentClassName}::after`,
-          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`,
-        );
-
-        const lineLength =
-          scriptText.split('\n')[result.line_number - 1].length + 1;
-
-        const editorRefToUse = editorRef.current as any;
-        editorRefToUse.deltaDecorations(
-          [],
-          [
-            {
-              // Range(lineStart, column, lineEnd, column)
-              range: new (monacoRef.current as any).Range(
-                result.line_number,
-                lineLength,
-              ),
-              options: { afterContentClassName: currentClassName },
-            },
-          ],
-        );
-      }
+      // TODO: Add CodeMirror decoration support for line error highlighting
+      // when result.line_number and result.error are present
     }
   };
 
