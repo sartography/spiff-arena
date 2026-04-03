@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import CodeMirror from '@uiw/react-codemirror';
+import ThemedCodeMirror from '../ThemedCodeMirror';
 import { json } from '@codemirror/lang-json';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from 'codemirror';
@@ -16,7 +16,6 @@ import {
   Tab,
   Box,
   Typography,
-  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useDebouncedCallback } from 'use-debounce';
@@ -89,8 +88,6 @@ export default function ReactFormBuilder({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
-  const theme = useTheme();
-  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
     if (pythonWorker === null) {
@@ -469,16 +466,13 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <CodeMirror
-                height={'600px'}
-                width="auto"
+              <ThemedCodeMirror
                 value={strSchema}
                 extensions={extensions}
                 onChange={(value) => {
                   updateStrFileDebounce(value || '');
                   setStrSchema(value || '');
                 }}
-                theme={codeMirrorTheme}
               />
             </Box>
           )}
@@ -494,16 +488,13 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <CodeMirror
-                height={'600px'}
-                width="auto"
+              <ThemedCodeMirror
                 value={strUI}
                 extensions={extensions}
                 onChange={(value) => {
                   updateStrUIFileDebounce(value || '');
                   setStrUI(value || '');
                 }}
-                theme={codeMirrorTheme}
               />
             </Box>
           )}
@@ -512,16 +503,13 @@ export default function ReactFormBuilder({
               <Typography variant="body1">
                 {t('data_view_description')}
               </Typography>
-              <CodeMirror
-                height={'600px'}
-                width="auto"
+              <ThemedCodeMirror
                 value={strFormData}
                 extensions={extensions}
                 onChange={(value) => {
                   updateFormDataFileDebounce(value || '');
                   updateDataFromStr(value || '');
                 }}
-                theme={codeMirrorTheme}
               />
             </Box>
           )}

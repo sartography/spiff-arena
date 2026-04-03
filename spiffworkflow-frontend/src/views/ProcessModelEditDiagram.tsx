@@ -18,7 +18,6 @@ import {
   TextareaAutosize,
   IconButton,
   Tooltip,
-  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -30,8 +29,8 @@ import {
   Info,
 } from '@mui/icons-material';
 
-import CodeMirror from '@uiw/react-codemirror';
-import CodeMirrorMerge from 'react-codemirror-merge';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
+import ThemedCodeMirrorMerge from '../components/ThemedCodeMirrorMerge';
 import { python } from '@codemirror/lang-python';
 import { json } from '@codemirror/lang-json';
 import { indentUnit } from '@codemirror/language';
@@ -92,8 +91,6 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
@@ -644,18 +641,18 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <CodeMirrorMerge theme={codeMirrorTheme}>
-            <CodeMirrorMerge.Original
+          <ThemedCodeMirrorMerge>
+            <ThemedCodeMirrorMerge.Original
               height={'200px'}
               width="auto"
               value={outputJson}
               extensions={[json()]}
             />
-            <CodeMirrorMerge.Modified
+            <ThemedCodeMirrorMerge.Modified
               value={contextJson}
               extensions={[json(), EditorView.editable.of(false), EditorState.readOnly.of(true)]}
             />
-          </CodeMirrorMerge>
+          </ThemedCodeMirrorMerge>
         );
       }
       return (
@@ -758,13 +755,11 @@ export default function ProcessModelEditDiagram() {
             <Grid size={{ xs: 6 }}>
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
-                <CodeMirror
+                <ThemedCodeMirror
                   height={'500px'}
-                  width="auto"
                   value={inputJson}
                   extensions={[json()]}
                   onChange={handleEditorScriptTestUnitInputChange}
-                  theme={codeMirrorTheme}
                 />
               </div>
             </Grid>
@@ -773,13 +768,11 @@ export default function ProcessModelEditDiagram() {
                 {t('diagram_script_editor_unit_test_expected_output_json')}
               </div>
               <div>
-                <CodeMirror
+                <ThemedCodeMirror
                   height={'500px'}
-                  width="auto"
                   value={outputJson}
                   extensions={[json()]}
                   onChange={handleEditorScriptTestUnitOutputChange}
-                  theme={codeMirrorTheme}
                 />
               </div>
             </Grid>
@@ -794,13 +787,11 @@ export default function ProcessModelEditDiagram() {
   const editorWindow = () => {
 
     return (
-      <CodeMirror
+      <ThemedCodeMirror
         height={'500px'}
-        width="auto"
         value={scriptText}
         extensions={[python(), indentUnit.of('    ')]}
         onChange={handleEditorScriptChange}
-        theme={codeMirrorTheme}
       />
     );
   };

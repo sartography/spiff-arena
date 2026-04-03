@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import CodeMirror from '@uiw/react-codemirror';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -13,7 +13,6 @@ import {
   TextField,
   TextareaAutosize,
   Stack,
-  useTheme,
 } from '@mui/material';
 import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
@@ -46,8 +45,6 @@ export default function ReactFormEditor() {
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
-  const theme = useTheme();
-  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
@@ -271,13 +268,10 @@ export default function ReactFormEditor() {
       extensions.push(xml());
     }
     return (
-      <CodeMirror
-        height={'600px'}
-        width="auto"
+      <ThemedCodeMirror
         value={processModelFileContents || ''}
         extensions={extensions}
         onChange={(value) => setProcessModelFileContents(value || '')}
-        theme={codeMirrorTheme}
       />
     );
   };
