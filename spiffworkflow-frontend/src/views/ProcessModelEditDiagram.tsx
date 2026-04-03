@@ -34,8 +34,8 @@ import ThemedCodeMirrorMerge from '../components/ThemedCodeMirrorMerge';
 import { python } from '@codemirror/lang-python';
 import { json } from '@codemirror/lang-json';
 import { indentUnit } from '@codemirror/language';
-import { EditorView } from 'codemirror';
-import { EditorState } from '@codemirror/state';
+import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
+import { EditorState, StateField, StateEffect } from '@codemirror/state';
 
 import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
@@ -88,6 +88,41 @@ import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
+// State effects for managing error line decorations in script editor
+const addErrorLineEffect = StateEffect.define<{ line: number; error: string }>();
+const clearErrorLineEffect = StateEffect.define<null>();
+
+// State field to track error line decorations
+const errorLineField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (effect.is(addErrorLineEffect)) {
+        const { line: lineNumber, error } = effect.value;
+        try {
+          const line = tr.state.doc.line(lineNumber);
+          const decoration = Decoration.line({
+            attributes: {
+              class: 'cm-script-error-line',
+              'data-error': error,
+            },
+          });
+          decorations = Decoration.set([decoration.range(line.from)]);
+        } catch (e) {
+          console.error('Failed to add error decoration:', e);
+        }
+      } else if (effect.is(clearErrorLineEffect)) {
+        decorations = Decoration.none;
+      }
+    }
+    return decorations;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -101,6 +136,13 @@ export default function ProcessModelEditDiagram() {
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
+  // CodeMirror editor reference for script unit test error highlighting
+  const scriptEditorViewRef = useRef<EditorView | null>(null);
+  // Persist error info to apply when editor is created (survives tab switches)
+  const [scriptErrorInfo, setScriptErrorInfo] = useState<{
+    line: number;
+    error: string;
+  } | null>(null);
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
@@ -459,6 +501,14 @@ export default function ProcessModelEditDiagram() {
 
   const resetUnitTextResult = () => {
     resetScriptUnitTestResult();
+    // Clear error state
+    setScriptErrorInfo(null);
+    // Clear any error line decorations in the editor
+    if (scriptEditorViewRef.current) {
+      scriptEditorViewRef.current.dispatch({
+        effects: clearErrorLineEffect.of(null),
+      });
+    }
   };
 
   // Note: API-based callbacks are now provided by useBpmnEditorCallbacks hook
@@ -522,8 +572,42 @@ export default function ProcessModelEditDiagram() {
   const processScriptUnitTestRunResult = (result: any) => {
     if ('result' in result) {
       setScriptUnitTestResult(result);
-      // TODO: Add CodeMirror decoration support for line error highlighting
-      // when result.line_number and result.error are present
+      // Store error info for highlighting (will be applied when editor is created/visible)
+      if (result.line_number && result.error) {
+        // Ensure CSS styles are present
+        if (!document.getElementById('cm-script-error-styles')) {
+          const style = document.createElement('style');
+          style.id = 'cm-script-error-styles';
+          style.textContent = `
+            .cm-script-error-line {
+              background-color: rgba(255, 0, 0, 0.1) !important;
+              border-left: 3px solid red !important;
+            }
+            .cm-script-error-line::after {
+              content: "  # " attr(data-error);
+              color: red;
+              font-style: italic;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        // Store error info to persist across tab switches
+        setScriptErrorInfo({
+          line: result.line_number,
+          error: result.error,
+        });
+
+        // If editor is currently mounted, apply decoration immediately
+        if (scriptEditorViewRef.current) {
+          scriptEditorViewRef.current.dispatch({
+            effects: addErrorLineEffect.of({
+              line: result.line_number,
+              error: result.error,
+            }),
+          });
+        }
+      }
     }
   };
 
@@ -737,13 +821,32 @@ export default function ProcessModelEditDiagram() {
 
   /* Main python script editor user works in */
   const editorWindow = () => {
+    const handleEditorCreate = (view: EditorView) => {
+      scriptEditorViewRef.current = view;
+
+      // Apply error decoration if there's a pending error from unit test
+      if (scriptErrorInfo) {
+        // Use setTimeout to ensure the editor is fully initialized
+        setTimeout(() => {
+          if (view && scriptErrorInfo) {
+            view.dispatch({
+              effects: addErrorLineEffect.of({
+                line: scriptErrorInfo.line,
+                error: scriptErrorInfo.error,
+              }),
+            });
+          }
+        }, 0);
+      }
+    };
 
     return (
       <ThemedCodeMirror
         height={'500px'}
         value={scriptText}
-        extensions={[python(), indentUnit.of('    ')]}
+        extensions={[python(), indentUnit.of('    '), errorLineField]}
         onChange={handleEditorScriptChange}
+        onCreateEditor={handleEditorCreate}
       />
     );
   };
