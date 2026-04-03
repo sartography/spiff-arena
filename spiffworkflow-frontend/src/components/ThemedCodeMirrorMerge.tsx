@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material';
 import CodeMirrorMerge from 'react-codemirror-merge';
-import { ReactCodeMirrorMergeProps } from 'react-codemirror-merge';
+import type { CodeMirrorMergeProps } from 'react-codemirror-merge';
 
 /**
  * A themed wrapper around CodeMirrorMerge that automatically applies the app's theme.
@@ -21,13 +21,25 @@ import { ReactCodeMirrorMergeProps } from 'react-codemirror-merge';
  * </ThemedCodeMirrorMerge>
  * ```
  */
-export default function ThemedCodeMirrorMerge(props: ReactCodeMirrorMergeProps) {
+function ThemedCodeMirrorMergeBase(props: CodeMirrorMergeProps) {
   const theme = useTheme();
   const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   return <CodeMirrorMerge theme={codeMirrorTheme} {...props} />;
 }
 
-// Re-export the Original and Modified components for convenience
-ThemedCodeMirrorMerge.Original = CodeMirrorMerge.Original;
-ThemedCodeMirrorMerge.Modified = CodeMirrorMerge.Modified;
+// Create a properly typed component with statics
+type ThemedCodeMirrorMergeComponent = typeof ThemedCodeMirrorMergeBase & {
+  Original: typeof CodeMirrorMerge.Original;
+  Modified: typeof CodeMirrorMerge.Modified;
+};
+
+const ThemedCodeMirrorMerge = Object.assign(
+  ThemedCodeMirrorMergeBase,
+  {
+    Original: CodeMirrorMerge.Original,
+    Modified: CodeMirrorMerge.Modified,
+  }
+) as ThemedCodeMirrorMergeComponent;
+
+export default ThemedCodeMirrorMerge;
