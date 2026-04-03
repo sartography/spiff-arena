@@ -360,7 +360,13 @@ export default function ReactFormBuilder({
 
     const mapTaskDataOptions = (name: string) => {
       if (!Array.isArray(data?.[name])) {
-        return [];
+        return [
+          {
+            type: 'string',
+            enum: [`missing-options-from-task-data-var:${name}`],
+            title: `Missing options_from_task_data_var: ${name}`,
+          },
+        ];
       }
       return data[name].map((opt: any) => ({
         type: 'string',
