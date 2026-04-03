@@ -1,7 +1,7 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { json } from '@codemirror/lang-json';
-import { EditorState } from '@codemirror/state';
+import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from 'codemirror';
 import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
@@ -1388,7 +1388,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    const extensions = [json()];
+    const extensions: Extension[] = [json()];
     if (editorReadOnly) {
       extensions.push(EditorState.readOnly.of(true));
       extensions.push(EditorView.editable.of(false));

@@ -89,7 +89,10 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 // State effects for managing error line decorations in script editor
-const addErrorLineEffect = StateEffect.define<{ line: number; error: string }>();
+const addErrorLineEffect = StateEffect.define<{
+  line: number;
+  error: string;
+}>();
 const clearErrorLineEffect = StateEffect.define<null>();
 
 // State field to track error line decorations
@@ -677,16 +680,18 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <ThemedCodeMirrorMerge>
+          <ThemedCodeMirrorMerge style={{ height: '200px' }}>
             <ThemedCodeMirrorMerge.Original
-              height={'200px'}
-              width="auto"
               value={outputJson}
               extensions={[json()]}
             />
             <ThemedCodeMirrorMerge.Modified
               value={contextJson}
-              extensions={[json(), EditorView.editable.of(false), EditorState.readOnly.of(true)]}
+              extensions={[
+                json(),
+                EditorView.editable.of(false),
+                EditorState.readOnly.of(true),
+              ]}
             />
           </ThemedCodeMirrorMerge>
         );

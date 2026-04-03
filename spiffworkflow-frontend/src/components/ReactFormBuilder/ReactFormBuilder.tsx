@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import ThemedCodeMirror from '../ThemedCodeMirror';
 import { json } from '@codemirror/lang-json';
-import { EditorState } from '@codemirror/state';
+import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from 'codemirror';
 
 import merge from 'lodash/merge';
@@ -387,10 +387,7 @@ export default function ReactFormBuilder({
 
       if (Array.isArray(node.anyOf)) {
         node.anyOf = node.anyOf.flatMap((entry: any) => {
-          if (
-            typeof entry === 'string' &&
-            entry.startsWith(sentinelPrefix)
-          ) {
+          if (typeof entry === 'string' && entry.startsWith(sentinelPrefix)) {
             const name = entry.replace(sentinelPrefix, '');
             return mapTaskDataOptions(name);
           }
@@ -480,7 +477,7 @@ export default function ReactFormBuilder({
       </Grid>
     );
   }
-  const extensions = [json()];
+  const extensions: Extension[] = [json()];
   if (!canUpdateFiles) {
     extensions.push(EditorState.readOnly.of(true));
     extensions.push(EditorView.editable.of(false));

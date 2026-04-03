@@ -34,12 +34,9 @@ type ThemedCodeMirrorMergeComponent = typeof ThemedCodeMirrorMergeBase & {
   Modified: typeof CodeMirrorMerge.Modified;
 };
 
-const ThemedCodeMirrorMerge = Object.assign(
-  ThemedCodeMirrorMergeBase,
-  {
-    Original: CodeMirrorMerge.Original,
-    Modified: CodeMirrorMerge.Modified,
-  }
-) as ThemedCodeMirrorMergeComponent;
+const ThemedCodeMirrorMerge = Object.assign(ThemedCodeMirrorMergeBase, {
+  Original: CodeMirrorMerge.Original,
+  Modified: CodeMirrorMerge.Modified,
+}) as ThemedCodeMirrorMergeComponent;
 
 export default ThemedCodeMirrorMerge;
