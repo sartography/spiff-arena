@@ -3,10 +3,13 @@ import { json } from '@codemirror/lang-json';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
+import { useTheme } from '@mui/material';
 import HttpService from '../services/HttpService';
 
 export default function AuthenticationConfiguration() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const [authConfig, setAuthConfig] = useState('');
 
@@ -45,6 +48,7 @@ export default function AuthenticationConfiguration() {
         value={authConfig || ''}
         extensions={[json()]}
         onChange={(value) => setAuthConfig(value || '')}
+        theme={codeMirrorTheme}
       />
     </>
   );

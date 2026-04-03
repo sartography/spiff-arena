@@ -13,6 +13,7 @@ import {
   TextField,
   TextareaAutosize,
   Stack,
+  useTheme,
 } from '@mui/material';
 import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
@@ -45,6 +46,8 @@ export default function ReactFormEditor() {
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
@@ -274,6 +277,7 @@ export default function ReactFormEditor() {
         value={processModelFileContents || ''}
         extensions={extensions}
         onChange={(value) => setProcessModelFileContents(value || '')}
+        theme={codeMirrorTheme}
       />
     );
   };

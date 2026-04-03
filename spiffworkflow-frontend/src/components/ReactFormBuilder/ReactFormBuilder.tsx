@@ -16,6 +16,7 @@ import {
   Tab,
   Box,
   Typography,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useDebouncedCallback } from 'use-debounce';
@@ -88,6 +89,8 @@ export default function ReactFormBuilder({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
     if (pythonWorker === null) {
@@ -475,6 +478,7 @@ export default function ReactFormBuilder({
                   updateStrFileDebounce(value || '');
                   setStrSchema(value || '');
                 }}
+                theme={codeMirrorTheme}
               />
             </Box>
           )}
@@ -499,6 +503,7 @@ export default function ReactFormBuilder({
                   updateStrUIFileDebounce(value || '');
                   setStrUI(value || '');
                 }}
+                theme={codeMirrorTheme}
               />
             </Box>
           )}
@@ -516,6 +521,7 @@ export default function ReactFormBuilder({
                   updateFormDataFileDebounce(value || '');
                   updateDataFromStr(value || '');
                 }}
+                theme={codeMirrorTheme}
               />
             </Box>
           )}

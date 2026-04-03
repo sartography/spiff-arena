@@ -43,6 +43,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -190,6 +191,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     permissionRequestData,
   );
   const { t } = useTranslation();
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -1410,6 +1413,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
               }}
+              theme={codeMirrorTheme}
             />
           </>
         )}
@@ -1456,6 +1460,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           value={eventPayload}
           extensions={[json()]}
           onChange={(value: any) => setEventPayload(value || '{}')}
+          theme={codeMirrorTheme}
         />
       );
     }

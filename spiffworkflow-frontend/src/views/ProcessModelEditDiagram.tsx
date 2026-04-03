@@ -18,6 +18,7 @@ import {
   TextareaAutosize,
   IconButton,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -91,6 +92,8 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
@@ -641,7 +644,7 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <CodeMirrorMerge>
+          <CodeMirrorMerge theme={codeMirrorTheme}>
             <CodeMirrorMerge.Original
               height={'200px'}
               width="auto"
@@ -761,6 +764,7 @@ export default function ProcessModelEditDiagram() {
                   value={inputJson}
                   extensions={[json()]}
                   onChange={handleEditorScriptTestUnitInputChange}
+                  theme={codeMirrorTheme}
                 />
               </div>
             </Grid>
@@ -775,6 +779,7 @@ export default function ProcessModelEditDiagram() {
                   value={outputJson}
                   extensions={[json()]}
                   onChange={handleEditorScriptTestUnitOutputChange}
+                  theme={codeMirrorTheme}
                 />
               </div>
             </Grid>
@@ -795,6 +800,7 @@ export default function ProcessModelEditDiagram() {
         value={scriptText}
         extensions={[python(), indentUnit.of('    ')]}
         onChange={handleEditorScriptChange}
+        theme={codeMirrorTheme}
       />
     );
   };

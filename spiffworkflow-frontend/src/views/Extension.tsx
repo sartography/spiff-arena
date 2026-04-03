@@ -1,6 +1,7 @@
 import { createElement, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorState } from '@codemirror/state';
 import { json } from '@codemirror/lang-json';
@@ -40,6 +41,8 @@ export default function Extension({
   const { targetUris } = useUriListForPermissions();
   const params = useParams();
   const [searchParams] = useSearchParams();
+  const theme = useTheme();
+  const codeMirrorTheme = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [formData, setFormData] = useState<any>(null);
@@ -403,6 +406,7 @@ export default function Extension({
               width="auto"
               value={JSON.stringify(processedTaskData, null, 2)}
               extensions={[json(), EditorState.readOnly.of(true)]}
+              theme={codeMirrorTheme}
             />
           </>,
         );
