@@ -42,7 +42,7 @@ CONFIG = {
         "json_schema": "Edit JSON Schema",
     },
     "script_editor": {
-        "mode": "monaco",
+        "mode": "codemirror",
         "apply_button": "close",
         "close_button": "close",
     },

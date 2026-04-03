@@ -1,6 +1,3 @@
-export { ScriptEditorModal } from './ScriptEditorModal';
-export type { ScriptEditorModalProps } from './ScriptEditorModal';
-
 export { MarkdownEditorModal } from './MarkdownEditorModal';
 export type { MarkdownEditorModalProps } from './MarkdownEditorModal';
 
