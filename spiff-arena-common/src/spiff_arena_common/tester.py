@@ -68,7 +68,7 @@ class BpmnTestCase(unittest.TestCase):
             if len(pending) == 0:
                 # This indicates a workflow logic issue (not completed but no pending tasks)
                 error_msg = f"Test file: {self.file}\n"
-                error_msg += f"Expected pending tasks but found none (workflow not completed but stuck).\n"
+                error_msg += "Expected pending tasks but found none (workflow not completed but stuck).\n"
                 response_copy = dict(r)
                 if 'state' in response_copy:
                     del response_copy['state']  # Exclude large state object
