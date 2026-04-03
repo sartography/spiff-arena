@@ -8,7 +8,7 @@ from spiffworkflow_backend.scripts.extract_from_task_data import ExtractFromTask
 
 
 @dataclass
-class MockTask:
+class MockTask:user_
     data: dict
 
 
