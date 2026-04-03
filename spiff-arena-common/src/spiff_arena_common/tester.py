@@ -33,15 +33,29 @@ class BpmnTestCase(unittest.TestCase):
 
     def runTest(self):
         iters = 0
+        r = None
         while iters < 100:
             iters = iters + 1
             r = json.loads(advance_workflow(self.specs, self.state, None, "unittest", None))
             self.state = r["state"]
+
+            # Check for errors after each advance
+            if r.get("status") != "ok":
+                error_msg = f"Test file: {self.file}\n"
+                error_msg += f"Error during workflow execution (iteration {iters}):\n"
+                error_msg += f"Message: {r.get('message', 'No message')}\n"
+                if r.get("error_tasks"):
+                    error_tasks = r.get("error_tasks")
+                    if error_tasks:
+                        error_msg += f"\nFailed task: {error_tasks[0].get('task_spec', {}).get('bpmn_name', 'unknown')}\n"
+                        error_msg += f"Task ID: {error_tasks[0].get('task_spec', {}).get('bpmn_id', 'unknown')}\n"
+                self.fail(error_msg)
+
             lazy_loads = r.get("lazy_loads")
             if not lazy_loads:
                 break
             self.lazy_load(lazy_loads)
-        
+
         self.assertEqual(r.get("status"), "ok")
         completed = r.get("completed")
         
@@ -51,6 +65,59 @@ class BpmnTestCase(unittest.TestCase):
         else:
             self.assertIn("pending_tasks", r)
             pending = r["pending_tasks"]
+            if len(pending) == 0:
+                error_msg = f"Test file: {self.file}\n"
+                error_msg += f"Expected pending tasks but found none.\n"
+                error_msg += f"Status: {r.get('status')}, Completed: {completed}\n"
+
+                # Extract error information from state
+                found_errors = False
+                if self.state:
+                    state_obj = json.loads(self.state) if isinstance(self.state, str) else self.state
+
+                    # Check for task errors in the state
+                    if "tasks" in state_obj:
+                        for task_id, task_data in state_obj["tasks"].items():
+                            if isinstance(task_data, dict):
+                                # Check for error or exception in task
+                                if task_data.get("state") == 128:  # ERROR state
+                                    found_errors = True
+                                    error_msg += f"\nTask in ERROR state:\n"
+                                    error_msg += f"  Task ID: {task_id}\n"
+                                    error_msg += f"  Task spec: {task_data.get('task_spec', 'unknown')}\n"
+                                    if task_data.get("internal_data"):
+                                        internal = task_data["internal_data"]
+                                        if internal.get("error"):
+                                            error_msg += f"  Error: {internal['error']}\n"
+                                        if internal.get("exception"):
+                                            error_msg += f"  Exception: {internal['exception']}\n"
+
+                                # Also check data for error information
+                                if task_data.get("data"):
+                                    task_data_dict = task_data["data"]
+                                    if task_data_dict.get("error"):
+                                        found_errors = True
+                                        error_msg += f"\nTask data contains error:\n"
+                                        error_msg += f"  Task ID: {task_id}\n"
+                                        error_msg += f"  Error: {task_data_dict['error']}\n"
+
+                # Show error_tasks from response if available
+                if r.get("error_tasks"):
+                    found_errors = True
+                    error_msg += f"\nError tasks: {json.dumps(r.get('error_tasks'), indent=2)}\n"
+
+                if r.get("message"):
+                    found_errors = True
+                    error_msg += f"\nMessage: {r.get('message')}\n"
+
+                # If no specific errors found, show the response for debugging
+                if not found_errors:
+                    response_copy = dict(r)
+                    if 'state' in response_copy:
+                        del response_copy['state']
+                    error_msg += f"\nFull response:\n{json.dumps(response_copy, indent=2)}\n"
+
+                self.fail(error_msg)
             self.assertGreater(len(pending), 0)
             self.assertIn("data", pending[0])
             data = pending[0]["data"]
