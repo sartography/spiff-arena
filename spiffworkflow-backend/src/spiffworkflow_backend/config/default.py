@@ -58,6 +58,9 @@ configs_with_structures = normalized_environment(environ)
 config_from_env("FLASK_SESSION_SECRET_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
+# used mostly by boot_server_in_docker. app only needs to know about it if running with internal openid server
+config_from_env("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT")
+
 ### AI Tools
 config_from_env("SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
@@ -133,6 +136,10 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", default=False)  # Set to enforce OAuth PKCE (recommended)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
+
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
