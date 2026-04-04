@@ -25,3 +25,17 @@ jobs:
           curl -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"spiff-arena <${WF_URL}|${WF_NAME}>: ${WF_CONCLUSION} - branch ${WF_BRANCH}\"}" \
           "$SLACK_WEBHOOK_URL"
+      - name: Summary
+        if: always()
+        env:
+          WF_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ "$WF_CONCLUSION" != "success" ] && [ "$WF_CONCLUSION" != "skipped" ]; then
+            echo "### 🔔 Slack notification sent" >> "$GITHUB_STEP_SUMMARY"
+            echo "**${WF_NAME}** ${WF_CONCLUSION} on \`${WF_BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ✅ No Slack notification sent" >> "$GITHUB_STEP_SUMMARY"
+            echo "**${WF_NAME}** succeeded on \`${WF_BRANCH}\` — no message sent." >> "$GITHUB_STEP_SUMMARY"
+          fi
