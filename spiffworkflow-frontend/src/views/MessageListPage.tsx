@@ -1,43 +1,44 @@
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Tab, Tabs } from '@mui/material';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import MessageInstanceList from '../components/messages/MessageInstanceList';
+import MessageModelList from '../components/messages/MessageModelList';
 import { setPageTitle } from '../helpers';
+import { useSearchParams } from 'react-router-dom';
 
 export default function MessageListPage() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab =
+    searchParams.get('tab') === 'instances' ? 'instances' : 'models';
+
   useEffect(() => {
     setPageTitle([t('messages')]);
   }, [t]);
-
-  // TODO: add tabs back in when MessageModelList is working again
-  // TODO: only load the component for the tab we are currently on
-  // return (
-  //   <>
-  //     <h1>Messages</h1>
-  //     <Tabs>
-  //       <TabList aria-label="List of tabs">
-  //         <Tab>Message Instances</Tab>
-  //         <Tab>Message Models</Tab>
-  //       </TabList>
-  //       <TabPanels>
-  //         <TabPanel>
-  //           <MessageInstanceList />
-  //         </TabPanel>
-  //         <TabPanel>
-  //           <MessageModelList />
-  //         </TabPanel>
-  //       </TabPanels>
-  //     </Tabs>
-  //   </>
-  // );
 
   return (
     <Box>
       <Typography variant="h1" sx={{ mb: 2 }}>
         {t('messages')}
       </Typography>
-      <MessageInstanceList />
+      <Tabs
+        value={selectedTab}
+        onChange={(_event, nextTab) => {
+          const nextSearchParams = new URLSearchParams(searchParams);
+          nextSearchParams.set('tab', nextTab);
+          setSearchParams(nextSearchParams);
+        }}
+        aria-label="Messages tabs"
+        sx={{ mb: 2 }}
+      >
+        <Tab value="models" label="Message Models" />
+        <Tab value="instances" label="Message Instances" />
+      </Tabs>
+      {selectedTab === 'models' ? (
+        <MessageModelList />
+      ) : (
+        <MessageInstanceList />
+      )}
     </Box>
   );
 }

@@ -109,7 +109,14 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     )
 
     all_message_models: dict[tuple[str, str], MessageModel] = {}
-    MessageDefinitionService.collect_message_models(process_group_with_message_metadata, process_group_id, all_message_models)
+    try:
+        MessageDefinitionService.collect_message_models(process_group_with_message_metadata, process_group_id, all_message_models)
+    except ValueError as exception:
+        raise ApiError(
+            error_code="invalid_message_model",
+            message=str(exception),
+            status_code=400,
+        ) from exception
     MessageDefinitionService.delete_message_models_at_location(process_group_id)
     db.session.commit()
     MessageDefinitionService.save_all_message_models(all_message_models)

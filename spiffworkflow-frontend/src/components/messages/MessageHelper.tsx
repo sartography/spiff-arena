@@ -109,7 +109,10 @@ export const areCorrelationPropertiesInSync = (
       message = {
         correlation_properties:
           matchingMessageModel.correlation_properties.reduce(
-            (result: Record<string, { retrieval_expression: string }>, property) => {
+            (
+              result: Record<string, { retrieval_expression: string }>,
+              property,
+            ) => {
               result[property.identifier] = {
                 retrieval_expression: property.retrieval_expression,
               };

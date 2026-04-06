@@ -85,6 +85,11 @@ export function MessageEditor({
   const [displayNotSyncedMessage, setDisplayNotSyncedMessage] =
     useState<boolean>(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [currentMessageLocation, setCurrentMessageLocation] = useState<
+    string | null
+  >(null);
+  const [currentSharedMessageModelId, setCurrentSharedMessageModelId] =
+    useState<number | null>(null);
   const [sharedMessageOptions, setSharedMessageOptions] = useState<
     SharedMessageOption[]
   >([]);
@@ -133,8 +138,10 @@ export function MessageEditor({
       response: ProcessGroup,
       messageIdentifier: string,
       updatedMessagesForId: MessageDefinition,
+      messageLocation: string,
     ) => {
       setProcessGroup(response);
+      setCurrentMessageLocation(messageLocation);
       setDisplaySaveMessageMessage(true);
       messageEvent.eventBus.fire('spiff.add_message.returned', {
         name: messageIdentifier,
@@ -144,6 +151,44 @@ export function MessageEditor({
       setDisplayNotSyncedMessage(false);
     },
     [elementId, messageEvent.eventBus],
+  );
+
+  const getProcessGroupForLocation = useCallback(
+    (
+      location: string,
+      successCallback: (result: ProcessGroup) => void,
+      failureCallback?: () => void,
+    ) => {
+      if (processGroup && location === currentGroupLocation) {
+        successCallback(processGroup);
+        return;
+      }
+
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${location}`,
+        successCallback,
+        failureCallback,
+      });
+    },
+    [currentGroupLocation, processGroup],
+  );
+
+  const saveProcessGroupAtLocation = useCallback(
+    (
+      location: string,
+      processGroupToUpdate: ProcessGroup,
+      successCallback: (response: ProcessGroup) => void,
+      failureCallback?: () => void,
+    ) => {
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${location}`,
+        successCallback,
+        failureCallback,
+        httpMethod: 'PUT',
+        postBody: processGroupToUpdate,
+      });
+    },
+    [],
   );
 
   const updateProcessGroupWithMessages = useCallback(
@@ -156,6 +201,9 @@ export function MessageEditor({
 
       const newMessageId = formData.messageId;
       const oldMessageId = currentMessageId || newMessageId;
+      const sourceLocation = currentMessageLocation || currentGroupLocation;
+      const targetLocation =
+        formData.processGroupIdentifier || currentGroupLocation;
 
       const processGroupForUpdate = { ...processGroup };
       if (!processGroupForUpdate.messages) {
@@ -186,38 +234,111 @@ export function MessageEditor({
         sharedMessageOptionsById[formData.useExistingSharedMessageId || ''];
       const shouldInheritAncestorSharedMessage =
         selectedSharedMessageOption != null &&
-        selectedSharedMessageOption.message.location !== currentGroupLocation;
+        selectedSharedMessageOption.message.location === targetLocation &&
+        selectedSharedMessageOption.message.location !== sourceLocation;
+
+      const persistedMessageDefinition: MessageDefinition = {
+        ...updatedMessagesForId,
+      };
+      const persistedMessageModelId =
+        currentSharedMessageModelId || selectedSharedMessageOption?.id || null;
+      if (sourceLocation !== targetLocation) {
+        persistedMessageDefinition.id = persistedMessageModelId || undefined;
+        persistedMessageDefinition.location = targetLocation;
+      } else {
+        delete persistedMessageDefinition.id;
+        delete persistedMessageDefinition.location;
+      }
+
+      const updateComplete = (response: ProcessGroup) => {
+        setCurrentMessageId(newMessageId);
+        setCurrentSharedMessageModelId(persistedMessageModelId);
+        setCurrentFormData({
+          ...formData,
+          processGroupIdentifier: targetLocation,
+        });
+        handleProcessGroupUpdateResponse(
+          response,
+          newMessageId,
+          updatedMessagesForId,
+          targetLocation,
+        );
+      };
 
       if (shouldInheritAncestorSharedMessage) {
         delete processGroupForUpdate.messages[newMessageId];
-      } else {
-        delete updatedMessagesForId.id;
-        delete updatedMessagesForId.location;
-        processGroupForUpdate.messages[newMessageId] = updatedMessagesForId;
+        if (oldMessageId !== newMessageId) {
+          delete processGroupForUpdate.messages[oldMessageId];
+        }
+        saveProcessGroupAtLocation(
+          sourceLocation,
+          processGroupForUpdate,
+          (response) => {
+            setCurrentSharedMessageModelId(
+              selectedSharedMessageOption.message.id,
+            );
+            updateComplete(response);
+          },
+        );
+        return;
       }
-      if (oldMessageId !== newMessageId) {
-        delete processGroupForUpdate.messages[oldMessageId];
+
+      if (sourceLocation === targetLocation) {
+        processGroupForUpdate.messages[newMessageId] =
+          persistedMessageDefinition;
+        if (oldMessageId !== newMessageId) {
+          delete processGroupForUpdate.messages[oldMessageId];
+        }
+        saveProcessGroupAtLocation(
+          sourceLocation,
+          processGroupForUpdate,
+          updateComplete,
+        );
+        return;
       }
-      setCurrentMessageId(newMessageId);
-      const path = `/process-groups/${modifiedProcessGroupIdentifier}`;
-      HttpService.makeCallToBackend({
-        path,
-        successCallback: (response: ProcessGroup) =>
-          handleProcessGroupUpdateResponse(
-            response,
-            newMessageId,
-            updatedMessagesForId,
-          ),
-        httpMethod: 'PUT',
-        postBody: processGroupForUpdate,
+
+      getProcessGroupForLocation(targetLocation, (targetProcessGroup) => {
+        const sourceProcessGroupForUpdate = { ...processGroupForUpdate };
+        if (!sourceProcessGroupForUpdate.messages) {
+          sourceProcessGroupForUpdate.messages = {};
+        }
+        delete sourceProcessGroupForUpdate.messages[oldMessageId];
+        if (oldMessageId !== newMessageId) {
+          delete sourceProcessGroupForUpdate.messages[newMessageId];
+        }
+
+        const targetProcessGroupForUpdate = { ...targetProcessGroup };
+        if (!targetProcessGroupForUpdate.messages) {
+          targetProcessGroupForUpdate.messages = {};
+        }
+        targetProcessGroupForUpdate.messages[newMessageId] =
+          persistedMessageDefinition;
+        if (oldMessageId !== newMessageId) {
+          delete targetProcessGroupForUpdate.messages[oldMessageId];
+        }
+
+        saveProcessGroupAtLocation(
+          sourceLocation,
+          sourceProcessGroupForUpdate,
+          () => {
+            saveProcessGroupAtLocation(
+              targetLocation,
+              targetProcessGroupForUpdate,
+              updateComplete,
+            );
+          },
+        );
       });
     },
     [
-      currentMessageId,
-      handleProcessGroupUpdateResponse,
-      modifiedProcessGroupIdentifier,
-      processGroup,
       currentGroupLocation,
+      currentMessageId,
+      currentMessageLocation,
+      currentSharedMessageModelId,
+      handleProcessGroupUpdateResponse,
+      getProcessGroupForLocation,
+      processGroup,
+      saveProcessGroupAtLocation,
       sharedMessageOptionsById,
       updateCorrelationPropertiesOnProcessGroup,
       t,
@@ -285,6 +406,10 @@ export function MessageEditor({
         ),
       };
       setCurrentFormData(newFormData);
+      setCurrentMessageLocation(
+        nearestMessageModel?.location || currentGroupLocation,
+      );
+      setCurrentSharedMessageModelId(nearestMessageModel?.id || null);
     };
 
     const processResult = (
@@ -306,6 +431,9 @@ export function MessageEditor({
       setDisplayNotSyncedMessage(!newIsSynced);
       setProcessGroup(processGroupResult);
       setCurrentMessageId(messageId);
+      setCurrentMessageLocation(
+        matchingMessageModels[0]?.location || currentGroupLocation,
+      );
       setPageTitle([processGroupResult.display_name]);
       setInitialFormData(processGroupResult, matchingMessageModels);
     };
@@ -345,7 +473,12 @@ export function MessageEditor({
         maybeFinalize();
       },
     });
-  }, [modifiedProcessGroupIdentifier, correlationProperties, messageId]);
+  }, [
+    modifiedProcessGroupIdentifier,
+    correlationProperties,
+    currentGroupLocation,
+    messageId,
+  ]);
 
   const schema = useMemo(() => {
     return {

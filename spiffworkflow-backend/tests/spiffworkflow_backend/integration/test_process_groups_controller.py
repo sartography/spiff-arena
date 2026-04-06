@@ -5,6 +5,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
@@ -103,6 +104,56 @@ class TestProcessGroupsController(BaseTest):
 
         process_group = ProcessModelService.get_process_group(group_id)
         assert process_group.display_name == "Modified Display Name"
+
+    def test_process_group_update_rejects_reusing_message_id_for_different_message(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("survey")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+        message_id = (
+            MessageModel.query.filter_by(
+                identifier="request-for-information-received",
+                location="order",
+            )
+            .one()
+            .id
+        )
+
+        response = client.put(
+            "/v1.0/process-groups/survey",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Survey",
+                "messages": {
+                    "some-other-message": {
+                        "id": message_id,
+                        "location": "survey",
+                        "schema": {},
+                    }
+                },
+            },
+        )
+
+        assert response.status_code == 400
+        assert response.json()["error_code"] == "invalid_message_model"
 
     def test_process_group_list(
         self,

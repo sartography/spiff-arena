@@ -1,105 +1,161 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Table } from '@carbon/react';
-import { useSearchParams } from 'react-router-dom';
-import PaginationForTable from '../PaginationForTable';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  getPageInfoFromSearchParams,
-  modifyProcessIdentifierForPathParam,
-} from '../../helpers';
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Link,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import HttpService from '../../services/HttpService';
-import { PaginationObject, ReferenceCache } from '../../interfaces';
+import { modifyProcessIdentifierForPathParam } from '../../helpers';
+import { MessageEditor } from './MessageEditor';
 
-// TODO: update to work with current message-models api
 type OwnProps = {
   processGroupId?: string;
 };
 
+type MessageModelResponse = {
+  id: number;
+  identifier: string;
+  location: string;
+  schema: any;
+  correlation_properties: Array<{
+    identifier: string;
+    retrieval_expression: string;
+  }>;
+};
+
+const noOpBpmnEvent = {
+  eventBus: {
+    fire: () => {},
+  },
+};
+
+const correlationSummary = (messageModel: MessageModelResponse): string => {
+  return messageModel.correlation_properties
+    .map((property) => property.identifier)
+    .join(', ');
+};
+
 export default function MessageModelList({ processGroupId }: OwnProps) {
-  const [messageModels, setMessageModels] = useState<ReferenceCache[]>([]);
-  const [pagination, setPagination] = useState<PaginationObject | null>(null);
-  const [searchParams] = useSearchParams();
+  const [messageModels, setMessageModels] = useState<MessageModelResponse[]>(
+    [],
+  );
+  const [selectedMessageModel, setSelectedMessageModel] =
+    useState<MessageModelResponse | null>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
-    const setMessageInstanceListFromResult = (result: any) => {
-      setMessageModels(result.results);
-      setPagination(result.pagination);
-    };
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    const queryParamString = `per_page=${perPage}&page=${page}`;
-    let modifiedProcessIdentifierForPathParam = '';
-    if (processGroupId) {
-      modifiedProcessIdentifierForPathParam = `/${modifyProcessIdentifierForPathParam(
-        processGroupId,
-      )}`;
-    }
+    const queryParamString = 'per_page=100&page=1';
+    const path = processGroupId
+      ? `/message-models/${modifyProcessIdentifierForPathParam(
+          processGroupId,
+        )}?${queryParamString}`
+      : `/all-message-models?${queryParamString}`;
 
     HttpService.makeCallToBackend({
-      path: `/message-models${modifiedProcessIdentifierForPathParam}?${queryParamString}`,
-      successCallback: setMessageInstanceListFromResult,
+      path,
+      successCallback: (result: { messages: MessageModelResponse[] }) => {
+        setMessageModels(result.messages || []);
+      },
     });
-  }, [processGroupId, searchParams]);
+  }, [processGroupId]);
 
-  const correlation = (row: ReferenceCache): string => {
-    let keys = '';
-    const cProps: string[] = [];
-    if ('correlation_keys' in row.properties) {
-      keys = row.properties.correlation_keys;
-    }
-    if ('correlations' in row.properties) {
-      row.properties.correlations.forEach((cor: any) => {
-        cProps.push(cor.correlation_property);
-      });
-    }
-    if (cProps.length > 0) {
-      keys += ` (${cProps.join(', ')})`;
-    }
-    return keys;
-  };
-
-  const buildTable = () => {
-    const rows = messageModels.map((row: ReferenceCache) => {
+  const rows = useMemo(() => {
+    return messageModels.map((messageModel) => {
       return (
-        <tr key={row.identifier}>
-          <td>{row.identifier}</td>
-          <td>
-            <a
+        <TableRow
+          key={`${messageModel.location}:${messageModel.identifier}`}
+          hover
+        >
+          <TableCell>{messageModel.identifier}</TableCell>
+          <TableCell>
+            <Link
               href={`/process-groups/${modifyProcessIdentifierForPathParam(
-                row.relative_location,
+                messageModel.location,
               )}`}
+              underline="hover"
             >
-              {row.relative_location}
-            </a>
-          </td>
-          <td>{correlation(row)}</td>
-        </tr>
+              {messageModel.location}
+            </Link>
+          </TableCell>
+          <TableCell>{correlationSummary(messageModel)}</TableCell>
+          <TableCell align="right">
+            <Button onClick={() => setSelectedMessageModel(messageModel)}>
+              {t('edit')}
+            </Button>
+          </TableCell>
+        </TableRow>
       );
     });
-    return (
-      <Table striped bordered>
-        <thead>
-          <tr>
-            <th>{t('id')}</th>
-            <th>{t('location')}</th>
-            <th>{t('correlations')}</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
-    );
-  };
-  if (pagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    return (
-      <PaginationForTable
-        page={page}
-        perPage={perPage}
-        pagination={pagination}
-        tableToDisplay={buildTable()}
-        paginationQueryParamPrefix="message-model-list"
-      />
-    );
-  }
-  return null;
+  }, [messageModels, t]);
+
+  return (
+    <>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('id')}</TableCell>
+              <TableCell>{t('location')}</TableCell>
+              <TableCell>{t('correlations')}</TableCell>
+              <TableCell align="right">{t('edit')}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.length > 0 ? (
+              rows
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4}>
+                  <Typography variant="body2">{t('no_results')}</Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Dialog
+        open={selectedMessageModel != null}
+        onClose={() => setSelectedMessageModel(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        {selectedMessageModel ? (
+          <>
+            <DialogTitle>
+              {`${selectedMessageModel.identifier} (${selectedMessageModel.location})`}
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ pt: 1 }}>
+                <MessageEditor
+                  modifiedProcessGroupIdentifier={selectedMessageModel.location}
+                  messageId={selectedMessageModel.identifier}
+                  messageEvent={noOpBpmnEvent}
+                  correlationProperties={selectedMessageModel.correlation_properties.map(
+                    (correlationProperty) => ({
+                      id: correlationProperty.identifier,
+                      retrievalExpression:
+                        correlationProperty.retrieval_expression,
+                    }),
+                  )}
+                  elementId={`${selectedMessageModel.location}:${selectedMessageModel.identifier}`}
+                />
+              </Box>
+            </DialogContent>
+          </>
+        ) : null}
+      </Dialog>
+    </>
+  );
 }

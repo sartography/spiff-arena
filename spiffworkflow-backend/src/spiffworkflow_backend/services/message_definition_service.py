@@ -24,7 +24,7 @@ class MessageDefinitionService:
 
         if message_id is not None:
             model_by_id = MessageModel.query.filter_by(id=message_id).first()
-            if model_by_id is not None and (model_by_id.identifier != identifier or model_by_id.location != message_location):
+            if model_by_id is not None and model_by_id.identifier != identifier:
                 raise ValueError(
                     f"Supplied message_id {message_id} belongs to a different message"
                     f" ('{model_by_id.identifier}' at '{model_by_id.location}')."

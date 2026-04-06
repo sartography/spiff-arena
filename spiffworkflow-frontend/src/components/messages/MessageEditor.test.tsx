@@ -39,14 +39,30 @@ vi.mock('../CustomForm', () => {
       const { formData, schema } = props;
       latestCustomFormProps = props;
       const selectedValue = formData.useExistingSharedMessageId;
-      const selectedOption = schema.properties.useExistingSharedMessageId.oneOf.find(
-        (option: any) => option.const === selectedValue,
-      );
+      const selectedOption =
+        schema.properties.useExistingSharedMessageId.oneOf.find(
+          (option: any) => option.const === selectedValue,
+        );
       return (
         <>
           <div data-testid="selected-shared-message">
             {selectedOption?.title || selectedValue}
           </div>
+          <button
+            data-testid="choose-parent-location"
+            onClick={() =>
+              latestCustomFormProps.onChange({
+                formData: {
+                  ...formData,
+                  processGroupIdentifier: 'order',
+                  useExistingSharedMessageId: 'none',
+                },
+              })
+            }
+            type="button"
+          >
+            move to parent location
+          </button>
           <button
             data-testid="choose-parent-message"
             onClick={() =>
@@ -273,5 +289,112 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.queryByText('save_warning_message')).not.toBeInTheDocument();
+  });
+
+  it('updates the target process group when moving a message to a new location', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order/survey"
+        messageId="request-for-information-received"
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[]}
+        elementId="Task_1"
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order/survey');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order/survey');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Survey',
+        messages: {
+          'request-for-information-received': {
+            id: 1442,
+            location: 'order/survey',
+            correlation_properties: {
+              survey_id: { retrieval_expression: 'survey_id' },
+            },
+            schema: {},
+          },
+        },
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [
+          {
+            id: 1442,
+            identifier: 'request-for-information-received',
+            location: 'order/survey',
+            schema: {},
+            correlation_properties: [],
+          },
+        ],
+      });
+    });
+
+    await act(async () => {
+      screen.getByTestId('choose-parent-location').click();
+    });
+
+    await act(async () => {
+      screen.getByTestId('save-message').click();
+    });
+
+    const targetProcessGroupGetCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order');
+
+    expect(targetProcessGroupGetCall).toBeTruthy();
+
+    await act(async () => {
+      targetProcessGroupGetCall.successCallback({
+        display_name: 'Order',
+        messages: {},
+      });
+    });
+
+    const sourceUpdateCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find(
+        (call) =>
+          call.path === '/process-groups/order/survey' &&
+          call.httpMethod === 'PUT',
+      );
+
+    expect(sourceUpdateCall).toBeTruthy();
+    expect(sourceUpdateCall.postBody.messages).toEqual({});
+
+    await act(async () => {
+      sourceUpdateCall.successCallback({
+        display_name: 'Survey',
+        messages: {},
+      });
+    });
+
+    const completedTargetUpdateCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find(
+        (call) =>
+          call.path === '/process-groups/order' && call.httpMethod === 'PUT',
+      );
+
+    expect(completedTargetUpdateCall).toBeTruthy();
+    expect(completedTargetUpdateCall.postBody.messages).toEqual({
+      'request-for-information-received': {
+        correlation_properties: {
+          survey_id: { retrieval_expression: 'survey_id' },
+        },
+        schema: {},
+        id: 1442,
+        location: 'order',
+      },
+    });
   });
 });
