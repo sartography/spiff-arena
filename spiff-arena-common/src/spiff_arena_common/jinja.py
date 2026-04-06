@@ -1,6 +1,7 @@
 import re
 
 import jinja2
+from jinja2 import meta
 
 class JinjaHelpers:
     """These are helpers that added to script tasks and to jinja for rendering templates.
@@ -42,5 +43,23 @@ def jinja(s, data):
         template = env.from_string(s)
 
         return template.render(**data), None
+    except jinja2.TemplateSyntaxError as e:
+        error_msg = f"{e.__class__.__name__}: {e}"
+        if e.lineno is not None:
+            lines = s.splitlines()
+            if 0 < e.lineno <= len(lines):
+                error_msg += f"\n  Line {e.lineno}: {lines[e.lineno - 1].strip()}"
+        return None, error_msg
     except Exception as e:
-        return None, f"{e.__class__.__name__}: {e}"
+        error_msg = f"{e.__class__.__name__}: {e}"
+        if isinstance(e, TypeError) and "Undefined" in str(e):
+            referenced_vars = meta.find_undeclared_variables(env.parse(s))
+            undefined_vars = referenced_vars - set(data.keys())
+            if undefined_vars:
+                names = ", ".join(sorted(undefined_vars))
+                error_msg += f"\n  Undefined variables: {names}"
+        if hasattr(e, "lineno") and e.lineno is not None:
+            lines = s.splitlines()
+            if 0 < e.lineno <= len(lines):
+                error_msg += f"\n  Line {e.lineno}: {lines[e.lineno - 1].strip()}"
+        return None, error_msg
