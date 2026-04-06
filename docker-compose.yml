@@ -67,12 +67,10 @@ services:
 
   spiffworkflow-connector:
     container_name: spiffworkflow-connector
-    image: ghcr.io/sartography/connector-proxy-demo:latest
+    image: ghcr.io/sartography/connector-proxy-async-http:latest
     environment:
       FLASK_ENV: "${FLASK_ENV:-development}"
-      FLASK_DEBUG: "0"
-      FLASK_SESSION_SECRET_KEY: "${FLASK_SESSION_SECRET_KEY:-super_secret_key}"
-      CONNECTOR_PROXY_PORT: "${SPIFF_CONNECTOR_PORT:-8004}"
+    command: ["granian", "--host", "0.0.0.0", "--port", "${SPIFF_CONNECTOR_PORT:-8004}", "--interface", "asgi", "main:app"]
     ports:
       - "${SPIFF_CONNECTOR_PORT:-8004}:${SPIFF_CONNECTOR_PORT:-8004}/tcp"
     healthcheck:
