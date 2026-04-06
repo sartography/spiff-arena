@@ -195,7 +195,8 @@ jobs:
         # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
         # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
         run: |
-          brew install mysql@8.0 postgresql@14 && brew link mysql@8.0
+          brew install mysql@8.0 postgresql@16
+          brew link mysql@8.0 2>/dev/null || true
 
       - name: Run Session
         run: |
@@ -315,7 +316,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5.5.2
+        uses: codecov/codecov-action@v6.0.0
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v5.0.0
@@ -334,7 +335,7 @@ jobs:
       # part about saving PR number and then using it from auto-merge-dependabot-prs from:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
       - name: Write PR number to spiffworkflow-backend/pr dir
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
@@ -342,7 +343,7 @@ jobs:
           echo "$PR_NUMBER" > ./pr/pr_number
       - name: Upload PR number as artifact
         uses: actions/upload-artifact@v7
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         with:
           name: pr_number
           # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
@@ -454,3 +455,4 @@ jobs:
         with:
           name: playwright-traces
           path: ./spiffworkflow-frontend/test/browser/test-results/
+          if-no-files-found: ignore

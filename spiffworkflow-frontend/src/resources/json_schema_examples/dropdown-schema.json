@@ -1,6 +1,6 @@
 {
   "title": "Dropdown list",
-  "description": "A dropdown list with options pulled form existing Task Data. IMPORTANT - Add 'fruits' to Task Data before using this component!!!",
+  "description": "A dropdown list with options pulled from existing Task Data. Each item should have label and value attributes.",
   "type": "object",
   "properties": {
     "favoriteFruit": {
