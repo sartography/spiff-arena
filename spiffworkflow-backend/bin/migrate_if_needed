@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Fast database migration guard.
+#
+# Strategy for speed:
+#   1. Read current revision(s) from alembic_version table directly via psql  (< 10ms)
+#   2. Compute expected "heads" by parsing migration files (pure file I/O, no subprocess)
+#   3. Only invoke `flask db upgrade` if the DB is behind head (~5-10s)
+#
+# On a fully-migrated DB this exits in < 100ms total.
+
+set -o errexit -o errtrace -o nounset -o pipefail
+
+script_dir="$(cd -- "$(dirname "$0")" && pwd)"
+backend_dir="$(cd -- "$script_dir/.." && pwd)"
+versions_dir="$backend_dir/migrations/versions"
+
+# ── Determine database URI ───────────────────────────────────────────────────
+db_uri="${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}"
+if [[ -z "$db_uri" ]]; then
+  # Fall back to the same default the app uses
+  db_name="spiffworkflow_backend_${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
+  db_uri="postgresql://spiffuser@/${db_name}?host=/var/run/postgresql"
+fi
+
+# ── Find all file-based heads (leaf nodes in migration DAG) ─────────────────
+# Heads = Revision IDs that no other migration file lists as its Revises target.
+grep -rh "^Revision ID:" "$versions_dir"/*.py \
+  | awk '{print $NF}' | sort > /tmp/_spiff_migration_all_ids.txt
+
+grep -rh "^Revises:" "$versions_dir"/*.py \
+  | awk '{print $NF}' \
+  | grep -v "^$" \
+  | grep -v "^None$" \
+  | sort > /tmp/_spiff_migration_all_revises.txt
+
+# file_heads = IDs not referenced as Revises by any other migration
+mapfile -t file_heads < <(comm -23 /tmp/_spiff_migration_all_ids.txt /tmp/_spiff_migration_all_revises.txt)
+rm -f /tmp/_spiff_migration_all_ids.txt /tmp/_spiff_migration_all_revises.txt
+
+if [[ ${#file_heads[@]} -eq 0 ]]; then
+  echo "migrate_if_needed: no migrations found in $versions_dir, skipping"
+  exit 0
+fi
+
+# ── Read current revision(s) from DB ────────────────────────────────────────
+# psql -t strips column headers; tr removes whitespace/newlines
+if ! db_current=$(psql "$db_uri" -t -c \
+    "SELECT version_num FROM alembic_version ORDER BY version_num" \
+    2>/dev/null | tr -d ' \n'); then
+  # Table may not exist yet (fresh DB) — definitely need to migrate
+  echo "migrate_if_needed: alembic_version table not found — running initial migration"
+  db_current=""
+fi
+
+# ── Compare ──────────────────────────────────────────────────────────────────
+# Build a lookup set from file heads
+declare -A heads_set
+for h in "${file_heads[@]}"; do
+  heads_set["$h"]=1
+done
+
+needs_upgrade=false
+
+if [[ -z "$db_current" ]]; then
+  needs_upgrade=true
+else
+  # Every revision in the DB must be a file head; otherwise we're mid-chain
+  while IFS= read -r rev; do
+    if [[ -z "$rev" ]]; then
+      continue
+    fi
+    if [[ -z "${heads_set[$rev]+_}" ]]; then
+      echo "migrate_if_needed: revision $rev is not a head — upgrade needed"
+      needs_upgrade=true
+      break
+    fi
+  done <<< "$db_current"
+fi
+
+if [[ "$needs_upgrade" == "false" ]]; then
+  echo "migrate_if_needed: DB already at head ($(echo "$db_current" | tr '\n' ' ')) — nothing to do"
+  exit 0
+fi
+
+echo "migrate_if_needed: running flask db upgrade …"
+cd "$backend_dir"
+uv run flask db upgrade
+echo "migrate_if_needed: done"
