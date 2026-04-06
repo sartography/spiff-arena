@@ -69,12 +69,11 @@ services:
     container_name: spiffworkflow-connector
     image: ghcr.io/sartography/connector-proxy-async-http:main-latest
     environment:
-      FLASK_ENV: "${FLASK_ENV:-development}"
-    command: ["granian", "--host", "0.0.0.0", "--port", "${SPIFF_CONNECTOR_PORT:-8004}", "--interface", "asgi", "main:app"]
+      CONNECTOR_PROXY_ASYNC_HTTP_PORT: "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:8004}"
     ports:
-      - "${SPIFF_CONNECTOR_PORT:-8004}:${SPIFF_CONNECTOR_PORT:-8004}/tcp"
+      - "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}:${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}/tcp"
     healthcheck:
-      test: "curl localhost:${SPIFF_CONNECTOR_PORT:-8004}/liveness --fail"
+      test: "curl localhost:${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}/liveness --fail"
       interval: 10s
       timeout: 5s
       retries: 20
