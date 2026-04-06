@@ -255,8 +255,8 @@ def _advance_workflow(workflow, task, strategy_name):
                         task.data.update(expected["data"])
                         workflow.data["spiff_testFixture_index"] = index - 1
                     except Exception as e:
-                        logging.error(f"Failed to load test fixture from {fixture_file}: {e}")
-                        break
+                        # Re-raise so the error is properly reported in the response
+                        raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
                 else:
                     # Fallback to inline fixture (process-models compatibility)
                     stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
