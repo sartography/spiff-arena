@@ -51,6 +51,7 @@ COPY pyproject.toml poetry.lock /app/
 
 COPY . /app
 RUN poetry install
+RUN /app/venv/bin/pip install chardet==5.2.0
 
 
 ######################## - FINAL

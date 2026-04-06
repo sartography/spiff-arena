@@ -136,6 +136,8 @@ class TaskService:
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
         self.dirty_bpmn_process_updates: dict[str, tuple[BpmnWorkflow, BpmnProcessModel]] = {}
+        self._should_query_task_models = len(self.task_model_mapping) > 0
+        self._subprocess_guid_lookup_by_top_workflow: dict[int, dict[int, str]] = {}
 
         self.run_started_at: float | None = run_started_at
 
@@ -196,6 +198,45 @@ class TaskService:
                 self.process_spiff_task_parent_subprocess_tasks(
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
+
+    def sync_parents_for_deleted_spiff_tasks(
+        self,
+        deleted_spiff_tasks: list[SpiffTask],
+        deleted_task_guids: set[str],
+    ) -> None:
+        """Persist parent task structure even when deleted children did not bump parent timestamps."""
+        seen_parent_guids: set[str] = set()
+        for deleted_spiff_task in deleted_spiff_tasks:
+            parent_spiff_task = deleted_spiff_task.parent
+            while parent_spiff_task is not None:
+                parent_guid = str(parent_spiff_task.id)
+                if parent_guid in deleted_task_guids:
+                    parent_spiff_task = parent_spiff_task.parent
+                    continue
+                if parent_guid in seen_parent_guids:
+                    parent_spiff_task = parent_spiff_task.parent
+                    continue
+                seen_parent_guids.add(parent_guid)
+                self.update_task_model_with_spiff_task(
+                    spiff_task=parent_spiff_task,
+                    store_process_instance_events=False,
+                )
+                parent_spiff_task = parent_spiff_task.parent
+
+    def prune_missing_child_references(self, valid_task_guids: set[str]) -> None:
+        """Drop child links that point outside the current workflow snapshot before bulk save."""
+        for task_model in self.task_models.values():
+            children = task_model.properties_json.get("children")
+            if not children:
+                continue
+
+            valid_children = [child_guid for child_guid in children if child_guid in valid_task_guids]
+            if len(valid_children) == len(children):
+                continue
+
+            new_properties_json = copy.copy(task_model.properties_json)
+            new_properties_json["children"] = valid_children
+            task_model.properties_json = new_properties_json
 
     def update_task_model_with_spiff_task(
         self,
@@ -336,11 +377,14 @@ class TaskService:
         if new_properties_json["task_spec"] == "Start":
             new_properties_json["parent"] = None
 
-        # Use spiff_task.data directly, which has fully materialized data
-        # While SpiffWorkflow serialization does optimations to reduce duplication, we handle that optimization differently.
-        new_properties_json.pop("data", None)
+        serialized_task_data = new_properties_json.pop("data", None)
+        # Older Spiff serializers may omit "delta"; keep a compatibility fast path for that case.
+        has_delta = "delta" in new_properties_json
         new_properties_json.pop("delta", None)
-        spiff_task_data = self.serializer.registry.convert(spiff_task.data)  # surprisingly expensive call.
+        if serialized_task_data is not None and not has_delta:
+            spiff_task_data = serialized_task_data
+        else:
+            spiff_task_data = self.serializer.registry.convert(spiff_task.data)
 
         python_env_data_dict = self.__class__._get_python_env_data_dict_from_spiff_task(spiff_task, self.serializer)
         task_model.properties_json = new_properties_json
@@ -362,7 +406,9 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: TaskModel | None = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        task_model: TaskModel | None = None
+        if self._should_query_task_models:
+            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -375,6 +421,8 @@ class TaskService:
                 process_instance_id=self.process_instance.id,
                 task_definition_id=task_definition.id,
             )
+            if not self._should_query_task_models:
+                self.task_model_mapping[spiff_task_guid] = task_model
 
         return (bpmn_process, task_model)
 
@@ -449,20 +497,25 @@ class TaskService:
             if top_level_process is not None:
                 subprocesses = spiff_workflow.top_workflow.subprocesses
                 direct_bpmn_process_parent: BpmnProcessModel | None = top_level_process
+                top_workflow_key = id(spiff_workflow.top_workflow)
+                subprocess_lookup = self._subprocess_guid_lookup_by_top_workflow.get(top_workflow_key)
+                if subprocess_lookup is None:
+                    subprocess_lookup = {id(workflow): str(guid) for guid, workflow in list(subprocesses.items())}
+                    self._subprocess_guid_lookup_by_top_workflow[top_workflow_key] = subprocess_lookup
 
-                # BpmnWorkflows do not know their own guid so we have to cycle through subprocesses to find the guid that matches
-                # calling list(subprocesses) to make a copy of the keys so we can change subprocesses while iterating
-                # changing subprocesses happens when running parallel tests
-                # for reasons we do not understand. https://stackoverflow.com/a/11941855/6090676
-                for subprocess_guid in list(subprocesses):
-                    subprocess = subprocesses[subprocess_guid]
-                    if subprocess == spiff_workflow.parent_workflow:
-                        direct_bpmn_process_parent = self.bpmn_subprocess_mapping.get(str(subprocess_guid))
-                        if direct_bpmn_process_parent is None:
-                            raise BpmnProcessNotFoundError(
-                                f"Could not find bpmn process with guid: {str(subprocess_guid)} "
-                                f"while searching for direct parent process of {bpmn_process_guid}."
-                            )
+                parent_workflow_guid = subprocess_lookup.get(id(spiff_workflow.parent_workflow))
+                if parent_workflow_guid is None:
+                    subprocess_lookup = {id(workflow): str(guid) for guid, workflow in list(subprocesses.items())}
+                    self._subprocess_guid_lookup_by_top_workflow[top_workflow_key] = subprocess_lookup
+                    parent_workflow_guid = subprocess_lookup.get(id(spiff_workflow.parent_workflow))
+
+                if parent_workflow_guid is not None:
+                    direct_bpmn_process_parent = self.bpmn_subprocess_mapping.get(parent_workflow_guid)
+                    if direct_bpmn_process_parent is None:
+                        raise BpmnProcessNotFoundError(
+                            f"Could not find bpmn process with guid: {parent_workflow_guid} "
+                            f"while searching for direct parent process of {bpmn_process_guid}."
+                        )
 
                 if direct_bpmn_process_parent is None:
                     raise BpmnProcessNotFoundError(f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}")
@@ -484,6 +537,7 @@ class TaskService:
         db.session.add(bpmn_process)
 
         if bpmn_process_is_new:
+            db.session.flush()
             self.add_tasks_to_bpmn_process(
                 tasks=tasks,
                 spiff_workflow=spiff_workflow,
@@ -508,7 +562,9 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = TaskModel.query.filter_by(guid=task_id).first()
+            task_model = None
+            if self._should_query_task_models:
+                task_model = TaskModel.query.filter_by(guid=task_id).first()
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -553,6 +609,8 @@ class TaskService:
         for bpmn_process in bpmn_processes_to_delete:
             db.session.delete(bpmn_process)
 
+        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks, set(deleted_task_guids))
+
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE
         spiff_tasks_updated = {}
@@ -561,6 +619,8 @@ class TaskService:
                 spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         for _id, spiff_task in spiff_tasks_updated.items():
             self.update_task_model_with_spiff_task(spiff_task)
+
+        self.prune_missing_child_references({str(spiff_task.id) for spiff_task in spiff_tasks})
 
         self.save_objects_to_database()
 
