@@ -22,6 +22,7 @@ import { MessageEditor } from './MessageEditor';
 
 type OwnProps = {
   processGroupId?: string;
+  initialMessageId?: string;
 };
 
 type MessageModelResponse = {
@@ -38,6 +39,9 @@ type MessageModelResponse = {
 const noOpBpmnEvent = {
   eventBus: {
     fire: () => {},
+    on: () => {},
+    off: () => {},
+    once: () => {},
   },
 };
 
@@ -47,7 +51,7 @@ const correlationSummary = (messageModel: MessageModelResponse): string => {
     .join(', ');
 };
 
-export default function MessageModelList({ processGroupId }: OwnProps) {
+export default function MessageModelList({ processGroupId, initialMessageId }: OwnProps) {
   const [messageModels, setMessageModels] = useState<MessageModelResponse[]>(
     [],
   );
@@ -66,10 +70,17 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
     HttpService.makeCallToBackend({
       path,
       successCallback: (result: { messages: MessageModelResponse[] }) => {
-        setMessageModels(result.messages || []);
+        const messages = result.messages || [];
+        setMessageModels(messages);
+        if (initialMessageId) {
+          const match = messages.find((m) => m.identifier === initialMessageId);
+          if (match) {
+            setSelectedMessageModel(match);
+          }
+        }
       },
     });
-  }, [processGroupId]);
+  }, [processGroupId, initialMessageId]);
 
   const rows = useMemo(() => {
     return messageModels.map((messageModel) => {
@@ -139,7 +150,7 @@ export default function MessageModelList({ processGroupId }: OwnProps) {
             <DialogContent>
               <Box sx={{ pt: 1 }}>
                 <MessageEditor
-                  modifiedProcessGroupIdentifier={selectedMessageModel.location}
+                  modifiedProcessGroupIdentifier={modifyProcessIdentifierForPathParam(selectedMessageModel.location)}
                   messageId={selectedMessageModel.identifier}
                   messageEvent={noOpBpmnEvent}
                   correlationProperties={selectedMessageModel.correlation_properties.map(
