@@ -34,6 +34,12 @@ on:
       - bpmn-js-spiffworkflow-react
       - debt/performance
     tags: [v*]
+    paths:
+      - spiffworkflow-frontend/**
+      - spiffworkflow-backend/**
+      - connector-proxy-demo/**
+      - connector-proxies/async-http/**
+      - .github/workflows/build_docker_images.yml
 
 jobs:
   create_docker_images:
@@ -52,6 +58,9 @@ jobs:
           - image_name: sartography/connector-proxy-demo
             context: connector-proxy-demo
             description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
+          - image_name: sartography/connector-proxy-async-http
+            context: connector-proxies/async-http
+            description: "Async HTTP connector proxy for SpiffWorkflow, providing generic HTTP integration capabilities"
 
     env:
       REGISTRY: ghcr.io
