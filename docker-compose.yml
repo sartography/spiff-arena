@@ -69,7 +69,7 @@ services:
     container_name: spiffworkflow-connector
     image: ghcr.io/sartography/connector-proxy-async-http:main-latest
     environment:
-      CONNECTOR_PROXY_ASYNC_HTTP_PORT: "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:8004}"
+      CONNECTOR_PROXY_ASYNC_HTTP_PORT: "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}"
     ports:
       - "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}:${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}/tcp"
     healthcheck:
