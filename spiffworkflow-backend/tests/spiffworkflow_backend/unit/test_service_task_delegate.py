@@ -219,54 +219,55 @@ class TestServiceTaskDelegate(BaseTest):
         assert all("Connector proxy response" not in message for message in logged_messages)
 
     def test_call_connector_logs_request_and_response(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        process_model = load_test_spec(
-            process_model_id="test_group/model_with_lanes",
-            bpmn_file_name="lanes.bpmn",
-            process_model_source_directory="model_with_lanes",
-        )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", "http://localhost:7004"):
+            process_model = load_test_spec(
+                process_model_id="test_group/model_with_lanes",
+                bpmn_file_name="lanes.bpmn",
+                process_model_source_directory="model_with_lanes",
+            )
+            process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            spiff_task = processor.next_task()
 
-        command_response: CommandResponseDict = {
-            "body": json.dumps({"we_did_it": True}),
-            "mimetype": "application/json",
-        }
-        connector_response: ConnectorProxyResponseDict = {
-            "command_response": command_response,
-            "error": None,
-            "command_response_version": 2,
-        }
+            command_response: CommandResponseDict = {
+                "body": json.dumps({"we_did_it": True}),
+                "mimetype": "application/json",
+            }
+            connector_response: ConnectorProxyResponseDict = {
+                "command_response": command_response,
+                "error": None,
+                "command_response_version": 2,
+            }
 
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
-            with patch("requests.post") as mock_post:
-                mock_post.return_value.status_code = 200
-                mock_post.return_value.ok = True
-                mock_post.return_value.text = json.dumps(connector_response)
-                mock_post.return_value.headers = {"Content-Type": "application/json"}
-                with patch.object(service_task_logger, "info") as mock_logger_info:
-                    ServiceTaskDelegate.call_connector(
-                        "my_operation",
-                        {"payload": {"value": {"hello": "world"}}},
-                        spiff_task,
-                        process_instance.id,
-                    )
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
+                with patch("requests.post") as mock_post:
+                    mock_post.return_value.status_code = 200
+                    mock_post.return_value.ok = True
+                    mock_post.return_value.text = json.dumps(connector_response)
+                    mock_post.return_value.headers = {"Content-Type": "application/json"}
+                    with patch.object(service_task_logger, "info") as mock_logger_info:
+                        ServiceTaskDelegate.call_connector(
+                            "my_operation",
+                            {"payload": {"value": {"hello": "world"}}},
+                            spiff_task,
+                            process_instance.id,
+                        )
 
-        request_call = mock_logger_info.call_args_list[0]
-        assert "Connector proxy request" in request_call.args[0]
-        assert request_call.args[2] == "POST"
-        assert request_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-        assert '"payload": {' in request_call.args[5]
-        assert '"hello": "world"' in request_call.args[5]
+            request_call = mock_logger_info.call_args_list[0]
+            assert "Connector proxy request" in request_call.args[0]
+            assert request_call.args[2] == "POST"
+            assert request_call.args[3] == "http://localhost:7004/v1/do/my_operation"
+            assert '"payload": {' in request_call.args[5]
+            assert '"hello": "world"' in request_call.args[5]
 
-        response_call = mock_logger_info.call_args_list[1]
-        assert "Connector proxy response" in response_call.args[0]
-        assert response_call.args[2] == "POST"
-        assert response_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-        assert response_call.args[4] == 200
-        assert response_call.args[5] == '{\n  "Content-Type": "application/json"\n}'
-        assert '\\"we_did_it\\": true' in response_call.args[6]
+            response_call = mock_logger_info.call_args_list[1]
+            assert "Connector proxy response" in response_call.args[0]
+            assert response_call.args[2] == "POST"
+            assert response_call.args[3] == "http://localhost:7004/v1/do/my_operation"
+            assert response_call.args[4] == 200
+            assert response_call.args[5] == '{\n  "Content-Type": "application/json"\n}'
+            assert '\\"we_did_it\\": true' in response_call.args[6]
 
     def test_call_connector_logs_request_and_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
