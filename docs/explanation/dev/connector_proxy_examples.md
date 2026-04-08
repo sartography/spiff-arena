@@ -194,7 +194,7 @@ When an error occurs:
   "command_response_version": 2,
   "error": {
     "message": "Connection timeout",
-    "code": "TIMEOUT_ERROR"
+    "error_code": "TIMEOUT_ERROR"
   },
   "spiff__logs": [
     "Attempted connection to https://api.example.com/items",
@@ -247,7 +247,9 @@ When SpiffWorkflow invokes a service task, it automatically includes a `spiff__c
 
 ### Callback Request Format
 
-When your service is ready to complete the task, send a **PUT** request to the `spiff__callback_url`:
+When your service is ready to complete the task, send a **PUT** request to the `spiff__callback_url` using the connector proxy response envelope format:
+
+> **Important:** The `command_response.body` field is **required** in all callback requests. Omitting this structure will result in an `invalid_callback_body` error from SpiffWorkflow.
 
 ```text
 PUT <spiff__callback_url>
@@ -268,5 +270,7 @@ Content-Type: application/json
   "spiff__logs": []
 }
 ```
+
+The `command_response.body` field contains your actual result data. SpiffWorkflow extracts this value and stores it in the service task's configured result variable.
 
 See [Long-Running Service Tasks](../../how_to_guides/building_diagrams/long_running_service_tasks) for complete documentation.
