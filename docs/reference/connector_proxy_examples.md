@@ -2,6 +2,11 @@
 
 This page provides sample requests and responses for connector proxy implementations.
 
+```{contents}
+:local:
+:depth: 2
+```
+
 ## Request Examples
 
 ### List Available Commands
