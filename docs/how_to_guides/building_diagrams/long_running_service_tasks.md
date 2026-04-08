@@ -19,20 +19,11 @@ The process will pause at that task until the external service calls back with t
 To complete the task, the external service should call the `spiff__callback_url` using a **PUT** request with a JSON body containing the result data.
 The result data will be stored in the service task's configured result variable, and the process will continue.
 
-### Example Callback Request
+### Callback Request Structure
 
-```text
-PUT <spiff__callback_url>
-Content-Type: application/json
+If you are using a connector proxy, the callback should use the standard connector proxy response envelope structure.
 
-{
-  "order_id": "12345",
-  "status": "complete",
-  "details": "Processing finished successfully"
-}
-```
-
-If the response includes a `body` key, SpiffWorkflow will use the value of `body` as the result data rather than the entire payload.
+For complete examples of the proper request and response formats, see the [Connector Proxy API Examples](../../reference/connector_proxy_examples) reference page.
 
 ## Monitoring Waiting Tasks
 
