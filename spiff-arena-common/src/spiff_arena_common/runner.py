@@ -203,7 +203,7 @@ def next_task(workflow, state):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name, return_iters=False):
+def _advance_workflow(workflow, task, strategy_name):
     iters = 0
 
     # TODO: make maxIters part of strategy, add cycle detection
@@ -277,8 +277,6 @@ def _advance_workflow(workflow, task, strategy_name, return_iters=False):
                     task.run()
                     task.data.update(expected["data"])
 
-    if return_iters:
-        return build_response(workflow, None, extra={"iterations": iters})
     return build_response(workflow, None)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params):
@@ -296,7 +294,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params):
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name, return_iters=True)
+        return _advance_workflow(workflow, task, strategy_name)
     except Exception as e:
         try:
             return build_response(workflow, e)
@@ -328,7 +326,7 @@ def get_state(workflow):
     state.pop("subprocess_specs")
     return state
 
-def build_response(workflow, e, extra=None):
+def build_response(workflow, e):
     completed = workflow.completed
 
     if e is None:
@@ -355,9 +353,6 @@ def build_response(workflow, e, extra=None):
         response["lazy_loads"] = lazy_loads(workflow)
 
     response["state"] = get_state(workflow)
-
-    if extra:
-        response.update(extra)
 
     return json.dumps(response)
 
