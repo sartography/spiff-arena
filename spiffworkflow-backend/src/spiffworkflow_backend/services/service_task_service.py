@@ -62,6 +62,10 @@ def connector_proxy_api_key_headers() -> dict:
     return {}
 
 
+def connector_proxy_http_logging_enabled() -> bool:
+    return bool(current_app.config.get("SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", False))
+
+
 def _format_log_value(value: Any) -> str:
     if value in (None, ""):
         return "<empty>"
@@ -77,6 +81,8 @@ def _format_log_value(value: Any) -> str:
 
 
 def _log_connector_proxy_request(operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any) -> None:
+    if not connector_proxy_http_logging_enabled():
+        return
     logger.info(
         "Connector proxy request\n"
         "Operator: %s\n"
@@ -95,6 +101,8 @@ def _log_connector_proxy_request(operator_identifier: str, method: str, url: str
 def _log_connector_proxy_response(
     operator_identifier: str, method: str, url: str, status_code: int, headers: Any, body: str
 ) -> None:
+    if not connector_proxy_http_logging_enabled():
+        return
     logger.info(
         "Connector proxy response\n"
         "Operator: %s\n"
@@ -115,6 +123,8 @@ def _log_connector_proxy_response(
 def _log_connector_proxy_exception(
     operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any, exception: Exception
 ) -> None:
+    if not connector_proxy_http_logging_enabled():
+        return
     logger.error(
         "Connector proxy request failed\n"
         "Operator: %s\n"
