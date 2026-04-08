@@ -223,7 +223,7 @@ When a service task initiates a long-running operation:
 }
 ```
 
-> **Note:** When a connector proxy returns a `202 (Accepted)` response, SpiffWorkflow will leave the service task in a **WAITING** state. See [Long-Running Service Tasks](../how_to_guides/building_diagrams/long_running_service_tasks) for more details.
+> **Note:** When a connector proxy returns a `202 (Accepted)` response, SpiffWorkflow will leave the service task in a **WAITING** state. See [Long-Running Service Tasks](../../how_to_guides/building_diagrams/long_running_service_tasks) for more details.
 
 ---
 
@@ -270,4 +270,4 @@ Content-Type: application/json
 }
 ```
 
-See [Long-Running Service Tasks](../how_to_guides/building_diagrams/long_running_service_tasks) for complete documentation.
+See [Long-Running Service Tasks](../../how_to_guides/building_diagrams/long_running_service_tasks) for complete documentation.

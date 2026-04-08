@@ -149,7 +149,7 @@ For detailed examples of request payloads and response structures, including:
 - Error response examples
 - Long-running task callbacks
 
-See the [Connector Proxy API Examples](../../reference/connector_proxy_examples) reference page.
+See the [Connector Proxy API Examples](connector_proxy_examples) page.
 
 ---
 
