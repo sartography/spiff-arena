@@ -77,12 +77,7 @@ def _log_connector_proxy_request(operator_identifier: str, method: str, url: str
     if not connector_proxy_http_logging_enabled():
         return
     logger.info(
-        "Connector proxy request\n"
-        "Operator: %s\n"
-        "Method: %s\n"
-        "URL: %s\n"
-        "Headers:\n%s\n"
-        "Body:\n%s",
+        "Connector proxy request\nOperator: %s\nMethod: %s\nURL: %s\nHeaders:\n%s\nBody:\n%s",
         operator_identifier,
         method,
         url,
@@ -97,13 +92,7 @@ def _log_connector_proxy_response(
     if not connector_proxy_http_logging_enabled():
         return
     logger.info(
-        "Connector proxy response\n"
-        "Operator: %s\n"
-        "Method: %s\n"
-        "URL: %s\n"
-        "Status: %s\n"
-        "Headers:\n%s\n"
-        "Body:\n%s",
+        "Connector proxy response\nOperator: %s\nMethod: %s\nURL: %s\nStatus: %s\nHeaders:\n%s\nBody:\n%s",
         operator_identifier,
         method,
         url,
@@ -119,13 +108,7 @@ def _log_connector_proxy_exception(
     if not connector_proxy_http_logging_enabled():
         return
     logger.error(
-        "Connector proxy request failed\n"
-        "Operator: %s\n"
-        "Method: %s\n"
-        "URL: %s\n"
-        "Headers:\n%s\n"
-        "Body:\n%s\n"
-        "Exception: %s: %s",
+        "Connector proxy request failed\nOperator: %s\nMethod: %s\nURL: %s\nHeaders:\n%s\nBody:\n%s\nException: %s: %s",
         operator_identifier,
         method,
         url,

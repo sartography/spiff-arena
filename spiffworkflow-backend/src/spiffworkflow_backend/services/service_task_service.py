@@ -31,6 +31,7 @@ class ServiceTaskCallbackResult:
     processor: Any
     next_task: SpiffTask | None
 
+
 class ServiceTaskService:
     @classmethod
     def complete_waiting_callback(

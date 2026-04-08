@@ -17,10 +17,10 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
 from spiffworkflow_backend.services.service_task_delegate import connector_proxy_api_key_headers
+from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -281,9 +281,7 @@ class TestServiceTaskDelegate(BaseTest):
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
             with patch("requests.post", side_effect=Exception("mocked error")):
-                with patch.object(service_task_logger, "info"), patch.object(
-                    service_task_logger, "error"
-                ) as mock_logger_error:
+                with patch.object(service_task_logger, "info"), patch.object(service_task_logger, "error") as mock_logger_error:
                     with pytest.raises(UncaughtServiceTaskError):
                         ServiceTaskDelegate.call_connector(
                             "my_operation",
@@ -445,7 +443,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_id="test_group/service_task",
             process_model_source_directory="service_task",
         )
-        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=with_super_admin_user)
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
         processor = ProcessInstanceProcessor(process_instance)
 
         with patch("requests.post") as mock_post:
