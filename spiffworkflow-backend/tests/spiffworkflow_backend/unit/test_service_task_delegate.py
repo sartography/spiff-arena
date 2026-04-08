@@ -283,7 +283,10 @@ class TestServiceTaskDelegate(BaseTest):
 
             with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
                 with patch("requests.post", side_effect=Exception("mocked error")):
-                    with patch.object(service_task_logger, "info"), patch.object(service_task_logger, "error") as mock_logger_error:
+                    with (
+                        patch.object(service_task_logger, "info"),
+                        patch.object(service_task_logger, "error") as mock_logger_error,
+                    ):
                         with pytest.raises(UncaughtServiceTaskError):
                             ServiceTaskDelegate.call_connector(
                                 "my_operation",
