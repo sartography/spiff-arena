@@ -209,6 +209,11 @@ def _advance_workflow(workflow, task, strategy_name):
     # TODO: make maxIters part of strategy, add cycle detection
     while task and iters < 5000:
         iters = iters + 1
+
+        # Report progress every 50 iterations for UI feedback
+        if iters % 50 == 0:
+            print(f"[progress] iteration: {iters}", flush=True)
+
         if task.state == TaskState.STARTED:
             task.complete()
         else:
@@ -272,8 +277,7 @@ def _advance_workflow(workflow, task, strategy_name):
                     task.run()
                     task.data.update(expected["data"])
 
-    step = build_response(workflow, None)
-    return step
+    return build_response(workflow, None)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params):
     workflow = hydrate_workflow(specs, state)
