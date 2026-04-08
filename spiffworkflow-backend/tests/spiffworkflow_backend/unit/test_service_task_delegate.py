@@ -6,13 +6,16 @@ from unittest.mock import patch
 import pytest
 from flask.app import Flask
 from requests import Response
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_connector_command.command_interface import CommandResponseDict
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 from sqlalchemy import and_
 
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -434,6 +437,39 @@ class TestServiceTaskDelegate(BaseTest):
                 ServiceTaskService.authentication_list()
                 _, call_kwargs = mock_safe_requests.get.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
+
+    def test_complete_waiting_callback_completes_process(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service_task",
+            process_model_source_directory="service_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=with_super_admin_user)
+        processor = ProcessInstanceProcessor(process_instance)
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 202
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps({})
+            processor.do_engine_steps(save=True)
+
+        assert process_instance.status == "waiting"
+        call_kwargs = mock_post.call_args.kwargs
+        task_guid = call_kwargs.get("json", {})["spiff__task_id"]
+
+        response_item = ServiceTaskService.complete_waiting_callback(
+            process_instance_id=process_instance.id,
+            task_guid=task_guid,
+            content={"do_not_fail": True},
+            user=with_super_admin_user,
+        )
+
+        assert response_item.next_task is not None
+        assert TaskState.get_name(response_item.next_task.state) == "COMPLETED"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text

@@ -1,6 +1,8 @@
 import copy
 import json
 import logging
+import uuid
+from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import Any
 
@@ -22,6 +24,7 @@ from spiffworkflow_connector_command.command_interface import CommandErrorDict
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -47,6 +50,13 @@ class ServiceTaskErrorDict(CommandErrorDict):
     operator_identifier: str
     status_code: int
     command_response_body: Any
+
+
+@dataclass
+class ServiceTaskCallbackResult:
+    process_instance: Any
+    processor: Any
+    next_task: SpiffTask | None
 
 
 def connector_proxy_url() -> Any:
@@ -407,6 +417,109 @@ class ServiceTaskDelegate:
 
 
 class ServiceTaskService:
+    @classmethod
+    def complete_waiting_callback(
+        cls,
+        process_instance_id: int,
+        task_guid: str,
+        content: dict[str, Any] | None,
+        user: Any,
+        execution_mode: str | None = None,
+    ) -> ServiceTaskCallbackResult:
+        from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+            queue_process_instance_if_appropriate,
+        )
+        from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
+        from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
+        from spiffworkflow_backend.models.db import db
+        from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+        from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+        from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+        from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        if process_instance is None:
+            raise ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance cannot be found: {process_instance_id}",
+                status_code=400,
+            )
+
+        error = None
+        with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
+            with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+                if ProcessInstanceMigrator.run(process_instance):
+                    db.session.refresh(process_instance)
+
+                processor = ProcessInstanceProcessor(
+                    process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+                )
+                spiff_task = cls._get_spiff_task_from_processor(task_guid, processor)
+
+                if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
+                    queue_process_instance_if_appropriate(process_instance, execution_mode)
+
+                    callback_content = content or {}
+                    cls._check_for_callback_errors(process_instance, spiff_task, callback_content)
+
+                    result_variable = spiff_task.task_spec.result_variable
+                    callback_result = callback_content
+                    if "body" in callback_result:
+                        callback_result = callback_result["body"]
+                    if result_variable:
+                        spiff_task.data[result_variable] = callback_result
+
+                    processor.complete_task(spiff_task, user)
+
+                    execution_strategy_name = None
+                    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                        execution_strategy_name = "greedy"
+                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                else:
+                    error = ApiError(
+                        error_code="not_waiting_for_callback",
+                        message="This process instance is not waiting for a callback.",
+                        status_code=400,
+                    )
+            if error:
+                raise error
+            return ServiceTaskCallbackResult(
+                process_instance=process_instance,
+                processor=processor,
+                next_task=processor.next_task(),
+            )
+
+    @staticmethod
+    def _check_for_callback_errors(process_instance: Any, spiff_task: SpiffTask, content: dict[str, Any]) -> None:
+        from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+
+        try:
+            ServiceTaskDelegate.check_for_errors(
+                spiff_task=spiff_task,
+                parsed_response=content,
+                status_code=200,
+                response_text=json.dumps(content),
+                operator_identifier=spiff_task.task_spec.operation_name,
+            )
+        except Exception as e:
+            wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
+            wte.add_note(str(e))
+            ErrorHandlingService.handle_error(process_instance, wte)
+            raise wte from e
+
+    @staticmethod
+    def _get_spiff_task_from_processor(task_guid: str, processor: Any) -> SpiffTask:
+        task_uuid = uuid.UUID(task_guid)
+        spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
+
+        if spiff_task is None:
+            raise ApiError(
+                error_code="empty_task",
+                message="Processor failed to obtain task.",
+                status_code=500,
+            )
+        return spiff_task
+
     @staticmethod
     def available_connectors() -> Any:
         """Returns a list of available connectors."""
