@@ -53,6 +53,7 @@ from spiffworkflow_backend.exceptions.error import RefreshTokenStorageError
 from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.exceptions.error import TokenInvalidError
 from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
+from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
@@ -360,7 +361,7 @@ class AuthenticationService:
 
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
-            redirect_url = f"{self.get_backend_url()}{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/logout_return"
+            redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")
         request_url = (
             self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
             + f"?post_logout_redirect_uri={redirect_url}&"
