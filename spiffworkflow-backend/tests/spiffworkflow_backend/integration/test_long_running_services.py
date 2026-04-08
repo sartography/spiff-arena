@@ -104,7 +104,14 @@ class TestLongRunningService(BaseTest):
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
 
         # Execute the callback url to complete the process
-        content = {"do_not_fail": True}
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
         response = client.put(
             callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
         )
@@ -171,7 +178,14 @@ class TestLongRunningService(BaseTest):
 
         # Execute the callback WITHOUT "do_not_fail" - the script task after the service task
         # will raise a KeyError, which should put the process in an error state.
-        content = {"some_other_key": True}
+        content = {
+            "command_response": {
+                "body": {"some_other_key": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
         response = client.put(
             callback_url,
             headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
@@ -277,7 +291,14 @@ class TestLongRunningService(BaseTest):
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
         # Execute the callback, which should fail with a 400, because it received a cancel signal event, and moved on.
-        content = {"do_not_fail": True}
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
         response = client.put(
             callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
         )
@@ -315,7 +336,14 @@ class TestLongRunningService(BaseTest):
             callback_url = json_data["spiff__callback_url"]
 
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
-        content = {"do_not_fail": True}
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
 
         # Execute the callback, as a different user
         user = self.find_or_create_user("joe")

@@ -68,9 +68,7 @@ class ServiceTaskService:
                     cls._check_for_callback_errors(process_instance, spiff_task, callback_content)
 
                     result_variable = spiff_task.task_spec.result_variable
-                    callback_result = callback_content
-                    if "body" in callback_result:
-                        callback_result = callback_result["body"]
+                    callback_result = cls._get_callback_body(callback_content)
                     if result_variable:
                         spiff_task.data[result_variable] = callback_result
 
@@ -109,6 +107,25 @@ class ServiceTaskService:
             wte.add_note(str(e))
             ErrorHandlingService.handle_error(process_instance, wte)
             raise wte from e
+
+    @staticmethod
+    def _get_callback_body(content: dict[str, Any]) -> Any:
+        command_response = content.get("command_response")
+        if not isinstance(command_response, dict) or "body" not in command_response:
+            raise ApiError(
+                error_code="invalid_callback_body",
+                message="Service task callbacks must provide a command_response.body value.",
+                status_code=400,
+            )
+
+        body = command_response["body"]
+        mimetype = command_response.get("mimetype")
+        if isinstance(body, str) and mimetype == "application/json":
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError:
+                return body
+        return body
 
     @staticmethod
     def _get_spiff_task_from_processor(task_guid: str, processor: Any) -> SpiffTask:

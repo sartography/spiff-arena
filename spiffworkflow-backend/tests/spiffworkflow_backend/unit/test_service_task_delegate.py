@@ -461,7 +461,14 @@ class TestServiceTaskDelegate(BaseTest):
         response_item = ServiceTaskService.complete_waiting_callback(
             process_instance_id=process_instance.id,
             task_guid=task_guid,
-            content={"do_not_fail": True},
+            content={
+                "command_response": {
+                    "body": {"do_not_fail": True},
+                    "mimetype": "application/json",
+                },
+                "command_response_version": 2,
+                "error": None,
+            },
             user=with_super_admin_user,
         )
 
