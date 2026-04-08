@@ -62,6 +62,77 @@ def connector_proxy_api_key_headers() -> dict:
     return {}
 
 
+def _format_log_value(value: Any) -> str:
+    if value in (None, ""):
+        return "<empty>"
+
+    if isinstance(value, str):
+        try:
+            parsed_value = json.loads(value)
+        except (TypeError, ValueError):
+            return value
+        return json.dumps(parsed_value, indent=2, sort_keys=True, default=str)
+
+    return json.dumps(value, indent=2, sort_keys=True, default=str)
+
+
+def _log_connector_proxy_request(operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any) -> None:
+    logger.info(
+        "Connector proxy request\n"
+        "Operator: %s\n"
+        "Method: %s\n"
+        "URL: %s\n"
+        "Headers:\n%s\n"
+        "Body:\n%s",
+        operator_identifier,
+        method,
+        url,
+        _format_log_value(headers),
+        _format_log_value(body),
+    )
+
+
+def _log_connector_proxy_response(
+    operator_identifier: str, method: str, url: str, status_code: int, headers: Any, body: str
+) -> None:
+    logger.info(
+        "Connector proxy response\n"
+        "Operator: %s\n"
+        "Method: %s\n"
+        "URL: %s\n"
+        "Status: %s\n"
+        "Headers:\n%s\n"
+        "Body:\n%s",
+        operator_identifier,
+        method,
+        url,
+        status_code,
+        _format_log_value(dict(headers) if headers is not None else headers),
+        _format_log_value(body),
+    )
+
+
+def _log_connector_proxy_exception(
+    operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any, exception: Exception
+) -> None:
+    logger.error(
+        "Connector proxy request failed\n"
+        "Operator: %s\n"
+        "Method: %s\n"
+        "URL: %s\n"
+        "Headers:\n%s\n"
+        "Body:\n%s\n"
+        "Exception: %s: %s",
+        operator_identifier,
+        method,
+        url,
+        _format_log_value(headers),
+        _format_log_value(body),
+        exception.__class__.__name__,
+        exception,
+    )
+
+
 class CustomServiceTask(ServiceTask):  # type: ignore
     def _execute(self, spiff_task: SpiffTask) -> bool | None:
         def evaluate(param: dict) -> dict:
@@ -226,6 +297,7 @@ class ServiceTaskDelegate:
     ) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
+        request_method = "POST"
         current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
         task_data = spiff_task.data
         with sentry_sdk.start_span(op="connector_by_name", name=operator_identifier):
@@ -241,6 +313,8 @@ class ServiceTaskDelegate:
                 params = DefaultRegistry().convert(
                     params
                 )  # Avoid serialization errors by using the same converter as the core lib.
+                request_headers = connector_proxy_api_key_headers()
+                _log_connector_proxy_request(operator_identifier, request_method, call_url, request_headers, params)
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}
@@ -252,13 +326,24 @@ class ServiceTaskDelegate:
                         proxied_response = requests.post(
                             call_url,
                             json=params,
-                            headers=connector_proxy_api_key_headers(),
+                            headers=request_headers,
                             timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
                         )
 
                     status_code = proxied_response.status_code
                     response_text = proxied_response.text
+                    _log_connector_proxy_response(
+                        operator_identifier,
+                        request_method,
+                        call_url,
+                        status_code,
+                        proxied_response.headers,
+                        response_text,
+                    )
                 except Exception as exception:
+                    _log_connector_proxy_exception(
+                        operator_identifier, request_method, call_url, request_headers, params, exception
+                    )
                     # in case proxied_response.text fails we do not want to lose the original status code
                     status_code = status_code or 500
                     parsed_response = {
