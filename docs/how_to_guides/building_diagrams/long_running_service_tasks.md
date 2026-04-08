@@ -23,7 +23,7 @@ The result data will be stored in the service task's configured result variable,
 
 If you are using a connector proxy, the callback should use the standard connector proxy response envelope structure.
 
-For complete examples of the proper request and response formats, see the [Connector Proxy API Examples](../../reference/connector_proxy_examples) reference page.
+For complete examples of the proper request and response formats, see the [Connector Proxy API Examples](callback-urls-long-running-tasks) reference page.
 
 ## Monitoring Waiting Tasks
 
