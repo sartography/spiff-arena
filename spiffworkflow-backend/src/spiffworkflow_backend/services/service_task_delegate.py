@@ -224,9 +224,10 @@ class ServiceTaskDelegate:
             if "error" in parsed_response:
                 error_response = parsed_response["error"] or ""
                 if isinstance(error_response, list | dict):
-                    error_response = json.dumps(parsed_response["error"])
-                elif error_response is not None:
-                    error_message += str(error_response)
+                    error_response = json.dumps(error_response)
+                else:
+                    error_response = str(error_response) if error_response is not None else ""
+                error_message += error_response
             if not error_message:
                 error_message = response_text
             error_message += " A critical component (The connector proxy) is not responding correctly."

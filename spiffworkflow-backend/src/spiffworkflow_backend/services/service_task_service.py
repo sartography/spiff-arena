@@ -17,7 +17,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -105,7 +104,6 @@ class ServiceTaskService:
         except Exception as e:
             wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
             wte.add_note(str(e))
-            ErrorHandlingService.handle_error(process_instance, wte)
             raise wte from e
 
     @staticmethod
