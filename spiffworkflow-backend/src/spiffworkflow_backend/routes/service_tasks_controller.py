@@ -30,9 +30,7 @@ def authentication_list() -> flask.wrappers.Response:
         "results": available_authentications,
         "resultsV2": available_v2_authentications,
         "connector_proxy_base_url": current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"],
-        "redirect_url": build_public_api_v1_url(
-            current_app.config["SPIFFWORKFLOW_BACKEND_URL"], "authentication_callback"
-        ),
+        "redirect_url": build_public_api_v1_url(current_app.config["SPIFFWORKFLOW_BACKEND_URL"], "authentication_callback"),
     }
 
     return make_response(jsonify(response_json), 200)

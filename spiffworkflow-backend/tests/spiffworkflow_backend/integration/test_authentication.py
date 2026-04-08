@@ -10,6 +10,7 @@ import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from starlette.testclient import TestClient
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -58,7 +59,8 @@ class TestAuthentication(BaseTest):
         mocker: MockerFixture,
     ) -> None:
         remote_app = MagicMock()
-        remote_app.authorize.return_value = "ok"
+        redirect_response = WerkzeugResponse(status=302)
+        remote_app.authorize.return_value = redirect_response
 
         with (
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
@@ -76,7 +78,7 @@ class TestAuthentication(BaseTest):
                 )
                 response = authentication_begin("example", "oauth")
 
-        assert response == "ok"
+        assert response is redirect_response
         remote_app.authorize.assert_called_once_with(
             callback="https://backend.example.com/api/v1.0/authentication_callback/example/oauth",
             _external=True,

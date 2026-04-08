@@ -42,9 +42,9 @@ REPLACEMENTS: dict[Path, list[tuple[str, str]]] = {
         ),
         (
             '    api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]\n'
-            '    callback = f"{current_app.config[\'SPIFFWORKFLOW_BACKEND_URL\']}'
+            "    callback = f\"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}"
             '{api_path_prefix}/authentication_callback/{service}/oauth"\n',
-            '    callback = build_public_api_v1_url(\n'
+            "    callback = build_public_api_v1_url(\n"
             '        current_app.config["SPIFFWORKFLOW_BACKEND_URL"], f"authentication_callback/{service}/oauth"\n'
             "    )\n",
         ),
@@ -57,7 +57,7 @@ REPLACEMENTS: dict[Path, list[tuple[str, str]]] = {
         ),
         (
             '            redirect_url = f"{self.get_backend_url()}'
-            '{current_app.config[\'SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX\']}/logout_return"\n',
+            "{current_app.config['SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX']}/logout_return\"\n",
             '            redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")\n',
         ),
     ],
@@ -70,7 +70,7 @@ REPLACEMENTS: dict[Path, list[tuple[str, str]]] = {
         (
             '                api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]\n'
             '                params["spiff__callback_url"] = (\n'
-            '                    f"{current_app.config[\'SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND\']}'
+            "                    f\"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}"
             '{api_path_prefix}/tasks/{process_instance_id}/{spiff_task.id}/callback"\n'
             "                )\n",
             '                params["spiff__callback_url"] = build_public_api_v1_url(\n'
