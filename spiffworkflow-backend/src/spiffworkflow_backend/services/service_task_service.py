@@ -175,10 +175,22 @@ class ServiceTaskDelegate:
         response_text: str,
         operator_identifier: str,
     ) -> None:
-        # v2 support
+        # v2 support: check for explicit error dict from connector
         base_error = None
         if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
+        # v2 support: check http_status inside command_response (connector proxy returns HTTP 200 but upstream failed)
+        elif (
+            "command_response_version" in parsed_response
+            and parsed_response.get("command_response_version", 0) > 1
+            and isinstance(parsed_response.get("command_response"), dict)
+            and parsed_response["command_response"].get("http_status", 0) >= 300
+        ):
+            upstream_status = parsed_response["command_response"]["http_status"]
+            base_error = {
+                "error_code": f"ServiceTaskHttpError{upstream_status}",
+                "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
+            }
         # v1 support or something terrible happened with a v2 connector
         elif status_code >= 300:
             # this can happen for both v1 and v2 connector responses
@@ -188,11 +200,11 @@ class ServiceTaskDelegate:
                 error_response = parsed_response["error"] or ""
                 if isinstance(error_response, list | dict):
                     error_response = json.dumps(parsed_response["error"])
-
-                error_message += error_response
-            else:
+                elif error_response is not None:
+                    error_message += str(error_response)
+            if not error_message:
                 error_message = response_text
-            error_message += "A critical component (The connector proxy) is not responding correctly."
+            error_message += " A critical component (The connector proxy) is not responding correctly."
             base_error = {
                 "error_code": "ServiceTaskOperatorReturnedBadStatusError",
                 "message": error_message,
