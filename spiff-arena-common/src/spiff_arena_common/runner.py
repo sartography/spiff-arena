@@ -203,12 +203,17 @@ def next_task(workflow, state):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name):
+def _advance_workflow(workflow, task, strategy_name, return_iters=False):
     iters = 0
 
     # TODO: make maxIters part of strategy, add cycle detection
     while task and iters < 5000:
         iters = iters + 1
+
+        # Report progress every 50 iterations for UI feedback
+        if iters % 50 == 0:
+            print(f"[progress] iteration: {iters}", flush=True)
+
         if task.state == TaskState.STARTED:
             task.complete()
         else:
@@ -272,8 +277,9 @@ def _advance_workflow(workflow, task, strategy_name):
                     task.run()
                     task.data.update(expected["data"])
 
-    step = build_response(workflow, None)
-    return step
+    if return_iters:
+        return build_response(workflow, None, extra={"iterations": iters})
+    return build_response(workflow, None)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params):
     workflow = hydrate_workflow(specs, state)
@@ -290,7 +296,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params):
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name)
+        return _advance_workflow(workflow, task, strategy_name, return_iters=True)
     except Exception as e:
         try:
             return build_response(workflow, e)
@@ -322,7 +328,7 @@ def get_state(workflow):
     state.pop("subprocess_specs")
     return state
 
-def build_response(workflow, e):
+def build_response(workflow, e, extra=None):
     completed = workflow.completed
 
     if e is None:
@@ -349,6 +355,9 @@ def build_response(workflow, e):
         response["lazy_loads"] = lazy_loads(workflow)
 
     response["state"] = get_state(workflow)
+
+    if extra:
+        response.update(extra)
 
     return json.dumps(response)
 
