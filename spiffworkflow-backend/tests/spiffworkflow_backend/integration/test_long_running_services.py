@@ -173,7 +173,9 @@ class TestLongRunningService(BaseTest):
         # will raise a KeyError, which should put the process in an error state.
         content = {"some_other_key": True}
         response = client.put(
-            callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
+            callback_url,
+            headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
+            json=content,
         )
         response_dict = response.json()
         assert response.status_code == 400
@@ -182,6 +184,57 @@ class TestLongRunningService(BaseTest):
         assert process_instance.status == "error"
 
         # The process instance is in a state of error, which should mean the task is no longer waiting.
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
+
+    def test__202_connector_error_response(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """When a callback provides connector-style error data, it should follow normal service-task error handling."""
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+            call_kwargs = mock_post.call_args.kwargs
+            json_data = call_kwargs.get("json", {})
+            callback_url = json_data["spiff__callback_url"]
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
+        content = {
+            "error": {
+                "error_code": "OurTestError",
+                "message": "We errored",
+            },
+            "command_response": {
+                "body": "{}",
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+        }
+        response = client.put(
+            callback_url, headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}), json=content
+        )
+        response_dict = response.json()
+        assert response.status_code == 400
+        assert response_dict["title"] == "unexpected_workflow_exception"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "error"
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
     def test__202_canceled_response(

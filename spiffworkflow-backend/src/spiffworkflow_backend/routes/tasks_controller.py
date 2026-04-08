@@ -77,6 +77,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -585,6 +586,20 @@ def _complete_service_task_that_is_waiting_for_callback(
                 content = request.json
                 if content is None:
                     content = {}
+                if isinstance(content, dict):
+                    try:
+                        ServiceTaskDelegate.check_for_errors(
+                            spiff_task=spiff_task,
+                            parsed_response=content,
+                            status_code=200,
+                            response_text=json.dumps(content),
+                            operator_identifier=spiff_task.task_spec.operation_name,
+                        )
+                    except Exception as e:
+                        wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
+                        wte.add_note(str(e))
+                        ErrorHandlingService.handle_error(process_instance, wte)
+                        raise wte from e
                 if "body" in content:
                     content = content["body"]
                 if result_variable:
