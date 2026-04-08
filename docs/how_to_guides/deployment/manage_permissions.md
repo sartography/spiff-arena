@@ -68,9 +68,9 @@ To allow reading and DISALLOW updating, it would look like this:
 
 ## Default Permissions and User Groups\*\*
 
-### The "Everyone" Group
+### The "everybody" Group
 
-By default, **every user** who logs into the system is automatically part of the **"everyone"** group.
+By default, **every user** who logs into the system is automatically part of the **"everybody"** group.
 
 - Any **permissions assigned to this group apply to all users** unless explicitly overridden by other settings.
 - The default group can be changed using the **environment variable**:
@@ -80,7 +80,7 @@ By default, **every user** who logs into the system is automatically part of the
   ```
 
   **Example Usage:**  
-  If you want all new users to be assigned to a **custom group** instead of "everyone," set:
+  If you want all new users to be assigned to a **custom group** instead of "everybody," set:
 
   ```sh
   export SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP="custom-default-group"

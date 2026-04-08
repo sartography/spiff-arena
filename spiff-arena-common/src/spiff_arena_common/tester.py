@@ -33,15 +33,29 @@ class BpmnTestCase(unittest.TestCase):
 
     def runTest(self):
         iters = 0
+        r = None
         while iters < 100:
             iters = iters + 1
             r = json.loads(advance_workflow(self.specs, self.state, None, "unittest", None))
             self.state = r["state"]
+
+            # Check for errors after each advance
+            if r.get("status") != "ok":
+                error_msg = f"Test file: {self.file}\n"
+                error_msg += f"Error during workflow execution (iteration {iters}):\n"
+                error_msg += f"Message: {r.get('message', 'No message')}\n"
+                if r.get("error_tasks"):
+                    error_tasks = r.get("error_tasks")
+                    if error_tasks:
+                        error_msg += f"\nFailed task: {error_tasks[0].get('task_spec', {}).get('bpmn_name', 'unknown')}\n"
+                        error_msg += f"Task ID: {error_tasks[0].get('task_spec', {}).get('bpmn_id', 'unknown')}\n"
+                self.fail(error_msg)
+
             lazy_loads = r.get("lazy_loads")
             if not lazy_loads:
                 break
             self.lazy_load(lazy_loads)
-        
+
         self.assertEqual(r.get("status"), "ok")
         completed = r.get("completed")
         
@@ -51,6 +65,15 @@ class BpmnTestCase(unittest.TestCase):
         else:
             self.assertIn("pending_tasks", r)
             pending = r["pending_tasks"]
+            if len(pending) == 0:
+                # This indicates a workflow logic issue (not completed but no pending tasks)
+                error_msg = f"Test file: {self.file}\n"
+                error_msg += "Expected pending tasks but found none (workflow not completed but stuck).\n"
+                response_copy = dict(r)
+                if 'state' in response_copy:
+                    del response_copy['state']  # Exclude large state object
+                error_msg += f"Response:\n{json.dumps(response_copy, indent=2)}\n"
+                self.fail(error_msg)
             self.assertGreater(len(pending), 0)
             self.assertIn("data", pending[0])
             data = pending[0]["data"]

@@ -56,9 +56,9 @@ def test_can_create_new_bpmn_dmn_json_files(page: Page):
             page.locator("#bio-properties-panel-id").fill(file_name)
         else:
             # JSON: type content into the code editor
-            editor = page.locator(".view-line").first
+            editor = page.locator(".cm-content")
             editor.click()
-            editor.type('{"test_key": "test_value"}')
+            page.keyboard.type('{"test_key": "test_value"}')
 
         # Allow state update
         page.wait_for_timeout(500)

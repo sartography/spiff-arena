@@ -54,6 +54,12 @@ class v1_do_http_connector:
         else:
             command_response = { "raw_response": raw_response }
 
+        if status >= 300:
+            error = {
+                "error_code": f"HttpError{status}",
+                "message": f"HTTP {status} error from service. Response: {raw_response}",
+            }
+
         resp.media = {
             "command_response": {
                 "body": command_response,
@@ -85,6 +91,12 @@ app = falcon.asgi.App(
 app.req_options.media_handlers.update(extra_handlers)
 app.resp_options.media_handlers.update(extra_handlers)
 
+class liveness:
+    async def on_get(self, req, resp):
+        resp.media = {"status": "ok"}
+
+
+app.add_route("/liveness", liveness())
 app.add_route("/v1/commands", v1_commands())
 
 app.add_route("/v1/do/http/DeleteRequest", v1_do_http_connector("DELETE"))

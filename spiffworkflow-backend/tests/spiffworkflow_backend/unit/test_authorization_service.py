@@ -844,7 +844,7 @@ class TestAuthorizationService(BaseTest):
             )
             assert human_task_count == 2
 
-    def test_user_can_is_not_assigned_task_if_lane_owners_in_use(
+    def test_user_is_not_auto_assigned_to_username_based_lane_owners_task_on_group_membership_change(
         self,
         app: Flask,
         client: TestClient,

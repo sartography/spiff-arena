@@ -206,14 +206,22 @@ def next_task(workflow, state):
 def _advance_workflow(workflow, task, strategy_name):
     iters = 0
 
-    # TODO: make maxIters part of strategy
-    while task and iters < 100:
+    # TODO: make maxIters part of strategy, add cycle detection
+    while task and iters < 5000:
         iters = iters + 1
+
+        # Report progress every 50 iterations for UI feedback
+        if iters % 50 == 0:
+            print(f"[progress] iteration: {iters}", flush=True)
+
         if task.state == TaskState.STARTED:
             task.complete()
         else:
             task.run()
         workflow.refresh_waiting_tasks()
+
+        if missing_lazy_load_specs(workflow):
+            break
 
         task = next_task(workflow, TaskState.READY)
         if not task:
@@ -223,23 +231,53 @@ def _advance_workflow(workflow, task, strategy_name):
         elif strategy_name == "greedy":
             if task.task_spec.__class__.__name__.startswith("Custom"):
                 break
-            if missing_lazy_load_specs(workflow):
-                break
         elif strategy_name == "unittest":
             if task.task_spec.__class__.__name__.startswith("Custom"):
-                stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
-                if not stack:
-                    break
-                expected = stack.pop()
-                if task.task_spec.name != expected["id"]:
-                    break
-                task.run()
-                task.data.update(expected["data"])
-            if missing_lazy_load_specs(workflow):
-                break
+                # Check for file-based fixture first (ed recording playback)
+                fixture_file = task.data.get("spiff_testFixture_file")
+                if fixture_file:
+                    # File-based fixture: read from disk and manage index.
+                    # Index is stored in workflow.data (shared across all tasks) to ensure
+                    # the counter stays synchronized even when tasks are created ahead of time.
+                    try:
+                        with open(fixture_file) as f:
+                            fixture = json.load(f)
+                        stack = fixture.get("pendingTaskStack", [])
 
-    step = build_response(workflow, None)
-    return step
+                        if "spiff_testFixture_index" not in workflow.data:
+                            index = len(stack) - 1
+                        else:
+                            index = workflow.data["spiff_testFixture_index"]
+
+                        # If recording is exhausted (index < 0), let task run interactively
+                        if index < 0:
+                            break
+
+                        if index >= len(stack):
+                            break
+
+                        expected = stack[index]
+                        if task.task_spec.name != expected["id"]:
+                            break
+
+                        task.run()
+                        task.data.update(expected["data"])
+                        workflow.data["spiff_testFixture_index"] = index - 1
+                    except Exception as e:
+                        # Re-raise so the error is properly reported in the response
+                        raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+                else:
+                    # Fallback to inline fixture (process-models compatibility)
+                    stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
+                    if not stack:
+                        break
+                    expected = stack.pop()
+                    if task.task_spec.name != expected["id"]:
+                        break
+                    task.run()
+                    task.data.update(expected["data"])
+
+    return build_response(workflow, None)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params):
     workflow = hydrate_workflow(specs, state)

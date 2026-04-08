@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.11.6-slim-bookworm AS base
+FROM python:3.11-slim-bookworm AS base
 
 ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -25,8 +25,6 @@ RUN apt-get update \
   && apt-get clean -y \
   && apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 libsqlite3-0=3.40.1-2+deb12u2 \
   && rm -rf /var/lib/apt/lists/*
-
-RUN pip install poetry==1.6.1
 
 
 ######################## - SETUP

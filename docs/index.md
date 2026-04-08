@@ -1,12 +1,6 @@
 # Welcome to SpiffWorkflow's Documentation
 
-**SpiffWorkflow: Streamline Your Processes with Ease.** SpiffWorkflow is a platform designed to help you automate and manage complex workflows efficiently.
-
-**What SpiffWorkflow Does:** It provides a comprehensive suite of tools to model, execute, and monitor business processes, enabling organizations to improve productivity and transparency.
-
-**Meeting Your Needs:** Whether you're looking to automate routine tasks or manage intricate workflows--including AI and Human-in-the-loop--SpiffWorkflow offers the flexibility and scalability to meet your business needs, in an open and standards-based package.
-
-**Who Benefits from SpiffWorkflow:** Ideal for businesses of all sizes, SpiffWorkflow is perfect for process architects, IT professionals, and anyone looking to optimize their workflow management.
+SpiffWorkflow is an open source platform for modeling, executing, and monitoring business processes, with support for both human-driven and automated workflows across a wide range of use cases.
 
 ---
 

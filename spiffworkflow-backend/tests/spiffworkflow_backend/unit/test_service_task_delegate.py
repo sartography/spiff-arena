@@ -6,18 +6,22 @@ from unittest.mock import patch
 import pytest
 from flask.app import Flask
 from requests import Response
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_connector_command.command_interface import CommandResponseDict
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 from sqlalchemy import and_
 
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.service_task_delegate import connector_proxy_api_key_headers
+from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
-from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
-from spiffworkflow_backend.services.service_task_service import connector_proxy_api_key_headers
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -176,6 +180,130 @@ class TestServiceTaskDelegate(BaseTest):
                 **{"operator_identifier": "my_operation"},
             }
 
+    def test_call_connector_does_not_log_http_by_default(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        command_response: CommandResponseDict = {
+            "body": json.dumps({"we_did_it": True}),
+            "mimetype": "application/json",
+        }
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": command_response,
+            "error": None,
+            "command_response_version": 2,
+        }
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps(connector_response)
+            mock_post.return_value.headers = {"Content-Type": "application/json"}
+            with patch.object(service_task_logger, "info") as mock_logger_info:
+                ServiceTaskDelegate.call_connector(
+                    "my_operation",
+                    {"payload": {"value": {"hello": "world"}}},
+                    spiff_task,
+                    process_instance.id,
+                )
+
+        logged_messages = [call.args[0] for call in mock_logger_info.call_args_list]
+        assert all("Connector proxy request" not in message for message in logged_messages)
+        assert all("Connector proxy response" not in message for message in logged_messages)
+
+    def test_call_connector_logs_request_and_response(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", "http://localhost:7004"):
+            process_model = load_test_spec(
+                process_model_id="test_group/model_with_lanes",
+                bpmn_file_name="lanes.bpmn",
+                process_model_source_directory="model_with_lanes",
+            )
+            process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            spiff_task = processor.next_task()
+
+            command_response: CommandResponseDict = {
+                "body": json.dumps({"we_did_it": True}),
+                "mimetype": "application/json",
+            }
+            connector_response: ConnectorProxyResponseDict = {
+                "command_response": command_response,
+                "error": None,
+                "command_response_version": 2,
+            }
+
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
+                with patch("requests.post") as mock_post:
+                    mock_post.return_value.status_code = 200
+                    mock_post.return_value.ok = True
+                    mock_post.return_value.text = json.dumps(connector_response)
+                    mock_post.return_value.headers = {"Content-Type": "application/json"}
+                    with patch.object(service_task_logger, "info") as mock_logger_info:
+                        ServiceTaskDelegate.call_connector(
+                            "my_operation",
+                            {"payload": {"value": {"hello": "world"}}},
+                            spiff_task,
+                            process_instance.id,
+                        )
+
+            request_call = mock_logger_info.call_args_list[0]
+            assert "Connector proxy request" in request_call.args[0]
+            assert request_call.args[2] == "POST"
+            assert request_call.args[3] == "http://localhost:7004/v1/do/my_operation"
+            assert '"payload": {' in request_call.args[5]
+            assert '"hello": "world"' in request_call.args[5]
+
+            response_call = mock_logger_info.call_args_list[1]
+            assert "Connector proxy response" in response_call.args[0]
+            assert response_call.args[2] == "POST"
+            assert response_call.args[3] == "http://localhost:7004/v1/do/my_operation"
+            assert response_call.args[4] == 200
+            assert response_call.args[5] == '{\n  "Content-Type": "application/json"\n}'
+            assert '\\"we_did_it\\": true' in response_call.args[6]
+
+    def test_call_connector_logs_request_and_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", "http://localhost:7004"):
+            process_model = load_test_spec(
+                process_model_id="test_group/model_with_lanes",
+                bpmn_file_name="lanes.bpmn",
+                process_model_source_directory="model_with_lanes",
+            )
+            process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.do_engine_steps(save=True)
+            spiff_task = processor.next_task()
+
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
+                with patch("requests.post", side_effect=Exception("mocked error")):
+                    with (
+                        patch.object(service_task_logger, "info"),
+                        patch.object(service_task_logger, "error") as mock_logger_error,
+                    ):
+                        with pytest.raises(UncaughtServiceTaskError):
+                            ServiceTaskDelegate.call_connector(
+                                "my_operation",
+                                {"payload": {"value": {"hello": "world"}}},
+                                spiff_task,
+                                process_instance.id,
+                            )
+
+            error_call = mock_logger_error.call_args_list[0]
+            assert "Connector proxy request failed" in error_call.args[0]
+            assert error_call.args[2] == "POST"
+            assert error_call.args[3] == "http://localhost:7004/v1/do/my_operation"
+            assert '"payload": {' in error_call.args[5]
+            assert '"hello": "world"' in error_call.args[5]
+            assert error_call.args[6] == "Exception"
+            assert str(error_call.args[7]) == "mocked error"
+
     def test_can_capture_error_on_correct_multinstance_task(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/multiinstance_with_inner_error_boundary_event",
@@ -293,7 +421,7 @@ class TestServiceTaskDelegate(BaseTest):
         mock_response.text = json.dumps([{"id": "connector1"}])
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
-            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
                 mock_safe_requests.get.return_value = mock_response
                 ServiceTaskService.available_connectors()
                 _, call_kwargs = mock_safe_requests.get.call_args
@@ -307,11 +435,53 @@ class TestServiceTaskDelegate(BaseTest):
         mock_response.text = json.dumps([{"id": "auth1"}])
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
-            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
                 mock_safe_requests.get.return_value = mock_response
                 ServiceTaskService.authentication_list()
                 _, call_kwargs = mock_safe_requests.get.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
+
+    def test_complete_waiting_callback_completes_process(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service_task",
+            process_model_source_directory="service_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 202
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps({})
+            processor.do_engine_steps(save=True)
+
+        assert process_instance.status == "waiting"
+        call_kwargs = mock_post.call_args.kwargs
+        task_guid = call_kwargs.get("json", {})["spiff__task_id"]
+
+        response_item = ServiceTaskService.complete_waiting_callback(
+            process_instance_id=process_instance.id,
+            task_guid=task_guid,
+            content={
+                "command_response": {
+                    "body": {"do_not_fail": True},
+                    "mimetype": "application/json",
+                },
+                "command_response_version": 2,
+                "error": None,
+            },
+            user=with_super_admin_user,
+        )
+
+        assert response_item.next_task is not None
+        assert TaskState.get_name(response_item.next_task.state) == "COMPLETED"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text

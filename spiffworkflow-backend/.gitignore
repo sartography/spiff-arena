@@ -26,3 +26,4 @@
 /tests/spiffworkflow_backend/files
 __pycache__/
 node_modules
+/hot_spiff_env
