@@ -17,11 +17,11 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_service import logger as service_task_logger
-from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
+from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.service_task_delegate import connector_proxy_api_key_headers
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
-from spiffworkflow_backend.services.service_task_service import UncaughtServiceTaskError
-from spiffworkflow_backend.services.service_task_service import connector_proxy_api_key_headers
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -418,7 +418,7 @@ class TestServiceTaskDelegate(BaseTest):
         mock_response.text = json.dumps([{"id": "connector1"}])
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
-            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
                 mock_safe_requests.get.return_value = mock_response
                 ServiceTaskService.available_connectors()
                 _, call_kwargs = mock_safe_requests.get.call_args
@@ -432,7 +432,7 @@ class TestServiceTaskDelegate(BaseTest):
         mock_response.text = json.dumps([{"id": "auth1"}])
 
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "test-api-key"):
-            with patch("spiffworkflow_backend.services.service_task_service.safe_requests") as mock_safe_requests:
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
                 mock_safe_requests.get.return_value = mock_response
                 ServiceTaskService.authentication_list()
                 _, call_kwargs = mock_safe_requests.get.call_args
