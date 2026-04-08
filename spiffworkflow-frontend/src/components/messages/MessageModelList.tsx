@@ -34,6 +34,7 @@ type MessageModelResponse = {
     identifier: string;
     retrieval_expression: string;
   }>;
+  process_model_identifiers: string[];
 };
 
 const noOpBpmnEvent = {
@@ -84,6 +85,18 @@ export default function MessageModelList({ processGroupId, initialMessageId }: O
 
   const rows = useMemo(() => {
     return messageModels.map((messageModel) => {
+      const usedIn = (messageModel.process_model_identifiers || []).map(
+        (pmId) => (
+          <Link
+            key={pmId}
+            href={`/process-models/${modifyProcessIdentifierForPathParam(pmId)}`}
+            underline="hover"
+            sx={{ display: 'block', whiteSpace: 'nowrap' }}
+          >
+            {pmId}
+          </Link>
+        ),
+      );
       return (
         <TableRow
           key={`${messageModel.location}:${messageModel.identifier}`}
@@ -101,6 +114,7 @@ export default function MessageModelList({ processGroupId, initialMessageId }: O
             </Link>
           </TableCell>
           <TableCell>{correlationSummary(messageModel)}</TableCell>
+          <TableCell>{usedIn.length > 0 ? usedIn : null}</TableCell>
           <TableCell align="right">
             <Button onClick={() => setSelectedMessageModel(messageModel)}>
               {t('edit')}
@@ -120,6 +134,7 @@ export default function MessageModelList({ processGroupId, initialMessageId }: O
               <TableCell>{t('id')}</TableCell>
               <TableCell>{t('location')}</TableCell>
               <TableCell>{t('correlations')}</TableCell>
+              <TableCell>{t('used_in')}</TableCell>
               <TableCell align="right">{t('edit')}</TableCell>
             </TableRow>
           </TableHead>
@@ -128,7 +143,7 @@ export default function MessageModelList({ processGroupId, initialMessageId }: O
               rows
             ) : (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <Typography variant="body2">{t('no_results')}</Typography>
                 </TableCell>
               </TableRow>

@@ -58,6 +58,7 @@
   "copy_shareable_link_tooltip": "复制可共享的短链接",
   "correlation_properties": "关联属性",
   "correlations": "关联",
+  "used_in": "使用于",
   "corresponding_message_instance": "相应的消息实例",
   "create_files": "创建文件",
   "create_script_unit_test": "创建脚本单元测试",

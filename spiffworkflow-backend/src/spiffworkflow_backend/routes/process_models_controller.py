@@ -36,6 +36,7 @@ from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportNotFoundError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.process_model_test_generator_service import ProcessModelTestGeneratorService
@@ -115,6 +116,7 @@ def process_model_delete(
 
         # can't do this in the ProcessModelService due to circular imports
         SpecFileService.clear_caches_for_item(process_model_info=process_model)
+        MessageDefinitionService.remove_process_model_from_usage(process_model_identifier)
         db.session.commit()
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
@@ -330,6 +332,7 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
 
     try:
         SpecFileService.delete_file(process_model, file_name)
+        DataSetupService.refresh_single_process_model_cache(process_model_identifier)
         db.session.commit()
     except FileNotFoundError as exception:
         raise (

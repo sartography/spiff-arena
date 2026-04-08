@@ -58,6 +58,7 @@
   "copy_shareable_link_tooltip": "Kopioi jaettava linkki",
   "correlation_properties": "Korrelaatio-ominaisuudet",
   "correlations": "Korjaukset:",
+  "used_in": "Käytetty kohteessa",
   "corresponding_message_instance": "Vastaava viesti-instanssi",
   "create_files": "Luo tiedostot",
   "create_script_unit_test": "Luo skriptin yksikkötesti",

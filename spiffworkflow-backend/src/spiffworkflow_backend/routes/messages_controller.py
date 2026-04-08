@@ -164,6 +164,7 @@ def _get_message_models(messages: list[MessageModel]) -> flask.wrappers.Response
             "location": message.location,
             "schema": message.schema,
             "correlation_properties": [correlation_property_response(cp) for cp in message.correlation_properties],
+            "process_model_identifiers": sorted(message.process_model_identifiers or []),
         }
 
     return make_response(jsonify({"messages": [message_response(m) for m in messages]}), 200)

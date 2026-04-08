@@ -69,6 +69,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
         # can't do this in the ProcessModelService due to circular imports
         SpecFileService.clear_caches_for_item(process_group_id=process_group_id)
+        MessageDefinitionService.remove_process_group_from_usage(process_group_id)
         db.session.commit()
 
     except ProcessModelWithInstancesNotDeletableError as exception:

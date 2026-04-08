@@ -58,6 +58,7 @@
   "copy_shareable_link_tooltip": "Copiar enlace corto compartible",
   "correlation_properties": "Propiedades de correlación",
   "correlations": "Correlaciones:",
+  "used_in": "Usado en",
   "corresponding_message_instance": "Instancia de mensaje correspondiente",
   "create_files": "Crear Archivos",
   "create_script_unit_test": "Crear prueba unitaria de script",

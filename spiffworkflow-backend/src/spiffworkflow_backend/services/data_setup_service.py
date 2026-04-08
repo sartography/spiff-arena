@@ -73,9 +73,11 @@ class DataSetupService:
         current_app.logger.debug("DataSetupService.refresh_process_model_caches() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
+
+        usage_map = cls._build_message_usage_map(references)
         MessageDefinitionService.delete_all_message_models()
         db.session.commit()
-        MessageDefinitionService.save_all_message_models(all_message_models)
+        MessageDefinitionService.save_all_message_models(all_message_models, usage_map)
         db.session.commit()
 
         cls._update_process_model_caches_for_references(references, failing_process_models)
@@ -93,11 +95,40 @@ class DataSetupService:
             references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
             failing_process_models.extend(model_failures)
             cls._update_process_model_caches_for_references(references, failing_process_models)
+            cls._update_message_usage_for_process_model(process_model_id, references)
         except Exception as ex:
             failing_process_models.append((process_model_id, str(ex)))
 
         current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() end for {process_model_id}")
         return failing_process_models
+
+    @classmethod
+    def _build_message_usage_map(cls, references: list) -> dict[str, list[str]]:
+        """Build a map of message_name -> sorted list of process_model_ids that declare the message."""
+        usage: dict[str, set[str]] = {}
+        for ref in references:
+            for msg_name in ref.messages:
+                usage.setdefault(msg_name, set()).add(ref.relative_location)
+        return {k: sorted(v) for k, v in usage.items()}
+
+    @classmethod
+    def _update_message_usage_for_process_model(cls, process_model_id: str, references: list) -> None:
+        """After a single-model refresh, update process_model_identifiers on affected MessageModels."""
+        new_message_names = {msg_name for ref in references for msg_name in ref.messages}
+
+        # Remove this process model from all messages it's no longer in
+        MessageDefinitionService.remove_process_model_from_usage(process_model_id)
+
+        # Add it to messages it now declares
+        for msg_name in new_message_names:
+            message = MessageModel.query.filter_by(identifier=msg_name).first()
+            if message is not None:
+                ids = list(message.process_model_identifiers or [])
+                if process_model_id not in ids:
+                    ids.append(process_model_id)
+                    message.process_model_identifiers = sorted(ids)
+                    db.session.add(message)
+        db.session.commit()
 
     @classmethod
     def _collect_data_store_specifications(

@@ -88,13 +88,18 @@ class MessageDefinitionService:
             db.session.delete(message)
 
     @classmethod
-    def save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
+    def save_all_message_models(
+        cls,
+        all_message_models: dict[tuple[str, str], MessageModel],
+        usage_map: dict[str, list[str]] | None = None,
+    ) -> None:
         for message_model in all_message_models.values():
             correlation_property_models = list(message_model.correlation_properties)
             message_model_to_merge = MessageModel(
                 identifier=message_model.identifier,
                 location=message_model.location,
                 schema=message_model.schema,
+                process_model_identifiers=sorted(usage_map.get(message_model.identifier, [])) if usage_map else None,
             )
             if message_model.id is not None:
                 message_model_to_merge.id = message_model.id
@@ -106,3 +111,30 @@ class MessageDefinitionService:
             for correlation_property_model in correlation_property_models:
                 correlation_property_model.message_id = merged_message_model.id
                 db.session.add(correlation_property_model)
+
+    @classmethod
+    def remove_process_model_from_usage(cls, process_model_id: str) -> None:
+        """Remove a process model ID from process_model_identifiers on all MessageModels that reference it."""
+        messages = MessageModel.query.filter(
+            MessageModel.process_model_identifiers.isnot(None)  # type: ignore
+        ).all()
+        for message in messages:
+            ids = list(message.process_model_identifiers or [])
+            if process_model_id in ids:
+                ids.remove(process_model_id)
+                message.process_model_identifiers = ids
+                db.session.add(message)
+
+    @classmethod
+    def remove_process_group_from_usage(cls, process_group_id: str) -> None:
+        """Remove all process model IDs under a process group from process_model_identifiers."""
+        prefix = process_group_id + "/"
+        messages = MessageModel.query.filter(
+            MessageModel.process_model_identifiers.isnot(None)  # type: ignore
+        ).all()
+        for message in messages:
+            ids = list(message.process_model_identifiers or [])
+            new_ids = [pm_id for pm_id in ids if pm_id != process_group_id and not pm_id.startswith(prefix)]
+            if len(new_ids) != len(ids):
+                message.process_model_identifiers = new_ids
+                db.session.add(message)

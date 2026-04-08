@@ -58,6 +58,7 @@
   "copy_shareable_link_tooltip": "Kopírovat sdílený odkaz",
   "correlation_properties": "Vlastnosti korelace",
   "correlations": "Korelace:",
+  "used_in": "Použito v",
   "corresponding_message_instance": "Příslušná instance zprávy",
   "create_files": "Vytvořit soubory",
   "create_script_unit_test": "Vytvořit unit test skriptu",
