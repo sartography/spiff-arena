@@ -206,9 +206,14 @@ def next_task(workflow, state):
 def _advance_workflow(workflow, task, strategy_name):
     iters = 0
 
-    # TODO: make maxIters part of strategy
-    while task and iters < 100:
+    # TODO: make maxIters part of strategy, add cycle detection
+    while task and iters < 5000:
         iters = iters + 1
+
+        # Report progress every 50 iterations for UI feedback
+        if iters % 50 == 0:
+            print(f"[progress] iteration: {iters}", flush=True)
+
         if task.state == TaskState.STARTED:
             task.complete()
         else:
@@ -244,7 +249,11 @@ def _advance_workflow(workflow, task, strategy_name):
                         else:
                             index = workflow.data["spiff_testFixture_index"]
 
-                        if index < 0 or index >= len(stack):
+                        # If recording is exhausted (index < 0), let task run interactively
+                        if index < 0:
+                            break
+
+                        if index >= len(stack):
                             break
 
                         expected = stack[index]
@@ -268,8 +277,7 @@ def _advance_workflow(workflow, task, strategy_name):
                     task.run()
                     task.data.update(expected["data"])
 
-    step = build_response(workflow, None)
-    return step
+    return build_response(workflow, None)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params):
     workflow = hydrate_workflow(specs, state)
