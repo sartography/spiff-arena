@@ -185,7 +185,7 @@ class ServiceTaskDelegate:
             # we used to raise errors for v1 responses, and we need to make that happen
             error_message = ""
             if "error" in parsed_response:
-                error_response = parsed_response["error"]
+                error_response = parsed_response["error"] or ""
                 if isinstance(error_response, list | dict):
                     error_response = json.dumps(parsed_response["error"])
 
