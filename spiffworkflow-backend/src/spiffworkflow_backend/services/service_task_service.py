@@ -132,9 +132,9 @@ class ServiceTaskService:
 
         if spiff_task is None:
             raise ApiError(
-                error_code="empty_task",
-                message="Processor failed to obtain task.",
-                status_code=500,
+                error_code="callback_not_found",
+                message=f"No task found with guid '{task_guid}'. The task may have already completed or the guid is invalid.",
+                status_code=400,
             )
         return spiff_task
 
