@@ -224,6 +224,19 @@ def next_task(workflow, state):
 def _advance_workflow(workflow, task, strategy_name, compress_state=False):
     iters = 0
 
+    # Cache fixture file for unittest strategy to avoid repeated file I/O
+    cached_fixture = None
+    cached_fixture_file = None
+    if strategy_name == "unittest" and task:
+        fixture_file = task.data.get("spiff_testFixture_file")
+        if fixture_file:
+            try:
+                with open(fixture_file) as f:
+                    cached_fixture = json.load(f)
+                cached_fixture_file = fixture_file
+            except Exception as e:
+                raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+
     # TODO: make maxIters part of strategy, add cycle detection
     while task and iters < 5000:
         iters = iters + 1
@@ -254,36 +267,37 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                 # Check for file-based fixture first (ed recording playback)
                 fixture_file = task.data.get("spiff_testFixture_file")
                 if fixture_file:
-                    # File-based fixture: read from disk and manage index.
-                    # Index is stored in workflow.data (shared across all tasks) to ensure
-                    # the counter stays synchronized even when tasks are created ahead of time.
-                    try:
-                        with open(fixture_file) as f:
-                            fixture = json.load(f)
-                        stack = fixture.get("pendingTaskStack", [])
+                    # Use cached fixture data instead of re-reading from disk
+                    if cached_fixture_file != fixture_file or cached_fixture is None:
+                        # Fixture file changed or wasn't cached - shouldn't happen but handle it
+                        try:
+                            with open(fixture_file) as f:
+                                cached_fixture = json.load(f)
+                            cached_fixture_file = fixture_file
+                        except Exception as e:
+                            raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
 
-                        if "spiff_testFixture_index" not in workflow.data:
-                            index = len(stack) - 1
-                        else:
-                            index = workflow.data["spiff_testFixture_index"]
+                    stack = cached_fixture.get("pendingTaskStack", [])
 
-                        # If recording is exhausted (index < 0), let task run interactively
-                        if index < 0:
-                            break
+                    if "spiff_testFixture_index" not in workflow.data:
+                        index = len(stack) - 1
+                    else:
+                        index = workflow.data["spiff_testFixture_index"]
 
-                        if index >= len(stack):
-                            break
+                    # If recording is exhausted (index < 0), let task run interactively
+                    if index < 0:
+                        break
 
-                        expected = stack[index]
-                        if task.task_spec.name != expected["id"]:
-                            break
+                    if index >= len(stack):
+                        break
 
-                        task.run()
-                        task.data.update(expected["data"])
-                        workflow.data["spiff_testFixture_index"] = index - 1
-                    except Exception as e:
-                        # Re-raise so the error is properly reported in the response
-                        raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+                    expected = stack[index]
+                    if task.task_spec.name != expected["id"]:
+                        break
+
+                    task.run()
+                    task.data.update(expected["data"])
+                    workflow.data["spiff_testFixture_index"] = index - 1
                 else:
                     # Fallback to inline fixture (process-models compatibility)
                     stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
