@@ -260,8 +260,10 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
         else:
             task.run()
 
-        if missing_lazy_load_specs(workflow):
-            break
+        # Skip lazy load check for unittest strategy with file fixtures - all specs are preloaded
+        if not (strategy_name == "unittest" and cached_fixture_file):
+            if missing_lazy_load_specs(workflow):
+                break
 
         # Optimization: try searching from completed task first (fast path),
         # only refresh waiting tasks if fast path fails (deferred refresh)
