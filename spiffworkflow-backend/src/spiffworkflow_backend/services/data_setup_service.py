@@ -162,9 +162,7 @@ class DataSetupService:
         db.session.commit()
 
     @classmethod
-    def _message_locations_by_identifier(
-        cls, message_model_keys: Any
-    ) -> dict[str, set[str]]:
+    def _message_locations_by_identifier(cls, message_model_keys: Any) -> dict[str, set[str]]:
         locations_by_identifier: dict[str, set[str]] = {}
         for identifier, location in message_model_keys:
             locations_by_identifier.setdefault(identifier, set()).add(location)

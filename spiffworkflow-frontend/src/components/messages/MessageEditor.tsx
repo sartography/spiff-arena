@@ -8,6 +8,7 @@ import {
   CorrelationProperties,
 } from '../../interfaces';
 import {
+  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../../helpers';
@@ -48,12 +49,23 @@ type MessageEditorFormData = {
   schema?: string;
 };
 
+type SavedMessageData = {
+  messageId: string;
+  location: string;
+  correlationProperties: Array<{
+    id: string;
+    retrievalExpression?: string;
+  }>;
+};
+
 type OwnProps = {
   modifiedProcessGroupIdentifier: string;
   elementId: string;
   messageId: string;
   messageEvent: any;
   correlationProperties: any;
+  hideSubmitButton?: boolean;
+  onSave?: (savedMessage: SavedMessageData) => void;
 };
 
 const NO_SHARED_MESSAGE_OPTION = 'none';
@@ -73,6 +85,8 @@ export function MessageEditor({
   messageEvent,
   correlationProperties,
   elementId,
+  hideSubmitButton = true,
+  onSave,
 }: OwnProps) {
   const currentGroupLocation = unModifyProcessIdentifierForPathParam(
     modifiedProcessGroupIdentifier,
@@ -165,7 +179,7 @@ export function MessageEditor({
       }
 
       HttpService.makeCallToBackend({
-        path: `/process-groups/${location}`,
+        path: `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
         successCallback,
         failureCallback,
       });
@@ -181,7 +195,7 @@ export function MessageEditor({
       failureCallback?: () => void,
     ) => {
       HttpService.makeCallToBackend({
-        path: `/process-groups/${location}`,
+        path: `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
         successCallback,
         failureCallback,
         httpMethod: 'PUT',
@@ -263,6 +277,16 @@ export function MessageEditor({
           updatedMessagesForId,
           targetLocation,
         );
+        onSave?.({
+          messageId: newMessageId,
+          location: targetLocation,
+          correlationProperties: Object.entries(newCorrelationProperties).map(
+            ([id, correlationProperty]) => ({
+              id,
+              retrievalExpression: correlationProperty.retrieval_expression,
+            }),
+          ),
+        });
       };
 
       if (shouldInheritAncestorSharedMessage) {
@@ -342,6 +366,7 @@ export function MessageEditor({
       sharedMessageOptionsById,
       updateCorrelationPropertiesOnProcessGroup,
       t,
+      onSave,
     ],
   );
 
@@ -396,8 +421,8 @@ export function MessageEditor({
         nearestMessageModel?.schema || {};
       const newFormData: MessageEditorFormData = {
         processGroupIdentifier:
-          (currentMessageDefinitionLocation ??
-            nearestMessageModel?.location) || currentGroupLocation,
+          (currentMessageDefinitionLocation ?? nearestMessageModel?.location) ||
+          currentGroupLocation,
         messageId,
         useExistingSharedMessageId: nearestMessageModel
           ? String(nearestMessageModel.id)
@@ -676,7 +701,7 @@ export function MessageEditor({
           uiSchema={uischema}
           formData={currentFormData}
           onSubmit={updateProcessGroupWithMessages}
-          hideSubmitButton
+          hideSubmitButton={hideSubmitButton}
           onChange={updateFormData}
           submitButtonText={t('save')}
           bpmnEvent={messageEvent}

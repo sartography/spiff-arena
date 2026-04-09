@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 
 def _literal_string_list(node: ast.AST) -> list[str]:
@@ -11,7 +11,7 @@ def _literal_string_list(node: ast.AST) -> list[str]:
             return []
         if isinstance(node.value, str):
             return [node.value]
-    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+    if isinstance(node, ast.List | ast.Tuple | ast.Set):
         values: list[str] = []
         for element in node.elts:
             if isinstance(element, ast.Constant) and isinstance(element.value, str):

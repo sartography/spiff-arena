@@ -5,9 +5,7 @@ from spiffworkflow_backend.services.migration_guard import needs_upgrade
 
 
 def test_get_file_heads_uses_down_revision_metadata() -> None:
-    versions_dir = (
-        Path(__file__).resolve().parents[3] / "migrations" / "versions"
-    )
+    versions_dir = Path(__file__).resolve().parents[3] / "migrations" / "versions"
 
     file_heads = get_file_heads(versions_dir)
 

@@ -37,6 +37,8 @@ class MessageDefinitionService:
         message_model = MessageModel(identifier=identifier, location=message_location, schema=schema)
         if resolved_message_id is not None:
             message_model.id = resolved_message_id
+        if existing_model is not None:
+            message_model.process_model_identifiers = list(existing_model.process_model_identifiers or [])
 
         return message_model
 
@@ -95,15 +97,16 @@ class MessageDefinitionService:
     ) -> None:
         for message_model in all_message_models.values():
             correlation_property_models = list(message_model.correlation_properties)
+            process_model_identifiers = (
+                sorted(usage_map.get((message_model.identifier, message_model.location), []))
+                if usage_map
+                else list(message_model.process_model_identifiers or [])
+            )
             message_model_to_merge = MessageModel(
                 identifier=message_model.identifier,
                 location=message_model.location,
                 schema=message_model.schema,
-                process_model_identifiers=(
-                    sorted(usage_map.get((message_model.identifier, message_model.location), []))
-                    if usage_map
-                    else None
-                ),
+                process_model_identifiers=process_model_identifiers,
             )
             if message_model.id is not None:
                 message_model_to_merge.id = message_model.id

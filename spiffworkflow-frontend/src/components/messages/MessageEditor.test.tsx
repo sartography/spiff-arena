@@ -20,8 +20,11 @@ vi.mock('../../services/HttpService', () => {
 
 vi.mock('../../helpers', () => {
   return {
+    modifyProcessIdentifierForPathParam: (identifier: string) =>
+      identifier.replace(/\//g, ':'),
     setPageTitle: vi.fn(),
-    unModifyProcessIdentifierForPathParam: (identifier: string) => identifier,
+    unModifyProcessIdentifierForPathParam: (identifier: string) =>
+      identifier.replace(/:/g, '/'),
   };
 });
 
@@ -245,7 +248,7 @@ describe('MessageEditor', () => {
       .map((call) => call[0])
       .find(
         (call) =>
-          call.path === '/process-groups/order/survey' &&
+          call.path === '/process-groups/order:survey' &&
           call.httpMethod === 'PUT',
       );
 
@@ -378,7 +381,7 @@ describe('MessageEditor', () => {
       .map((call) => call[0])
       .find(
         (call) =>
-          call.path === '/process-groups/order/survey' &&
+          call.path === '/process-groups/order:survey' &&
           call.httpMethod === 'PUT',
       );
 
@@ -425,10 +428,14 @@ describe('MessageEditor', () => {
 
     const processGroupCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/process-groups/order/request-for-information');
+      .find(
+        (call) => call.path === '/process-groups/order/request-for-information',
+      );
     const messageModelsCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/message-models/order/request-for-information');
+      .find(
+        (call) => call.path === '/message-models/order/request-for-information',
+      );
 
     await act(async () => {
       processGroupCall.successCallback({
@@ -476,7 +483,7 @@ describe('MessageEditor', () => {
       .map((call) => call[0])
       .find(
         (call) =>
-          call.path === '/process-groups/order/request-for-information' &&
+          call.path === '/process-groups/order:request-for-information' &&
           call.httpMethod === 'PUT',
       );
 

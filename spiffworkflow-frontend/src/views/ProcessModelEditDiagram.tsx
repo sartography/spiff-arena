@@ -167,7 +167,6 @@ export default function ProcessModelEditDiagram() {
     canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
     messageModelListPath: targetUris.messageModelListPath,
   });
-  const { onMessagesRequested } = bpmnEditorCallbacks;
   const {
     onLaunchScriptEditor,
     onLaunchMarkdownEditor,
@@ -217,8 +216,9 @@ export default function ProcessModelEditDiagram() {
         const nextSearchParams = new URLSearchParams({
           message_id: messageId,
         });
-        const sourceLocation =
-          unModifyProcessIdentifierForPathParam(modifiedProcessModelId);
+        const sourceLocation = unModifyProcessIdentifierForPathParam(
+          modifiedProcessModelId,
+        );
         if (sourceLocation) {
           nextSearchParams.set('source_location', sourceLocation);
         }
@@ -998,7 +998,6 @@ export default function ProcessModelEditDiagram() {
       />
     );
   };
-
 
   const processSearchOnClose = (selection: ProcessReference) => {
     selectProcessSearchResult(selection?.identifier);

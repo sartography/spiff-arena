@@ -1,9 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Box,
   Button,
   Dialog,
+  DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Link,
   Paper,
@@ -13,19 +21,22 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import HttpService from '../../services/HttpService';
+import { Notification } from '../Notification';
 import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
 } from '../../helpers';
-import { PaginationObject } from '../../interfaces';
+import { PaginationObject, ProcessGroup } from '../../interfaces';
 import PaginationForTable from '../PaginationForTable';
 import { MessageEditor } from './MessageEditor';
 import { findNearestAncestorLocation } from './MessageHelper';
+import ConfirmButton from '../ConfirmButton';
 
 type OwnProps = {
   processGroupId?: string;
@@ -45,6 +56,15 @@ type MessageModelResponse = {
   process_model_identifiers: string[];
 };
 
+type EditorState = {
+  messageId: string;
+  location: string;
+  correlationProperties: Array<{
+    id: string;
+    retrievalExpression?: string;
+  }>;
+};
+
 const noOpBpmnEvent = {
   eventBus: {
     fire: () => {},
@@ -61,6 +81,19 @@ const correlationSummary = (messageModel: MessageModelResponse): string => {
 };
 
 const paginationQueryParamPrefix = 'message-model-list';
+
+const toEditorState = (messageModel: MessageModelResponse): EditorState => {
+  return {
+    messageId: messageModel.identifier,
+    location: messageModel.location,
+    correlationProperties: messageModel.correlation_properties.map(
+      (correlationProperty) => ({
+        id: correlationProperty.identifier,
+        retrievalExpression: correlationProperty.retrieval_expression,
+      }),
+    ),
+  };
+};
 
 const getInitialSelectedMessageModel = (
   messages: MessageModelResponse[],
@@ -85,8 +118,9 @@ const getInitialSelectedMessageModel = (
     );
     if (nearestLocation) {
       return (
-        matches.find((messageModel) => messageModel.location === nearestLocation) ||
-        null
+        matches.find(
+          (messageModel) => messageModel.location === nearestLocation,
+        ) || null
       );
     }
   }
@@ -102,8 +136,17 @@ export default function MessageModelList({
   const [messageModels, setMessageModels] = useState<MessageModelResponse[]>(
     [],
   );
-  const [selectedMessageModel, setSelectedMessageModel] =
-    useState<MessageModelResponse | null>(null);
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createLocation, setCreateLocation] = useState(processGroupId || '');
+  const [createLocationError, setCreateLocationError] = useState('');
+  const [isValidatingCreateLocation, setIsValidatingCreateLocation] =
+    useState(false);
+  const [deletedMessageNotification, setDeletedMessageNotification] = useState<{
+    identifier: string;
+    location: string;
+  } | null>(null);
+  const hasInitializedEditor = useRef(false);
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { page, perPage } = getPageInfoFromSearchParams(
@@ -113,33 +156,148 @@ export default function MessageModelList({
     paginationQueryParamPrefix,
   );
 
-  useEffect(() => {
-    const path = processGroupId
-      ? `/message-models/${modifyProcessIdentifierForPathParam(
-          processGroupId,
-        )}`
-      : '/all-message-models';
+  const listPath = processGroupId
+    ? `/message-models/${modifyProcessIdentifierForPathParam(processGroupId)}`
+    : '/all-message-models';
 
-    HttpService.makeCallToBackend({
-      path,
-      successCallback: (result: { messages: MessageModelResponse[] }) => {
-        const messages = result.messages || [];
-        setMessageModels(messages);
-        setSelectedMessageModel(
-          getInitialSelectedMessageModel(
-            messages,
-            initialMessageId,
-            initialSourceLocation,
-          ),
-        );
-      },
-    });
-  }, [processGroupId, initialMessageId, initialSourceLocation]);
+  const loadMessageModels = useCallback(
+    (selectedMessage?: { identifier: string; location: string } | null) => {
+      HttpService.makeCallToBackend({
+        path: listPath,
+        successCallback: (result: { messages: MessageModelResponse[] }) => {
+          const messages = result.messages || [];
+          setMessageModels(messages);
+
+          if (selectedMessage === null) {
+            setEditorState(null);
+            return;
+          }
+
+          if (selectedMessage) {
+            const matchingMessageModel = messages.find((messageModel) => {
+              return (
+                messageModel.identifier === selectedMessage.identifier &&
+                messageModel.location === selectedMessage.location
+              );
+            });
+            if (matchingMessageModel) {
+              setEditorState(toEditorState(matchingMessageModel));
+            }
+            return;
+          }
+
+          if (!hasInitializedEditor.current) {
+            hasInitializedEditor.current = true;
+            const initialMessageModel = getInitialSelectedMessageModel(
+              messages,
+              initialMessageId,
+              initialSourceLocation,
+            );
+            if (initialMessageModel) {
+              setEditorState(toEditorState(initialMessageModel));
+            }
+          }
+        },
+      });
+    },
+    [initialMessageId, initialSourceLocation, listPath],
+  );
+
+  useEffect(() => {
+    hasInitializedEditor.current = false;
+    setEditorState(null);
+    setCreateLocation(processGroupId || '');
+    setCreateLocationError('');
+    setIsCreateDialogOpen(false);
+    const path = processGroupId
+      ? `/message-models/${modifyProcessIdentifierForPathParam(processGroupId)}`
+      : '/all-message-models';
+    if (path === listPath) {
+      loadMessageModels();
+    }
+  }, [loadMessageModels, listPath, processGroupId]);
 
   const paginatedMessageModels = useMemo(() => {
     const startingIndex = (page - 1) * perPage;
     return messageModels.slice(startingIndex, startingIndex + perPage);
   }, [messageModels, page, perPage]);
+
+  const openCreateDialog = useCallback(() => {
+    setCreateLocation(processGroupId || '');
+    setCreateLocationError('');
+    setIsCreateDialogOpen(true);
+  }, [processGroupId]);
+
+  const closeCreateDialog = useCallback(() => {
+    setCreateLocationError('');
+    setIsValidatingCreateLocation(false);
+    setIsCreateDialogOpen(false);
+  }, []);
+
+  const validateCreateLocation = useCallback(() => {
+    const normalizedLocation = createLocation.trim();
+    if (!normalizedLocation) {
+      setCreateLocationError(t('location_required'));
+      return;
+    }
+
+    setCreateLocationError('');
+    setIsValidatingCreateLocation(true);
+    HttpService.makeCallToBackend({
+      path: `/process-groups/${modifyProcessIdentifierForPathParam(
+        normalizedLocation,
+      )}`,
+      successCallback: () => {
+        setIsValidatingCreateLocation(false);
+        setIsCreateDialogOpen(false);
+        setEditorState({
+          messageId: '',
+          location: normalizedLocation,
+          correlationProperties: [],
+        });
+      },
+      failureCallback: () => {
+        setIsValidatingCreateLocation(false);
+        setCreateLocationError(t('message_model_location_not_found'));
+      },
+    });
+  }, [createLocation, t]);
+
+  const deleteMessageModel = useCallback(
+    (messageModel: MessageModelResponse) => {
+      const modifiedLocation = modifyProcessIdentifierForPathParam(
+        messageModel.location,
+      );
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${modifiedLocation}`,
+        successCallback: (processGroup: ProcessGroup) => {
+          const updatedMessages = {
+            ...(processGroup.messages || {}),
+          };
+          delete updatedMessages[messageModel.identifier];
+
+          const updatedProcessGroup: ProcessGroup = {
+            ...processGroup,
+            messages: updatedMessages,
+          };
+
+          HttpService.makeCallToBackend({
+            path: `/process-groups/${modifiedLocation}`,
+            successCallback: () => {
+              setDeletedMessageNotification({
+                identifier: messageModel.identifier,
+                location: messageModel.location,
+              });
+              loadMessageModels(null);
+            },
+            httpMethod: 'PUT',
+            postBody: updatedProcessGroup,
+          });
+        },
+      });
+    },
+    [loadMessageModels],
+  );
 
   const rows = useMemo(() => {
     return paginatedMessageModels.map((messageModel) => {
@@ -174,14 +332,40 @@ export default function MessageModelList({
           <TableCell>{correlationSummary(messageModel)}</TableCell>
           <TableCell>{usedIn.length > 0 ? usedIn : null}</TableCell>
           <TableCell align="right">
-            <Button onClick={() => setSelectedMessageModel(messageModel)}>
-              {t('edit')}
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button
+                onClick={() => setEditorState(toEditorState(messageModel))}
+              >
+                {t('edit')}
+              </Button>
+              <ConfirmButton
+                buttonLabel={t('delete')}
+                onConfirmation={() => deleteMessageModel(messageModel)}
+                title={t('delete_message_model_confirmation')}
+                description={
+                  (messageModel.process_model_identifiers || []).length > 0
+                    ? t('delete_message_model_description_used_in', {
+                        identifier: messageModel.identifier,
+                        location: messageModel.location,
+                        usedIn: (
+                          messageModel.process_model_identifiers || []
+                        ).join(', '),
+                      })
+                    : t('delete_message_model_description', {
+                        identifier: messageModel.identifier,
+                        location: messageModel.location,
+                      })
+                }
+                confirmButtonLabel={t('delete')}
+                variant="text"
+                color="error"
+              />
+            </Box>
           </TableCell>
         </TableRow>
       );
     });
-  }, [paginatedMessageModels, t]);
+  }, [deleteMessageModel, paginatedMessageModels, t]);
 
   const table = (
     <TableContainer component={Paper} variant="outlined">
@@ -192,7 +376,7 @@ export default function MessageModelList({
             <TableCell>{t('location')}</TableCell>
             <TableCell>{t('correlations')}</TableCell>
             <TableCell>{t('used_in')}</TableCell>
-            <TableCell align="right">{t('edit')}</TableCell>
+            <TableCell align="right">{t('actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -221,6 +405,24 @@ export default function MessageModelList({
 
   return (
     <>
+      {deletedMessageNotification ? (
+        <Notification
+          title={t('delete_message_model_success_title')}
+          hideCloseButton
+          timeout={4000}
+          onClose={() => setDeletedMessageNotification(null)}
+        >
+          {t('delete_message_model_success_message', {
+            identifier: deletedMessageNotification.identifier,
+            location: deletedMessageNotification.location,
+          })}
+        </Notification>
+      ) : null}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button variant="contained" onClick={openCreateDialog}>
+          {t('add_message_model')}
+        </Button>
+      </Box>
       {pagination ? (
         <PaginationForTable
           page={page}
@@ -233,35 +435,80 @@ export default function MessageModelList({
         table
       )}
       <Dialog
-        open={selectedMessageModel != null}
-        onClose={() => setSelectedMessageModel(null)}
+        open={editorState != null}
+        onClose={() => setEditorState(null)}
         fullWidth
         maxWidth="md"
       >
-        {selectedMessageModel ? (
+        {editorState ? (
           <>
             <DialogTitle>
-              {`${selectedMessageModel.identifier} (${selectedMessageModel.location})`}
+              {editorState.messageId
+                ? `${editorState.messageId} (${editorState.location})`
+                : t('new_message_model_title', {
+                    location: editorState.location,
+                  })}
             </DialogTitle>
             <DialogContent>
               <Box sx={{ pt: 1 }}>
                 <MessageEditor
-                  modifiedProcessGroupIdentifier={modifyProcessIdentifierForPathParam(selectedMessageModel.location)}
-                  messageId={selectedMessageModel.identifier}
-                  messageEvent={noOpBpmnEvent}
-                  correlationProperties={selectedMessageModel.correlation_properties.map(
-                    (correlationProperty) => ({
-                      id: correlationProperty.identifier,
-                      retrievalExpression:
-                        correlationProperty.retrieval_expression,
-                    }),
+                  modifiedProcessGroupIdentifier={modifyProcessIdentifierForPathParam(
+                    editorState.location,
                   )}
-                  elementId={`${selectedMessageModel.location}:${selectedMessageModel.identifier}`}
+                  messageId={editorState.messageId}
+                  messageEvent={noOpBpmnEvent}
+                  correlationProperties={editorState.correlationProperties}
+                  elementId={`${editorState.location}:${editorState.messageId || 'new-message-model'}`}
+                  hideSubmitButton={false}
+                  onSave={(savedMessage) => {
+                    setEditorState(savedMessage);
+                    loadMessageModels({
+                      identifier: savedMessage.messageId,
+                      location: savedMessage.location,
+                    });
+                  }}
                 />
               </Box>
             </DialogContent>
           </>
         ) : null}
+      </Dialog>
+      <Dialog
+        open={isCreateDialogOpen}
+        onClose={closeCreateDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{t('choose_message_model_location')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            {t('choose_message_model_location_description')}
+          </DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            label={t('location')}
+            value={createLocation}
+            error={Boolean(createLocationError)}
+            helperText={createLocationError || ' '}
+            onChange={(event) => {
+              setCreateLocation(event.target.value);
+              if (createLocationError) {
+                setCreateLocationError('');
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeCreateDialog}>{t('cancel')}</Button>
+          <Button
+            variant="contained"
+            onClick={validateCreateLocation}
+            disabled={isValidatingCreateLocation}
+          >
+            {t('continue')}
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
