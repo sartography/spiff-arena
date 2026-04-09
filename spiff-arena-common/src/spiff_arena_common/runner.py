@@ -215,9 +215,19 @@ def missing_lazy_load_specs(workflow):
             return True
     return False
 
-def next_task(workflow, state):
-    task_filter = TaskFilter(state=TaskState.READY)
-    for task in workflow.get_tasks(task_filter=task_filter):
+def next_task(workflow, state, from_task=None):
+    """Find the next task in the given state.
+
+    Args:
+        workflow: The workflow to search
+        state: TaskState to filter by
+        from_task: Optional task to start searching from (instead of root)
+
+    Returns:
+        The next task, or None if not found
+    """
+    task_filter = TaskFilter(state=state)
+    for task in workflow.get_tasks(first_task=from_task, task_filter=task_filter):
         return task
     return None
 
@@ -254,7 +264,12 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
         if missing_lazy_load_specs(workflow):
             break
 
-        task = next_task(workflow, TaskState.READY)
+        # Optimization: try searching from completed task first (fast path),
+        # fall back to full search if not found (handles parallel branches, etc.)
+        completed_task = task
+        task = next_task(workflow, TaskState.READY, completed_task)
+        if not task:
+            task = next_task(workflow, TaskState.READY)
         if not task:
             break
         elif strategy_name == "oneAtATime" and task.task_spec.bpmn_id:
