@@ -150,6 +150,39 @@ export const getProcessModelFullIdentifierFromSearchParams = (
   return processModelFullIdentifier;
 };
 
+export const buildUniqueMilestoneNamesPath = ({
+  variant,
+  withRelationToMe,
+  processModelIdentifier,
+}: {
+  variant: string;
+  withRelationToMe: boolean;
+  processModelIdentifier: string | null;
+}) => {
+  const searchParams = new URLSearchParams();
+  if (variant !== 'all' || withRelationToMe) {
+    searchParams.set('with_relation_to_me', 'true');
+  }
+  if (processModelIdentifier) {
+    searchParams.set('process_model_identifier', processModelIdentifier);
+  }
+  const queryString = searchParams.toString();
+  if (queryString) {
+    return `/process-instances/unique-milestone-names?${queryString}`;
+  }
+  return '/process-instances/unique-milestone-names';
+};
+
+export const mergeSelectedStringOption = (
+  options: string[],
+  selectedValue: string | null,
+) => {
+  if (!selectedValue || options.includes(selectedValue)) {
+    return options;
+  }
+  return [selectedValue, ...options];
+};
+
 // https://stackoverflow.com/a/71352046/6090676
 export const truncateString = (text: string, len: number) => {
   if (text.length > len && text.length > 0) {

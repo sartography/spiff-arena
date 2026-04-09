@@ -1966,6 +1966,19 @@ paths:
       summary: Returns a list of all unique milestone names.
       tags:
         - Process Instances
+      parameters:
+        - name: with_relation_to_me
+          in: query
+          required: false
+          description: Limit milestone names to process instances related to the current user.
+          schema:
+            type: boolean
+        - name: process_model_identifier
+          in: query
+          required: false
+          description: Limit milestone names to the given process model identifier.
+          schema:
+            type: string
       responses:
         "200":
           description: List of unique milestone names.

@@ -272,3 +272,132 @@ class TestProcessInstancesController(BaseTest):
         milestone_names = response.json()
         assert "User One Milestone" in milestone_names
         assert "User Two Milestone" not in milestone_names
+
+    def test_unique_milestone_name_list_returns_all_for_users_with_global_instance_access(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "runs_without_input/sample",
+            process_model_source_directory="sample",
+        )
+        privileged_user = self.create_user_with_permission(
+            username="privileged_user",
+            target_uri="/process-instances/unique-milestone-names",
+            permission_names=["read"],
+        )
+        self.add_permissions_to_user(
+            privileged_user,
+            target_uri="/process-instances",
+            permission_names=["read"],
+        )
+        other_user = self.find_or_create_user(username="other_user")
+
+        privileged_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=privileged_user
+        )
+        privileged_instance.last_milestone_bpmn_name = "Privileged Milestone"
+
+        other_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=other_user
+        )
+        other_instance.last_milestone_bpmn_name = "Other Milestone"
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/process-instances/unique-milestone-names",
+            headers=self.logged_in_headers(privileged_user),
+        )
+        assert response.status_code == 200
+        milestone_names = response.json()
+        assert "Privileged Milestone" in milestone_names
+        assert "Other Milestone" in milestone_names
+
+    def test_unique_milestone_name_list_can_be_scoped_for_privileged_users(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "runs_without_input/sample",
+            process_model_source_directory="sample",
+        )
+        privileged_user = self.create_user_with_permission(
+            username="privileged_user_scoped",
+            target_uri="/process-instances/unique-milestone-names",
+            permission_names=["read"],
+        )
+        self.add_permissions_to_user(
+            privileged_user,
+            target_uri="/process-instances",
+            permission_names=["read"],
+        )
+        other_user = self.find_or_create_user(username="other_user_scoped")
+
+        privileged_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=privileged_user
+        )
+        privileged_instance.last_milestone_bpmn_name = "Privileged Scoped Milestone"
+
+        other_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=other_user
+        )
+        other_instance.last_milestone_bpmn_name = "Other Scoped Milestone"
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/process-instances/unique-milestone-names?with_relation_to_me=true",
+            headers=self.logged_in_headers(privileged_user),
+        )
+        assert response.status_code == 200
+        milestone_names = response.json()
+        assert "Privileged Scoped Milestone" in milestone_names
+        assert "Other Scoped Milestone" not in milestone_names
+
+    def test_unique_milestone_name_list_can_be_filtered_to_a_process_model(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        first_process_model = load_test_spec(
+            "runs_without_input/sample",
+            process_model_source_directory="sample",
+        )
+        second_process_model = load_test_spec(
+            "runs_without_input/random_fact",
+            process_model_source_directory="random_fact",
+        )
+        privileged_user = self.create_user_with_permission(
+            username="privileged_user_filtered",
+            target_uri="/process-instances/unique-milestone-names",
+            permission_names=["read"],
+        )
+        self.add_permissions_to_user(
+            privileged_user,
+            target_uri="/process-instances",
+            permission_names=["read"],
+        )
+
+        first_instance = self.create_process_instance_from_process_model(
+            process_model=first_process_model, status="complete", user=privileged_user
+        )
+        first_instance.last_milestone_bpmn_name = "First Model Milestone"
+
+        second_instance = self.create_process_instance_from_process_model(
+            process_model=second_process_model, status="complete", user=privileged_user
+        )
+        second_instance.last_milestone_bpmn_name = "Second Model Milestone"
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/process-instances/unique-milestone-names?process_model_identifier=runs_without_input/sample",
+            headers=self.logged_in_headers(privileged_user),
+        )
+        assert response.status_code == 200
+        milestone_names = response.json()
+        assert "First Model Milestone" in milestone_names
+        assert "Second Model Milestone" not in milestone_names

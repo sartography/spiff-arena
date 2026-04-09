@@ -32,6 +32,7 @@ from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -652,8 +653,26 @@ def send_bpmn_event(
         )
 
 
-def unique_milestone_name_list() -> Response:
-    values = ProcessInstanceReportService.unique_milestone_names_for_user(g.user)
+def unique_milestone_name_list(
+    with_relation_to_me: bool = False,
+    process_model_identifier: str | None = None,
+) -> Response:
+    filters: list[FilterValue] = []
+    if process_model_identifier:
+        filters.append({"field_name": "process_model_identifier", "field_value": process_model_identifier})
+
+    should_scope_to_requesting_user = with_relation_to_me or not AuthorizationService.user_has_permission(
+        user=g.user,
+        permission="read",
+        target_uri="/process-instances",
+    )
+    if should_scope_to_requesting_user:
+        filters.append({"field_name": "with_relation_to_me", "field_value": True})
+
+    values = ProcessInstanceReportService.unique_milestone_names(
+        filters=filters,
+        user=g.user if should_scope_to_requesting_user else None,
+    )
     return make_response(jsonify(values), 200)
 
 
