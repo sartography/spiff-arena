@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
+import os
 from typing import Any
 
 import flask.wrappers
@@ -13,7 +14,9 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import Proc
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API
+from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -37,6 +40,84 @@ def _strip_message_model_metadata(messages: dict[str, Any] | None) -> dict[str, 
         sanitized_messages[identifier] = {k: v for k, v in message_definition.items() if k not in {"id", "location"}}
 
     return sanitized_messages
+
+
+def _filter_process_group_body(body: dict[str, Any]) -> dict[str, Any]:
+    body_filtered = {
+        include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
+    }
+    if "messages" in body_filtered:
+        body_filtered["messages"] = _strip_message_model_metadata(body.get("messages"))
+    return body_filtered
+
+
+def _process_group_json_path(process_group_id: str) -> str:
+    return os.path.join(ProcessModelService.full_path_from_id(process_group_id), ProcessModelService.PROCESS_GROUP_JSON_FILE)
+
+
+def _serialize_process_group_for_disk(process_group: ProcessGroup) -> dict[str, Any]:
+    serialized_process_group = process_group.serialized()
+    return {
+        key: value
+        for key, value in serialized_process_group.items()
+        if key in PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
+    }
+
+
+def _read_process_group_json(process_group_id: str) -> str:
+    with open(_process_group_json_path(process_group_id)) as process_group_file:
+        return process_group_file.read()
+
+
+def _restore_process_group_json(process_group_id: str, contents: str) -> None:
+    with open(_process_group_json_path(process_group_id), "w") as process_group_file:
+        process_group_file.write(contents)
+
+
+def _collect_message_models_for_process_groups(
+    process_groups_with_message_metadata: dict[str, ProcessGroup],
+) -> dict[tuple[str, str], MessageModel]:
+    all_message_models: dict[tuple[str, str], MessageModel] = {}
+    for process_group_id, process_group in process_groups_with_message_metadata.items():
+        MessageDefinitionService.collect_message_models(process_group, process_group_id, all_message_models)
+    return all_message_models
+
+
+def _persist_process_groups_and_message_models(
+    updated_process_groups: dict[str, ProcessGroup],
+    process_groups_with_message_metadata: dict[str, ProcessGroup],
+) -> None:
+    all_message_models = _collect_message_models_for_process_groups(process_groups_with_message_metadata)
+    file_backups = {
+        process_group_id: _read_process_group_json(process_group_id) for process_group_id in updated_process_groups
+    }
+
+    try:
+        for process_group in updated_process_groups.values():
+            ProcessModelService.update_process_group(process_group)
+
+        for process_group_id in updated_process_groups:
+            MessageDefinitionService.delete_message_models_at_location(process_group_id)
+        db.session.flush()
+        MessageDefinitionService.save_all_message_models(all_message_models)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        for process_group_id, original_contents in file_backups.items():
+            _restore_process_group_json(process_group_id, original_contents)
+        raise
+
+
+def _ensure_user_can_update_process_group(process_group_id: str) -> None:
+    modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group_id)
+    if not AuthorizationService.user_has_permission(
+        user=g.user,
+        permission="update",
+        target_uri=f"/process-groups/{modified_process_group_id}",
+    ):
+        raise NotAuthorizedError(
+            f"User {g.user.username} is not authorized to update process group {process_group_id}",
+        )
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
@@ -84,12 +165,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
 
 
 def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
-    body_filtered = {
-        include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
-    }
-    if "messages" in body_filtered:
-        body_filtered["messages"] = _strip_message_model_metadata(body.get("messages"))
-
+    body_filtered = _filter_process_group_body(body)
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
     if not ProcessModelService.is_process_group_identifier(process_group_id):
         raise ApiError(
@@ -99,8 +175,6 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
         )
 
     process_group = ProcessGroup.from_dict({"id": process_group_id, **body_filtered})
-    ProcessModelService.update_process_group(process_group)
-
     process_group_with_message_metadata = ProcessGroup.from_dict(
         {
             "id": process_group_id,
@@ -109,19 +183,17 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
         }
     )
 
-    all_message_models: dict[tuple[str, str], MessageModel] = {}
     try:
-        MessageDefinitionService.collect_message_models(process_group_with_message_metadata, process_group_id, all_message_models)
+        _persist_process_groups_and_message_models(
+            updated_process_groups={process_group_id: process_group},
+            process_groups_with_message_metadata={process_group_id: process_group_with_message_metadata},
+        )
     except ValueError as exception:
         raise ApiError(
             error_code="invalid_message_model",
             message=str(exception),
             status_code=400,
         ) from exception
-    MessageDefinitionService.delete_message_models_at_location(process_group_id)
-    db.session.commit()
-    MessageDefinitionService.save_all_message_models(all_message_models)
-    db.session.commit()
 
     _commit_and_push_to_git(f"User: {g.user.username} updated process group {process_group_id}")
     return make_response(jsonify(process_group), 200)
@@ -189,3 +261,128 @@ def process_group_move(modified_process_group_identifier: str, new_location: str
     new_process_group = ProcessModelService.process_group_move(original_process_group_id, new_location)
     _commit_and_push_to_git(f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}")
     return make_response(jsonify(new_process_group), 200)
+
+
+def move_message_definition(
+    modified_process_group_id: str,
+    source_message_identifier: str,
+    body: dict[str, Any],
+) -> flask.wrappers.Response:
+    source_process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    target_process_group_id = body.get("target_process_group_identifier")
+    target_message_identifier = body.get("target_message_identifier")
+    message_definition = body.get("message_definition")
+
+    if not isinstance(target_process_group_id, str) or not target_process_group_id:
+        raise ApiError(
+            error_code="target_process_group_identifier_required",
+            message="target_process_group_identifier is required",
+            status_code=400,
+        )
+    if not isinstance(target_message_identifier, str) or not target_message_identifier:
+        raise ApiError(
+            error_code="target_message_identifier_required",
+            message="target_message_identifier is required",
+            status_code=400,
+        )
+    if not isinstance(message_definition, dict):
+        raise ApiError(
+            error_code="message_definition_required",
+            message="message_definition is required",
+            status_code=400,
+        )
+
+    _ensure_user_can_update_process_group(target_process_group_id)
+
+    try:
+        source_process_group = ProcessModelService.get_process_group(
+            source_process_group_id,
+            find_direct_nested_items=False,
+            find_all_nested_items=False,
+        )
+        target_process_group = ProcessModelService.get_process_group(
+            target_process_group_id,
+            find_direct_nested_items=False,
+            find_all_nested_items=False,
+        )
+    except ProcessEntityNotFoundError as exception:
+        raise ApiError(
+            error_code="process_group_cannot_be_found",
+            message=str(exception),
+            status_code=400,
+        ) from exception
+
+    source_messages = dict(source_process_group.messages or {})
+    if source_message_identifier not in source_messages:
+        raise ApiError(
+            error_code="message_definition_not_found",
+            message=f"Message '{source_message_identifier}' was not found at '{source_process_group_id}'",
+            status_code=400,
+        )
+
+    target_messages = dict(target_process_group.messages or {})
+    source_messages.pop(source_message_identifier, None)
+    if source_message_identifier != target_message_identifier:
+        source_messages.pop(target_message_identifier, None)
+        target_messages.pop(source_message_identifier, None)
+
+    sanitized_message_definition = _strip_message_model_metadata(
+        {target_message_identifier: message_definition}
+    ) or {}
+    target_messages[target_message_identifier] = sanitized_message_definition[target_message_identifier]
+
+    updated_source_process_group = ProcessGroup.from_dict(
+        {
+            **_serialize_process_group_for_disk(source_process_group),
+            "id": source_process_group_id,
+            "messages": source_messages,
+        }
+    )
+    updated_target_process_group = ProcessGroup.from_dict(
+        {
+            **_serialize_process_group_for_disk(target_process_group),
+            "id": target_process_group_id,
+            "messages": target_messages,
+        }
+    )
+
+    source_messages_with_metadata = dict(source_messages)
+    target_messages_with_metadata = dict(target_messages)
+    target_messages_with_metadata[target_message_identifier] = message_definition
+
+    try:
+        _persist_process_groups_and_message_models(
+            updated_process_groups={
+                source_process_group_id: updated_source_process_group,
+                target_process_group_id: updated_target_process_group,
+            },
+            process_groups_with_message_metadata={
+                source_process_group_id: ProcessGroup.from_dict(
+                    {
+                        **_serialize_process_group_for_disk(source_process_group),
+                        "id": source_process_group_id,
+                        "messages": source_messages_with_metadata,
+                    }
+                ),
+                target_process_group_id: ProcessGroup.from_dict(
+                    {
+                        **_serialize_process_group_for_disk(target_process_group),
+                        "id": target_process_group_id,
+                        "messages": target_messages_with_metadata,
+                    }
+                ),
+            },
+        )
+    except ValueError as exception:
+        raise ApiError(
+            error_code="invalid_message_model",
+            message=str(exception),
+            status_code=400,
+        ) from exception
+
+    _commit_and_push_to_git(
+        "User: "
+        f"{g.user.username} moved message {source_message_identifier} from "
+        f"{source_process_group_id} to {target_process_group_id} as {target_message_identifier}"
+    )
+    return make_response(jsonify(updated_target_process_group), 200)

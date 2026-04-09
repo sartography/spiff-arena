@@ -254,6 +254,8 @@
   "message_id": "ID",
   "message_name": "Nombre del mensaje",
   "message_name_description": "El nombre del mensaje no debe contener espacios ni caracteres especiales",
+  "message_instances_tab": "Instancias de mensajes",
+  "message_models_tab": "Modelos de mensajes",
   "message_name_validation_error": "debe contener solo caracteres alfanuméricos, guiones bajos o guiones",
   "message_title": "Mensaje {{id}} ({{name}}) datos de {{type}}:",
   "message_type_receive": "Recibir",

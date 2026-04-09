@@ -46,6 +46,6 @@ CONFIG = {
         "apply_button": "close",
         "close_button": "close",
     },
-    "message_editor": {"opens": True},
+    "message_editor": {"opens": False},
     "call_activity_dialog_closes": False,
 }

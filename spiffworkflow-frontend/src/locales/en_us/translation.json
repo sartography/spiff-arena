@@ -267,6 +267,8 @@
   "message_id": "ID",
   "message_name": "Message Name",
   "message_name_description": "The message name should contain no spaces or special characters",
+  "message_instances_tab": "Message Instances",
+  "message_models_tab": "Message Models",
   "message_name_validation_error": "must contain only alphanumeric characters, underscores, or hyphens",
   "new_message_model_title": "New Message Model ({{location}})",
   "message_title": "Message {{id}} ({{name}}) {{type}} data:",

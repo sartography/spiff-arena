@@ -66,6 +66,7 @@ type OwnProps = {
   correlationProperties: any;
   hideSubmitButton?: boolean;
   onSave?: (savedMessage: SavedMessageData) => void;
+  managePageTitle?: boolean;
 };
 
 const NO_SHARED_MESSAGE_OPTION = 'none';
@@ -87,6 +88,7 @@ export function MessageEditor({
   elementId,
   hideSubmitButton = true,
   onSave,
+  managePageTitle = true,
 }: OwnProps) {
   const currentGroupLocation = unModifyProcessIdentifierForPathParam(
     modifiedProcessGroupIdentifier,
@@ -165,26 +167,6 @@ export function MessageEditor({
       setDisplayNotSyncedMessage(false);
     },
     [elementId, messageEvent.eventBus],
-  );
-
-  const getProcessGroupForLocation = useCallback(
-    (
-      location: string,
-      successCallback: (result: ProcessGroup) => void,
-      failureCallback?: () => void,
-    ) => {
-      if (processGroup && location === currentGroupLocation) {
-        successCallback(processGroup);
-        return;
-      }
-
-      HttpService.makeCallToBackend({
-        path: `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
-        successCallback,
-        failureCallback,
-      });
-    },
-    [currentGroupLocation, processGroup],
   );
 
   const saveProcessGroupAtLocation = useCallback(
@@ -320,38 +302,17 @@ export function MessageEditor({
         );
         return;
       }
-
-      getProcessGroupForLocation(targetLocation, (targetProcessGroup) => {
-        const sourceProcessGroupForUpdate = { ...processGroupForUpdate };
-        if (!sourceProcessGroupForUpdate.messages) {
-          sourceProcessGroupForUpdate.messages = {};
-        }
-        delete sourceProcessGroupForUpdate.messages[oldMessageId];
-        if (oldMessageId !== newMessageId) {
-          delete sourceProcessGroupForUpdate.messages[newMessageId];
-        }
-
-        const targetProcessGroupForUpdate = { ...targetProcessGroup };
-        if (!targetProcessGroupForUpdate.messages) {
-          targetProcessGroupForUpdate.messages = {};
-        }
-        targetProcessGroupForUpdate.messages[newMessageId] =
-          persistedMessageDefinition;
-        if (oldMessageId !== newMessageId) {
-          delete targetProcessGroupForUpdate.messages[oldMessageId];
-        }
-
-        saveProcessGroupAtLocation(
-          sourceLocation,
-          sourceProcessGroupForUpdate,
-          () => {
-            saveProcessGroupAtLocation(
-              targetLocation,
-              targetProcessGroupForUpdate,
-              updateComplete,
-            );
-          },
-        );
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${modifyProcessIdentifierForPathParam(sourceLocation)}/messages/${encodeURIComponent(
+          oldMessageId,
+        )}/move`,
+        successCallback: updateComplete,
+        httpMethod: 'PUT',
+        postBody: {
+          target_process_group_identifier: targetLocation,
+          target_message_identifier: newMessageId,
+          message_definition: persistedMessageDefinition,
+        },
       });
     },
     [
@@ -360,7 +321,6 @@ export function MessageEditor({
       currentMessageLocation,
       currentSharedMessageModelId,
       handleProcessGroupUpdateResponse,
-      getProcessGroupForLocation,
       processGroup,
       saveProcessGroupAtLocation,
       sharedMessageOptionsById,
@@ -467,7 +427,9 @@ export function MessageEditor({
       setCurrentMessageLocation(
         matchingMessageModels[0]?.location || currentGroupLocation,
       );
-      setPageTitle([processGroupResult.display_name]);
+      if (managePageTitle) {
+        setPageTitle([processGroupResult.display_name]);
+      }
       setInitialFormData(processGroupResult, matchingMessageModels);
     };
 
@@ -510,6 +472,7 @@ export function MessageEditor({
     modifiedProcessGroupIdentifier,
     correlationProperties,
     currentGroupLocation,
+    managePageTitle,
     messageId,
   ]);
 

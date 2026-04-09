@@ -152,6 +152,41 @@ describe('MessageModelList', () => {
     );
   });
 
+  it('provides an explicit close action for the message editor dialog', async () => {
+    render(
+      <MemoryRouter>
+        <MessageModelList />
+      </MemoryRouter>,
+    );
+
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/all-message-models');
+
+    await act(async () => {
+      listCall.successCallback({
+        messages: [
+          {
+            id: 1442,
+            identifier: 'request-for-information-received',
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+            process_model_identifiers: [],
+          },
+        ],
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+
+    expect(screen.getByTestId('message-editor')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+
+    expect(screen.queryByTestId('message-editor')).not.toBeInTheDocument();
+  });
+
   it('opens a blank message editor after validating the chosen create location', async () => {
     render(
       <MemoryRouter>

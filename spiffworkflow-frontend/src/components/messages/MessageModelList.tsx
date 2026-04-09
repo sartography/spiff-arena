@@ -460,6 +460,7 @@ export default function MessageModelList({
                   correlationProperties={editorState.correlationProperties}
                   elementId={`${editorState.location}:${editorState.messageId || 'new-message-model'}`}
                   hideSubmitButton={false}
+                  managePageTitle={false}
                   onSave={(savedMessage) => {
                     setEditorState(savedMessage);
                     loadMessageModels({
@@ -470,6 +471,9 @@ export default function MessageModelList({
                 />
               </Box>
             </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setEditorState(null)}>{t('close')}</Button>
+            </DialogActions>
           </>
         ) : null}
       </Dialog>

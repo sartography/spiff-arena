@@ -34,8 +34,8 @@ export default function MessageListPage() {
         aria-label="Messages tabs"
         sx={{ mb: 2 }}
       >
-        <Tab value="models" label="Message Models" />
-        <Tab value="instances" label="Message Instances" />
+        <Tab value="models" label={t('message_models_tab')} />
+        <Tab value="instances" label={t('message_instances_tab')} />
       </Tabs>
       {selectedTab === 'models' ? (
         <MessageModelList

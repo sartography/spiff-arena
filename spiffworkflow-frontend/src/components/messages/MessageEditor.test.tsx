@@ -2,13 +2,15 @@ import { act, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageEditor } from './MessageEditor';
 
-const { makeCallToBackend } = vi.hoisted(() => {
+const { makeCallToBackend, setPageTitle } = vi.hoisted(() => {
   return {
     makeCallToBackend: vi.fn(),
+    setPageTitle: vi.fn(),
   };
 });
 
 let latestCustomFormProps: any = null;
+const REQUEST_FOR_INFORMATION_MESSAGE_ID = 'request-for-information-received';
 
 vi.mock('../../services/HttpService', () => {
   return {
@@ -22,7 +24,7 @@ vi.mock('../../helpers', () => {
   return {
     modifyProcessIdentifierForPathParam: (identifier: string) =>
       identifier.replace(/\//g, ':'),
-    setPageTitle: vi.fn(),
+    setPageTitle,
     unModifyProcessIdentifierForPathParam: (identifier: string) =>
       identifier.replace(/:/g, '/'),
   };
@@ -114,6 +116,7 @@ vi.mock('../CustomForm', () => {
 describe('MessageEditor', () => {
   beforeEach(() => {
     makeCallToBackend.mockReset();
+    setPageTitle.mockReset();
     latestCustomFormProps = null;
   });
 
@@ -121,7 +124,7 @@ describe('MessageEditor', () => {
     render(
       <MessageEditor
         modifiedProcessGroupIdentifier="order/residential"
-        messageId="request-for-information-received"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
         messageEvent={{ eventBus: { fire: vi.fn() } }}
         correlationProperties={[]}
         elementId="Task_1"
@@ -161,7 +164,7 @@ describe('MessageEditor', () => {
           },
           {
             id: 1441,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [],
@@ -171,15 +174,51 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
-      'request-for-information-received (order)',
+      `${REQUEST_FOR_INFORMATION_MESSAGE_ID} (order)`,
     );
+    expect(setPageTitle).toHaveBeenCalledWith(['Residential']);
+  });
+
+  it('does not overwrite the parent page title when disabled', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order/residential"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[]}
+        elementId="Task_1"
+        managePageTitle={false}
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order/residential');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order/residential');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Residential',
+        messages: {},
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [],
+      });
+    });
+
+    expect(setPageTitle).not.toHaveBeenCalled();
   });
 
   it('removes the local message definition when selecting an ancestor shared message', async () => {
     render(
       <MessageEditor
         modifiedProcessGroupIdentifier="order/survey"
-        messageId="request-for-information-received"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
         messageEvent={{ eventBus: { fire: vi.fn() } }}
         correlationProperties={[]}
         elementId="Task_1"
@@ -197,7 +236,7 @@ describe('MessageEditor', () => {
       processGroupCall.successCallback({
         display_name: 'Survey',
         messages: {
-          'request-for-information-received': {
+          [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
             correlation_properties: {
               survey_id: { retrieval_expression: 'survey_id' },
             },
@@ -212,14 +251,14 @@ describe('MessageEditor', () => {
         messages: [
           {
             id: 1441,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [],
           },
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order/survey',
             schema: {},
             correlation_properties: [],
@@ -229,7 +268,7 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
-      'request-for-information-received (order/survey)',
+      `${REQUEST_FOR_INFORMATION_MESSAGE_ID} (order/survey)`,
     );
 
     await act(async () => {
@@ -237,7 +276,7 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
-      'request-for-information-received (order)',
+      `${REQUEST_FOR_INFORMATION_MESSAGE_ID} (order)`,
     );
 
     await act(async () => {
@@ -260,7 +299,7 @@ describe('MessageEditor', () => {
     render(
       <MessageEditor
         modifiedProcessGroupIdentifier="order/survey"
-        messageId="request-for-information-received"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
         messageEvent={{ eventBus: { fire: vi.fn() } }}
         correlationProperties={[
           {
@@ -291,7 +330,7 @@ describe('MessageEditor', () => {
         messages: [
           {
             id: 1441,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [
@@ -308,11 +347,11 @@ describe('MessageEditor', () => {
     expect(screen.queryByText('save_warning_message')).not.toBeInTheDocument();
   });
 
-  it('updates the target process group when moving a message to a new location', async () => {
+  it('moves a message with a single backend request when changing locations', async () => {
     render(
       <MessageEditor
         modifiedProcessGroupIdentifier="order/survey"
-        messageId="request-for-information-received"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
         messageEvent={{ eventBus: { fire: vi.fn() } }}
         correlationProperties={[]}
         elementId="Task_1"
@@ -330,7 +369,7 @@ describe('MessageEditor', () => {
       processGroupCall.successCallback({
         display_name: 'Survey',
         messages: {
-          'request-for-information-received': {
+          [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
             id: 1442,
             location: 'order/survey',
             correlation_properties: {
@@ -347,7 +386,7 @@ describe('MessageEditor', () => {
         messages: [
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order/survey',
             schema: {},
             correlation_properties: [],
@@ -364,47 +403,20 @@ describe('MessageEditor', () => {
       screen.getByTestId('save-message').click();
     });
 
-    const targetProcessGroupGetCall = makeCallToBackend.mock.calls
-      .map((call) => call[0])
-      .find((call) => call.path === '/process-groups/order');
-
-    expect(targetProcessGroupGetCall).toBeTruthy();
-
-    await act(async () => {
-      targetProcessGroupGetCall.successCallback({
-        display_name: 'Order',
-        messages: {},
-      });
-    });
-
-    const sourceUpdateCall = makeCallToBackend.mock.calls
+    const moveCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
       .find(
         (call) =>
-          call.path === '/process-groups/order:survey' &&
+          call.path ===
+            `/process-groups/order:survey/messages/${REQUEST_FOR_INFORMATION_MESSAGE_ID}/move` &&
           call.httpMethod === 'PUT',
       );
 
-    expect(sourceUpdateCall).toBeTruthy();
-    expect(sourceUpdateCall.postBody.messages).toEqual({});
-
-    await act(async () => {
-      sourceUpdateCall.successCallback({
-        display_name: 'Survey',
-        messages: {},
-      });
-    });
-
-    const completedTargetUpdateCall = makeCallToBackend.mock.calls
-      .map((call) => call[0])
-      .find(
-        (call) =>
-          call.path === '/process-groups/order' && call.httpMethod === 'PUT',
-      );
-
-    expect(completedTargetUpdateCall).toBeTruthy();
-    expect(completedTargetUpdateCall.postBody.messages).toEqual({
-      'request-for-information-received': {
+    expect(moveCall).toBeTruthy();
+    expect(moveCall.postBody).toEqual({
+      target_process_group_identifier: 'order',
+      target_message_identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
+      message_definition: {
         correlation_properties: {
           survey_id: { retrieval_expression: 'survey_id' },
         },
@@ -419,7 +431,7 @@ describe('MessageEditor', () => {
     render(
       <MessageEditor
         modifiedProcessGroupIdentifier="order/request-for-information"
-        messageId="request-for-information-received"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
         messageEvent={{ eventBus: { fire: vi.fn() } }}
         correlationProperties={[]}
         elementId="Task_1"
@@ -449,7 +461,7 @@ describe('MessageEditor', () => {
         messages: [
           {
             id: 1441,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [
@@ -464,7 +476,7 @@ describe('MessageEditor', () => {
     });
 
     expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
-      'request-for-information-received (order)',
+      `${REQUEST_FOR_INFORMATION_MESSAGE_ID} (order)`,
     );
 
     await act(async () => {
@@ -489,7 +501,7 @@ describe('MessageEditor', () => {
 
     expect(updateCall).toBeTruthy();
     expect(updateCall.postBody.messages).toEqual({
-      'request-for-information-received': {
+      [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
         correlation_properties: {
           order_uuid: { retrieval_expression: 'uuid' },
         },

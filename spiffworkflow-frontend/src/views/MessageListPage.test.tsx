@@ -42,7 +42,14 @@ describe('MessageListPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Message Models' }));
+    expect(
+      screen.getByRole('tab', { name: 'message_models_tab' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('tab', { name: 'message_instances_tab' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'message_models_tab' }));
 
     expect(screen.getByText('message models')).toBeInTheDocument();
   });

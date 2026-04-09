@@ -254,6 +254,8 @@
   "message_id": "ID",
   "message_name": "Nachrichtenname",
   "message_name_description": "Der Nachrichtenname darf keine Leerzeichen oder Sonderzeichen enthalten",
+  "message_instances_tab": "Nachrichteninstanzen",
+  "message_models_tab": "Nachrichtenmodelle",
   "message_name_validation_error": "darf nur alphanumerische Zeichen, Unterstriche oder Bindestriche enthalten",
   "message_title": "Nachricht {{id}} ({{name}}) Daten {{type}}:",
   "message_type_receive": "Empfangen",

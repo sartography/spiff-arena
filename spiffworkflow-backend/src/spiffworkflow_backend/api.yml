@@ -518,6 +518,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessGroup"
 
+  /process-groups/{modified_process_group_id}/messages/{source_message_identifier}/move:
+    parameters:
+      - name: modified_process_group_id
+        in: path
+        required: true
+        description: The unique id of the source process group.
+        schema:
+          type: string
+      - name: source_message_identifier
+        in: path
+        required: true
+        description: The identifier of the message definition to move.
+        schema:
+          type: string
+    put:
+      operationId: spiffworkflow_backend.routes.process_groups_controller.move_message_definition
+      summary: Move a message definition from one process group to another
+      tags:
+        - Process Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Process Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessGroup"
+
   /upsearch-locations:
     parameters:
       - name: location

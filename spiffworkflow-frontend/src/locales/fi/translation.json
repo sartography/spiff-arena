@@ -254,6 +254,8 @@
   "message_id": "Tunniste",
   "message_name": "Viestin nimi",
   "message_name_description": "Viestin nimessä ei saa olla välilyöntejä tai erikoismerkkejä",
+  "message_instances_tab": "Viesti-instanssit",
+  "message_models_tab": "Viestimallit",
   "message_name_validation_error": "saa sisältää vain aakkosnumeerisia merkkejä, alaviivoja tai väliviivoja",
   "message_title": "Viesti {{id}} ({{name}}) tiedot {{type}}:",
   "message_type_receive": "Vastaanota",
