@@ -64,7 +64,7 @@ class ServiceTaskService:
                     queue_process_instance_if_appropriate(process_instance, execution_mode)
 
                     callback_content = content or {}
-                    cls._check_for_callback_errors(process_instance, spiff_task, callback_content)
+                    cls._check_for_callback_errors(spiff_task, callback_content)
 
                     result_variable = spiff_task.task_spec.result_variable
                     callback_result = cls._get_callback_body(callback_content)
@@ -92,7 +92,7 @@ class ServiceTaskService:
             )
 
     @staticmethod
-    def _check_for_callback_errors(process_instance: Any, spiff_task: SpiffTask, content: dict[str, Any]) -> None:
+    def _check_for_callback_errors(spiff_task: SpiffTask, content: dict[str, Any]) -> None:
         try:
             ServiceTaskDelegate.check_for_errors(
                 spiff_task=spiff_task,

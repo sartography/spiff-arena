@@ -19,6 +19,7 @@ from spiffworkflow_connector_command.command_interface import CommandErrorDict
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
+from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -260,9 +261,9 @@ class ServiceTaskDelegate:
                 params["spiff__process_instance_id"] = process_instance_id
                 params["spiff__task_id"] = str(spiff_task.id)
                 params["spiff__task_data"] = task_data
-                api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
-                params["spiff__callback_url"] = (
-                    f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}{api_path_prefix}/tasks/{process_instance_id}/{spiff_task.id}/callback"
+                params["spiff__callback_url"] = build_public_api_v1_url(
+                    current_app.config["SPIFFWORKFLOW_BACKEND_URL"],
+                    f"tasks/{process_instance_id}/{spiff_task.id}/callback",
                 )
                 params = DefaultRegistry().convert(params)
                 request_headers = connector_proxy_api_key_headers()
