@@ -91,6 +91,13 @@ def _connector_response(http_response: requests.Response) -> HttpConnectorRespon
     else:
         command_response = {"raw_response": raw_response}
 
+    error = None
+    if status >= 300:
+        error = {
+            "error_code": f"HttpError{status}",
+            "message": f"HTTP {status} error from service. Response: {raw_response}",
+        }
+
     return_dict = {
         "command_response": {
             "body": command_response,
@@ -98,7 +105,7 @@ def _connector_response(http_response: requests.Response) -> HttpConnectorRespon
             "http_status": status,
         },
         "command_response_version": 2,
-        "error": None,
+        "error": error,
         "spiff__logs": [],
     }
 

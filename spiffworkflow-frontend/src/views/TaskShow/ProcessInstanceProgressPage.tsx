@@ -13,11 +13,11 @@ export default function ProcessInstanceProgressPage({ variant }: OwnProps) {
   const { t } = useTranslation();
   const params = useParams();
 
-  // TODO: the next version we should support the pi show page in the new ui
-  // let processInstanceShowPageUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   let processInstanceShowPageUrl = '/';
   if (variant === 'all') {
     processInstanceShowPageUrl = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  } else if (variant === 'for-me') {
+    processInstanceShowPageUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   return (

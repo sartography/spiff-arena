@@ -54,6 +54,12 @@ class v1_do_http_connector:
         else:
             command_response = { "raw_response": raw_response }
 
+        if status >= 300:
+            error = {
+                "error_code": f"HttpError{status}",
+                "message": f"HTTP {status} error from service. Response: {raw_response}",
+            }
+
         resp.media = {
             "command_response": {
                 "body": command_response,
