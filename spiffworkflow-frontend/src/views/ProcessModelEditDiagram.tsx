@@ -69,6 +69,7 @@ import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
   modifyProcessIdentifierForPathParam,
   setPageTitle,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import {
   PermissionsToCheck,
@@ -204,6 +205,8 @@ export default function ProcessModelEditDiagram() {
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
+  const modifiedProcessModelId = params.process_model_id || '';
 
   // Navigate to the Messages page to edit a message model rather than opening
   // an inline modal. This makes it clear the message is a shared resource.
@@ -211,12 +214,20 @@ export default function ProcessModelEditDiagram() {
     (event: any) => {
       const messageId = event?.value?.messageId;
       if (messageId) {
-        navigate(`/messages?message_id=${encodeURIComponent(messageId)}`);
+        const nextSearchParams = new URLSearchParams({
+          message_id: messageId,
+        });
+        const sourceLocation =
+          unModifyProcessIdentifierForPathParam(modifiedProcessModelId);
+        if (sourceLocation) {
+          nextSearchParams.set('source_location', sourceLocation);
+        }
+        navigate(`/messages?${nextSearchParams.toString()}`);
       } else {
         navigate('/messages');
       }
     },
-    [navigate],
+    [modifiedProcessModelId, navigate],
   );
 
   const { addError, removeError } = useAPIError();
@@ -226,9 +237,6 @@ export default function ProcessModelEditDiagram() {
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
-
-  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
-  const modifiedProcessModelId = params.process_model_id || '';
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 

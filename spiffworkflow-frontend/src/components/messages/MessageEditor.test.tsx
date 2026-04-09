@@ -78,6 +78,20 @@ vi.mock('../CustomForm', () => {
             choose parent
           </button>
           <button
+            data-testid="customize-selected-message"
+            onClick={() =>
+              latestCustomFormProps.onChange({
+                formData: {
+                  ...latestCustomFormProps.formData,
+                  schema: '{"type":"object"}',
+                },
+              })
+            }
+            type="button"
+          >
+            customize selected message
+          </button>
+          <button
             data-testid="save-message"
             onClick={() =>
               latestCustomFormProps.onSubmit({
@@ -394,6 +408,85 @@ describe('MessageEditor', () => {
         schema: {},
         id: 1442,
         location: 'order',
+      },
+    });
+  });
+
+  it('creates a local override when an inherited ancestor message is customized', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order/request-for-information"
+        messageId="request-for-information-received"
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[]}
+        elementId="Task_1"
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order/request-for-information');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order/request-for-information');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Request For Information',
+        messages: {},
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [
+          {
+            id: 1441,
+            identifier: 'request-for-information-received',
+            location: 'order',
+            schema: {},
+            correlation_properties: [
+              {
+                identifier: 'order_uuid',
+                retrieval_expression: 'uuid',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
+      'request-for-information-received (order)',
+    );
+
+    await act(async () => {
+      screen.getByTestId('customize-selected-message').click();
+    });
+
+    expect(screen.getByTestId('selected-shared-message')).toHaveTextContent(
+      'do_not_use_existing_shared_message',
+    );
+
+    await act(async () => {
+      screen.getByTestId('save-message').click();
+    });
+
+    const updateCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find(
+        (call) =>
+          call.path === '/process-groups/order/request-for-information' &&
+          call.httpMethod === 'PUT',
+      );
+
+    expect(updateCall).toBeTruthy();
+    expect(updateCall.postBody.messages).toEqual({
+      'request-for-information-received': {
+        correlation_properties: {
+          order_uuid: { retrieval_expression: 'uuid' },
+        },
+        schema: { type: 'object' },
       },
     });
   });

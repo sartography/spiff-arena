@@ -19,8 +19,14 @@ vi.mock('../../services/HttpService', () => {
 
 vi.mock('../../helpers', () => {
   return {
+    getPageInfoFromSearchParams: () => ({
+      page: 1,
+      perPage: 50,
+    }),
     modifyProcessIdentifierForPathParam: (identifier: string) =>
       identifier.replace(/\//g, ':'),
+    unModifyProcessIdentifierForPathParam: (identifier: string) =>
+      identifier.replace(/:/g, '/'),
   };
 });
 
@@ -46,7 +52,7 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models?per_page=100&page=1');
+      .find((call) => call.path === '/all-message-models');
 
     expect(listCall).toBeTruthy();
 
@@ -74,5 +80,52 @@ describe('MessageModelList', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('order')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'edit' })).toBeInTheDocument();
+  });
+
+  it('opens the nearest matching message model for the provided source location', async () => {
+    render(
+      <MemoryRouter>
+        {/* @ts-expect-error - prop added as part of the new selection flow */}
+        <MessageModelList
+          initialMessageId="request-for-information-received"
+          initialSourceLocation="order/request-for-information/request-for-information"
+        />
+      </MemoryRouter>,
+    );
+
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/all-message-models');
+
+    expect(listCall).toBeTruthy();
+
+    await act(async () => {
+      listCall.successCallback({
+        messages: [
+          {
+            id: 1441,
+            identifier: 'request-for-information-received',
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+            process_model_identifiers: [],
+          },
+          {
+            id: 1442,
+            identifier: 'request-for-information-received',
+            location: 'order/request-for-information',
+            schema: {},
+            correlation_properties: [],
+            process_model_identifiers: [],
+          },
+        ],
+      });
+    });
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'request-for-information-received (order/request-for-information)',
+      }),
+    ).toBeInTheDocument();
   });
 });

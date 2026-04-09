@@ -350,6 +350,11 @@ export function MessageEditor({
       newProcessGroup: ProcessGroup,
       matchingMessageModels: MessageModelResponse[],
     ) => {
+      const currentProcessGroupMessage = (newProcessGroup.messages || {})[
+        messageId
+      ];
+      const currentMessageDefinitionLocation =
+        currentProcessGroupMessage?.location || currentGroupLocation;
       const candidateLocations = matchingMessageModels.map((messageModel) => {
         return messageModel.location;
       });
@@ -386,12 +391,13 @@ export function MessageEditor({
       );
 
       const jsonSchemaFromProcessGroup =
-        (newProcessGroup.messages || {})[messageId]?.schema || {};
+        currentProcessGroupMessage?.schema || {};
       const jsonSchemaFromSelectedSharedMessage =
         nearestMessageModel?.schema || {};
       const newFormData: MessageEditorFormData = {
         processGroupIdentifier:
-          nearestMessageModel?.location || currentGroupLocation,
+          (currentMessageDefinitionLocation ??
+            nearestMessageModel?.location) || currentGroupLocation,
         messageId,
         useExistingSharedMessageId: nearestMessageModel
           ? String(nearestMessageModel.id)
@@ -406,10 +412,12 @@ export function MessageEditor({
         ),
       };
       setCurrentFormData(newFormData);
-      setCurrentMessageLocation(
-        nearestMessageModel?.location || currentGroupLocation,
+      setCurrentMessageLocation(currentMessageDefinitionLocation);
+      setCurrentSharedMessageModelId(
+        nearestMessageModel?.location === currentMessageDefinitionLocation
+          ? nearestMessageModel.id
+          : null,
       );
-      setCurrentSharedMessageModelId(nearestMessageModel?.id || null);
     };
 
     const processResult = (
@@ -565,12 +573,29 @@ export function MessageEditor({
   const updateFormData = (formObject: any) => {
     const nextFormData = formObject.formData as MessageEditorFormData;
     const selectedSharedMessageId = nextFormData.useExistingSharedMessageId;
+    if (!currentFormData) {
+      setCurrentFormData(nextFormData);
+      return;
+    }
+
     const sharedMessageOption =
       selectedSharedMessageId === NO_SHARED_MESSAGE_OPTION
         ? null
         : sharedMessageOptionsById[selectedSharedMessageId || ''];
+    if (!sharedMessageOption) {
+      const deselectedInheritedSharedMessage =
+        currentFormData.useExistingSharedMessageId !==
+          NO_SHARED_MESSAGE_OPTION &&
+        currentFormData.processGroupIdentifier !== currentGroupLocation;
+      if (deselectedInheritedSharedMessage) {
+        setCurrentSharedMessageModelId(null);
+        setCurrentFormData({
+          ...nextFormData,
+          processGroupIdentifier: currentGroupLocation,
+        });
+        return;
+      }
 
-    if (!sharedMessageOption || !currentFormData) {
       setCurrentFormData(nextFormData);
       return;
     }
@@ -578,6 +603,29 @@ export function MessageEditor({
     const sharedMessageSelectionChanged =
       selectedSharedMessageId !== currentFormData.useExistingSharedMessageId;
     if (!sharedMessageSelectionChanged) {
+      const inheritedSharedMessageWasCustomized =
+        sharedMessageOption.message.location !== currentGroupLocation &&
+        (nextFormData.messageId !== currentFormData.messageId ||
+          nextFormData.processGroupIdentifier !==
+            currentFormData.processGroupIdentifier ||
+          nextFormData.schema !== currentFormData.schema ||
+          JSON.stringify(nextFormData.correlation_properties || []) !==
+            JSON.stringify(currentFormData.correlation_properties || []));
+
+      if (inheritedSharedMessageWasCustomized) {
+        setCurrentSharedMessageModelId(null);
+        setCurrentFormData({
+          ...nextFormData,
+          processGroupIdentifier:
+            nextFormData.processGroupIdentifier ===
+            sharedMessageOption.message.location
+              ? currentGroupLocation
+              : nextFormData.processGroupIdentifier,
+          useExistingSharedMessageId: NO_SHARED_MESSAGE_OPTION,
+        });
+        return;
+      }
+
       setCurrentFormData(nextFormData);
       return;
     }

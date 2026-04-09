@@ -12,6 +12,8 @@ export default function MessageListPage() {
   const selectedTab =
     searchParams.get('tab') === 'instances' ? 'instances' : 'models';
   const initialMessageId = searchParams.get('message_id') || undefined;
+  const initialSourceLocation =
+    searchParams.get('source_location') || undefined;
 
   useEffect(() => {
     setPageTitle([t('messages')]);
@@ -36,7 +38,10 @@ export default function MessageListPage() {
         <Tab value="instances" label="Message Instances" />
       </Tabs>
       {selectedTab === 'models' ? (
-        <MessageModelList initialMessageId={initialMessageId} />
+        <MessageModelList
+          initialMessageId={initialMessageId}
+          initialSourceLocation={initialSourceLocation}
+        />
       ) : (
         <MessageInstanceList />
       )}

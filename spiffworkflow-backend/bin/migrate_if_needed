@@ -23,19 +23,24 @@ if [[ -z "$db_uri" ]]; then
 fi
 
 # ── Find all file-based heads (leaf nodes in migration DAG) ─────────────────
-# Heads = Revision IDs that no other migration file lists as its Revises target.
-grep -rh "^Revision ID:" "$versions_dir"/*.py \
-  | awk '{print $NF}' | sort > /tmp/_spiff_migration_all_ids.txt
+# Use Alembic's authoritative Python metadata instead of docstring comments.
+mapfile -t file_heads < <(
+  python3 - "$backend_dir" <<'PY'
+import importlib.util
+from pathlib import Path
+import sys
 
-grep -rh "^Revises:" "$versions_dir"/*.py \
-  | awk '{print $NF}' \
-  | grep -v "^$" \
-  | grep -v "^None$" \
-  | sort > /tmp/_spiff_migration_all_revises.txt
+backend_dir = Path(sys.argv[1])
+module_path = backend_dir / "src" / "spiffworkflow_backend" / "services" / "migration_guard.py"
+spec = importlib.util.spec_from_file_location("migration_guard", module_path)
+module = importlib.util.module_from_spec(spec)
+assert spec is not None and spec.loader is not None
+spec.loader.exec_module(module)
 
-# file_heads = IDs not referenced as Revises by any other migration
-mapfile -t file_heads < <(comm -23 /tmp/_spiff_migration_all_ids.txt /tmp/_spiff_migration_all_revises.txt)
-rm -f /tmp/_spiff_migration_all_ids.txt /tmp/_spiff_migration_all_revises.txt
+for file_head in module.get_file_heads(backend_dir / "migrations" / "versions"):
+    print(file_head)
+PY
+)
 
 if [[ ${#file_heads[@]} -eq 0 ]]; then
   echo "migrate_if_needed: no migrations found in $versions_dir, skipping"
@@ -43,13 +48,13 @@ if [[ ${#file_heads[@]} -eq 0 ]]; then
 fi
 
 # ── Read current revision(s) from DB ────────────────────────────────────────
-# psql -t strips column headers; tr removes whitespace/newlines
-if ! db_current=$(psql "$db_uri" -t -c \
-    "SELECT version_num FROM alembic_version ORDER BY version_num" \
-    2>/dev/null | tr -d ' \n'); then
+# psql -At emits one bare revision per line.
+if ! mapfile -t db_current < <(
+  psql "$db_uri" -At -c "SELECT version_num FROM alembic_version ORDER BY version_num" 2>/dev/null
+); then
   # Table may not exist yet (fresh DB) — definitely need to migrate
   echo "migrate_if_needed: alembic_version table not found — running initial migration"
-  db_current=""
+  db_current=()
 fi
 
 # ── Compare ──────────────────────────────────────────────────────────────────
@@ -61,11 +66,11 @@ done
 
 needs_upgrade=false
 
-if [[ -z "$db_current" ]]; then
+if [[ ${#db_current[@]} -eq 0 ]]; then
   needs_upgrade=true
 else
   # Every revision in the DB must be a file head; otherwise we're mid-chain
-  while IFS= read -r rev; do
+  for rev in "${db_current[@]}"; do
     if [[ -z "$rev" ]]; then
       continue
     fi
@@ -74,15 +79,21 @@ else
       needs_upgrade=true
       break
     fi
-  done <<< "$db_current"
+  done
 fi
 
 if [[ "$needs_upgrade" == "false" ]]; then
-  echo "migrate_if_needed: DB already at head ($(echo "$db_current" | tr '\n' ' ')) — nothing to do"
+  echo "migrate_if_needed: DB already at head (${db_current[*]}) — nothing to do"
   exit 0
 fi
 
 echo "migrate_if_needed: running flask db upgrade …"
 cd "$backend_dir"
+if [[ -z "${FLASK_SESSION_SECRET_KEY:-}" ]]; then
+  # Align the upgrade path with the normal local-dev backend bootstrap.
+  # When run-spiff-arena only sources hot_spiff_env, create_app still
+  # expects the local development defaults from this setup script.
+  . "${backend_dir}/bin/local_development_environment_setup"
+fi
 uv run flask db upgrade
 echo "migrate_if_needed: done"

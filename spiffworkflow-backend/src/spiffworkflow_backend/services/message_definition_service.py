@@ -91,7 +91,7 @@ class MessageDefinitionService:
     def save_all_message_models(
         cls,
         all_message_models: dict[tuple[str, str], MessageModel],
-        usage_map: dict[str, list[str]] | None = None,
+        usage_map: dict[tuple[str, str], list[str]] | None = None,
     ) -> None:
         for message_model in all_message_models.values():
             correlation_property_models = list(message_model.correlation_properties)
@@ -99,7 +99,11 @@ class MessageDefinitionService:
                 identifier=message_model.identifier,
                 location=message_model.location,
                 schema=message_model.schema,
-                process_model_identifiers=sorted(usage_map.get(message_model.identifier, [])) if usage_map else None,
+                process_model_identifiers=(
+                    sorted(usage_map.get((message_model.identifier, message_model.location), []))
+                    if usage_map
+                    else None
+                ),
             )
             if message_model.id is not None:
                 message_model_to_merge.id = message_model.id

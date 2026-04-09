@@ -1,7 +1,7 @@
 """Add process_model_identifiers to message table
 
 Revision ID: a1b2c3d4e5f6
-Revises: ffef09e6ddf1
+Revises: 0b90171055cd
 Create Date: 2026-04-07 16:35:00.000000
 
 """
