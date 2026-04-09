@@ -259,16 +259,16 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
             task.complete()
         else:
             task.run()
-        workflow.refresh_waiting_tasks()
 
         if missing_lazy_load_specs(workflow):
             break
 
         # Optimization: try searching from completed task first (fast path),
-        # fall back to full search if not found (handles parallel branches, etc.)
+        # only refresh waiting tasks if fast path fails (deferred refresh)
         completed_task = task
         task = next_task(workflow, TaskState.READY, completed_task)
         if not task:
+            workflow.refresh_waiting_tasks()
             task = next_task(workflow, TaskState.READY)
         if not task:
             break
