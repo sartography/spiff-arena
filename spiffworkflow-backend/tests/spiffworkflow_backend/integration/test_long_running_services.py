@@ -146,6 +146,36 @@ class TestLongRunningService(BaseTest):
         assert task_model is not None
         assert task_model.state == "COMPLETED"
 
+    def test__202_callback_url_uses_public_backend_base(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "https://frontend.example.com"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
+        ):
+            with app.test_request_context():
+                process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+                processor = ProcessInstanceProcessor(process_instance)
+                with patch("requests.post") as mock_post:
+                    mock_post.return_value.status_code = 202
+                    mock_post.return_value.ok = True
+                    mock_post.return_value.text = json.dumps({})
+                    processor.do_engine_steps(save=True)
+                callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
+                spiff_task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
+
+        assert callback_url == f"https://backend.example.com/api/v1.0/tasks/{process_instance.id}/{spiff_task_id}/callback"
+
     def test__202_error_response(
         self,
         app: Flask,
