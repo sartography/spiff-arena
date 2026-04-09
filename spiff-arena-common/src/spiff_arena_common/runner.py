@@ -221,7 +221,7 @@ def next_task(workflow, state):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name):
+def _advance_workflow(workflow, task, strategy_name, compress_state=False):
     iters = 0
 
     # TODO: make maxIters part of strategy, add cycle detection
@@ -295,15 +295,15 @@ def _advance_workflow(workflow, task, strategy_name):
                     task.run()
                     task.data.update(expected["data"])
 
-    return build_response(workflow, None, compress_state=True)
+    return build_response(workflow, None, compress_state=compress_state)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
     workflow = hydrate_workflow(specs, state)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_params.get("data", {}))
             break
-    
+
     if completed_task:
         task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
         if "data" in completed_task:
@@ -312,10 +312,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params):
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name)
+        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state)
     except Exception as e:
         try:
-            return build_response(workflow, e, compress_state=True)
+            return build_response(workflow, e, compress_state=compress_state)
         except Exception as e:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
