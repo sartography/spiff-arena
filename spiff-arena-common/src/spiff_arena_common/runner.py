@@ -1,5 +1,7 @@
+import base64
 import calendar
 import datetime
+import gzip
 import json
 import logging
 import time
@@ -166,6 +168,15 @@ def specs_from_xml(files):
     return json.dumps(workflow_specs_dct), None
 
 def hydrate_workflow(specs, state):
+    """Hydrate workflow from specs and state.
+
+    Args:
+        specs: JSON string or dict of workflow specs
+        state: dict, str (base64-encoded gzip-compressed), or None
+
+    Returns:
+        BpmnWorkflow instance
+    """
     specs = serializer.deserialize_json(specs)
     process = specs.pop("spec")
     subprocesses = specs.pop("subprocess_specs")
@@ -173,6 +184,13 @@ def hydrate_workflow(specs, state):
     if not state:
         workflow = BpmnWorkflow(process, subprocesses)
     else:
+        # Handle base64-encoded gzip-compressed state (string)
+        if isinstance(state, str) and not state.startswith('{'):
+            # Decode base64 then decompress
+            compressed = base64.b64decode(state)
+            decompressed = gzip.decompress(compressed)
+            state = json.loads(decompressed.decode('utf-8'))
+
         state["spec"] = process
         state["subprocess_specs"] = subprocesses
         workflow = serializer.from_dict(state)
@@ -203,7 +221,7 @@ def next_task(workflow, state):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name):
+def _advance_workflow(workflow, task, strategy_name, compress_state=False):
     iters = 0
 
     # TODO: make maxIters part of strategy, add cycle detection
@@ -277,15 +295,15 @@ def _advance_workflow(workflow, task, strategy_name):
                     task.run()
                     task.data.update(expected["data"])
 
-    return build_response(workflow, None)
+    return build_response(workflow, None, compress_state=compress_state)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
     workflow = hydrate_workflow(specs, state)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_params.get("data", {}))
             break
-    
+
     if completed_task:
         task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
         if "data" in completed_task:
@@ -294,10 +312,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params):
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name)
+        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state)
     except Exception as e:
         try:
-            return build_response(workflow, e)
+            return build_response(workflow, e, compress_state=compress_state)
         except Exception as e:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
@@ -320,13 +338,39 @@ def get_tasks(workflow, task_filter):
         },
     } for t in tasks]
     
-def get_state(workflow):
+def get_state(workflow, compress=False):
+    """Get workflow state, optionally compressed with gzip.
+
+    Args:
+        workflow: The workflow to serialize
+        compress: If True, return base64-encoded gzip-compressed string. If False, return dict.
+
+    Returns:
+        str (base64-encoded compressed, if compress=True) or dict (if compress=False)
+    """
     state = serializer.to_dict(workflow)
     state.pop("spec")
     state.pop("subprocess_specs")
+
+    if compress:
+        json_str = json.dumps(state)
+        compressed = gzip.compress(json_str.encode('utf-8'))
+        # Base64 encode for JSON serialization
+        return base64.b64encode(compressed).decode('ascii')
+
     return state
 
-def build_response(workflow, e):
+def build_response(workflow, e, compress_state=False):
+    """Build response with workflow state.
+
+    Args:
+        workflow: The workflow instance
+        e: Exception if error occurred, None otherwise
+        compress_state: If True, compress state with gzip
+
+    Returns:
+        JSON string with response data
+    """
     completed = workflow.completed
 
     if e is None:
@@ -352,7 +396,9 @@ def build_response(workflow, e):
         )
         response["lazy_loads"] = lazy_loads(workflow)
 
-    response["state"] = get_state(workflow)
+    response["state"] = get_state(workflow, compress=compress_state)
+    if compress_state:
+        response["state_compressed"] = True
 
     return json.dumps(response)
 
