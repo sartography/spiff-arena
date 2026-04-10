@@ -20,10 +20,15 @@ class MessageDefinitionService:
         message_id = message_definition.get("id")
         if isinstance(message_id, str) and message_id.isdigit():
             message_id = int(message_id)
+        elif message_id is not None and not isinstance(message_id, int):
+            raise ValueError(
+                f"Invalid message id '{message_id}' for message '{identifier}'. Must be None, an integer, or a numeric string."
+            )
 
         existing_model = MessageModel.query.filter_by(identifier=identifier, location=message_location).first()
         existing_message_id = existing_model.id if existing_model else None
 
+        resolved_message_id: int | None = None
         if message_id is not None:
             model_by_id = MessageModel.query.filter_by(id=message_id).first()
             if model_by_id is not None and model_by_id.identifier != identifier:
