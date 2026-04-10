@@ -1,9 +1,17 @@
+import os
 from pathlib import Path
+
+import pytest
 
 from spiffworkflow_backend.services.migration_guard import get_file_heads
 from spiffworkflow_backend.services.migration_guard import needs_upgrade
 
 
+@pytest.mark.skipif(
+    os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI") == "true"
+    and os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite",
+    reason="Migration files are crushed/recreated for SQLite in CI, invalidating specific migration IDs",
+)
 def test_get_file_heads_uses_down_revision_metadata() -> None:
     versions_dir = Path(__file__).resolve().parents[3] / "migrations" / "versions"
 
