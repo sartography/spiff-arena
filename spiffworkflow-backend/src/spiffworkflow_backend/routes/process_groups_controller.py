@@ -24,27 +24,6 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
 
-def _filter_process_group_body(body: dict[str, Any]) -> dict[str, Any]:
-    body_filtered = {
-        include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
-    }
-    if "messages" in body_filtered:
-        body_filtered["messages"] = MessageDefinitionService.strip_metadata(body.get("messages"))
-    return body_filtered
-
-
-def _ensure_user_can_update_process_group(process_group_id: str) -> None:
-    modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group_id)
-    if not AuthorizationService.user_has_permission(
-        user=g.user,
-        permission="update",
-        target_uri=f"/process-groups/{modified_process_group_id}",
-    ):
-        raise NotAuthorizedError(
-            f"User {g.user.username} is not authorized to update process group {process_group_id}",
-        )
-
-
 def process_group_create(body: dict) -> flask.wrappers.Response:
     process_group = ProcessGroup.from_dict(body)
 
@@ -198,6 +177,7 @@ def move_message_definition(
     target_message_identifier = body.get("target_message_identifier")
     message_definition = body.get("message_definition")
 
+    # Validate request parameters
     if not isinstance(target_process_group_id, str) or not target_process_group_id:
         raise ApiError(
             error_code="target_process_group_identifier_required",
@@ -219,6 +199,7 @@ def move_message_definition(
 
     _ensure_user_can_update_process_group(target_process_group_id)
 
+    # Load process groups
     try:
         source_process_group = ProcessModelService.get_process_group(
             source_process_group_id,
@@ -237,75 +218,51 @@ def move_message_definition(
             status_code=400,
         ) from exception
 
-    source_messages = dict(source_process_group.messages or {})
-    if source_message_identifier not in source_messages:
-        raise ApiError(
-            error_code="message_definition_not_found",
-            message=f"Message '{source_message_identifier}' was not found at '{source_process_group_id}'",
-            status_code=400,
-        )
-
-    target_messages = dict(target_process_group.messages or {})
-    source_messages.pop(source_message_identifier, None)
-    if source_message_identifier != target_message_identifier:
-        source_messages.pop(target_message_identifier, None)
-        target_messages.pop(source_message_identifier, None)
-
-    sanitized_message_definition = MessageDefinitionService.strip_metadata({target_message_identifier: message_definition}) or {}
-    target_messages[target_message_identifier] = sanitized_message_definition[target_message_identifier]
-
-    updated_source_process_group = ProcessGroup.from_dict(
-        {
-            **MessageDefinitionService.serialize_process_group_for_disk(source_process_group),
-            "id": source_process_group_id,
-            "messages": source_messages,
-        }
-    )
-    updated_target_process_group = ProcessGroup.from_dict(
-        {
-            **MessageDefinitionService.serialize_process_group_for_disk(target_process_group),
-            "id": target_process_group_id,
-            "messages": target_messages,
-        }
-    )
-
-    source_messages_with_metadata = dict(source_messages)
-    target_messages_with_metadata = dict(target_messages)
-    target_messages_with_metadata[target_message_identifier] = message_definition
-
+    # Move message (service handles all business logic)
     try:
-        MessageDefinitionService.persist_process_groups_with_messages(
-            updated_process_groups={
-                source_process_group_id: updated_source_process_group,
-                target_process_group_id: updated_target_process_group,
-            },
-            process_groups_with_message_metadata={
-                source_process_group_id: ProcessGroup.from_dict(
-                    {
-                        **MessageDefinitionService.serialize_process_group_for_disk(source_process_group),
-                        "id": source_process_group_id,
-                        "messages": source_messages_with_metadata,
-                    }
-                ),
-                target_process_group_id: ProcessGroup.from_dict(
-                    {
-                        **MessageDefinitionService.serialize_process_group_for_disk(target_process_group),
-                        "id": target_process_group_id,
-                        "messages": target_messages_with_metadata,
-                    }
-                ),
-            },
+        _, updated_target_process_group = MessageDefinitionService.move_message_between_groups(
+            source_process_group=source_process_group,
+            target_process_group=target_process_group,
+            source_message_identifier=source_message_identifier,
+            target_message_identifier=target_message_identifier,
+            message_definition=message_definition,
         )
     except ValueError as exception:
+        # Convert service ValueError to appropriate HTTP error
+        error_message = str(exception)
+        if "was not found at" in error_message:
+            error_code = "message_definition_not_found"
+        else:
+            error_code = "invalid_message_model"
         raise ApiError(
-            error_code="invalid_message_model",
-            message=str(exception),
+            error_code=error_code,
+            message=error_message,
             status_code=400,
         ) from exception
 
     _commit_and_push_to_git(
-        "User: "
-        f"{g.user.username} moved message {source_message_identifier} from "
+        f"User: {g.user.username} moved message {source_message_identifier} from "
         f"{source_process_group_id} to {target_process_group_id} as {target_message_identifier}"
     )
     return make_response(jsonify(updated_target_process_group), 200)
+
+
+def _filter_process_group_body(body: dict[str, Any]) -> dict[str, Any]:
+    body_filtered = {
+        include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
+    }
+    if "messages" in body_filtered:
+        body_filtered["messages"] = MessageDefinitionService.strip_metadata(body.get("messages"))
+    return body_filtered
+
+
+def _ensure_user_can_update_process_group(process_group_id: str) -> None:
+    modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group_id)
+    if not AuthorizationService.user_has_permission(
+        user=g.user,
+        permission="update",
+        target_uri=f"/process-groups/{modified_process_group_id}",
+    ):
+        raise NotAuthorizedError(
+            f"User {g.user.username} is not authorized to update process group {process_group_id}",
+        )
