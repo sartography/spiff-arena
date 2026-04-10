@@ -11,7 +11,7 @@ import jsonschema
 
 from spiff_arena_common.data_stores import JSONFileDataStore
 
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExceptionF
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
@@ -415,28 +415,6 @@ def get_state(workflow, compress=False):
 
     return state
 
-def compact_state(workflow):
-    """Extract only task_spec name + state per task, skipping full serialization."""
-    def compact_tasks(wf):
-        return {
-            str(t.id): {"task_spec": t.task_spec.name, "state": t.state}
-            for t in wf.get_tasks()
-        }
-
-    result = {
-        "tasks": compact_tasks(workflow),
-        "subprocesses": {},
-        "data": workflow.data,
-    }
-
-    for sp_id, sp in workflow.subprocesses.items():
-        result["subprocesses"][str(sp_id)] = {
-            "spec": sp.spec.name,
-            "tasks": compact_tasks(sp),
-        }
-
-    return result
-
 def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
     """Build response with workflow state.
 
@@ -479,125 +457,3 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         response["state_compressed"] = True
 
     return json.dumps(response)
-
-def build_compact_response(workflow, e):
-    """Like build_response but with compact state for UI only."""
-    completed = workflow.completed
-
-    if e is None:
-        response = { "status": "ok", "completed": completed }
-    else:
-        response = {
-            "status": "error",
-            "message": f"{e}",
-            "error_tasks": get_tasks(workflow, TaskFilter(TaskState.ERROR)),
-        }
-
-        if isinstance(e, WorkflowTaskException):
-            response["line_number"] = e.line_number
-            response["offset"] = e.offset
-            response["error_line"] = e.error_line
-
-    if completed:
-        response["result"] = workflow.data
-    else:
-        response["pending_tasks"] = get_tasks(
-            workflow,
-            TaskFilter(TaskState.STARTED | TaskState.READY | TaskState.WAITING),
-        )
-        response["lazy_loads"] = lazy_loads(workflow)
-
-    response["state"] = compact_state(workflow)
-
-    return json.dumps(response)
-
-# Persistent workflow storage
-_workflows = {}
-_snapshots = {}
-
-def advance_persistent(session_id, specs, state, completed_task, strategy_name, start_params, restore_index=-1):
-    t = [time.time()]  # t[0] = start
-
-    # Restore from snapshot if requested (step-back + re-advance, state surgery)
-    if restore_index >= 0:
-        snaps = _snapshots.get(session_id, [])
-        if restore_index < len(snaps):
-            state = snaps[restore_index]
-            _snapshots[session_id] = snaps[:restore_index]
-
-    if session_id in _workflows and state is None:
-        workflow = _workflows[session_id]
-        # Inject any new subprocess specs for lazy loading of CallActivities
-        if specs:
-            parsed = json.loads(specs)
-            new_subs = [k for k in parsed.get("subprocess_specs", {})
-                        if k not in workflow.subprocess_specs]
-            if new_subs:
-                deserialized = serializer.deserialize_json(specs)
-                for name in new_subs:
-                    if name in deserialized["subprocess_specs"]:
-                        workflow.subprocess_specs[name] = deserialized["subprocess_specs"][name]
-    else:
-        workflow = hydrate_workflow(specs, state if state else {})
-        _workflows[session_id] = workflow
-
-    if state is not None and state == {} and start_params:
-        for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
-            task.data.update(start_params.get("data", {}))
-            break
-
-    t.append(time.time())  # t[1] = after setup/hydrate
-
-    # Save snapshot before advancing (for step-back)
-    # Skip snapshots for unittest strategy — recording playback doesn't need step-back
-    if strategy_name != "unittest":
-        if session_id not in _snapshots:
-            _snapshots[session_id] = []
-        _snapshots[session_id].append(get_state(workflow))
-
-    t.append(time.time())  # t[2] = after snapshot
-
-    if completed_task:
-        task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
-        if "data" in completed_task:
-            task.data.update(completed_task["data"])
-    else:
-        task = next_task(workflow, TaskState.READY)
-
-    t.append(time.time())  # t[3] = after task lookup
-
-    try:
-        workflow = _advance_workflow(workflow, task, strategy_name)
-        t.append(time.time())  # t[4] = after advance
-        result = build_compact_response(workflow, None)
-        t.append(time.time())  # t[5] = after response
-
-        ms = lambda a, b: f"{(t[b]-t[a])*1000:.0f}"
-        n_tasks = sum(1 for _ in workflow.get_tasks())
-        n_subs = len(workflow.subprocesses)
-        print(f"[python] setup={ms(0,1)}ms snapshot={ms(1,2)}ms advance={ms(3,4)}ms response={ms(4,5)}ms total={ms(0,5)}ms | tasks={n_tasks} subs={n_subs}")
-
-        return result
-    except Exception as e:
-        try:
-            return build_compact_response(workflow, e)
-        except Exception as e2:
-            return json.dumps({ "status": "error", "message": f"{e2}" })
-
-def restore_snapshot(session_id, index, specs):
-    snaps = _snapshots.get(session_id, [])
-    if index < 0 or index >= len(snaps):
-        return json.dumps(None)
-
-    state = snaps[index]
-    _snapshots[session_id] = snaps[:index + 1]
-
-    workflow = hydrate_workflow(specs, state)
-    _workflows[session_id] = workflow
-
-    return json.dumps(compact_state(workflow))
-
-def drop_session(session_id):
-    _workflows.pop(session_id, None)
-    _snapshots.pop(session_id, None)
-
