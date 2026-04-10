@@ -147,7 +147,7 @@ export default function MessageModelList({
     location: string;
   } | null>(null);
   const hasInitializedEditor = useRef(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { page, perPage } = getPageInfoFromSearchParams(
     searchParams,
@@ -262,6 +262,15 @@ export default function MessageModelList({
       },
     });
   }, [createLocation, t]);
+
+  const closeEditor = useCallback(() => {
+    setEditorState(null);
+    // Clear message_id and source_location params when closing editor
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('message_id');
+    nextSearchParams.delete('source_location');
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const deleteMessageModel = useCallback(
     (messageModel: MessageModelResponse) => {
@@ -436,7 +445,7 @@ export default function MessageModelList({
       )}
       <Dialog
         open={editorState != null}
-        onClose={() => setEditorState(null)}
+        onClose={closeEditor}
         fullWidth
         maxWidth="md"
       >
@@ -484,7 +493,7 @@ export default function MessageModelList({
               >
                 {t('save')}
               </Button>
-              <Button onClick={() => setEditorState(null)}>{t('close')}</Button>
+              <Button onClick={closeEditor}>{t('close')}</Button>
             </DialogActions>
           </>
         ) : null}

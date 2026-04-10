@@ -10,7 +10,7 @@ export default function MessageListPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab =
-    searchParams.get('tab') === 'instances' ? 'instances' : 'models';
+    searchParams.get('tab') === 'models' ? 'models' : 'instances';
   const initialMessageId = searchParams.get('message_id') || undefined;
   const initialSourceLocation =
     searchParams.get('source_location') || undefined;
@@ -27,15 +27,15 @@ export default function MessageListPage() {
       <Tabs
         value={selectedTab}
         onChange={(_event, nextTab) => {
-          const nextSearchParams = new URLSearchParams(searchParams);
+          const nextSearchParams = new URLSearchParams();
           nextSearchParams.set('tab', nextTab);
           setSearchParams(nextSearchParams);
         }}
         aria-label="Messages tabs"
         sx={{ mb: 2 }}
       >
-        <Tab value="models" label={t('message_models_tab')} />
         <Tab value="instances" label={t('message_instances_tab')} />
+        <Tab value="models" label={t('message_models_tab')} />
       </Tabs>
       {selectedTab === 'models' ? (
         <MessageModelList

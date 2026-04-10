@@ -215,6 +215,7 @@ export default function ProcessModelEditDiagram() {
       if (messageId) {
         const nextSearchParams = new URLSearchParams({
           message_id: messageId,
+          tab: 'models',
         });
         const sourceLocation = unModifyProcessIdentifierForPathParam(
           modifiedProcessModelId,
@@ -224,7 +225,7 @@ export default function ProcessModelEditDiagram() {
         }
         window.open(`/messages?${nextSearchParams.toString()}`, '_blank');
       } else {
-        window.open('/messages', '_blank');
+        window.open('/messages?tab=models', '_blank');
       }
     },
     [modifiedProcessModelId],
