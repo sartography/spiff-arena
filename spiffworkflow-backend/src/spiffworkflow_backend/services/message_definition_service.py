@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from flask import current_app
@@ -186,23 +185,6 @@ class MessageDefinitionService:
         return all_message_models
 
     @classmethod
-    def _process_group_json_path(cls, process_group_id: str) -> str:
-        """Get the path to a process group's JSON file."""
-        return os.path.join(ProcessModelService.full_path_from_id(process_group_id), ProcessModelService.PROCESS_GROUP_JSON_FILE)
-
-    @classmethod
-    def _read_process_group_json(cls, process_group_id: str) -> str:
-        """Read the contents of a process group's JSON file."""
-        with open(cls._process_group_json_path(process_group_id)) as process_group_file:
-            return process_group_file.read()
-
-    @classmethod
-    def _restore_process_group_json(cls, process_group_id: str, contents: str) -> None:
-        """Restore a process group's JSON file from backup contents."""
-        with open(cls._process_group_json_path(process_group_id), "w") as process_group_file:
-            process_group_file.write(contents)
-
-    @classmethod
     def persist_process_groups_with_messages(
         cls,
         updated_process_groups: dict[str, ProcessGroup],
@@ -211,7 +193,8 @@ class MessageDefinitionService:
         """Persist process groups and their message models in a single transaction with rollback support."""
         all_message_models = cls.collect_for_multiple_process_groups(process_groups_with_message_metadata)
         file_backups = {
-            process_group_id: cls._read_process_group_json(process_group_id) for process_group_id in updated_process_groups
+            process_group_id: ProcessModelService.read_process_group_json(process_group_id)
+            for process_group_id in updated_process_groups
         }
 
         try:
@@ -226,5 +209,5 @@ class MessageDefinitionService:
         except Exception:
             db.session.rollback()
             for process_group_id, original_contents in file_backups.items():
-                cls._restore_process_group_json(process_group_id, original_contents)
+                ProcessModelService.restore_process_group_json(process_group_id, original_contents)
             raise

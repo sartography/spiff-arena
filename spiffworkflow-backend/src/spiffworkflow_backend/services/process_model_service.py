@@ -669,6 +669,23 @@ class ProcessModelService(FileSystemService):
         return process_group
 
     @classmethod
+    def process_group_json_path(cls, process_group_id: str) -> str:
+        """Get the path to a process group's JSON file."""
+        return os.path.join(cls.full_path_from_id(process_group_id), cls.PROCESS_GROUP_JSON_FILE)
+
+    @classmethod
+    def read_process_group_json(cls, process_group_id: str) -> str:
+        """Read the contents of a process group's JSON file."""
+        with open(cls.process_group_json_path(process_group_id)) as process_group_file:
+            return process_group_file.read()
+
+    @classmethod
+    def restore_process_group_json(cls, process_group_id: str, contents: str) -> None:
+        """Restore a process group's JSON file from backup contents."""
+        with open(cls.process_group_json_path(process_group_id), "w") as process_group_file:
+            process_group_file.write(contents)
+
+    @classmethod
     def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:
         original_group_path = cls.full_path_from_id(original_process_group_id)
         _, original_base_group_id = os.path.split(original_group_path)
