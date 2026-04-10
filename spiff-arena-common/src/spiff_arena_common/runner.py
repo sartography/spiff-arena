@@ -209,11 +209,6 @@ def lazy_loads(workflow):
             specs.add(task_spec.spec)
     return list(specs)
 
-def missing_lazy_load_specs(workflow):
-    for spec in lazy_loads(workflow):
-        if spec not in workflow.subprocess_specs:
-            return True
-    return False
 
 def next_task(workflow, state, from_task=None):
     """Find the next task in the given state.
@@ -233,6 +228,7 @@ def next_task(workflow, state, from_task=None):
 
 def _advance_workflow(workflow, task, strategy_name, compress_state=False):
     iters = 0
+    lazy_loads_list = None
 
     # Cache fixture file for unittest strategy to avoid repeated file I/O
     cached_fixture = None
@@ -263,7 +259,8 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
         # Only check for missing lazy loads if not using file-based test fixtures
         # (file fixtures preload all specs recursively, so this check is redundant and expensive)
         if not (strategy_name == "unittest" and cached_fixture_file):
-            if missing_lazy_load_specs(workflow):
+            lazy_loads_list = lazy_loads(workflow)
+            if any(spec not in workflow.subprocess_specs for spec in lazy_loads_list):
                 break
 
         # Optimization: try searching from completed task first (fast path),
@@ -327,7 +324,7 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                     task.run()
                     task.data.update(expected["data"])
 
-    return build_response(workflow, None, compress_state=compress_state)
+    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
     workflow = hydrate_workflow(specs, state)
@@ -392,13 +389,14 @@ def get_state(workflow, compress=False):
 
     return state
 
-def build_response(workflow, e, compress_state=False):
+def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
     """Build response with workflow state.
 
     Args:
         workflow: The workflow instance
         e: Exception if error occurred, None otherwise
         compress_state: If True, compress state with gzip
+        lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
 
     Returns:
         JSON string with response data
@@ -426,7 +424,7 @@ def build_response(workflow, e, compress_state=False):
             workflow,
             TaskFilter(TaskState.STARTED | TaskState.READY | TaskState.WAITING),
         )
-        response["lazy_loads"] = lazy_loads(workflow)
+        response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
     response["state"] = get_state(workflow, compress=compress_state)
     if compress_state:
