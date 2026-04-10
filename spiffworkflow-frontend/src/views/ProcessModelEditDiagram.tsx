@@ -222,12 +222,12 @@ export default function ProcessModelEditDiagram() {
         if (sourceLocation) {
           nextSearchParams.set('source_location', sourceLocation);
         }
-        navigate(`/messages?${nextSearchParams.toString()}`);
+        window.open(`/messages?${nextSearchParams.toString()}`, '_blank');
       } else {
-        navigate('/messages');
+        window.open('/messages', '_blank');
       }
     },
-    [modifiedProcessModelId, navigate],
+    [modifiedProcessModelId],
   );
 
   const { addError, removeError } = useAPIError();
