@@ -18,10 +18,11 @@ from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnviron
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser
+from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG
-from SpiffWorkflow.spiff.serializer.task_spec import ServiceTaskConverter, SpiffBpmnTaskConverter
-from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ServiceTask, UserTask
+from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter
+from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ReceiveTask, SendTask, ServiceTask, UserTask
 from SpiffWorkflow.util.task import TaskFilter, TaskState
 
 logging.basicConfig(level=logging.ERROR)
@@ -62,6 +63,26 @@ class CustomUserTaskConverter(SpiffBpmnTaskConverter):
     def __init__(self, target_class, registry, typename = "UserTask"):
         super().__init__(target_class, registry, typename)
 
+class CustomReceiveTask(ReceiveTask):
+    def _update_hook(self, my_task):
+        # Bypass event waiting — go straight to READY so the UI can show a form
+        return True
+
+    def _run(self, my_task):
+        return None
+
+class CustomReceiveTaskConverter(SendReceiveTaskConverter):
+    def __init__(self, target_class, registry, typename = "ReceiveTask"):
+        super().__init__(target_class, registry, typename)
+
+class CustomSendTask(SendTask):
+    def _run(self, my_task):
+        return None
+
+class CustomSendTaskConverter(SendReceiveTaskConverter):
+    def __init__(self, target_class, registry, typename = "SendTask"):
+        super().__init__(target_class, registry, typename)
+
 class CustomParser(SpiffBpmnParser):
     DATA_STORE_CLASSES = {
         "JSONFileDataStore": JSONFileDataStore,
@@ -72,17 +93,23 @@ class CustomParser(SpiffBpmnParser):
     OVERRIDE_PARSER_CLASSES.update({full_tag("task"): (SpiffTaskParser, CustomNoneTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("serviceTask"): (ServiceTaskParser, CustomServiceTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("userTask"): (SpiffTaskParser, CustomUserTask)})
+    OVERRIDE_PARSER_CLASSES.update({full_tag("receiveTask"): (SpiffReceiveTaskParser, CustomReceiveTask)})
+    OVERRIDE_PARSER_CLASSES.update({full_tag("sendTask"): (SpiffSendTaskParser, CustomSendTask)})
 
 
 SPIFF_CONFIG[CustomManualTask] = CustomManualTaskConverter
 SPIFF_CONFIG[CustomNoneTask] = CustomNoneTaskConverter
 SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
 SPIFF_CONFIG[CustomUserTask] = CustomUserTaskConverter
+SPIFF_CONFIG[CustomReceiveTask] = CustomReceiveTaskConverter
+SPIFF_CONFIG[CustomSendTask] = CustomSendTaskConverter
 
 del SPIFF_CONFIG[ManualTask]
 del SPIFF_CONFIG[NoneTask]
 del SPIFF_CONFIG[ServiceTask]
 del SPIFF_CONFIG[UserTask]
+del SPIFF_CONFIG[ReceiveTask]
+del SPIFF_CONFIG[SendTask]
 
 class CustomEnvironment(TaskDataEnvironment):
     def __init__(self):
@@ -323,7 +350,6 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                         break
                     task.run()
                     task.data.update(expected["data"])
-
     return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
 
 def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
@@ -354,7 +380,7 @@ def get_tasks(workflow, task_filter):
     spec_keys = set([
         "name", "description", "manual", "bpmn_id", "bpmn_name",
         "lane", "documentation", "extensions", "typename",
-        "result_variable", "spec",
+        "result_variable", "spec", "event_definition",
     ])
 
     return [{
@@ -431,4 +457,3 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         response["state_compressed"] = True
 
     return json.dumps(response)
-
