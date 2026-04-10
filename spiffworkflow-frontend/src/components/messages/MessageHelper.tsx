@@ -97,7 +97,7 @@ export const areCorrelationPropertiesInSync = (
     ? processGroup.messages[messageId]
     : undefined;
 
-  if (!message && currentLocation) {
+  if (!message && currentLocation != null) {
     const nearestAncestorLocation = findNearestAncestorLocation(
       currentLocation,
       matchingMessageModels.map((messageModel) => messageModel.location),
