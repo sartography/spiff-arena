@@ -62,6 +62,17 @@ class MessageDefinitionService:
         return models
 
     @classmethod
+    def _build_process_group_with_messages(cls, process_group: ProcessGroup, messages: dict[str, Any]) -> ProcessGroup:
+        """Helper to build a ProcessGroup with updated messages."""
+        return ProcessGroup.from_dict(
+            {
+                **cls.serialize_process_group_for_disk(process_group),
+                "id": process_group.id,
+                "messages": messages,
+            }
+        )
+
+    @classmethod
     def collect_message_models(
         cls, process_group: ProcessGroup, location: str, all_message_models: dict[tuple[str, str], MessageModel]
     ) -> None:
@@ -220,74 +231,41 @@ class MessageDefinitionService:
         source_message_identifier: str,
         target_message_identifier: str,
         message_definition: dict[str, Any],
-    ) -> tuple[ProcessGroup, ProcessGroup]:
+    ) -> ProcessGroup:
         """Move a message definition from source to target process group, optionally renaming it.
 
-        Returns: (updated_source_process_group, updated_target_process_group)
+        Returns: updated_target_process_group
         Raises: ValueError if source message not found or invalid message definition
         """
-        source_process_group_id = source_process_group.id
-        target_process_group_id = target_process_group.id
-
-        # Validate source message exists
+        # Validate and manipulate messages
         source_messages = dict(source_process_group.messages or {})
         if source_message_identifier not in source_messages:
-            raise ValueError(f"Message '{source_message_identifier}' was not found at '{source_process_group_id}'")
+            raise ValueError(f"Message '{source_message_identifier}' was not found at '{source_process_group.id}'")
 
-        # Remove message from source and handle potential naming conflicts
         target_messages = dict(target_process_group.messages or {})
         source_messages.pop(source_message_identifier, None)
         if source_message_identifier != target_message_identifier:
-            # If renaming, remove any conflicts in both source and target
             source_messages.pop(target_message_identifier, None)
             target_messages.pop(source_message_identifier, None)
 
-        # Add sanitized message to target
-        sanitized_message_definition = cls.strip_metadata({target_message_identifier: message_definition}) or {}
-        target_messages[target_message_identifier] = sanitized_message_definition[target_message_identifier]
+        sanitized = cls.strip_metadata({target_message_identifier: message_definition}) or {}
+        target_messages[target_message_identifier] = sanitized[target_message_identifier]
 
-        # Build updated process groups for persistence (without metadata)
-        updated_source_process_group = ProcessGroup.from_dict(
-            {
-                **cls.serialize_process_group_for_disk(source_process_group),
-                "id": source_process_group_id,
-                "messages": source_messages,
-            }
-        )
-        updated_target_process_group = ProcessGroup.from_dict(
-            {
-                **cls.serialize_process_group_for_disk(target_process_group),
-                "id": target_process_group_id,
-                "messages": target_messages,
-            }
-        )
-
-        # Build process groups with metadata for message model persistence
-        source_messages_with_metadata = dict(source_messages)
+        # Build groups for persistence
         target_messages_with_metadata = dict(target_messages)
         target_messages_with_metadata[target_message_identifier] = message_definition
 
         cls.persist_process_groups_with_messages(
             updated_process_groups={
-                source_process_group_id: updated_source_process_group,
-                target_process_group_id: updated_target_process_group,
+                source_process_group.id: cls._build_process_group_with_messages(source_process_group, source_messages),
+                target_process_group.id: cls._build_process_group_with_messages(target_process_group, target_messages),
             },
             process_groups_with_message_metadata={
-                source_process_group_id: ProcessGroup.from_dict(
-                    {
-                        **cls.serialize_process_group_for_disk(source_process_group),
-                        "id": source_process_group_id,
-                        "messages": source_messages_with_metadata,
-                    }
-                ),
-                target_process_group_id: ProcessGroup.from_dict(
-                    {
-                        **cls.serialize_process_group_for_disk(target_process_group),
-                        "id": target_process_group_id,
-                        "messages": target_messages_with_metadata,
-                    }
+                source_process_group.id: cls._build_process_group_with_messages(source_process_group, source_messages),
+                target_process_group.id: cls._build_process_group_with_messages(
+                    target_process_group, target_messages_with_metadata
                 ),
             },
         )
 
-        return updated_source_process_group, updated_target_process_group
+        return cls._build_process_group_with_messages(target_process_group, target_messages)

@@ -220,7 +220,7 @@ def move_message_definition(
 
     # Move message (service handles all business logic)
     try:
-        _, updated_target_process_group = MessageDefinitionService.move_message_between_groups(
+        updated_target_process_group = MessageDefinitionService.move_message_between_groups(
             source_process_group=source_process_group,
             target_process_group=target_process_group,
             source_message_identifier=source_message_identifier,
@@ -228,17 +228,8 @@ def move_message_definition(
             message_definition=message_definition,
         )
     except ValueError as exception:
-        # Convert service ValueError to appropriate HTTP error
-        error_message = str(exception)
-        if "was not found at" in error_message:
-            error_code = "message_definition_not_found"
-        else:
-            error_code = "invalid_message_model"
-        raise ApiError(
-            error_code=error_code,
-            message=error_message,
-            status_code=400,
-        ) from exception
+        error_code = "message_definition_not_found" if "was not found at" in str(exception) else "invalid_message_model"
+        raise ApiError(error_code=error_code, message=str(exception), status_code=400) from exception
 
     _commit_and_push_to_git(
         f"User: {g.user.username} moved message {source_message_identifier} from "
