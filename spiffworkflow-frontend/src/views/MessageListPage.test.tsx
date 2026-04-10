@@ -60,7 +60,7 @@ describe('MessageListPage', () => {
     render(
       <MemoryRouter
         initialEntries={[
-          '/messages?message_id=request-for-information-received&source_location=order%2Frequest-for-information%2Frequest-for-information',
+          '/messages?tab=models&message_id=request-for-information-received&source_location=order%2Frequest-for-information%2Frequest-for-information',
         ]}
       >
         <MessageListPage />

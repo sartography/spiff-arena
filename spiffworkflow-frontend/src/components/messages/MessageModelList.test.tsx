@@ -148,7 +148,7 @@ describe('MessageModelList', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('message-editor')).toHaveAttribute(
       'data-hide-submit-button',
-      'false',
+      'true',
     );
   });
 
