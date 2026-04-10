@@ -29,8 +29,15 @@ import {
   Info,
 } from '@mui/icons-material';
 
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
+import ThemedCodeMirrorMerge from '../components/ThemedCodeMirrorMerge';
+import { python } from '@codemirror/lang-python';
+import { json } from '@codemirror/lang-json';
+import { indentUnit } from '@codemirror/language';
+import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
+import { EditorState, StateField, StateEffect } from '@codemirror/state';
+
 import { Can } from '@casl/react';
-import { Editor, DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -64,7 +71,6 @@ import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
   getGroupFromModifiedModelId,
-  makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
@@ -82,6 +88,44 @@ import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
+// State effects for managing error line decorations in script editor
+const addErrorLineEffect = StateEffect.define<{
+  line: number;
+  error: string;
+}>();
+const clearErrorLineEffect = StateEffect.define<null>();
+
+// State field to track error line decorations
+const errorLineField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (effect.is(addErrorLineEffect)) {
+        const { line: lineNumber, error } = effect.value;
+        try {
+          const line = tr.state.doc.line(lineNumber);
+          const decoration = Decoration.line({
+            attributes: {
+              class: 'cm-script-error-line',
+              'data-error': error,
+            },
+          });
+          decorations = Decoration.set([decoration.range(line.from)]);
+        } catch (e) {
+          console.error('Failed to add error decoration:', e);
+        }
+      } else if (effect.is(clearErrorLineEffect)) {
+        decorations = Decoration.none;
+      }
+    }
+    return decorations;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -95,10 +139,13 @@ export default function ProcessModelEditDiagram() {
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
-  const editorRef = useRef(null);
-  const monacoRef = useRef(null);
-
-  const failingScriptLineClassNamePrefix = 'failingScriptLineError';
+  // CodeMirror editor reference for script unit test error highlighting
+  const scriptEditorViewRef = useRef<EditorView | null>(null);
+  // Persist error info to apply when editor is created (survives tab switches)
+  const [scriptErrorInfo, setScriptErrorInfo] = useState<{
+    line: number;
+    error: string;
+  } | null>(null);
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
@@ -161,13 +208,6 @@ export default function ProcessModelEditDiagram() {
     markdownEditorState,
     jsonSchemaEditorState,
   });
-
-  function handleEditorDidMount(editor: any, monaco: any) {
-    // here is the editor instance
-    // you can store it in `useRef` for further usage
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-  }
 
   const params = useParams();
   const navigate = useNavigate();
@@ -464,15 +504,13 @@ export default function ProcessModelEditDiagram() {
 
   const resetUnitTextResult = () => {
     resetScriptUnitTestResult();
-    const styleSheet = document.styleSheets[0];
-    const ruleList = styleSheet.cssRules;
-    for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
-      const regexp = new RegExp(
-        `^.${failingScriptLineClassNamePrefix}_.*::after `,
-      );
-      if (ruleList[ii].cssText.match(regexp)) {
-        styleSheet.deleteRule(ii);
-      }
+    // Clear error state
+    setScriptErrorInfo(null);
+    // Clear any error line decorations in the editor
+    if (scriptEditorViewRef.current) {
+      scriptEditorViewRef.current.dispatch({
+        effects: clearErrorLineEffect.of(null),
+      });
     }
   };
 
@@ -534,58 +572,44 @@ export default function ProcessModelEditDiagram() {
     updateExpectedOutputJson(value, scriptElement, scriptModeling);
   };
 
-  const generalEditorOptions = () => {
-    return {
-      glyphMargin: false,
-      folding: false,
-      lineNumbersMinChars: 0,
-    };
-  };
-
-  const jsonEditorOptions = () => {
-    return Object.assign(generalEditorOptions(), {
-      minimap: { enabled: false },
-      folding: true,
-    });
-  };
-
   const processScriptUnitTestRunResult = (result: any) => {
     if ('result' in result) {
       setScriptUnitTestResult(result);
-      if (
-        result.line_number &&
-        result.error &&
-        editorRef.current &&
-        monacoRef.current
-      ) {
-        const currentClassName = `${failingScriptLineClassNamePrefix}_${makeid(
-          7,
-        )}`;
+      // Store error info for highlighting (will be applied when editor is created/visible)
+      if (result.line_number && result.error) {
+        // Ensure CSS styles are present
+        if (!document.getElementById('cm-script-error-styles')) {
+          const style = document.createElement('style');
+          style.id = 'cm-script-error-styles';
+          style.textContent = `
+            .cm-script-error-line {
+              background-color: rgba(255, 0, 0, 0.1) !important;
+              border-left: 3px solid red !important;
+            }
+            .cm-script-error-line::after {
+              content: "  # " attr(data-error);
+              color: red;
+              font-style: italic;
+            }
+          `;
+          document.head.appendChild(style);
+        }
 
-        // document.documentElement.style.setProperty causes the content property to go away
-        // so add the rule dynamically instead of changing a property variable
-        document.styleSheets[0].addRule(
-          `.${currentClassName}::after`,
-          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`,
-        );
+        // Store error info to persist across tab switches
+        setScriptErrorInfo({
+          line: result.line_number,
+          error: result.error,
+        });
 
-        const lineLength =
-          scriptText.split('\n')[result.line_number - 1].length + 1;
-
-        const editorRefToUse = editorRef.current as any;
-        editorRefToUse.deltaDecorations(
-          [],
-          [
-            {
-              // Range(lineStart, column, lineEnd, column)
-              range: new (monacoRef.current as any).Range(
-                result.line_number,
-                lineLength,
-              ),
-              options: { afterContentClassName: currentClassName },
-            },
-          ],
-        );
+        // If editor is currently mounted, apply decoration immediately
+        if (scriptEditorViewRef.current) {
+          scriptEditorViewRef.current.dispatch({
+            effects: addErrorLineEffect.of({
+              line: result.line_number,
+              error: result.error,
+            }),
+          });
+        }
       }
     }
   };
@@ -656,15 +680,20 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <DiffEditor
-            height={200}
-            width="auto"
-            originalLanguage="json"
-            modifiedLanguage="json"
-            options={Object.assign(jsonEditorOptions(), {})}
-            original={outputJson}
-            modified={contextJson}
-          />
+          <ThemedCodeMirrorMerge style={{ height: '200px' }}>
+            <ThemedCodeMirrorMerge.Original
+              value={outputJson}
+              extensions={[json()]}
+            />
+            <ThemedCodeMirrorMerge.Modified
+              value={contextJson}
+              extensions={[
+                json(),
+                EditorView.editable.of(false),
+                EditorState.readOnly.of(true),
+              ]}
+            />
+          </ThemedCodeMirrorMerge>
         );
       }
       return (
@@ -767,12 +796,10 @@ export default function ProcessModelEditDiagram() {
             <Grid size={{ xs: 6 }}>
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
-                <Editor
-                  height={500}
-                  width="auto"
-                  defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
-                  defaultValue={inputJson}
+                <ThemedCodeMirror
+                  height={'500px'}
+                  value={inputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
@@ -782,12 +809,10 @@ export default function ProcessModelEditDiagram() {
                 {t('diagram_script_editor_unit_test_expected_output_json')}
               </div>
               <div>
-                <Editor
-                  height={500}
-                  width="auto"
-                  defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
-                  defaultValue={outputJson}
+                <ThemedCodeMirror
+                  height={'500px'}
+                  value={outputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitOutputChange}
                 />
               </div>
@@ -801,16 +826,32 @@ export default function ProcessModelEditDiagram() {
 
   /* Main python script editor user works in */
   const editorWindow = () => {
+    const handleEditorCreate = (view: EditorView) => {
+      scriptEditorViewRef.current = view;
+
+      // Apply error decoration if there's a pending error from unit test
+      if (scriptErrorInfo) {
+        // Use setTimeout to ensure the editor is fully initialized
+        setTimeout(() => {
+          if (view && scriptErrorInfo) {
+            view.dispatch({
+              effects: addErrorLineEffect.of({
+                line: scriptErrorInfo.line,
+                error: scriptErrorInfo.error,
+              }),
+            });
+          }
+        }, 0);
+      }
+    };
+
     return (
-      <Editor
-        height={500}
-        width="auto"
-        options={generalEditorOptions()}
-        defaultLanguage="python"
-        defaultValue={scriptText}
+      <ThemedCodeMirror
+        height={'500px'}
         value={scriptText}
+        extensions={[python(), indentUnit.of('    '), errorLineField]}
         onChange={handleEditorScriptChange}
-        onMount={handleEditorDidMount}
+        onCreateEditor={handleEditorCreate}
       />
     );
   };

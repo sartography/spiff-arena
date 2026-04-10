@@ -7,7 +7,7 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-port="${CONNECTOR_PROXY_PORT:-}"
+port="${CONNECTOR_PROXY_ASYNC_HTTP_PORT:-}"
 if [[ -z "$port" ]]; then
   port=7004
 fi
@@ -16,6 +16,5 @@ workers=3
 
 # THIS MUST BE THE LAST COMMAND!
 # Dependencies are already installed into the image virtualenv during build,
-# so avoid invoking Poetry again at runtime.
-# default --limit-request-line is 4094. see https://stackoverflow.com/a/66688382/6090676
-exec gunicorn --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --access-logfile '-' --log-level debug app:app
+# so avoid invoking pip again at runtime.
+exec granian --host "0.0.0.0" --port "$port" --workers "$workers" --interface asgi main:app

@@ -1,5 +1,7 @@
+import base64
 import calendar
 import datetime
+import gzip
 import json
 import logging
 import time
@@ -193,6 +195,15 @@ def specs_from_xml(files):
     return json.dumps(workflow_specs_dct), None
 
 def hydrate_workflow(specs, state):
+    """Hydrate workflow from specs and state.
+
+    Args:
+        specs: JSON string or dict of workflow specs
+        state: dict, str (base64-encoded gzip-compressed), or None
+
+    Returns:
+        BpmnWorkflow instance
+    """
     specs = serializer.deserialize_json(specs)
     process = specs.pop("spec")
     subprocesses = specs.pop("subprocess_specs")
@@ -200,6 +211,13 @@ def hydrate_workflow(specs, state):
     if not state:
         workflow = BpmnWorkflow(process, subprocesses)
     else:
+        # Handle base64-encoded gzip-compressed state (string)
+        if isinstance(state, str) and not state.startswith('{'):
+            # Decode base64 then decompress
+            compressed = base64.b64decode(state)
+            decompressed = gzip.decompress(compressed)
+            state = json.loads(decompressed.decode('utf-8'))
+
         state["spec"] = process
         state["subprocess_specs"] = subprocesses
         workflow = serializer.from_dict(state)
@@ -218,34 +236,67 @@ def lazy_loads(workflow):
             specs.add(task_spec.spec)
     return list(specs)
 
-def missing_lazy_load_specs(workflow):
-    for spec in lazy_loads(workflow):
-        if spec not in workflow.subprocess_specs:
-            return True
-    return False
 
-def next_task(workflow, state):
-    task_filter = TaskFilter(state=TaskState.READY)
-    for task in workflow.get_tasks(task_filter=task_filter):
+def next_task(workflow, state, from_task=None):
+    """Find the next task in the given state.
+
+    Args:
+        workflow: The workflow to search
+        state: TaskState to filter by
+        from_task: Optional task to start searching from (instead of root)
+
+    Returns:
+        The next task, or None if not found
+    """
+    task_filter = TaskFilter(state=state)
+    for task in workflow.get_tasks(first_task=from_task, task_filter=task_filter):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name):
+def _advance_workflow(workflow, task, strategy_name, compress_state=False):
     iters = 0
+    lazy_loads_list = None
 
-    # TODO: make maxIters part of strategy
-    while task and iters < 100:
+    # Cache fixture file for unittest strategy to avoid repeated file I/O
+    cached_fixture = None
+    cached_fixture_file = None
+    if strategy_name == "unittest" and task:
+        fixture_file = task.data.get("spiff_testFixture_file")
+        if fixture_file:
+            try:
+                with open(fixture_file) as f:
+                    cached_fixture = json.load(f)
+                cached_fixture_file = fixture_file
+            except Exception as e:
+                raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+
+    # TODO: make maxIters part of strategy, add cycle detection
+    while task and iters < 5000:
         iters = iters + 1
+
+        # Report progress every 50 iterations for UI feedback
+        if iters % 50 == 0:
+            print(f"[progress] iteration: {iters}", flush=True)
+
         if task.state == TaskState.STARTED:
             task.complete()
         else:
             task.run()
-        workflow.refresh_waiting_tasks()
 
-        if missing_lazy_load_specs(workflow):
-            break
+        # Only check for missing lazy loads if not using file-based test fixtures
+        # (file fixtures preload all specs recursively, so this check is redundant and expensive)
+        if not (strategy_name == "unittest" and cached_fixture_file):
+            lazy_loads_list = lazy_loads(workflow)
+            if any(spec not in workflow.subprocess_specs for spec in lazy_loads_list):
+                break
 
-        task = next_task(workflow, TaskState.READY)
+        # Optimization: try searching from completed task first (fast path),
+        # only refresh waiting tasks if fast path fails (deferred refresh)
+        completed_task = task
+        task = next_task(workflow, TaskState.READY, completed_task)
+        if not task:
+            workflow.refresh_waiting_tasks()
+            task = next_task(workflow, TaskState.READY)
         if not task:
             break
         elif strategy_name == "oneAtATime" and task.task_spec.bpmn_id:
@@ -258,32 +309,37 @@ def _advance_workflow(workflow, task, strategy_name):
                 # Check for file-based fixture first (ed recording playback)
                 fixture_file = task.data.get("spiff_testFixture_file")
                 if fixture_file:
-                    # File-based fixture: read from disk and manage index.
-                    # Index is stored in workflow.data (shared across all tasks) to ensure
-                    # the counter stays synchronized even when tasks are created ahead of time.
-                    try:
-                        with open(fixture_file) as f:
-                            fixture = json.load(f)
-                        stack = fixture.get("pendingTaskStack", [])
+                    # Use cached fixture data instead of re-reading from disk
+                    if cached_fixture_file != fixture_file or cached_fixture is None:
+                        # Fixture file changed or wasn't cached - shouldn't happen but handle it
+                        try:
+                            with open(fixture_file) as f:
+                                cached_fixture = json.load(f)
+                            cached_fixture_file = fixture_file
+                        except Exception as e:
+                            raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
 
-                        if "spiff_testFixture_index" not in workflow.data:
-                            index = len(stack) - 1
-                        else:
-                            index = workflow.data["spiff_testFixture_index"]
+                    stack = cached_fixture.get("pendingTaskStack", [])
 
-                        if index < 0 or index >= len(stack):
-                            break
+                    if "spiff_testFixture_index" not in workflow.data:
+                        index = len(stack) - 1
+                    else:
+                        index = workflow.data["spiff_testFixture_index"]
 
-                        expected = stack[index]
-                        if task.task_spec.name != expected["id"]:
-                            break
+                    # If recording is exhausted (index < 0), let task run interactively
+                    if index < 0:
+                        break
 
-                        task.run()
-                        task.data.update(expected["data"])
-                        workflow.data["spiff_testFixture_index"] = index - 1
-                    except Exception as e:
-                        # Re-raise so the error is properly reported in the response
-                        raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+                    if index >= len(stack):
+                        break
+
+                    expected = stack[index]
+                    if task.task_spec.name != expected["id"]:
+                        break
+
+                    task.run()
+                    task.data.update(expected["data"])
+                    workflow.data["spiff_testFixture_index"] = index - 1
                 else:
                     # Fallback to inline fixture (process-models compatibility)
                     stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
@@ -294,16 +350,15 @@ def _advance_workflow(workflow, task, strategy_name):
                         break
                     task.run()
                     task.data.update(expected["data"])
+    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
 
-    return workflow
-
-def advance_workflow(specs, state, completed_task, strategy_name, start_params):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
     workflow = hydrate_workflow(specs, state)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_params.get("data", {}))
             break
-    
+
     if completed_task:
         task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
         if "data" in completed_task:
@@ -312,11 +367,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params):
         task = next_task(workflow, TaskState.READY)
 
     try:
-        workflow = _advance_workflow(workflow, task, strategy_name)
-        return build_response(workflow, None)
+        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state)
     except Exception as e:
         try:
-            return build_response(workflow, e)
+            return build_response(workflow, e, compress_state=compress_state)
         except Exception as e:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
@@ -339,10 +393,26 @@ def get_tasks(workflow, task_filter):
         },
     } for t in tasks]
     
-def get_state(workflow):
+def get_state(workflow, compress=False):
+    """Get workflow state, optionally compressed with gzip.
+
+    Args:
+        workflow: The workflow to serialize
+        compress: If True, return base64-encoded gzip-compressed string. If False, return dict.
+
+    Returns:
+        str (base64-encoded compressed, if compress=True) or dict (if compress=False)
+    """
     state = serializer.to_dict(workflow)
     state.pop("spec")
     state.pop("subprocess_specs")
+
+    if compress:
+        json_str = json.dumps(state)
+        compressed = gzip.compress(json_str.encode('utf-8'))
+        # Base64 encode for JSON serialization
+        return base64.b64encode(compressed).decode('ascii')
+
     return state
 
 def compact_state(workflow):
@@ -367,7 +437,18 @@ def compact_state(workflow):
 
     return result
 
-def build_response(workflow, e):
+def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
+    """Build response with workflow state.
+
+    Args:
+        workflow: The workflow instance
+        e: Exception if error occurred, None otherwise
+        compress_state: If True, compress state with gzip
+        lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
+
+    Returns:
+        JSON string with response data
+    """
     completed = workflow.completed
 
     if e is None:
@@ -391,9 +472,11 @@ def build_response(workflow, e):
             workflow,
             TaskFilter(TaskState.STARTED | TaskState.READY | TaskState.WAITING),
         )
-        response["lazy_loads"] = lazy_loads(workflow)
+        response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
-    response["state"] = get_state(workflow)
+    response["state"] = get_state(workflow, compress=compress_state)
+    if compress_state:
+        response["state_compressed"] = True
 
     return json.dumps(response)
 

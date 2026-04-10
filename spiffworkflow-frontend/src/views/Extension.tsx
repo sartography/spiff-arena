@@ -1,7 +1,9 @@
 import { createElement, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import { EditorState } from '@codemirror/state';
+import { json } from '@codemirror/lang-json';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessFile, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -396,17 +398,10 @@ export default function Extension({
         componentsToDisplay.push(
           <>
             <h2 className="with-top-margin">Result:</h2>
-            <Editor
-              className="with-top-margin"
+            <ThemedCodeMirror
               height="30rem"
-              width="auto"
-              defaultLanguage="json"
-              defaultValue={JSON.stringify(processedTaskData, null, 2)}
-              options={{
-                readOnly: true,
-                scrollBeyondLastLine: true,
-                minimap: { enabled: true },
-              }}
+              value={JSON.stringify(processedTaskData, null, 2)}
+              extensions={[json(), EditorState.readOnly.of(true)]}
             />
           </>,
         );

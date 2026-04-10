@@ -629,16 +629,17 @@ class BaseTest:
         shutil.copytree(source, destination)
 
     def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
-        """Round last state change to the nearest 4 significant digits.
+        """Round last state change to the nearest 3 decimal places.
 
         Works around imprecise floating point values in mysql json columns.
-        The values between mysql and SpiffWorkflow seem to have minor differences on randomly and since
-        we do not care about such precision for this field, round it to a value that is more likely to match.
+        MySQL's JSON round-trip can alter the value by up to 0.0001,
+        and we do not care about such precision for this field,
+        so round it to a value that will match when we compare actual to expected.
         """
         if isinstance(bpmn_process_dict, dict):
             for key, value in bpmn_process_dict.items():
                 if key == "last_state_change":
-                    bpmn_process_dict[key] = round(value, 4)
+                    bpmn_process_dict[key] = round(value, 3)
                 elif isinstance(value, dict | list):
                     self.round_last_state_change(value)
         elif isinstance(bpmn_process_dict, list):

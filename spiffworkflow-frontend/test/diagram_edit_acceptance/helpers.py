@@ -237,7 +237,7 @@ def read_script_text(dialog: Locator) -> str:
     mode = CONFIG["script_editor"]["mode"]
     if mode == "textarea":
         return dialog.locator("textarea").first.input_value().strip()
-    text = dialog.locator(".view-lines").inner_text().strip()
+    text = dialog.locator(".cm-content").first.inner_text().strip()
     return text.replace("\u00a0", " ")
 
 
@@ -246,7 +246,7 @@ def set_script_text(page: Page, dialog: Locator, text: str) -> None:
     if mode == "textarea":
         dialog.locator("textarea").first.fill(text)
         return
-    editor = dialog.locator(".monaco-editor")
+    editor = dialog.locator(".cm-content").first
     editor.click()
     page.keyboard.press("ControlOrMeta+A")
     page.keyboard.press("Backspace")

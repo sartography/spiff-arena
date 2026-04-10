@@ -1,6 +1,9 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import { json } from '@codemirror/lang-json';
+import { EditorState, type Extension } from '@codemirror/state';
+import { EditorView } from 'codemirror';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
   useParams,
   useNavigate,
@@ -1367,12 +1370,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const numberOfLines = taskDataToDisplay.split('\n').length;
     let heightInEm = numberOfLines + 5;
-    let scrollEnabled = false;
-    let minimapEnabled = false;
     if (heightInEm > 30) {
       heightInEm = 30;
-      scrollEnabled = true;
-      minimapEnabled = true;
     }
     let taskDataHeader = t('task_data');
     let editorReadOnly = true;
@@ -1388,6 +1387,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
+    const extensions: Extension[] = [json()];
+    if (editorReadOnly) {
+      extensions.push(EditorState.readOnly.of(true));
+      extensions.push(EditorView.editable.of(false));
+      extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
+    }
+
     return (
       <>
         {showTaskDataLoading ? <CircularProgress size={24} /> : null}
@@ -1396,18 +1402,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : (
           <>
             <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <Editor
+            <ThemedCodeMirror
               height={`${heightInEm}rem`}
-              width="auto"
-              defaultLanguage="json"
               value={taskDataToDisplay}
+              extensions={extensions}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
-              }}
-              options={{
-                readOnly: editorReadOnly,
-                scrollBeyondLastLine: scrollEnabled,
-                minimap: { enabled: minimapEnabled },
               }}
             />
           </>
@@ -1449,13 +1449,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (eventTextEditorEnabled) {
       className = '';
       editor = (
-        <Editor
-          height={300}
-          width="auto"
-          defaultLanguage="json"
-          defaultValue={eventPayload}
+        <ThemedCodeMirror
+          height={'300px'}
+          value={eventPayload}
+          extensions={[json()]}
           onChange={(value: any) => setEventPayload(value || '{}')}
-          options={{ readOnly: !eventTextEditorEnabled }}
         />
       );
     }
