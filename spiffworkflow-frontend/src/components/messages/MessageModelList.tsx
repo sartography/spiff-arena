@@ -459,7 +459,7 @@ export default function MessageModelList({
                   messageEvent={noOpBpmnEvent}
                   correlationProperties={editorState.correlationProperties}
                   elementId={`${editorState.location}:${editorState.messageId || 'new-message-model'}`}
-                  hideSubmitButton={false}
+                  hideSubmitButton={true}
                   managePageTitle={false}
                   onSave={(savedMessage) => {
                     setEditorState(savedMessage);
@@ -472,6 +472,18 @@ export default function MessageModelList({
               </Box>
             </DialogContent>
             <DialogActions>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  const submitButton = document.getElementById('submit-button');
+                  if (submitButton) {
+                    (submitButton as HTMLButtonElement).click();
+                  }
+                }}
+              >
+                {t('save')}
+              </Button>
               <Button onClick={() => setEditorState(null)}>{t('close')}</Button>
             </DialogActions>
           </>
