@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 
-import os
 from typing import Any
 
 import flask.wrappers
@@ -12,9 +11,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API
-from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
@@ -27,85 +24,13 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
 
-def _strip_message_model_metadata(messages: dict[str, Any] | None) -> dict[str, Any] | None:
-    if messages is None:
-        return None
-
-    sanitized_messages: dict[str, Any] = {}
-    for identifier, message_definition in messages.items():
-        if not isinstance(message_definition, dict):
-            sanitized_messages[identifier] = message_definition
-            continue
-
-        sanitized_messages[identifier] = {k: v for k, v in message_definition.items() if k not in {"id", "location"}}
-
-    return sanitized_messages
-
-
 def _filter_process_group_body(body: dict[str, Any]) -> dict[str, Any]:
     body_filtered = {
         include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
     }
     if "messages" in body_filtered:
-        body_filtered["messages"] = _strip_message_model_metadata(body.get("messages"))
+        body_filtered["messages"] = MessageDefinitionService.strip_metadata(body.get("messages"))
     return body_filtered
-
-
-def _process_group_json_path(process_group_id: str) -> str:
-    return os.path.join(ProcessModelService.full_path_from_id(process_group_id), ProcessModelService.PROCESS_GROUP_JSON_FILE)
-
-
-def _serialize_process_group_for_disk(process_group: ProcessGroup) -> dict[str, Any]:
-    serialized_process_group = process_group.serialized()
-    return {
-        key: value
-        for key, value in serialized_process_group.items()
-        if key in PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
-    }
-
-
-def _read_process_group_json(process_group_id: str) -> str:
-    with open(_process_group_json_path(process_group_id)) as process_group_file:
-        return process_group_file.read()
-
-
-def _restore_process_group_json(process_group_id: str, contents: str) -> None:
-    with open(_process_group_json_path(process_group_id), "w") as process_group_file:
-        process_group_file.write(contents)
-
-
-def _collect_message_models_for_process_groups(
-    process_groups_with_message_metadata: dict[str, ProcessGroup],
-) -> dict[tuple[str, str], MessageModel]:
-    all_message_models: dict[tuple[str, str], MessageModel] = {}
-    for process_group_id, process_group in process_groups_with_message_metadata.items():
-        MessageDefinitionService.collect_message_models(process_group, process_group_id, all_message_models)
-    return all_message_models
-
-
-def _persist_process_groups_and_message_models(
-    updated_process_groups: dict[str, ProcessGroup],
-    process_groups_with_message_metadata: dict[str, ProcessGroup],
-) -> None:
-    all_message_models = _collect_message_models_for_process_groups(process_groups_with_message_metadata)
-    file_backups = {
-        process_group_id: _read_process_group_json(process_group_id) for process_group_id in updated_process_groups
-    }
-
-    try:
-        for process_group in updated_process_groups.values():
-            ProcessModelService.update_process_group(process_group)
-
-        for process_group_id in updated_process_groups:
-            MessageDefinitionService.delete_message_models_at_location(process_group_id)
-        db.session.flush()
-        MessageDefinitionService.save_all_message_models(all_message_models)
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        for process_group_id, original_contents in file_backups.items():
-            _restore_process_group_json(process_group_id, original_contents)
-        raise
 
 
 def _ensure_user_can_update_process_group(process_group_id: str) -> None:
@@ -184,7 +109,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     )
 
     try:
-        _persist_process_groups_and_message_models(
+        MessageDefinitionService.persist_process_groups_with_messages(
             updated_process_groups={process_group_id: process_group},
             process_groups_with_message_metadata={process_group_id: process_group_with_message_metadata},
         )
@@ -326,21 +251,19 @@ def move_message_definition(
         source_messages.pop(target_message_identifier, None)
         target_messages.pop(source_message_identifier, None)
 
-    sanitized_message_definition = _strip_message_model_metadata(
-        {target_message_identifier: message_definition}
-    ) or {}
+    sanitized_message_definition = MessageDefinitionService.strip_metadata({target_message_identifier: message_definition}) or {}
     target_messages[target_message_identifier] = sanitized_message_definition[target_message_identifier]
 
     updated_source_process_group = ProcessGroup.from_dict(
         {
-            **_serialize_process_group_for_disk(source_process_group),
+            **MessageDefinitionService.serialize_process_group_for_disk(source_process_group),
             "id": source_process_group_id,
             "messages": source_messages,
         }
     )
     updated_target_process_group = ProcessGroup.from_dict(
         {
-            **_serialize_process_group_for_disk(target_process_group),
+            **MessageDefinitionService.serialize_process_group_for_disk(target_process_group),
             "id": target_process_group_id,
             "messages": target_messages,
         }
@@ -351,7 +274,7 @@ def move_message_definition(
     target_messages_with_metadata[target_message_identifier] = message_definition
 
     try:
-        _persist_process_groups_and_message_models(
+        MessageDefinitionService.persist_process_groups_with_messages(
             updated_process_groups={
                 source_process_group_id: updated_source_process_group,
                 target_process_group_id: updated_target_process_group,
@@ -359,14 +282,14 @@ def move_message_definition(
             process_groups_with_message_metadata={
                 source_process_group_id: ProcessGroup.from_dict(
                     {
-                        **_serialize_process_group_for_disk(source_process_group),
+                        **MessageDefinitionService.serialize_process_group_for_disk(source_process_group),
                         "id": source_process_group_id,
                         "messages": source_messages_with_metadata,
                     }
                 ),
                 target_process_group_id: ProcessGroup.from_dict(
                     {
-                        **_serialize_process_group_for_disk(target_process_group),
+                        **MessageDefinitionService.serialize_process_group_for_disk(target_process_group),
                         "id": target_process_group_id,
                         "messages": target_messages_with_metadata,
                     }

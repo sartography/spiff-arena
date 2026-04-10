@@ -207,7 +207,9 @@ class TestProcessGroupsController(BaseTest):
 
         assert response.status_code == 500
 
-        source_process_group = ProcessModelService.get_process_group("order/request-for-information", find_direct_nested_items=False)
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
         target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
 
         assert source_process_group.messages == {"request-for-information-received": {"schema": {}}}
@@ -270,7 +272,9 @@ class TestProcessGroupsController(BaseTest):
 
         assert move_response.status_code == 200
 
-        source_process_group = ProcessModelService.get_process_group("order/request-for-information", find_direct_nested_items=False)
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
         target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
 
         assert source_process_group.messages == {}

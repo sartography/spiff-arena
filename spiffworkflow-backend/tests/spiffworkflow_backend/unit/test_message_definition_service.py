@@ -28,9 +28,7 @@ class TestMessageDefinitionService(BaseTest):
         )
 
         assert message_model is not None
-        assert message_model.process_model_identifiers == [
-            "order/request-for-information"
-        ]
+        assert message_model.process_model_identifiers == ["order/request-for-information"]
 
         MessageDefinitionService.delete_message_models_at_location("order")
         db.session.commit()
@@ -49,6 +47,4 @@ class TestMessageDefinitionService(BaseTest):
             identifier="request-for-information-received",
             location="order",
         ).one()
-        assert refreshed_message_model.process_model_identifiers == [
-            "order/request-for-information"
-        ]
+        assert refreshed_message_model.process_model_identifiers == ["order/request-for-information"]
