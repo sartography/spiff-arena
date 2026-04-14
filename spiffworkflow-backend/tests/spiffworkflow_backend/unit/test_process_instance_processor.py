@@ -1510,13 +1510,16 @@ class TestProcessInstanceProcessor(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
-        assert process_instance.summary is None
+        summary = process_instance.summary
+        assert summary is None
         processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
-        assert process_instance.summary == "WE SUMMARIZE"
+        summary = process_instance.summary
+        assert summary is not None
+        assert summary == "WE SUMMARIZE"
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        assert process_instance.summary is not None
-        # mypy thinks this is unreachable but it is reachable. summary can be str | None
-        assert len(process_instance.summary) == 255  # type: ignore
+        summary = process_instance.summary
+        assert summary is not None
+        assert len(summary) == 255
 
     def test_it_can_update_guids_in_bpmn_process_dict(
         self,
