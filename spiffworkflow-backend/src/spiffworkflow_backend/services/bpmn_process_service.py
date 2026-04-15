@@ -241,67 +241,70 @@ class BpmnProcessService:
         bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
     ) -> None:
-        parent_id = None
-        subprocess_ids = []
-        for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
-            bpmn_process_definition = entity["bpmn_process_definition"]
-            bpd_id = 0
-            if bpmn_process_definition.id is None:
-                bpmn_process_definition_dict = {
-                    "single_process_hash": bpmn_process_definition.single_process_hash,
-                    "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
-                    "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
-                    "bpmn_name": bpmn_process_definition.bpmn_name,
-                    "properties_json": bpmn_process_definition.properties_json,
-                    "updated_at_in_seconds": round(time.time()),
-                    "created_at_in_seconds": round(time.time()),
-                }
-                result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
-                db.session.commit()
-                if result and result.inserted_primary_key is not None:
-                    bpd_id = result.inserted_primary_key[0]
-            if bpd_id == 0:
-                bpdm = BpmnProcessDefinitionModel.query.filter(
-                    and_(
-                        BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
-                        BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
-                    )
-                ).first()
-                bpd_id = bpdm.id
-
-            if bpmn_process_definition_parent is not None:
-                if bpmn_process_definition_parent.bpmn_identifier == _bpmn_process_identifier:
-                    parent_id = bpd_id
-                else:
-                    subprocess_ids.append(bpd_id)
-
-            for identifier, definition in entity.items():
-                if definition.id is None and identifier != "bpmn_process_definition":
-                    task_definition_dict = {
-                        "bpmn_process_definition_id": bpd_id,
-                        "bpmn_identifier": definition.bpmn_identifier,
-                        "bpmn_name": definition.bpmn_name,
-                        "properties_json": definition.properties_json,
-                        "typename": definition.typename,
+        try:
+            parent_id = None
+            subprocess_ids = []
+            for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+                bpmn_process_definition = entity["bpmn_process_definition"]
+                bpd_id = 0
+                if bpmn_process_definition.id is None:
+                    bpmn_process_definition_dict = {
+                        "single_process_hash": bpmn_process_definition.single_process_hash,
+                        "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
+                        "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
+                        "bpmn_name": bpmn_process_definition.bpmn_name,
+                        "properties_json": bpmn_process_definition.properties_json,
                         "updated_at_in_seconds": round(time.time()),
                         "created_at_in_seconds": round(time.time()),
                     }
-                    result = TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+                    result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+                    if result and result.inserted_primary_key is not None:
+                        bpd_id = result.inserted_primary_key[0]
+                if bpd_id == 0:
+                    bpdm = BpmnProcessDefinitionModel.query.filter(
+                        and_(
+                            BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
+                            BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
+                        )
+                    ).first()
+                    bpd_id = bpdm.id
 
-        if parent_id:
-            for bpd_id in subprocess_ids:
-                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                    bpmn_process_definition_parent_id=parent_id,
-                    bpmn_process_definition_child_id=bpd_id,
-                ).first()
-                if bpmn_process_definition_relationship is None:
-                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
+                if bpmn_process_definition_parent is not None:
+                    if bpmn_process_definition_parent.bpmn_identifier == _bpmn_process_identifier:
+                        parent_id = bpd_id
+                    else:
+                        subprocess_ids.append(bpd_id)
+
+                for identifier, definition in entity.items():
+                    if definition.id is None and identifier != "bpmn_process_definition":
+                        task_definition_dict = {
+                            "bpmn_process_definition_id": bpd_id,
+                            "bpmn_identifier": definition.bpmn_identifier,
+                            "bpmn_name": definition.bpmn_name,
+                            "properties_json": definition.properties_json,
+                            "typename": definition.typename,
+                            "updated_at_in_seconds": round(time.time()),
+                            "created_at_in_seconds": round(time.time()),
+                        }
+                        TaskDefinitionModel.insert_or_update_record(task_definition_dict)
+
+            if parent_id:
+                for bpd_id in subprocess_ids:
+                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
                         bpmn_process_definition_parent_id=parent_id,
                         bpmn_process_definition_child_id=bpd_id,
-                    )
-                    db.session.add(bpmn_process_definition_relationship)
+                    ).first()
+                    if bpmn_process_definition_relationship is None:
+                        bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
+                            bpmn_process_definition_parent_id=parent_id,
+                            bpmn_process_definition_child_id=bpd_id,
+                        )
+                        db.session.add(bpmn_process_definition_relationship)
 
-        db.session.commit()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
 
     @classmethod
     def extract_human_task_definitions(cls, bpmn_definition_to_task_definitions_mappings: dict) -> list[TaskDefinitionModel]:
