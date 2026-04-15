@@ -169,6 +169,10 @@ serializer = BpmnWorkflowSerializer(registry=registry)
 # Global workflow cache by session_id to avoid repeated (de)serialization
 _workflow_cache = {}
 
+# Global step history cache by session_id - keeps full workflow state for each step
+# This allows jumping to any step without sending state back from JavaScript
+_step_history_cache = {}
+
 def specs_from_xml(files):
     parser = CustomParser()
 
@@ -300,7 +304,7 @@ def next_task(workflow, state, from_task=None):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name, compress_state=False):
+def _advance_workflow(workflow, task, strategy_name, compress_state=False, session_id=None):
     iters = 0
     lazy_loads_list = None
 
@@ -397,9 +401,15 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                         break
                     task.run()
                     task.data.update(expected["data"])
-    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
+    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None, jump_to_step_idx=None):
+    # If jumping to a specific step, restore state from step history cache
+    if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
+        steps = _step_history_cache[session_id]
+        if 0 <= jump_to_step_idx < len(steps):
+            state = steps[jump_to_step_idx]
+
     workflow = hydrate_workflow(specs, state, session_id=session_id)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
@@ -414,10 +424,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state)
+        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state, session_id=session_id)
     except Exception as e:
         try:
-            return build_response(workflow, e, compress_state=compress_state)
+            return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
         except Exception as e2:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
@@ -500,14 +510,15 @@ def get_minimal_state(workflow):
         "subprocesses": subprocesses
     }
 
-def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
+def build_response(workflow, e, compress_state=False, lazy_loads_result=None, session_id=None):
     """Build response with workflow state.
 
     Args:
         workflow: The workflow instance
         e: Exception if error occurred, None otherwise
-        compress_state: If True, compress state with gzip
+        compress_state: If True, compress state with gzip (deprecated - unused now)
         lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
+        session_id: Optional session ID for caching step history
 
     Returns:
         JSON string with response data
@@ -537,29 +548,64 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         )
         response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
-    # Use minimal state (only task_spec and state fields for diagram coloring)
-    # Full state is no longer needed since workflow is cached in Python
+    # Return minimal state (for diagram coloring) and step_idx (for navigation)
     response["state"] = get_minimal_state(workflow)
+
+    # Cache full state in Python for jump/state surgery operations
+    if session_id:
+        if session_id not in _step_history_cache:
+            _step_history_cache[session_id] = []
+
+        # Store full state in cache
+        full_state = get_state(workflow, compress=False)
+        _step_history_cache[session_id].append(full_state)
+
+        # Return step index instead of full state
+        response["step_idx"] = len(_step_history_cache[session_id]) - 1
 
     return json.dumps(response)
 
+def truncate_step_history(session_id, step_idx):
+    """Truncate step history cache to a specific step index.
+
+    Args:
+        session_id: Session ID
+        step_idx: Step index to truncate to (inclusive)
+
+    Returns:
+        Number of steps removed
+    """
+    global _step_history_cache
+    if session_id and session_id in _step_history_cache:
+        steps = _step_history_cache[session_id]
+        if step_idx is not None and 0 <= step_idx < len(steps):
+            removed = len(steps) - step_idx - 1
+            _step_history_cache[session_id] = steps[:step_idx + 1]
+            return removed
+    return 0
+
 def clear_workflow_cache(session_id=None):
-    """Clear cached workflows.
+    """Clear cached workflows and step history.
 
     Args:
         session_id: Optional session ID. If provided, only clear that session.
-                   If None, clear all cached workflows.
+                   If None, clear all cached workflows and steps.
 
     Returns:
         Number of entries cleared
     """
-    global _workflow_cache
+    global _workflow_cache, _step_history_cache
     if session_id:
+        count = 0
         if session_id in _workflow_cache:
             del _workflow_cache[session_id]
-            return 1
-        return 0
+            count += 1
+        if session_id in _step_history_cache:
+            del _step_history_cache[session_id]
+            count += 1
+        return count
     else:
-        count = len(_workflow_cache)
+        count = len(_workflow_cache) + len(_step_history_cache)
         _workflow_cache.clear()
+        _step_history_cache.clear()
         return count
