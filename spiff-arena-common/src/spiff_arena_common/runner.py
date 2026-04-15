@@ -208,7 +208,11 @@ def hydrate_workflow(specs, state, session_id=None):
     Returns:
         BpmnWorkflow instance
     """
-    # Check cache first if session_id provided and state exists
+    # If we have a cached workflow and state is None, just return the cache
+    if session_id and state is None and session_id in _workflow_cache:
+        return _workflow_cache[session_id]
+
+    # Check cache when state is provided (state surgery case)
     if session_id and state and session_id in _workflow_cache:
         cached_workflow = _workflow_cache[session_id]
 
@@ -240,7 +244,14 @@ def hydrate_workflow(specs, state, session_id=None):
     process = specs_dict.pop("spec")
     subprocesses = specs_dict.pop("subprocess_specs")
 
-    if not state:
+    # Check if state is minimal state (only tasks/subprocesses, no workflow internals)
+    # Minimal state can't be used for hydration - treat as empty
+    is_minimal_state = (state and isinstance(state, dict) and
+                       set(state.keys()) == {'tasks', 'subprocesses'} and
+                       all(set(task.keys()) == {'task_spec', 'state'}
+                           for task in state.get('tasks', {}).values()))
+
+    if not state or is_minimal_state:
         workflow = BpmnWorkflow(process, subprocesses)
     else:
         # Handle base64-encoded gzip-compressed state (string)
@@ -407,7 +418,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
     except Exception as e:
         try:
             return build_response(workflow, e, compress_state=compress_state)
-        except Exception as e:
+        except Exception as e2:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
 def get_tasks(workflow, task_filter):
@@ -451,6 +462,44 @@ def get_state(workflow, compress=False):
 
     return state
 
+def get_minimal_state(workflow):
+    """Get minimal state needed for diagram coloring (task_spec and state only).
+
+    Args:
+        workflow: The workflow to extract state from
+
+    Returns:
+        dict with tasks and subprocesses containing only {task_spec, state} fields
+    """
+    # Extract minimal task info: just task_spec ID and state
+    tasks = {
+        str(task.id): {
+            "task_spec": task.task_spec.name,
+            "state": task.state
+        }
+        for task in workflow.get_tasks()
+    }
+
+    # Extract minimal subprocess info
+    subprocesses = {}
+    for name, subprocess in workflow.subprocesses.items():
+        # name might be a UUID, convert to string for JSON serialization
+        subprocesses[str(name)] = {
+            "spec": subprocess.spec.name,
+            "tasks": {
+                str(task.id): {
+                    "task_spec": task.task_spec.name,
+                    "state": task.state
+                }
+                for task in subprocess.get_tasks()
+            }
+        }
+
+    return {
+        "tasks": tasks,
+        "subprocesses": subprocesses
+    }
+
 def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
     """Build response with workflow state.
 
@@ -488,9 +537,9 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         )
         response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
-    response["state"] = get_state(workflow, compress=compress_state)
-    if compress_state:
-        response["state_compressed"] = True
+    # Use minimal state (only task_spec and state fields for diagram coloring)
+    # Full state is no longer needed since workflow is cached in Python
+    response["state"] = get_minimal_state(workflow)
 
     return json.dumps(response)
 
