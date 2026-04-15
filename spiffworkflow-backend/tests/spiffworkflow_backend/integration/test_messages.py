@@ -5,6 +5,7 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
@@ -209,9 +210,64 @@ class TestMessages(BaseTest):
         }
 
         for message in messages:
+            assert isinstance(message["id"], int)
             assert message["identifier"] in expected_message_identifiers
             assert message["location"] == "bob"
             assert message["schema"] == {}
 
             cp = {p["identifier"]: p["retrieval_expression"] for p in message["correlation_properties"]}
             assert cp == expected_correlation_properties[message["identifier"]]
+
+    def test_process_group_update_can_move_message_to_new_location_using_existing_message_id(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        process_group = {
+            "display_name": "Order",
+            "messages": {
+                "request-for-information-received": {
+                    "schema": {},
+                }
+            },
+        }
+        response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=process_group,
+        )
+        assert response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order",
+        ).one()
+        original_message_id = original_message.id
+
+        response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "request-for-information-received": {
+                        "id": original_message_id,
+                        "location": "order/request-for-information",
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert response.status_code == 200
+
+        updated_message = MessageModel.query.filter_by(id=original_message_id).one()
+        assert updated_message.identifier == "request-for-information-received"
+        assert updated_message.location == "order/request-for-information"
+
+        parent_message = MessageModel.query.filter_by(identifier="request-for-information-received", location="order").first()
+        assert parent_message is None

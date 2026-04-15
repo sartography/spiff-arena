@@ -1,5 +1,28 @@
 import { ProcessGroup } from '../../interfaces';
 
+export const findNearestAncestorLocation = (
+  currentLocation: string,
+  candidateLocations: string[],
+) => {
+  const normalizedCurrentLocation = currentLocation.replace(/(^\/+|\/+$)/g, '');
+
+  const matchingLocations = candidateLocations.filter((candidateLocation) => {
+    const normalizedCandidate = candidateLocation.replace(/(^\/+|\/+$)/g, '');
+    return (
+      normalizedCurrentLocation === normalizedCandidate ||
+      normalizedCurrentLocation.startsWith(`${normalizedCandidate}/`)
+    );
+  });
+
+  if (matchingLocations.length === 0) {
+    return null;
+  }
+
+  return matchingLocations.sort(
+    (a: string, b: string) => b.length - a.length,
+  )[0];
+};
+
 export const getPropertiesForMessage = (
   messageId: string,
   processGroup: ProcessGroup,
@@ -56,15 +79,50 @@ export const areCorrelationPropertiesInSync = (
   processGroup: ProcessGroup,
   messageId: string,
   messageProperties: any[],
+  currentLocation?: string,
+  matchingMessageModels: Array<{
+    location: string;
+    correlation_properties: Array<{
+      identifier: string;
+      retrieval_expression: string;
+    }>;
+  }> = [],
 ) => {
   if (!messageId) {
     // About Message Creation
     return true;
   }
 
-  const message = processGroup.messages
+  let message = processGroup.messages
     ? processGroup.messages[messageId]
     : undefined;
+
+  if (!message && currentLocation != null) {
+    const nearestAncestorLocation = findNearestAncestorLocation(
+      currentLocation,
+      matchingMessageModels.map((messageModel) => messageModel.location),
+    );
+    const matchingMessageModel = matchingMessageModels.find(
+      (messageModel) => messageModel.location === nearestAncestorLocation,
+    );
+    if (matchingMessageModel) {
+      message = {
+        correlation_properties:
+          matchingMessageModel.correlation_properties.reduce(
+            (
+              result: Record<string, { retrieval_expression: string }>,
+              property,
+            ) => {
+              result[property.identifier] = {
+                retrieval_expression: property.retrieval_expression,
+              };
+              return result;
+            },
+            {},
+          ),
+      };
+    }
+  }
 
   if (!message) {
     return false;

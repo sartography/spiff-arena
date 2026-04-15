@@ -243,8 +243,10 @@ export interface CorrelationProperties {
 }
 
 export interface MessageDefinition {
+  id?: number;
+  location?: string;
   correlation_properties: CorrelationProperties;
-  schema: any;
+  schema?: any;
 }
 
 export interface Messages {

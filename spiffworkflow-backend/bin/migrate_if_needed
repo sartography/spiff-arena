@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Fast database migration guard.
+#
+# Strategy for speed:
+#   1. Read current revision(s) from alembic_version table directly via psql  (< 10ms)
+#   2. Compute expected "heads" by parsing migration files (pure file I/O, no subprocess)
+#   3. Only invoke `flask db upgrade` if the DB is behind head (~5-10s)
+#
+# On a fully-migrated DB this exits in < 100ms total.
+
+set -o errexit -o errtrace -o nounset -o pipefail
+
+script_dir="$(cd -- "$(dirname "$0")" && pwd)"
+backend_dir="$(cd -- "$script_dir/.." && pwd)"
+versions_dir="$backend_dir/migrations/versions"
+
+# ── Determine database URI ───────────────────────────────────────────────────
+db_uri="${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}"
+if [[ -z "$db_uri" ]]; then
+  # Fall back to the same default the app uses
+  db_name="spiffworkflow_backend_${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
+  db_uri="postgresql://spiffuser@/${db_name}?host=/var/run/postgresql"
+fi
+
+# ── Find all file-based heads (leaf nodes in migration DAG) ─────────────────
+# Use Alembic's authoritative Python metadata instead of docstring comments.
+mapfile -t file_heads < <(
+  python3 - "$backend_dir" <<'PY'
+import importlib.util
+from pathlib import Path
+import sys
+
+backend_dir = Path(sys.argv[1])
+module_path = backend_dir / "src" / "spiffworkflow_backend" / "services" / "migration_guard.py"
+spec = importlib.util.spec_from_file_location("migration_guard", module_path)
+module = importlib.util.module_from_spec(spec)
+assert spec is not None and spec.loader is not None
+spec.loader.exec_module(module)
+
+for file_head in module.get_file_heads(backend_dir / "migrations" / "versions"):
+    print(file_head)
+PY
+)
+
+if [[ ${#file_heads[@]} -eq 0 ]]; then
+  echo "migrate_if_needed: no migrations found in $versions_dir, skipping"
+  exit 0
+fi
+
+# ── Read current revision(s) from DB ────────────────────────────────────────
+# psql -At emits one bare revision per line.
+if ! mapfile -t db_current < <(
+  psql "$db_uri" -At -c "SELECT version_num FROM alembic_version ORDER BY version_num" 2>/dev/null
+); then
+  # Table may not exist yet (fresh DB) — definitely need to migrate
+  echo "migrate_if_needed: alembic_version table not found — running initial migration"
+  db_current=()
+fi
+
+# ── Compare ──────────────────────────────────────────────────────────────────
+# Build a lookup set from file heads
+declare -A heads_set
+for h in "${file_heads[@]}"; do
+  heads_set["$h"]=1
+done
+
+needs_upgrade=false
+
+if [[ ${#db_current[@]} -eq 0 ]]; then
+  needs_upgrade=true
+else
+  # Every revision in the DB must be a file head; otherwise we're mid-chain
+  for rev in "${db_current[@]}"; do
+    if [[ -z "$rev" ]]; then
+      continue
+    fi
+    if [[ -z "${heads_set[$rev]+_}" ]]; then
+      echo "migrate_if_needed: revision $rev is not a head — upgrade needed"
+      needs_upgrade=true
+      break
+    fi
+  done
+fi
+
+if [[ "$needs_upgrade" == "false" ]]; then
+  echo "migrate_if_needed: DB already at head (${db_current[*]}) — nothing to do"
+  exit 0
+fi
+
+echo "migrate_if_needed: running flask db upgrade …"
+cd "$backend_dir"
+if [[ -z "${FLASK_SESSION_SECRET_KEY:-}" ]]; then
+  # Align the upgrade path with the normal local-dev backend bootstrap.
+  # When run-spiff-arena only sources hot_spiff_env, create_app still
+  # expects the local development defaults from this setup script.
+  . "${backend_dir}/bin/local_development_environment_setup"
+fi
+uv run flask db upgrade
+echo "migrate_if_needed: done"

@@ -25,7 +25,6 @@ from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_K
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -667,6 +666,23 @@ class ProcessModelService(FileSystemService):
                 del serialized_process_group[key]
         cls.write_json_file(json_path, serialized_process_group)
         return process_group
+
+    @classmethod
+    def process_group_json_path(cls, process_group_id: str) -> str:
+        """Get the path to a process group's JSON file."""
+        return os.path.join(cls.full_path_from_id(process_group_id), cls.PROCESS_GROUP_JSON_FILE)
+
+    @classmethod
+    def read_process_group_json(cls, process_group_id: str) -> str:
+        """Read the contents of a process group's JSON file."""
+        with open(cls.process_group_json_path(process_group_id)) as process_group_file:
+            return process_group_file.read()
+
+    @classmethod
+    def restore_process_group_json(cls, process_group_id: str, contents: str) -> None:
+        """Restore a process group's JSON file from backup contents."""
+        with open(cls.process_group_json_path(process_group_id), "w") as process_group_file:
+            process_group_file.write(contents)
 
     @classmethod
     def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:

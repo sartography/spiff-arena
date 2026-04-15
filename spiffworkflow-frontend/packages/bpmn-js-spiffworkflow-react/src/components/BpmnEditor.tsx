@@ -315,6 +315,69 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
       getModeler: () => diagramModelerState,
     }));
 
+    /**
+     * bpmn-moddle silently drops bpmn:CorrelationKey from definitions.rootElements
+     * during XML parsing because CorrelationKey's superClass is BaseElement, not
+     * RootElement. This function re-reads the raw XML to restore any dropped
+     * CorrelationKey nodes so they are preserved on the next save.
+     */
+    function restoreCorrelationKeysFromXml(
+      xmlString: string,
+      modeler: any,
+    ): void {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlString, 'application/xml');
+        const ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL';
+        const ckNodes = doc.documentElement.getElementsByTagNameNS(
+          ns,
+          'correlationKey',
+        );
+        if (!ckNodes.length) return;
+
+        const definitions = modeler.getDefinitions?.();
+        if (!definitions?.rootElements) return;
+
+        const moddle = modeler.get('moddle');
+
+        const cpById: Record<string, any> = {};
+        for (const re of definitions.rootElements) {
+          if (re.$type === 'bpmn:CorrelationProperty') {
+            cpById[re.id] = re;
+          }
+        }
+
+        for (const ckNode of Array.from(ckNodes)) {
+          const id = (ckNode as Element).getAttribute('id');
+          const name = (ckNode as Element).getAttribute('name');
+          if (!id) continue;
+
+          if (definitions.rootElements.some((e: any) => e.id === id)) continue;
+
+          const refs: any[] = [];
+          const refNodes = (ckNode as Element).getElementsByTagNameNS(
+            ns,
+            'correlationPropertyRef',
+          );
+          for (const refNode of Array.from(refNodes)) {
+            const cpId = refNode.textContent?.trim();
+            if (cpId && cpById[cpId]) {
+              refs.push(cpById[cpId]);
+            }
+          }
+
+          const ck = moddle.create('bpmn:CorrelationKey', {
+            id,
+            name: name ?? undefined,
+            correlationPropertyRef: refs,
+          });
+          definitions.rootElements.push(ck);
+        }
+      } catch (err) {
+        console.warn('Failed to restore CorrelationKeys from XML:', err);
+      }
+    }
+
     /* This restores unresolved references that bpmn-js removes */
     const fixUnresolvedReferences = (diagramModelerToUse: any): null => {
       diagramModelerToUse.on('import.parse.complete', (event: any) => {
@@ -655,6 +718,7 @@ const BpmnEditor = forwardRef<BpmnEditorRef, BpmnEditorInternalProps>(
             return;
           }
           await modeler.importXML(xmlToImport);
+          restoreCorrelationKeysFromXml(xmlToImport, modeler);
         })
         .catch((error: any) => {
           console.error('Failed to import diagram XML:', error);

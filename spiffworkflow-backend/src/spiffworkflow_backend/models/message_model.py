@@ -19,6 +19,7 @@ class MessageModel(SpiffworkflowBaseDBModel):
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
     location: str = db.Column(db.String(255), index=True, nullable=False)
     schema: dict = db.Column(db.JSON, nullable=False)
+    process_model_identifiers: list = db.Column(db.JSON, nullable=True)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)
     created_at_in_seconds: int = db.Column(db.Integer, nullable=False)
 
