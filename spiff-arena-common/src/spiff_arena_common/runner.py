@@ -166,6 +166,13 @@ class CustomScriptEngine(PythonScriptEngine):
 registry = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
 serializer = BpmnWorkflowSerializer(registry=registry)
 
+# Global workflow cache by session_id to avoid repeated (de)serialization
+_workflow_cache = {}
+
+# Global step history cache by session_id - keeps full workflow state for each step
+# This allows jumping to any step without sending state back from JavaScript
+_step_history_cache = {}
+
 def specs_from_xml(files):
     parser = CustomParser()
 
@@ -194,21 +201,61 @@ def specs_from_xml(files):
 
     return json.dumps(workflow_specs_dct), None
 
-def hydrate_workflow(specs, state):
-    """Hydrate workflow from specs and state.
+def hydrate_workflow(specs, state, session_id=None):
+    """Hydrate workflow from specs and state, using cache when available.
 
     Args:
         specs: JSON string or dict of workflow specs
         state: dict, str (base64-encoded gzip-compressed), or None
+        session_id: Optional session ID for caching
 
     Returns:
         BpmnWorkflow instance
     """
-    specs = serializer.deserialize_json(specs)
-    process = specs.pop("spec")
-    subprocesses = specs.pop("subprocess_specs")
+    # If we have a cached workflow and state is None, just return the cache
+    if session_id and state is None and session_id in _workflow_cache:
+        return _workflow_cache[session_id]
 
-    if not state:
+    # Check cache when state is provided (state surgery case)
+    if session_id and state and session_id in _workflow_cache:
+        cached_workflow = _workflow_cache[session_id]
+
+        # Decompress state if it's compressed
+        if isinstance(state, str) and not state.startswith('{'):
+            compressed = base64.b64decode(state)
+            decompressed = gzip.decompress(compressed)
+            state = json.loads(decompressed.decode('utf-8'))
+
+        # Update cached workflow with new state (in-place mutation)
+        # Only update the mutable parts - tasks, data, etc.
+        cached_state = serializer.to_dict(cached_workflow)
+        if state != cached_state:
+            # State changed, need to deserialize
+            specs_dict = serializer.deserialize_json(specs)
+            process = specs_dict.pop("spec")
+            subprocesses = specs_dict.pop("subprocess_specs")
+            state["spec"] = process
+            state["subprocess_specs"] = subprocesses
+            workflow = serializer.from_dict(state)
+            workflow.script_engine = CustomScriptEngine()
+            _workflow_cache[session_id] = workflow
+            return workflow
+
+        return cached_workflow
+
+    # Cache miss or no session_id - create new workflow
+    specs_dict = serializer.deserialize_json(specs)
+    process = specs_dict.pop("spec")
+    subprocesses = specs_dict.pop("subprocess_specs")
+
+    # Check if state is minimal state (only tasks/subprocesses, no workflow internals)
+    # Minimal state can't be used for hydration - treat as empty
+    is_minimal_state = (state and isinstance(state, dict) and
+                       set(state.keys()) == {'tasks', 'subprocesses'} and
+                       all(set(task.keys()) == {'task_spec', 'state'}
+                           for task in state.get('tasks', {}).values()))
+
+    if not state or is_minimal_state:
         workflow = BpmnWorkflow(process, subprocesses)
     else:
         # Handle base64-encoded gzip-compressed state (string)
@@ -223,6 +270,10 @@ def hydrate_workflow(specs, state):
         workflow = serializer.from_dict(state)
 
     workflow.script_engine = CustomScriptEngine()
+
+    # Cache the workflow if session_id provided
+    if session_id:
+        _workflow_cache[session_id] = workflow
 
     return workflow
 
@@ -253,7 +304,7 @@ def next_task(workflow, state, from_task=None):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name, compress_state=False):
+def _advance_workflow(workflow, task, strategy_name, compress_state=False, session_id=None):
     iters = 0
     lazy_loads_list = None
 
@@ -350,10 +401,16 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                         break
                     task.run()
                     task.data.update(expected["data"])
-    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
+    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
-    workflow = hydrate_workflow(specs, state)
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None, jump_to_step_idx=None):
+    # If jumping to a specific step, restore state from step history cache
+    if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
+        steps = _step_history_cache[session_id]
+        if 0 <= jump_to_step_idx < len(steps):
+            state = steps[jump_to_step_idx]
+
+    workflow = hydrate_workflow(specs, state, session_id=session_id)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_params.get("data", {}))
@@ -367,11 +424,11 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state)
+        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state, session_id=session_id)
     except Exception as e:
         try:
-            return build_response(workflow, e, compress_state=compress_state)
-        except Exception as e:
+            return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
+        except Exception as e2:
             return json.dumps({ "status": "error", "message": f"{e}" })
 
 def get_tasks(workflow, task_filter):
@@ -415,14 +472,53 @@ def get_state(workflow, compress=False):
 
     return state
 
-def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
+def get_minimal_state(workflow):
+    """Get minimal state needed for diagram coloring (task_spec and state only).
+
+    Args:
+        workflow: The workflow to extract state from
+
+    Returns:
+        dict with tasks and subprocesses containing only {task_spec, state} fields
+    """
+    # Extract minimal task info: just task_spec ID and state
+    tasks = {
+        str(task.id): {
+            "task_spec": task.task_spec.name,
+            "state": task.state
+        }
+        for task in workflow.get_tasks()
+    }
+
+    # Extract minimal subprocess info
+    subprocesses = {}
+    for name, subprocess in workflow.subprocesses.items():
+        # name might be a UUID, convert to string for JSON serialization
+        subprocesses[str(name)] = {
+            "spec": subprocess.spec.name,
+            "tasks": {
+                str(task.id): {
+                    "task_spec": task.task_spec.name,
+                    "state": task.state
+                }
+                for task in subprocess.get_tasks()
+            }
+        }
+
+    return {
+        "tasks": tasks,
+        "subprocesses": subprocesses
+    }
+
+def build_response(workflow, e, compress_state=False, lazy_loads_result=None, session_id=None):
     """Build response with workflow state.
 
     Args:
         workflow: The workflow instance
         e: Exception if error occurred, None otherwise
-        compress_state: If True, compress state with gzip
+        compress_state: If True, compress state with gzip (deprecated - unused now)
         lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
+        session_id: Optional session ID for caching step history
 
     Returns:
         JSON string with response data
@@ -452,8 +548,69 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         )
         response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
-    response["state"] = get_state(workflow, compress=compress_state)
-    if compress_state:
-        response["state_compressed"] = True
+    # Return minimal state (for diagram coloring) and step_idx (for navigation)
+    response["state"] = get_minimal_state(workflow)
+
+    # Cache full state in Python for jump/state surgery operations
+    if session_id:
+        if session_id not in _step_history_cache:
+            _step_history_cache[session_id] = []
+
+        # Store full state in cache
+        full_state = get_state(workflow, compress=False)
+        _step_history_cache[session_id].append(full_state)
+
+        # Return step index instead of full state
+        response["step_idx"] = len(_step_history_cache[session_id]) - 1
 
     return json.dumps(response)
+
+def truncate_step_history(session_id, step_idx):
+    """Truncate step history cache to a specific step index.
+
+    Args:
+        session_id: Session ID
+        step_idx: Step index to truncate to (inclusive)
+
+    Returns:
+        Number of steps removed
+    """
+    global _step_history_cache
+    if session_id and session_id in _step_history_cache:
+        steps = _step_history_cache[session_id]
+        if step_idx is not None and 0 <= step_idx < len(steps):
+            removed = len(steps) - step_idx - 1
+            _step_history_cache[session_id] = steps[:step_idx + 1]
+            return removed
+    return 0
+
+def clear_workflow_cache(session_id=None):
+    """Clear cached workflows and step history.
+
+    Args:
+        session_id: Optional session ID. If provided, only clear that session.
+                   If None, clear all cached workflows and steps.
+
+    Returns:
+        Number of entries cleared
+    """
+    import gc
+    global _workflow_cache, _step_history_cache
+    if session_id:
+        count = 0
+        if session_id in _workflow_cache:
+            del _workflow_cache[session_id]
+            count += 1
+        if session_id in _step_history_cache:
+            del _step_history_cache[session_id]
+            count += 1
+        # Force garbage collection to free memory immediately
+        gc.collect()
+        return count
+    else:
+        count = len(_workflow_cache) + len(_step_history_cache)
+        _workflow_cache.clear()
+        _step_history_cache.clear()
+        # Force garbage collection to free memory immediately
+        gc.collect()
+        return count
