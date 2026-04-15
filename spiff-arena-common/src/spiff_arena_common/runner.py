@@ -9,6 +9,15 @@ import uuid
 
 import jsonschema
 
+
+class EdEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        if isinstance(obj, datetime.timedelta):
+            return obj.total_seconds()
+        return super().default(obj)
+
 from spiff_arena_common.data_stores import JSONFileDataStore
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
@@ -122,18 +131,36 @@ class CustomEnvironment(TaskDataEnvironment):
             "time": time,
             "timedelta": datetime.timedelta,
         })
+        self.custom_scripts = {}
+
+    def load_custom_scripts(self, path):
+        self.custom_scripts = {}
+        try:
+            with open(path) as f:
+                source = f.read()
+            namespace = {}
+            exec(source, namespace)
+            self.custom_scripts = {
+                k: v for k, v in namespace.items()
+                if callable(v) and not k.startswith('_')
+            }
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logging.warning(f"Failed to load custom scripts from {path}: {e}")
 
     def execute(self, script, context, external_context=None):
         if external_context is None:
             external_context = {}
-        
-        # TODO: would be nice to get these from the client so we don't have to code change for globals
+
+        external_context.update(self.custom_scripts)
+        # ToDo: Provide placeholders for all of Arena's built in scripts..
         external_context["get_task_data_value"] = lambda k, d=None: context.get(k, d)
         external_context["get_top_level_process_info"] = lambda: {
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
-        
+
         return super().execute(script or "", context, external_context)
 
 
@@ -160,7 +187,7 @@ class CustomScriptEngine(PythonScriptEngine):
             "operation_name": operation_name,
             "operation_params": operation_params,
             "task_data": task_data,
-        })
+        }, cls=EdEncoder)
 
 
 registry = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
@@ -199,7 +226,7 @@ def specs_from_xml(files):
         "subprocess_specs": workflow_dct["subprocess_specs"],
     }
 
-    return json.dumps(workflow_specs_dct), None
+    return json.dumps(workflow_specs_dct, cls=EdEncoder), None
 
 def hydrate_workflow(specs, state, session_id=None):
     """Hydrate workflow from specs and state, using cache when available.
@@ -403,12 +430,15 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False, sessi
                     task.data.update(expected["data"])
     return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None, jump_to_step_idx=None):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None, jump_to_step_idx=None, scripts_path=None):
     # If jumping to a specific step, restore state from step history cache
     if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
         steps = _step_history_cache[session_id]
         if 0 <= jump_to_step_idx < len(steps):
             state = steps[jump_to_step_idx]
+
+    if scripts_path:
+        custom_environment.load_custom_scripts(scripts_path)
 
     workflow = hydrate_workflow(specs, state, session_id=session_id)
     if state == {} and start_params:
@@ -429,7 +459,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         try:
             return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
         except Exception as e2:
-            return json.dumps({ "status": "error", "message": f"{e}" })
+            import traceback
+            tb = traceback.format_exc()
+            print(tb, flush=True)
+            return json.dumps({ "status": "error", "message": f"{e2}\n{tb}" }, cls=EdEncoder)
 
 def get_tasks(workflow, task_filter):
     tasks = workflow.get_tasks(task_filter=task_filter)
@@ -465,7 +498,7 @@ def get_state(workflow, compress=False):
     state.pop("subprocess_specs")
 
     if compress:
-        json_str = json.dumps(state)
+        json_str = json.dumps(state, cls=EdEncoder)
         compressed = gzip.compress(json_str.encode('utf-8'))
         # Base64 encode for JSON serialization
         return base64.b64encode(compressed).decode('ascii')
@@ -562,8 +595,7 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None, se
 
         # Return step index instead of full state
         response["step_idx"] = len(_step_history_cache[session_id]) - 1
-
-    return json.dumps(response)
+    return json.dumps(response, cls=EdEncoder)
 
 def truncate_step_history(session_id, step_idx):
     """Truncate step history cache to a specific step index.
