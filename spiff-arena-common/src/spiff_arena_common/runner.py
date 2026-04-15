@@ -594,6 +594,7 @@ def clear_workflow_cache(session_id=None):
     Returns:
         Number of entries cleared
     """
+    import gc
     global _workflow_cache, _step_history_cache
     if session_id:
         count = 0
@@ -603,9 +604,13 @@ def clear_workflow_cache(session_id=None):
         if session_id in _step_history_cache:
             del _step_history_cache[session_id]
             count += 1
+        # Force garbage collection to free memory immediately
+        gc.collect()
         return count
     else:
         count = len(_workflow_cache) + len(_step_history_cache)
         _workflow_cache.clear()
         _step_history_cache.clear()
+        # Force garbage collection to free memory immediately
+        gc.collect()
         return count
