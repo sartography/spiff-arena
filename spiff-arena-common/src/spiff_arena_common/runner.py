@@ -166,6 +166,9 @@ class CustomScriptEngine(PythonScriptEngine):
 registry = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
 serializer = BpmnWorkflowSerializer(registry=registry)
 
+# Global workflow cache by session_id to avoid repeated (de)serialization
+_workflow_cache = {}
+
 def specs_from_xml(files):
     parser = CustomParser()
 
@@ -194,19 +197,48 @@ def specs_from_xml(files):
 
     return json.dumps(workflow_specs_dct), None
 
-def hydrate_workflow(specs, state):
-    """Hydrate workflow from specs and state.
+def hydrate_workflow(specs, state, session_id=None):
+    """Hydrate workflow from specs and state, using cache when available.
 
     Args:
         specs: JSON string or dict of workflow specs
         state: dict, str (base64-encoded gzip-compressed), or None
+        session_id: Optional session ID for caching
 
     Returns:
         BpmnWorkflow instance
     """
-    specs = serializer.deserialize_json(specs)
-    process = specs.pop("spec")
-    subprocesses = specs.pop("subprocess_specs")
+    # Check cache first if session_id provided and state exists
+    if session_id and state and session_id in _workflow_cache:
+        cached_workflow = _workflow_cache[session_id]
+
+        # Decompress state if it's compressed
+        if isinstance(state, str) and not state.startswith('{'):
+            compressed = base64.b64decode(state)
+            decompressed = gzip.decompress(compressed)
+            state = json.loads(decompressed.decode('utf-8'))
+
+        # Update cached workflow with new state (in-place mutation)
+        # Only update the mutable parts - tasks, data, etc.
+        cached_state = serializer.to_dict(cached_workflow)
+        if state != cached_state:
+            # State changed, need to deserialize
+            specs_dict = serializer.deserialize_json(specs)
+            process = specs_dict.pop("spec")
+            subprocesses = specs_dict.pop("subprocess_specs")
+            state["spec"] = process
+            state["subprocess_specs"] = subprocesses
+            workflow = serializer.from_dict(state)
+            workflow.script_engine = CustomScriptEngine()
+            _workflow_cache[session_id] = workflow
+            return workflow
+
+        return cached_workflow
+
+    # Cache miss or no session_id - create new workflow
+    specs_dict = serializer.deserialize_json(specs)
+    process = specs_dict.pop("spec")
+    subprocesses = specs_dict.pop("subprocess_specs")
 
     if not state:
         workflow = BpmnWorkflow(process, subprocesses)
@@ -223,6 +255,10 @@ def hydrate_workflow(specs, state):
         workflow = serializer.from_dict(state)
 
     workflow.script_engine = CustomScriptEngine()
+
+    # Cache the workflow if session_id provided
+    if session_id:
+        _workflow_cache[session_id] = workflow
 
     return workflow
 
@@ -352,8 +388,8 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False):
                     task.data.update(expected["data"])
     return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False):
-    workflow = hydrate_workflow(specs, state)
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None):
+    workflow = hydrate_workflow(specs, state, session_id=session_id)
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_params.get("data", {}))
@@ -457,3 +493,24 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None):
         response["state_compressed"] = True
 
     return json.dumps(response)
+
+def clear_workflow_cache(session_id=None):
+    """Clear cached workflows.
+
+    Args:
+        session_id: Optional session ID. If provided, only clear that session.
+                   If None, clear all cached workflows.
+
+    Returns:
+        Number of entries cleared
+    """
+    global _workflow_cache
+    if session_id:
+        if session_id in _workflow_cache:
+            del _workflow_cache[session_id]
+            return 1
+        return 0
+    else:
+        count = len(_workflow_cache)
+        _workflow_cache.clear()
+        return count
