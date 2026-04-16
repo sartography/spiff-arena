@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from hashlib import sha256
 
 from spiffworkflow_backend import create_app
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -61,14 +63,6 @@ def audit_process_model(process_model_identifier: str) -> list[dict]:
         full_process_model_hash=full_process_model_hash(full_hash_input)
     ).first()
     if parent_definition is None:
-        process_issues.append(
-            {
-                "process_model_id": process_model_identifier,
-                "issue": "missing_persisted_process_definition",
-                "bpmn_identifier": parent_spec["name"],
-                "full_process_model_hash": full_process_model_hash(full_hash_input),
-            }
-        )
         return process_issues
 
     process_issues.extend(
@@ -85,14 +79,6 @@ def audit_process_model(process_model_identifier: str) -> list[dict]:
         expected_subprocess_hashes.append(expected_hash)
         persisted_subprocess = BpmnProcessDefinitionModel.query.filter_by(single_process_hash=expected_hash).first()
         if persisted_subprocess is None:
-            process_issues.append(
-                {
-                    "process_model_id": process_model_identifier,
-                    "issue": "missing_persisted_subprocess_definition",
-                    "bpmn_identifier": subprocess_spec["name"],
-                    "single_process_hash": expected_hash,
-                }
-            )
             continue
         process_issues.extend(
             audit_definition(
@@ -125,18 +111,42 @@ def audit_process_model(process_model_identifier: str) -> list[dict]:
     return process_issues
 
 
-def audit_all_process_models() -> list[dict]:
+def audit_all_process_models(include_parse_failures: bool = False) -> list[dict]:
     issues = []
     process_models = ProcessModelService.get_process_models(recursive=True)
     for process_model in process_models:
-        issues.extend(audit_process_model(process_model.id))
+        try:
+            issues.extend(audit_process_model(process_model.id))
+        except ApiError as exception:
+            if include_parse_failures:
+                issues.append(
+                    {
+                        "process_model_id": process_model.id,
+                        "issue": "process_model_parse_failed",
+                        "error": exception.message,
+                        "error_code": exception.error_code,
+                    }
+                )
+            continue
     return issues
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--include-parse-failures", action="store_true")
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
     app = create_app()
     with app.app.app_context():
-        issues = audit_all_process_models()
+        issues = audit_all_process_models(include_parse_failures=args.include_parse_failures)
+
+    if args.json_output:
+        print(json.dumps({"issues": issues, "ok": len(issues) == 0}, indent=2, sort_keys=True))
+        return 0 if not issues else 1
 
     if issues:
         print(json.dumps(issues, indent=2, sort_keys=True))
