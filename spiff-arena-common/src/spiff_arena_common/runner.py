@@ -154,12 +154,20 @@ class CustomEnvironment(TaskDataEnvironment):
         if external_context is None:
             external_context = {}
 
-        # ToDo: Provide placeholders for all of Arena's built in scripts..
         external_context["get_task_data_value"] = lambda k, d=None: context.get(k, d)
         external_context["get_top_level_process_info"] = lambda: {
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
+        external_context["get_current_user"] = lambda: {
+            "email": "current_user@example.com",
+            "display_name": "Mr. Current User",
+        }
+        external_context["get_group_members"] = lambda group_name: [
+            "group_member_1@example.com",
+            "group_member_2@example.com",
+            "group_member_3@example.com"
+        ]
 
         return super().execute(script or "", context, external_context)
 
