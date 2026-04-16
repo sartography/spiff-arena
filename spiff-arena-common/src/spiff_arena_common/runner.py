@@ -463,10 +463,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         try:
             return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
         except Exception as e2:
-            import traceback
-            tb = traceback.format_exc()
-            print(tb, flush=True)
-            return json.dumps({ "status": "error", "message": f"{e2}\n{tb}" }, cls=SpiffJsonEncoder)
+            return json.dumps({"status": "error", "message": f"{e}"})
 
 def get_tasks(workflow, task_filter):
     tasks = workflow.get_tasks(task_filter=task_filter)
