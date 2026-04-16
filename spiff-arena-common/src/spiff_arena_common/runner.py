@@ -9,6 +9,33 @@ import uuid
 
 import jsonschema
 
+
+# This encoder/decoder replicates the type conversion behavior of
+# SpiffWorkflow's DefaultRegistry (bpmn.serializer.helpers.registry)
+# for UUID, datetime, and timedelta, but uses a JSONEncoder subclass
+# and json.loads object_hook for single-pass performance on large payloads.
+class SpiffJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, uuid.UUID):
+            return { 'typename': 'UUID', 'value': str(obj) }
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return { 'typename': 'datetime', 'value': obj.isoformat() }
+        if isinstance(obj, datetime.timedelta):
+            return { 'typename': 'timedelta', 'days': obj.days, 'seconds': obj.seconds }
+        return super().default(obj)
+
+
+def spiff_json_object_hook(dct):
+    typename = dct.get('typename')
+    if typename == 'UUID':
+        return uuid.UUID(dct['value'])
+    if typename == 'datetime':
+        return datetime.datetime.fromisoformat(dct['value'])
+    if typename == 'timedelta':
+        return datetime.timedelta(days=dct['days'], seconds=dct['seconds'])
+    return dct
+
+
 from spiff_arena_common.data_stores import JSONFileDataStore
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
@@ -126,14 +153,22 @@ class CustomEnvironment(TaskDataEnvironment):
     def execute(self, script, context, external_context=None):
         if external_context is None:
             external_context = {}
-        
-        # TODO: would be nice to get these from the client so we don't have to code change for globals
+
         external_context["get_task_data_value"] = lambda k, d=None: context.get(k, d)
         external_context["get_top_level_process_info"] = lambda: {
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
-        
+        external_context["get_current_user"] = lambda: {
+            "email": "current_user@example.com",
+            "display_name": "Mr. Current User",
+        }
+        external_context["get_group_members"] = lambda group_name: [
+            "group_member_1@example.com",
+            "group_member_2@example.com",
+            "group_member_3@example.com"
+        ]
+
         return super().execute(script or "", context, external_context)
 
 
@@ -160,12 +195,11 @@ class CustomScriptEngine(PythonScriptEngine):
             "operation_name": operation_name,
             "operation_params": operation_params,
             "task_data": task_data,
-        })
+        }, cls=SpiffJsonEncoder)
 
 
 registry = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
 serializer = BpmnWorkflowSerializer(registry=registry)
-
 # Global workflow cache by session_id to avoid repeated (de)serialization
 _workflow_cache = {}
 
@@ -199,7 +233,7 @@ def specs_from_xml(files):
         "subprocess_specs": workflow_dct["subprocess_specs"],
     }
 
-    return json.dumps(workflow_specs_dct), None
+    return json.dumps(workflow_specs_dct, cls=SpiffJsonEncoder), None
 
 def hydrate_workflow(specs, state, session_id=None):
     """Hydrate workflow from specs and state, using cache when available.
@@ -224,7 +258,7 @@ def hydrate_workflow(specs, state, session_id=None):
         if isinstance(state, str) and not state.startswith('{'):
             compressed = base64.b64decode(state)
             decompressed = gzip.decompress(compressed)
-            state = json.loads(decompressed.decode('utf-8'))
+            state = json.loads(decompressed.decode('utf-8'), object_hook=spiff_json_object_hook)
 
         # Update cached workflow with new state (in-place mutation)
         # Only update the mutable parts - tasks, data, etc.
@@ -263,7 +297,7 @@ def hydrate_workflow(specs, state, session_id=None):
             # Decode base64 then decompress
             compressed = base64.b64decode(state)
             decompressed = gzip.decompress(compressed)
-            state = json.loads(decompressed.decode('utf-8'))
+            state = json.loads(decompressed.decode('utf-8'), object_hook=spiff_json_object_hook)
 
         state["spec"] = process
         state["subprocess_specs"] = subprocesses
@@ -429,7 +463,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         try:
             return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
         except Exception as e2:
-            return json.dumps({ "status": "error", "message": f"{e}" })
+            return json.dumps({"status": "error", "message": f"{e}"})
 
 def get_tasks(workflow, task_filter):
     tasks = workflow.get_tasks(task_filter=task_filter)
@@ -465,7 +499,7 @@ def get_state(workflow, compress=False):
     state.pop("subprocess_specs")
 
     if compress:
-        json_str = json.dumps(state)
+        json_str = json.dumps(state, cls=SpiffJsonEncoder)
         compressed = gzip.compress(json_str.encode('utf-8'))
         # Base64 encode for JSON serialization
         return base64.b64encode(compressed).decode('ascii')
@@ -562,8 +596,7 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None, se
 
         # Return step index instead of full state
         response["step_idx"] = len(_step_history_cache[session_id]) - 1
-
-    return json.dumps(response)
+    return json.dumps(response, cls=SpiffJsonEncoder)
 
 def truncate_step_history(session_id, step_idx):
     """Truncate step history cache to a specific step index.
