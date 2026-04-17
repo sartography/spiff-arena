@@ -338,7 +338,7 @@ def next_task(workflow, state, from_task=None):
         return task
     return None
 
-def _advance_workflow(workflow, task, strategy_name, compress_state=False, session_id=None):
+def _advance_workflow(workflow, task, strategy_name, compress_response=False, session_id=None):
     iters = 0
     lazy_loads_list = None
 
@@ -435,9 +435,9 @@ def _advance_workflow(workflow, task, strategy_name, compress_state=False, sessi
                         break
                     task.run()
                     task.data.update(expected["data"])
-    return build_response(workflow, None, compress_state=compress_state, lazy_loads_result=lazy_loads_list, session_id=session_id)
+    return build_response(workflow, None, compress_response=compress_response, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_state=False, session_id=None, jump_to_step_idx=None):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_response=False, session_id=None, jump_to_step_idx=None):
     # If jumping to a specific step, restore state from step history cache
     if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
         steps = _step_history_cache[session_id]
@@ -458,10 +458,10 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         task = next_task(workflow, TaskState.READY)
 
     try:
-        return _advance_workflow(workflow, task, strategy_name, compress_state=compress_state, session_id=session_id)
+        return _advance_workflow(workflow, task, strategy_name, compress_response=compress_response, session_id=session_id)
     except Exception as e:
         try:
-            return build_response(workflow, e, compress_state=compress_state, session_id=session_id)
+            return build_response(workflow, e, compress_response=compress_response, session_id=session_id)
         except Exception as e2:
             return json.dumps({"status": "error", "message": f"{e}"})
 
@@ -544,18 +544,18 @@ def get_minimal_state(workflow):
         "subprocesses": subprocesses
     }
 
-def build_response(workflow, e, compress_state=False, lazy_loads_result=None, session_id=None):
+def build_response(workflow, e, compress_response=False, lazy_loads_result=None, session_id=None):
     """Build response with workflow state.
 
     Args:
         workflow: The workflow instance
         e: Exception if error occurred, None otherwise
-        compress_state: If True, compress state with gzip (deprecated - unused now)
+        compress_response: If True, compress entire response with gzip
         lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
         session_id: Optional session ID for caching step history
 
     Returns:
-        JSON string with response data
+        JSON string with response data (or base64-encoded gzip if compress_response=True)
     """
     completed = workflow.completed
 
@@ -596,7 +596,15 @@ def build_response(workflow, e, compress_state=False, lazy_loads_result=None, se
 
         # Return step index instead of full state
         response["step_idx"] = len(_step_history_cache[session_id]) - 1
-    return json.dumps(response, cls=SpiffJsonEncoder)
+    
+    json_str = json.dumps(response, cls=SpiffJsonEncoder)
+    
+    if compress_response:
+        compressed = gzip.compress(json_str.encode('utf-8'))
+        # Return base64-encoded compressed data with marker prefix
+        return "gz:" + base64.b64encode(compressed).decode('ascii')
+    
+    return json_str
 
 def truncate_step_history(session_id, step_idx):
     """Truncate step history cache to a specific step index.
