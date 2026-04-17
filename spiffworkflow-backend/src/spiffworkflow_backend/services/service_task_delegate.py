@@ -74,6 +74,31 @@ def _format_log_value(value: Any) -> str:
     return json.dumps(value, indent=2, sort_keys=True, default=str)
 
 
+def _redact_sensitive_headers(headers: dict[str, Any] | None) -> dict[str, Any] | None:
+    if headers is None:
+        return None
+
+    sensitive_header_names = {
+        "authorization",
+        "proxy-authorization",
+        "x-api-key",
+        "api-key",
+        "apikey",
+        "token",
+        "secret",
+        "password",
+        "spiff-connector-proxy-api-key",
+    }
+    redacted_headers: dict[str, Any] = {}
+    for key, value in headers.items():
+        if str(key).lower() in sensitive_header_names:
+            redacted_headers[key] = "<redacted>"
+        else:
+            redacted_headers[key] = value
+
+    return redacted_headers
+
+
 def _log_connector_proxy_request(operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any) -> None:
     if not connector_proxy_http_logging_enabled():
         return
@@ -82,7 +107,7 @@ def _log_connector_proxy_request(operator_identifier: str, method: str, url: str
         operator_identifier,
         method,
         url,
-        _format_log_value(headers),
+        _format_log_value(_redact_sensitive_headers(headers)),
         _format_log_value(body),
     )
 
@@ -92,13 +117,14 @@ def _log_connector_proxy_response(
 ) -> None:
     if not connector_proxy_http_logging_enabled():
         return
+    response_headers = dict(headers) if headers is not None else None
     logger.info(
         "Connector proxy response\nOperator: %s\nMethod: %s\nURL: %s\nStatus: %s\nHeaders:\n%s\nBody:\n%s",
         operator_identifier,
         method,
         url,
         status_code,
-        _format_log_value(dict(headers) if headers is not None else headers),
+        _format_log_value(_redact_sensitive_headers(response_headers)),
         _format_log_value(body),
     )
 
@@ -113,7 +139,7 @@ def _log_connector_proxy_exception(
         operator_identifier,
         method,
         url,
-        _format_log_value(headers),
+        _format_log_value(_redact_sensitive_headers(headers)),
         _format_log_value(body),
         exception.__class__.__name__,
         exception,
