@@ -77,96 +77,141 @@ def setup_deferred_logging(app: Flask) -> None:
             _process_log_queue()
 
 
+def _extract_request_context() -> dict[str, Any]:
+    """Helper to extract common request details."""
+    endpoint = ""
+    method = ""
+    request_body = None
+    query_params = None
+
+    if request:
+        try:
+            endpoint = request.path
+            method = request.method
+            request_body = request.get_json(silent=True)
+            query_params = dict(request.args)
+        except RuntimeError:
+            pass
+        except Exception:
+            request_body = None
+
+    return {"endpoint": endpoint, "method": method, "request_body": request_body, "query_params": query_params}
+
+
+def _create_log_entry_final(
+    start_time: float,
+    response: Any = None,
+    exception: Exception | None = None,
+    kwargs: dict[str, Any] | None = None,
+) -> None:
+    """Consolidated helper to create and queue log entries from response or exception."""
+    context = _extract_request_context()
+    status_code = 500
+    response_body = None
+
+    if exception:
+        if hasattr(exception, "status_code"):
+            status_code = exception.status_code
+        if hasattr(exception, "to_dict"):
+            response_body = exception.to_dict()
+        else:
+            response_body = {"fabricated_response_body_from_exception": f"{exception.__class__.__name__}: {str(exception)}"}
+    elif response:
+        if isinstance(response, Response):
+            status_code = response.status_code
+            try:
+                if response.is_json:
+                    response_body = response.get_json()
+            except Exception:
+                logger.warning("Failed to parse response body as JSON", exc_info=True)
+        elif isinstance(response, tuple) and len(response) >= 2:
+            response_body = response[0]
+            if isinstance(response[1], int):
+                status_code = response[1]
+        else:
+            response_body = response
+            # If no status code was derived from response object, assume 200 for successful returns
+            if status_code == 500:
+                status_code = 200
+
+    process_instance_id = None
+    if response_body and isinstance(response_body, dict):
+        if "process_instance" in response_body and isinstance(response_body["process_instance"], dict):
+            process_instance_id = response_body["process_instance"].get("id")
+        elif "id" in response_body:
+            process_instance_id = response_body.get("id")
+
+    if not process_instance_id and kwargs and "process_instance_id" in kwargs:
+        process_instance_id = kwargs["process_instance_id"]
+
+    duration_ms = int((time.time() - start_time) * 1000)
+
+    log_entry = APILogModel(
+        endpoint=context["endpoint"],
+        method=context["method"],
+        request_body=context["request_body"],
+        query_params=context["query_params"],
+        response_body=response_body,
+        status_code=status_code,
+        process_instance_id=process_instance_id,
+        duration_ms=duration_ms,
+    )
+    _queue_api_log_entry(log_entry)
+
+    if request:
+        g.api_log_created = True
+
+
+def setup_global_api_logging(app: Flask) -> None:
+    """Set up global API logging for all endpoints."""
+
+    # Check config at setup time to avoid registering hooks if not needed
+    if not app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
+        return
+
+    if not app.config.get("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", False):
+        return
+
+    @app.before_request
+    def start_timer() -> None:
+        g.api_log_start_time = time.time()
+
+    @app.after_request
+    def log_request(response: Response) -> Response:
+        # Runtime check in case config allows runtime changes (unlikely) or just safety
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
+            return response
+
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", False):
+            return response
+
+        # Skip if this request was already logged by the decorator
+        if hasattr(g, "api_log_created") and g.api_log_created:
+            return response
+
+        try:
+            start_time = getattr(g, "api_log_start_time", time.time())
+            _create_log_entry_final(start_time, response=response)
+        except Exception:
+            logger.exception("Failed to globally log API interaction")
+
+        return response
+
+
 def log_api_interaction(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Check if API logging is enabled
         if not current_app.config.get("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", False):
             return func(*args, **kwargs)
 
         start_time = time.time()
 
-        # Capture request details
-        endpoint = ""
-        method = ""
-        request_body = None
-
-        if request:
-            try:
-                endpoint = request.path
-                method = request.method
-                request_body = request.get_json(silent=True)
-            except RuntimeError:
-                # Working outside of request context
-                pass
-            except Exception:
-                request_body = None
-
-        status_code = 500
-        response_body = None
-        process_instance_id = None
-        response = None
-
         try:
             response = func(*args, **kwargs)
+            _create_log_entry_final(start_time, response=response, kwargs=kwargs)
+            return response
         except Exception as e:
-            # If an exception occurs, we try to get the status code from it if it's an API error
-            if hasattr(e, "status_code"):
-                status_code = e.status_code
-            if hasattr(e, "to_dict"):
-                response_body = e.to_dict()
-            else:
-                response_body = {"fabricated_response_body_from_exception": f"{e.__class__.__name__}: {str(e)}"}
-
+            _create_log_entry_final(start_time, exception=e, kwargs=kwargs)
             raise e
-        finally:
-            duration_ms = int((time.time() - start_time) * 1000)
-
-            if response:
-                if isinstance(response, Response):
-                    status_code = response.status_code
-                    try:
-                        if response.is_json:
-                            response_body = response.get_json()
-                    except Exception:
-                        # We might fail to parse JSON if the response is not actually JSON
-                        # despite the header, or some other issue. We'll just skip the body.
-                        logger.warning("Failed to parse response body as JSON", exc_info=True)
-                        pass
-                elif isinstance(response, tuple) and len(response) >= 2:
-                    # Handle tuple responses like (data, status_code) or (data, status_code, headers)
-                    response_body = response[0]
-                    if isinstance(response[1], int):
-                        status_code = response[1]
-                else:
-                    # Handle other response types - assume it's the response body
-                    response_body = response
-
-            # Extract process_instance_id if available in response
-            if response_body and isinstance(response_body, dict):
-                if "process_instance" in response_body and isinstance(response_body["process_instance"], dict):
-                    process_instance_id = response_body["process_instance"].get("id")
-                elif "id" in response_body:
-                    # Sometimes the response IS the process instance
-                    process_instance_id = response_body.get("id")
-
-            # If not found in response, check if it was in the args (e.g. for run)
-            if not process_instance_id:
-                if "process_instance_id" in kwargs:
-                    process_instance_id = kwargs["process_instance_id"]
-
-            log_entry = APILogModel(
-                endpoint=endpoint,
-                method=method,
-                request_body=request_body,
-                response_body=response_body,
-                status_code=status_code,
-                process_instance_id=process_instance_id,
-                duration_ms=duration_ms,
-            )
-            # Queue the log entry for deferred processing instead of immediate commit
-            _queue_api_log_entry(log_entry)
-
-        return response
 
     return wrapper

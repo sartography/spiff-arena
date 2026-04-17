@@ -23,6 +23,11 @@ on:
       - .github/workflows/tests.yml
       - .github/workflows/constraints.txt
 
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: spiffworkflow-backend
@@ -178,14 +183,7 @@ jobs:
       #   run: ./bin/recreate_db clean rmall
 
       - name: Setup Mysql
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 3306
-          container port: 3306
-          mysql version: "8.0"
-          mysql database: "spiffworkflow_backend_unit_testing"
-          mysql root password: password
-          collation server: "utf8mb4_0900_as_cs"
+        run: docker run --name mysql-spiff -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=spiffworkflow_backend_unit_testing -d mysql:8.0 --collation-server=utf8mb4_0900_as_cs
         if: matrix.database == 'mysql'
 
       - name: Setup Postgres
@@ -197,7 +195,8 @@ jobs:
         # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
         # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
         run: |
-          brew install mysql@8.0 postgresql@14 && brew link mysql@8.0
+          brew install mysql@8.0 postgresql@16
+          brew link mysql@8.0 2>/dev/null || true
 
       - name: Run Session
         run: |
@@ -206,7 +205,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: "actions/upload-artifact@v6"
+        uses: "actions/upload-artifact@v7"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -215,14 +214,14 @@ jobs:
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
-      #   uses: actions/upload-artifact@v6
+      #   uses: actions/upload-artifact@v7
       #   with:
       #     name: docs
       #     path: docs/_build
       #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v6"
+        uses: "actions/upload-artifact@v7"
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
@@ -306,7 +305,7 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: Download coverage data
-        uses: actions/download-artifact@v7.0.0
+        uses: actions/download-artifact@v8.0.1
         with:
           name: coverage-data
           # this action doesn't seem to respect working-directory so include working-directory value in path
@@ -317,7 +316,7 @@ jobs:
           ./bin/run_ci_session coverage
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5.5.2
+        uses: codecov/codecov-action@v6.0.0
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v5.0.0
@@ -336,15 +335,15 @@ jobs:
       # part about saving PR number and then using it from auto-merge-dependabot-prs from:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
       - name: Write PR number to spiffworkflow-backend/pr dir
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
       - name: Upload PR number as artifact
-        uses: actions/upload-artifact@v6
-        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         with:
           name: pr_number
           # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
@@ -371,8 +370,7 @@ jobs:
         with:
           node-version: 24.x
       - run: npm install
-      - run: npm run lint
-      - run: npm test
+      - run: npm run check-ci
       - run: npm run build --if-present
       - name: SonarCloud Scan
         # thought about just skipping dependabot
@@ -447,13 +445,14 @@ jobs:
         run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
       - name: Upload logs
         if: failure()
-        uses: "actions/upload-artifact@v6"
+        uses: "actions/upload-artifact@v7"
         with:
           name: spiffworkflow-backend-logs
           path: "./spiffworkflow-backend/log/*.log"
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-traces
           path: ./spiffworkflow-frontend/test/browser/test-results/
+          if-no-files-found: ignore

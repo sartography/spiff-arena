@@ -31,7 +31,7 @@ This is a React application built with Vite and using `npm` as the package manag
   npm run build
   ```
 
-## Testing and Linting
+## Testing and Code Quality
 
 - **Run unit tests:**
 
@@ -39,10 +39,10 @@ This is a React application built with Vite and using `npm` as the package manag
   npm test
   ```
 
-- **Run linter:**
+- **Run type checks + lint fixes + tests:**
 
   ```bash
-  npm run lint
+  npm run check
   ```
 
 ## Playwright E2E Tests

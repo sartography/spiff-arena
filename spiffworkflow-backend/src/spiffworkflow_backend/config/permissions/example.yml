@@ -36,7 +36,7 @@ permissions:
     uri: /*
 
   # Everybody can participate in tasks assigned to them.
-  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/permission_url.html
+  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/reference/permission_url.html#permission-url
   basic:
     groups: [everybody]
     actions: [all]

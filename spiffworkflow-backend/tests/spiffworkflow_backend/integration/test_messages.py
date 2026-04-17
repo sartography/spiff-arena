@@ -114,6 +114,23 @@ class TestMessages(BaseTest):
         assert response.json() is not None
         assert len(response.json()["messages"]) == 0, "should not have access to messages defined in a sub directory"
 
+    def test_message_model_list_all(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.copy_example_process_models()
+        DataSetupService.refresh_process_model_caches()
+        response = client.get(
+            "/v1.0/all-message-models",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert len(response.json()["messages"]) == 4
+
     def test_process_group_update_syncs_message_models(
         self,
         app: Flask,

@@ -1,7 +1,11 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
-import { ElementForArray, ProcessInstance } from './interfaces';
+import {
+  ElementForArray,
+  MessageInstance,
+  ProcessInstance,
+} from './interfaces';
 import i18n from './i18n';
 
 export const DEFAULT_PER_PAGE = 50;
@@ -257,6 +261,13 @@ export const getProcessStatus = (processInstance: ProcessInstance | string) => {
     return i18n.t(`status_${processInstance}`);
   }
   return i18n.t(`status_${processInstance.status}`);
+};
+
+export const getMessageType = (messageInstance: MessageInstance | string) => {
+  if (typeof messageInstance === 'string') {
+    return i18n.t(`message_type_${messageInstance}`);
+  }
+  return i18n.t(`message_type_${messageInstance.message_type}`);
 };
 
 export const getLastMilestoneFromProcessInstance = (

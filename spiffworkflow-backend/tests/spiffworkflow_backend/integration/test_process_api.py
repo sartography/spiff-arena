@@ -2357,6 +2357,18 @@ class TestProcessApi(BaseTest):
             json={"execute": False},
         )
 
+        assert response.status_code == 400
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        process_instance.status = ProcessInstanceStatus.suspended.value
+        db.session.add(process_instance)
+        db.session.commit()
+        response = client.post(
+            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/{human_task['guid']}",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"execute": False},
+        )
+
         assert response.json()["status"] == "suspended"
         task_model = TaskModel.query.filter_by(guid=human_task["guid"]).first()
         assert task_model is not None

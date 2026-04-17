@@ -101,6 +101,7 @@ class TestAuthorizationService(BaseTest):
                 ("/logs/some-process-group:some-process-model:*", "read"),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
                 ("/message-models/some-process-group:some-process-model:*", "read"),
+                ("/all-message-models/some-process-group:some-process-model:*", "read"),
                 ("/process-data/some-process-group:some-process-model:*", "read"),
                 (
                     "/process-data-file-download/some-process-group:some-process-model:*",
@@ -202,6 +203,7 @@ class TestAuthorizationService(BaseTest):
                 ),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
                 ("/message-models/some-process-group:some-process-model/*", "read"),
+                ("/all-message-models/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
                 (
                     "/process-instance-migrate/some-process-group:some-process-model/*",
@@ -550,6 +552,8 @@ class TestAuthorizationService(BaseTest):
                 ("/frontend-access", "read"),
                 ("/logs/*", "read"),
                 ("/messages", "read"),
+                ("/message-models", "read"),
+                ("/all-message-models", "read"),
                 ("/messages/*", "create"),
                 ("/messages/*", "read"),
                 ("/process-data-file-download/*", "read"),
@@ -839,7 +843,7 @@ class TestAuthorizationService(BaseTest):
             )
             assert human_task_count == 2
 
-    def test_user_can_is_not_assigned_task_if_lane_owners_in_use(
+    def test_user_is_not_auto_assigned_to_username_based_lane_owners_task_on_group_membership_change(
         self,
         app: Flask,
         client: TestClient,

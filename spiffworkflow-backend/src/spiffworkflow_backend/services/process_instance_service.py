@@ -47,6 +47,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -722,7 +723,7 @@ class ProcessInstanceService:
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, str(spiff_task.id), user)
 
         # Validate user task data against JSON schema if enabled and it's a User Task (not Manual Task)
         if (
@@ -801,7 +802,7 @@ class ProcessInstanceService:
         a multi-instance task.
         """
         ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        processor.complete_task(spiff_task, human_task, user=user)
+        processor.complete_task(spiff_task, user=user, human_task=human_task)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if should_queue_process_instance(execution_mode):
@@ -840,7 +841,7 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_task(processor.process_instance_model.id, task_guid, g.user)
+            AuthorizationService.assert_user_can_complete_human_task(processor.process_instance_model.id, task_guid, g.user)
             can_complete = True
         except HumanTaskAlreadyCompletedError:
             can_complete = False
@@ -855,10 +856,24 @@ class ProcessInstanceService:
         if can_complete is False:
             human_task = HumanTaskModel.query.filter_by(task_id=task_guid).first()
             if human_task is not None:
+                # Collect group identifiers from both sources
+                group_identifiers = []
+
+                # Check for group assignment via HumanTaskGroupModel (preferred, supports multiple groups)
+                task_groups = HumanTaskGroupModel.query.filter_by(human_task_id=human_task.id).all()
+                for task_group in task_groups:
+                    group = GroupModel.query.filter_by(id=task_group.group_id).first()
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                # Also check legacy lane_assignment_id for backwards compatibility
                 if human_task.lane_assignment_id is not None:
                     group = GroupModel.query.filter_by(id=human_task.lane_assignment_id).first()
-                    if group is not None:
-                        assigned_user_group_identifier = group.identifier
+                    if group is not None and group.identifier not in group_identifiers:
+                        group_identifiers.append(group.identifier)
+
+                if group_identifiers:
+                    assigned_user_group_identifier = ",".join(group_identifiers)
                 elif len(human_task.potential_owners) > 0:
                     user_list = [u.email for u in human_task.potential_owners]
                     potential_owner_usernames = ",".join(user_list)

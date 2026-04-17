@@ -1,0 +1,127 @@
+/* Scoped styles for properties panel only */
+.properties-panel-parent * {
+    box-sizing: border-box;
+}
+.properties-panel-parent {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    border-left: 1px solid #ccc;
+    overflow: auto;
+}
+.properties-panel-parent#js-properties-panel {
+    width: 400px;
+}
+.properties-panel-parent a:link {
+    text-decoration: none;
+}
+.properties-panel-parent:empty {
+    display: none;
+}
+.properties-panel-parent > .djs-properties-panel {
+    padding-bottom: 70px;
+    min-height: 100%;
+}
+
+/* Content container rules - scoped to avoid global conflicts */
+.bpmn-properties-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+.bpmn-properties-content > .message {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    display: table;
+    font-size: 16px;
+    color: #111;
+}
+.bpmn-properties-content > .message .note {
+    vertical-align: middle;
+    text-align: center;
+    display: table-cell;
+}
+.bpmn-properties-content > .message.error .details {
+    max-width: 500px;
+    font-size: 12px;
+    margin: 20px auto;
+    text-align: left;
+    color: #bd2828;
+}
+.bpmn-properties-content > .message.error pre {
+    border: solid 1px #bd2828;
+    background: #fefafa;
+    padding: 10px;
+    color: #bd2828;
+}
+.bpmn-properties-content:not(.with-error) .error,
+.bpmn-properties-content.with-error .intro,
+.bpmn-properties-content.with-diagram .intro {
+    display: none;
+}
+.bpmn-properties-content .canvas {
+    width: 100%;
+}
+.bpmn-properties-content .canvas,
+.bpmn-properties-content .properties-panel-parent {
+    display: none;
+}
+.bpmn-properties-content.with-diagram .canvas,
+.bpmn-properties-content.with-diagram .properties-panel-parent {
+    display: block;
+}
+
+/* Button styles - scoped to properties panel */
+.properties-panel-parent .buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.properties-panel-parent .buttons > li {
+    display: inline-block;
+    margin-right: 10px;
+}
+.properties-panel-parent .buttons > li > a {
+    background: #ddd;
+    border: solid 1px #666;
+    display: inline-block;
+    padding: 5px;
+}
+.properties-panel-parent .buttons a {
+    opacity: 0.3;
+}
+.properties-panel-parent .buttons a.active {
+    opacity: 1;
+}
+/* Scoped palette width override for this editor instance */
+.bpmn-properties-content .djs-palette.two-column.open {
+    width: 96px;
+}
+
+/* Scoped dialog styles for BPMN editor dialogs only */
+.bpmn-editor-wide-dialog .MuiPaper-root {
+    max-width: 100%;
+    min-width: 70%;
+}
+
+[data-theme='dark'] .bpmn-js-container {
+    filter: invert(1) hue-rotate(180deg);
+}
+[data-theme='dark'] .bpmn-js-container .djs-context-pad.open > .group > .entry {
+    background-color: #c5c5c5;
+    color: black;
+}
+[data-theme='dark'] .bpmn-js-container .djs-popup {
+    background-color: white;
+    color: black;
+}
+[data-theme='dark'] .bpmn-js-container .djs-popup .selected {
+    background-color: grey;
+}
+[data-theme='dark'] .bpmn-js-container .bjs-breadcrumbs {
+    color: grey;
+}

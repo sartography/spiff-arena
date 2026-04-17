@@ -15,5 +15,7 @@ fi
 workers=3
 
 # THIS MUST BE THE LAST COMMAND!
+# Dependencies are already installed into the image virtualenv during build,
+# so avoid invoking Poetry again at runtime.
 # default --limit-request-line is 4094. see https://stackoverflow.com/a/66688382/6090676
-exec poetry run gunicorn --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --error-logfile '-' --access-logfile '-' --log-level debug app:app
+exec gunicorn --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --error-logfile '-' --access-logfile '-' --log-level debug app:app

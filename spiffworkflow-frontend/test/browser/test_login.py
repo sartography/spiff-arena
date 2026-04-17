@@ -1,4 +1,3 @@
-import time
 from playwright.sync_api import Page, expect
 
 from helpers.login import login, logout

@@ -1,6 +1,9 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import { json } from '@codemirror/lang-json';
+import { EditorState, type Extension } from '@codemirror/state';
+import { EditorView } from 'codemirror';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
   useParams,
   useNavigate,
@@ -133,6 +136,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const [diagramFileName, setDiagramFileName] = useState<string | null>(null);
+  const [diagramProcessModelId, setDiagramProcessModelId] = useState<
+    string | null
+  >(null);
+  const [diagramLoadError, setDiagramLoadError] = useState<string | null>(null);
 
   const [addingPotentialOwners, setAddingPotentialOwners] =
     useState<boolean>(false);
@@ -361,6 +369,51 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     tab,
     taskSubTab,
   ]);
+
+  useEffect(() => {
+    if (!processInstance) {
+      return;
+    }
+
+    if (processInstance.bpmn_xml_file_contents) {
+      setDiagramFileName(null);
+      setDiagramProcessModelId(null);
+      setDiagramLoadError(null);
+      return;
+    }
+
+    const diagramIdentifier =
+      processInstance.process_model_with_diagram_identifier ||
+      processInstance.process_model_identifier;
+    if (!diagramIdentifier) {
+      return;
+    }
+
+    const modifiedDiagramId =
+      modifyProcessIdentifierForPathParam(diagramIdentifier);
+    setDiagramProcessModelId(modifiedDiagramId);
+
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedDiagramId}`,
+      successCallback: (result: ProcessModel) => {
+        if (result.primary_file_name) {
+          setDiagramFileName(result.primary_file_name);
+          setDiagramLoadError(null);
+        } else {
+          setDiagramLoadError(t('diagram_file_name_editor_error_required'));
+        }
+      },
+      failureCallback: (err: { message?: string } | string) => {
+        if (typeof err === 'string') {
+          setDiagramLoadError(err);
+        } else if (err?.message) {
+          setDiagramLoadError(err.message);
+        } else {
+          setDiagramLoadError(t('failed_to_load_diagram'));
+        }
+      },
+    });
+  }, [processInstance, t]);
 
   const updateSearchParams = (value: string, key: string) => {
     if (value !== undefined) {
@@ -1317,12 +1370,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const numberOfLines = taskDataToDisplay.split('\n').length;
     let heightInEm = numberOfLines + 5;
-    let scrollEnabled = false;
-    let minimapEnabled = false;
     if (heightInEm > 30) {
       heightInEm = 30;
-      scrollEnabled = true;
-      minimapEnabled = true;
     }
     let taskDataHeader = t('task_data');
     let editorReadOnly = true;
@@ -1338,6 +1387,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
+    const extensions: Extension[] = [json()];
+    if (editorReadOnly) {
+      extensions.push(EditorState.readOnly.of(true));
+      extensions.push(EditorView.editable.of(false));
+      extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
+    }
+
     return (
       <>
         {showTaskDataLoading ? <CircularProgress size={24} /> : null}
@@ -1346,18 +1402,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : (
           <>
             <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <Editor
+            <ThemedCodeMirror
               height={`${heightInEm}rem`}
-              width="auto"
-              defaultLanguage="json"
               value={taskDataToDisplay}
+              extensions={extensions}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
-              }}
-              options={{
-                readOnly: editorReadOnly,
-                scrollBeyondLastLine: scrollEnabled,
-                minimap: { enabled: minimapEnabled },
               }}
             />
           </>
@@ -1399,13 +1449,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (eventTextEditorEnabled) {
       className = '';
       editor = (
-        <Editor
-          height={300}
-          width="auto"
-          defaultLanguage="json"
-          defaultValue={eventPayload}
+        <ThemedCodeMirror
+          height={'300px'}
+          value={eventPayload}
+          extensions={[json()]}
           onChange={(value: any) => setEventPayload(value || '{}')}
-          options={{ readOnly: !eventTextEditorEnabled }}
         />
       );
     }
@@ -1794,36 +1842,52 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return <CircularProgress size={24} />;
     }
 
+    const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
+    const canLoadFromModel =
+      !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
+    const retrievalError =
+      processInstance.bpmn_xml_file_contents_retrieval_error || '';
     const detailsComponent = (
       <>
         {childrenForErrorObject(
-          errorForDisplayFromString(
-            processInstance.bpmn_xml_file_contents_retrieval_error || '',
-          ),
+          errorForDisplayFromString(diagramLoadError || retrievalError),
           t,
         )}
       </>
     );
-    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
-      <Notification
-        title={t('failed_to_load_diagram')}
-        type="error"
-        hideCloseButton
-        allowTogglingFullMessage
-      >
-        {detailsComponent}
-      </Notification>
-    ) : (
+
+    if (
+      !hasDiagramXml &&
+      !canLoadFromModel &&
+      (diagramLoadError || retrievalError)
+    ) {
+      return (
+        <Notification
+          title={t('failed_to_load_diagram')}
+          type="error"
+          hideCloseButton
+          allowTogglingFullMessage
+        >
+          {detailsComponent}
+        </Notification>
+      );
+    }
+
+    return (
       <>
         <ReactDiagramEditor
           diagramType="readonly"
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
           onCallActivityOverlayClick={handleCallActivityNavigate}
           onElementClick={handleClickedDiagramTask}
-          processModelId={processModelId || ''}
+          modifiedProcessModelId={
+            canLoadFromModel
+              ? diagramProcessModelId || ''
+              : modifiedProcessModelId || ''
+          }
           tasks={tasks}
         />
-        <div id="diagram-container" />
       </>
     );
   };
@@ -1929,7 +1993,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView={false}
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}
@@ -1937,7 +2001,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}

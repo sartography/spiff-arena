@@ -4,11 +4,7 @@ orphan: true
 
 # Full Index
 
-```{toctree}
-:titlesonly:
-
-tutorials/index
-how_to_guides/index
-reference/index
-explanation/index
-```
+- [Tutorials](tutorials/index)
+- [How-to Guides](how_to_guides/index)
+- [Reference](reference/index)
+- [Explanation](explanation/index)

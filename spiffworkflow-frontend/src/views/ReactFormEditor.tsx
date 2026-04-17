@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
+import { json } from '@codemirror/lang-json';
+import { xml } from '@codemirror/lang-xml';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -9,6 +11,7 @@ import {
   Box,
   Typography,
   TextField,
+  TextareaAutosize,
   Stack,
 } from '@mui/material';
 import { Can } from '@casl/react';
@@ -240,6 +243,10 @@ export default function ReactFormEditor() {
 
   const editorArea = () => {
     if (fileExtension === 'md') {
+      const createTextarea = (props: any) => {
+        return <TextareaAutosize {...props} />;
+      };
+
       return (
         <div data-color-mode="light">
           <MDEditor
@@ -247,16 +254,23 @@ export default function ReactFormEditor() {
             highlightEnable={false}
             value={processModelFileContents || ''}
             onChange={(value) => setProcessModelFileContents(value || '')}
+            components={{
+              textarea: createTextarea,
+            }}
           />
         </div>
       );
     }
+    const extensions = [];
+    if (editorDefaultLanguage == 'json') {
+      extensions.push(json());
+    } else if (editorDefaultLanguage == 'xml') {
+      extensions.push(xml());
+    }
     return (
-      <Editor
-        height={600}
-        width="auto"
-        defaultLanguage={editorDefaultLanguage}
-        defaultValue={processModelFileContents || ''}
+      <ThemedCodeMirror
+        value={processModelFileContents || ''}
+        extensions={extensions}
         onChange={(value) => setProcessModelFileContents(value || '')}
       />
     );
@@ -284,7 +298,12 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb hotCrumbs={hotCrumbs.current} />
-        <h1>{t('process_model_file', { fileName: processModelFileName })}</h1>
+        <h1
+          data-testid="process-model-file-show"
+          data-filename={processModelFileName}
+        >
+          {t('process_model_file', { fileName: processModelFileName })}
+        </h1>
         {newFileNameBox()}
         {saveFileMessage()}
 

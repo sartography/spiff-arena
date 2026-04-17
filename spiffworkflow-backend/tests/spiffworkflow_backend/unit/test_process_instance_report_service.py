@@ -5,6 +5,8 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportMetadataInvalidError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
@@ -14,6 +16,84 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceReportService(BaseTest):
+    def test_filter_by_user_group_identifier_handles_tasks_with_only_human_task_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+        group_two = UserService.find_or_create_group("group_two")
+        UserService.add_user_to_group(user_two, group_two)
+
+        process_instance = ProcessInstanceModel(
+            process_initiator=user_two,
+            process_model_identifier="test/process",
+            process_model_display_name="Test Process",
+        )
+        db.session.add(process_instance)
+        db.session.flush()
+        human_task = HumanTaskModel(
+            process_instance_id=process_instance.id,
+            task_id="task_1",
+            task_name="Task 1",
+            task_type="UserTask",
+            task_status="READY",
+            lane_assignment_id=None,
+        )
+        db.session.add(human_task)
+        db.session.flush()
+        db.session.add(HumanTaskGroupModel(human_task_id=human_task.id, group_id=group_two.id))
+        db.session.commit()
+
+        query = ProcessInstanceReportService.filter_by_user_group_identifier(
+            ProcessInstanceModel.query,
+            user_group_identifier=group_two.identifier,
+            user=user_one,
+        )
+        assert query.all() == []
+
+    def test_filter_by_user_group_identifier_only_returns_instances_for_requesting_users_group_membership(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+        group_one = UserService.find_or_create_group("group_one")
+        group_two = UserService.find_or_create_group("group_two")
+        UserService.add_user_to_group(user_one, group_one)
+        UserService.add_user_to_group(user_two, group_two)
+
+        process_instance = ProcessInstanceModel(
+            process_initiator=user_two,
+            process_model_identifier="test/process",
+            process_model_display_name="Test Process",
+        )
+        db.session.add(process_instance)
+        db.session.flush()
+        db.session.add(
+            HumanTaskModel(
+                process_instance_id=process_instance.id,
+                task_id="task_1",
+                task_name="Task 1",
+                task_type="UserTask",
+                task_status="READY",
+                lane_assignment_id=group_two.id,
+            )
+        )
+        db.session.commit()
+
+        query = ProcessInstanceReportService.filter_by_user_group_identifier(
+            ProcessInstanceModel.query,
+            user_group_identifier=group_two.identifier,
+            user=user_one,
+        )
+
+        assert query.all() == []
+
     def test_can_filter_by_completed_instances_initiated_by_me(
         self,
         app: Flask,

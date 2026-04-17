@@ -31,6 +31,7 @@ else
     fi
 
     uv run python "${script_dir}/bootstrap.py"
+    export SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT="1"
 
     # this line blocks
     exec uv run uvicorn spiff_web_server:connexion_app \

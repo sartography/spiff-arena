@@ -15,6 +15,7 @@ class APILogModel(SpiffworkflowBaseDBModel):
     endpoint: str = db.Column(db.String(255), index=True)
     method: str = db.Column(db.String(10), index=True)
     request_body: dict | None = db.Column(db.JSON)
+    query_params: dict | None = db.Column(db.JSON)
     response_body: dict | None = db.Column(db.JSON)
     status_code: int = db.Column(db.Integer, index=True)
     duration_ms: int = db.Column(db.Integer, index=True)

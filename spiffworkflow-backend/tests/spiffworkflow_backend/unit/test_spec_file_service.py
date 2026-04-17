@@ -6,6 +6,7 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -301,3 +302,47 @@ class TestSpecFileService(BaseTest):
 
         process_caller_relationships = ProcessCallerRelationshipModel.query.all()
         assert len(process_caller_relationships) == 2
+
+    def test_can_rename_bpmn_file_with_message_start_event(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        old_file_name = "message_start_event.bpmn"
+        new_file_name = "renamed_message_start.bpmn"
+        process_model_id = "test_group/message_rename"
+
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name=old_file_name,
+        )
+
+        message_triggers = MessageTriggerableProcessModel.query.filter_by(
+            process_model_identifier=process_model_id, file_name=old_file_name
+        ).all()
+        assert len(message_triggers) == 1
+        assert message_triggers[0].message_name == "message_one"
+
+        file_contents = SpecFileService.get_data(process_model, old_file_name)
+
+        # Clear the cache for the old file (simulating the first part of a rename operation)
+        SpecFileService.clear_caches_for_item(file_name=old_file_name, process_model_info=process_model)
+        db.session.commit()
+
+        # Simulate renaming by updating the file with a new name
+        # This should update the message trigger cache without errors
+        SpecFileService.update_file(process_model, new_file_name, file_contents)
+        db.session.commit()
+
+        updated_message_triggers = MessageTriggerableProcessModel.query.filter_by(
+            process_model_identifier=process_model_id, message_name="message_one"
+        ).all()
+        assert len(updated_message_triggers) == 1
+        assert updated_message_triggers[0].file_name == new_file_name
+
+        old_message_triggers = MessageTriggerableProcessModel.query.filter_by(
+            process_model_identifier=process_model_id, file_name=old_file_name
+        ).all()
+        assert len(old_message_triggers) == 0

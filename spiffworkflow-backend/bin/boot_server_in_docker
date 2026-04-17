@@ -61,10 +61,11 @@ fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
 # it causes issues with attempting to add duplicate data to the db
-worker_count=4
+worker_count="${SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT:-4}"
 if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
   worker_count=1
 fi
+export SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT="$worker_count"
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
@@ -105,7 +106,6 @@ fi
 uv run python bin/bootstrap.py
 
 log_info "Starting gunicorn server"
-export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
 # Run with gunicorn as per recommendation from uvicorn
 #   https://www.uvicorn.org/deployment/

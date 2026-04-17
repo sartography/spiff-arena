@@ -3,16 +3,21 @@ import base64
 import re
 import time
 import urllib.parse
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from starlette.testclient import TestClient
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.service_tasks_controller import authentication_begin
+from spiffworkflow_backend.routes.service_tasks_controller import authentication_list
 from spiffworkflow_backend.services.authentication_service import PKCE
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -24,6 +29,80 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthentication(BaseTest):
+    def test_authentication_list_redirect_url_uses_public_backend_base(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
+        ):
+            with app.test_request_context("/v1.0/authentications"):
+                mocker.patch(
+                    "spiffworkflow_backend.routes.service_tasks_controller.ServiceTaskService.authentication_list",
+                    return_value=[],
+                )
+                mocker.patch(
+                    "spiffworkflow_backend.routes.service_tasks_controller.OAuthService.authentication_list",
+                    return_value=[],
+                )
+                response = authentication_list()
+
+        assert response.status_code == 200
+        assert response.get_json()["redirect_url"] == "https://backend.example.com/api/v1.0/authentication_callback"
+
+    def test_authentication_begin_callback_uses_public_backend_base(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        remote_app = MagicMock()
+        redirect_response = WerkzeugResponse(status=302)
+        remote_app.authorize.return_value = redirect_response
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
+        ):
+            with app.test_request_context("/v1.0/authentication_begin/example/oauth?token=test-token"):
+                mocker.patch("spiffworkflow_backend.routes.service_tasks_controller.verify_token", return_value=None)
+                mocker.patch(
+                    "spiffworkflow_backend.routes.service_tasks_controller.OAuthService.supported_service",
+                    return_value=True,
+                )
+                mocker.patch(
+                    "spiffworkflow_backend.routes.service_tasks_controller.OAuthService.remote_app",
+                    return_value=remote_app,
+                )
+                response = authentication_begin("example", "oauth")
+
+        assert response is redirect_response
+        remote_app.authorize.assert_called_once_with(
+            callback="https://backend.example.com/api/v1.0/authentication_callback/example/oauth",
+            _external=True,
+        )
+
+    def test_logout_redirect_url_uses_public_backend_base(self, app: Flask) -> None:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
+        ):
+            with app.test_request_context():
+                with patch.object(
+                    AuthenticationService,
+                    "open_id_endpoint_for_name",
+                    return_value="https://auth.example.com/logout",
+                ):
+                    response = AuthenticationService().logout("test-id-token", "default")
+
+        assert response.location == (
+            "https://auth.example.com/logout"
+            "?post_logout_redirect_uri=https://backend.example.com/api/v1.0/logout_return&"
+            "id_token_hint=test-id-token"
+        )
+
     def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False):
             redirect_url = "http://example.com/"
@@ -282,7 +361,15 @@ class TestAuthentication(BaseTest):
             assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
             assert isinstance(state_dict["pkce_id"], str)
 
-    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask) -> None:
+    def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask, mocker: MockerFixture) -> None:
+        # Mock the redirect URI method since we're testing PKCE validation, not URL building.
+        # There's some bad interaction with another test depnding on test order.
+        # Not sure if it's about connexion and url building, etc.
+        mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.AuthenticationService.get_redirect_uri_for_login_to_server",
+            return_value="https://example.com/v1.0/login_return",
+        )
+
         with app.test_request_context(
             "/some/path",
             base_url="https://example.com/",  # this is what request.host_url will be based on

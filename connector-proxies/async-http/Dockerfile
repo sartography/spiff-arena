@@ -8,5 +8,6 @@ RUN pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
+COPY bin ./bin
 
-CMD [ "granian", "--host", "0.0.0.0", "--port", "8080", "--interface", "asgi", "main:app" ]
+CMD ["./bin/boot_server_in_docker"]

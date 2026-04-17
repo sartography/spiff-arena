@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 jobs:
   build:
 

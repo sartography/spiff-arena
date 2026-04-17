@@ -12,6 +12,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailDict
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import LoggingService
 
 
@@ -28,21 +29,23 @@ class ProcessInstanceTmpService:
         process_instance: ProcessInstanceModel,
         event_type: str,
         task_guid: str | None = None,
-        user_id: int | None = None,
+        user: UserModel | None = None,
         exception: Exception | None = None,
         timestamp: float | None = None,
         add_to_db_session: bool | None = True,
         migration_details: ProcessInstanceMigrationDetailDict | None = None,
         log_event: bool = True,
     ) -> tuple[ProcessInstanceEventModel, ProcessInstanceErrorDetailModel | None]:
-        if user_id is None and hasattr(g, "user") and g.user:
-            user_id = g.user.id
+        if user is None and hasattr(g, "user") and g.user:
+            user = g.user
         if timestamp is None:
             timestamp = time.time()
 
         process_instance_event = ProcessInstanceEventModel(
-            process_instance_id=process_instance.id, event_type=event_type, timestamp=timestamp, user_id=user_id
+            process_instance_id=process_instance.id, event_type=event_type, timestamp=timestamp
         )
+        if user is not None:
+            process_instance_event.user = user
         if task_guid:
             process_instance_event.task_guid = task_guid
 
