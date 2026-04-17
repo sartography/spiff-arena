@@ -59,7 +59,7 @@ jobs:
           - image_name: gsa-tts/connector-proxy-demo
             context: connector-proxy-demo
             description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
-          - image_name: sartography/connector-proxy-async-http
+          - image_name: gsa-tts/connector-proxy-async-http
             context: connector-proxies/async-http
             description: "Async HTTP connector proxy for SpiffWorkflow, providing generic HTTP integration capabilities"
 
