@@ -594,6 +594,13 @@ def build_response(workflow, e, compress_response=False, lazy_loads_result=None,
         full_state = get_state(workflow, compress=False)
         _step_history_cache[session_id].append(full_state)
 
+        # Cap step history at 64 steps - replace oldest entries with None to reduce memory
+        STEP_HISTORY_CAP = 64
+        steps = _step_history_cache[session_id]
+        if len(steps) > STEP_HISTORY_CAP:
+            # On step 64, step 0 becomes None (keeping array size intact for jump indices)
+            steps[len(steps) - STEP_HISTORY_CAP - 1] = None
+
         # Return step index instead of full state
         response["step_idx"] = len(_step_history_cache[session_id]) - 1
     
