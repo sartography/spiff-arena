@@ -5,7 +5,7 @@ import unittest
 
 from collections import namedtuple
 
-from spiff_arena_common.runner import advance_workflow, specs_from_xml
+from spiff_arena_common.runner import advance_workflow, SpiffJsonEncoder, spiff_json_object_hook, specs_from_xml
 
 Test = namedtuple("Test", ["file", "specs"])
 TestCtx = namedtuple("TestCtx", ["files", "specs", "tests", "test_cases"])
@@ -23,20 +23,20 @@ class BpmnTestCase(unittest.TestCase):
         super().__init__()
 
     def lazy_load(self, ids):
-        self.specs = json.loads(self.specs)
+        self.specs = json.loads(self.specs, object_hook=spiff_json_object_hook)
         for id in ids:
-            specs = json.loads(self.specs_by_id[id])
+            specs = json.loads(self.specs_by_id[id], object_hook=spiff_json_object_hook)
             subprocess_specs = self.specs["subprocess_specs"]
             subprocess_specs[id] = specs["spec"]
             subprocess_specs.update(specs["subprocess_specs"])
-        self.specs = json.dumps(self.specs)
+        self.specs = json.dumps(self.specs, cls=SpiffJsonEncoder)
 
     def runTest(self):
         iters = 0
         r = None
         while iters < 100:
             iters = iters + 1
-            r = json.loads(advance_workflow(self.specs, self.state, None, "unittest", None))
+            r = json.loads(advance_workflow(self.specs, self.state, None, "unittest", None), object_hook=spiff_json_object_hook)
             self.state = r["state"]
 
             # Check for errors after each advance
