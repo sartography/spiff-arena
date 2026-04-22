@@ -44,11 +44,17 @@ export function extractSchemaBaseName(fileName: string): string {
  */
 export function toValidSchemaName(input: string): string {
   if (!input) return '';
-  return input
+
+  let result = input
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 50);
+    .slice(0, 50);
+
+  // Note that after the above replacement, we can never have consecutive hyphens because -- is replaced with -
+  if (result.startsWith('-')) result = result.slice(1);
+  if (result.endsWith('-')) result = result.slice(0, -1);
+
+  return result;
 }
 
 /**
