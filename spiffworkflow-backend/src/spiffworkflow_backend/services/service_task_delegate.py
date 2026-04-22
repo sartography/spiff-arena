@@ -271,6 +271,7 @@ class ServiceTaskDelegate:
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}
+                proxied_response: http_connector.HttpConnectorResponse | requests.Response
                 try:
                     if http_connector.does(operator_identifier):
                         proxied_response = http_connector.do(operator_identifier, params)
