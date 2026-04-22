@@ -207,6 +207,17 @@ _workflow_cache = {}
 # This allows jumping to any step without sending state back from JavaScript
 _step_history_cache = {}
 
+
+def _missing_process_error(parser):
+    process_ids = list(parser.process_parsers.keys())
+    if process_ids:
+        joined = ", ".join(process_ids)
+        return (
+            "No executable BPMN process definitions were found in the XML. "
+            f"Found non-executable processes: {joined}."
+        )
+    return "No BPMN process definitions were found in the XML."
+
 def specs_from_xml(files):
     parser = CustomParser()
 
@@ -220,8 +231,12 @@ def specs_from_xml(files):
         all_specs = parser.find_all_specs()
     except Exception as e:
         return None, f"{e.__class__.__name__}: {e}"
-    
-    process_id = parser.get_process_ids()[0]
+
+    process_ids = parser.get_process_ids()
+    if not process_ids:
+        return None, _missing_process_error(parser)
+
+    process_id = process_ids[0]
     process = all_specs.pop(process_id)
     subprocesses = all_specs
 
@@ -593,6 +608,13 @@ def build_response(workflow, e, compress_response=False, lazy_loads_result=None,
         # Store full state in cache
         full_state = get_state(workflow, compress=False)
         _step_history_cache[session_id].append(full_state)
+
+        # Cap step history at 64 steps - replace oldest entries with None to reduce memory
+        STEP_HISTORY_CAP = 64
+        steps = _step_history_cache[session_id]
+        if len(steps) > STEP_HISTORY_CAP:
+            # On step 64, step 0 becomes None (keeping array size intact for jump indices)
+            steps[len(steps) - STEP_HISTORY_CAP - 1] = None
 
         # Return step index instead of full state
         response["step_idx"] = len(_step_history_cache[session_id]) - 1
