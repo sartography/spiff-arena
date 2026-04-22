@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from typing import Any
 from typing import cast
 from urllib.parse import urlparse
@@ -9,16 +10,18 @@ from flask import current_app
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 
 
+@dataclass
 class HttpConnectorResponse:
-    text: str | None = None
-    status_code: int | None = None
+    text: str
+    status_code: int
+    headers: dict[str, Any]
 
 
 def does(id: str) -> bool:
     return id in _config
 
 
-def do(id: str, params: dict[str, Any]) -> Any:
+def do(id: str, params: dict[str, Any]) -> HttpConnectorResponse:
     handler = cast(str, _config[id]["handler"])
     url = params["url"]
     headers = params.get("headers")
@@ -109,11 +112,10 @@ def _connector_response(http_response: requests.Response) -> HttpConnectorRespon
         "spiff__logs": [],
     }
 
-    # create a blank object so we can mimic an actual http response object
-    obj = HttpConnectorResponse()
-    obj.text = json.dumps(return_dict)
-    obj.status_code = http_response.status_code
-    return obj
+    # return a mimicked version an actual http response object
+    return HttpConnectorResponse(
+        text=json.dumps(return_dict), status_code=http_response.status_code, headers=dict(http_response.headers)
+    )
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
