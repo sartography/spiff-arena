@@ -207,6 +207,17 @@ _workflow_cache = {}
 # This allows jumping to any step without sending state back from JavaScript
 _step_history_cache = {}
 
+
+def _missing_process_error(parser):
+    process_ids = list(parser.process_parsers.keys())
+    if process_ids:
+        joined = ", ".join(process_ids)
+        return (
+            "No executable BPMN process definitions were found in the XML. "
+            f"Found non-executable processes: {joined}."
+        )
+    return "No BPMN process definitions were found in the XML."
+
 def specs_from_xml(files):
     parser = CustomParser()
 
@@ -220,8 +231,12 @@ def specs_from_xml(files):
         all_specs = parser.find_all_specs()
     except Exception as e:
         return None, f"{e.__class__.__name__}: {e}"
-    
-    process_id = parser.get_process_ids()[0]
+
+    process_ids = parser.get_process_ids()
+    if not process_ids:
+        return None, _missing_process_error(parser)
+
+    process_id = process_ids[0]
     process = all_specs.pop(process_id)
     subprocesses = all_specs
 
