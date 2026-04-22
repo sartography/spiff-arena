@@ -81,17 +81,23 @@ def _redact_sensitive_headers(headers: dict[str, Any] | None) -> dict[str, Any] 
     sensitive_header_names = {
         "authorization",
         "proxy-authorization",
-        "x-api-key",
-        "api-key",
-        "apikey",
+        "spiff-connector-proxy-api-key",
+    }
+    sensitive_header_substrings = [
+        "auth",
         "token",
         "secret",
         "password",
-        "spiff-connector-proxy-api-key",
-    }
+        "api-key",
+        "apikey",
+        "cookie",
+    ]
     redacted_headers: dict[str, Any] = {}
     for key, value in headers.items():
-        if str(key).lower() in sensitive_header_names:
+        key_lower = str(key).lower()
+        if key_lower in sensitive_header_names or any(
+            sensitive_substring in key_lower for sensitive_substring in sensitive_header_substrings
+        ):
             redacted_headers[key] = "<redacted>"
         else:
             redacted_headers[key] = value
