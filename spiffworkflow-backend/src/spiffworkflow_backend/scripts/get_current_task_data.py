@@ -1,6 +1,6 @@
 from typing import Any
 
-from SpiffWorkflow.bpmn.serializer import DefaultRegistry
+from SpiffWorkflow.bpmn.serializer import DefaultRegistry  # type: ignore
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
@@ -20,5 +20,8 @@ class GetCurrentTaskData(Script):
         """
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        data = DefaultRegistry().convert(script_attributes_context.task.data)
+        spiff_task = script_attributes_context.task
+        if not spiff_task:
+            return {}
+        data = DefaultRegistry().convert(spiff_task.data)
         return {k: v for k, v in data.items() if k not in _INTERNAL_KEYS}
