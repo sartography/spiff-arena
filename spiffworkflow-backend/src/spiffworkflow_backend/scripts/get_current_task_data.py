@@ -1,8 +1,11 @@
 from typing import Any
 
+from SpiffWorkflow.bpmn.serializer import DefaultRegistry
+
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
-from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
+
+_INTERNAL_KEYS = {"__builtins__", "__annotations__"}
 
 
 class GetCurrentTaskData(Script):
@@ -17,5 +20,5 @@ class GetCurrentTaskData(Script):
         """
 
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
-        task_dict = BpmnProcessService.serializer.to_dict(script_attributes_context.task)
-        return task_dict["data"]
+        data = DefaultRegistry().convert(script_attributes_context.task.data)
+        return {k: v for k, v in data.items() if k not in _INTERNAL_KEYS}
