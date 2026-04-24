@@ -5,7 +5,7 @@ from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser  # type: ignore
 
 from spiffworkflow_backend.data_stores import register_data_store_classes
-from spiffworkflow_backend.services.service_task_service import CustomServiceTask
+from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.specs.start_event import StartEvent
 
 

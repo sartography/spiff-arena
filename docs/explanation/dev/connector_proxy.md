@@ -141,89 +141,15 @@ These are the schema definitions returned by async-http and should be treated as
 
 ---
 
-## Examples
+## Request and Response Examples
 
-### List available commands
+For detailed examples of request payloads and response structures, including:
+- Sample requests for GET, POST, PUT, PATCH, DELETE, and HEAD operations
+- Response envelope structure and parsing behavior
+- Error response examples
+- Long-running task callbacks
 
-```
-curl -s http://localhost:8200/v1/commands | jq
-```
-
-### Execute a GET request
-
-Endpoint:
-
-```
-POST /v1/do/http/GetRequest
-```
-
-Payload:
-
-```json
-{
-  "url": "https://api.example.com/items",
-  "headers": { "Accept": "application/json" },
-  "params": { "limit": 10 }
-}
-```
-
-### Execute a POST request
-
-Endpoint:
-
-```
-POST /v1/do/http/PostRequest
-```
-
-Payload:
-
-```json
-{
-  "url": "https://api.example.com/items",
-  "headers": { "Content-Type": "application/json" },
-  "data": { "name": "example" }
-}
-```
-
-### Execute with basic auth
-
-```json
-{
-  "url": "https://api.example.com/secure",
-  "basic_auth_username": "user",
-  "basic_auth_password": "pass"
-}
-```
-
----
-
-## Response Contract
-
-All commands return a response envelope with this structure:
-
-```json
-{
-  "command_response": {
-    "body": {},
-    "mimetype": "application/json",
-    "http_status": 200
-  },
-  "command_response_version": 2,
-  "error": null,
-  "spiff__logs": []
-}
-```
-
-### Response parsing behavior
-
-- If the upstream response `Content-Type` includes `application/json`, the proxy parses JSON into `command_response.body`.
-- Otherwise, it returns:
-
-```json
-{ "raw_response": "<text>" }
-```
-
-> **Note:** The example sets `mimetype` to `"application/json"` for all responses, including raw text responses.
+See the [Connector Proxy API Examples](connector_proxy_examples) page.
 
 ---
 

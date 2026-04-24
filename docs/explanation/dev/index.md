@@ -8,6 +8,7 @@ developer_setup
 backend_api
 frontend
 connector_proxy
+connector_proxy_examples
 process
 pycharm_setup
 ```
