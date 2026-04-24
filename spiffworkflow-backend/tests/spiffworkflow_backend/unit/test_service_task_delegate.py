@@ -19,6 +19,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.service_task_delegate import _redact_sensitive_headers
 from spiffworkflow_backend.services.service_task_delegate import connector_proxy_api_key_headers
 from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
@@ -489,3 +490,25 @@ class TestServiceTaskDelegate(BaseTest):
             f"Expected to find '{contains_message}' in: {response_text}"
         )
         assert bool(re.search(rf"\b{status_code}\b", response_text)), f"Expected to find '{status_code}' in: {response_text}"
+
+
+def test_redact_sensitive_headers_redacts_sensitive_variants() -> None:
+    headers = {
+        "Authorization": "Bearer secret-token",
+        "Cookie": "session=abc123",
+        "Set-Cookie": "session=abc123; HttpOnly",
+        "X-Auth-Token": "auth-token-value",
+        "X-Amz-Security-Token": "aws-session-token",
+        "X-Goog-Api-Key": "google-api-key",
+        "Content-Type": "application/json",
+    }
+
+    assert _redact_sensitive_headers(headers) == {
+        "Authorization": "<redacted>",
+        "Cookie": "<redacted>",
+        "Set-Cookie": "<redacted>",
+        "X-Auth-Token": "<redacted>",
+        "X-Amz-Security-Token": "<redacted>",
+        "X-Goog-Api-Key": "<redacted>",
+        "Content-Type": "application/json",
+    }
