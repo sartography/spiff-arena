@@ -244,7 +244,7 @@ export default function ProcessInstanceListTableWithFilters({
   // it can be used to create a link to the process instances list page to reconstruct the report.
   const [reportHash, setReportHash] = useState<string | null>(null);
 
-  const lastRequestedInitatorSearchTerm = useRef<string>();
+  const lastRequestedInitatorSearchTerm = useRef<string | undefined>(undefined);
 
   const dateParametersToAlwaysFilterBy: DateParameters = useMemo(() => {
     return {
