@@ -42,7 +42,7 @@ There are four distinct types of connecting elements: Sequence Flows, Message Fl
 ## Elements
 
 These are the fundamental components used to construct processes.
-These elements encompass Flow Elements, Connecting Elements, Data Elements, Artifacts, and Swimlanes.
+These elements encompass Flow Elements, Connecting Elements, Data Elements, Artifacts, and Lanes.
 
 ## End Event
 
@@ -154,8 +154,7 @@ This is a self-contained and compound Activity incorporated within a process, ca
 
 ## Swimlane
 
-This is a visual representation that separates processes based on the Participants responsible for performing them.
-Swimlanes are comprised of Pools and Lanes.
+See Lane, which is the preferred term.
 
 ## Task
 

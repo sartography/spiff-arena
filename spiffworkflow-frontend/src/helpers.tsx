@@ -1,9 +1,11 @@
-import { Buffer } from 'buffer';
-
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { ReactElement } from 'react';
-import { ElementForArray, ProcessInstance } from './interfaces';
+import {
+  ElementForArray,
+  MessageInstance,
+  ProcessInstance,
+} from './interfaces';
 import i18n from './i18n';
 
 export const DEFAULT_PER_PAGE = 50;
@@ -254,19 +256,18 @@ export const isANumber = (str: string | number | null) => {
   return /^\d+(\.\d+)?$/.test(str.toString());
 };
 
-export const encodeBase64 = (data: string) => {
-  return Buffer.from(data).toString('base64');
-};
-
-export const decodeBase64 = (data: string) => {
-  return Buffer.from(data, 'base64').toString('ascii');
-};
-
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
   if (typeof processInstance === 'string') {
     return i18n.t(`status_${processInstance}`);
   }
   return i18n.t(`status_${processInstance.status}`);
+};
+
+export const getMessageType = (messageInstance: MessageInstance | string) => {
+  if (typeof messageInstance === 'string') {
+    return i18n.t(`message_type_${messageInstance}`);
+  }
+  return i18n.t(`message_type_${messageInstance.message_type}`);
 };
 
 export const getLastMilestoneFromProcessInstance = (

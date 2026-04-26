@@ -15,10 +15,13 @@ from typing import Any
 
 import dateparser
 import pytz
+from flask import current_app
 from lxml import etree  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
+from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -29,7 +32,7 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DEFAULT_NSMAP = {
     "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -273,9 +276,27 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
 
     def get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
         ready_tasks = list(bpmn_process_instance.get_tasks(state=TaskState.READY))
-        if len(ready_tasks) > 0:
+        code, no_code = [], []
+        for task in ready_tasks:
+            if isinstance(task.task_spec, BoundaryEvent):
+                event_definition = task.task_spec.event_definition
+                if isinstance(event_definition, CodeEventDefinition) and event_definition.code is not None:
+                    code.append(task)
+                else:
+                    no_code.append(task)
+
+        # This ensures that boundary events take priority, and events that have codes assigned
+        # take precedence over default actions
+        if len(code) > 0:
+            for task in no_code:
+                task.cancel()
+            return code[0]
+        elif len(no_code) > 0:
+            return no_code[0]
+        elif len(ready_tasks) > 0:
             return ready_tasks[0]
-        return None
+        else:
+            return None
 
     def _add_bpmn_file_to_parser(self, parser: MyCustomParser, bpmn_file: str) -> None:
         related_file_etree = self._get_etree_from_bpmn_file(bpmn_file)
@@ -286,7 +307,7 @@ class ProcessModelTestRunnerMostlyPureSpiffDelegate(ProcessModelTestRunnerDelega
     def _get_etree_from_bpmn_file(self, bpmn_file: str) -> etree._Element:
         with open(bpmn_file, "rb") as f_handle:
             data = f_handle.read()
-        return SpecFileService.get_etree_from_xml_bytes(data)
+        return ProcessModelService.get_etree_from_xml_bytes(data)
 
     def _find_related_bpmn_files(self, bpmn_file: str) -> list[str]:
         related_bpmn_files = []
@@ -337,12 +358,14 @@ class ProcessModelTestRunner:
 
     def __init__(
         self,
+        process_model_identifier: str,
         process_model_directory_path: str,
         process_model_test_runner_delegate_class: type = ProcessModelTestRunnerMostlyPureSpiffDelegate,
         process_model_directory_for_test_discovery: str | None = None,
         test_case_file: str | None = None,
         test_case_identifier: str | None = None,
     ) -> None:
+        self.process_model_identifier = process_model_identifier
         self.process_model_directory_path = process_model_directory_path
         self.process_model_directory_for_test_discovery = (
             process_model_directory_for_test_discovery or process_model_directory_path
@@ -384,6 +407,10 @@ class ProcessModelTestRunner:
         return "\n".join(formatted_tests)
 
     def run(self) -> None:
+        tld = current_app.config.get("THREAD_LOCAL_DATA")
+        if tld:
+            tld.process_model_identifier = self.process_model_identifier
+
         if len(self.test_mappings.items()) < 1:
             raise NoTestCasesFoundError(
                 f"Could not find any test cases in given directory: {self.process_model_directory_for_test_discovery}"
@@ -555,21 +582,3 @@ class ProcessModelTestRunner:
 
 class ProcessModelTestRunnerBackendDelegate(ProcessModelTestRunnerMostlyPureSpiffDelegate):
     pass
-
-
-class ProcessModelTestRunnerService:
-    def __init__(
-        self,
-        process_model_directory_path: str,
-        test_case_file: str | None = None,
-        test_case_identifier: str | None = None,
-    ) -> None:
-        self.process_model_test_runner = ProcessModelTestRunner(
-            process_model_directory_path,
-            test_case_file=test_case_file,
-            test_case_identifier=test_case_identifier,
-            process_model_test_runner_delegate_class=ProcessModelTestRunnerBackendDelegate,
-        )
-
-    def run(self) -> None:
-        self.process_model_test_runner.run()

@@ -4,6 +4,8 @@ users:
     email: admin@example.com
     password: admin
     preferred_username: admin
+  adminX:
+    service: bootstrap
   nelson:
     service: local_open_id
     email: nelson@example.com
@@ -22,7 +24,7 @@ users:
 
 groups:
   admin:
-    users: [admin@example.com, nelson@example.com]
+    users: [admin@example.com, adminX@bootstrap, nelson@example.com]
   approvers:
     users: [malala@example.com, oskar@example.com]
 
@@ -34,7 +36,7 @@ permissions:
     uri: /*
 
   # Everybody can participate in tasks assigned to them.
-  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/permission_url.html
+  # BASIC, PG, PM, are documented at https://spiff-arena.readthedocs.io/en/latest/reference/permission_url.html#permission-url
   basic:
     groups: [everybody]
     actions: [all]

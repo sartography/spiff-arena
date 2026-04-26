@@ -1,5 +1,4 @@
 import {
-  ReactNode,
   SyntheticEvent,
   useCallback,
   useEffect,
@@ -14,20 +13,13 @@ import {
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Button,
   ButtonGroup,
-  Dialog,
-  Tabs,
-  Tab,
-  TextField,
-  Grid,
-  Box,
   Stack,
   TextareaAutosize,
-  CircularProgress,
   IconButton,
   Tooltip,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import {
   SkipNext,
   SkipPrevious,
@@ -37,8 +29,15 @@ import {
   Info,
 } from '@mui/icons-material';
 
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
+import ThemedCodeMirrorMerge from '../components/ThemedCodeMirrorMerge';
+import { python } from '@codemirror/lang-python';
+import { json } from '@codemirror/lang-json';
+import { indentUnit } from '@codemirror/language';
+import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
+import { EditorState, StateField, StateEffect } from '@codemirror/state';
+
 import { Can } from '@casl/react';
-import { Editor, DiffEditor } from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -46,19 +45,41 @@ import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
 import {
+  useBpmnEditorCallbacks,
+  useBpmnEditorModals,
+  useProcessReferences,
+  useBpmnEditorTextEditorsState,
+  useBpmnEditorScriptState,
+  useScriptUnitTestsState,
+  runScriptUnitTest,
+  MessageEditorDialog,
+  MarkdownEditorDialog,
+  JsonSchemaEditorDialog,
+  FileNameEditorDialog,
+  ProcessSearchDialog,
+  ScriptAssistPanel,
+  ScriptEditorDialog,
+  useDiagramNavigationStack,
+  useDiagramNavigationHandlers,
+  fireMessageSave,
+  closeMarkdownEditorWithUpdate,
+  closeJsonSchemaEditorWithUpdate,
+  closeMessageEditorAndRefresh,
+  closeScriptEditorWithUpdate,
+} from '../../packages/bpmn-js-spiffworkflow-react/src';
+import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow-react/src';
+import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
+import {
   getGroupFromModifiedModelId,
-  makeid,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
 import {
-  CorrelationProperties,
   PermissionsToCheck,
   ProcessFile,
   ProcessModel,
   ProcessReference,
 } from '../interfaces';
-import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
@@ -67,25 +88,43 @@ import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
-function TabPanel(props: {
-  children?: ReactNode;
-  index: number;
-  value: number;
-}) {
-  const { children, value, index, ...other } = props;
+// State effects for managing error line decorations in script editor
+const addErrorLineEffect = StateEffect.define<{
+  line: number;
+  error: string;
+}>();
+const clearErrorLineEffect = StateEffect.define<null>();
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+// State field to track error line decorations
+const errorLineField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (effect.is(addErrorLineEffect)) {
+        const { line: lineNumber, error } = effect.value;
+        try {
+          const line = tr.state.doc.line(lineNumber);
+          const decoration = Decoration.line({
+            attributes: {
+              class: 'cm-script-error-line',
+              'data-error': error,
+            },
+          });
+          decorations = Decoration.set([decoration.range(line.from)]);
+        } catch (e) {
+          console.error('Failed to add error decoration:', e);
+        }
+      } else if (effect.is(clearErrorLineEffect)) {
+        decorations = Decoration.none;
+      }
+    }
+    return decorations;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 
 export default function ProcessModelEditDiagram() {
   const { t } = useTranslation();
@@ -94,46 +133,19 @@ export default function ProcessModelEditDiagram() {
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
-  const [scriptText, setScriptText] = useState<string>('');
-  const [scriptType, setScriptType] = useState<string>('');
-  const [fileEventBus, setFileEventBus] = useState<any>(null);
-  const [jsonSchemaFileName, setJsonSchemaFileName] = useState<string>('');
-  const [showJsonSchemaEditor, setShowJsonSchemaEditor] = useState(false);
-
-  const [scriptEventBus, setScriptEventBus] = useState<any>(null);
-  const [scriptModeling, setScriptModeling] = useState(null);
-  const [scriptElement, setScriptElement] = useState(null);
-  const [showScriptEditor, setShowScriptEditor] = useState(false);
-  const handleShowScriptEditor = () => setShowScriptEditor(true);
-
-  const [markdownText, setMarkdownText] = useState<string | undefined>('');
-  const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
-  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [showMessageEditor, setShowMessageEditor] = useState(false);
-  const [messageId, setMessageId] = useState<string>('');
-  const [elementId, setElementId] = useState<string>('');
-  const [correlationProperties, setCorrelationProperties] =
-    useState<CorrelationProperties | null>(null);
-  const [showProcessSearch, setShowProcessSearch] = useState(false);
-  const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
-  const [processSearchElement, setProcessSearchElement] = useState<any>(null);
-  const [processes, setProcesses] = useState<ProcessReference[]>([]);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
 
-  const [messageEvent, setMessageEvent] = useState<any>(null);
-
-  const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
-
-  const handleShowMessageEditor = () => setShowMessageEditor(true);
-
-  const editorRef = useRef(null);
-  const monacoRef = useRef(null);
-
-  const failingScriptLineClassNamePrefix = 'failingScriptLineError';
+  // CodeMirror editor reference for script unit test error highlighting
+  const scriptEditorViewRef = useRef<EditorView | null>(null);
+  // Persist error info to apply when editor is created (survives tab switches)
+  const [scriptErrorInfo, setScriptErrorInfo] = useState<{
+    line: number;
+    error: string;
+  } | null>(null);
 
   const [scriptAssistValue, setScriptAssistValue] = useState<string>('');
   const [scriptAssistError, setScriptAssistError] = useState<string | null>(
@@ -152,33 +164,50 @@ export default function ProcessModelEditDiagram() {
     permissionRequestData,
   );
 
-  function handleEditorDidMount(editor: any, monaco: any) {
-    // here is the editor instance
-    // you can store it in `useRef` for further usage
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-  }
-
-  interface ScriptUnitTest {
-    id: string;
-    inputJson: any;
-    expectedOutputJson: any;
-  }
-
-  interface ScriptUnitTestResult {
-    result: boolean;
-    context?: object;
-    error?: string;
-    line_number?: number;
-    offset?: number;
-  }
-
-  const [currentScriptUnitTest, setCurrentScriptUnitTest] =
-    useState<ScriptUnitTest | null>(null);
-  const [currentScriptUnitTestIndex, setCurrentScriptUnitTestIndex] =
-    useState<number>(-1);
-  const [scriptUnitTestResult, setScriptUnitTestResult] =
-    useState<ScriptUnitTestResult | null>(null);
+  // Use reusable hooks from bpmn-js-spiffworkflow-react package
+  const bpmnEditorCallbacks = useBpmnEditorCallbacks({
+    apiService: spiffBpmnApiService,
+    processModel,
+    canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
+    messageModelListPath: targetUris.messageModelListPath,
+  });
+  const { onMessagesRequested } = bpmnEditorCallbacks;
+  const {
+    onLaunchScriptEditor,
+    onLaunchMarkdownEditor,
+    onLaunchMessageEditor,
+    onLaunchJsonSchemaEditor: launchJsonSchemaEditor,
+    onSearchProcessModels,
+    scriptEditorState,
+    markdownEditorState,
+    messageEditorState,
+    jsonSchemaEditorState,
+    processSearchState,
+    closeScriptEditor,
+    closeMarkdownEditor,
+    closeMessageEditor,
+    closeJsonSchemaEditor,
+    selectProcessSearchResult,
+  } = useBpmnEditorModals();
+  const {
+    scriptText,
+    setScriptText,
+    scriptType,
+    scriptEventBus,
+    scriptElement,
+    scriptModeling,
+  } = useBpmnEditorScriptState({ scriptEditorState });
+  const {
+    markdownText,
+    setMarkdownText,
+    markdownEventBus,
+    jsonSchemaFileName,
+    setJsonSchemaFileName,
+    fileEventBus,
+  } = useBpmnEditorTextEditorsState({
+    markdownEditorState,
+    jsonSchemaEditorState,
+  });
 
   const params = useParams();
   const navigate = useNavigate();
@@ -192,9 +221,8 @@ export default function ProcessModelEditDiagram() {
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
-  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    (params as any).process_model_id,
-  );
+  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
+  const modifiedProcessModelId = params.process_model_id || '';
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
@@ -202,37 +230,43 @@ export default function ProcessModelEditDiagram() {
 
   const [pythonWorker, setPythonWorker] = useState<Worker | null>(null);
 
-  const getProcessesCallback = useCallback((onProcessesFetched?: Function) => {
-    const processResults = (result: any) => {
-      const selectionArray = result.map((item: any) => {
-        const label = `${item.display_name} (${item.identifier})`;
-        Object.assign(item, { label });
-        return item;
-      });
-      setProcesses(selectionArray);
-      if (onProcessesFetched) {
-        onProcessesFetched(selectionArray);
-      }
-    };
-    HttpService.makeCallToBackend({
-      path: `/processes`,
-      successCallback: processResults,
-    });
+  const {
+    stack: navigationStack,
+    push: pushNavigation,
+    reset: resetNavigation,
+    popToIndex,
+    updateTop,
+  } = useDiagramNavigationStack();
 
+  const prevNavigationKeyRef = useRef<string>('');
+
+  const buildProcessFilePath = useCallback((item: DiagramNavigationItem) => {
+    return generatePath('/process-models/:process_model_id/files/:file_name', {
+      process_model_id: item.modifiedProcessModelId,
+      file_name: item.fileName,
+    });
+  }, []);
+
+  const handleEditorScriptChange = useCallback(
+    (value: any) => {
+      setScriptText(value);
+    },
+    [setScriptText],
+  );
+
+  const [{ processes }, { refresh: refreshProcesses }] = useProcessReferences({
+    apiService: spiffBpmnApiService,
+  });
+
+  useEffect(() => {
     const worker = new Worker(
       new URL('/src/workers/python.ts', import.meta.url),
     );
-
     setPythonWorker(worker);
+    return () => {
+      worker.terminate();
+    };
   }, []);
-
-  const handleEditorScriptChange = (value: any) => {
-    setScriptText(value);
-  };
-
-  useEffect(() => {
-    getProcessesCallback();
-  }, [getProcessesCallback]);
 
   useEffect(() => {
     const fileResult = (result: any) => {
@@ -267,6 +301,44 @@ export default function ProcessModelEditDiagram() {
     }
   }, [processModel, processModelFile]);
 
+  useEffect(() => {
+    if (!params.process_model_id || !params.file_name) {
+      return;
+    }
+    const currentKey = `${params.process_model_id}:${params.file_name}`;
+    if (prevNavigationKeyRef.current === currentKey) {
+      return;
+    }
+    prevNavigationKeyRef.current = currentKey;
+
+    const currentItem: DiagramNavigationItem = {
+      modifiedProcessModelId: params.process_model_id,
+      fileName: params.file_name,
+    };
+    const existingIndex = navigationStack.findIndex(
+      (item) =>
+        item.modifiedProcessModelId === currentItem.modifiedProcessModelId &&
+        item.fileName === currentItem.fileName,
+    );
+    if (existingIndex === -1) {
+      resetNavigation(currentItem);
+      return;
+    }
+    if (existingIndex !== navigationStack.length - 1) {
+      popToIndex(existingIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.file_name, params.process_model_id, popToIndex, resetNavigation]);
+
+  useEffect(() => {
+    if (!processModelFile) {
+      return;
+    }
+    updateTop({
+      displayName: processModelFile.name,
+    });
+  }, [processModelFile, updateTop]);
+
   /**
    * When the value of the Editor is updated dynamically async,
    * it doesn't seem to fire an onChange (discussions as recent as 4.2.1).
@@ -283,7 +355,7 @@ export default function ProcessModelEditDiagram() {
         setScriptAssistError('Received unexpected response from server.');
       }
     }
-  }, [scriptAssistResult]);
+  }, [scriptAssistResult, handleEditorScriptChange]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -293,7 +365,7 @@ export default function ProcessModelEditDiagram() {
 
   const getProcessModelSpecs = () => {
     const httpMethod = 'GET';
-    const path = `/process-models/${modifiedProcessModelId}/specs`;
+    const path = `/process-models/${modifiedProcessModelId}/validate`;
 
     HttpService.makeCallToBackend({
       path,
@@ -414,148 +486,35 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <Dialog
+      <FileNameEditorDialog
         open={showFileNameEditor}
-        onClose={handleFileNameCancel}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_file_name_editor_title')}</h2>
-          <Grid container spacing={2}>
-            <Grid item xs={8}>
-              <TextField
-                id="process_model_file_name"
-                label={t('diagram_file_name_editor_label')}
-                value={newFileName}
-                onChange={(e: any) => setNewFileName(e.target.value)}
-                error={!!processModelFileInvalidText}
-                helperText={processModelFileInvalidText}
-                size="small"
-                autoFocus
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={4}>
-              {fileExtension}
-            </Grid>
-          </Grid>
-          <ButtonGroup>
-            <Button onClick={handleFileNameSave}>{t('save_changes')}</Button>
-            <Button onClick={handleFileNameCancel}>{t('cancel')}</Button>
-          </ButtonGroup>
-        </Box>
-      </Dialog>
+        title={t('diagram_file_name_editor_title')}
+        label={t('diagram_file_name_editor_label')}
+        value={newFileName}
+        fileExtension={fileExtension}
+        errorText={processModelFileInvalidText}
+        onChange={setNewFileName}
+        onSave={handleFileNameSave}
+        onCancel={handleFileNameCancel}
+        saveLabel={t('save_changes')}
+        cancelLabel={t('cancel')}
+      />
     );
   };
 
   const resetUnitTextResult = () => {
-    setScriptUnitTestResult(null);
-    const styleSheet = document.styleSheets[0];
-    const ruleList = styleSheet.cssRules;
-    for (let ii = ruleList.length - 1; ii >= 0; ii -= 1) {
-      const regexp = new RegExp(
-        `^.${failingScriptLineClassNamePrefix}_.*::after `,
-      );
-      if (ruleList[ii].cssText.match(regexp)) {
-        styleSheet.deleteRule(ii);
-      }
+    resetScriptUnitTestResult();
+    // Clear error state
+    setScriptErrorInfo(null);
+    // Clear any error line decorations in the editor
+    if (scriptEditorViewRef.current) {
+      scriptEditorViewRef.current.dispatch({
+        effects: clearErrorLineEffect.of(null),
+      });
     }
   };
 
-  const makeApiHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.service_tasks.returned', {
-        serviceTaskOperators: results,
-      });
-    };
-  };
-
-  const makeDataStoresApiHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.data_stores.returned', {
-        options: results,
-      });
-    };
-  };
-
-  const onServiceTasksRequested = useCallback((event: any) => {
-    HttpService.makeCallToBackend({
-      path: `/service-tasks`,
-      successCallback: makeApiHandler(event),
-    });
-  }, []);
-
-  const onDataStoresRequested = useCallback(
-    (event: any) => {
-      const processGroupIdentifier =
-        processModel?.parent_groups?.slice(-1).pop()?.id ?? '';
-      HttpService.makeCallToBackend({
-        path: `/data-stores?upsearch=true&process_group_identifier=${processGroupIdentifier}`,
-        successCallback: makeDataStoresApiHandler(event),
-      });
-    },
-    [processModel?.parent_groups],
-  );
-
-  const onJsonSchemaFilesRequested = useCallback(
-    (event: any) => {
-      const re = /.*[-.]schema.json/;
-      if (processModel?.files) {
-        const jsonFiles = processModel.files.filter((f) => f.name.match(re));
-        const options = jsonFiles.map((f) => {
-          return { label: f.name, value: f.name };
-        });
-        event.eventBus.fire('spiff.json_schema_files.returned', { options });
-      } else {
-        console.error('There is no process Model.');
-      }
-    },
-    [processModel?.files],
-  );
-
-  const onDmnFilesRequested = useCallback(
-    (event: any) => {
-      if (processModel?.files) {
-        const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
-        const options: any[] = [];
-        dmnFiles.forEach((file) => {
-          file.references.forEach((ref) => {
-            options.push({ label: ref.display_name, value: ref.identifier });
-          });
-        });
-        event.eventBus.fire('spiff.dmn_files.returned', { options });
-      } else {
-        console.error('There is no process model.');
-      }
-    },
-    [processModel?.files],
-  );
-
-  const makeMessagesRequestedHandler = (event: any) => {
-    return function fireEvent(results: any) {
-      event.eventBus.fire('spiff.messages.returned', {
-        configuration: results,
-      });
-    };
-  };
-  const onMessagesRequested = useCallback(
-    (event: any) => {
-      // it is perfectly reasonable to access the edit diagram page in read only mode when you actually don't have access to edit.
-      // this is awkward in terms of functionality like this, where we are fetching the relevant list of messages to show in the
-      // properties panel. since message_model_list is a different permission, you may not have access to it even though you have
-      // access to the read the process model. we also considered automatically giving you access to read message_model_list
-      // when you have read access to the process model, but this seemed easier and more in line with the current backend permission system,
-      // where we normally only pork barrel permissions on top of "start" and "all."
-      if (ability.can('GET', targetUris.messageModelListPath)) {
-        HttpService.makeCallToBackend({
-          path: targetUris.messageModelListPath,
-          successCallback: makeMessagesRequestedHandler(event),
-        });
-      }
-    },
-    [ability, targetUris.messageModelListPath],
-  );
+  // Note: API-based callbacks are now provided by useBpmnEditorCallbacks hook
 
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
@@ -572,167 +531,114 @@ export default function ProcessModelEditDiagram() {
     return [];
   };
 
-  const setScriptUnitTestElementWithIndex = useCallback(
-    (scriptIndex: number, element: any) => {
-      const unitTestsModdleElements = getScriptUnitTestElements(element);
-      if (unitTestsModdleElements.length > 0) {
-        setCurrentScriptUnitTest(unitTestsModdleElements[scriptIndex]);
-        setCurrentScriptUnitTestIndex(scriptIndex);
-      }
+  const [
+    { currentScriptUnitTest, currentScriptUnitTestIndex, scriptUnitTestResult },
+    {
+      setScriptUnitTestElementWithIndex,
+      setPreviousScriptUnitTest,
+      setNextScriptUnitTest,
+      updateInputJson,
+      updateExpectedOutputJson,
+      setScriptUnitTestResult,
+      resetScriptUnitTestResult,
+      setCurrentScriptUnitTest,
+      setCurrentScriptUnitTestIndex,
     },
-    [],
-  );
+  ] = useScriptUnitTestsState({ getScriptUnitTestElements });
 
-  const onLaunchScriptEditor = useCallback(
-    (
-      element: any,
-      script: string,
-      scriptTypeString: string,
-      eventBus: any,
-      modeling: any,
-    ) => {
-      // TODO: modeling is only needed for script unit tests.
-      // we should update this to act like updating scripts
-      // where we pass an event to bpmn-js
-      setScriptModeling(modeling);
-      setScriptText(script || '');
-      setScriptType(scriptTypeString);
-      setScriptEventBus(eventBus);
-      setScriptElement(element);
-      setScriptUnitTestElementWithIndex(0, element);
-      handleShowScriptEditor();
-    },
-    [setScriptUnitTestElementWithIndex],
-  );
+  useEffect(() => {
+    if (!scriptEditorState) {
+      return;
+    }
+    setScriptUnitTestElementWithIndex(0, scriptEditorState.element);
+  }, [scriptEditorState, setScriptUnitTestElementWithIndex]);
 
   const handleScriptEditorClose = () => {
-    scriptEventBus.fire('spiff.script.update', {
+    closeScriptEditorWithUpdate(
+      scriptEventBus,
       scriptType,
-      script: scriptText,
-      element: scriptElement,
-    });
-
-    resetUnitTextResult();
-    setShowScriptEditor(false);
+      scriptText,
+      scriptElement,
+      closeScriptEditor,
+      resetUnitTextResult,
+    );
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
-    if (currentScriptUnitTest) {
-      currentScriptUnitTest.inputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
-    }
+    updateInputJson(value, scriptElement, scriptModeling);
   };
 
   const handleEditorScriptTestUnitOutputChange = (value: any) => {
-    if (currentScriptUnitTest) {
-      currentScriptUnitTest.expectedOutputJson.value = value;
-      (scriptModeling as any).updateProperties(scriptElement, {});
-    }
-  };
-
-  const generalEditorOptions = () => {
-    return {
-      glyphMargin: false,
-      folding: false,
-      lineNumbersMinChars: 0,
-    };
-  };
-
-  const jsonEditorOptions = () => {
-    return Object.assign(generalEditorOptions(), {
-      minimap: { enabled: false },
-      folding: true,
-    });
-  };
-
-  const setPreviousScriptUnitTest = () => {
-    resetUnitTextResult();
-    const newScriptIndex = currentScriptUnitTestIndex - 1;
-    if (newScriptIndex >= 0) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
-    }
-  };
-
-  const setNextScriptUnitTest = () => {
-    resetUnitTextResult();
-    const newScriptIndex = currentScriptUnitTestIndex + 1;
-    const unitTestsModdleElements = getScriptUnitTestElements(scriptElement);
-    if (newScriptIndex < unitTestsModdleElements.length) {
-      setScriptUnitTestElementWithIndex(newScriptIndex, scriptElement);
-    }
+    updateExpectedOutputJson(value, scriptElement, scriptModeling);
   };
 
   const processScriptUnitTestRunResult = (result: any) => {
     if ('result' in result) {
       setScriptUnitTestResult(result);
-      if (
-        result.line_number &&
-        result.error &&
-        editorRef.current &&
-        monacoRef.current
-      ) {
-        const currentClassName = `${failingScriptLineClassNamePrefix}_${makeid(
-          7,
-        )}`;
+      // Store error info for highlighting (will be applied when editor is created/visible)
+      if (result.line_number && result.error) {
+        // Ensure CSS styles are present
+        if (!document.getElementById('cm-script-error-styles')) {
+          const style = document.createElement('style');
+          style.id = 'cm-script-error-styles';
+          style.textContent = `
+            .cm-script-error-line {
+              background-color: rgba(255, 0, 0, 0.1) !important;
+              border-left: 3px solid red !important;
+            }
+            .cm-script-error-line::after {
+              content: "  # " attr(data-error);
+              color: red;
+              font-style: italic;
+            }
+          `;
+          document.head.appendChild(style);
+        }
 
-        // document.documentElement.style.setProperty causes the content property to go away
-        // so add the rule dynamically instead of changing a property variable
-        document.styleSheets[0].addRule(
-          `.${currentClassName}::after`,
-          `content: "  # ${result.error.replaceAll('"', '')}"; color: red`,
-        );
+        // Store error info to persist across tab switches
+        setScriptErrorInfo({
+          line: result.line_number,
+          error: result.error,
+        });
 
-        const lineLength =
-          scriptText.split('\n')[result.line_number - 1].length + 1;
-
-        const editorRefToUse = editorRef.current as any;
-        editorRefToUse.deltaDecorations(
-          [],
-          [
-            {
-              // Range(lineStart, column, lineEnd, column)
-              range: new (monacoRef.current as any).Range(
-                result.line_number,
-                lineLength,
-              ),
-              options: { afterContentClassName: currentClassName },
-            },
-          ],
-        );
+        // If editor is currently mounted, apply decoration immediately
+        if (scriptEditorViewRef.current) {
+          scriptEditorViewRef.current.dispatch({
+            effects: addErrorLineEffect.of({
+              line: result.line_number,
+              error: result.error,
+            }),
+          });
+        }
       }
     }
   };
 
   const runCurrentUnitTest = () => {
-    if (currentScriptUnitTest && scriptElement) {
-      let inputJson = '';
-      let expectedJson = '';
-      try {
-        inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
-        expectedJson = JSON.parse(
-          currentScriptUnitTest.expectedOutputJson.value,
-        );
-      } catch (_) {
+    runScriptUnitTest({
+      currentScriptUnitTest,
+      scriptElement,
+      scriptText,
+      beforeRun: resetUnitTextResult,
+      onResult: processScriptUnitTestRunResult,
+      onInvalidJson: () => {
         setScriptUnitTestResult({
           result: false,
           error: t('diagram_errors_json_formatting'),
         });
-        return;
-      }
-
-      resetUnitTextResult();
-      HttpService.makeCallToBackend({
-        path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
-        httpMethod: 'POST',
-        successCallback: processScriptUnitTestRunResult,
-        postBody: {
-          bpmn_task_identifier: (scriptElement as any).id,
-          python_script: scriptText,
-          input_json: inputJson,
-          expected_output_json: expectedJson,
-        },
-      });
-    }
+      },
+      runRequest: (payload) => {
+        return new Promise((resolve, reject) => {
+          HttpService.makeCallToBackend({
+            path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
+            httpMethod: 'POST',
+            successCallback: resolve,
+            failureCallback: reject,
+            postBody: payload,
+          });
+        });
+      },
+    });
   };
 
   const unitTestFailureElement = () => {
@@ -774,15 +680,20 @@ export default function ProcessModelEditDiagram() {
           '  ',
         );
         errorContextElement = (
-          <DiffEditor
-            height={200}
-            width="auto"
-            originalLanguage="json"
-            modifiedLanguage="json"
-            options={Object.assign(jsonEditorOptions(), {})}
-            original={outputJson}
-            modified={contextJson}
-          />
+          <ThemedCodeMirrorMerge style={{ height: '200px' }}>
+            <ThemedCodeMirrorMerge.Original
+              value={outputJson}
+              extensions={[json()]}
+            />
+            <ThemedCodeMirrorMerge.Modified
+              value={contextJson}
+              extensions={[
+                json(),
+                EditorView.editable.of(false),
+                EditorState.readOnly.of(true),
+              ]}
+            />
+          </ThemedCodeMirrorMerge>
         );
       }
       return (
@@ -850,14 +761,14 @@ export default function ProcessModelEditDiagram() {
       return (
         <main>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <p className="with-top-margin-for-unit-test-name">
                 {t('diagram_script_editor_unit_test_title', {
                   testId: currentScriptUnitTest.id,
                 })}
               </p>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <ButtonGroup>
                 <IconButton
                   onClick={setPreviousScriptUnitTest}
@@ -879,35 +790,29 @@ export default function ProcessModelEditDiagram() {
             </Grid>
           </Grid>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              {unitTestFailureElement()}
-            </Grid>
+            <Grid size={{ xs: 12 }}>{unitTestFailureElement()}</Grid>
           </Grid>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <div>{t('diagram_script_editor_unit_test_input_json')}</div>
               <div>
-                <Editor
-                  height={500}
-                  width="auto"
-                  defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
-                  defaultValue={inputJson}
+                <ThemedCodeMirror
+                  height={'500px'}
+                  value={inputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitInputChange}
                 />
               </div>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <div>
                 {t('diagram_script_editor_unit_test_expected_output_json')}
               </div>
               <div>
-                <Editor
-                  height={500}
-                  width="auto"
-                  defaultLanguage="json"
-                  options={Object.assign(jsonEditorOptions(), {})}
-                  defaultValue={outputJson}
+                <ThemedCodeMirror
+                  height={'500px'}
+                  value={outputJson}
+                  extensions={[json()]}
                   onChange={handleEditorScriptTestUnitOutputChange}
                 />
               </div>
@@ -921,16 +826,32 @@ export default function ProcessModelEditDiagram() {
 
   /* Main python script editor user works in */
   const editorWindow = () => {
+    const handleEditorCreate = (view: EditorView) => {
+      scriptEditorViewRef.current = view;
+
+      // Apply error decoration if there's a pending error from unit test
+      if (scriptErrorInfo) {
+        // Use setTimeout to ensure the editor is fully initialized
+        setTimeout(() => {
+          if (view && scriptErrorInfo) {
+            view.dispatch({
+              effects: addErrorLineEffect.of({
+                line: scriptErrorInfo.line,
+                error: scriptErrorInfo.error,
+              }),
+            });
+          }
+        }, 0);
+      }
+    };
+
     return (
-      <Editor
-        height={500}
-        width="auto"
-        options={generalEditorOptions()}
-        defaultLanguage="python"
-        defaultValue={scriptText}
+      <ThemedCodeMirror
+        height={'500px'}
         value={scriptText}
+        extensions={[python(), indentUnit.of('    '), errorLineField]}
         onChange={handleEditorScriptChange}
-        onMount={handleEditorDidMount}
+        onCreateEditor={handleEditorCreate}
       />
     );
   };
@@ -959,42 +880,22 @@ export default function ProcessModelEditDiagram() {
   /* If the Script Assist tab is enabled (via scriptAssistEnabled), this is the UI */
   const scriptAssistWindow = () => {
     return (
-      <>
-        <TextareaAutosize
-          placeholder={t('diagram_script_assist_placeholder')}
-          minRows={20}
-          value={scriptAssistValue}
-          onChange={(e: any) => setScriptAssistValue(e.target.value)}
-          style={{ width: '100%' }}
-        />
-        <Stack
-          direction="row"
-          justifyContent="flex-end"
-          alignItems="center"
-          spacing={2}
-        >
-          {scriptAssistError && (
-            <div style={{ color: 'red' }}>{scriptAssistError}</div>
-          )}
-          {scriptAssistLoading && <CircularProgress />}
-          <Button
-            variant="contained"
-            onClick={() => handleProcessScriptAssist()}
-            disabled={scriptAssistLoading}
-          >
-            {t('diagram_script_assist_button')}
-          </Button>
-        </Stack>
-      </>
+      <ScriptAssistPanel
+        value={scriptAssistValue}
+        onChange={setScriptAssistValue}
+        placeholder={t('diagram_script_assist_placeholder')}
+        error={scriptAssistError}
+        loading={scriptAssistLoading}
+        buttonLabel={t('diagram_script_assist_button')}
+        onSubmit={handleProcessScriptAssist}
+      />
     );
   };
 
   const scriptEditor = () => {
     return (
       <Grid container>
-        <Grid item xs={12}>
-          {editorWindow()}
-        </Grid>
+        <Grid size={{ xs: 12 }}>{editorWindow()}</Grid>
       </Grid>
     );
   };
@@ -1002,10 +903,8 @@ export default function ProcessModelEditDiagram() {
   const scriptEditorWithAssist = () => {
     return (
       <Grid container>
-        <Grid item xs={7}>
-          {editorWindow()}
-        </Grid>
-        <Grid item xs={5}>
+        <Grid size={{ xs: 7 }}>{editorWindow()}</Grid>
+        <Grid size={{ xs: 5 }}>
           <Tooltip title={t('diagram_script_assist_tooltip')}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Info fontSize="small" />
@@ -1023,7 +922,7 @@ export default function ProcessModelEditDiagram() {
       setScriptEditorTabValue(newValue);
     };
 
-    if (!showScriptEditor) {
+    if (!scriptEditorState) {
       return null;
     }
     let scriptName = '';
@@ -1031,57 +930,30 @@ export default function ProcessModelEditDiagram() {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
     return (
-      <Dialog
-        className="wide-dialog"
-        open={showScriptEditor}
+      <ScriptEditorDialog
+        open={!!scriptEditorState}
+        title={t('diagram_script_editor_title', { scriptName })}
+        tabValue={scriptEditorTabValue}
+        onTabChange={handleTabChange}
+        scriptTabLabel={t('diagram_script_editor_tab_script_editor')}
+        assistTabLabel={t('diagram_script_editor_tab_script_assist')}
+        unitTestsTabLabel={t('diagram_script_editor_tab_unit_tests')}
+        assistEnabled={scriptAssistEnabled ?? false}
+        renderScript={scriptEditor}
+        renderUnitTests={scriptUnitTestEditorElement}
+        renderAssist={scriptEditorWithAssist}
+        closeLabel={t('close')}
         onClose={handleScriptEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_script_editor_title', { scriptName })}
-          </h2>
-          <Tabs value={scriptEditorTabValue} onChange={handleTabChange}>
-            <Tab label={t('diagram_script_editor_tab_script_editor')} />
-            {scriptAssistEnabled && (
-              <Tab label={t('diagram_script_editor_tab_script_assist')} />
-            )}
-            <Tab label={t('diagram_script_editor_tab_unit_tests')} />
-          </Tabs>
-          <Box>
-            <TabPanel value={scriptEditorTabValue} index={0}>
-              {scriptEditor()}
-            </TabPanel>
-            {scriptAssistEnabled && (
-              <TabPanel value={scriptEditorTabValue} index={1}>
-                {scriptEditorWithAssist()}
-              </TabPanel>
-            )}
-            <TabPanel value={scriptEditorTabValue} index={2}>
-              {scriptUnitTestEditorElement()}
-            </TabPanel>
-          </Box>
-          <Button onClick={handleScriptEditorClose}>{t('close')}</Button>
-        </Box>
-      </Dialog>
+      />
     );
   };
 
-  const onLaunchMarkdownEditor = useCallback(
-    (_element: any, markdown: string, eventBus: any) => {
-      setMarkdownText(markdown || '');
-      setMarkdownEventBus(eventBus);
-      handleShowMarkdownEditor();
-    },
-    [],
-  );
-
   const handleMarkdownEditorClose = () => {
-    markdownEventBus.fire('spiff.markdown.update', {
-      value: markdownText,
-    });
-    setShowMarkdownEditor(false);
+    closeMarkdownEditorWithUpdate(
+      markdownEventBus,
+      markdownText || '',
+      closeMarkdownEditor,
+    );
   };
 
   const markdownEditorTextArea = (props: any) => {
@@ -1089,213 +961,122 @@ export default function ProcessModelEditDiagram() {
   };
 
   const markdownEditor = () => {
+    if (!markdownEditorState) {
+      return null;
+    }
     return (
-      <Dialog
-        className="wide-dialog"
-        open={showMarkdownEditor}
+      <MarkdownEditorDialog
+        open={!!markdownEditorState}
         onClose={handleMarkdownEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_markdown_editor_title')}</h2>
-          <div data-color-mode="light">
-            <MDEditor
-              height={500}
-              highlightEnable={false}
-              value={markdownText}
-              onChange={setMarkdownText}
-              components={{
-                textarea: markdownEditorTextArea,
-              }}
-            />
-          </div>
-          <Button onClick={handleMarkdownEditorClose}>{t('close')}</Button>
-        </Box>
-      </Dialog>
+        title={t('diagram_markdown_editor_title')}
+        closeLabel={t('close')}
+        renderEditor={() => (
+          <MDEditor
+            height={500}
+            highlightEnable={false}
+            value={markdownText}
+            onChange={(value) => setMarkdownText(value || '')}
+            components={{
+              textarea: markdownEditorTextArea,
+            }}
+          />
+        )}
+      />
     );
   };
 
-  const onLaunchMessageEditor = useCallback((event: any) => {
-    setMessageEvent(event);
-    setMessageId(event.value.messageId);
-    setElementId(event.value.elementId);
-    setCorrelationProperties(event.value.correlation_properties);
-    handleShowMessageEditor();
-  }, []);
-
   const handleMessageEditorClose = () => {
-    setShowMessageEditor(false);
-    onMessagesRequested(messageEvent);
+    closeMessageEditorAndRefresh(
+      messageEditorState?.event,
+      closeMessageEditor,
+      onMessagesRequested,
+    );
   };
 
   const handleMessageEditorSave = (_event: any) => {
-    messageEvent.eventBus.fire('spiff.message.save');
+    if (messageEditorState?.event?.eventBus) {
+      fireMessageSave(messageEditorState.event.eventBus);
+    }
   };
 
   const messageEditor = () => {
     // do not render this component until we actually want to display it
-    if (!showMessageEditor) {
+    if (!messageEditorState) {
       return null;
     }
     return (
-      <Dialog
-        className="wide-dialog"
-        open={showMessageEditor}
+      <MessageEditorDialog
+        open={!!messageEditorState}
         onClose={handleMessageEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">{t('diagram_message_editor_title')}</h2>
-          <p>{t('diagram_message_editor_description')}</p>
-          <div data-color-mode="light">
-            <MessageEditor
-              modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-                modifiedProcessModelId,
-              )}
-              messageId={messageId}
-              correlationProperties={correlationProperties}
-              messageEvent={messageEvent}
-              elementId={elementId}
-            />
-          </div>
-          <Button onClick={handleMessageEditorSave}>
-            {t('diagram_message_editor_save')}
-          </Button>
-          <Button onClick={handleMessageEditorClose}>
-            {t('diagram_message_editor_close')}
-          </Button>
-        </Box>
-      </Dialog>
+        onSave={handleMessageEditorSave}
+        title={t('diagram_message_editor_title')}
+        description={t('diagram_message_editor_description')}
+        saveLabel={t('diagram_message_editor_save')}
+        closeLabel={t('diagram_message_editor_close')}
+        renderEditor={() => (
+          <MessageEditor
+            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
+              modifiedProcessModelId,
+            )}
+            messageId={messageEditorState.messageId}
+            correlationProperties={messageEditorState.correlationProperties}
+            messageEvent={messageEditorState.event}
+            elementId={messageEditorState.elementId}
+          />
+        )}
+      />
     );
   };
 
-  const onSearchProcessModels = useCallback(
-    (_processId: string, eventBus: any, element: any) => {
-      setProcessSearchEventBus(eventBus);
-      setProcessSearchElement(element);
-      setShowProcessSearch(true);
-    },
-    [],
-  );
   const processSearchOnClose = (selection: ProcessReference) => {
-    if (selection) {
-      processSearchEventBus.fire('spiff.callactivity.update', {
-        element: processSearchElement,
-        value: selection.identifier,
-      });
-    }
-    setShowProcessSearch(false);
+    selectProcessSearchResult(selection?.identifier);
   };
 
   const processModelSelector = () => {
+    if (!processSearchState) {
+      return null;
+    }
     return (
-      <Dialog
-        className="wide-dialog"
-        open={showProcessSearch}
-        onClose={processSearchOnClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_process_model_selector_title')}
-          </h2>
-          <ProcessSearch
-            height="500px"
-            onChange={processSearchOnClose}
-            processes={processes}
-            titleText={t('diagram_process_model_selector_search_placeholder')}
-          />
-        </Box>
-      </Dialog>
+      <ProcessSearchDialog
+        open={!!processSearchState}
+        title={t('diagram_process_model_selector_title')}
+        onChange={processSearchOnClose}
+        processes={processes}
+        titleText={t('diagram_process_model_selector_search_placeholder')}
+        placeholderText={t('choose_a_process')}
+      />
     );
   };
 
-  const findFileNameForReferenceId = useCallback(
-    (id: string, type: string): ProcessFile | null => {
-      // Given a reference id (like a process_id, or decision_id) finds the file
-      // that contains that reference and returns it.
-      let matchFile = null;
-      if (processModel?.files) {
-        const files = processModel.files.filter((f) => f.type === type);
-        files.some((file) => {
-          if (file.references.some((ref) => ref.identifier === id)) {
-            matchFile = file;
-            return true;
-          }
-          return false;
-        });
-      }
-      return matchFile;
-    },
-    [processModel?.files],
-  );
-
-  const onLaunchBpmnEditor = useCallback(
-    (processId: string) => {
-      const openProcessModelFileInNewTab = (
-        processReference: ProcessReference,
-      ) => {
-        const path = generatePath(
-          '/process-models/:process_model_path/files/:file_name',
-          {
-            process_model_path: modifyProcessIdentifierForPathParam(
-              processReference.relative_location,
-            ),
-            file_name: processReference.file_name,
-          },
-        );
-        window.open(path);
-      };
-
-      const openFileNameForProcessId = (
-        processesReferences: ProcessReference[],
-      ) => {
-        const processRef = processesReferences.find((p) => {
-          return p.identifier === processId;
-        });
-        if (processRef) {
-          openProcessModelFileInNewTab(processRef);
-        }
-      };
-
-      // using the "setState" method with a function gives us access to the
-      // most current state of processes. Otherwise it uses the stale state
-      // when passing the callback to a non-React component like bpmn-js:
-      //   https://stackoverflow.com/a/60643670/6090676
-      setProcesses((upToDateProcesses: ProcessReference[]) => {
-        const processRef = upToDateProcesses.find((p) => {
-          return p.identifier === processId;
-        });
-        if (!processRef) {
-          getProcessesCallback(openFileNameForProcessId);
-        } else {
-          openProcessModelFileInNewTab(processRef);
-        }
-        return upToDateProcesses;
-      });
-    },
-    [getProcessesCallback],
-  );
+  const { onLaunchBpmnEditor, onLaunchDmnEditor } =
+    useDiagramNavigationHandlers({
+      processes,
+      refreshProcesses,
+      processModel,
+      currentProcessModelId: params.process_model_id || '',
+      normalizeProcessModelId: modifyProcessIdentifierForPathParam,
+      pushNavigation,
+      navigateTo: navigate,
+      buildProcessFilePath,
+      buildDmnListPath: (processModelId) =>
+        generatePath('/process-models/:process_model_id/files', {
+          process_model_id: processModelId || null,
+        }) + '?file_type=dmn',
+    });
 
   const onLaunchJsonSchemaEditor = useCallback(
-    (_element: any, fileName: string, eventBus: any) => {
+    (element: any, fileName: string, eventBus: any) => {
       const url = import.meta.env.VITE_SPIFFWORKFLOW_FRONTEND_LAUNCH_EDITOR_URL;
       if (url) {
         window.open(
-          `${url}?processModelId=${params.process_model_id || ''}&fileName=${fileName || ''}`,
+          `${url}?processModelId=${modifiedProcessModelId || ''}&fileName=${fileName || ''}`,
           '_blank',
         );
         return;
       }
-
-      setFileEventBus(eventBus);
-      setJsonSchemaFileName(fileName);
-      setShowJsonSchemaEditor(true);
+      launchJsonSchemaEditor(element, fileName, eventBus);
     },
-    [params.process_model_id],
+    [launchJsonSchemaEditor, modifiedProcessModelId],
   );
 
   const addNewFileIfNotExist = () => {
@@ -1335,31 +1116,27 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleJsonSchemaEditorClose = () => {
-    addNewFileIfNotExist();
-    fileEventBus.fire('spiff.jsonSchema.update', {
-      value: jsonSchemaFileName,
-    });
-    setShowJsonSchemaEditor(false);
+    closeJsonSchemaEditorWithUpdate(
+      fileEventBus,
+      jsonSchemaFileName,
+      closeJsonSchemaEditor,
+      addNewFileIfNotExist,
+    );
   };
 
   const jsonSchemaEditor = () => {
-    if (!showJsonSchemaEditor || !permissionsLoaded) {
+    if (!jsonSchemaEditorState || !permissionsLoaded) {
       return null;
     }
     return (
-      <Dialog
-        className="wide-dialog"
-        open={showJsonSchemaEditor}
+      <JsonSchemaEditorDialog
+        open={!!jsonSchemaEditorState}
         onClose={handleJsonSchemaEditorClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ p: 4 }}>
-          <h2 id="modal-modal-title">
-            {t('diagram_json_schema_editor_title')}
-          </h2>
+        title={t('diagram_json_schema_editor_title')}
+        closeLabel={t('close')}
+        renderEditor={() => (
           <ReactFormBuilder
-            processModelId={params.process_model_id || ''}
+            modifiedProcessModelId={modifiedProcessModelId || ''}
             fileName={jsonSchemaFileName}
             onFileNameSet={setJsonSchemaFileName}
             canUpdateFiles={ability.can(
@@ -1372,37 +1149,12 @@ export default function ProcessModelEditDiagram() {
             )}
             pythonWorker={pythonWorker}
           />
-          <Button onClick={handleJsonSchemaEditorClose}>{t('close')}</Button>
-        </Box>
-      </Dialog>
+        )}
+      />
     );
   };
 
-  const onLaunchDmnEditor = useCallback(
-    (processId: string) => {
-      const file = findFileNameForReferenceId(processId, 'dmn');
-      let path = '';
-      if (file) {
-        path = generatePath(
-          '/process-models/:process_model_id/files/:file_name',
-          {
-            process_model_id: params.process_model_id || null,
-            file_name: file.name,
-          },
-        );
-        window.open(path);
-      } else {
-        path = generatePath(
-          '/process-models/:process_model_id/files?file_type=dmn',
-          {
-            process_model_id: params.process_model_id || null,
-          },
-        );
-      }
-      window.open(path);
-    },
-    [findFileNameForReferenceId, params.process_model_id],
-  );
+  // onLaunchBpmnEditor/onLaunchDmnEditor now provided by useDiagramNavigationHandlers
 
   const isDmn = () => {
     const fileName = params.file_name || '';
@@ -1417,8 +1169,17 @@ export default function ProcessModelEditDiagram() {
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
           onDeleteFile={onDeleteFile}
-          processModelId={params.process_model_id || ''}
+          modifiedProcessModelId={modifiedProcessModelId || ''}
           saveDiagram={saveDiagram}
+          navigationStack={navigationStack}
+          onNavigate={(index) => {
+            const item = navigationStack[index];
+            if (!item) {
+              return;
+            }
+            popToIndex(index);
+            navigate(buildProcessFilePath(item));
+          }}
         />
       );
     }
@@ -1428,7 +1189,9 @@ export default function ProcessModelEditDiagram() {
     if (
       processModel &&
       params.file_name &&
-      params.file_name !== processModel.primary_file_name
+      params.file_name !== processModel.primary_file_name &&
+      modifyProcessIdentifierForPathParam(processModel.id) ===
+        modifiedProcessModelId
     ) {
       onSetPrimaryFileCallback = onSetPrimaryFile;
     }
@@ -1442,23 +1205,34 @@ export default function ProcessModelEditDiagram() {
         fileName={params.file_name}
         isPrimaryFile={params.file_name === processModel?.primary_file_name}
         processModel={processModel}
-        onDataStoresRequested={onDataStoresRequested}
+        onDataStoresRequested={bpmnEditorCallbacks.onDataStoresRequested}
         onDeleteFile={onDeleteFile}
-        onDmnFilesRequested={onDmnFilesRequested}
+        onDmnFilesRequested={bpmnEditorCallbacks.onDmnFilesRequested}
         onElementsChanged={onElementsChanged}
-        onJsonSchemaFilesRequested={onJsonSchemaFilesRequested}
+        onJsonSchemaFilesRequested={
+          bpmnEditorCallbacks.onJsonSchemaFilesRequested
+        }
         onLaunchBpmnEditor={onLaunchBpmnEditor}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onLaunchJsonSchemaEditor={onLaunchJsonSchemaEditor}
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchMessageEditor={onLaunchMessageEditor}
         onLaunchScriptEditor={onLaunchScriptEditor}
-        onMessagesRequested={onMessagesRequested}
+        onMessagesRequested={bpmnEditorCallbacks.onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
-        onServiceTasksRequested={onServiceTasksRequested}
+        onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}
-        processModelId={params.process_model_id || ''}
+        modifiedProcessModelId={modifiedProcessModelId || ''}
         saveDiagram={saveDiagram}
+        navigationStack={navigationStack}
+        onNavigate={(index) => {
+          const item = navigationStack[index];
+          if (!item) {
+            return;
+          }
+          popToIndex(index);
+          navigate(buildProcessFilePath(item));
+        }}
       />
     );
   };
@@ -1512,7 +1286,6 @@ export default function ProcessModelEditDiagram() {
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
-    const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
         <ProcessBreadcrumb
@@ -1523,19 +1296,14 @@ export default function ProcessModelEditDiagram() {
               entityType: 'process-model',
               linkLastItem: true,
             },
-            [processModelFileName],
           ]}
         />
-        <h1>
-          {t('process_model_file', { fileName: processModelFileName || '---' })}
-        </h1>
 
         {pageModals()}
 
         {unsavedChangesMessage()}
         {saveFileMessage()}
         {appropriateEditor()}
-        <div id="diagram-container" />
       </>
     );
   }

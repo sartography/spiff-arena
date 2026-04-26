@@ -25,6 +25,7 @@ from spiffworkflow_backend.routes.tasks_controller import task_data_update
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -92,7 +93,8 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
+        assert len(human_task.human_task_groups) == 1
+        assert human_task.human_task_groups[0].group_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user
 
@@ -111,6 +113,409 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
+
+    def test_automatically_creates_group_for_lane_when_it_does_not_exist(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test that groups are automatically created for lanes when they don't exist.
+
+        The lanes.bpmn file has a finance_team lane. This test deliberately does NOT
+        create that group beforehand. The system should automatically create the group
+        when it encounters the lane, add it via HumanTaskGroupModel, and
+        have empty potential_owners (since the group has no users yet).
+        """
+        initiator_user = self.find_or_create_user("initiator_user")
+
+        finance_team_lane_identifier = "Finance Team"
+        # Note: We are NOT calling AuthorizationService.import_permissions_from_yaml_file()
+        # which would create the Finance Team group. This is intentional - we want to test
+        # that the group gets created automatically.
+
+        # Verify the Finance Team group doesn't exist yet
+        finance_group_before = GroupModel.query.filter_by(identifier=finance_team_lane_identifier).first()
+        assert finance_group_before is None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # Complete the first task (initiator_one) to reach the finance_approval task
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
+        assert human_task.task_name == "initiator_one"
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
+
+        # Advance the processor to create the next human task (which will trigger group creation)
+        processor.do_engine_steps(save=True)
+
+        # Now we should be at the finance_approval task which has lane "finance_team"
+        # The system should have automatically created the finance_team group
+        assert len(process_instance.active_human_tasks) == 1
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+
+        # Verify the group was automatically created
+        finance_group_after = GroupModel.query.filter_by(identifier=finance_team_lane_identifier).first()
+        assert finance_group_after is not None
+        assert finance_group_after.identifier == finance_team_lane_identifier
+
+        # The group should be tracked via HumanTaskGroupModel instead of lane_assignment_id
+        assert finance_task.lane_assignment_id is None
+        assert len(finance_task.human_task_groups) == 1
+        assert finance_task.human_task_groups[0].group_id == finance_group_after.id
+
+        # potential_owners should be empty since the group has no users
+        assert len(finance_task.potential_owners) == 0
+
+    def test_updates_human_task_assignments_when_yaml_config_adds_user_to_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test that human task assignments update when YAML config changes add user to group.
+
+        Scenario:
+        1. A process instance has a human task assigned to Finance Team
+        2. A user exists but is NOT in Finance Team
+        3. Configuration (YAML) is updated to add the user to Finance Team
+        4. User signs in (create_user_from_sign_in is called)
+        5. The user should now be assigned to the existing human task
+        """
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+        from spiffworkflow_backend.services.authorization_service import AuthorizationService
+
+        initiator_user = self.find_or_create_user("initiator_user")
+
+        # Create testuser1 who is NOT in Finance Team yet
+        # Note: find_or_create_user creates a user with service="internal" and service_id=username
+        testuser1 = self.find_or_create_user("testuser1")
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+
+        # Start process and advance to finance_approval task
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # Complete first task to get to finance_approval
+        human_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task)
+        processor.do_engine_steps(save=True)
+
+        # Now at finance_approval task - testuser1 should NOT be assigned yet
+        # because they're not in Finance Team
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+
+        testuser1_assignments_before = HumanTaskUserModel.query.filter_by(
+            user_id=testuser1.id, human_task_id=finance_task.id
+        ).all()
+        assert len(testuser1_assignments_before) == 0
+
+        # Verify testuser1 is NOT in Finance Team yet
+        assert not any(g.identifier == "Finance Team" for g in testuser1.groups)
+
+        # Now simulate user signing in - this should:
+        # 1. Call import_permissions_from_sign_in which reads the YAML
+        # 2. Add testuser1 to Finance Team (per the YAML config)
+        # 3. Detect the group change and update human task assignments
+        # Use the existing user's service and service_id
+        # The YAML has testuser1 in Finance Team, so this should add them to the group
+        returned_user = AuthorizationService.create_user_from_sign_in(
+            {
+                "sub": testuser1.service_id,  # "testuser1"
+                "iss": testuser1.service,  # "internal"
+                "preferred_username": testuser1.username,  # "testuser1"
+            }
+        )
+
+        # Refresh to get the latest groups from the database
+        from spiffworkflow_backend.models.db import db
+
+        db.session.expire(returned_user, ["groups"])
+
+        # Verify testuser1 is now in Finance Team
+        assert any(g.identifier == "Finance Team" for g in returned_user.groups)
+
+        # testuser1 should now be assigned to the finance_approval task
+        testuser1_assignments_after = HumanTaskUserModel.query.filter_by(
+            user_id=testuser1.id, human_task_id=finance_task.id
+        ).all()
+        assert len(testuser1_assignments_after) == 1
+
+    def test_does_not_fail_when_lane_owners_references_empty_group(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        first_task = process_instance.active_human_tasks[0]
+        assert first_task.task_name == "initiator_one"
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:finance-approvers-empty"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        finance_task = process_instance.active_human_tasks[0]
+        assert finance_task.task_name == "finance_approval"
+        assert len(finance_task.potential_owners) == 0
+
+        group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
+        assert len(group_rows) == 1
+        assert group_rows[0].group.identifier == "finance-approvers-empty"
+        lane_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        explicit_group = GroupModel.query.filter_by(identifier="finance-approvers-empty").first()
+        assert lane_group is not None
+        assert explicit_group is not None
+        # lane_assignment_id is no longer used; groups are tracked via HumanTaskGroupModel
+        assert finance_task.lane_assignment_id is None
+
+    def test_deduplicates_group_entries_in_lane_owners(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:dedupe-reviewers", "group:dedupe-reviewers"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        group_rows = HumanTaskGroupModel.query.filter_by(human_task_id=finance_task.id).all()
+        assert len(group_rows) == 1
+        assert group_rows[0].group.identifier == "dedupe-reviewers"
+
+    def test_deduplicates_potential_owner_users_from_group_and_explicit_entries(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        repeated_owner = self.find_or_create_user("repeated_owner")
+        dup_group = UserService.find_or_create_group("dup-group")
+        UserService.add_user_to_group(repeated_owner, dup_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:dup-group", repeated_owner.username]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        assignment_rows = HumanTaskUserModel.query.filter_by(human_task_id=finance_task.id, user_id=repeated_owner.id).all()
+        assert len(assignment_rows) == 1
+
+    def test_explicit_owner_overrides_group_membership_in_added_by_field(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        """Test that explicit lane_owners upgrade added_by from lane_assignment to lane_owner.
+
+        When a user appears both in a group (group:...) and as an explicit entry,
+        the added_by field should be set to lane_owner to prevent group cleanup
+        from removing explicitly listed users.
+        """
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
+        from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        explicit_owner = self.find_or_create_user("explicit_owner")
+        owner_group = UserService.find_or_create_group("owner-group")
+        UserService.add_user_to_group(explicit_owner, owner_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:owner-group", explicit_owner.username]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        assignment_rows = HumanTaskUserModel.query.filter_by(human_task_id=finance_task.id, user_id=explicit_owner.id).all()
+
+        # Should have exactly one row (deduplication works)
+        assert len(assignment_rows) == 1
+
+        # The added_by field should be lane_owner, not lane_assignment
+        # This ensures group cleanup won't remove explicitly listed users
+        assert assignment_rows[0].added_by == HumanTaskUserAddedBy.lane_owner.value
+
+        # Now remove the user from the group to simulate group membership cleanup
+        UserService.remove_user_from_group(explicit_owner, owner_group.id)
+
+        # Verify the assignment still exists and is still marked as lane_owner
+        assignment_after_removal = HumanTaskUserModel.query.filter_by(
+            human_task_id=finance_task.id, user_id=explicit_owner.id
+        ).first()
+        assert assignment_after_removal is not None
+        assert assignment_after_removal.added_by == HumanTaskUserAddedBy.lane_owner.value
+
+        # Verify the user is still a potential owner (can complete the task)
+        assert explicit_owner in finance_task.potential_owners
+
+    def test_deduplicates_waiting_usernames_from_lane_owners(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
+
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["future_user@example.com", "future_user@example.com"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        waiting_rows = HumanTaskUserWaitingModel.query.filter_by(
+            human_task_id=finance_task.id, username="future_user@example.com"
+        ).all()
+        assert len(waiting_rows) == 1
+
+    def test_lane_group_only_user_cannot_complete_task_when_lane_owners_uses_explicit_groups(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        group_one_user = self.find_or_create_user("group_one_user")
+        lane_group_only_user = self.find_or_create_user("lane_group_only_user")
+
+        group_one = UserService.find_or_create_group("group-one")
+        UserService.find_or_create_group("group-two")
+        lane_group = UserService.find_or_create_group("Finance Team")
+        UserService.add_user_to_group(group_one_user, group_one)
+        UserService.add_user_to_group(lane_group_only_user, lane_group)
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(first_task.task_name, processor.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            processor,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["group:group-one", "group:group-two"]}},
+            initiator_user,
+            first_task,
+        )
+        processor.do_engine_steps(save=True)
+
+        finance_task = process_instance.active_human_tasks[0]
+        finance_spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            finance_task.task_name, processor.bpmn_process_instance
+        )
+        with pytest.raises(UserDoesNotHaveAccessToTaskError):
+            ProcessInstanceService.complete_form_task(
+                processor,
+                finance_spiff_task,
+                {},
+                lane_group_only_user,
+                finance_task,
+            )
+
+        ProcessInstanceService.complete_form_task(
+            processor,
+            finance_spiff_task,
+            {},
+            group_one_user,
+            finance_task,
+        )
 
     def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
@@ -153,7 +558,6 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
         assert len(human_task.potential_owners) == 2
         assert human_task.potential_owners == [finance_user_three, finance_user_four]
 
@@ -166,7 +570,6 @@ class TestProcessInstanceProcessor(BaseTest):
         assert human_task.completed_by_user_id == finance_user_three.id
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
-        assert human_task.lane_assignment_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user_four
 
@@ -1055,7 +1458,7 @@ class TestProcessInstanceProcessor(BaseTest):
         non_manual_spiff_task = processor.bpmn_process_instance.get_tasks(manual=False)[0]
         assert human_task_one.task_guid != str(non_manual_spiff_task.id)
         with pytest.raises(TaskMismatchError):
-            processor.complete_task(non_manual_spiff_task, human_task_one, user=process_instance.process_initiator)
+            processor.complete_task(non_manual_spiff_task, user=process_instance.process_initiator, human_task=human_task_one)
 
     def test_can_run_multiinstance_tasks_with_human_task(
         self,
@@ -1075,19 +1478,19 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.complete_task(spiff_manual_task, human_task_one, user=process_instance.process_initiator)
+        processor.complete_task(spiff_manual_task, user=process_instance.process_initiator, human_task=human_task_one)
 
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"
@@ -1107,13 +1510,16 @@ class TestProcessInstanceProcessor(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")
-        assert process_instance.summary is None
+        summary = process_instance.summary
+        assert summary is None
         processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
-        assert process_instance.summary == "WE SUMMARIZE"
+        summary = process_instance.summary
+        assert summary is not None
+        assert summary == "WE SUMMARIZE"
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        assert process_instance.summary is not None
-        # mypy thinks this is unreachable but it is reachable. summary can be str | None
-        assert len(process_instance.summary) == 255  # type: ignore
+        summary = process_instance.summary
+        assert summary is not None
+        assert len(summary) == 255
 
     def test_it_can_update_guids_in_bpmn_process_dict(
         self,
@@ -1205,29 +1611,3 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         processor.terminate()
-
-    # # To test processing times with multiinstance subprocesses
-    # def test_large_multiinstance(
-    #     self,
-    #     app: Flask,
-    #     client: TestClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    # ) -> None:
-    #     import time
-    #
-    #     process_model = load_test_spec(
-    #         process_model_id="test_group/multiinstance_with_subprocess_and_large_dataset",
-    #         process_model_source_directory="multiinstance_with_subprocess_and_large_dataset",
-    #     )
-    #     process_instance = self.create_process_instance_from_process_model(
-    #         process_model=process_model, save_start_and_end_times=False
-    #     )
-    #
-    #     processor = ProcessInstanceProcessor(process_instance)
-    #     start_time = time.time()
-    #     processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-    #     end_time = time.time()
-    #     duration = end_time - start_time
-    #     assert processor.process_instance_model.end_in_seconds is not None
-    #     duration = processor.process_instance_model.end_in_seconds - processor.process_instance_model.created_at_in_seconds
-    #     print(f"➡️ ➡️ ➡️  duration: {duration}")

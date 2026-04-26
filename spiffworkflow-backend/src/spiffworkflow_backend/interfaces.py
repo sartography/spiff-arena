@@ -68,4 +68,10 @@ class PotentialOwner(TypedDict):
 
 class PotentialOwnerIdList(TypedDict):
     potential_owners: list[PotentialOwner]
-    lane_assignment_id: int | None
+    # lane_assignment_id is deprecated - use lane_owner_group_ids instead
+    # kept for backward compatibility with existing tasks during migration
+    lane_assignment_id: NotRequired[int | None]
+    # lane_owner_group_ids replaces lane_assignment_id to support multiple groups per task
+    # NotRequired for backward compatibility with existing serialized data
+    lane_owner_group_ids: NotRequired[list[int]]
+    lane_owner_usernames_waiting: NotRequired[list[str]]

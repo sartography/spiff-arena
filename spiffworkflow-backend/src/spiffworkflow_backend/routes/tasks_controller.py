@@ -9,6 +9,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask import stream_with_context
 from flask.wrappers import Response
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -16,12 +17,18 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
+from sqlalchemy import case
 from sqlalchemy import desc
+from sqlalchemy import exists
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_enabled_for_process_model,
+)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -30,6 +37,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
@@ -63,6 +71,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -76,30 +85,37 @@ def task_allows_guest(
     return make_response(jsonify({"allows_guest": allows_guest}), 200)
 
 
-# this is currently not used by the Frontend
+# this is currently used by the ProcessInstanceShow page on the frontend
 def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
-    assigned_user = aliased(UserModel)
+
     process_initiator_user = aliased(UserModel)
+    lane_group = aliased(GroupModel)
+    human_task_group = aliased(GroupModel)
+    # This alias is only used for aggregating "all assignees"
+    htum_all = aliased(HumanTaskUserModel)
+    assigned_user_all = aliased(UserModel)
+
     human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .group_by(HumanTaskModel.id)
-        .join(
-            ProcessInstanceModel,
-            ProcessInstanceModel.id == HumanTaskModel.process_instance_id,
-        )
-        .join(
-            process_initiator_user,
-            process_initiator_user.id == ProcessInstanceModel.process_initiator_id,
-        )
-        .join(
-            HumanTaskUserModel,
-            HumanTaskUserModel.human_task_id == HumanTaskModel.id,
-        )
-        .filter(HumanTaskUserModel.user_id == principal.user_id)
-        .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
+        .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
+        .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
-        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
+        # Filter my tasks to avoid duplication, but use a separate join to get all assignees for the task
+        .filter(
+            exists().where(
+                and_(
+                    HumanTaskUserModel.human_task_id == HumanTaskModel.id,
+                    HumanTaskUserModel.user_id == principal.user_id,
+                )
+            )
+        )
+        .outerjoin(htum_all, htum_all.human_task_id == HumanTaskModel.id)
+        .outerjoin(assigned_user_all, assigned_user_all.id == htum_all.user_id)
+        .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
+        .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
     )
 
     if process_instance_id is not None:
@@ -108,7 +124,8 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
             ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
-    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    potential_owner_usernames = _get_potential_owner_usernames(assigned_user_all)
+    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
@@ -122,15 +139,16 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
+        HumanTaskModel.created_at_in_seconds,
+        HumanTaskModel.updated_at_in_seconds,
+        HumanTaskModel.json_metadata,
         func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier"),
         func.max(ProcessInstanceModel.status).label("process_instance_status"),
-        func.max(ProcessInstanceModel.updated_at_in_seconds).label("updated_at_in_seconds"),
-        func.max(ProcessInstanceModel.created_at_in_seconds).label("created_at_in_seconds"),
         func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
-        func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
-        potential_owner_usernames_from_group_concat_or_similar,
+        assigned_group_identifiers,
+        potential_owner_usernames,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
     response_json = {
@@ -185,6 +203,7 @@ def task_list_completed(process_instance_id: int, page: int = 1, per_page: int =
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
+            HumanTaskModel.json_metadata,
             UserModel.username.label("completed_by_username"),  # type: ignore
         )
     )
@@ -209,6 +228,64 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
     return _get_tasks(page=page, per_page=per_page)
 
 
+def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+    task_models = (
+        db.session.query(TaskModel)  # type: ignore
+        .join(TaskDefinitionModel)
+        .join(ProcessInstanceModel)
+        .filter(
+            TaskModel.state == "STARTED",
+            TaskDefinitionModel.typename == "ServiceTask",
+            ProcessInstanceModel.process_initiator_id == user_id,
+            ProcessInstanceModel.status == "waiting",
+        )
+        .add_columns(
+            TaskModel.guid,
+            TaskModel.state,
+            TaskModel.process_instance_id,
+            TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.typename,
+            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.process_model_display_name,
+        )
+        .order_by(
+            desc(TaskModel.process_instance_id)  # type: ignore
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    results = []
+    for row in task_models.items:
+        results.append(
+            {
+                "id": row.guid,
+                "name": row.bpmn_identifier,
+                "title": row.task_name or row.bpmn_identifier,
+                "type": row.typename,
+                "state": row.state,
+                "process_instance_id": row.process_instance_id,
+                "process_instance_status": row.process_instance_status,
+                "process_model_identifier": row.process_model_identifier,
+                "process_model_display_name": row.process_model_display_name,
+            }
+        )
+
+    response_json = {
+        "results": results,
+        "pagination": {
+            "count": len(task_models.items),
+            "total": task_models.total,
+            "pages": task_models.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
+# DEPRECATED: used to drive old homepage
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(
         processes_started_by_user=False,
@@ -218,6 +295,7 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
     )
 
 
+# DEPRECATED: used to drive old homepage
 def task_list_for_my_groups(
     user_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
@@ -327,6 +405,15 @@ def manual_complete_task(
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == process_instance_id).first()
+    if process_instance.status != ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="complete_task",
+            message=(
+                f"Process Instance must have status '{ProcessInstanceStatus.suspended.value}' to complete tasks like this."
+                f"Instance {process_instance_id} had '{process_instance.status}'."
+            ),
+        )
+
     if process_instance:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
@@ -448,6 +535,54 @@ def task_submit(
         if "next_task_assigned_to_me" in response_item:
             response_item = response_item["next_task_assigned_to_me"]
         elif "next_task" in response_item:
+            response_item = response_item["next_task"]
+        return make_response(jsonify(response_item), 200)
+
+
+def _complete_service_task_that_is_waiting_for_callback(
+    process_instance_id: int,
+    task_guid: str,
+    execution_mode: str | None = None,
+) -> dict:
+    """Complete a service task that is waiting for a callback after returning 202.
+
+    This is called when a long-running service task returns a 202 (Accepted) response,
+    leaving the task in STARTED state. The connector later calls back with the result.
+    """
+
+    if not request.is_json:
+        raise ApiError(
+            error_code="invalid_mimetype",
+            message="This endpoint must be called with a json mimetype.",
+            status_code=400,
+        )
+    user = UserModel.query.filter_by(id=g.user.id).first()
+    callback_result = ServiceTaskService.complete_waiting_callback(
+        process_instance_id=process_instance_id,
+        task_guid=task_guid,
+        content=request.json,
+        user=user,
+        execution_mode=execution_mode,
+    )
+    if callback_result.next_task:
+        task = ProcessInstanceService.spiff_task_to_api_task(callback_result.processor, callback_result.next_task)
+        task.process_model_uses_queued_execution = queue_enabled_for_process_model()
+        return {"next_task": task}
+    return {
+        "ok": True,
+        "process_model_identifier": callback_result.process_instance.process_model_identifier,
+        "process_instance_id": process_instance_id,
+    }
+
+
+def service_task_submit_callback(
+    process_instance_id: int,
+    task_guid: str,
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    with sentry_sdk.start_span(op="controller_action", name="tasks_controller.service_task_submit_callback"):
+        response_item = _complete_service_task_that_is_waiting_for_callback(process_instance_id, task_guid, execution_mode)
+        if "next_task" in response_item:
             response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)
 
@@ -748,7 +883,7 @@ def task_save_draft(
         )
 
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_guid, principal.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
     except HumanTaskAlreadyCompletedError:
         return make_response(jsonify({"ok": True}), 200)
 
@@ -813,10 +948,14 @@ def _get_tasks(
     # we can get back multiple for the same human task row which throws off
     # pagination later on
     # https://stackoverflow.com/q/34582014/6090676
+    lane_group = aliased(GroupModel)
+    human_task_group = aliased(GroupModel)
     human_tasks_query = (
         db.session.query(HumanTaskModel)
         .group_by(HumanTaskModel.id)  # type: ignore
-        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
+        .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
+        .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         .filter(
@@ -846,18 +985,35 @@ def _get_tasks(
 
         if has_lane_assignment_id:
             if user_group_identifier:
-                human_tasks_query = human_tasks_query.filter(GroupModel.identifier == user_group_identifier)
+                human_tasks_query = human_tasks_query.filter(
+                    or_(
+                        lane_group.identifier == user_group_identifier,
+                        human_task_group.identifier == user_group_identifier,
+                    )
+                )
             else:
-                human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_not(None))  # type: ignore
+                # Filter to tasks assigned to groups via either method
+                human_tasks_query = human_tasks_query.filter(
+                    or_(
+                        HumanTaskModel.lane_assignment_id.is_not(None),  # type: ignore
+                        HumanTaskGroupModel.human_task_id.is_not(None),
+                    )
+                )
         else:
-            human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
+            # Filter to tasks NOT assigned to groups (individual assignments only)
+            human_tasks_query = human_tasks_query.filter(
+                and_(
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    HumanTaskGroupModel.human_task_id.is_(None),
+                )
+            )
 
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
+    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
 
     process_model_identifier_column = ProcessInstanceModel.process_model_identifier
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
-    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")  # type: ignore
     lane_name_column = HumanTaskModel.lane_name
     if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
         process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
@@ -865,7 +1021,6 @@ def _get_tasks(
         )
         process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")
         user_username_column = func.max(UserModel.username).label("process_initiator_username")
-        group_identifier_column = func.max(GroupModel.identifier).label("assigned_user_group_identifier")
         lane_name_column = func.max(HumanTaskModel.lane_name).label("lane_name")
 
     human_tasks = (
@@ -873,13 +1028,14 @@ def _get_tasks(
             process_model_identifier_column,
             process_instance_status_column,
             user_username_column,
-            group_identifier_column,
+            assigned_group_identifiers,
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
             HumanTaskModel.process_instance_id,
             HumanTaskModel.updated_at_in_seconds,
             HumanTaskModel.created_at_in_seconds,
+            HumanTaskModel.json_metadata,
             lane_name_column,
             potential_owner_usernames_from_group_concat_or_similar,
         )
@@ -911,3 +1067,37 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
         )
 
     return potential_owner_usernames_from_group_concat_or_similar
+
+
+def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: AliasedClass) -> Any:
+    """Get group identifiers from both legacy lane_assignment_id and new HumanTaskGroupModel.
+
+    Combines group identifiers from both sources into a single comma-separated string.
+    Uses CONCAT_WS or equivalent to combine both sources, filtering out nulls.
+    """
+    db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
+
+    if db_type == "postgres":
+        # For postgres, aggregate both columns separately then combine
+        # This ensures we get identifiers from both sources
+        lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
+        htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+    elif db_type == "mysql":
+        # For mysql, aggregate both columns separately then combine
+        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+        # Use concat_ws to combine, which handles nulls gracefully
+        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
+    else:
+        # For sqlite, which doesn't support concat_ws, manually concatenate
+        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
+        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
+        # Manually concatenate with separator, handling NULLs
+        combined = (
+            func.coalesce(lane_agg, "")
+            + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")  # type: ignore
+            + func.coalesce(htg_agg, "")
+        )
+        return func.nullif(combined, "").label("assigned_user_group_identifier")

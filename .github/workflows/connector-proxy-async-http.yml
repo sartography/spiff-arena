@@ -6,12 +6,18 @@ on:
       - .github/workflows/connector-proxy-async-http.yml
     branches:
       - main
+
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Deploy Connector Proxy - Async Http
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy connector-proxies/async-http --remote-only
         env:

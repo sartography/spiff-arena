@@ -18,6 +18,9 @@ FRONTEND_DEV_OVERLAY ?= spiffworkflow-frontend/dev.docker-compose.yml
 CONNECTOR_PROXY_CONTAINER ?= spiffworkflow-connector
 CONNECTOR_PROXY_DEV_OVERLAY ?= connector-proxy-demo/dev.docker-compose.yml
 
+CONNECTOR_PROXY_AGGREGATE_CONTAINER ?= connector-proxy-aggregate
+CONNECTOR_PROXY_AGGREGATE_DEV_OVERLAY ?= connector-proxies/aggregate/dev.docker-compose.yml
+
 CONNECTOR_PROXY_ASYNC_HTTP_CONTAINER ?= connector-proxy-async-http
 CONNECTOR_PROXY_ASYNC_HTTP_DEV_OVERLAY ?= connector-proxies/async-http/dev.docker-compose.yml
 
@@ -25,6 +28,7 @@ YML_FILES := -f docker-compose.yml \
 	-f $(BACKEND_DEV_OVERLAY) \
 	-f $(FRONTEND_DEV_OVERLAY) \
 	-f $(CONNECTOR_PROXY_DEV_OVERLAY) \
+	-f $(CONNECTOR_PROXY_AGGREGATE_DEV_OVERLAY) \
 	-f $(CONNECTOR_PROXY_ASYNC_HTTP_DEV_OVERLAY) \
 	-f $(ARENA_DEV_OVERLAY)
 
@@ -32,6 +36,7 @@ DOCKER_COMPOSE ?= RUN_AS=$(ME) docker compose $(YML_FILES)
 IN_ARENA ?= $(DOCKER_COMPOSE) run --rm $(ARENA_CONTAINER)
 IN_BACKEND ?= $(DOCKER_COMPOSE) run --rm $(BACKEND_CONTAINER)
 IN_CONNECTOR_PROXY ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_CONTAINER)
+IN_CONNECTOR_PROXY_AGGREGATE ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_AGGREGATE_CONTAINER)
 IN_CONNECTOR_PROXY_ASYNC_HTTP ?= $(DOCKER_COMPOSE) run --rm $(CONNECTOR_PROXY_ASYNC_HTTP_CONTAINER)
 IN_FRONTEND ?= $(DOCKER_COMPOSE) run --rm $(FRONTEND_CONTAINER)
 
@@ -101,6 +106,9 @@ be-tests: be-clear-log-file
 be-tests-par: be-clear-log-file
 	$(IN_BACKEND) uv run pytest -n auto -x --random-order $(ARGS) tests/spiffworkflow_backend/$(JUST)
 
+co-tests:
+	$(IN_ARENA) uv run pytest $(ARGS) spiff-arena-common/tests/spiff_arena_common/$(JUST)
+
 co-wheel:
 	$(IN_ARENA) uv build spiff-arena-common
 
@@ -115,6 +123,12 @@ cp-poetry-lock:
 
 cp-logs:
 	docker logs -f $(CONNECTOR_PROXY_CONTAINER)
+
+cpagg-sh:
+	$(IN_CONNECTOR_PROXY_AGGREGATE) /bin/sh
+
+cpagg-logs:
+	docker logs -f $(CONNECTOR_PROXY_AGGREGATE_CONTAINER)
 
 cpah-sh:
 	$(IN_CONNECTOR_PROXY_ASYNC_HTTP) /bin/bash
@@ -172,8 +186,9 @@ take-ownership:
 	start-dev stop-dev \
 	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
-	co-wheel \
+	co-tests co-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock cp-sh \
+	cpagg-logs cpagg-sh \
 	cpah-logs cpah-sh \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \
 	uv-sync venv-rm pre-commit ruff run-pyl \

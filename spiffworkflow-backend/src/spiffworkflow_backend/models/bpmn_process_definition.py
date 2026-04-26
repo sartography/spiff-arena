@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import UniqueConstraint
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 # contents of top-level attributes from spiff:
@@ -52,3 +54,11 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     @classmethod
     def keys_for_full_process_model_hash(cls) -> list[str]:
         return ["spec", "subprocess_specs", "serializer_version"]
+
+    @classmethod
+    def insert_or_update_record(cls, bpmn_process_definition_dict: dict) -> Any:
+        return insert_or_ignore_duplicate(
+            model_class=BpmnProcessDefinitionModel,
+            values=bpmn_process_definition_dict,
+            postgres_conflict_index_elements=["full_process_model_hash"],
+        )

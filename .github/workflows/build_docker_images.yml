@@ -31,14 +31,19 @@ on:
   push:
     branches:
       - main
-      - keycloak-realm-with-groups
-      - fail-fast-off
-      - newui-all-in
-      - rebuild-v1.0.0
+      - bpmn-js-spiffworkflow-react
+      - debt/performance
     tags: [v*]
+    paths:
+      - spiffworkflow-frontend/**
+      - spiffworkflow-backend/**
+      - connector-proxy-demo/**
+      - connector-proxies/async-http/**
+      - .github/workflows/build_docker_images.yml
 
 jobs:
   create_docker_images:
+    name: Build ${{ matrix.context }} image
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -53,26 +58,34 @@ jobs:
           - image_name: sartography/connector-proxy-demo
             context: connector-proxy-demo
             description: "Connector proxy component of SpiffWorkflow, providing integration capabilities for external services"
+          - image_name: sartography/connector-proxy-async-http
+            context: connector-proxies/async-http
+            description: "Async HTTP connector proxy for SpiffWorkflow, providing generic HTTP integration capabilities"
 
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ matrix.image_name }}
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     permissions:
       contents: read
       packages: write
       security-events: write # Required for uploading Trivy scan results to GitHub Security
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Log in to the Container registry
-        uses: docker/login-action@v3.3.0
+        uses: docker/login-action@v4.1.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Normalize branch name
+        id: normalize_branch_name
+        run: |
+          BRANCH_NAME=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed -r 's/[^a-z0-9]+/-/g' | sed -r 's/^-+|-+$//g')
+          echo "normalized_branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Get current date
         id: date
@@ -82,15 +95,13 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.8.0
+        uses: docker/metadata-action@v6.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.description=${{ matrix.description }}
-            org.opencontainers.image.version=${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
+            org.opencontainers.image.version=${{ steps.normalize_branch_name.outputs.normalized_branch_name }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=raw,value=v1.0.0,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
-            type=raw,value=latest,enable=${{ github.ref_name == 'rebuild-v1.0.0' }}
             type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
             type=ref,event=tag,enable=true,format={{version}}
@@ -101,9 +112,9 @@ jobs:
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Generate full image tag
         id: full_tag
-        run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BRANCH_NAME }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
+        run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.normalize_branch_name.outputs.normalized_branch_name }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
       - name: Build Docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v7.0.0
         with:
           context: ${{ matrix.context }}
           push: false # Don't push yet
@@ -119,7 +130,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: "${{ steps.full_tag.outputs.full_tag }}"
           scan-type: "image"
@@ -137,18 +148,19 @@ jobs:
         run: |
           if [ -f "trivy-results.sarif" ]; then
             echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
+            cat "trivy-results.sarif"
           else
             echo "Trivy results file not found. Skipping upload."
             echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
           fi
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
         with:
           sarif_file: "trivy-results.sarif"
 
       - name: Push Docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v7.0.0
         with:
           context: ${{ matrix.context }}
           push: true
@@ -159,36 +171,3 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Adding markdown
         run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
-
-  quickstart-guide-test:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [create_docker_images]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-      - name: Setup Apps
-        run: ./bin/run_arena_with_docker_compose
-      - name: wait_for_backend
-        working-directory: ./spiffworkflow-backend
-        run: ./bin/wait_for_backend_to_be_up 5 8000
-      - name: wait_for_frontend
-        working-directory: ./spiffworkflow-frontend
-        run: ./bin/wait_for_frontend_to_be_up 5 8001
-      - name: wait_for_connector
-        working-directory: ./connector-proxy-demo
-        run: ./bin/wait_for_connector_to_be_up 5 8004
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          working-directory: ./spiffworkflow-frontend
-          browser: chromium
-          # just run one test to make sure we didn't completely break it
-          spec: cypress/e2e/process_groups.cy.js
-        env:
-          # pass GitHub token to allow accurately detecting a build vs a re-run build
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
-          SPIFFWORKFLOW_FRONTEND_PORT: 8001

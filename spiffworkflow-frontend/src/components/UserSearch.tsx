@@ -17,7 +17,7 @@ export default function UserSearch({
   label = 'User',
 }: OwnProps) {
   const { t } = useTranslation();
-  const lastRequestedInitatorSearchTerm = useRef<string>();
+  const lastRequestedInitatorSearchTerm = useRef<string | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userList, setUserList] = useState<User[]>([]);
 
@@ -27,6 +27,7 @@ export default function UserSearch({
       result.users.forEach((user: User) => {
         if (user.username === inputText) {
           setSelectedUser(user);
+          onSelectedUser(user);
         }
       });
     }

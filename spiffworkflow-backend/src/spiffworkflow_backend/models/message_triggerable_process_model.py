@@ -6,7 +6,7 @@ class MessageTriggerableProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_triggerable_process_model"
 
     id = db.Column(db.Integer, primary_key=True)
-    message_name: str = db.Column(db.String(255), index=True)
+    message_name: str = db.Column(db.String(255), index=True, unique=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     file_name: str = db.Column(db.String(255), index=True)
 

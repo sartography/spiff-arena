@@ -45,7 +45,7 @@ def submit_input_into_form_field(
 
 def test_can_complete_and_navigate_a_form(page: Page):
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     parent_group = "Shared Resources"
     child_group = "Acceptance Tests Group One"

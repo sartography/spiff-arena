@@ -1,6 +1,10 @@
+import os
 import re
+import sys
 
+import pytest
 from flask import Flask
+from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -170,3 +174,19 @@ class TestProcessModelService(BaseTest):
         # this model should not show up in results because it is not executable
         process_models = ProcessModelService.get_process_models_for_api(user=user, recursive=True, filter_runnable_by_user=True)
         assert len(process_models) == 1
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="tmp file path is not valid xml for windows and it doesn't matter",
+    )
+    def test_does_not_evaluate_entities(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        string_replacement = b"THIS_STRING_SHOULD_NOT_EXIST_ITS_SECRET"
+        tmp_file = os.path.normpath(self.get_test_data_file_full_path("file_to_inject", "xml_with_entity"))
+        file_contents = self.get_test_data_file_contents("invoice.bpmn", "xml_with_entity")
+        file_contents = file_contents.decode("utf-8").replace("{{FULL_PATH_TO_FILE}}", tmp_file).encode()
+        etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
+        assert string_replacement not in etree.tostring(etree_element)

@@ -44,7 +44,7 @@ import {
 } from '../../helpers';
 import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
-import ButtonWithConfirmation from '../../components/ButtonWithConfirmation';
+import ConfirmIconButton from '../../components/ConfirmIconButton';
 import HttpService from '../../services/HttpService';
 import DataStoreCard from '../../components/DataStoreCard';
 
@@ -622,11 +622,10 @@ export default function ProcessModelTreePage({
                           a={targetUris.processGroupShowPath}
                           ability={ability}
                         >
-                          <ButtonWithConfirmation
+                          <ConfirmIconButton
                             data-testid="delete-process-group-button"
                             renderIcon={<Delete />}
                             iconDescription={t('delete_process_group')}
-                            hasIconOnly
                             description={t('delete_process_group_with_name', {
                               name: currentProcessGroup.display_name,
                             })}
@@ -805,7 +804,7 @@ export default function ProcessModelTreePage({
                         <IconButton
                           size="small"
                           onClick={(e) => e.stopPropagation()}
-                          data-testid="add-process-group-button"
+                          data-testid="add-data-store-button"
                           href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                         >
                           <Add />

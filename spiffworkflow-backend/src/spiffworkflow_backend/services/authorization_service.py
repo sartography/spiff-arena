@@ -59,6 +59,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/logs", "relevant_permissions": ["read"]},
     {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},
     {"path": "/message-models", "relevant_permissions": ["read"]},
+    {"path": "/all-message-models", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
@@ -71,6 +72,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
     {"path": "/process-instance-events", "relevant_permissions": ["read"]},
     {"path": "/process-instance-migrate", "relevant_permissions": ["create"]},
+    {"path": "/process-instance-run", "relevant_permissions": ["create"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-model-import", "relevant_permissions": ["create"]},
@@ -282,7 +284,6 @@ class AuthorizationService:
         authentication_exclusion_list = [
             "spiffworkflow_backend.routes.authentication_controller.authentication_options",
             "spiffworkflow_backend.routes.authentication_controller.login",
-            "spiffworkflow_backend.routes.authentication_controller.login_api_return",
             "spiffworkflow_backend.routes.authentication_controller.login_return",
             "spiffworkflow_backend.routes.authentication_controller.login_with_access_token",
             "spiffworkflow_backend.routes.authentication_controller.logout",
@@ -404,7 +405,7 @@ class AuthorizationService:
         return False
 
     @staticmethod
-    def assert_user_can_complete_task(
+    def assert_user_can_complete_human_task(
         process_instance_id: int,
         task_guid: str,
         user: UserModel,
@@ -480,11 +481,9 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
-        new_user = False
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             user_model = UserService().create_user(**user_attributes)
-            new_user = True
         else:
             # Update with the latest information
             user_db_model_changed = False
@@ -525,13 +524,8 @@ class AuthorizationService:
         # the external service user identifier.
         cls.import_permissions_from_yaml_file(user_model)
 
-        if new_user:
-            new_group_ids.update({g.id for g in user_model.groups})
-
-        if len(new_group_ids) > 0 or len(old_group_ids) > 0:
-            UserService.update_human_task_assignments_for_user(
-                user_model, new_group_ids=new_group_ids, old_group_ids=old_group_ids
-            )
+        # Refresh the groups relationship to get the latest from the database
+        db.session.expire(user_model, ["groups"])
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore
@@ -549,9 +543,10 @@ class AuthorizationService:
         #   1. view your own instances.
         #   2. view the logs for these instances.
         if permission_set == "start":
-            path_prefixes_that_allow_create_access = ["process-instances"]
-            for path_prefix in path_prefixes_that_allow_create_access:
-                target_uri = f"/{path_prefix}/{process_related_path_segment}"
+            for target_uri in [
+                f"/process-instances/{process_related_path_segment}",
+                f"/process-instance-run/{process_related_path_segment}",
+            ]:
                 permissions_to_assign.append(PermissionToAssign(permission="create", target_uri=target_uri))
 
             # giving people access to all logs for an instance actually gives them a little bit more access
@@ -660,7 +655,10 @@ class AuthorizationService:
         # FIXME: we need to fix so that user that can start a process-model
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/message-models"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/all-message-models"))
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
@@ -672,6 +670,7 @@ class AuthorizationService:
 
         # read comes from PG and PM ALL permissions as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-assign/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instance-run/*"))
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/event-error-details/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/*"))
@@ -823,7 +822,7 @@ class AuthorizationService:
         return actions
 
     @classmethod
-    def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
+    def load_permissions_yaml(cls) -> Any:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
             raise (
                 PermissionsFileNotSetError(
@@ -831,9 +830,12 @@ class AuthorizationService:
                 )
             )
 
-        permission_configs = None
         with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
-            permission_configs = yaml.safe_load(file)
+            return yaml.safe_load(file)
+
+    @classmethod
+    def parse_permissions_yaml_into_group_info(cls) -> list[GroupPermissionsDict]:
+        permission_configs = cls.load_permissions_yaml()
 
         group_permissions_by_group: dict[str, GroupPermissionsDict] = {}
         if current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
@@ -1007,7 +1009,6 @@ class AuthorizationService:
         group_permissions_only: bool = False,
     ) -> None:
         added_permission_assignments = added_permissions["permission_assignments"]
-        added_group_identifiers = added_permissions["group_identifiers"]
         added_user_to_group_identifiers = added_permissions["user_to_group_identifiers"]
         added_waiting_group_assignments = added_permissions["waiting_user_group_assignments"]
 
@@ -1028,14 +1029,6 @@ class AuthorizationService:
                     }
                     if current_user_dict not in added_user_to_group_identifiers:
                         db.session.delete(iutga)
-
-        # do not remove the default user group
-        added_group_identifiers.add(current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"])
-        added_group_identifiers.add(SPIFF_GUEST_GROUP)
-        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(added_group_identifiers)).all()  # type: ignore
-        for gtd in groups_to_delete:
-            if not gtd.source_is_open_id:
-                db.session.delete(gtd)
 
         for wugam in initial_waiting_group_assignments:
             if wugam not in added_waiting_group_assignments:

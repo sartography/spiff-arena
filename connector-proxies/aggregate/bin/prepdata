@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+
+const config = {
+  "https://connector-proxy-v1.fly.dev": { not: /^http\// },
+  "https://l3m.fly.dev": {},
+  "https://acp-bitter-fog-6526.fly.dev": {},
+  "https://connector-rand.jon-herron.workers.dev": {},
+};
+
+const munge = data => {
+  var uniqueIdsByConnector = {};
+  var commandsByUniqueId = {};
+
+  for (const [connectorProxy, actions] of data) {
+    for (const {id, parameters} of actions) {
+      if (config[connectorProxy].not?.test(id)) continue;
+      
+      const [connector, command] = id.split('/');
+      const uniqueId = crypto.randomUUID();
+
+      uniqueIdsByConnector[connector] = [
+        ...(uniqueIdsByConnector[connector] ?? []),
+        ...[uniqueId],
+      ];
+
+      commandsByUniqueId[uniqueId] = { id, parameters, command, connectorProxy };
+    }
+  }
+  
+  return { uniqueIdsByConnector, commandsByUniqueId };
+};
+
+const extract = data => {
+  const values = Object.values(data.commandsByUniqueId);
+  const commands = values.map(({ id, parameters }) => ({ id, parameters }));
+  const redirects = values.map(({ id, connectorProxy }) => ({ id, connectorProxy }));
+
+  return { commands, redirects };
+};
+
+const nginxConf = redirects => {
+  return [
+`
+server {
+  listen 8080;
+  server_name localhost;
+  root /app/static;
+
+  location = /standard/v1/commands {
+    try_files $uri $uri.json =404;
+  }
+`,
+  ...redirects.map(({ id, connectorProxy }) => `
+  location = /standard/v1/do/${id} {
+    return 307 ${connectorProxy}/v1/do/${id};
+  }
+`),
+`
+}
+`
+  ].join("\n");
+};
+
+const prep = ({ commands, redirects }) => {
+  return {
+    'static/standard/v1/commands.json': JSON.stringify(commands),
+    'nginx/conf.d/default.conf': nginxConf(redirects),
+  };
+};
+
+const write = async data => {
+  Object.entries(data).forEach(([k, v]) => fs.writeFile(k, v, e => console.log(e ?? `Wrote ${k}`)));
+};
+
+(async () => {
+  Promise.all(
+    Object.keys(config).map(url => fetch(new URL('/v1/commands', url))
+      .then(resp => resp.json())
+      .then(json => [url, json])
+    )
+  )
+  .then(munge)
+  .then(extract)
+  .then(prep)
+  .then(write);
+})();

@@ -44,6 +44,11 @@ class TestGetAllPermissions(BaseTest):
             },
             {
                 "group_identifier": "my_test_group",
+                "uri": "/process-instance-run/hey:group:*",
+                "permissions": ["create"],
+            },
+            {
+                "group_identifier": "my_test_group",
                 "uri": "/process-instances/hey:group:*",
                 "permissions": ["create"],
             },

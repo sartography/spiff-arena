@@ -87,6 +87,35 @@ class JSONDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ignore
         db.session.commit()
         del my_task.data[self.bpmn_id]
 
+    @classmethod
+    def clear(cls, identifier: str, location: str | None) -> None:
+        if not location:
+            return
+
+        model = JSONDataStoreModel.query.filter_by(identifier=identifier, location=location).first()
+        if model is None:
+            raise DataStoreWriteError(f"Unable to write to data store '{identifier}' using location '{location}'.")
+
+        data: dict[str, Any] = {}
+
+        cls.validate_schema(model, data)
+        model.data = data
+
+        db.session.add(model)
+        db.session.commit()
+
+    @classmethod
+    def delete(cls, identifier: str, location: str | None) -> None:
+        if not location:
+            return
+
+        model = JSONDataStoreModel.query.filter_by(identifier=identifier, location=location).first()
+        if model is None:
+            raise DataStoreWriteError(f"Unable to delete data store '{identifier}' using location '{location}'.")
+
+        db.session.delete(model)
+        db.session.commit()
+
     @staticmethod
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["JSONDataStore"] = JSONDataStore
@@ -111,6 +140,16 @@ class JSONDataStoreConverter(BpmnConverter):  # type: ignore
 
 class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
     """JSONFileDataStore."""
+
+    @classmethod
+    def clear(cls, identifier: str, location: str | None) -> None:
+        if location and cls._data_store_exists_at_location(location, identifier):
+            FileSystemService.write_to_json_file_at_relative_path(location, cls._data_store_filename(identifier), {})
+
+    @classmethod
+    def delete(cls, identifier: str, location: str | None) -> None:
+        if location and cls._data_store_exists_at_location(location, identifier):
+            FileSystemService.delete_file_at_relative_path(location, cls._data_store_filename(identifier))
 
     def get(self, my_task: SpiffTask) -> None:
         """get."""
@@ -144,10 +183,12 @@ class JSONFileDataStore(BpmnDataStoreSpecification):  # type: ignore
             return None
         return location
 
-    def _data_store_exists_at_location(self, location: str, identifier: str) -> bool:
-        return FileSystemService.file_exists_at_relative_path(location, self._data_store_filename(identifier))
+    @classmethod
+    def _data_store_exists_at_location(cls, location: str, identifier: str) -> bool:
+        return FileSystemService.file_exists_at_relative_path(location, cls._data_store_filename(identifier))
 
-    def _data_store_filename(self, name: str) -> str:
+    @classmethod
+    def _data_store_filename(cls, name: str) -> str:
         return f"{name}.json"
 
     @staticmethod

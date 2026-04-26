@@ -9,9 +9,8 @@
 5. Skip the redirect URL. We will do that later.
 6. Click _Register._
 7. In the new view, copy and note the following:
-    - _Application (client) ID._ It is your **Client ID.**
-    - _Directory (tenant) ID._ This is part of your server URL.
- 
+   - _Application (client) ID._ It is your **Client ID.**
+   - _Directory (tenant) ID._ This is part of your server URL.
 
 ### Configure your app
 
@@ -29,9 +28,7 @@ You will need to add more redirect URLs.
 
 Follow these instructions for the following URL patterns:
 
-- `http://localhost:8000/v1.0/login_api_return`
 - `https://<domainname>/v1.0/login_return`
-- `https://<domainname>/v1.0/login_api_return`
 
 1. Under _Web > Redirect URIs,_ click _Add URI._
 2. Type in the URL pattern.

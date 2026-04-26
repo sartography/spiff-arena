@@ -7,6 +7,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel
@@ -556,3 +557,206 @@ class TestTasksController(BaseTest):
         assert response.headers["content-type"] == "application/json"
         assert isinstance(response.json(), list)
         assert len(response.json()) == 1
+
+    def test_task_list_my_tasks(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        tasks_endpoint = "/v1.0/tasks"
+
+        initiator_user = self.find_or_create_user("testuser4")
+        finance_user = self.find_or_create_user("testuser2")
+        assert initiator_user.principal is not None
+        assert finance_user.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        process_group_id = "finance"
+        process_model_id = "model_with_lanes"
+        bpmn_file_name = "lanes.bpmn"
+        bpmn_file_location = "model_with_lanes"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        # Create and run a process instance as initiator.
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 201
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+
+        # At this point, the "READY" task should be owned by the initiator lane.
+        # Verify that the initiator sees the task.
+        response = client.get(
+            tasks_endpoint,
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert "results" in response.json()
+        assert "pagination" in response.json()
+        assert response.json()["pagination"]["count"] == 1
+        assert response.json()["pagination"]["total"] >= 1
+        assert response.json()["pagination"]["pages"] >= 1
+        my_task = response.json()["results"][0]
+        assert my_task["process_instance_id"] == process_instance_id
+        assert my_task["process_initiator_username"] == initiator_user.username
+
+        # Verify that the finance user *does not* see the task.
+        response = client.get(
+            tasks_endpoint,
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert response.json()["pagination"]["count"] == 0
+
+        # Complete the initiator's task to move the process forward to the finance lane task.
+        task_list_resp = client.get(
+            "/v1.0/tasks",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert task_list_resp.status_code == 200
+        assert task_list_resp.json() is not None
+        assert len(task_list_resp.json()["results"]) == 1
+        task_id = task_list_resp.json()["results"][0]["id"]
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+
+        # Verify the finance user sees a task.
+        response = client.get(
+            tasks_endpoint,
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert response.json()["pagination"]["count"] == 1
+        finance_task = response.json()["results"][0]
+        assert finance_task["process_instance_id"] == process_instance_id
+
+        # Verify the initiator no longer sees the task.
+        response = client.get(
+            tasks_endpoint,
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert response.json()["pagination"]["count"] == 0
+
+        # Verify the optional process_instance_id filter works (and excludes "error" status).
+        response = client.get(
+            f"{tasks_endpoint}?process_instance_id={process_instance_id}",
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert response.json()["pagination"]["count"] == 1
+
+        # If the instance is set to "error", the filtered query should exclude it.
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        process_instance.status = ProcessInstanceStatus.error.value
+        db.session.add(process_instance)
+        db.session.commit()
+
+        response = client.get(
+            f"{tasks_endpoint}?process_instance_id={process_instance_id}",
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json() is not None
+        assert response.json()["pagination"]["count"] == 0
+
+    def test_task_list_my_tasks_returns_multiple_potential_owners(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        tasks_endpoint = "/v1.0/tasks"
+
+        initiator_user = self.find_or_create_user("testuser4")
+        finance_user = self.find_or_create_user("testuser2")
+        assert initiator_user.principal is not None
+        assert finance_user.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        process_group_id = "finance"
+        process_model_id = "model_with_lanes"
+        bpmn_file_name = "lanes.bpmn"
+        bpmn_file_location = "model_with_lanes"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        # Create and run instance as initiator
+        resp = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert resp.status_code == 201
+        assert resp.json() is not None
+        process_instance_id = resp.json()["id"]
+
+        resp = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert resp.status_code == 200
+
+        # Verify that at first only the initiator is the task owner
+        resp = client.get(tasks_endpoint, headers=self.logged_in_headers(initiator_user))
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload is not None
+        assert payload["pagination"]["count"] == 1
+        task_row = payload["results"][0]
+
+        # Find the underlying HumanTaskModel row and add the finance user as an owner
+        human_task = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_row["id"]).first()
+        assert human_task is not None
+        db.session.add(HumanTaskUserModel(human_task_id=human_task.id, user_id=finance_user.id))
+        db.session.commit()
+
+        # Re-fetch and verify the response aggregates both owners
+        resp = client.get(tasks_endpoint, headers=self.logged_in_headers(initiator_user))
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload is not None
+        assert payload["pagination"]["count"] == 1
+        task_row = payload["results"][0]
+
+        owners_raw = task_row.get("potential_owner_usernames")
+        assert isinstance(owners_raw, str)
+        owners = {owner.strip() for owner in owners_raw.split(",")}
+
+        assert initiator_user.username in owners
+        assert finance_user.username in owners

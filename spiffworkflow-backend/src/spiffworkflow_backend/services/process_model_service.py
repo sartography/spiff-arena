@@ -1,13 +1,16 @@
 import copy
 import json
 import os
+import random
 import shutil
+import string
 import uuid
 from json import JSONDecodeError
 from typing import Any
 from typing import TypeVar
 
 from flask import current_app
+from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
@@ -32,6 +35,10 @@ T = TypeVar("T")
 
 
 class ProcessModelWithInstancesNotDeletableError(Exception):
+    pass
+
+
+class ProcessModelInvalidError(Exception):
     pass
 
 
@@ -179,6 +186,68 @@ class ProcessModelService(FileSystemService):
         new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_relative_path))
         shutil.move(original_model_path, new_model_path)
         new_process_model = cls.get_process_model(new_relative_path)
+        return new_process_model
+
+    @classmethod
+    def copy_process_model(
+        cls, original_process_model_id: str, new_process_model_id: str, new_display_name: str
+    ) -> ProcessModelInfo:
+        if len(new_process_model_id.split("/")) < 2:
+            msg = (
+                "Process model id needs to have a group followed by the model name: [process_group_id]/[process_model]. "
+                f"{new_process_model_id} is invalid"
+            )
+            raise ProcessModelInvalidError(msg)
+
+        # Validate that the target process group exists
+        target_process_group_segments = new_process_model_id.split("/")[:-1]  # All segments except the last one (model name)
+        target_process_group_id = "/".join(target_process_group_segments)
+
+        if not cls.is_process_group_identifier(target_process_group_id):
+            raise ProcessModelInvalidError(
+                f"Process group '{target_process_group_id}' does not exist. "
+                f"Please create the process group first or choose an existing one."
+            )
+
+        original_process_model = cls.get_process_model(original_process_model_id)
+        original_model_path = cls.process_model_full_path(original_process_model)
+
+        # Prevent path traversal by ensuring resolved path is inside root_path
+        new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_process_model_id))
+        root_path = os.path.abspath(FileSystemService.root_path())
+        try:
+            common_path = os.path.commonpath([new_model_path, root_path])
+            if common_path != root_path:
+                raise ProcessModelInvalidError(
+                    f"Invalid process model path: {new_process_model_id} resolves outside the allowed directory"
+                )
+        except ValueError:
+            raise ProcessModelInvalidError(f"Invalid process model path: {new_process_model_id}") from None
+
+        if os.path.exists(new_model_path):
+            raise ProcessModelInvalidError(f"Process model already exists at path: {new_process_model_id}")
+
+        shutil.copytree(original_model_path, new_model_path)
+
+        new_process_model = cls.get_process_model(new_process_model_id)
+        new_process_model.id = new_process_model_id
+        new_process_model.display_name = new_display_name
+
+        # Build an id_map while renaming process IDs and update all references
+        id_map: dict[str, str] = {}
+        bpmn_files = [f for f in os.listdir(new_model_path) if f.endswith(".bpmn")]
+
+        # First pass: Build the id_map by renaming all process IDs
+        for bpmn_file in bpmn_files:
+            bpmn_file_path = os.path.join(new_model_path, bpmn_file)
+            cls._update_process_ids_for_bpmn_file(bpmn_file_path, new_process_model, id_map)
+
+        # Second pass: Update all references using the id_map
+        for bpmn_file in bpmn_files:
+            bpmn_file_path = os.path.join(new_model_path, bpmn_file)
+            cls._update_call_activity_references(bpmn_file_path, id_map)
+
+        cls.save_process_model(new_process_model)
         return new_process_model
 
     @classmethod
@@ -773,3 +842,63 @@ class ProcessModelService(FileSystemService):
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info
+
+    # This is designed to isolate xml parsing, which is a security issue, and make it as safe as possible.
+    # S320 indicates that xml parsing with lxml is unsafe. To mitigate this, we add options to the parser
+    # to make it as safe as we can. No exploits have been demonstrated with this parser, but we will try to stay alert.
+    @classmethod
+    def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
+        etree_xml_parser = etree.XMLParser(
+            resolve_entities=False, remove_comments=True, no_network=True, load_dtd=False, dtd_validation=False
+        )
+        return etree.fromstring(binary_data, parser=etree_xml_parser)  # noqa: S320
+
+    @classmethod
+    def _update_call_activity_references(cls, bpmn_file_path: str, id_map: dict) -> None:
+        with open(bpmn_file_path, "rb") as f:
+            file_contents = f.read()
+        bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
+
+        # Update participant/@processRef references
+        participants = bpmn_etree_element.xpath(
+            "//bpmn:participant[@processRef]", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+        )
+        for participant in participants:
+            process_ref = participant.get("processRef")
+            if process_ref and process_ref in id_map:
+                participant.set("processRef", id_map[process_ref])
+
+        # Update callActivity/@calledElement references
+        call_activities = bpmn_etree_element.xpath(
+            "//bpmn:callActivity[@calledElement]", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+        )
+        for call_activity in call_activities:
+            called_element = call_activity.get("calledElement")
+            if called_element and called_element in id_map:
+                call_activity.set("calledElement", id_map[called_element])
+
+        FileSystemService.write_file_data_to_system(bpmn_file_path, etree.tostring(bpmn_etree_element))
+
+    @classmethod
+    def _update_process_ids_for_bpmn_file(cls, bpmn_file_path: str, process_model: ProcessModelInfo, id_map: dict) -> None:
+        bpmn_file = os.path.basename(bpmn_file_path)
+        with open(bpmn_file_path, "rb") as f:
+            file_contents = f.read()
+        bpmn_etree_element = ProcessModelService.get_etree_from_xml_bytes(file_contents)
+        process_elements = bpmn_etree_element.xpath(
+            "//bpmn:process", namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"}
+        )
+
+        for process in process_elements:
+            old_process_id = process.get("id")
+            if old_process_id:
+                fuzz = "".join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(7))
+                new_process_id = f"{old_process_id}_{fuzz}"
+                process.set("id", new_process_id)
+                id_map[old_process_id] = new_process_id
+
+                # Update primary process ID if this matches
+                if bpmn_file == process_model.primary_file_name and process_model.primary_process_id == old_process_id:
+                    process_model.primary_process_id = new_process_id
+
+        FileSystemService.write_file_data_to_system(bpmn_file_path, etree.tostring(bpmn_etree_element))

@@ -58,12 +58,16 @@ configs_with_structures = normalized_environment(environ)
 config_from_env("FLASK_SESSION_SECRET_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR")
 
+# used mostly by boot_server_in_docker. app only needs to know about it if running with internal openid server
+config_from_env("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT")
+
 ### AI Tools
 config_from_env("SPIFFWORKFLOW_BACKEND_SCRIPT_ASSIST_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_SECRET_KEY_OPENAI_API")
 
 ### extensions
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default="extensions")
+config_from_env("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
 
 ### background processor
@@ -97,6 +101,8 @@ SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS = re.split(
 
 ### service task connector proxy
 config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", default="http://localhost:7004")
+config_from_env("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", default=False)
 config_from_env(
     "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPEAHEAD_URL",
     default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
@@ -130,6 +136,11 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES", default="openid,profile,email")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", default=False)  # Set to enforce OAuth PKCE (recommended)
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY")
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
+
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
@@ -183,6 +194,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_LOG_MILESTONES", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
+config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", default=False)
 
 ### permissions
 config_from_env("SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH")
@@ -215,6 +228,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
+# If the BPMN spec dir is a subdir within a git repo, rather than the entire git repo, this is the path to that subdir
+config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_SUBDIR_WITHIN_REPO")
 
 ### webhook
 # configs for handling incoming webhooks from other systems

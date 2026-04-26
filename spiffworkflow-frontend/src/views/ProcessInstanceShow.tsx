@@ -1,6 +1,9 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor } from '@monaco-editor/react';
+import { json } from '@codemirror/lang-json';
+import { EditorState, type Extension } from '@codemirror/state';
+import { EditorView } from 'codemirror';
+import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
   useParams,
   useNavigate,
@@ -23,7 +26,6 @@ import {
   View,
 } from '@carbon/icons-react';
 import {
-  Grid,
   Box,
   Typography,
   IconButton,
@@ -42,6 +44,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   DeleteOutlineOutlined,
@@ -67,9 +70,10 @@ import {
   isURL,
   getProcessStatus,
 } from '../helpers';
-import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ConfirmIconButton from '../components/ConfirmIconButton';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  BasicTask,
   ErrorForDisplay,
   EventDefinition,
   KeyboardShortcuts,
@@ -112,16 +116,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
-  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [tasks, setTasks] = useState<BasicTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
-  const [taskToDisplay, setTaskToDisplay] = useState<Task | null>(null);
-  const [taskToTimeTravelTo, setTaskToTimeTravelTo] = useState<Task | null>(
-    null,
-  );
+  const [taskToDisplay, setTaskToDisplay] = useState<BasicTask | null>(null);
+  const [taskToTimeTravelTo, setTaskToTimeTravelTo] =
+    useState<BasicTask | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
-  const [taskInstancesToDisplay, setTaskInstancesToDisplay] = useState<Task[]>(
-    [],
-  );
+  const [taskInstancesToDisplay, setTaskInstancesToDisplay] = useState<
+    BasicTask[]
+  >([]);
   const [showTaskDataLoading, setShowTaskDataLoading] =
     useState<boolean>(false);
 
@@ -133,6 +136,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const [diagramFileName, setDiagramFileName] = useState<string | null>(null);
+  const [diagramProcessModelId, setDiagramProcessModelId] = useState<
+    string | null
+  >(null);
+  const [diagramLoadError, setDiagramLoadError] = useState<string | null>(null);
 
   const [addingPotentialOwners, setAddingPotentialOwners] =
     useState<boolean>(false);
@@ -145,7 +153,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
     useState<boolean>(false);
 
-  const { addError, removeError } = useAPIError();
+  const { error, addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`,
   );
@@ -269,10 +277,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       setTasksCallHadError(true);
       handleAddErrorInUseEffect(result);
     };
-    const processTasksSuccess = (results: Task[]) => {
+    const processTasksSuccess = (results: BasicTask[]) => {
       if (params.to_task_guid) {
         const matchingTask = results.find(
-          (task: Task) => task.guid === params.to_task_guid,
+          (task: BasicTask) => task.guid === params.to_task_guid,
         );
         if (matchingTask) {
           setTaskToTimeTravelTo(matchingTask);
@@ -361,6 +369,51 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     tab,
     taskSubTab,
   ]);
+
+  useEffect(() => {
+    if (!processInstance) {
+      return;
+    }
+
+    if (processInstance.bpmn_xml_file_contents) {
+      setDiagramFileName(null);
+      setDiagramProcessModelId(null);
+      setDiagramLoadError(null);
+      return;
+    }
+
+    const diagramIdentifier =
+      processInstance.process_model_with_diagram_identifier ||
+      processInstance.process_model_identifier;
+    if (!diagramIdentifier) {
+      return;
+    }
+
+    const modifiedDiagramId =
+      modifyProcessIdentifierForPathParam(diagramIdentifier);
+    setDiagramProcessModelId(modifiedDiagramId);
+
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedDiagramId}`,
+      successCallback: (result: ProcessModel) => {
+        if (result.primary_file_name) {
+          setDiagramFileName(result.primary_file_name);
+          setDiagramLoadError(null);
+        } else {
+          setDiagramLoadError(t('diagram_file_name_editor_error_required'));
+        }
+      },
+      failureCallback: (err: { message?: string } | string) => {
+        if (typeof err === 'string') {
+          setDiagramLoadError(err);
+        } else if (err?.message) {
+          setDiagramLoadError(err.message);
+        } else {
+          setDiagramLoadError(t('failed_to_load_diagram'));
+        }
+      },
+    });
+  }, [processInstance, t]);
 
   const updateSearchParams = (value: string, key: string) => {
     if (value !== undefined) {
@@ -521,7 +574,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <dl>
             <Typography component="dt" variant="subtitle2">
               {t('status')}:
@@ -595,7 +648,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Typography>
           </dl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           {(processInstance.process_metadata || []).map(
             (processInstanceMetadata) => (
               <dl className="metadata-display">
@@ -644,10 +697,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
-        <ButtonWithConfirmation
+        <ConfirmIconButton
           renderIcon={<StopCircleOutlined />}
           iconDescription={t('terminate_button')}
-          hasIconOnly
           description={t('terminate_process_instance', {
             id: processInstance.id,
           })}
@@ -729,11 +781,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
-        <ButtonWithConfirmation
+        <ConfirmIconButton
           data-testid="process-instance-delete"
           renderIcon={<DeleteOutlineOutlined />}
           iconDescription={t('delete')}
-          hasIconOnly
           description={t('delete_process_instance', { id: processInstance.id })}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel={t('delete')}
@@ -744,7 +795,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const initializeTaskInstancesToDisplay = useCallback(
-    (task: Task | null) => {
+    (task: BasicTask | null) => {
       if (!task) {
         return;
       }
@@ -752,10 +803,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
         httpMethod: 'GET',
         // reverse operates on self as well as return the new ordered array so reverse it right away
-        successCallback: (results: Task[]) =>
+        successCallback: (results: BasicTask[]) =>
           setTaskInstancesToDisplay(results.reverse()),
-        failureCallback: (error: any) => {
-          setTaskDataToDisplay(`ERROR: ${error.message}`);
+        failureCallback: (err: any) => {
+          setTaskDataToDisplay(`ERROR: ${err.message}`);
         },
       });
     },
@@ -772,7 +823,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const initializeTaskDataToDisplay = useCallback(
-    (task: Task | null) => {
+    (task: BasicTask | null) => {
       if (
         task &&
         ['COMPLETED', 'ERROR', 'READY'].includes(task.state) &&
@@ -783,8 +834,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
           httpMethod: 'GET',
           successCallback: processTaskResult,
-          failureCallback: (error: any) => {
-            setTaskDataToDisplay(`ERROR: ${error.message}`);
+          failureCallback: (err: any) => {
+            setTaskDataToDisplay(`ERROR: ${err.message}`);
             setShowTaskDataLoading(false);
           },
         });
@@ -873,9 +924,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
       let additionalParams = '';
       if (tasks) {
-        const matchingTask: Task | undefined = tasks.find((task: Task) => {
-          return task.bpmn_identifier === parentProcessIdentifier;
-        });
+        const matchingTask: BasicTask | undefined = tasks.find(
+          (task: BasicTask) => {
+            return task.bpmn_identifier === parentProcessIdentifier;
+          },
+        );
         if (matchingTask) {
           additionalParams = `?process_identifier=${parentProcessIdentifier}&bpmn_process_guid=${matchingTask.guid}`;
         } else if (processIdentifier && bpmnProcessGuid) {
@@ -905,14 +958,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const findMatchingTaskFromShapeElement = useCallback(
     (shapeElement: any, bpmnProcessIdentifiers: any) => {
       if (tasks) {
-        const matchingTask: Task | undefined = tasks.find((task: Task) => {
-          return (
-            task.bpmn_identifier === shapeElement.id &&
-            bpmnProcessIdentifiers.includes(
-              task.bpmn_process_definition_identifier,
-            )
-          );
-        });
+        const matchingTask: BasicTask | undefined = tasks.find(
+          (task: BasicTask) => {
+            return (
+              task.bpmn_identifier === shapeElement.id &&
+              bpmnProcessIdentifiers.includes(
+                task.bpmn_process_definition_identifier,
+              )
+            );
+          },
+        );
         return matchingTask;
       }
       return undefined;
@@ -921,7 +976,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   );
 
   const handleCallActivityNavigate = useCallback(
-    (task: Task, event: any) => {
+    (task: BasicTask, event: any) => {
       if (
         task &&
         task.typename === 'CallActivity' &&
@@ -989,7 +1044,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const getTaskById = (taskId: string) => {
     if (tasks !== null) {
-      return tasks.find((task: Task) => task.guid === taskId) || null;
+      return tasks.find((task: BasicTask) => task.guid === taskId) || null;
     }
     return null;
   };
@@ -998,29 +1053,30 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     console.log('result', result);
   };
 
-  const getParentTaskFromTask = (task: Task) => {
+  const getParentTaskFromTask = (task: BasicTask) => {
     return task.properties_json.parent;
   };
 
   const createScriptUnitTest = () => {
     if (taskToDisplay) {
-      const previousTask: Task | null = getTaskById(
+      const previousTask: BasicTask | null = getTaskById(
         getParentTaskFromTask(taskToDisplay),
       );
+      const postBody = {
+        bpmn_task_identifier: taskToDisplay.bpmn_identifier,
+        previous_task_guid: previousTask?.guid,
+        task_guid: taskToDisplay.guid,
+      };
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/script-unit-tests`,
         httpMethod: 'POST',
         successCallback: processScriptUnitTestCreateResult,
-        postBody: {
-          bpmn_task_identifier: taskToDisplay.bpmn_identifier,
-          input_json: previousTask ? previousTask.data : '',
-          expected_output_json: taskToDisplay.data,
-        },
+        postBody: postBody,
       });
     }
   };
 
-  const isActiveTask = (task: Task) => {
+  const isActiveTask = (task: BasicTask) => {
     const subprocessTypes = [
       'Subprocess',
       'CallActivity',
@@ -1036,7 +1092,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canEditTaskData = (task: Task) => {
+  const canEditTaskData = (task: BasicTask) => {
     return (
       processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
@@ -1046,7 +1102,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canSendEvent = (task: Task) => {
+  const canSendEvent = (task: BasicTask) => {
     // We actually could allow this for any waiting events
     const taskTypes = ['EventBasedGateway'];
     return (
@@ -1060,7 +1116,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canCompleteTask = (task: Task) => {
+  const canCompleteTask = (task: BasicTask) => {
     return (
       processInstance &&
       processInstance.status === 'suspended' &&
@@ -1070,7 +1126,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canAddPotentialOwners = (task: Task) => {
+  const canAddPotentialOwners = (task: BasicTask) => {
     return (
       HUMAN_TASK_TYPES.includes(task.typename) &&
       processInstance &&
@@ -1081,7 +1137,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canResetProcess = (task: Task) => {
+  const canResetProcess = (task: BasicTask) => {
     return (
       ability.can('POST', targetUris.processInstanceResetPath) &&
       processInstance &&
@@ -1091,7 +1147,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const getEvents = (task: Task) => {
+  const getEvents = (task: BasicTask) => {
     const handleMessage = (eventDefinition: EventDefinition) => {
       if (eventsThatNeedPayload.includes(eventDefinition.typename)) {
         const newEvent = eventDefinition;
@@ -1114,20 +1170,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return [];
   };
 
-  const taskDataStringToObject = (dataString: string) => {
-    return JSON.parse(dataString);
-  };
-
   const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
-    const dataObject = taskDataStringToObject(taskDataToDisplay);
-    if (taskToDisplay) {
-      const taskToDisplayCopy: Task = {
-        ...taskToDisplay,
-        data: dataObject,
-      }; // spread operator
-      setTaskToDisplay(taskToDisplayCopy);
-    }
   };
 
   const saveTaskData = () => {
@@ -1136,21 +1180,22 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     removeError();
 
-    // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
-    const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceTaskDataPath}/${taskToUse.guid}`,
+      path: `${targetUris.processInstanceTaskDataPath}/${taskToDisplay.guid}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: addError,
       postBody: {
-        new_task_data: taskToUse.data,
+        new_task_data: taskDataToDisplay,
       },
     });
   };
 
   const addPotentialOwners = () => {
-    if (!additionalPotentialOwners) {
+    if (!additionalPotentialOwners || additionalPotentialOwners.length === 0) {
+      addError({
+        message: 'Please select a user from the dropdown',
+      });
       return;
     }
     if (!taskToDisplay) {
@@ -1195,7 +1240,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
-  const taskDisplayButtons = (task: Task) => {
+  const taskDisplayButtons = (task: BasicTask) => {
     const buttons = [];
     if (editingTaskData || addingPotentialOwners || selectingEvent) {
       return null;
@@ -1325,12 +1370,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     const numberOfLines = taskDataToDisplay.split('\n').length;
     let heightInEm = numberOfLines + 5;
-    let scrollEnabled = false;
-    let minimapEnabled = false;
     if (heightInEm > 30) {
       heightInEm = 30;
-      scrollEnabled = true;
-      minimapEnabled = true;
     }
     let taskDataHeader = t('task_data');
     let editorReadOnly = true;
@@ -1346,6 +1387,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
+    const extensions: Extension[] = [json()];
+    if (editorReadOnly) {
+      extensions.push(EditorState.readOnly.of(true));
+      extensions.push(EditorView.editable.of(false));
+      extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
+    }
+
     return (
       <>
         {showTaskDataLoading ? <CircularProgress size={24} /> : null}
@@ -1354,18 +1402,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         ) : (
           <>
             <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <Editor
+            <ThemedCodeMirror
               height={`${heightInEm}rem`}
-              width="auto"
-              defaultLanguage="json"
               value={taskDataToDisplay}
+              extensions={extensions}
               onChange={(value) => {
                 setTaskDataToDisplay(value || '');
-              }}
-              options={{
-                readOnly: editorReadOnly,
-                scrollBeyondLastLine: scrollEnabled,
-                minimap: { enabled: minimapEnabled },
               }}
             />
           </>
@@ -1384,10 +1426,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <p className="explanatory-message with-tiny-bottom-margin">
             {t('select_user_to_complete_task')}
           </p>
+          {error && (
+            <div style={{ color: 'red', marginBottom: '10px' }}>
+              {error.message}
+            </div>
+          )}
           <UserSearch
             className="modal-dropdown"
             onSelectedUser={(user: User) => {
               setAdditionalPotentialOwners([user]);
+              removeError();
             }}
           />
         </div>
@@ -1401,13 +1449,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (eventTextEditorEnabled) {
       className = '';
       editor = (
-        <Editor
-          height={300}
-          width="auto"
-          defaultLanguage="json"
-          defaultValue={eventPayload}
+        <ThemedCodeMirror
+          height={'300px'}
+          value={eventPayload}
+          extensions={[json()]}
           onChange={(value: any) => setEventPayload(value || '{}')}
-          options={{ readOnly: !eventTextEditorEnabled }}
         />
       );
     }
@@ -1446,7 +1492,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const taskIsInstanceOfMultiInstanceTask = (task: Task) => {
+  const taskIsInstanceOfMultiInstanceTask = (task: BasicTask) => {
     // this is the same check made in the backend in the _process_instance_task_list method to determine
     // if the given task is an instance of a multi-instance or loop task.
     // we need to avoid resetting the task instance list since the list may not be the same as we need
@@ -1467,9 +1513,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
-  const switchToTask = (taskGuid: string, taskListToUse: Task[] | null) => {
+  const switchToTask = (
+    taskGuid: string,
+    taskListToUse: BasicTask[] | null,
+  ) => {
     if (taskListToUse && taskToDisplay) {
-      const task = taskListToUse.find((task_: Task) => task_.guid === taskGuid);
+      const task = taskListToUse.find(
+        (task_: BasicTask) => task_.guid === taskGuid,
+      );
       if (task) {
         // set to null right away to hopefully avoid using the incorrect task later
         setTaskToDisplay(null);
@@ -1484,12 +1535,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
     return (
       <>
-        {taskInstancesToDisplay.map((task: Task, index: number) => {
+        {taskInstancesToDisplay.map((task: BasicTask, index: number) => {
           const buttonClass =
             task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
           return (
             <Grid container spacing={2}>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <SpiffTooltip title="View">
                   <IconButton
                     onClick={() =>
@@ -1500,7 +1551,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   </IconButton>
                 </SpiffTooltip>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <div className={`task-instance-modal-row-item ${buttonClass}`}>
                   {index + 1} {': '}
                   {DateAndTimeService.convertSecondsToFormattedDateTime(
@@ -1617,7 +1668,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!taskToDisplay) {
       return null;
     }
-    const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
 
     let primaryButtonText = t('close');
     let secondaryButtonText = null;
@@ -1639,19 +1689,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       onSecondarySubmit = resetTaskActionDetails;
       onRequestSubmit = addPotentialOwners;
     }
-    if (taskToUse.runtime_info) {
-      if (typeof taskToUse.runtime_info.instance !== 'undefined') {
+    if (taskToDisplay.runtime_info) {
+      if (typeof taskToDisplay.runtime_info.instance !== 'undefined') {
         secondaryButtonText = t('return_to_mi_task');
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent, [
+          switchToTask(taskToDisplay.properties_json.parent, [
             ...(tasks || []),
             ...taskInstancesToDisplay,
           ]);
         };
-      } else if (typeof taskToUse.runtime_info.iteration !== 'undefined') {
+      } else if (typeof taskToDisplay.runtime_info.iteration !== 'undefined') {
         secondaryButtonText = t('return_to_loop_task');
         onSecondarySubmit = () => {
-          switchToTask(taskToUse.properties_json.parent, [
+          switchToTask(taskToDisplay.properties_json.parent, [
             ...(tasks || []),
             ...taskInstancesToDisplay,
           ]);
@@ -1661,34 +1711,35 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <Dialog
-        open={!!taskToUse}
+        open={!!taskToDisplay}
         onClose={handleTaskDataDisplayClose}
         className="wide-dialog"
       >
-        <DialogTitle>{`${taskToUse.bpmn_identifier} (${taskToUse.typename}): ${taskToUse.state}`}</DialogTitle>
+        <DialogTitle>{`${taskToDisplay.bpmn_identifier} (${taskToDisplay.typename}): ${taskToDisplay.state}`}</DialogTitle>
         <DialogContent>
           <div className="indented-content explanatory-message">
-            {taskToUse.bpmn_name ? (
+            {taskToDisplay.bpmn_name ? (
               <div>
                 <Box display="flex" gap={2}>
-                  Name: {taskToUse.bpmn_name}
+                  Name: {taskToDisplay.bpmn_name}
                 </Box>
               </div>
             ) : null}
 
             <div>
               <Box display="flex" gap={2}>
-                Guid: {taskToUse.guid}
+                Guid: {taskToDisplay.guid}
               </Box>
             </div>
           </div>
-          {taskDisplayButtons(taskToUse)}
-          {taskToUse.state === 'COMPLETED' || taskToUse.state === 'ERROR' ? (
+          {taskDisplayButtons(taskToDisplay)}
+          {taskToDisplay.state === 'COMPLETED' ||
+          taskToDisplay.state === 'ERROR' ? (
             <div className="indented-content">
               <Box display="flex" gap={2}>
                 {completionViewLink(
                   'View process instance at the time when this task was active.',
-                  taskToUse.guid,
+                  taskToDisplay.guid,
                 )}
               </Box>
               <br />
@@ -1758,7 +1809,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <p>
               {t('viewing_process_instance_at_time_when')}{' '}
               <span title={title}>
@@ -1791,36 +1842,52 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return <CircularProgress size={24} />;
     }
 
+    const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
+    const canLoadFromModel =
+      !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
+    const retrievalError =
+      processInstance.bpmn_xml_file_contents_retrieval_error || '';
     const detailsComponent = (
       <>
         {childrenForErrorObject(
-          errorForDisplayFromString(
-            processInstance.bpmn_xml_file_contents_retrieval_error || '',
-          ),
+          errorForDisplayFromString(diagramLoadError || retrievalError),
           t,
         )}
       </>
     );
-    return processInstance.bpmn_xml_file_contents_retrieval_error ? (
-      <Notification
-        title={t('failed_to_load_diagram')}
-        type="error"
-        hideCloseButton
-        allowTogglingFullMessage
-      >
-        {detailsComponent}
-      </Notification>
-    ) : (
+
+    if (
+      !hasDiagramXml &&
+      !canLoadFromModel &&
+      (diagramLoadError || retrievalError)
+    ) {
+      return (
+        <Notification
+          title={t('failed_to_load_diagram')}
+          type="error"
+          hideCloseButton
+          allowTogglingFullMessage
+        >
+          {detailsComponent}
+        </Notification>
+      );
+    }
+
+    return (
       <>
         <ReactDiagramEditor
           diagramType="readonly"
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
           onCallActivityOverlayClick={handleCallActivityNavigate}
           onElementClick={handleClickedDiagramTask}
-          processModelId={processModelId || ''}
+          modifiedProcessModelId={
+            canLoadFromModel
+              ? diagramProcessModelId || ''
+              : modifiedProcessModelId || ''
+          }
           tasks={tasks}
         />
-        <div id="diagram-container" />
       </>
     );
   };
@@ -1926,7 +1993,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView={false}
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}
@@ -1934,7 +2001,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <ProcessInstanceLogList
               variant={variant}
               isEventsView
-              processModelId={modifiedProcessModelId || ''}
+              modifiedProcessModelId={modifiedProcessModelId || ''}
               processInstanceId={processInstance.id}
             />
           ) : null}

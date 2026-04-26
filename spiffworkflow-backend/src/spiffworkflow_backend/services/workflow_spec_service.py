@@ -38,10 +38,10 @@ class WorkflowSpecService:
             data = SpecFileService.get_data(process_model_info, file.name)
             try:
                 if file.type == FileType.bpmn.value:
-                    bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
+                    bpmn: etree.Element = ProcessModelService.get_etree_from_xml_bytes(data)
                     parser.add_bpmn_xml(bpmn, filename=file.name)
                 elif file.type == FileType.dmn.value:
-                    dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
+                    dmn: etree.Element = ProcessModelService.get_etree_from_xml_bytes(data)
                     parser.add_dmn_xml(dmn, filename=file.name)
             except XMLSyntaxError as xse:
                 raise ApiError(

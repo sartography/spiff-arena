@@ -66,6 +66,9 @@ class ApiError(Exception):
             msg += f"In file {self.file_name}. "
         return msg
 
+    def to_dict(self) -> dict:
+        return self.serialized()
+
     def serialized(self) -> dict[str, Any]:
         initial_dict = self.__dict__
         return_dict = {}
@@ -287,7 +290,10 @@ def handle_exception(app: Flask, request: ConnexionRequest, exception: Exception
             # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
             # seems to break the sentry sdk context where we no longer get back
             # an event id or send out tags like username
-            current_app.logger.exception(exception)
+            if current_app.debug:
+                current_app.logger.error(str(exception), exc_info=exception)
+            else:
+                current_app.logger.exception(exception)
         else:
             current_app.logger.warning(
                 f"Received exception: {exception}. Since we do not want this particular"

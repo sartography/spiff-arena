@@ -294,21 +294,25 @@ def process_data_file_download(
     )
 
 
-def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
+def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str, Any]) -> tuple[Any, str | None]:
     return_value = None
-    if parameter in post_body:
-        return_value = post_body[parameter]
+    parameter_name = None
+
+    for parameter in parameters:
+        if parameter in post_body:
+            parameter_name = parameter
+            return_value = post_body[parameter]
 
     if return_value is None or return_value == "":
         raise (
             ApiError(
                 error_code="missing_required_parameter",
-                message=f"Parameter is missing from json request body: {parameter}",
+                message=f"Parameter is missing from json request body: {parameters}",
                 status_code=400,
             )
         )
 
-    return return_value
+    return return_value, parameter_name
 
 
 def _commit_and_push_to_git(message: str) -> None:
@@ -509,37 +513,34 @@ def _task_submit_shared(
             status_code=400,
         )
 
-    # we're dequeing twice in this function.
-    # tried to wrap the whole block in one dequeue, but that has the confusing side-effect that every exception
-    # in the block causes the process instance to go into an error state. for example, when
-    # AuthorizationService.assert_user_can_complete_task raises. this would have been solvable, but this seems simpler,
-    # and the cost is not huge given that this function is not the most common code path in the world.
-    with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
-        ProcessInstanceMigrator.run(process_instance)
-
-    processor = ProcessInstanceProcessor(
-        process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
-    )
-    spiff_task = _get_spiff_task_from_processor(task_guid, processor)
-    AuthorizationService.assert_user_can_complete_task(process_instance.id, str(spiff_task.id), principal.user)
-
-    if spiff_task.state != TaskState.READY:
-        raise (
-            ApiError(
-                error_code="invalid_state",
-                message="You may not update a task unless it is in the READY state.",
-                status_code=400,
-            )
-        )
-
-    human_task = _find_human_task_or_raise(
-        process_instance_id=process_instance_id,
-        task_guid=task_guid,
-        only_tasks_that_can_be_completed=True,
-    )
+    AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
 
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
-        with ProcessInstanceQueueService.dequeued(processor.process_instance_model, max_attempts=3):
+        with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
+            if ProcessInstanceMigrator.run(process_instance):
+                # Refresh the process instance to get any updates from migration
+                db.session.refresh(process_instance)
+
+            processor = ProcessInstanceProcessor(
+                process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
+            )
+            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
+
+            if spiff_task.state != TaskState.READY:
+                raise (
+                    ApiError(
+                        error_code="invalid_state",
+                        message="You may not update a task unless it is in the READY state.",
+                        status_code=400,
+                    )
+                )
+
+            human_task = _find_human_task_or_raise(
+                process_instance_id=process_instance_id,
+                task_guid=task_guid,
+                only_tasks_that_can_be_completed=True,
+            )
+
             ProcessInstanceService.complete_form_task(
                 processor=processor,
                 spiff_task=spiff_task,
@@ -601,7 +602,7 @@ def _find_human_task_or_raise(
     else:
         human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
 
-    human_task: HumanTaskModel = human_task_query.first()
+    human_task: HumanTaskModel | None = human_task_query.first()
     if human_task is None:
         raise (
             ApiError(
@@ -631,8 +632,11 @@ def _get_spiff_task_from_processor(
     return spiff_task
 
 
-def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int) -> TaskModel:
-    task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
+def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:
+    task_model_query = TaskModel.query.filter_by(guid=task_guid)
+    if process_instance_id is not None:
+        task_model_query = task_model_query.filter_by(process_instance_id=process_instance_id)
+    task_model: TaskModel | None = task_model_query.first()
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",
@@ -665,7 +669,7 @@ def _get_task_model_for_request(
 
     can_complete = False
     try:
-        AuthorizationService.assert_user_can_complete_task(process_instance.id, task_model.guid, g.user)
+        AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_model.guid, g.user)
         can_complete = True
     except (
         HumanTaskNotFoundError,
@@ -745,6 +749,10 @@ def _get_task_model_for_request(
             else:
                 task_model.form_ui_schema = {}
             _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model.form_ui_schema, task_model.data)
+
+            subset_var = extensions.get("variableName")
+            if subset_var:
+                task_model.data = {subset_var: task_model.data.get(subset_var, {})}
 
         # it should be safe to add instructions to the task spec here since we are never commiting it back to the db
         extensions["instructionsForEndUser"] = JinjaService.render_instructions_for_end_user(task_model, extensions)

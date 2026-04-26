@@ -18,7 +18,7 @@ def test_can_filter(page: Page):
     """
 
     # 1. Log in
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Create a fresh process instance to ensure a recent date entry
     page.goto(f"{BASE_URL}/process-groups")

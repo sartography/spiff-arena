@@ -1,15 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Editor, loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
-
-// @ts-ignore
+import ThemedCodeMirror from '../ThemedCodeMirror';
+import { json } from '@codemirror/lang-json';
+import { EditorState, type Extension } from '@codemirror/state';
+import { EditorView } from 'codemirror';
 
 import merge from 'lodash/merge';
 
 import {
-  Grid,
   TextField,
   Button,
   CircularProgress,
@@ -18,14 +17,13 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useDebouncedCallback } from 'use-debounce';
 import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
 import CustomForm from '../CustomForm';
 import { Notification } from '../Notification';
-
-loader.config({ monaco });
 
 type ErrorProps = {
   error: Error;
@@ -50,7 +48,7 @@ function FormErrorFallback({ error }: ErrorProps) {
 }
 
 type OwnProps = {
-  processModelId: string;
+  modifiedProcessModelId: string;
   fileName: string;
   onFileNameSet: (fileName: string) => void;
   canCreateFiles: boolean;
@@ -59,7 +57,7 @@ type OwnProps = {
 };
 
 export default function ReactFormBuilder({
-  processModelId,
+  modifiedProcessModelId,
   fileName,
   onFileNameSet,
   canCreateFiles,
@@ -90,24 +88,6 @@ export default function ReactFormBuilder({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [baseFileName, setBaseFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState<string>('');
-
-  /**
-   * This section gives us direct pointers to the monoco editors so that
-   * we can update their values.  Using state variables directly on the monoco editor
-   * causes the cursor to jump to the bottom if two letters are pressed simultaneously.
-   */
-  const schemaEditorRef = useRef(null);
-  const uiEditorRef = useRef(null);
-  const dataEditorRef = useRef(null);
-  function handleSchemaEditorDidMount(editor: any) {
-    schemaEditorRef.current = editor;
-  }
-  function handleUiEditorDidMount(editor: any) {
-    uiEditorRef.current = editor;
-  }
-  function handleDataEditorDidMount(editor: any) {
-    dataEditorRef.current = editor;
-  }
 
   useEffect(() => {
     if (pythonWorker === null) {
@@ -181,7 +161,7 @@ export default function ReactFormBuilder({
       return;
     }
     let httpMethod = 'PUT';
-    let url = `/process-models/${processModelId}/files`;
+    let url = `/process-models/${modifiedProcessModelId}/files`;
     if (create && canCreateFiles) {
       httpMethod = 'POST';
     } else if (canUpdateFiles) {
@@ -323,7 +303,7 @@ export default function ReactFormBuilder({
 
   function fetchSchema() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${SCHEMA_EXTENSION}`,
       successCallback: (response: any) => {
@@ -338,7 +318,7 @@ export default function ReactFormBuilder({
 
   function fetchUI() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${UI_EXTENSION}`,
       successCallback: setJsonUiFromResponseJson,
@@ -350,7 +330,7 @@ export default function ReactFormBuilder({
 
   function fetchExampleData() {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModelId}/files/${baseName(
+      path: `/process-models/${modifiedProcessModelId}/files/${baseName(
         fileName,
       )}${DATA_EXTENSION}`,
       successCallback: setDataFromResponseJson,
@@ -371,6 +351,73 @@ export default function ReactFormBuilder({
     updateStrUi(JSON.stringify(tempUI, null, 2));
   }
 
+  function addOptionsToSchema(schema: any, data: any) {
+    const sentinelPrefix = 'options_from_task_data_var:';
+    const newSchema =
+      typeof structuredClone === 'function'
+        ? structuredClone(schema)
+        : JSON.parse(JSON.stringify(schema));
+
+    const mapTaskDataOptions = (name: string) => {
+      if (!Array.isArray(data?.[name])) {
+        return [
+          {
+            type: 'string',
+            enum: [`missing-options-from-task-data-var:${name}`],
+            title: `Missing options_from_task_data_var: ${name}`,
+          },
+        ];
+      }
+      return data[name].map((opt: any) => ({
+        type: 'string',
+        enum: [opt.value],
+        title: opt.label,
+      }));
+    };
+
+    const walkSchema = (node: any): void => {
+      if (Array.isArray(node)) {
+        node.forEach((entry) => walkSchema(entry));
+        return;
+      }
+
+      if (!node || typeof node !== 'object') {
+        return;
+      }
+
+      if (Array.isArray(node.anyOf)) {
+        node.anyOf = node.anyOf.flatMap((entry: any) => {
+          if (typeof entry === 'string' && entry.startsWith(sentinelPrefix)) {
+            const name = entry.replace(sentinelPrefix, '');
+            return mapTaskDataOptions(name);
+          }
+          walkSchema(entry);
+          return [entry];
+        });
+      }
+
+      if (node.properties && typeof node.properties === 'object') {
+        Object.values(node.properties).forEach((property) => {
+          walkSchema(property);
+        });
+      }
+
+      if (node.items) {
+        walkSchema(node.items);
+      }
+
+      Object.entries(node).forEach(([key, value]) => {
+        if (key === 'properties' || key === 'items' || key === 'anyOf') {
+          return;
+        }
+        walkSchema(value);
+      });
+    };
+
+    walkSchema(newSchema);
+    return newSchema;
+  }
+
   if (!isReady()) {
     if (fileName !== '' && !fetchFailed) {
       fetchExampleData();
@@ -384,7 +431,7 @@ export default function ReactFormBuilder({
     }
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="h4">{t('schema_name')}</Typography>
           <Typography variant="body1">{t('provide_schema_name')}</Typography>
           <TextField
@@ -430,9 +477,15 @@ export default function ReactFormBuilder({
       </Grid>
     );
   }
+  const extensions: Extension[] = [json()];
+  if (!canUpdateFiles) {
+    extensions.push(EditorState.readOnly.of(true));
+    extensions.push(EditorView.editable.of(false));
+    extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
+  }
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Tabs value={selectedIndex} onChange={handleTabChange}>
           <Tab label={t('json_schema')} />
           <Tab label={t('ui_settings')} />
@@ -452,17 +505,13 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <Editor
-                height={600}
-                width="auto"
-                defaultLanguage="json"
-                defaultValue={strSchema}
+              <ThemedCodeMirror
+                value={strSchema}
+                extensions={extensions}
                 onChange={(value) => {
                   updateStrFileDebounce(value || '');
                   setStrSchema(value || '');
                 }}
-                onMount={handleSchemaEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
@@ -478,17 +527,13 @@ export default function ReactFormBuilder({
                 </a>
                 .
               </Typography>
-              <Editor
-                height={600}
-                width="auto"
-                defaultLanguage="json"
-                defaultValue={strUI}
+              <ThemedCodeMirror
+                value={strUI}
+                extensions={extensions}
                 onChange={(value) => {
                   updateStrUIFileDebounce(value || '');
                   setStrUI(value || '');
                 }}
-                onMount={handleUiEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
@@ -497,17 +542,13 @@ export default function ReactFormBuilder({
               <Typography variant="body1">
                 {t('data_view_description')}
               </Typography>
-              <Editor
-                height={600}
-                width="auto"
-                defaultLanguage="json"
-                defaultValue={strFormData}
+              <ThemedCodeMirror
+                value={strFormData}
+                extensions={extensions}
                 onChange={(value) => {
                   updateFormDataFileDebounce(value || '');
                   updateDataFromStr(value || '');
                 }}
-                onMount={handleDataEditorDidMount}
-                options={{ readOnly: !canUpdateFiles }}
               />
             </Box>
           )}
@@ -521,7 +562,7 @@ export default function ReactFormBuilder({
           )}
         </Box>
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Typography variant="h4">{t('form_preview')}</Typography>
         <div className="error_info_small">{errorMessage}</div>
         <ErrorBoundary FallbackComponent={FormErrorFallback}>
@@ -530,7 +571,7 @@ export default function ReactFormBuilder({
             key="custom_form"
             formData={formData}
             onChange={(e: any) => updateData(e.formData)}
-            schema={postJsonSchema}
+            schema={addOptionsToSchema(postJsonSchema, formData)}
             uiSchema={postJsonUI}
           />
         </ErrorBoundary>

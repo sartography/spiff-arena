@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Error</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .error-container {
+            background-color: #fff;
+            padding: 2em;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>Authentication Error</h1>
+        <p><strong>Error:</strong> {{ error }}</p>
+        <p><strong>Description:</strong> {{ error_description }}</p>
+    </div>
+</body>
+</html>

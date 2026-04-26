@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.7.0-trixie-slim AS base
+FROM node:24.13.0-trixie-slim AS base
 
 RUN mkdir /app
 
@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
-COPY . /app/
+COPY package.json package-lock.json /app/
 
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
@@ -34,6 +34,7 @@ COPY . /app/
 # npx can-i-ignore-scripts can check that it's safe to ignore scripts.
 RUN npm ci --ignore-scripts
 
+COPY . /app/
 RUN ./bin/build
 
 
@@ -41,10 +42,18 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29.1-alpine-perl
+FROM nginx:1.29.5-alpine
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
+
+# to fix security vulnerability:
+# remove this line once the base image has the secure version of this lib (10.46)
+RUN apk add --upgrade pcre2
+
+# to fix CVE-2026-22184 security vulnerability:
+# remove this line once the base image has zlib 1.3.2-r0 or higher
+RUN apk add --upgrade zlib
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*

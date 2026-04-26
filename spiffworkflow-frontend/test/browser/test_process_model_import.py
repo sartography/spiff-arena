@@ -9,7 +9,7 @@ def test_process_model_import(page: Page):
     """Test importing a process model from GitHub."""
 
     # 1. Login as admin
-    login(page, "admin", "admin")
+    login(page)
 
     # 2. Create a new process group to import into
     unique = uuid.uuid4().hex

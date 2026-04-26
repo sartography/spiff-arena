@@ -6,6 +6,10 @@ class RefreshTokenStorageError(Exception):
     pass
 
 
+class PkceCodeVerifierStorageError(Exception):
+    pass
+
+
 class ProcessInstanceMigrationNotSafeError(Exception):
     pass
 

@@ -16,10 +16,27 @@ if [[ ! -d "$bpmn_js_dir" ]]; then
   exit 1
 fi
 
-rm -rf "${frontend_dir}/node_modules"
+if [[ ! -d "${frontend_dir}/node_modules" ]]; then
+  npm --prefix "$frontend_dir" i
+fi
+
+if [[ ! -d "${bpmn_js_dir}/node_modules" ]]; then
+  npm --prefix "$bpmn_js_dir" i
+fi
+
+# Keep the linked package's own runtime deps, but remove peer/runtime copies
+# that must resolve from the consuming app to avoid duplicate React/Preact/BPMN stacks.
+rm -rf \
+  "${bpmn_js_dir}/node_modules/@bpmn-io" \
+  "${bpmn_js_dir}/node_modules/bpmn-js" \
+  "${bpmn_js_dir}/node_modules/bpmn-js-properties-panel" \
+  "${bpmn_js_dir}/node_modules/diagram-js" \
+  "${bpmn_js_dir}/node_modules/react" \
+  "${bpmn_js_dir}/node_modules/react-dom"
+if [[ ! -d "${bpmn_js_dir}/node_modules/inherits" ]]; then
+  npm --prefix "$bpmn_js_dir" i
+fi
 
 pushd "$frontend_dir"
-npm i
-rm -rf "${bpmn_js_dir}/node_modules"
 npm link "$bpmn_js_dir"
 popd

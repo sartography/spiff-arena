@@ -23,6 +23,12 @@ from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
+from spiffworkflow_backend.models.human_task_group import (
+    HumanTaskGroupModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.human_task_user_waiting import (
+    HumanTaskUserWaitingModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.cache_generation import (
     CacheGenerationModel,
 )  # noqa: F401
@@ -51,6 +57,7 @@ from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel  # noqa: F401
+from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel  # noqa: F401
 from spiffworkflow_backend.models.secret_model import SecretModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
@@ -117,5 +124,6 @@ from spiffworkflow_backend.models.feature_flag import (
     FeatureFlagModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel  # noqa: F401
+from spiffworkflow_backend.models.api_log_model import APILogModel  # noqa: F401
 
 add_listeners()

@@ -4,12 +4,9 @@ import json
 from hashlib import sha256
 from typing import TypedDict
 
-from flask import current_app
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
-
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 class JsonDataModelNotFoundError(Exception):
@@ -64,14 +61,11 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
-            on_duplicate_key_stmt = None
-            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
-                insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
-                on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(hash=insert_stmt.inserted.hash)
-            else:
-                insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
-                on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["hash"])
-            db.session.execute(on_duplicate_key_stmt)
+            insert_or_ignore_duplicate(
+                model_class=JsonDataModel,
+                values=list_of_dicts,
+                postgres_conflict_index_elements=["hash"],
+            )
 
     @classmethod
     def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:

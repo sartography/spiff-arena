@@ -10,8 +10,8 @@ import {
   Typography,
   IconButton,
   Chip,
-  Grid,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { AccessTime, PlayArrow } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -206,7 +206,7 @@ export default function TaskTable({
               <TableCell>{t('actions')}</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>{records}</TableBody>{' '}
+          <TableBody>{records}</TableBody>
         </Table>
       </TableContainer>
     );
@@ -228,7 +228,7 @@ export default function TaskTable({
     UserService.getPreferredUsername(),
     UserService.getUserEmail(),
     UserService.getUserName(),
-  ].filter(Boolean) as string[]; // remove null/undefined
+  ].filter(Boolean) as string[];
   const regex = new RegExp(`\\b(${ids.join('|')})\\b`);
 
   const records = entries.map((entry) => {

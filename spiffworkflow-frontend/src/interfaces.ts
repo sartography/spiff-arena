@@ -1,4 +1,19 @@
 import { ReactElement } from 'react';
+import { z } from 'zod';
+
+export const TaskMetadataObjectSchema = z
+  .object({
+    name: z.string(),
+    label: z.string().optional(),
+    description: z.string().optional(),
+  })
+  .strict();
+
+export const TaskMetadataArraySchema = z.array(
+  z.union([z.string(), TaskMetadataObjectSchema]),
+);
+
+export type TaskMetadata = z.infer<typeof TaskMetadataArraySchema>;
 
 export interface User {
   id: number;
@@ -88,6 +103,8 @@ export interface BasicTask {
   extensions?: any;
 
   process_model_uses_queued_execution?: boolean;
+
+  runtime_info?: any;
 }
 
 // TODO: merge with ProcessInstanceTask
@@ -100,7 +117,6 @@ export interface Task extends BasicTask {
 
   event_definition?: EventDefinition;
   saved_form_data?: any;
-  runtime_info?: any;
 }
 
 // Currently used like ApiTask in backend
@@ -244,6 +260,13 @@ export interface ReferenceCache {
   type: ReferenceCacheType;
   file_name: string;
   properties: any;
+}
+
+export interface MessageModel {
+  identifier: string;
+  location: string;
+  schema: string;
+  correlation_properties: any;
 }
 
 export interface MessageInstance {

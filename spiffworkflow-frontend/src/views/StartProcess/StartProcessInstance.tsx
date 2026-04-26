@@ -32,7 +32,7 @@ export default function StartProcessInstance() {
 
   const processModelRun = (processInstance: ProcessInstance) => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${modifiedProcessModelIdParam}/${processInstance.id}/run`,
+      path: `/process-instance-run/${modifiedProcessModelIdParam}/${processInstance.id}`,
       successCallback: onProcessInstanceRun,
       failureCallback: (result: any) => {
         addError(result);

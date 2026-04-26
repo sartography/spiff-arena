@@ -1,8 +1,9 @@
-import { Editor } from '@monaco-editor/react';
+import { json } from '@codemirror/lang-json';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import HttpService from '../services/HttpService';
+import ThemedCodeMirror from './ThemedCodeMirror';
 
 export default function AuthenticationConfiguration() {
   const { t } = useTranslation();
@@ -38,11 +39,9 @@ export default function AuthenticationConfiguration() {
       <br />
       <h2>{t('local_configuration')}</h2>
       <br />
-      <Editor
-        height={600}
-        width="auto"
-        defaultLanguage="json"
-        defaultValue={authConfig || ''}
+      <ThemedCodeMirror
+        value={authConfig || ''}
+        extensions={[json()]}
         onChange={(value) => setAuthConfig(value || '')}
       />
     </>

@@ -26,6 +26,14 @@ class DataStoreCRUD:
     def existing_instance(identifier: str, location: str) -> Any:
         raise Exception("must implement")
 
+    @classmethod
+    def clear(cls, identifier: str, location: str | None) -> None:
+        raise Exception("must implement")
+
+    @classmethod
+    def delete(cls, identifier: str, location: str | None) -> None:
+        raise Exception("must implement")
+
     @staticmethod
     def existing_data_stores(process_group_identifiers: list[str] | None = None) -> list[dict[str, Any]]:
         raise Exception("must implement")

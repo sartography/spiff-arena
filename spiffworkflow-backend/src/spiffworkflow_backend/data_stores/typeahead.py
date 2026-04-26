@@ -67,6 +67,19 @@ class TypeaheadDataStore(BpmnDataStoreSpecification, DataStoreCRUD):  # type: ig
     def register_data_store_class(data_store_classes: dict[str, Any]) -> None:
         data_store_classes["TypeaheadDataStore"] = TypeaheadDataStore
 
+    @classmethod
+    def clear(cls, identifier: str, location: str | None) -> None:
+        models = db.session.query(TypeaheadModel).filter_by(category=identifier).all()
+
+        for model_to_delete in models:
+            db.session.delete(model_to_delete)
+
+        db.session.commit()
+
+    @classmethod
+    def delete(cls, identifier: str, location: str | None) -> None:
+        cls.clear(identifier, location)
+
 
 class TypeaheadDataStoreConverter(BpmnConverter):  # type: ignore
     """TypeaheadDataStoreConverter."""

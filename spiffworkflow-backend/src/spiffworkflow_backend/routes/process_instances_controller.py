@@ -57,6 +57,7 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
 
 def process_instance_create(
@@ -68,6 +69,26 @@ def process_instance_create(
     return make_response(jsonify(process_instance.serialized()), 201)
 
 
+def process_instance_run_deprecated(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    force_run: bool = False,
+    execution_mode: str | None = None,
+) -> flask.wrappers.Response:
+    from typing import cast
+
+    return cast(
+        flask.wrappers.Response,
+        process_instance_run(
+            modified_process_model_identifier=modified_process_model_identifier,
+            process_instance_id=process_instance_id,
+            force_run=force_run,
+            execution_mode=execution_mode,
+        ),
+    )
+
+
+@log_api_interaction
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,

@@ -66,6 +66,7 @@ class TestMetadataBackfillTask(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         mock_current_app.config = {"SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED": True}
+        mock_current_app.logger = MagicMock()
 
         # Create mock models with different metadata paths
         old_model = ProcessModelInfo(

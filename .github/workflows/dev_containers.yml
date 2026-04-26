@@ -6,13 +6,18 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: restrict GITHUB_TOKEN to least privilege.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Create dev environment
       run: make dev-env

@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
@@ -21,16 +22,16 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 class DataSetupService:
     @classmethod
     def run_setup(cls) -> list:
-        return cls.save_all_process_models()
+        return cls.refresh_process_model_caches()
 
     @classmethod
-    def save_all_process_models(cls) -> list:
+    def refresh_process_model_caches(cls) -> list:
         """Build a cache of all processes, messages, correlation keys, and start events.
 
         These all exist within processes located on the file system, so we can quickly reference them
         from the database.
         """
-        current_app.logger.debug("DataSetupService.save_all_process_models() start")
+        current_app.logger.debug("DataSetupService.refresh_process_model_caches() start")
 
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
@@ -42,30 +43,10 @@ class DataSetupService:
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
-                current_app.logger.debug(f"Process Model: {process_model.display_name}")
-                try:
-                    # FIXME: get_references_for_file_contents is erroring out for elements in the list
-                    refs = SpecFileService.get_references_for_process(process_model)
-                    for ref in refs:
-                        try:
-                            reference_cache = ReferenceCacheModel.from_spec_reference(ref)
-                            ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
-                            db.session.commit()
-                            references.append(ref)
-                        except Exception as ex:
-                            failing_process_models.append(
-                                (
-                                    f"{ref.relative_location}/{ref.file_name}",
-                                    repr(ex),
-                                )
-                            )
-                except Exception as ex2:
-                    failing_process_models.append(
-                        (
-                            f"{process_model.id}",
-                            str(ex2),
-                        )
-                    )
+                # Use the common processing logic
+                model_refs, model_failures = cls._extract_process_model_references(process_model, reference_objects)
+                references.extend(model_refs)
+                failing_process_models.extend(model_failures)
             elif FileSystemService.is_data_store_json_file(file):
                 relative_location = FileSystemService.relative_location(file)
                 file_name = os.path.basename(file)
@@ -89,7 +70,7 @@ class DataSetupService:
                     current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
                     continue
 
-        current_app.logger.debug("DataSetupService.save_all_process_models() end")
+        current_app.logger.debug("DataSetupService.refresh_process_model_caches() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
         MessageDefinitionService.delete_all_message_models()
@@ -97,18 +78,25 @@ class DataSetupService:
         MessageDefinitionService.save_all_message_models(all_message_models)
         db.session.commit()
 
-        for ref in references:
-            try:
-                SpecFileService.update_caches_except_process(ref)
-                db.session.commit()
-            except Exception as ex:
-                failing_process_models.append(
-                    (
-                        f"{ref.relative_location}/{ref.file_name}",
-                        repr(ex),
-                    )
-                )
+        cls._update_process_model_caches_for_references(references, failing_process_models)
+        return failing_process_models
 
+    @classmethod
+    def refresh_single_process_model_cache(cls, process_model_id: str) -> list:
+        current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() start for {process_model_id}")
+
+        failing_process_models = []
+        reference_objects: dict[str, ReferenceCacheModel] = {}
+
+        try:
+            process_model = ProcessModelService.get_process_model(process_model_id)
+            references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
+            failing_process_models.extend(model_failures)
+            cls._update_process_model_caches_for_references(references, failing_process_models)
+        except Exception as ex:
+            failing_process_models.append((process_model_id, str(ex)))
+
+        current_app.logger.debug(f"DataSetupService.refresh_single_process_model_cache() end for {process_model_id}")
         return failing_process_models
 
     @classmethod
@@ -220,3 +208,51 @@ class DataSetupService:
                 current_app.logger.debug(f"DataSetupService: was expecting key '{key}' to point to a data store model to delete.")
                 continue
             db.session.delete(model)
+
+    @classmethod
+    def _extract_process_model_references(
+        cls, process_model: ProcessModelInfo, reference_objects: dict[str, ReferenceCacheModel]
+    ) -> tuple[list, list]:
+        failing_process_models = []
+        references = []
+
+        current_app.logger.debug(f"Extracting References for Process Model: {process_model.display_name}")
+
+        try:
+            refs = SpecFileService.get_references_for_process(process_model)
+            for ref in refs:
+                try:
+                    reference_cache = ReferenceCacheModel.from_spec_reference(ref)
+                    ReferenceCacheService.add_unique_reference_cache_object(reference_objects, reference_cache)
+                    db.session.commit()
+                    references.append(ref)
+                except Exception as ex:
+                    failing_process_models.append(
+                        (
+                            f"{ref.relative_location}/{ref.file_name}",
+                            repr(ex),
+                        )
+                    )
+        except Exception as ex2:
+            failing_process_models.append(
+                (
+                    f"{process_model.id}",
+                    str(ex2),
+                )
+            )
+
+        return references, failing_process_models
+
+    @classmethod
+    def _update_process_model_caches_for_references(cls, references: list, failing_process_models: list) -> None:
+        for ref in references:
+            try:
+                SpecFileService.update_caches_except_process(ref)
+                db.session.commit()
+            except Exception as ex:
+                failing_process_models.append(
+                    (
+                        f"{ref.relative_location}/{ref.file_name}",
+                        repr(ex),
+                    )
+                )

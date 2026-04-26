@@ -56,7 +56,7 @@ def _parse_environment(key_values: os._Environ | dict) -> list | dict:
     separator = "__"
 
     def get_first_component(key: str) -> str:
-        return key.split(separator)[0]
+        return key.split(separator, maxsplit=1)[0]
 
     def get_later_components(key: str) -> str:
         return separator.join(key.split(separator)[1:])

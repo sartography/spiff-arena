@@ -5,13 +5,37 @@ on:
     workflows: ["Tests", "Docker Image For Main Builds", "Release Builds", "Build Docs"]
     types: [completed]
 
+# Security: this workflow only sends a curl to Slack and needs no GitHub permissions.
+# See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
+permissions: {}
+
 jobs:
   send_notification:
     runs-on: ubuntu-latest
     steps:
       - name: Notify on Tests failure
         if: ${{ github.event.workflow_run.conclusion != 'success' && github.event.workflow_run.conclusion != 'skipped' }}
+        env:
+          WF_URL: ${{ github.event.workflow_run.html_url }}
+          WF_NAME: ${{ github.event.workflow.name }}
+          WF_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"spiff-arena <${{ github.event.workflow_run.html_url }}|${{ github.event.workflow.name }}>: ${{github.event.workflow_run.conclusion}} - branch ${{github.event.workflow_run.head_branch}}"}' \
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+            --data "{\"text\":\"spiff-arena <${WF_URL}|${WF_NAME}>: ${WF_CONCLUSION} - branch ${WF_BRANCH}\"}" \
+          "$SLACK_WEBHOOK_URL"
+      - name: Summary
+        if: always()
+        env:
+          WF_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ "$WF_CONCLUSION" != "success" ] && [ "$WF_CONCLUSION" != "skipped" ]; then
+            echo "### 🔔 Slack notification sent" >> "$GITHUB_STEP_SUMMARY"
+            echo "**${WF_NAME}** ${WF_CONCLUSION} on \`${WF_BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ✅ No Slack notification sent" >> "$GITHUB_STEP_SUMMARY"
+            echo "**${WF_NAME}** succeeded on \`${WF_BRANCH}\` — no message sent." >> "$GITHUB_STEP_SUMMARY"
+          fi

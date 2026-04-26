@@ -49,14 +49,17 @@ export default defineConfig({
           ? 'inferno/dist/index.dev.esm.js'
           : 'inferno/dist/index.esm.js',
     },
+    // Deduplicate @bpmn-io/properties-panel so both the frontend and the symlinked
+    // bpmn-js-spiffworkflow use the same instance (and thus the same bundled preact).
+    dedupe: ['@bpmn-io/properties-panel', 'bpmn-js-properties-panel'],
     preserveSymlinks: true,
   },
   css: {
     preprocessorOptions: {
       scss: {
-        // carbon creates this warning and it's not worth fixing
-        silenceDeprecations: ['mixed-decls'],
+        // carbon creates these warnings
+        silenceDeprecations: ['if-function'],
       },
-    }
-  }
+    },
+  },
 });

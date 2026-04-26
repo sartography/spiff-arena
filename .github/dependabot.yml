@@ -4,30 +4,65 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
 
   # PIP
   - package-ecosystem: pip
     directory: "/.github/workflows"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
   - package-ecosystem: pip
     directory: "/spiffworkflow-backend/docs"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
   - package-ecosystem: pip
     directory: "/spiffworkflow-backend"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
     ignore:
       - dependency-name: "connexion"
         versions: ["3.2.0"]
@@ -36,10 +71,24 @@ updates:
   - package-ecosystem: npm
     directory: "/.github/workflows"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
   - package-ecosystem: npm
     directory: "/spiffworkflow-frontend"
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"

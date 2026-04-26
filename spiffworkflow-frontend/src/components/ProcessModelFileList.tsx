@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Can } from '@casl/react';
 import { PureAbility } from '@casl/ability';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
+import ConfirmIconButton from './ConfirmIconButton';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
 import SpiffTooltip from './SpiffTooltip';
@@ -145,9 +145,8 @@ export default function ProcessModelFileList({
           a={targetUris.processModelFileCreatePath}
           ability={ability}
         >
-          <ButtonWithConfirmation
+          <ConfirmIconButton
             renderIcon={<Delete />}
-            hasIconOnly
             iconDescription={t('delete_file')}
             description={t('delete_file_description', {
               file: processModelFile.name,
@@ -156,7 +155,6 @@ export default function ProcessModelFileList({
               onDeleteFile(processModelFile.name);
             }}
             confirmButtonLabel={t('delete')}
-            classNameForModal="modal-within-table-cell"
           />
         </Can>,
       );

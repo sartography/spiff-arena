@@ -32,6 +32,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -265,11 +266,10 @@ class BaseTest:
         because of permissions, user might be required now..., not sure yet.
         """
         if process_model_location is None:
-            process_model_location = file_name.split(".")[0]
+            process_model_location = file_name.split(".", maxsplit=1)[0]
         if process_model is None:
             process_model = load_test_spec(
                 process_model_id=process_model_id,
-                bpmn_file_name=file_name,
                 process_model_source_directory=process_model_location,
             )
         data = [("file", (file_name, file_data))]
@@ -316,14 +316,13 @@ class BaseTest:
             load_test_spec(
                 process_model_id=test_process_model_id,
                 process_model_source_directory=basename,
-                bpmn_file_name=basename,
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.json()
         return response
 
     # @staticmethod
@@ -345,6 +344,7 @@ class BaseTest:
         if user is None:
             user = self.find_or_create_user()
 
+        BpmnProcessService.persist_bpmn_process_definition(process_model.id)
         current_time = round(time.time())
         start_in_seconds = None
         end_in_seconds = None
@@ -629,16 +629,17 @@ class BaseTest:
         shutil.copytree(source, destination)
 
     def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
-        """Round last state change to the nearest 4 significant digits.
+        """Round last state change to the nearest 3 decimal places.
 
         Works around imprecise floating point values in mysql json columns.
-        The values between mysql and SpiffWorkflow seem to have minor differences on randomly and since
-        we do not care about such precision for this field, round it to a value that is more likely to match.
+        MySQL's JSON round-trip can alter the value by up to 0.0001,
+        and we do not care about such precision for this field,
+        so round it to a value that will match when we compare actual to expected.
         """
         if isinstance(bpmn_process_dict, dict):
             for key, value in bpmn_process_dict.items():
                 if key == "last_state_change":
-                    bpmn_process_dict[key] = round(value, 4)
+                    bpmn_process_dict[key] = round(value, 3)
                 elif isinstance(value, dict | list):
                     self.round_last_state_change(value)
         elif isinstance(bpmn_process_dict, list):
