@@ -390,12 +390,10 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
             if any(spec not in workflow.subprocess_specs for spec in lazy_loads_list):
                 break
 
-        # Optimization: try searching from completed task first (fast path),
-        # only refresh waiting tasks if fast path fails (deferred refresh)
+        # Optimization: try searching from completed task first (fast path)
         completed_task = task
         task = next_task(workflow, TaskState.READY, completed_task)
         if not task:
-            workflow.refresh_waiting_tasks()
             task = next_task(workflow, TaskState.READY)
         if not task:
             break
