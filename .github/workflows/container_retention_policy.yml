@@ -7,18 +7,72 @@ on:
 
 jobs:
   clean-ghcr:
-    name: Delete old unused container images
+    name: Delete old main container images
     runs-on: ubuntu-latest
     steps:
-      - name: Delete 'spiff' main containers older than a week
-        # v3.0.1 tries to reference ghcr.io/snok/container-retention-policy:v3.0.1 which doesn't exist
-        # https://github.com/snok/container-retention-policy/issues/109
+      - name: Fetch protected multi-arch digests
+        id: multi_arch_digests
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+
+          ORG=sartography
+          IMAGES=(spiffworkflow-backend spiffworkflow-frontend)
+          protected_digests=()
+
+          for image in "${IMAGES[@]}"; do
+            registry_token=$(curl -fsSL \
+              -u "${GHCR_USER}:${GH_TOKEN}" \
+              "https://ghcr.io/token?service=ghcr.io&scope=repository:${ORG}/${image}:pull" | jq -r .token)
+
+            page=1
+            while true; do
+              response=$(curl -fsSL \
+                -H "Authorization: Bearer ${GH_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/orgs/${ORG}/packages/container/${image}/versions?per_page=100&page=${page}")
+
+              if [ "$(jq 'length' <<< "${response}")" -eq 0 ]; then
+                break
+              fi
+
+              tags=$(jq -r '.[].metadata.container.tags[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$") or . == "main-latest")' <<< "${response}" | sort -u)
+              while IFS= read -r tag; do
+                [ -n "${tag}" ] || continue
+
+                while IFS= read -r digest; do
+                  [ -n "${digest}" ] && protected_digests+=("${digest}")
+                done < <(curl -fsSL \
+                  -H "Authorization: Bearer ${registry_token}" \
+                  -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json" \
+                  "https://ghcr.io/v2/${ORG}/${image}/manifests/${tag}" | jq -r '.manifests[]?.digest')
+              done <<< "${tags}"
+
+              page=$((page + 1))
+            done
+          done
+
+          skip_shas=$(printf '%s\n' "${protected_digests[@]}" | sort -u | paste -sd ',' -)
+          echo "skip_shas=${skip_shas}" >> "${GITHUB_OUTPUT}"
+
+      - name: Delete 'spiff' main containers older than three months
         uses: snok/container-retention-policy@v3.0.1
         with:
           account: sartography
           cut-off: 3months
           image-names: spiffworkflow-backend, spiffworkflow-frontend
+          # Only delete main branch tags; release tags such as v2.2.0 are intentionally excluded.
           image-tags: "main-*"
+          # Multi-arch child manifests appear as untagged package versions in GHCR.
+          # Do not select untagged versions here; deleting them can break tagged images.
+          tag-selection: tagged
+          # Explicitly protect child manifests for release tags and main-latest.
+          # see https://github.com/snok/container-retention-policy#safely-handling-multi-platform-multi-arch-packages
+          skip-shas: ${{ steps.multi_arch_digests.outputs.skip_shas }}
           keep-n-most-recent: 1
-          # see https://github.com/settings/tokens/1335541013 under burnettk, classic personal access token with write:packages, read:packages, and delete:packages
+          # Classic PAT with read:packages, write:packages, and delete:packages.
+          # GITHUB_TOKEN cannot list packages by wildcard.
           token: ${{ secrets.PERSONAL_TOKEN_FOR_CONTAINER_CLEANUP }}
