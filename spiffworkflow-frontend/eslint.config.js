@@ -30,9 +30,9 @@ export default tseslint.config(
     },
     ignorePatterns: ['src/rjsf/carbon_theme/**/*'],
     extends: [
-      'plugin:import/errors',
-      'plugin:import/typescript',
-      'plugin:import/warnings',
+      'plugin:import-x/errors',
+      'plugin:import-x/typescript',
+      'plugin:import-x/warnings',
       'plugin:prettier/recommended',
       'plugin:react-hooks/recommended',
       'plugin:react/recommended',
@@ -80,7 +80,7 @@ export default tseslint.config(
       ],
       'react/react-in-jsx-scope': 'off',
       'react/require-default-props': 'off',
-      'import/prefer-default-export': 'off',
+      'import-x/prefer-default-export': 'off',
       'no-unused-vars': 'off',
       'sonarjs/cognitive-complexity': 'off',
       'sonarjs/fixme-tag': 'off',
@@ -107,7 +107,7 @@ export default tseslint.config(
           ignoreRestSiblings: true,
         },
       ],
-      'import/extensions': [
+      'import-x/extensions': [
         'error',
         'ignorePackages',
         {
