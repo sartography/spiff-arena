@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
-COPY package.json package-lock.json /app/
+COPY package.json package-lock.json .npmrc /app/
 
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
