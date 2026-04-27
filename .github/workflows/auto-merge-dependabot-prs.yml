@@ -17,6 +17,8 @@ on:
 #     types: [labeled]
 
 permissions:
+  # for deleting the pr_number artifact after a successful merge
+  actions: write
   # for gh pr review
   pull-requests: write
   # for gh pr merge
