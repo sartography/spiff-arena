@@ -87,7 +87,7 @@ workflow.reset_from_task_id(start.id)
 ### **13. Understanding Script Attributes Context**
 
 **Q:** I'm trying to understand the details of `script_attributes_context`. Where can I find more information?  
-**A:** The `ScriptAttributesContext` class is defined [here](https://github.com/sartography/spiff-arena/blob/deploy-mod-prod/spiffworkflow-backend/src/spiffworkflow_backend/models/script_attributes_context.py#L9).
+**A:** The `ScriptAttributesContext` class is defined [here](https://github.com/sartography/spiff-arena/blob/main/spiffworkflow-backend/src/spiffworkflow_backend/models/script_attributes_context.py#L9).
 
 ### **14. Using Message Start Event to Kick Off a Process**
 
