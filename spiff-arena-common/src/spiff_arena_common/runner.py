@@ -434,7 +434,7 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                         break
 
                     expected = stack[index]
-                    if task.task_spec.name != expected["id"]:
+                    if task.task_spec.bpmn_id != expected["id"]:
                         break
 
                     task.run()
@@ -446,7 +446,7 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                     if not stack:
                         break
                     expected = stack.pop()
-                    if task.task_spec.name != expected["id"]:
+                    if task.task_spec.bpmn_id != expected["id"]:
                         break
                     task.run()
                     task.data.update(expected["data"])
