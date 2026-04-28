@@ -17,6 +17,8 @@ on:
 #     types: [labeled]
 
 permissions:
+  # for deleting the pr_number artifact after a successful merge
+  actions: write
   # for gh pr review
   pull-requests: write
   # for gh pr merge
@@ -35,7 +37,7 @@ jobs:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
       # https://github.com/actions/github-script
       - name: "Download artifact"
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             console.log("download artifact: started")
@@ -77,7 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Delete pr_number artifact
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({

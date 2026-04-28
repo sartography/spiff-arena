@@ -69,7 +69,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "coverage[toml] >= 7.7",
+    "coverage[toml] >= 7.13.5",
     "safety >= 3.2.14",
     "mypy >= 0.961",
     "typeguard >= 4",

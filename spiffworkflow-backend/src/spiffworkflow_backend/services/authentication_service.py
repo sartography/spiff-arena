@@ -43,6 +43,7 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask import request
+from jwt.types import Options
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
@@ -327,13 +328,15 @@ class AuthenticationService:
             algorithm = str(header.get("alg"))
             json_key_configs = cls.jwks_public_key_for_key_id(authentication_identifier, key_id)
             public_key: Any = None
-            jwt_decode_options = {
+
+            jwt_decode_options: Options = {
                 "verify_exp": False,
                 "verify_aud": False,
                 "verify_iat": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_IAT"],
                 "verify_nbf": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_NBF"],
-                "leeway": current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY"],
             }
+
+            leeway = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_LEEWAY"]
 
             if "x5c" not in json_key_configs:
                 public_key = cls.public_key_from_rsa_public_numbers(json_key_configs)
@@ -349,9 +352,10 @@ class AuthenticationService:
                 token,
                 public_key,
                 algorithms=[algorithm],
-                audience=cls.valid_audiences(authentication_identifier)[0],
                 options=jwt_decode_options,
+                leeway=leeway,
             )
+
         return cast(dict, parsed_token)
 
     # returns either https://spiffworkflow.example.com or https://spiffworkflow.example.com/api
