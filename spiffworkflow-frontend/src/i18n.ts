@@ -12,7 +12,7 @@ import csCZ from './locales/cs_cz/translation.json';
 import zhCN from './locales/zh_cn/translation.json';
 import frFR from './locales/fr_fr/translation.json';
 
-// eslint-disable-next-line import/no-named-as-default-member
+// eslint-disable-next-line import-x/no-named-as-default-member
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
