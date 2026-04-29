@@ -8,8 +8,9 @@ import sentry_sdk
 from connexion import FlaskApp
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
-from werkzeug.exceptions import MethodNotAllowed
 from werkzeug.exceptions import NotFound
+
+from spiffworkflow_backend.exceptions.api_error import should_notify_sentry
 
 
 def get_version_info_data() -> dict[str, Any]:
@@ -54,6 +55,14 @@ def traces_sampler(sampling_context: Any) -> Any:
     return 0.01
 
 
+def should_capture_exception_in_sentry(exc_value: BaseException) -> bool:
+    if isinstance(exc_value, NotFound):
+        return False
+    if not isinstance(exc_value, Exception):
+        return True
+    return should_notify_sentry(exc_value)
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     sentry_dsn = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN")
 
@@ -65,10 +74,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
     def before_send(event: Any, hint: Any) -> Any:
         if "exc_info" in hint:
             _exc_type, exc_value, _tb = hint["exc_info"]
-            # NotFound is mostly from web crawlers
-            if isinstance(exc_value, NotFound):
-                return None
-            if isinstance(exc_value, MethodNotAllowed):
+            if not should_capture_exception_in_sentry(exc_value):
                 return None
         return event
 
