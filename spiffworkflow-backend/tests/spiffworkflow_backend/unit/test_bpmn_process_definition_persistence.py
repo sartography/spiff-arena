@@ -2,8 +2,8 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
-from flask import Flask
 import pytest
+from flask import Flask
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -13,7 +13,6 @@ from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessServi
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 
 _AUDIT_SCRIPT_PATH = Path(__file__).resolve().parents[3] / "bin" / "audit_process_definitions.py"
 _AUDIT_SPEC = importlib.util.spec_from_file_location("audit_process_definitions", _AUDIT_SCRIPT_PATH)

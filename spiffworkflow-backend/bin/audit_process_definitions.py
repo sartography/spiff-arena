@@ -23,11 +23,11 @@ def full_process_model_hash(full_bpmn_spec_dict: dict) -> str:
     return sha256(json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")).hexdigest()
 
 
-def audit_definition(process_model_identifier: str, expected_definition: dict, persisted_definition: BpmnProcessDefinitionModel) -> list[dict]:
+def audit_definition(
+    process_model_identifier: str, expected_definition: dict, persisted_definition: BpmnProcessDefinitionModel
+) -> list[dict]:
     expected_task_definition_count = len(expected_definition["task_specs"])
-    actual_task_definition_count = TaskDefinitionModel.query.filter_by(
-        bpmn_process_definition_id=persisted_definition.id
-    ).count()
+    actual_task_definition_count = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=persisted_definition.id).count()
 
     if expected_task_definition_count == actual_task_definition_count:
         return []
