@@ -164,3 +164,39 @@ class TestBpmnProcessDefinitionPersistence(BaseTest):
         issues = _AUDIT_MODULE.audit_all_process_models()
 
         assert issues == []
+
+    def test_save_to_database_raises_clear_error_when_fallback_lookup_fails(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        bpmn_process_definition = SimpleNamespace(
+            id=None,
+            single_process_hash="single-hash",
+            full_process_model_hash="full-hash",
+            bpmn_identifier="demo_process",
+            bpmn_name="Demo Process",
+            properties_json={},
+        )
+        bpmn_definition_to_task_definitions_mappings = {
+            "demo_process": {
+                "bpmn_process_definition": bpmn_process_definition,
+            }
+        }
+
+        class QueryStub:
+            def filter(self, *args: object, **kwargs: object) -> "QueryStub":
+                return self
+
+            def first(self) -> None:
+                return None
+
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "insert_or_update_record", lambda values: None)
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "query", QueryStub())
+
+        with pytest.raises(RuntimeError) as exc_info:
+            BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
+        error_message = str(exc_info.value)
+        assert "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record" in error_message
+        assert "full_process_model_hash='full-hash'" in error_message
+        assert "single_process_hash='single-hash'" in error_message

@@ -267,6 +267,12 @@ class BpmnProcessService:
                             BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
                         )
                     ).first()
+                    if bpdm is None:
+                        raise RuntimeError(
+                            "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record "
+                            f"for full_process_model_hash={bpmn_process_definition.full_process_model_hash!r} "
+                            f"and single_process_hash={bpmn_process_definition.single_process_hash!r}."
+                        )
                     bpd_id = bpdm.id
 
                 if bpmn_process_definition_parent is not None:
