@@ -54,3 +54,19 @@ def test_advance_workflow_falls_back_to_root_ready_lookup_without_refresh(monkey
     assert root_ready_task.run_calls == 1
     assert next_task_calls == [task, None, root_ready_task, None]
     assert result == {"status": "ok", "error": None, "lazy_loads": []}
+
+
+def test_custom_environment_get_current_task_data_filters_internal_keys():
+    context = {
+        "visible": 1,
+        "__builtins__": {"len": len},
+        "__annotations__": {"visible": int},
+    }
+
+    result = runner.CustomEnvironment().execute(
+        "result = get_current_task_data()",
+        context,
+    )
+
+    assert result is True
+    assert context["result"] == {"visible": 1}
