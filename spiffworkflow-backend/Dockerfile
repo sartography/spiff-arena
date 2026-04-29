@@ -24,7 +24,7 @@ FROM base AS deployment
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
 # libpq5 in order to be able to use postgres at runtime
 RUN apt-get update \
-  && apt-get install -y -q git-core curl procps default-mysql-client vim-tiny jq libpq5 libkrb5support0 libexpat1 \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps default-mysql-client vim-tiny jq libpq5 libkrb5support0 libexpat1 \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/*
 
@@ -46,7 +46,7 @@ RUN pip install uv==0.10.0
 # default-libmysqlclient-dev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib, psycopg2. See also libpq5 above in deployment image.
 RUN apt-get update \
-  && apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q gcc git libssl-dev libpq-dev default-libmysqlclient-dev pkg-config libffi-dev
 
 COPY . /app
 RUN uv sync --no-dev --frozen

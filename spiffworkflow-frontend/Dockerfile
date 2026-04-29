@@ -10,7 +10,7 @@ WORKDIR /app
 # vim ftw
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
   curl \
   procps \
   vim-tiny \
