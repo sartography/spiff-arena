@@ -6,6 +6,7 @@ import json
 import logging
 import time
 import uuid
+from types import ModuleType
 
 import jsonschema
 
@@ -39,6 +40,7 @@ def spiff_json_object_hook(dct):
 from spiff_arena_common.data_stores import JSONFileDataStore
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
+from SpiffWorkflow.bpmn.serializer import DefaultRegistry
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
 from SpiffWorkflow.bpmn.parser.util import full_tag
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
@@ -53,6 +55,8 @@ from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTas
 from SpiffWorkflow.util.task import TaskFilter, TaskState
 
 logging.basicConfig(level=logging.ERROR)
+
+_INTERNAL_KEYS = {"__builtins__", "__annotations__"}
 
 class CustomManualTask(ManualTask):
     def _run(self, task):
@@ -168,6 +172,12 @@ class CustomEnvironment(TaskDataEnvironment):
             "group_member_2@example.com",
             "group_member_3@example.com"
         ]
+        hidden_keys = _INTERNAL_KEYS | set(self.globals.keys()) | set(external_context.keys())
+        external_context["get_current_task_data"] = lambda: {
+            k: v
+            for k, v in DefaultRegistry().convert(context).items()
+            if k not in hidden_keys and not callable(v) and not isinstance(v, ModuleType)
+        }
 
         return super().execute(script or "", context, external_context)
 
