@@ -8,7 +8,6 @@ import sentry_sdk
 from connexion import FlaskApp
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
-from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import NotFound
 
 from spiffworkflow_backend.exceptions.api_error import should_notify_sentry
@@ -59,7 +58,10 @@ def traces_sampler(sampling_context: Any) -> Any:
 def should_capture_exception_in_sentry(exc_value: BaseException) -> bool:
     if isinstance(exc_value, NotFound):
         return False
-    if isinstance(exc_value, HTTPException) and exc_value.code in [404, 405]:
+    status_code = getattr(exc_value, "code", None)
+    if status_code is None:
+        status_code = getattr(exc_value, "status_code", None)
+    if status_code in [404, 405]:
         return False
     if not isinstance(exc_value, Exception):
         return True
