@@ -1106,6 +1106,5 @@ class AuthorizationService:
             )
             current_app.logger.debug("AUTH SERVICE - REFRESH PERMISSIONS - COMPLETED successfully")
 
-        except Exception as ex:
-            current_app.logger.error(f"AUTH SERVICE - REFRESH PERMISSIONS - ERROR: {str(ex)}")
+        except Exception:
             raise

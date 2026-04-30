@@ -59,7 +59,6 @@ def celery_task_event_notifier_run(
         error_message = (
             f"{logger_prefix}: Error notifying about updating process_instance {updated_process_instance_id}. {str(exception)}"
         )
-        current_app.logger.error(error_message)
         raise SpiffCeleryWorkerError(error_message) from exception
 
     return {**{"ok": True}, **data}
@@ -137,7 +136,6 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         error_message = (
             f"{logger_prefix}: Error running process_instance {process_instance_id} task_guid {task_guid}. {str(exception)}"
         )
-        current_app.logger.error(error_message)
         db.session.add(process_instance)
         db.session.commit()
         raise SpiffCeleryWorkerError(error_message) from exception

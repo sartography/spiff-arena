@@ -51,6 +51,5 @@ class RefreshPermissions(Script):
 
             AuthorizationService.refresh_permissions(group_info, **kwargs)
             current_app.logger.debug("SET PERMISSIONS - COMPLETED: RefreshPermissions script executed successfully")
-        except Exception as ex:
-            current_app.logger.error(f"SET PERMISSIONS - ERROR: Exception occurred: {str(ex)}")
+        except Exception:
             raise

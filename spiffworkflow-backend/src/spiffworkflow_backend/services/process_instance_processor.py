@@ -390,11 +390,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                 super().execute(task, script, methods)
                 current_app.logger.debug(f"SCRIPT TASK EXECUTION - COMPLETED: {task_name} (ID: {task_id})")
             return True
-        except WorkflowException as e:
-            current_app.logger.error(f"SCRIPT TASK EXECUTION - WORKFLOW EXCEPTION: {str(e)}")
-            raise e
+        except WorkflowException:
+            raise
         except Exception as e:
-            current_app.logger.error(f"SCRIPT TASK EXECUTION - EXCEPTION: {str(e)}")
             raise self.create_task_exec_exception(task, script, e) from e
 
     def call_service(
