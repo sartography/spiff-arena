@@ -118,7 +118,6 @@ class UserService:
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
-                current_app.logger.error(f"Exception in create_principal: {e}")
                 raise ApiError(
                     error_code="add_principal_error",
                     message=f"Could not create principal {child_id}",

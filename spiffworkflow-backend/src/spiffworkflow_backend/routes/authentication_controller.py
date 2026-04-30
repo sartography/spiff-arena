@@ -190,7 +190,6 @@ def login_return(
 
     else:
         # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
-        current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
             error_code="missing_token",
             message="Login failed. Please try again",
@@ -444,7 +443,6 @@ def _get_decoded_token(token: str) -> dict:
     if "iss" in decoded_token:
         return decoded_token
     else:
-        current_app.logger.error(f"Unknown token type in get_decoded_token: token: {token}")
         raise ApiError(
             error_code="unknown_token",
             message="Unknown token type in get_decoded_token",
