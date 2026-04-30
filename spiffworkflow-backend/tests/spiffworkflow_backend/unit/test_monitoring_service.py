@@ -1,5 +1,6 @@
 import unittest
 
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import NotFound
 
@@ -23,8 +24,14 @@ class TestMonitoringService(unittest.TestCase):
     def test_generic_404_http_exception_is_not_captured(self) -> None:
         self.assertFalse(should_capture_exception_in_sentry(Generic404HTTPException()))
 
+    def test_starlette_404_http_exception_is_not_captured(self) -> None:
+        self.assertFalse(should_capture_exception_in_sentry(StarletteHTTPException(status_code=404)))
+
     def test_generic_500_http_exception_is_captured(self) -> None:
         self.assertTrue(should_capture_exception_in_sentry(Generic500HTTPException()))
+
+    def test_starlette_500_http_exception_is_captured(self) -> None:
+        self.assertTrue(should_capture_exception_in_sentry(StarletteHTTPException(status_code=500)))
 
     def test_invalid_token_api_error_is_not_captured(self) -> None:
         self.assertFalse(
