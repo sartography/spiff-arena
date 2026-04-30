@@ -329,6 +329,11 @@ class GitService:
             )
             return True
 
+        current_app.logger.info(
+            "Force syncing process models from branch '%s' to revision '%s'",
+            git_branch,
+            git_revision_after,
+        )
         cls.run_shell_command(["fetch", "origin", git_branch], context_directory=bpmn_spec_absolute_dir)
         cls._preserve_local_state_before_force_sync(
             bpmn_spec_absolute_dir, git_revision_before_sync, git_revision_after, worktree_status
@@ -336,6 +341,11 @@ class GitService:
         cls.run_shell_command(["reset", "--hard", git_revision_after], context_directory=bpmn_spec_absolute_dir)
         cls.run_shell_command(["clean", "-fd"], context_directory=bpmn_spec_absolute_dir)
         DataSetupService.refresh_process_model_caches()
+        current_app.logger.info(
+            "Force sync completed for branch '%s' at revision '%s'",
+            git_branch,
+            git_revision_after,
+        )
         return True
 
     @classmethod
