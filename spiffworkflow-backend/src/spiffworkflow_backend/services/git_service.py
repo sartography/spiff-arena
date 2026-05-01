@@ -4,6 +4,7 @@ import shutil
 import subprocess  # noqa we need the subprocess module to safely run the git commands
 import uuid
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from flask import current_app
@@ -31,6 +32,13 @@ class GitCloneUrlMismatchError(Exception):
 
 class GitCommandError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class WebhookSyncDetails:
+    ref: str
+    after: str
+    git_branch: str
 
 
 # TOOD: check for the existence of git and configs on bootup if publishing is enabled
@@ -227,6 +235,29 @@ class GitService:
         return cls.run_shell_command_to_get_stdout(["status", "--porcelain"], context_directory=context_directory)
 
     @classmethod
+    def _validate_and_extract_webhook(cls, webhook: Mapping[str, Any]) -> WebhookSyncDetails | None:
+        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        cls._validate_webhook_repo_matches_origin(webhook, bpmn_spec_absolute_dir)
+
+        # Test webhook requests have a zen koan and hook info.
+        if "zen" in webhook or "hook_id" in webhook:
+            return None
+
+        if "ref" not in webhook:
+            raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook body: {webhook}")
+        if "after" not in webhook:
+            raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
+
+        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
+        if git_branch is None:
+            raise MissingGitConfigsError(
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is"
+                " required for updating the repository as a result of the webhook"
+            )
+
+        return WebhookSyncDetails(ref=webhook["ref"], after=webhook["after"], git_branch=git_branch)
+
+    @classmethod
     def _preserve_local_state_before_force_sync(
         cls,
         context_directory: str,
@@ -260,33 +291,17 @@ class GitService:
     # only supports github right now
     @classmethod
     def handle_web_hook(cls, webhook: Mapping[str, Any]) -> bool:
-        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
-        cls._validate_webhook_repo_matches_origin(webhook, bpmn_spec_absolute_dir)
-
-        # Test webhook requests have a zen koan and hook info.
-        if "zen" in webhook or "hook_id" in webhook:
+        webhook_details = cls._validate_and_extract_webhook(webhook)
+        if webhook_details is None:
             return False
 
-        if "ref" not in webhook:
-            raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook body: {webhook}")
-        if "after" not in webhook:
-            raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
-
         git_revision_before_pull = cls.get_current_revision(short_rev=False)
-        git_revision_after = webhook["after"]
+        git_revision_after = webhook_details.after
         if git_revision_before_pull == git_revision_after:
             current_app.logger.info("Skipping git pull because we already have the current git revision, git boy!")
             return True
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
-            raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is"
-                " required for updating the repository as a result of the webhook"
-            )
-
-        ref = webhook["ref"]
-        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
-        if ref != f"refs/heads/{git_branch}":
+        if webhook_details.ref != f"refs/heads/{webhook_details.git_branch}":
             return False
 
         cls.run_shell_command(
@@ -298,30 +313,15 @@ class GitService:
     @classmethod
     def force_sync_to_webhook_revision(cls, webhook: Mapping[str, Any]) -> bool:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
-        cls._validate_webhook_repo_matches_origin(webhook, bpmn_spec_absolute_dir)
-
-        # Test webhook requests have a zen koan and hook info.
-        if "zen" in webhook or "hook_id" in webhook:
+        webhook_details = cls._validate_and_extract_webhook(webhook)
+        if webhook_details is None:
             return False
 
-        if "ref" not in webhook:
-            raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook body: {webhook}")
-        if "after" not in webhook:
-            raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
-
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
-            raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is"
-                " required for updating the repository as a result of the webhook"
-            )
-
-        ref = webhook["ref"]
-        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
-        if ref != f"refs/heads/{git_branch}":
+        if webhook_details.ref != f"refs/heads/{webhook_details.git_branch}":
             return False
 
         git_revision_before_sync = cls.get_current_revision(short_rev=False)
-        git_revision_after = webhook["after"]
+        git_revision_after = webhook_details.after
         worktree_status = cls._get_worktree_status(bpmn_spec_absolute_dir)
         if git_revision_before_sync == git_revision_after and worktree_status == "":
             current_app.logger.info(
@@ -331,10 +331,10 @@ class GitService:
 
         current_app.logger.info(
             "Force syncing process models from branch '%s' to revision '%s'",
-            git_branch,
+            webhook_details.git_branch,
             git_revision_after,
         )
-        cls.run_shell_command(["fetch", "origin", git_branch], context_directory=bpmn_spec_absolute_dir)
+        cls.run_shell_command(["fetch", "origin", webhook_details.git_branch], context_directory=bpmn_spec_absolute_dir)
         cls._preserve_local_state_before_force_sync(
             bpmn_spec_absolute_dir, git_revision_before_sync, git_revision_after, worktree_status
         )
@@ -343,7 +343,7 @@ class GitService:
         DataSetupService.refresh_process_model_caches()
         current_app.logger.info(
             "Force sync completed for branch '%s' at revision '%s'",
-            git_branch,
+            webhook_details.git_branch,
             git_revision_after,
         )
         return True

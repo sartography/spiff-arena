@@ -1,8 +1,15 @@
 """Process Model."""
 
+import sys
 from types import SimpleNamespace
-from typing import TypedDict
 from unittest.mock import call
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired
+    from typing_extensions import TypedDict
+else:
+    from typing import NotRequired
+    from typing import TypedDict
 
 from flask.app import Flask
 from flask.testing import FlaskClient
@@ -22,6 +29,8 @@ class GitWebhook(TypedDict):
     repository: WebhookRepository
     ref: str
     after: str
+    zen: NotRequired[str]
+    hook_id: NotRequired[int]
 
 
 class TestGitService(BaseTest):
@@ -163,4 +172,26 @@ class TestGitService(BaseTest):
         assert result is True
         mock_run_shell_command.assert_not_called()
         mock_merge_base.assert_not_called()
+        mock_refresh.assert_not_called()
+
+    def test_handle_web_hook_ignores_test_webhooks(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        webhook = self._build_webhook()
+        webhook["zen"] = "Keep it logically awesome."
+        webhook["hook_id"] = 1
+
+        mocker.patch.object(GitService, "run_shell_command_to_get_stdout", return_value=webhook["repository"]["clone_url"])
+        mock_get_current_revision = mocker.patch.object(GitService, "get_current_revision")
+        mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
+        mock_refresh = mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH", "sandbox"):
+            result = GitService.handle_web_hook(webhook)
+
+        assert result is False
+        mock_get_current_revision.assert_not_called()
+        mock_run_shell_command.assert_not_called()
         mock_refresh.assert_not_called()

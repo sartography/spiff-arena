@@ -626,6 +626,8 @@ class BaseTest:
     def copy_example_process_models() -> None:
         source = os.path.abspath(os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir"))
         destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        if os.path.exists(destination):
+            shutil.rmtree(destination)
         shutil.copytree(source, destination)
 
     def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:
