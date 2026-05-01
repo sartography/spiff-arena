@@ -104,6 +104,9 @@ def data_store_item_list(
             status_code=400,
         )
 
+    top_level_key = top_level_key or None
+    secondary_key = secondary_key or None
+
     if top_level_key is not None and data_store_type == "kkv":
         return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page)
 
