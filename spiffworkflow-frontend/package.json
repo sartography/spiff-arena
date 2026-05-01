@@ -23,7 +23,7 @@
     "@mui/x-tree-view": "^7.25.0",
     "@preact/preset-vite": "^2.10.2",
     "@rjsf/core": "^6.1.2",
-    "@rjsf/mui": "^6.1.1",
+    "@rjsf/mui": "^6.5.1",
     "@rjsf/utils": "^6.1.1",
     "@rjsf/validator-ajv8": "^6.1.1",
     "@tanstack/react-query": "^5.40.0",
