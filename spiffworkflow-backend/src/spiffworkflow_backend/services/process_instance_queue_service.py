@@ -117,7 +117,8 @@ class ProcessInstanceQueueService:
         ignore_cannot_be_run_error: bool = False,
         needs_dequeue: bool = True,
     ) -> Generator[None, None, None]:
-        # needs_dequeue is more of a hack so we can avoid db commits in special code paths.
+        # needs_dequeue is more of a hack so we can avoid db commits in special code paths,
+        # such as when calling dequeued from within a dequeued block.
         # ideally all commits would happen at the top level such as in controllers or in background
         # service entry paths and then we can lock from those same or closer locations when necessary.
         if needs_dequeue:
