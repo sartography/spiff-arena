@@ -178,7 +178,7 @@ class MessageService:
                     f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
                 )
 
-            with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
+            with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                 cls.process_message_receive(
                     receiving_process_instance,
                     message_instance_receive,
@@ -294,7 +294,9 @@ class MessageService:
         ):
             processor_receive.bpmn_process_instance.correlations = message_instance_send.correlation_keys
 
-        processor_receive.do_engine_steps(save=False, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
+        # Persist the new receiver before it handles the message. A message-triggered service
+        # task can expose a callback URL immediately, and that callback runs in another request.
+        processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
 
         return (receiving_process_instance, processor_receive)
 

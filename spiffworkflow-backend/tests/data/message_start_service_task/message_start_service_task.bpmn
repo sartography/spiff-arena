@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_message_start_service_task" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="message_start_service_task" isExecutable="true">
+    <bpmn:startEvent id="message_start_event" name="Message start event">
+      <bpmn:outgoing>Flow_start_to_service</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_quick_callback" messageRef="Message_quick_callback" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_start_to_service" sourceRef="message_start_event" targetRef="Task_quick_callback_service" />
+    <bpmn:serviceTask id="Task_quick_callback_service" name="Quick callback service">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="ed/GetFiles" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="process_id" type="str" value="&#34;a&#34;" />
+            <spiffworkflow:parameter id="encoding" type="str" value="&#34;b&#34;" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_start_to_service</bpmn:incoming>
+      <bpmn:outgoing>Flow_service_to_script</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_service_to_script" sourceRef="Task_quick_callback_service" targetRef="Task_check_callback_body" />
+    <bpmn:scriptTask id="Task_check_callback_body" name="Check callback body">
+      <bpmn:incoming>Flow_service_to_script</bpmn:incoming>
+      <bpmn:outgoing>Flow_script_to_end</bpmn:outgoing>
+      <bpmn:script>response["do_not_fail"]</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_script_to_end" sourceRef="Task_check_callback_body" targetRef="Event_done" />
+    <bpmn:endEvent id="Event_done">
+      <bpmn:incoming>Flow_script_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_quick_callback" name="quick_callback_service_task">
+    <bpmn:extensionElements>
+      <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="message_start_service_task">
+      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="message_start_event">
+        <dc:Bounds x="170" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_di" bpmnElement="Task_quick_callback_service">
+        <dc:Bounds x="270" y="138" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_di" bpmnElement="Task_check_callback_body">
+        <dc:Bounds x="430" y="138" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="Event_done">
+        <dc:Bounds x="590" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_start_to_service_di" bpmnElement="Flow_start_to_service">
+        <di:waypoint x="206" y="178" />
+        <di:waypoint x="270" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_service_to_script_di" bpmnElement="Flow_service_to_script">
+        <di:waypoint x="370" y="178" />
+        <di:waypoint x="430" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_script_to_end_di" bpmnElement="Flow_script_to_end">
+        <di:waypoint x="530" y="178" />
+        <di:waypoint x="590" y="178" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
