@@ -1,3 +1,5 @@
+import contextlib
+from collections.abc import Generator
 from typing import Any
 
 from flask import current_app
@@ -160,28 +162,23 @@ class MessageService:
                 message_instance_send.user if message_instance_send.user is not None else UserService.find_or_create_system_user()
             )
 
-            receiving_process_instance, processor_receive = cls.start_process_with_message(
+            with cls._started_process_with_message(
                 message_triggerable_process_model,
                 user,
                 message_instance_send=message_instance_send,
                 execution_mode=execution_mode,
-            )
+            ) as (receiving_process_instance, processor_receive):
+                message_instance_receive = MessageInstanceModel.query.filter_by(
+                    process_instance_id=receiving_process_instance.id,
+                    message_type=MessageTypes.receive.value,
+                    status=MessageStatuses.ready.value,
+                ).first()
 
-            message_instance_receive = MessageInstanceModel.query.filter_by(
-                process_instance_id=receiving_process_instance.id,
-                message_type=MessageTypes.receive.value,
-            ).filter(
-                MessageInstanceModel.status.in_(  # type: ignore
-                    [MessageStatuses.ready.value, MessageStatuses.running.value]
-                )
-            ).first()
+                if message_instance_receive is None:
+                    raise MessageServiceError(
+                        f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
+                    )
 
-            if message_instance_receive is None:
-                raise MessageServiceError(
-                    f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
-                )
-
-            with ProcessInstanceQueueService.dequeued(receiving_process_instance):
                 cls.process_message_receive(
                     receiving_process_instance,
                     message_instance_receive,
@@ -277,6 +274,23 @@ class MessageService:
         execution_mode: str | None = None,
     ) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor]:
         """Start up a process instance, so it is ready to catch the event."""
+        with cls._started_process_with_message(
+            message_triggerable_process_model,
+            user,
+            message_instance_send=message_instance_send,
+            execution_mode=execution_mode,
+        ) as result:
+            return result
+
+    @classmethod
+    @contextlib.contextmanager
+    def _started_process_with_message(
+        cls,
+        message_triggerable_process_model: MessageTriggerableProcessModel,
+        user: UserModel,
+        message_instance_send: MessageInstanceModel | None = None,
+        execution_mode: str | None = None,
+    ) -> Generator[tuple[ProcessInstanceModel, ProcessInstanceProcessor], None, None]:
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier, user, commit_db=False
         )
@@ -297,20 +311,10 @@ class MessageService:
             ):
                 processor_receive.bpmn_process_instance.correlations = message_instance_send.correlation_keys
 
-            # Persist the new receiver before it handles the message. A message-triggered service
-            # task can expose a callback URL immediately, and that callback runs in another request.
+            # Persist the new receiver before it handles the message. A message-triggered service task can expose a callback
+            # URL immediately, and that callback runs in another request.
             processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
-            receive_message_instances = MessageInstanceModel.query.filter_by(
-                process_instance_id=receiving_process_instance.id,
-                message_type=MessageTypes.receive.value,
-                status=MessageStatuses.ready.value,
-            ).all()
-            for receive_message_instance in receive_message_instances:
-                receive_message_instance.status = MessageStatuses.running.value
-                db.session.add(receive_message_instance)
-            db.session.commit()
-
-        return (receiving_process_instance, processor_receive)
+            yield (receiving_process_instance, processor_receive)
 
     @staticmethod
     def process_message_receive(
