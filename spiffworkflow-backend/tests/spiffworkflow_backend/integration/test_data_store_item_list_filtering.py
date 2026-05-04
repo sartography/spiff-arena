@@ -149,13 +149,12 @@ class TestDataStoreItemListFiltering(BaseTest):
         with_super_admin_user: UserModel,
         with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
-        """When neither key is provided, should use the standard (non-filtered) code path."""
+        """When neither key is provided, should return all entries in flat format."""
         response = self._get(client, with_super_admin_user)
         assert response.status_code == 200
         results = response.json()["results"]
-        # Standard path returns a single result containing all entries in a "data" list
-        assert len(results) == 1
-        assert len(results[0]["data"]) == 5
+        assert len(results) == 5
+        assert all("top_level_key" in r and "secondary_key" in r and "value" in r for r in results)
 
     def test_filter_returns_404_for_nonexistent_store(
         self,
@@ -182,3 +181,36 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert len(response.json()["results"]) == 1
         assert response.json()["pagination"]["total"] == 2
         assert response.json()["pagination"]["pages"] == 2
+
+    def test_per_page_zero_returns_all_results(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        with_populated_kkv_store: KKVDataStoreModel,
+    ) -> None:
+        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&per_page=0"
+        response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        results = response.json()["results"]
+        assert len(results) == 5
+        assert response.json()["pagination"]["total"] == 5
+        assert response.json()["pagination"]["pages"] == 1
+
+    def test_per_page_zero_with_filter(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        with_populated_kkv_store: KKVDataStoreModel,
+    ) -> None:
+        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&secondary_key=model_a&per_page=0"
+        response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        results = response.json()["results"]
+        assert len(results) == 2
+        assert all(r["secondary_key"] == "model_a" for r in results)
+        assert response.json()["pagination"]["total"] == 2
+        assert response.json()["pagination"]["pages"] == 1

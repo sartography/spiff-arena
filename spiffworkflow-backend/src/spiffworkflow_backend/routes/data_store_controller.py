@@ -70,19 +70,28 @@ def _build_response(
     per_page: int,
 ) -> flask.wrappers.Response:
     data_store_query = data_store_class.get_data_store_query(identifier, location)
-    data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
-    results = []
-    for item in data.items:
-        result = data_store_class.build_response_item(item)
-        results.append(result)
-    response_json = {
-        "results": results,
-        "pagination": {
-            "count": len(data.items),
-            "total": data.total,
-            "pages": data.pages,
-        },
-    }
+    if per_page == 0:
+        items = data_store_query.all()
+        results = [data_store_class.build_response_item(item) for item in items]
+        response_json = {
+            "results": results,
+            "pagination": {
+                "count": len(results),
+                "total": len(results),
+                "pages": 1,
+            },
+        }
+    else:
+        data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
+        results = [data_store_class.build_response_item(item) for item in data.items]
+        response_json = {
+            "results": results,
+            "pagination": {
+                "count": len(data.items),
+                "total": data.total,
+                "pages": data.pages,
+            },
+        }
     return make_response(jsonify(response_json), 200)
 
 
@@ -107,7 +116,7 @@ def data_store_item_list(
     top_level_key = top_level_key or None
     secondary_key = secondary_key or None
 
-    if (top_level_key is not None or secondary_key is not None) and data_store_type == "kkv":
+    if data_store_type == "kkv":
         return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page)
 
     data_store_class, _ = DATA_STORES[data_store_type]
@@ -138,24 +147,42 @@ def _kkv_filtered_items(
     if secondary_key is not None:
         query = query.filter_by(secondary_key=secondary_key)
 
-    data = query.paginate(page=page, per_page=per_page, error_out=False)
-    results = [
-        {
-            "top_level_key": entry.top_level_key,
-            "secondary_key": entry.secondary_key,
-            "value": entry.value,
+    if per_page == 0:
+        items = query.all()
+        results = [
+            {
+                "top_level_key": entry.top_level_key,
+                "secondary_key": entry.secondary_key,
+                "value": entry.value,
+            }
+            for entry in items
+        ]
+        response_json = {
+            "results": results,
+            "pagination": {
+                "count": len(results),
+                "total": len(results),
+                "pages": 1,
+            },
         }
-        for entry in data.items
-    ]
-
-    response_json = {
-        "results": results,
-        "pagination": {
-            "count": len(data.items),
-            "total": data.total,
-            "pages": data.pages,
-        },
-    }
+    else:
+        data = query.paginate(page=page, per_page=per_page, error_out=False)
+        results = [
+            {
+                "top_level_key": entry.top_level_key,
+                "secondary_key": entry.secondary_key,
+                "value": entry.value,
+            }
+            for entry in data.items
+        ]
+        response_json = {
+            "results": results,
+            "pagination": {
+                "count": len(data.items),
+                "total": data.total,
+                "pages": data.pages,
+            },
+        }
     return make_response(jsonify(response_json), 200)
 
 
