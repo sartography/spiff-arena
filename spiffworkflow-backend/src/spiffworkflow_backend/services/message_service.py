@@ -167,11 +167,14 @@ class MessageService:
                 execution_mode=execution_mode,
             )
 
-            message_instance_receive = MessageInstanceModel.query.filter_by(
-                process_instance_id=receiving_process_instance.id,
-                message_type=MessageTypes.receive.value,
-                status=MessageStatuses.ready.value,
-            ).first()
+            message_instance_receive = (
+                MessageInstanceModel.query.filter_by(
+                    process_instance_id=receiving_process_instance.id,
+                    message_type=MessageTypes.receive.value,
+                )
+                .filter(MessageInstanceModel.status.in_([MessageStatuses.ready.value, MessageStatuses.running.value]))
+                .first()
+            )
 
             if message_instance_receive is None:
                 raise MessageServiceError(
@@ -277,25 +280,35 @@ class MessageService:
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier, user, commit_db=False
         )
-        processor_receive = ProcessInstanceProcessor(receiving_process_instance)
-        cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+        db.session.flush()
+        with ProcessInstanceQueueService.dequeued(receiving_process_instance):
+            processor_receive = ProcessInstanceProcessor(receiving_process_instance)
+            cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
 
-        execution_strategy_name = None
-        if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-            execution_strategy_name = "greedy"
+            execution_strategy_name = None
+            if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                execution_strategy_name = "greedy"
 
-        # add correlations to bpmn_process_instance if not set already so we can use them in the receive message instance later.
-        # these should never be set at this point but check just in case.
-        if (
-            message_instance_send is not None
-            and message_instance_send.correlation_keys
-            and not processor_receive.bpmn_process_instance.correlations
-        ):
-            processor_receive.bpmn_process_instance.correlations = message_instance_send.correlation_keys
+            # Add correlations to the BPMN instance if needed so receive messages can use them later.
+            if (
+                message_instance_send is not None
+                and message_instance_send.correlation_keys
+                and not processor_receive.bpmn_process_instance.correlations
+            ):
+                processor_receive.bpmn_process_instance.correlations = message_instance_send.correlation_keys
 
-        # Persist the new receiver before it handles the message. A message-triggered service
-        # task can expose a callback URL immediately, and that callback runs in another request.
-        processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
+            # Persist the new receiver before it handles the message. A message-triggered service
+            # task can expose a callback URL immediately, and that callback runs in another request.
+            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
+            receive_message_instances = MessageInstanceModel.query.filter_by(
+                process_instance_id=receiving_process_instance.id,
+                message_type=MessageTypes.receive.value,
+                status=MessageStatuses.ready.value,
+            ).all()
+            for receive_message_instance in receive_message_instances:
+                receive_message_instance.status = MessageStatuses.running.value
+                db.session.add(receive_message_instance)
+            db.session.commit()
 
         return (receiving_process_instance, processor_receive)
 

@@ -17,7 +17,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
-class TestLongRunningServices(BaseTest):
+class TestLongRunningService(BaseTest):
     def assert_tasks_awaiting_callback(
         self,
         app: Flask,
