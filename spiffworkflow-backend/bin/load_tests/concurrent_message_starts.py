@@ -4,7 +4,7 @@
 This is intended as a live-server regression harness for message-start races.
 Start Spiff first, for example with `run-spiff-arena`, then run:
 
-    uv run python bin/load_test_concurrent_message_starts.py --requests 50 --workers 20
+    uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --workers 20
 """
 
 from __future__ import annotations
