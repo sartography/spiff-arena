@@ -277,9 +277,8 @@ class MessageService:
         receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier, user, commit_db=False
         )
-        with ProcessInstanceQueueService.dequeued(receiving_process_instance, needs_dequeue=False):
-            processor_receive = ProcessInstanceProcessor(receiving_process_instance)
-            cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+        processor_receive = ProcessInstanceProcessor(receiving_process_instance)
+        cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
 
         execution_strategy_name = None
         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
