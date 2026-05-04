@@ -3969,13 +3969,13 @@ paths:
     - name: top_level_key
       in: query
       required: false
-      description: Filter KKV entries by top-level key (e.g. process instance ID). Requires a seconday_key.
+      description: Filter KKV entries by top-level key (e.g. process instance ID). Can be used alone or with secondary_key.
       schema:
         type: string
     - name: secondary_key
       in: query
       required: false
-      description: Filter KKV entries by secondary key (e.g. process model). Requires top_level_key.
+      description: Filter KKV entries by secondary key (e.g. process model). Can be used alone or with top_level_key.
       schema:
         type: string
     get:

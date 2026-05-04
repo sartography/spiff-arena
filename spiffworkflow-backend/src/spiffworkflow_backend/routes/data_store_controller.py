@@ -107,7 +107,7 @@ def data_store_item_list(
     top_level_key = top_level_key or None
     secondary_key = secondary_key or None
 
-    if top_level_key is not None and data_store_type == "kkv":
+    if (top_level_key is not None or secondary_key is not None) and data_store_type == "kkv":
         return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page)
 
     data_store_class, _ = DATA_STORES[data_store_type]
@@ -117,12 +117,12 @@ def data_store_item_list(
 def _kkv_filtered_items(
     identifier: str,
     location: str | None,
-    top_level_key: str,
+    top_level_key: str | None,
     secondary_key: str | None,
     page: int,
     per_page: int,
 ) -> flask.wrappers.Response:
-    """Return KKV entries filtered by top_level_key and optionally secondary_key."""
+    """Return KKV entries filtered by top_level_key and/or secondary_key."""
     store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
 
     if store_model is None:
@@ -132,10 +132,9 @@ def _kkv_filtered_items(
             status_code=404,
         )
 
-    query = db.session.query(KKVDataStoreEntryModel).filter_by(
-        kkv_data_store_id=store_model.id,
-        top_level_key=top_level_key,
-    )
+    query = db.session.query(KKVDataStoreEntryModel).filter_by(kkv_data_store_id=store_model.id)
+    if top_level_key is not None:
+        query = query.filter_by(top_level_key=top_level_key)
     if secondary_key is not None:
         query = query.filter_by(secondary_key=secondary_key)
 
