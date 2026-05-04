@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from hashlib import sha256
+from typing import cast
 
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -69,6 +70,8 @@ SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 class BpmnProcessService:
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
     serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
+    BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS = 5
+    BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS = 0.05
 
     @classmethod
     def persist_bpmn_process_definition(
@@ -259,14 +262,11 @@ class BpmnProcessService:
                     }
                     result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
                     if result and result.inserted_primary_key is not None:
-                        bpd_id = result.inserted_primary_key[0]
+                        inserted_primary_key = result.inserted_primary_key[0]
+                        if inserted_primary_key is not None:
+                            bpd_id = inserted_primary_key
                 if bpd_id == 0:
-                    bpdm = BpmnProcessDefinitionModel.query.filter(
-                        and_(
-                            BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
-                            BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
-                        )
-                    ).first()
+                    bpdm = cls._lookup_bpmn_process_definition_after_insert_or_ignore(bpmn_process_definition)
                     if bpdm is None:
                         raise RuntimeError(
                             "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record "
@@ -311,6 +311,31 @@ class BpmnProcessService:
         except Exception:
             db.session.rollback()
             raise
+
+    @classmethod
+    def _lookup_bpmn_process_definition_after_insert_or_ignore(
+        cls,
+        bpmn_process_definition: BpmnProcessDefinitionModel,
+    ) -> BpmnProcessDefinitionModel | None:
+        for attempt in range(cls.BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS):
+            db.session.expire_all()
+            bpdm = BpmnProcessDefinitionModel.query.filter(
+                and_(
+                    BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
+                    BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
+                )
+            ).first()
+            if bpdm is not None:
+                return cast(BpmnProcessDefinitionModel, bpdm)
+
+            # If another request won the insert but has not committed yet, start the
+            # next lookup in a fresh transaction so databases with transaction snapshots
+            # can see the row once it becomes visible.
+            db.session.rollback()
+            if attempt < cls.BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS - 1:
+                time.sleep(cls.BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS)
+
+        return None
 
     @classmethod
     def extract_human_task_definitions(cls, bpmn_definition_to_task_definitions_mappings: dict) -> list[TaskDefinitionModel]:

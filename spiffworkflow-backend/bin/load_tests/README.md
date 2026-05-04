@@ -11,9 +11,11 @@ uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --worker
 ```
 
 The script creates a temporary message-start process model using the API, sends one warm-up message, then fires concurrent
-`POST /v1.0/messages/...` requests. It exits nonzero if any request fails or does not complete its own process instance.
+`POST /v1.0/messages/...` requests. The warm-up keeps this focused on message-start concurrency rather than the separate
+cold BPMN process-definition persistence path. It exits nonzero if any request fails or does not complete its own process
+instance.
 
-To stress the first cold request path as well, skip the warm-up:
+To include the cold BPMN process-definition persistence path in the same stress test:
 
 ```sh
 uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --workers 20 --no-warm-up

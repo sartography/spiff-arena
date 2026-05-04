@@ -362,7 +362,7 @@ def parse_args() -> argparse.Namespace:
         "--no-warm-up",
         action="store_false",
         dest="warm_up",
-        help="Skip the single warm-up message before firing the concurrent batch",
+        help="Skip the single warm-up message and include cold BPMN definition persistence in the stress test",
     )
     parser.set_defaults(warm_up=True)
     return parser.parse_args()

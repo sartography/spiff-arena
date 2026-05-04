@@ -193,6 +193,7 @@ class TestBpmnProcessDefinitionPersistence(BaseTest):
 
         monkeypatch.setattr(BpmnProcessDefinitionModel, "insert_or_update_record", lambda values: None)
         monkeypatch.setattr(BpmnProcessDefinitionModel, "query", QueryStub())
+        monkeypatch.setattr(BpmnProcessService, "BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS", 0)
 
         with pytest.raises(RuntimeError) as exc_info:
             BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
@@ -200,3 +201,45 @@ class TestBpmnProcessDefinitionPersistence(BaseTest):
         assert "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record" in error_message
         assert "full_process_model_hash='full-hash'" in error_message
         assert "single_process_hash='single-hash'" in error_message
+
+    def test_save_to_database_retries_fallback_lookup_when_insert_is_ignored(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        bpmn_process_definition = SimpleNamespace(
+            id=None,
+            single_process_hash="single-hash",
+            full_process_model_hash="full-hash",
+            bpmn_identifier="demo_process",
+            bpmn_name="Demo Process",
+            properties_json={},
+        )
+        bpmn_definition_to_task_definitions_mappings = {
+            "demo_process": {
+                "bpmn_process_definition": bpmn_process_definition,
+            }
+        }
+        persisted_bpmn_process_definition = SimpleNamespace(id=123)
+
+        class QueryStub:
+            def __init__(self) -> None:
+                self.first_calls = 0
+
+            def filter(self, *args: object, **kwargs: object) -> "QueryStub":
+                return self
+
+            def first(self) -> object | None:
+                self.first_calls += 1
+                if self.first_calls == 1:
+                    return None
+                return persisted_bpmn_process_definition
+
+        query_stub = QueryStub()
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "insert_or_update_record", lambda values: None)
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "query", query_stub)
+        monkeypatch.setattr(BpmnProcessService, "BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS", 0)
+
+        BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
+
+        assert query_stub.first_calls == 2
