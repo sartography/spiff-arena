@@ -2058,6 +2058,79 @@ paths:
                 items:
                   $ref: "#/components/schemas/TaskDefinition"
 
+  /process-models/{modified_process_model_identifier}/task-definitions/search:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_task_definition_search
+      summary: Searches task definitions for a process model
+      tags:
+        - Process Models
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                include_dependencies:
+                  type: boolean
+                  default: true
+                task_types:
+                  type: array
+                  items:
+                    type: string
+                extension_names:
+                  type: array
+                  items:
+                    type: string
+                extension_name:
+                  type: string
+                extension_types:
+                  type: array
+                  items:
+                    type: string
+                extension_type:
+                  type: string
+                extension_property_name:
+                  type: string
+                extension_properties:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      exists:
+                        type: boolean
+                      value:
+                        type: string
+                        nullable: true
+                      values:
+                        type: array
+                        items:
+                          type: string
+                          nullable: true
+      responses:
+        "200":
+          description: Returns matching task definitions for the process model.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  results:
+                    type: array
+                    items:
+                      type: object
+
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
       - name: modified_process_model_identifier

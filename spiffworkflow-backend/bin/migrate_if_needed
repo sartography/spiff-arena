@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+
+cd "$script_dir/.."
+
+if [[ -f hot_spiff_env ]]; then
+  # shellcheck disable=SC1091
+  source hot_spiff_env
+fi
+if [[ -f bin/local_development_environment_setup ]]; then
+  # shellcheck disable=SC1091
+  source bin/local_development_environment_setup
+fi
+
+export SPIFFWORKFLOW_BACKEND_ENV="${SPIFFWORKFLOW_BACKEND_ENV:-local_development}"
+
+current_revision="$(uv run flask db current 2>/dev/null | awk 'NF {print $1}' | tail -n 1 || true)"
+head_revision="$(uv run flask db heads 2>/dev/null | awk 'NF {print $1}' | tail -n 1 || true)"
+
+if [[ -n "$current_revision" && -n "$head_revision" && "$current_revision" == "$head_revision" ]]; then
+  exit 0
+fi
+
+uv run flask db upgrade

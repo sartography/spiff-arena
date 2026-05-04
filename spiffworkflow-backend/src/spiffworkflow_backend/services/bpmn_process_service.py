@@ -3,6 +3,7 @@ import json
 import time
 from hashlib import sha256
 
+from flask import current_app
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
@@ -27,6 +28,8 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -321,6 +324,233 @@ class BpmnProcessService:
                     human_tasks.append(task_definition)
 
         return human_tasks
+
+    @classmethod
+    def search_task_definitions(cls, process_model_identifier: str, body: dict | None = None) -> list[dict[str, object]]:
+        body = body or {}
+        include_dependencies = body.get("include_dependencies", True) is not False
+        task_types = set(body.get("task_types") or [])
+        extension_names = set(body.get("extension_names") or [])
+        extension_names.update(body.get("extension_types") or [])
+        extension_name = body.get("extension_name") or body.get("extension_type")
+        if extension_name:
+            extension_names.add(extension_name)
+        extension_property_filters = cls._extension_property_filters_from_body(body)
+
+        process_model_info = ProcessModelService.get_process_model(process_model_identifier)
+        if process_model_info is None:
+            raise ApiError(
+                "process_model_not_found",
+                f"The given process model was not found: {process_model_identifier}.",
+            )
+
+        bpmn_definition_to_task_definitions_mappings: dict = {}
+        cls.persist_bpmn_process_definition(process_model_identifier, bpmn_definition_to_task_definitions_mappings)
+        task_location_index = cls._task_location_index_for_process_definitions(
+            process_model_info,
+            set(bpmn_definition_to_task_definitions_mappings.keys()),
+        )
+
+        results = []
+        for process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+            if not include_dependencies and process_identifier != process_model_info.primary_process_id:
+                continue
+
+            bpmn_process_definition = entity.get("bpmn_process_definition")
+            spec_reference = cls._spec_reference_for_process(process_identifier, process_model_info)
+            for task_identifier, task_definition in entity.items():
+                if task_identifier == "bpmn_process_definition":
+                    continue
+                if task_types and task_definition.typename not in task_types:
+                    continue
+                extensions = task_definition.properties_json.get("extensions") or {}
+                if not isinstance(extensions, dict):
+                    extensions = {}
+                if not cls._matches_extension_names(extensions, extension_names):
+                    continue
+                if not cls._matches_extension_property_filters(extensions, extension_property_filters):
+                    continue
+
+                extension_properties = extensions.get("properties") or {}
+                if not isinstance(extension_properties, dict):
+                    extension_properties = {}
+                task_location = task_location_index.get(
+                    (process_identifier, task_definition.bpmn_identifier),
+                    {
+                        "process_model_identifier": spec_reference.relative_location,
+                        "file_name": spec_reference.file_name,
+                    },
+                )
+
+                results.append(
+                    {
+                        "bpmn_identifier": task_definition.bpmn_identifier,
+                        "bpmn_name": task_definition.bpmn_name,
+                        "typename": task_definition.typename,
+                        "bpmn_process_identifier": process_identifier,
+                        "bpmn_process_name": getattr(bpmn_process_definition, "bpmn_name", None),
+                        "process_model_identifier": task_location["process_model_identifier"],
+                        "modified_process_model_identifier": ProcessModelInfo.modify_process_identifier_for_path_param(
+                            task_location["process_model_identifier"]
+                        ),
+                        "file_name": task_location["file_name"],
+                        "extensions": extensions,
+                        "extension_properties": extension_properties,
+                        "properties_json": task_definition.properties_json,
+                    }
+                )
+
+        return sorted(
+            results,
+            key=lambda item: (
+                str(item.get("process_model_identifier") or ""),
+                str(item.get("file_name") or ""),
+                str(item.get("bpmn_process_identifier") or ""),
+                str(item.get("bpmn_identifier") or ""),
+            ),
+        )
+
+    @staticmethod
+    def _extension_property_filters_from_body(body: dict) -> list[dict]:
+        filters = body.get("extension_properties") or []
+        if isinstance(filters, dict):
+            filters = [filters]
+        elif not isinstance(filters, list):
+            filters = []
+
+        property_name = body.get("extension_property_name") or body.get("property_name")
+        if property_name:
+            filters = [*filters, {"name": property_name, "exists": True}]
+        return [filter_item for filter_item in filters if isinstance(filter_item, dict)]
+
+    @staticmethod
+    def _matches_extension_names(extensions: dict, extension_names: set[str]) -> bool:
+        return all(extension_name in extensions for extension_name in extension_names)
+
+    @staticmethod
+    def _matches_extension_property_filters(extensions: dict, filters: list[dict]) -> bool:
+        if not filters:
+            return True
+
+        extension_properties = extensions.get("properties") or {}
+        if not isinstance(extension_properties, dict):
+            extension_properties = {}
+
+        for filter_item in filters:
+            property_name = filter_item.get("name") or filter_item.get("property_name")
+            if not property_name:
+                continue
+
+            property_exists = property_name in extension_properties
+            expected_exists = filter_item.get("exists")
+            if expected_exists is True and not property_exists:
+                return False
+            if expected_exists is False and property_exists:
+                return False
+            if "value" in filter_item and extension_properties.get(property_name) != filter_item["value"]:
+                return False
+            if "values" in filter_item and extension_properties.get(property_name) not in filter_item["values"]:
+                return False
+
+        return True
+
+    @staticmethod
+    def _spec_reference_for_process(process_identifier: str, process_model_info: ProcessModelInfo) -> ReferenceCacheModel:
+        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
+        if spec_reference is not None:
+            return spec_reference
+
+        WorkflowSpecService.backfill_missing_spec_reference_records(process_identifier)
+        db.session.flush()
+        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
+        if spec_reference is not None:
+            return spec_reference
+
+        return ReferenceCacheModel(
+            identifier=process_identifier,
+            display_name=process_identifier,
+            relative_location=process_model_info.id,
+            type="process",
+            file_name=process_model_info.primary_file_name or "",
+            properties={},
+        )
+
+    @classmethod
+    def _task_location_index_for_process_definitions(
+        cls,
+        process_model_info: ProcessModelInfo,
+        process_identifiers: set[str],
+    ) -> dict[tuple[str, str], dict[str, str]]:
+        process_model_files = {
+            (process_model_info.id, file.name)
+            for file in FileSystemService.get_files(process_model_info)
+            if file.type == "bpmn"
+        }
+        for process_identifier in process_identifiers:
+            spec_reference = cls._spec_reference_for_process(process_identifier, process_model_info)
+            if spec_reference.file_name:
+                process_model_files.add((spec_reference.relative_location, spec_reference.file_name))
+
+        index: dict[tuple[str, str], dict[str, str]] = {}
+        for process_model_identifier, file_name in process_model_files:
+            located_process_model = ProcessModelService.get_process_model(process_model_identifier)
+            if located_process_model is None:
+                continue
+            try:
+                bpmn_xml = FileSystemService.get_data(located_process_model, file_name)
+                bpmn_root = ProcessModelService.get_etree_from_xml_bytes(bpmn_xml)
+            except Exception as ex:
+                current_app.logger.warning(
+                    "Failed to index BPMN task locations for %s/%s: %s",
+                    process_model_identifier,
+                    file_name,
+                    ex,
+                )
+                continue
+            cls._index_bpmn_element_locations(
+                bpmn_root,
+                process_model_identifier=process_model_identifier,
+                file_name=file_name,
+                index=index,
+            )
+        return index
+
+    @classmethod
+    def _index_bpmn_element_locations(
+        cls,
+        element,
+        *,
+        process_model_identifier: str,
+        file_name: str,
+        index: dict[tuple[str, str], dict[str, str]],
+        scope_identifier: str | None = None,
+    ) -> None:
+        element_identifier = element.get("id")
+        if scope_identifier and element_identifier:
+            index.setdefault(
+                (scope_identifier, element_identifier),
+                {
+                    "process_model_identifier": process_model_identifier,
+                    "file_name": file_name,
+                },
+            )
+
+        child_scope_identifier = scope_identifier
+        if element_identifier and cls._xml_local_name(element.tag) in {"process", "subProcess"}:
+            child_scope_identifier = element_identifier
+
+        for child in element:
+            cls._index_bpmn_element_locations(
+                child,
+                process_model_identifier=process_model_identifier,
+                file_name=file_name,
+                index=index,
+                scope_identifier=child_scope_identifier,
+            )
+
+    @staticmethod
+    def _xml_local_name(tag: str) -> str:
+        return tag.rsplit("}", 1)[-1]
 
     @classmethod
     def _store_bpmn_process_definition(

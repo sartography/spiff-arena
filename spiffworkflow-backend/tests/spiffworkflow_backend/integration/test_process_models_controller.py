@@ -364,6 +364,71 @@ class TestProcessModelsController(BaseTest):
         assert human_tasks[0]["typename"] == "ManualTask"
         assert human_tasks[0]["properties_json"]["lane"] == "Process Initiator"
 
+    def test_search_task_definitions_by_extension_property_includes_call_activity_dependencies(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/task-definition-search",
+            primary_file_name="main.bpmn",
+            process_model_source_directory="task_definition_search",
+        )
+        modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        url = f"/v1.0/process-models/{modified_id}/task-definitions/search"
+        body = {
+            "extension_properties": [
+                {
+                    "name": "civitos.slotBefore",
+                    "exists": True,
+                }
+            ],
+            "include_dependencies": True,
+        }
+
+        response = client.post(url, json=body, headers=self.logged_in_headers(with_super_admin_user))
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 2
+        results_by_identifier = {result["bpmn_identifier"]: result for result in data["results"]}
+        assert results_by_identifier["main_anchor"]["file_name"] == "main.bpmn"
+        assert results_by_identifier["main_anchor"]["extension_properties"]["civitos.slotBefore"] == "before_main_anchor"
+        assert results_by_identifier["nested_anchor"]["file_name"] == "nested.bpmn"
+        assert results_by_identifier["nested_anchor"]["bpmn_process_identifier"] == "Task_Definition_Search_Nested"
+        assert results_by_identifier["nested_anchor"]["extension_properties"]["civitos.slotBefore"] == "before_nested_anchor"
+
+    def test_search_task_definitions_by_extension_property_can_exclude_dependencies(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/task-definition-search",
+            primary_file_name="main.bpmn",
+            process_model_source_directory="task_definition_search",
+        )
+        modified_id = process_model.modify_process_identifier_for_path_param(process_model.id)
+        url = f"/v1.0/process-models/{modified_id}/task-definitions/search"
+
+        response = client.post(
+            url,
+            json={
+                "extension_property_name": "civitos.slotBefore",
+                "include_dependencies": False,
+            },
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["results"][0]["bpmn_identifier"] == "main_anchor"
+
     def test_process_model_copy(
         self,
         app: Flask,

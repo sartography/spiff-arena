@@ -673,3 +673,12 @@ def get_human_task_definitions(modified_process_model_identifier: str) -> flask.
     BpmnProcessService.persist_bpmn_process_definition(process_model_identifier, bpmn_definition_to_task_definitions_mappings)
     human_tasks = BpmnProcessService.extract_human_task_definitions(bpmn_definition_to_task_definitions_mappings)
     return make_response(jsonify(human_tasks), 200)
+
+
+def process_model_task_definition_search(
+    modified_process_model_identifier: str,
+    body: dict | None = None,
+) -> flask.wrappers.Response:
+    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    task_definitions = BpmnProcessService.search_task_definitions(process_model_identifier, body)
+    return make_response(jsonify({"results": task_definitions, "count": len(task_definitions)}), 200)
