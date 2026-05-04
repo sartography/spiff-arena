@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from flask import Flask
+from sqlalchemy.exc import OperationalError
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -243,3 +244,63 @@ class TestBpmnProcessDefinitionPersistence(BaseTest):
         BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
 
         assert query_stub.first_calls == 2
+
+    def test_save_to_database_retries_mysql_deadlock_for_task_definition_insert(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        bpmn_process_definition = SimpleNamespace(
+            id=None,
+            single_process_hash="single-hash",
+            full_process_model_hash="full-hash",
+            bpmn_identifier="demo_process",
+            bpmn_name="Demo Process",
+            properties_json={},
+        )
+        task_definition = SimpleNamespace(
+            id=None,
+            bpmn_identifier="demo_process.EndJoin",
+            bpmn_name=None,
+            properties_json={},
+            typename="_EndJoin",
+        )
+        bpmn_definition_to_task_definitions_mappings = {
+            "demo_process": {
+                "bpmn_process_definition": bpmn_process_definition,
+                "demo_process.EndJoin": task_definition,
+            }
+        }
+        persisted_bpmn_process_definition = SimpleNamespace(id=123)
+
+        class QueryStub:
+            def filter(self, *args: object, **kwargs: object) -> "QueryStub":
+                return self
+
+            def first(self) -> object:
+                return persisted_bpmn_process_definition
+
+        class DeadlockOriginalException:
+            args = (1213, "Deadlock found when trying to get lock; try restarting transaction")
+
+        task_definition_insert_calls = 0
+
+        def insert_task_definition(task_definition_dict: dict) -> None:
+            nonlocal task_definition_insert_calls
+            task_definition_insert_calls += 1
+            if task_definition_insert_calls == 1:
+                raise OperationalError(
+                    "INSERT INTO task_definition ...",
+                    task_definition_dict,
+                    DeadlockOriginalException(),
+                )
+
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", "mysql")
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "insert_or_update_record", lambda values: None)
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "query", QueryStub())
+        monkeypatch.setattr(TaskDefinitionModel, "insert_or_update_record", insert_task_definition)
+        monkeypatch.setattr(BpmnProcessService, "SAVE_TO_DATABASE_RETRY_DELAY_SECONDS", 0)
+
+        BpmnProcessService.save_to_database(bpmn_definition_to_task_definitions_mappings)
+
+        assert task_definition_insert_calls == 2
