@@ -257,6 +257,70 @@ class TestLongRunningService(BaseTest):
         process_instance = ProcessInstanceService().get_process_instance(receiver_message.process_instance_id)
         assert process_instance.status == "complete"
 
+    def test__parallel_202_service_task_accepts_immediate_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """A callback can arrive before a parallel branch has finished the same engine run."""
+        process_model_id = "test_group/parallel_service_task_callback"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="parallel_service_task_callback",
+        )
+
+        callback_finished = threading.Event()
+        callback_result: dict[str, Any] = {}
+        callback_thread: threading.Thread | None = None
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+        callback_headers = self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"})
+
+        def submit_callback(callback_url: str) -> None:
+            try:
+                callback_result["response"] = client.put(
+                    callback_url,
+                    headers=callback_headers,
+                    json=content,
+                )
+            finally:
+                callback_finished.set()
+
+        def mock_connector_post(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            nonlocal callback_thread
+            json_data = kwargs.get("json", {})
+            assert isinstance(json_data, dict)
+            callback_url = json_data["spiff__callback_url"]
+            assert isinstance(callback_url, str)
+            callback_thread = threading.Thread(target=submit_callback, args=(callback_url,))
+            callback_thread.start()
+            return SimpleNamespace(status_code=202, ok=True, text=json.dumps({}), headers={})
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post", side_effect=mock_connector_post):
+                processor.do_engine_steps(save=True)
+
+        assert callback_thread is not None
+        callback_thread.join(timeout=5)
+        assert not callback_thread.is_alive()
+
+        response = callback_result["response"]
+        assert response.status_code == 200
+        assert response.json()["type"] == "Default End Event"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
+
     def test__202_error_response(
         self,
         app: Flask,

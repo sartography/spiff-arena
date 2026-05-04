@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_parallel_service_task_callback" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="parallel_service_task_callback" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_parallel_callback">
+      <bpmn:outgoing>Flow_start_to_split</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="Gateway_split">
+      <bpmn:incoming>Flow_start_to_split</bpmn:incoming>
+      <bpmn:outgoing>Flow_split_to_service</bpmn:outgoing>
+      <bpmn:outgoing>Flow_split_to_sleep</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="Task_parallel_callback_service" name="Parallel callback service">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="ed/GetFiles" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="process_id" type="str" value="&#34;a&#34;" />
+            <spiffworkflow:parameter id="encoding" type="str" value="&#34;b&#34;" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_split_to_service</bpmn:incoming>
+      <bpmn:outgoing>Flow_service_to_join</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:scriptTask id="Task_sleeping_branch" name="Sleeping branch">
+      <bpmn:incoming>Flow_split_to_sleep</bpmn:incoming>
+      <bpmn:outgoing>Flow_sleep_to_join</bpmn:outgoing>
+      <bpmn:script>time.sleep(0.1)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:parallelGateway id="Gateway_join">
+      <bpmn:incoming>Flow_service_to_join</bpmn:incoming>
+      <bpmn:incoming>Flow_sleep_to_join</bpmn:incoming>
+      <bpmn:outgoing>Flow_join_to_script</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:scriptTask id="Task_check_callback_body" name="Check callback body">
+      <bpmn:incoming>Flow_join_to_script</bpmn:incoming>
+      <bpmn:outgoing>Flow_script_to_end</bpmn:outgoing>
+      <bpmn:script>response["do_not_fail"]</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="Event_done">
+      <bpmn:incoming>Flow_script_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_start_to_split" sourceRef="StartEvent_parallel_callback" targetRef="Gateway_split" />
+    <bpmn:sequenceFlow id="Flow_split_to_service" sourceRef="Gateway_split" targetRef="Task_parallel_callback_service" />
+    <bpmn:sequenceFlow id="Flow_split_to_sleep" sourceRef="Gateway_split" targetRef="Task_sleeping_branch" />
+    <bpmn:sequenceFlow id="Flow_service_to_join" sourceRef="Task_parallel_callback_service" targetRef="Gateway_join" />
+    <bpmn:sequenceFlow id="Flow_sleep_to_join" sourceRef="Task_sleeping_branch" targetRef="Gateway_join" />
+    <bpmn:sequenceFlow id="Flow_join_to_script" sourceRef="Gateway_join" targetRef="Task_check_callback_body" />
+    <bpmn:sequenceFlow id="Flow_script_to_end" sourceRef="Task_check_callback_body" targetRef="Event_done" />
+  </bpmn:process>
+</bpmn:definitions>
