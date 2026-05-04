@@ -167,14 +167,14 @@ class MessageService:
                 execution_mode=execution_mode,
             )
 
-            message_instance_receive = (
-                MessageInstanceModel.query.filter_by(
-                    process_instance_id=receiving_process_instance.id,
-                    message_type=MessageTypes.receive.value,
+            message_instance_receive = MessageInstanceModel.query.filter_by(
+                process_instance_id=receiving_process_instance.id,
+                message_type=MessageTypes.receive.value,
+            ).filter(
+                MessageInstanceModel.status.in_(  # type: ignore
+                    [MessageStatuses.ready.value, MessageStatuses.running.value]
                 )
-                .filter(MessageInstanceModel.status.in_([MessageStatuses.ready.value, MessageStatuses.running.value]))
-                .first()
-            )
+            ).first()
 
             if message_instance_receive is None:
                 raise MessageServiceError(

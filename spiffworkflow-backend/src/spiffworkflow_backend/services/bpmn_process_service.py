@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from hashlib import sha256
+from typing import cast
 
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -323,7 +324,7 @@ class BpmnProcessService:
                 )
             ).first()
             if bpdm is not None:
-                return bpdm
+                return cast(BpmnProcessDefinitionModel, bpdm)
             if attempt < cls.BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS - 1:
                 time.sleep(cls.BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS)
         return None
