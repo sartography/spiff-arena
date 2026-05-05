@@ -213,14 +213,13 @@ line-length = 130
 target-version = "py310"
 
 exclude = [
-  "migrations",
-  "bin/load_test_message_start_event.py"
+  "migrations"
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
 "tests/**/*.py" = ["PLR2004", "S101"]  # PLR2004 is about magic vars, S101 allows assert
-"bin/*.py" = ["T"]  # it's ok to print things in scripts
+"bin/**/*.py" = ["T"]  # it's ok to print things in scripts
 
 [tool.ruff.lint.isort]
 force-single-line = true
