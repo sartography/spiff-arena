@@ -11,6 +11,7 @@ from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
@@ -146,6 +147,12 @@ def _kkv_filtered_items(
         query = query.filter_by(top_level_key=top_level_key)
     if secondary_key is not None:
         query = query.filter_by(secondary_key=secondary_key)
+
+    query = query.order_by(
+        KKVDataStoreEntryModel.top_level_key,
+        KKVDataStoreEntryModel.secondary_key,
+        KKVDataStoreEntryModel.id,
+    )
 
     if per_page == 0:
         items = query.all()
@@ -438,5 +445,5 @@ def data_store_write_items(data_store_type: str, identifier: str, location: str 
                 model.value = value
             db.session.add(model)
 
-    db.session.commit()
+    SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
     return make_response(jsonify({"ok": True}), 200)

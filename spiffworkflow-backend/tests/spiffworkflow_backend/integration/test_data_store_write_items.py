@@ -442,5 +442,4 @@ class TestDataStoreFilteredGet(BaseTest):
         self._seed_data(client, with_super_admin_user)
         response = self._get(client, with_super_admin_user, "test_store")
         assert response.status_code == 200
-        data = response.json()["results"][0]["data"]
-        assert len(data) == 3
+        assert len(response.json()["results"]) == 3
