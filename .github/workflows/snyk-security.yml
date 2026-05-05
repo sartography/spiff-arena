@@ -137,6 +137,9 @@ jobs:
         with:
           node-version: 18.x
       - run: npm install
+      - name: Install nested BPMN package dependencies
+        run: npm install --ignore-scripts --package-lock=false
+        working-directory: spiffworkflow-frontend/packages/bpmn-js-spiffworkflow-react
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
