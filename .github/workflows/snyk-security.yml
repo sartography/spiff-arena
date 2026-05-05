@@ -153,8 +153,10 @@ jobs:
       #   # env:
       #   #   DEBUG: "*snyk*"
       # Build the docker image for testing
+      - name: Setup version.json
+        run: 'echo ''{"version": "snyk_test"}'' >version_info.json'
       - name: Build a Docker image
-        run: "pwd && docker build -t spiffworkflow-frontend/snyk-test ."
+        run: docker build -t spiffworkflow-frontend/snyk-test .
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         # pruning repeated subdependencies because it fails otherwise
