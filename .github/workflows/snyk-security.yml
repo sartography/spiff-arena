@@ -158,8 +158,18 @@ jobs:
       # Build the docker image for testing
       - name: Setup version.json
         run: 'echo ''{"version": "snyk_test"}'' >version_info.json'
-      - name: Build a Docker image
-        run: docker build -t spiffworkflow-frontend/snyk-test .
+      # - name: Build a Docker image
+      #   run: docker build -t spiffworkflow-frontend/snyk-test .
+      - name: Build Docker image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: spiffworkflow-frontend
+          push: false # Don't push yet
+          load: true # Load image to local Docker daemon
+          tags: spiffworkflow-frontend/snyk-test
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         # pruning repeated subdependencies because it fails otherwise
