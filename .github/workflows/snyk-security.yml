@@ -152,9 +152,6 @@ jobs:
       #   # # uncomment to enable debug logs
       #   # env:
       #   #   DEBUG: "*snyk*"
-      # These are just needed for snyk
-      - name: Remove node_modules
-        run: rm -rf node_modules
       # Build the docker image for testing
       - name: Setup version.json
         run: 'echo ''{"version": "snyk_test"}'' >version_info.json'
