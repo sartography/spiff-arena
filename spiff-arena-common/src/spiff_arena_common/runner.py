@@ -96,7 +96,7 @@ class CustomUserTaskConverter(SpiffBpmnTaskConverter):
 
 class CustomReceiveTask(ReceiveTask):
     def _update_hook(self, my_task):
-        # Bypass event waiting — go straight to READY so the UI can show a form
+        my_task._inherit_data()
         return True
 
     def _run(self, my_task):
