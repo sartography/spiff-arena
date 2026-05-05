@@ -2,6 +2,7 @@ from collections.abc import Generator
 
 import pytest
 from flask import Flask
+from httpx import Response
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
@@ -70,7 +71,7 @@ class TestDataStoreItemListFiltering(BaseTest):
         location: str = "test_location",
         top_level_key: str | None = None,
         secondary_key: str | None = None,
-    ) -> TestClient:
+    ) -> Response:
         url = f"/v1.0/data-stores/kkv/{identifier}/items?location={location}"
         if top_level_key is not None:
             url += f"&top_level_key={top_level_key}"

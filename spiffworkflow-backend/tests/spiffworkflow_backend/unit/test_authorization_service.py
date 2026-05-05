@@ -544,7 +544,10 @@ class TestAuthorizationService(BaseTest):
             self._expected_basic_permissions()
             + [
                 ("/can-run-privileged-script/*", "create"),
+                ("/data-stores/*", "create"),
+                ("/data-stores/*", "delete"),
                 ("/data-stores/*", "read"),
+                ("/data-stores/*", "update"),
                 ("/debug/*", "create"),
                 ("/event-error-details/*", "read"),
                 ("/extensions-get-data/*", "read"),

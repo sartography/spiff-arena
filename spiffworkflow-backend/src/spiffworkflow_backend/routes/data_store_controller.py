@@ -173,7 +173,7 @@ def _kkv_filtered_items(
             },
         }
     else:
-        data = query.paginate(page=page, per_page=per_page, error_out=False)
+        data = query.paginate(page=page, per_page=per_page, error_out=False)  # type: ignore[attr-defined]
         results = [
             {
                 "top_level_key": entry.top_level_key,
