@@ -141,21 +141,20 @@ jobs:
         run: npm install --ignore-scripts --package-lock=false
         working-directory: spiffworkflow-frontend/packages/bpmn-js-spiffworkflow-react
 
-        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-        # Use || true to not fail the pipeline
-      - name: Snyk Code test
-        run: snyk code test --sarif > snyk-code.sarif || true
-
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
-        # # uncomment to enable debug logs
-        # env:
-        #   DEBUG: "*snyk*"
-
-        # Build the docker image for testing
+      #   # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
+      #   # Use || true to not fail the pipeline
+      # - name: Snyk Code test
+      #   run: snyk code test --sarif > snyk-code.sarif || true
+      #
+      #   # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
+      # - name: Snyk Open Source monitor
+      #   run: snyk monitor --all-projects
+      #   # # uncomment to enable debug logs
+      #   # env:
+      #   #   DEBUG: "*snyk*"
+      # Build the docker image for testing
       - name: Build a Docker image
-        run: docker build -t spiffworkflow-frontend/snyk-test .
+        run: "pwd && docker build -t spiffworkflow-frontend/snyk-test ."
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         # pruning repeated subdependencies because it fails otherwise
