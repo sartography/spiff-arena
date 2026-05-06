@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from hashlib import sha256
+from typing import cast
 
 from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -13,6 +14,7 @@ from SpiffWorkflow.spiff.serializer.task_spec import StandardLoopTaskConverter
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import StandardLoopTask
 from sqlalchemy import and_
+from sqlalchemy.exc import OperationalError
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_stores.json import JSONDataStore
@@ -34,6 +36,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 from spiffworkflow_backend.specs.start_event import StartEvent
+from spiffworkflow_backend.utils.db_utils import is_mysql_deadlock_error
 
 
 # this custom converter is just so we use 'ServiceTask' as the typename in the serialization
@@ -66,9 +69,17 @@ SPIFF_CONFIG[TypeaheadDataStore] = TypeaheadDataStoreConverter
 #   [spiff_task.workflow.spec.name][spiff_task.task_spec.name]
 
 
+class _BpmnProcessDefinitionLookupAfterInsertOrIgnoreError(RuntimeError):
+    pass
+
+
 class BpmnProcessService:
     wf_spec_converter = BpmnWorkflowSerializer.configure(SPIFF_CONFIG)
     serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION)
+    BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS = 5
+    BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS = 0.05
+    SAVE_TO_DATABASE_MAX_ATTEMPTS = 3
+    SAVE_TO_DATABASE_RETRY_DELAY_SECONDS = 0.05
 
     @classmethod
     def persist_bpmn_process_definition(
@@ -241,76 +252,122 @@ class BpmnProcessService:
         bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
     ) -> None:
-        try:
-            parent_id = None
-            subprocess_ids = []
-            for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
-                bpmn_process_definition = entity["bpmn_process_definition"]
-                bpd_id = 0
-                if bpmn_process_definition.id is None:
-                    bpmn_process_definition_dict = {
-                        "single_process_hash": bpmn_process_definition.single_process_hash,
-                        "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
-                        "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
-                        "bpmn_name": bpmn_process_definition.bpmn_name,
-                        "properties_json": bpmn_process_definition.properties_json,
+        last_retryable_exception: Exception | None = None
+        for attempt in range(cls.SAVE_TO_DATABASE_MAX_ATTEMPTS):
+            try:
+                cls._save_to_database_once(
+                    bpmn_definition_to_task_definitions_mappings,
+                    bpmn_process_definition_parent=bpmn_process_definition_parent,
+                )
+                return
+            except _BpmnProcessDefinitionLookupAfterInsertOrIgnoreError as exception:
+                db.session.rollback()
+                last_retryable_exception = exception
+            except OperationalError as exception:
+                db.session.rollback()
+                if not is_mysql_deadlock_error(exception):
+                    raise
+                last_retryable_exception = exception
+            except Exception:
+                db.session.rollback()
+                raise
+
+            if attempt < cls.SAVE_TO_DATABASE_MAX_ATTEMPTS - 1:
+                time.sleep(cls.SAVE_TO_DATABASE_RETRY_DELAY_SECONDS)
+
+        if last_retryable_exception is not None:
+            raise last_retryable_exception
+
+    @classmethod
+    def _save_to_database_once(
+        cls,
+        bpmn_definition_to_task_definitions_mappings: dict,
+        bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
+    ) -> None:
+        parent_id = None
+        subprocess_ids = []
+        for _bpmn_process_identifier, entity in bpmn_definition_to_task_definitions_mappings.items():
+            bpmn_process_definition = entity["bpmn_process_definition"]
+            bpd_id = 0
+            if bpmn_process_definition.id is None:
+                bpmn_process_definition_dict = {
+                    "single_process_hash": bpmn_process_definition.single_process_hash,
+                    "full_process_model_hash": bpmn_process_definition.full_process_model_hash,
+                    "bpmn_identifier": bpmn_process_definition.bpmn_identifier,
+                    "bpmn_name": bpmn_process_definition.bpmn_name,
+                    "properties_json": bpmn_process_definition.properties_json,
+                    "updated_at_in_seconds": round(time.time()),
+                    "created_at_in_seconds": round(time.time()),
+                }
+                result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
+                if result and result.inserted_primary_key is not None:
+                    inserted_primary_key = result.inserted_primary_key[0]
+                    if inserted_primary_key is not None:
+                        bpd_id = inserted_primary_key
+            if bpd_id == 0:
+                bpdm = cls._lookup_bpmn_process_definition_after_insert_or_ignore(bpmn_process_definition)
+                if bpdm is None:
+                    raise _BpmnProcessDefinitionLookupAfterInsertOrIgnoreError(
+                        "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record "
+                        f"for full_process_model_hash={bpmn_process_definition.full_process_model_hash!r} "
+                        f"and single_process_hash={bpmn_process_definition.single_process_hash!r}."
+                    )
+                bpd_id = bpdm.id
+
+            if bpmn_process_definition_parent is not None:
+                if bpmn_process_definition_parent.bpmn_identifier == _bpmn_process_identifier:
+                    parent_id = bpd_id
+                else:
+                    subprocess_ids.append(bpd_id)
+
+            for identifier, definition in entity.items():
+                if definition.id is None and identifier != "bpmn_process_definition":
+                    task_definition_dict = {
+                        "bpmn_process_definition_id": bpd_id,
+                        "bpmn_identifier": definition.bpmn_identifier,
+                        "bpmn_name": definition.bpmn_name,
+                        "properties_json": definition.properties_json,
+                        "typename": definition.typename,
                         "updated_at_in_seconds": round(time.time()),
                         "created_at_in_seconds": round(time.time()),
                     }
-                    result = BpmnProcessDefinitionModel.insert_or_update_record(bpmn_process_definition_dict)
-                    if result and result.inserted_primary_key is not None:
-                        bpd_id = result.inserted_primary_key[0]
-                if bpd_id == 0:
-                    bpdm = BpmnProcessDefinitionModel.query.filter(
-                        and_(
-                            BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
-                            BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
-                        )
-                    ).first()
-                    if bpdm is None:
-                        raise RuntimeError(
-                            "Failed to look up BpmnProcessDefinitionModel after insert_or_update_record "
-                            f"for full_process_model_hash={bpmn_process_definition.full_process_model_hash!r} "
-                            f"and single_process_hash={bpmn_process_definition.single_process_hash!r}."
-                        )
-                    bpd_id = bpdm.id
+                    TaskDefinitionModel.insert_or_update_record(task_definition_dict)
 
-                if bpmn_process_definition_parent is not None:
-                    if bpmn_process_definition_parent.bpmn_identifier == _bpmn_process_identifier:
-                        parent_id = bpd_id
-                    else:
-                        subprocess_ids.append(bpd_id)
-
-                for identifier, definition in entity.items():
-                    if definition.id is None and identifier != "bpmn_process_definition":
-                        task_definition_dict = {
-                            "bpmn_process_definition_id": bpd_id,
-                            "bpmn_identifier": definition.bpmn_identifier,
-                            "bpmn_name": definition.bpmn_name,
-                            "properties_json": definition.properties_json,
-                            "typename": definition.typename,
-                            "updated_at_in_seconds": round(time.time()),
-                            "created_at_in_seconds": round(time.time()),
-                        }
-                        TaskDefinitionModel.insert_or_update_record(task_definition_dict)
-
-            if parent_id:
-                for bpd_id in subprocess_ids:
-                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
+        if parent_id:
+            for bpd_id in subprocess_ids:
+                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
+                    bpmn_process_definition_parent_id=parent_id,
+                    bpmn_process_definition_child_id=bpd_id,
+                ).first()
+                if bpmn_process_definition_relationship is None:
+                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
                         bpmn_process_definition_parent_id=parent_id,
                         bpmn_process_definition_child_id=bpd_id,
-                    ).first()
-                    if bpmn_process_definition_relationship is None:
-                        bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
-                            bpmn_process_definition_parent_id=parent_id,
-                            bpmn_process_definition_child_id=bpd_id,
-                        )
-                        db.session.add(bpmn_process_definition_relationship)
+                    )
+                    db.session.add(bpmn_process_definition_relationship)
 
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            raise
+        db.session.commit()
+
+    @classmethod
+    def _lookup_bpmn_process_definition_after_insert_or_ignore(
+        cls,
+        bpmn_process_definition: BpmnProcessDefinitionModel,
+    ) -> BpmnProcessDefinitionModel | None:
+        for attempt in range(cls.BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS):
+            db.session.expire_all()
+            bpdm = BpmnProcessDefinitionModel.query.filter(
+                and_(
+                    BpmnProcessDefinitionModel.full_process_model_hash == bpmn_process_definition.full_process_model_hash,
+                    BpmnProcessDefinitionModel.single_process_hash == bpmn_process_definition.single_process_hash,
+                )
+            ).first()
+            if bpdm is not None:
+                return cast(BpmnProcessDefinitionModel, bpdm)
+
+            if attempt < cls.BPMN_PROCESS_DEFINITION_LOOKUP_MAX_ATTEMPTS - 1:
+                time.sleep(cls.BPMN_PROCESS_DEFINITION_LOOKUP_RETRY_DELAY_SECONDS)
+
+        return None
 
     @classmethod
     def extract_human_task_definitions(cls, bpmn_definition_to_task_definitions_mappings: dict) -> list[TaskDefinitionModel]:

@@ -8,8 +8,32 @@ from flask import current_app
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import OperationalError
 
 from spiffworkflow_backend.models.db import db
+
+MYSQL_DUPLICATE_ENTRY_ERROR_CODE = 1062
+MYSQL_DEADLOCK_ERROR_CODE = 1213
+
+
+def dbapi_error_code(exception: Exception) -> int | None:
+    original_exception = getattr(exception, "orig", None)
+    original_args = getattr(original_exception, "args", ())
+    if not original_args:
+        return None
+
+    try:
+        return int(original_args[0])
+    except (TypeError, ValueError):
+        return None
+
+
+def is_mysql_deadlock_error(exception: Exception) -> bool:
+    return (
+        current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql"
+        and isinstance(exception, OperationalError)
+        and dbapi_error_code(exception) == MYSQL_DEADLOCK_ERROR_CODE
+    )
 
 
 def insert_or_ignore_duplicate(
@@ -50,7 +74,7 @@ def insert_or_ignore_duplicate(
                     db.session.execute(mysql_insert(model_class).values(value_dict))
                 except IntegrityError as e:
                     # Check if it's a duplicate key error (errno 1062)
-                    if e.orig.args[0] == 1062:
+                    if dbapi_error_code(e) == MYSQL_DUPLICATE_ENTRY_ERROR_CODE:
                         # Record already exists, this is expected and fine
                         continue
                     # Some other integrity error, re-raise
@@ -63,7 +87,7 @@ def insert_or_ignore_duplicate(
                 return result
             except IntegrityError as e:
                 # Check if it's a duplicate key error (errno 1062)
-                if e.orig.args[0] == 1062:
+                if dbapi_error_code(e) == MYSQL_DUPLICATE_ENTRY_ERROR_CODE:
                     # Record already exists, return None to signal no insert occurred
                     return None
                 # Some other integrity error, re-raise
