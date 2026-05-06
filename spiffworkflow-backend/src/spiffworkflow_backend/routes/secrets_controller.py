@@ -5,6 +5,7 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -58,12 +59,14 @@ def secret_list(
 def secret_create(body: dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
+    db.session.commit()
     return make_response(jsonify(secret_model.to_dict()), 201)
 
 
 def secret_update(key: str, body: dict) -> Response:
     """Update secret."""
     SecretService().update_secret(key, body["value"], g.user.id)
+    db.session.commit()
     return make_response(jsonify({"ok": True}), 200)
 
 
@@ -71,4 +74,5 @@ def secret_delete(key: str) -> Response:
     """Delete secret."""
     current_user = UserService.current_user()
     SecretService.delete_secret(key, current_user.id)
+    db.session.commit()
     return make_response(jsonify({"ok": True}), 200)
