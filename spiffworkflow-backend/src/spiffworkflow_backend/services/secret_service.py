@@ -75,10 +75,7 @@ class SecretService:
             value = cls._encrypt(value)
             secret_model.value = value
             db.session.add(secret_model)
-            try:
-                db.session.flush()
-            except Exception:
-                raise
+            db.session.flush()
         elif create_if_not_exists:
             if user_id is None:
                 raise ApiError(
