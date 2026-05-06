@@ -159,20 +159,20 @@ jobs:
       - name: Remove node_modules
         run: rm -rf node_modules
         working-directory: spiffworkflow-frontend/packages/bpmn-js-spiffworkflow-react
+
       # Build the docker image for testing
       - name: Setup version.json
         run: 'echo ''{"version": "snyk_test"}'' >version_info.json'
-      # - name: Build a Docker image
-      #   run: docker build -t spiffworkflow-frontend/snyk-test .
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Build Docker image
         uses: docker/build-push-action@v7.0.0
         with:
           context: spiffworkflow-frontend
+          load: true
+          platforms: linux/amd64
           push: false # Don't push yet
           tags: spiffworkflow-frontend/snyk-test
-          platforms: linux/amd64
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         # pruning repeated subdependencies because it fails otherwise
