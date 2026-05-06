@@ -3,6 +3,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -10,6 +11,37 @@ from tests.spiffworkflow_backend.integration.test_secret_service import SecretSe
 
 
 class TestSecretsController(SecretServiceTestHelpers):
+    def test_add_secret_api_commits(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        commit_calls: list[None] = []
+        original_commit = db.session.commit
+
+        def recording_commit() -> None:
+            commit_calls.append(None)
+            original_commit()
+
+        monkeypatch.setattr(db.session, "commit", recording_commit)
+
+        secret_model = {
+            "key": self.test_key,
+            "value": self.test_value,
+            "user_id": with_super_admin_user.id,
+        }
+        response = client.post(
+            "/v1.0/secrets",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=secret_model,
+        )
+
+        assert response.status_code == 201
+        assert commit_calls == [None]
+
     def test_add_secret_api(
         self,
         app: Flask,
@@ -96,6 +128,33 @@ class TestSecretsController(SecretServiceTestHelpers):
         secret_model = SecretModel.query.filter(SecretModel.key == self.test_key).first()
         assert SecretService._decrypt(secret_model.value) == "new_secret_value"
 
+    def test_update_secret_api_commits(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.add_test_secret(with_super_admin_user)
+        commit_calls: list[None] = []
+        original_commit = db.session.commit
+
+        def recording_commit() -> None:
+            commit_calls.append(None)
+            original_commit()
+
+        monkeypatch.setattr(db.session, "commit", recording_commit)
+
+        response = client.put(
+            f"/v1.0/secrets/{self.test_key}",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"value": "new_secret_value"},
+        )
+
+        assert response.status_code == 200
+        assert commit_calls == [None]
+
     def test_delete_secret(
         self,
         app: Flask,
@@ -115,6 +174,32 @@ class TestSecretsController(SecretServiceTestHelpers):
         assert secret_response.status_code == 200
         with pytest.raises(ApiError):
             secret = SecretService.get_secret(self.test_key)
+
+    def test_delete_secret_api_commits(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.add_test_secret(with_super_admin_user)
+        commit_calls: list[None] = []
+        original_commit = db.session.commit
+
+        def recording_commit() -> None:
+            commit_calls.append(None)
+            original_commit()
+
+        monkeypatch.setattr(db.session, "commit", recording_commit)
+
+        secret_response = client.delete(
+            f"/v1.0/secrets/{self.test_key}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert secret_response.status_code == 200
+        assert commit_calls == [None]
 
     def test_delete_secret_bad_key(
         self,

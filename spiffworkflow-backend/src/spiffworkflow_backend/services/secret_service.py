@@ -39,9 +39,8 @@ class SecretService:
         secret_model = SecretModel(key=key, value=value, user_id=user_id)
         db.session.add(secret_model)
         try:
-            db.session.commit()
+            db.session.flush()
         except Exception as e:
-            db.session.rollback()
             raise ApiError(
                 error_code="create_secret_error",
                 message=(
@@ -77,10 +76,9 @@ class SecretService:
             secret_model.value = value
             db.session.add(secret_model)
             try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                raise e
+                db.session.flush()
+            except Exception:
+                raise
         elif create_if_not_exists:
             if user_id is None:
                 raise ApiError(
@@ -103,7 +101,7 @@ class SecretService:
         if secret_model:
             db.session.delete(secret_model)
             try:
-                db.session.commit()
+                db.session.flush()
             except Exception as e:
                 raise ApiError(
                     error_code="delete_secret_error",
