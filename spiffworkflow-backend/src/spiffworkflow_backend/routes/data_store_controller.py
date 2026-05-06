@@ -1,5 +1,7 @@
 import json
+from collections.abc import Callable
 from typing import Any
+from typing import TypeAlias
 
 import flask.wrappers
 from flask import g
@@ -7,6 +9,7 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
@@ -19,7 +22,9 @@ from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
-DATA_STORES = {
+DataStoreClass: TypeAlias = type[DataStoreCRUD]
+
+DATA_STORES: dict[str, tuple[DataStoreClass, str]] = {
     "json": (JSONDataStore, "JSON Data Store"),
     "kkv": (KKVDataStore, "Keyed Key-Value Data Store"),
     "typeahead": (TypeaheadDataStore, "Typeahead Data Store"),
@@ -63,37 +68,38 @@ def data_store_types() -> flask.wrappers.Response:
     return make_response(jsonify(data_store_types), 200)
 
 
+def _paginated_response(
+    query: Any,
+    item_mapper: Callable,
+    page: int,
+    per_page: int,
+    paginate: bool,
+) -> flask.wrappers.Response:
+    if paginate:
+        data = query.paginate(page=page, per_page=per_page, error_out=False)
+        results = [item_mapper(item) for item in data.items]
+        pagination = {
+            "count": len(data.items),
+            "total": data.total,
+            "pages": data.pages,
+        }
+    else:
+        items = query.all()
+        results = [item_mapper(item) for item in items]
+        pagination = {"count": len(results), "total": len(results), "pages": 1}
+    return make_response(jsonify({"results": results, "pagination": pagination}), 200)
+
+
 def _build_response(
-    data_store_class: Any,
+    data_store_class: DataStoreClass,
     identifier: str,
     location: str | None,
     page: int,
     per_page: int,
+    paginate: bool,
 ) -> flask.wrappers.Response:
-    data_store_query = data_store_class.get_data_store_query(identifier, location)
-    if per_page == 0:
-        items = data_store_query.all()
-        results = [data_store_class.build_response_item(item) for item in items]
-        response_json = {
-            "results": results,
-            "pagination": {
-                "count": len(results),
-                "total": len(results),
-                "pages": 1,
-            },
-        }
-    else:
-        data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
-        results = [data_store_class.build_response_item(item) for item in data.items]
-        response_json = {
-            "results": results,
-            "pagination": {
-                "count": len(data.items),
-                "total": data.total,
-                "pages": data.pages,
-            },
-        }
-    return make_response(jsonify(response_json), 200)
+    query = data_store_class.get_data_store_query(identifier, location)
+    return _paginated_response(query, data_store_class.build_response_item, page, per_page, paginate)
 
 
 def data_store_item_list(
@@ -104,6 +110,7 @@ def data_store_item_list(
     per_page: int = 100,
     top_level_key: str | None = None,
     secondary_key: str | None = None,
+    paginate: bool = True,
 ) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
 
@@ -118,10 +125,10 @@ def data_store_item_list(
     secondary_key = secondary_key or None
 
     if data_store_type == "kkv":
-        return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page)
+        return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page, paginate)
 
     data_store_class, _ = DATA_STORES[data_store_type]
-    return _build_response(data_store_class, identifier, location, page, per_page)
+    return _build_response(data_store_class, identifier, location, page, per_page, paginate)
 
 
 def _kkv_filtered_items(
@@ -131,6 +138,7 @@ def _kkv_filtered_items(
     secondary_key: str | None,
     page: int,
     per_page: int,
+    paginate: bool,
 ) -> flask.wrappers.Response:
     """Return KKV entries filtered by top_level_key and/or secondary_key."""
     store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
@@ -154,43 +162,14 @@ def _kkv_filtered_items(
         KKVDataStoreEntryModel.id,
     )
 
-    if per_page == 0:
-        items = query.all()
-        results = [
-            {
-                "top_level_key": entry.top_level_key,
-                "secondary_key": entry.secondary_key,
-                "value": entry.value,
-            }
-            for entry in items
-        ]
-        response_json = {
-            "results": results,
-            "pagination": {
-                "count": len(results),
-                "total": len(results),
-                "pages": 1,
-            },
+    def _kkv_item_mapper(entry: KKVDataStoreEntryModel) -> dict:
+        return {
+            "top_level_key": entry.top_level_key,
+            "secondary_key": entry.secondary_key,
+            "value": entry.value,
         }
-    else:
-        data = query.paginate(page=page, per_page=per_page, error_out=False)  # type: ignore[attr-defined]
-        results = [
-            {
-                "top_level_key": entry.top_level_key,
-                "secondary_key": entry.secondary_key,
-                "value": entry.value,
-            }
-            for entry in data.items
-        ]
-        response_json = {
-            "results": results,
-            "pagination": {
-                "count": len(data.items),
-                "total": data.total,
-                "pages": data.pages,
-            },
-        }
-    return make_response(jsonify(response_json), 200)
+
+    return _paginated_response(query, _kkv_item_mapper, page, per_page, paginate)
 
 
 def data_store_clear(
@@ -211,7 +190,7 @@ def data_store_clear(
 
     data_store_class, _ = DATA_STORES[data_store_type]
     data_store_class.clear(identifier, location)
-    return _build_response(data_store_class, identifier, location, page, per_page)
+    return _build_response(data_store_class, identifier, location, page, per_page, paginate=True)
 
 
 def data_store_delete(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:

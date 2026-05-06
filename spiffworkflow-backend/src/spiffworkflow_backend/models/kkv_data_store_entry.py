@@ -13,7 +13,14 @@ from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 @dataclass
 class KKVDataStoreEntryModel(SpiffworkflowBaseDBModel):
     __tablename__ = "kkv_data_store_entry"
-    __table_args__ = (UniqueConstraint("kkv_data_store_id", "top_level_key", "secondary_key", name="_instance_keys_unique"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "kkv_data_store_id",
+            "top_level_key",
+            "secondary_key",
+            name="_instance_keys_unique",
+        ),
+    )
 
     id: int = db.Column(db.Integer, primary_key=True)
     kkv_data_store_id: int = db.Column(ForeignKey(KKVDataStoreModel.id), nullable=False, index=True)  # type: ignore

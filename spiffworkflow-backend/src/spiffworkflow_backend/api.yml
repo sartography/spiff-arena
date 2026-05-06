@@ -3963,7 +3963,7 @@ paths:
     - name: per_page
       in: query
       required: false
-      description: Number of items per page. Defaults to 100. Set to 0 to return all results without pagination.
+      description: Number of items per page. Defaults to 100.
       schema:
         type: integer
     - name: top_level_key
@@ -3978,6 +3978,13 @@ paths:
       description: Filter KKV entries by secondary key (e.g. process model). Can be used alone or with top_level_key.
       schema:
         type: string
+    - name: paginate
+      in: query
+      required: false
+      description: Defaults to true. Pass false to return all entries unpaginated
+      schema:
+        type: boolean
+        default: true
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_item_list
       summary: Returns a paginated list of the contents of a data store.

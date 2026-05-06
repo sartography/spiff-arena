@@ -183,7 +183,7 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert response.json()["pagination"]["total"] == 2
         assert response.json()["pagination"]["pages"] == 2
 
-    def test_per_page_zero_returns_all_results(
+    def test_paginate_false_returns_all_results(
         self,
         app: Flask,
         client: TestClient,
@@ -191,7 +191,7 @@ class TestDataStoreItemListFiltering(BaseTest):
         with_super_admin_user: UserModel,
         with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
-        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&per_page=0"
+        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&paginate=false"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
         assert response.status_code == 200
         results = response.json()["results"]
@@ -199,7 +199,7 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert response.json()["pagination"]["total"] == 5
         assert response.json()["pagination"]["pages"] == 1
 
-    def test_per_page_zero_with_filter(
+    def test_paginate_false_with_filter(
         self,
         app: Flask,
         client: TestClient,
@@ -207,7 +207,7 @@ class TestDataStoreItemListFiltering(BaseTest):
         with_super_admin_user: UserModel,
         with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
-        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&secondary_key=model_a&per_page=0"
+        url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&secondary_key=model_a&paginate=false"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
         assert response.status_code == 200
         results = response.json()["results"]
