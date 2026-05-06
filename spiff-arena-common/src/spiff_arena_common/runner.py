@@ -37,22 +37,22 @@ def spiff_json_object_hook(dct):
     return dct
 
 
-from spiff_arena_common.data_stores import JSONFileDataStore
+from spiff_arena_common.data_stores import JSONFileDataStore  # noqa: E402
 
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException
-from SpiffWorkflow.bpmn.serializer import DefaultRegistry
-from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask
-from SpiffWorkflow.bpmn.parser.util import full_tag
-from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
-from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser
-from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser
-from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser
-from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG
-from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter
-from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ReceiveTask, SendTask, ServiceTask, UserTask
-from SpiffWorkflow.util.task import TaskFilter, TaskState
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # noqa: E402
+from SpiffWorkflow.bpmn.serializer import DefaultRegistry  # noqa: E402
+from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask  # noqa: E402
+from SpiffWorkflow.bpmn.parser.util import full_tag  # noqa: E402
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment  # noqa: E402
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # noqa: E402
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # noqa: E402
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # noqa: E402
+from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser  # noqa: E402
+from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser  # noqa: E402
+from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # noqa: E402
+from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter  # noqa: E402
+from SpiffWorkflow.spiff.specs.defaults import CallActivity, ManualTask, NoneTask, ReceiveTask, SendTask, ServiceTask, UserTask  # noqa: E402
+from SpiffWorkflow.util.task import TaskFilter, TaskState  # noqa: E402
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -96,7 +96,7 @@ class CustomUserTaskConverter(SpiffBpmnTaskConverter):
 
 class CustomReceiveTask(ReceiveTask):
     def _update_hook(self, my_task):
-        # Bypass event waiting — go straight to READY so the UI can show a form
+        my_task._inherit_data()
         return True
 
     def _run(self, my_task):
@@ -485,7 +485,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
     except Exception as e:
         try:
             return build_response(workflow, e, compress_response=compress_response, session_id=session_id)
-        except Exception as e2:
+        except Exception:
             return json.dumps({"status": "error", "message": f"{e}"})
 
 def get_tasks(workflow, task_filter):

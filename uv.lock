@@ -433,8 +433,25 @@ wheels = [
 
 [[package]]
 name = "spiff-arena-common"
-version = "0.1.28"
+version = "0.1.30"
 source = { editable = "spiff-arena-common" }
+
+[package.optional-dependencies]
+test = [
+    { name = "jinja2" },
+    { name = "jsonschema" },
+    { name = "pytest" },
+    { name = "spiffworkflow" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jinja2", marker = "extra == 'test'" },
+    { name = "jsonschema", marker = "extra == 'test'" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "spiffworkflow", marker = "extra == 'test'" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "spiffworkflow"
