@@ -14,6 +14,35 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestServiceTaskRetries(BaseTest):
+    def service_task_specs_in(self, value: object) -> list[dict]:
+        if isinstance(value, dict):
+            matches = []
+            if value.get("bpmn_id") == "ServiceTask_1" and value.get("operation_name") == "http/GetRequest":
+                matches.append(value)
+            for child_value in value.values():
+                matches.extend(self.service_task_specs_in(child_value))
+            return matches
+        if isinstance(value, list):
+            matches = []
+            for child_value in value:
+                matches.extend(self.service_task_specs_in(child_value))
+            return matches
+        return []
+
+    def test_service_task_retry_count_is_serialized(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/retries",
+            bpmn_file_name="retries.bpmn",
+            process_model_source_directory="retries",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+
+        service_task_specs = self.service_task_specs_in(processor.serialize())
+
+        assert len(service_task_specs) == 1
+        assert service_task_specs[0]["retries"] == 3
+
     def test_service_task_retries_on_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/retries",
