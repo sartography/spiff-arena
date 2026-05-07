@@ -70,7 +70,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v6
         with:
-          ref: v2.1.0
+          ref: v2.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Log in to the Container registry
@@ -101,7 +101,7 @@ jobs:
             org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ steps.normalize_branch_name.outputs.normalized_branch_name }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=raw,value=v2.1.0,enable=${{ github.ref_name == 'rebuild-2.1.0' }}
+            type=raw,value=v2.0.0,enable=${{ github.ref_name == 'rebuild-2.0.0' }}
             type=ref,event=branch,branch=main,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
             type=ref,event=tag,enable=true,format={{version}}
