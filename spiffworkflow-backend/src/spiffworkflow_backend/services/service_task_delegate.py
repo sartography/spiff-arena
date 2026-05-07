@@ -9,6 +9,7 @@ from flask import current_app
 from flask import g
 from security import safe_requests  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import EscalationEventDefinition
