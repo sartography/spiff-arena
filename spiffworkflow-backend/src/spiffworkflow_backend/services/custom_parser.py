@@ -23,7 +23,7 @@ class CustomServiceTaskParser(ServiceTaskParser):  # type: ignore[misc]
 
         retries = None
         xpath = xpath_eval(self.node, SPIFFWORKFLOW_NSMAP)
-        retry_elements = xpath("./bpmn:extensionElements/spiffworkflow:retry")
+        retry_elements = xpath("./bpmn:extensionElements/spiffworkflow:serviceTaskOperator/spiffworkflow:retry")
         if retry_elements:
             retries_val = retry_elements[0].get("retries")
             if retries_val:

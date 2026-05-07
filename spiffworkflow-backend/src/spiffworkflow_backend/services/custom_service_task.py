@@ -43,6 +43,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
         # If we succeeded, clear the retry counter if it exists
         spiff_task.data.pop("spiff__retry_count", None)
+        spiff_task.data.pop("spiff__retry_at", None)
 
         return True
 

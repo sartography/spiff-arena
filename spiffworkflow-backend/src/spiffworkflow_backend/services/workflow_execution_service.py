@@ -31,6 +31,7 @@ from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.intermediate_event import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskFilter  # type: ignore
 from SpiffWorkflow.util.task import TaskState
@@ -628,6 +629,7 @@ class WorkflowExecutionService:
                     )
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
+            self.refresh_due_service_task_retries()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
             task_runnability = self.execution_strategy.spiff_run(
@@ -661,6 +663,17 @@ class WorkflowExecutionService:
                     self.process_instance_saver()
                     if should_schedule_waiting_timer_events:
                         self.schedule_waiting_timer_events()
+
+    def refresh_due_service_task_retries(self) -> None:
+        current_time = round(time.time())
+        for spiff_task in self.bpmn_process_instance.get_tasks(state=TaskState.STARTED):
+            if not isinstance(spiff_task.task_spec, ServiceTask):
+                continue
+
+            retry_at = spiff_task.data.get("spiff__retry_at")
+            if retry_at is not None and int(retry_at) <= current_time:
+                spiff_task.data.pop("spiff__retry_at", None)
+                spiff_task._set_state(TaskState.READY)
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs
