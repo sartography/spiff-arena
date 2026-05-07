@@ -672,12 +672,20 @@ class WorkflowExecutionService:
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
         if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
-            waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING, spec_class=CatchingEvent)
-            for spiff_task in waiting_tasks:
-                event = spiff_task.task_spec.event_definition.details(spiff_task)
-                if "Time" in event.event_type:
-                    time_string = event.value
-                    run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+            # Check for waiting tasks AND started service tasks with retry_at
+            relevant_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.STARTED)
+            for spiff_task in relevant_tasks:
+                run_at_in_seconds = None
+                if spiff_task.state == TaskState.WAITING and hasattr(spiff_task.task_spec, "event_definition"):
+                    event = spiff_task.task_spec.event_definition.details(spiff_task)
+                    if "Time" in event.event_type:
+                        time_string = event.value
+                        run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+
+                if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.data:
+                    run_at_in_seconds = spiff_task.data["spiff__retry_at"]
+
+                if run_at_in_seconds is not None:
                     queued_to_run_at_in_seconds = None
                     if self.is_happening_soon(run_at_in_seconds):
                         if queue_future_task_if_appropriate(

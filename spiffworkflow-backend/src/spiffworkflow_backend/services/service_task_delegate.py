@@ -32,7 +32,9 @@ class ConnectorProxyError(Exception):
 
 
 class UncaughtServiceTaskError(Exception):
-    pass
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class Accepted202Exception(Exception):  # noqa N818
@@ -154,6 +156,21 @@ def _log_connector_proxy_exception(
 
 class ServiceTaskDelegate:
     @classmethod
+    def is_transient_error(cls, exception: Exception) -> bool:
+        if isinstance(exception, UncaughtServiceTaskError):
+            status_code = exception.status_code or 500
+            # 5xx are server errors, 429 is too many requests
+            return status_code >= 500 or status_code == 429
+        if isinstance(exception, WorkflowTaskException) and hasattr(exception, "exception") and exception.exception:
+            return cls.is_transient_error(exception.exception)
+        if isinstance(exception, requests.exceptions.RequestException):
+            # Most request exceptions (timeouts, connection errors) are transient
+            # but we exclude some like 4xx errors if they are wrapped here
+            return True
+        # General exceptions are treated as transient for retries if configured
+        return not isinstance(exception, (ValueError, TypeError, KeyError, AttributeError))
+
+    @classmethod
     def handle_template_substitutions(cls, value: Any) -> Any:
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
@@ -227,7 +244,7 @@ class ServiceTaskDelegate:
                 message_from_status_code,
                 f"The original message: {error['message']}",
             ]
-            raise UncaughtServiceTaskError(" ::: ".join(message))
+            raise UncaughtServiceTaskError(" ::: ".join(message), status_code=error["status_code"])
 
     @classmethod
     def check_for_errors(
