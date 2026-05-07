@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from flask.app import Flask
-from SpiffWorkflow.util.task import TaskState
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -24,10 +24,11 @@ class TestServiceTaskRetries(BaseTest):
         processor.bpmn_process_instance.data["process_instance_id"] = process_instance.id
 
         # Mock connector proxy to return a 500 error
-        with patch("requests.post") as mock_post:
-            mock_post.return_value.status_code = 500
-            mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps(
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 500
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
                 {
                     "command_response": {"body": "{}", "http_status": 500},
                     "command_response_version": 2,
@@ -62,10 +63,11 @@ class TestServiceTaskRetries(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.bpmn_process_instance.data["process_instance_id"] = process_instance.id
 
-        with patch("requests.post") as mock_post:
-            mock_post.return_value.status_code = 500
-            mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps(
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 500
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
                 {
                     "command_response": {"body": "{}", "http_status": 500},
                     "command_response_version": 2,
@@ -116,10 +118,11 @@ class TestServiceTaskRetries(BaseTest):
         # ServiceTaskDelegate.check_for_errors will raise UncaughtServiceTaskError for status >= 300
         # unless it is caught by an error event.
         # In our case, 400 is NOT transient according to ServiceTaskDelegate.is_transient_error.
-        with patch("requests.post") as mock_post:
-            mock_post.return_value.status_code = 400
-            mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps(
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 400
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
                 {
                     "command_response": {"body": "{}", "http_status": 400},
                     "command_response_version": 2,

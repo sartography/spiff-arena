@@ -1,8 +1,9 @@
 import contextlib
 from typing import Any
+from typing import cast
 
 from SpiffWorkflow.bpmn.parser.BpmnParser import full_tag  # type: ignore
-from SpiffWorkflow.bpmn.parser.util import xpath_eval
+from SpiffWorkflow.bpmn.parser.util import xpath_eval  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser  # type: ignore
 
@@ -13,8 +14,8 @@ from spiffworkflow_backend.specs.start_event import StartEvent
 SPIFFWORKFLOW_NSMAP = {"spiffworkflow": "http://spiffworkflow.org/bpmn/schema/1.0/core"}
 
 
-class CustomServiceTaskParser(ServiceTaskParser):
-    def create_task(self):
+class CustomServiceTaskParser(ServiceTaskParser):  # type: ignore[misc]
+    def create_task(self) -> CustomServiceTask:
         extensions = self.parse_extensions()
         operator = extensions.get("serviceTaskOperator")
         prescript = extensions.get("preScript")
@@ -29,16 +30,19 @@ class CustomServiceTaskParser(ServiceTaskParser):
                 with contextlib.suppress(ValueError):
                     retries = int(retries_val)
 
-        return self.spec_class(
-            self.spec,
-            self.bpmn_id,
-            operation_name=operator["name"],
-            operation_params=operator["parameters"],
-            result_variable=operator["resultVariable"],
-            prescript=prescript,
-            postscript=postscript,
-            retries=retries,
-            **self.bpmn_attributes,
+        return cast(
+            CustomServiceTask,
+            self.spec_class(
+                self.spec,
+                self.bpmn_id,
+                operation_name=operator["name"],
+                operation_params=operator["parameters"],
+                result_variable=operator["resultVariable"],
+                prescript=prescript,
+                postscript=postscript,
+                retries=retries,
+                **self.bpmn_attributes,
+            ),
         )
 
 
