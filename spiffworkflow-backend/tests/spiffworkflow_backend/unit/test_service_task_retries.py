@@ -6,7 +6,9 @@ import pytest
 from flask.app import Flask
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -109,9 +111,15 @@ class TestServiceTaskRetries(BaseTest):
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
 
+                assert process_instance.spiffworkflow_fully_initialized()
+
+                db.session.expire_all()
+                reloaded_process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).one()
+                processor = ProcessInstanceProcessor(reloaded_process_instance)
                 tasks = processor.bpmn_process_instance.get_tasks()
                 service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
                 assert service_task.state == TaskState.STARTED
+                assert service_task.task_spec.retries == 3
                 assert service_task.data.get("spiff__retry_count") == 2
 
                 service_task.data["spiff__retry_at"] = round(time.time()) - 1
