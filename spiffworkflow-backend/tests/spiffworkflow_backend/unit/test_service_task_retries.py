@@ -11,6 +11,7 @@ from spiffworkflow_backend.services.service_task_delegate import UncaughtService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+
 class TestServiceTaskRetries(BaseTest):
     def test_service_task_retries_on_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
@@ -26,14 +27,16 @@ class TestServiceTaskRetries(BaseTest):
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 500
             mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps({
-                "command_response": {"body": "{}", "http_status": 500},
-                "command_response_version": 2,
-                "error": {"error_code": "HttpError500", "message": "Server Error"},
-            })
+            mock_post.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 500},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError500", "message": "Server Error"},
+                }
+            )
 
             # Mock send_task to avoid RabbitMQ connection errors
-            with patch("celery.current_app.send_task") as mock_send_task:
+            with patch("celery.current_app.send_task"):
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
 
@@ -62,13 +65,15 @@ class TestServiceTaskRetries(BaseTest):
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 500
             mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps({
-                "command_response": {"body": "{}", "http_status": 500},
-                "command_response_version": 2,
-                "error": {"error_code": "HttpError500", "message": "Server Error"},
-            })
+            mock_post.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 500},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError500", "message": "Server Error"},
+                }
+            )
 
-            with patch("celery.current_app.send_task") as mock_send_task:
+            with patch("celery.current_app.send_task"):
                 # First attempt
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
@@ -91,6 +96,7 @@ class TestServiceTaskRetries(BaseTest):
                 # Final attempt - should exhaust retries and raise UncaughtServiceTaskError
                 service_task._set_state(TaskState.READY)
                 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
+
                 with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
                     processor.do_engine_steps(save=True)
 
@@ -108,18 +114,21 @@ class TestServiceTaskRetries(BaseTest):
 
         # Mock connector proxy to return a 400 error (permanent)
         # ServiceTaskDelegate.check_for_errors will raise UncaughtServiceTaskError for status >= 300
-        # unless it is caught by an error event. 
+        # unless it is caught by an error event.
         # In our case, 400 is NOT transient according to ServiceTaskDelegate.is_transient_error.
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 400
             mock_post.return_value.ok = False
-            mock_post.return_value.text = json.dumps({
-                "command_response": {"body": "{}", "http_status": 400},
-                "command_response_version": 2,
-                "error": {"error_code": "HttpError400", "message": "Bad Request"},
-            })
+            mock_post.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 400},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError400", "message": "Bad Request"},
+                }
+            )
 
             from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
+
             with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
                 processor.do_engine_steps(save=True)
 
@@ -127,4 +136,3 @@ class TestServiceTaskRetries(BaseTest):
         service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
         assert service_task.state == TaskState.ERROR
         assert "spiff__retry_count" not in service_task.data
-

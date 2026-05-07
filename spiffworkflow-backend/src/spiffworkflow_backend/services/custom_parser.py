@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any
 
 from SpiffWorkflow.bpmn.parser.BpmnParser import full_tag  # type: ignore
@@ -8,8 +9,6 @@ from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser  # type: igno
 from spiffworkflow_backend.data_stores import register_data_store_classes
 from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.specs.start_event import StartEvent
-
-import contextlib
 
 SPIFFWORKFLOW_NSMAP = {"spiffworkflow": "http://spiffworkflow.org/bpmn/schema/1.0/core"}
 

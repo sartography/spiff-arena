@@ -168,7 +168,7 @@ class ServiceTaskDelegate:
             # but we exclude some like 4xx errors if they are wrapped here
             return True
         # General exceptions are treated as transient for retries if configured
-        return not isinstance(exception, (ValueError, TypeError, KeyError, AttributeError))
+        return not isinstance(exception, ValueError | TypeError | KeyError | AttributeError)
 
     @classmethod
     def handle_template_substitutions(cls, value: Any) -> Any:
