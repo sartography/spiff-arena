@@ -42,8 +42,8 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         spiff_task.data[self.result_variable] = parsed_result
 
         # If we succeeded, clear the retry counter if it exists
-        spiff_task.data.pop("spiff__retry_count", None)
-        spiff_task.data.pop("spiff__retry_at", None)
+        spiff_task.internal_data.pop("spiff__retry_count", None)
+        spiff_task.internal_data.pop("spiff__retry_at", None)
 
         return True
 
@@ -54,15 +54,15 @@ class CustomServiceTask(ServiceTask):  # type: ignore
             return False
 
         # Check retry counter
-        retry_count = spiff_task.data.get("spiff__retry_count", self.retries)
+        retry_count = spiff_task.internal_data.get("spiff__retry_count", self.retries)
         return int(retry_count) > 0
 
     def schedule_retry(self, spiff_task: SpiffTask) -> None:
         if self.retries is None:
             raise ValueError("Cannot schedule a retry without a configured retry count.")
-        current_retry = spiff_task.data.get("spiff__retry_count", self.retries)
+        current_retry = spiff_task.internal_data.get("spiff__retry_count", self.retries)
         next_retry = int(current_retry) - 1
-        spiff_task.data["spiff__retry_count"] = next_retry
+        spiff_task.internal_data["spiff__retry_count"] = next_retry
 
         # Exponential backoff: 2s, 4s, 8s, 16s, ...
         attempt_number = int(self.retries) - int(current_retry)
@@ -74,7 +74,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
             f"Remaining retries: {next_retry}. Backoff delay: {delay}s."
         )
 
-        spiff_task.data["spiff__retry_at"] = run_at
+        spiff_task.internal_data["spiff__retry_at"] = run_at
 
         # Return None to indicate the task is still in progress (STARTED).
         return None

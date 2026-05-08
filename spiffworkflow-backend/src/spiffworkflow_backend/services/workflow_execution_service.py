@@ -670,9 +670,9 @@ class WorkflowExecutionService:
             if not isinstance(spiff_task.task_spec, ServiceTask):
                 continue
 
-            retry_at = spiff_task.data.get("spiff__retry_at")
+            retry_at = spiff_task.internal_data.get("spiff__retry_at")
             if retry_at is not None and int(retry_at) <= current_time:
-                spiff_task.data.pop("spiff__retry_at", None)
+                spiff_task.internal_data.pop("spiff__retry_at", None)
                 spiff_task._set_state(TaskState.READY)
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:
@@ -694,8 +694,8 @@ class WorkflowExecutionService:
                         time_string = event.value
                         run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
 
-                if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.data:
-                    run_at_in_seconds = spiff_task.data["spiff__retry_at"]
+                if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.internal_data:
+                    run_at_in_seconds = spiff_task.internal_data["spiff__retry_at"]
 
                 if run_at_in_seconds is not None:
                     queued_to_run_at_in_seconds = None

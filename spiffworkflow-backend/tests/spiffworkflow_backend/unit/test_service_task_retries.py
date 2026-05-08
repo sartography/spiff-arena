@@ -77,8 +77,8 @@ class TestServiceTaskRetries(BaseTest):
         tasks = processor.bpmn_process_instance.get_tasks()
         service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
         assert service_task.state == TaskState.STARTED
-        assert service_task.data.get("spiff__retry_count") == 2
-        assert "spiff__retry_at" in service_task.data
+        assert service_task.internal_data.get("spiff__retry_count") == 2
+        assert "spiff__retry_at" in service_task.internal_data
 
         # Check if FutureTask was created
         future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
@@ -120,16 +120,16 @@ class TestServiceTaskRetries(BaseTest):
                 service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
                 assert service_task.state == TaskState.STARTED
                 assert service_task.task_spec.retries == 3
-                assert service_task.data.get("spiff__retry_count") == 2
+                assert service_task.internal_data.get("spiff__retry_count") == 2
 
-                service_task.data["spiff__retry_at"] = round(time.time()) - 1
+                service_task.internal_data["spiff__retry_at"] = round(time.time()) - 1
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
 
         assert mock_get.call_count == 2
         assert service_task.state == TaskState.STARTED
-        assert service_task.data.get("spiff__retry_count") == 1
-        assert "spiff__retry_at" in service_task.data
+        assert service_task.internal_data.get("spiff__retry_count") == 1
+        assert "spiff__retry_at" in service_task.internal_data
 
     def test_service_task_fails_after_exhausting_retries(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
@@ -159,19 +159,19 @@ class TestServiceTaskRetries(BaseTest):
                     processor.do_engine_steps(save=True)
                 tasks = processor.bpmn_process_instance.get_tasks()
                 service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
-                assert service_task.data.get("spiff__retry_count") == 2
+                assert service_task.internal_data.get("spiff__retry_count") == 2
 
                 # Second attempt
                 service_task._set_state(TaskState.READY)
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
-                assert service_task.data.get("spiff__retry_count") == 1
+                assert service_task.internal_data.get("spiff__retry_count") == 1
 
                 # Third attempt
                 service_task._set_state(TaskState.READY)
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     processor.do_engine_steps(save=True)
-                assert service_task.data.get("spiff__retry_count") == 0
+                assert service_task.internal_data.get("spiff__retry_count") == 0
 
                 # Final attempt - should exhaust retries and raise UncaughtServiceTaskError
                 service_task._set_state(TaskState.READY)
@@ -216,4 +216,4 @@ class TestServiceTaskRetries(BaseTest):
         tasks = processor.bpmn_process_instance.get_tasks()
         service_task = [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
         assert service_task.state == TaskState.ERROR
-        assert "spiff__retry_count" not in service_task.data
+        assert "spiff__retry_count" not in service_task.internal_data
