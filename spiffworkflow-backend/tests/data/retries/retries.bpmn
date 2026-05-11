@@ -6,7 +6,9 @@
     <bpmn:serviceTask id="ServiceTask_1" name="Service Task 1">
       <bpmn:extensionElements>
         <spiffworkflow:serviceTaskOperator id="http/GetRequest" resultVariable="result">
-          <spiffworkflow:parameter id="url" type="str" value="'http://mock/fail'" />
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="'http://mock/fail'" />
+          </spiffworkflow:parameters>
           <spiffworkflow:retry retries="3" />
         </spiffworkflow:serviceTaskOperator>
       </bpmn:extensionElements>
