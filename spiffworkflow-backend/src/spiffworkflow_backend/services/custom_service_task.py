@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from typing import Any
+from typing import cast
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
@@ -66,7 +67,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
     def _run(self, spiff_task: SpiffTask) -> bool | None:
         try:
-            return super()._run(spiff_task)
+            return cast(bool | None, super()._run(spiff_task))
         except RetryScheduledError:
             spiff_task._set_state(TaskState.STARTED)
             raise
