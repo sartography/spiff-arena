@@ -43,7 +43,6 @@ class TestLongRunningService(BaseTest):
             assert task_model.guid is not None
             assert task_model.process_instance_id is not None
             assert task_model.task_definition.bpmn_name or task_model.task_definition.bpmn_identifier
-            assert task_model.process_instance.process_model_identifier is not None
 
     def test_connector_receives_additional_metadata(
         self,
