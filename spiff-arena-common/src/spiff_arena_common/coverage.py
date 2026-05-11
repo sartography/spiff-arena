@@ -7,8 +7,14 @@ TestCov = namedtuple("TestCov", ["all", "completed", "missing"])
 Tally = namedtuple("Tally", ["completed", "all", "percent"])
 CovTally = namedtuple("CovTally", ["result", "breakdown"])
 
-def cov_tasks(states):
-    for state in states:
+def cov_tasks(test_cases):
+    for test_case in test_cases:
+        state = test_case.state
+        coverage_spec_id = getattr(test_case, "coverage_spec_id", None)
+        if coverage_spec_id:
+            for _, task in state["tasks"].items():
+                if task["state"] == 64:
+                    yield coverage_spec_id, task["task_spec"]
         for _, sp in state["subprocesses"].items():
             id = sp["spec"]
             for _, task in sp["tasks"].items():
@@ -30,11 +36,10 @@ def tally(cov):
     return CovTally(result, breakdown)
 
 def task_coverage(ctx):
-    states = [t.state for t in ctx.test_cases]
     all = {}
     completed = {}
     missing = {}
-    for id, task_id in cov_tasks(states):
+    for id, task_id in cov_tasks(ctx.test_cases):
         if id not in completed:
             completed[id] = set()
         completed[id].add(task_id)

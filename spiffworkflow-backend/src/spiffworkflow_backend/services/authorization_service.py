@@ -148,7 +148,10 @@ class AuthorizationService:
 
     @classmethod
     def permission_assignments_include(
-        cls, permission_assignments: list[PermissionAssignmentModel], permission: str, target_uri: str
+        cls,
+        permission_assignments: list[PermissionAssignmentModel],
+        permission: str,
+        target_uri: str,
     ) -> bool:
         uri_with_percent = re.sub(r"\*", "%", target_uri)
         target_uri_normalized = remove_api_prefix(uri_with_percent)
@@ -647,9 +650,18 @@ class AuthorizationService:
     def set_support_permissions(cls) -> list[PermissionToAssign]:
         """Just like elevated permissions minus access to secrets."""
         permissions_to_assign = cls.set_basic_permissions()
-        for process_instance_action in ["migrate", "resume", "terminate", "suspend", "reset"]:
+        for process_instance_action in [
+            "migrate",
+            "resume",
+            "terminate",
+            "suspend",
+            "reset",
+        ]:
             permissions_to_assign.append(
-                PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")
+                PermissionToAssign(
+                    permission="create",
+                    target_uri=f"/process-instance-{process_instance_action}/*",
+                )
             )
 
         # FIXME: we need to fix so that user that can start a process-model
@@ -682,7 +694,8 @@ class AuthorizationService:
         for permission in ["create", "read", "update", "delete"]:
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
 
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/data-stores/*"))
+        for permission in ["create", "read", "update", "delete"]:
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/data-stores/*"))
         return permissions_to_assign
 
     @classmethod
@@ -848,7 +861,11 @@ class AuthorizationService:
 
         if "groups" in permission_configs:
             for group_identifier, group_config in permission_configs["groups"].items():
-                group_info: GroupPermissionsDict = {"name": group_identifier, "users": [], "permissions": []}
+                group_info: GroupPermissionsDict = {
+                    "name": group_identifier,
+                    "users": [],
+                    "permissions": [],
+                }
                 for username in group_config["users"]:
                     group_info["users"].append(username)
                 group_permissions_by_group[group_identifier] = group_info
@@ -901,7 +918,10 @@ class AuthorizationService:
                     f"ADD PERMISSIONS - Processing {len(group['users'])} users for group: {group_identifier}"
                 )
                 for user_index, username_or_email in enumerate(group["users"]):
-                    if user_model and username_or_email not in [user_model.username, user_model.email]:
+                    if user_model and username_or_email not in [
+                        user_model.username,
+                        user_model.email,
+                    ]:
                         continue
 
                     user_count = len(group["users"])
@@ -910,7 +930,7 @@ class AuthorizationService:
                         f"ADD PERMISSIONS - Processing user {user_num}/{user_count}: "
                         f"{username_or_email} for group: {group_identifier}"
                     )
-                    (wugam, new_user_to_group_identifiers) = UserService.add_user_to_group_or_add_to_waiting(
+                    wugam, new_user_to_group_identifiers = UserService.add_user_to_group_or_add_to_waiting(
                         username_or_email, group_identifier
                     )
                     if wugam is not None:
@@ -1037,7 +1057,11 @@ class AuthorizationService:
         db.session.commit()
 
     @classmethod
-    def refresh_permissions(cls, group_permissions: list[GroupPermissionsDict], group_permissions_only: bool = False) -> None:
+    def refresh_permissions(
+        cls,
+        group_permissions: list[GroupPermissionsDict],
+        group_permissions_only: bool = False,
+    ) -> None:
         """Adds new permission assignments and deletes old ones."""
         groups_count = len(group_permissions)
         current_app.logger.debug(
@@ -1050,7 +1074,10 @@ class AuthorizationService:
             initial_permission_assignments = (
                 PermissionAssignmentModel.query.outerjoin(
                     PrincipalModel,
-                    and_(PrincipalModel.id == PermissionAssignmentModel.principal_id, PrincipalModel.user_id.is_not(None)),
+                    and_(
+                        PrincipalModel.id == PermissionAssignmentModel.principal_id,
+                        PrincipalModel.user_id.is_not(None),
+                    ),
                 )
                 .outerjoin(UserModel, UserModel.id == PrincipalModel.user_id)
                 .filter(or_(UserModel.id.is_(None), UserModel.service != SPIFF_SERVICE_ACCOUNT_AUTH_SERVICE))  # type: ignore

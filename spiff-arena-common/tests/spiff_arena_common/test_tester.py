@@ -2,7 +2,7 @@ import pytest
 
 from spiff_arena_common.coverage import task_coverage
 from spiff_arena_common.runner import specs_from_xml
-from spiff_arena_common.tester import run_tests
+from spiff_arena_common.tester import run_tests, run_tests_with_recordings
 
 ut = ("ut.bpmn", """
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
@@ -188,6 +188,25 @@ spiff_testResult = test()</bpmn:script>
 </bpmn:definitions>
 """)
 
+ut_parent = ("ut_parent.bpmn", """
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Parent" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Parent_Process" name="Parent_Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_Parent">
+      <bpmn:outgoing>Flow_Parent_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:callActivity id="Call_Ut" name="Run UT" calledElement="Process_1770128055928">
+      <bpmn:incoming>Flow_Parent_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_Parent_End</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="EndEvent_Parent">
+      <bpmn:incoming>Flow_Parent_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Parent_Start" sourceRef="StartEvent_Parent" targetRef="Call_Ut" />
+    <bpmn:sequenceFlow id="Flow_Parent_End" sourceRef="Call_Ut" targetRef="EndEvent_Parent" />
+  </bpmn:process>
+</bpmn:definitions>
+""")
+
 @pytest.mark.parametrize(
     "files",
     [
@@ -217,3 +236,147 @@ def test_tester(files):
     assert completed == 3
     assert all == 3
     assert percent == int(100)
+
+
+def test_run_tests_with_recordings_runs_main_file_with_recording_and_schema(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "ut.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "some_field": {"const": "jj"}
+  },
+  "required": ["some_field"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert result.testsRun == 1
+    assert ctx.test_cases[0].wasSuccessful
+
+    _, tally = task_coverage(ctx)
+    ut_tally = tally.breakdown["Process_1770128055928"]
+    assert ut_tally.completed == 3
+    assert ut_tally.all == 3
+    assert ut_tally.percent == 100
+
+
+def test_run_tests_with_recordings_reports_schema_failure(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "wrong"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "ut.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "some_field": {"const": "jj"}
+  },
+  "required": ["some_field"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert not result.wasSuccessful()
+    assert not ctx.test_cases[0].wasSuccessful
+    assert "ut.schema.json" in output
+
+
+def test_run_tests_with_recordings_accepts_artifact_outcome_schema(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "outcome.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "case_id": {"type": "string"},
+    "last_task_data": {
+      "type": "object",
+      "properties": {
+        "some_field": {"const": "jj"}
+      },
+      "required": ["some_field"]
+    }
+  },
+  "required": ["case_id", "last_task_data"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert ctx.test_cases[0].wasSuccessful
+
+
+def test_run_tests_with_recordings_preloads_dependencies_for_call_activities(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    parsed = []
+    for file in [ut_parent, ut]:
+        specs, err = specs_from_xml([file])
+        assert err is None
+        parsed.append((file[0], specs))
+
+    ctx, result, output = run_tests_with_recordings(
+        parsed,
+        [("ut_parent.bpmn", str(recording_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert ctx.test_cases[0].wasSuccessful
