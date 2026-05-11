@@ -544,55 +544,114 @@ class ProcessModelService(FileSystemService):
         return process_groups
 
     @classmethod
+    def _uri_ancestor_prefixes(cls, target_uri: str) -> list[str]:
+        uri_parts = target_uri.rsplit("/", 1)
+        if len(uri_parts) != 2 or uri_parts[1] == "":
+            return [target_uri]
+        base_uri, identifier = uri_parts
+        segments = identifier.split(":")
+        return [f"{base_uri}/{':'.join(segments[0 : index + 1])}" for index in range(len(segments))]
+
+    @classmethod
+    def _modified_group_id_ancestors(cls, modified_group_id: str, include_self: bool = True) -> list[str]:
+        segments = [segment for segment in modified_group_id.split(":") if segment]
+        max_segments = len(segments) if include_self else len(segments) - 1
+        if max_segments <= 0:
+            return []
+        return ["/".join(segments[0 : index + 1]) for index in range(max_segments)]
+
+    @classmethod
+    def _process_group_permission_index(cls, permission_assignments: list, permission_to_check: str) -> dict[str, set[str]]:
+        index: dict[str, set[str]] = {
+            "exact_permit_uris": set(),
+            "wildcard_permit_prefixes": set(),
+            "exact_deny_uris": set(),
+            "wildcard_deny_prefixes": set(),
+            "descendant_permitted_group_ids": set(),
+        }
+
+        for permission_assignment in permission_assignments:
+            if permission_assignment.permission != permission_to_check:
+                continue
+
+            target_uri = permission_assignment.permission_target.uri
+            grant_type = permission_assignment.grant_type
+            is_permit = grant_type == PermitDeny.permit.value
+            is_deny = grant_type == PermitDeny.deny.value
+
+            if target_uri.startswith("/process-groups/"):
+                if target_uri.endswith("%"):
+                    normalized_uri = target_uri.removesuffix("%").removesuffix(":").removesuffix("/")
+                    if is_permit:
+                        index["wildcard_permit_prefixes"].add(normalized_uri)
+                        modified_group_id = normalized_uri.removeprefix("/process-groups/")
+                        index["descendant_permitted_group_ids"].update(
+                            cls._modified_group_id_ancestors(modified_group_id, include_self=True)
+                        )
+                    elif is_deny:
+                        index["wildcard_deny_prefixes"].add(normalized_uri)
+                else:
+                    if is_permit:
+                        index["exact_permit_uris"].add(target_uri)
+                        modified_group_id = target_uri.removeprefix("/process-groups/")
+                        index["descendant_permitted_group_ids"].update(
+                            cls._modified_group_id_ancestors(modified_group_id, include_self=False)
+                        )
+                    elif is_deny:
+                        index["exact_deny_uris"].add(target_uri)
+            elif is_permit and target_uri.startswith("/process-models/"):
+                modified_model_id = target_uri.removeprefix("/process-models/")
+                if ":" in modified_model_id:
+                    parent_group_id = modified_model_id.rsplit(":", 1)[0]
+                    index["descendant_permitted_group_ids"].update(
+                        cls._modified_group_id_ancestors(parent_group_id, include_self=True)
+                    )
+
+        return index
+
+    @classmethod
+    def _permission_index_matches_target_uri(
+        cls, target_uri: str, ancestor_prefixes: list[str], exact_uris: set[str], wildcard_prefixes: set[str]
+    ) -> bool:
+        if target_uri in exact_uris:
+            return True
+        for ancestor_uri in ancestor_prefixes:
+            if ancestor_uri in wildcard_prefixes:
+                return True
+        return False
+
+    @classmethod
     def get_process_groups_user_has_permissions_to(
         cls, process_groups: list[ProcessGroup], permission_assignments: list, permission_to_check: str, permission_base_uri: str
     ) -> list[ProcessGroup]:
-        new_process_group_list = []
-        denied_parent_ids: set[str] = set()
+        permission_index = cls._process_group_permission_index(permission_assignments, permission_to_check)
+        permitted_process_groups = []
         for process_group in process_groups:
             modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group.id)
             target_uri = f"{permission_base_uri}/{modified_process_group_id}"
-            has_permission = AuthorizationService.permission_assignments_include(
-                permission_assignments=permission_assignments,
-                permission=permission_to_check,
+            ancestor_prefixes = cls._uri_ancestor_prefixes(target_uri)
+            has_direct_deny = cls._permission_index_matches_target_uri(
                 target_uri=target_uri,
+                ancestor_prefixes=ancestor_prefixes,
+                exact_uris=permission_index["exact_deny_uris"],
+                wildcard_prefixes=permission_index["wildcard_deny_prefixes"],
             )
-            if not has_permission:
-                for pa in permission_assignments:
-                    if (
-                        pa.permission == permission_to_check
-                        and pa.grant_type == PermitDeny.deny.value
-                        and AuthorizationService.target_uri_matches_actual_uri(pa.permission_target.uri, target_uri)
-                    ):
-                        denied_parent_ids.add(f"{process_group.id}")
-                    elif (
-                        pa.permission == permission_to_check
-                        and pa.grant_type == PermitDeny.permit.value
-                        and (
-                            pa.permission_target.uri.startswith(f"{target_uri}:")
-                            or pa.permission_target.uri.startswith(f"/process-models/{modified_process_group_id}:")
-                        )
-                    ):
-                        has_permission = True
-            if has_permission:
-                new_process_group_list.append(process_group)
+            has_direct_permit = cls._permission_index_matches_target_uri(
+                target_uri=target_uri,
+                ancestor_prefixes=ancestor_prefixes,
+                exact_uris=permission_index["exact_permit_uris"],
+                wildcard_prefixes=permission_index["wildcard_permit_prefixes"],
+            )
+            has_descendant_permit = process_group.id in permission_index["descendant_permitted_group_ids"]
 
-        # remove any process group that also matched a deny permission
-        permitted_process_groups = []
-        for process_group in new_process_group_list:
-            has_denied_permission = False
-            for dpi in denied_parent_ids:
-                if process_group.id.startswith(f"{dpi}:") or process_group.id == dpi:
-                    has_denied_permission = True
-            if not has_denied_permission:
-                permitted_process_groups.append(process_group)
-                permitted_subgroups = cls.get_process_groups_user_has_permissions_to(
+            if (has_direct_permit and not has_direct_deny) or (has_descendant_permit and not has_direct_deny):
+                process_group.process_groups = cls.get_process_groups_user_has_permissions_to(
                     process_groups=process_group.process_groups,
                     permission_assignments=permission_assignments,
                     permission_to_check=permission_to_check,
                     permission_base_uri=permission_base_uri,
                 )
-                process_group.process_groups = permitted_subgroups
+                permitted_process_groups.append(process_group)
 
         return permitted_process_groups
 
