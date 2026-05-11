@@ -10,6 +10,9 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -112,6 +115,15 @@ class TestServiceTaskRetries(BaseTest):
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data.get("spiff__retries_attempted") == 0
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
+
+        task_model = TaskModel.query.filter_by(guid=str(service_task.id)).one()
+        assert task_model.end_in_seconds is None
+
+        completion_event = ProcessInstanceEventModel.query.filter_by(
+            task_guid=str(service_task.id),
+            event_type=ProcessInstanceEventType.task_completed.value,
+        ).first()
+        assert completion_event is None
 
         future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
         assert future_task is not None

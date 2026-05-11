@@ -54,6 +54,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
+from spiffworkflow_backend.services.custom_service_task import RetryScheduledError
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -174,6 +175,26 @@ class ExecutionStrategy:
 
             return spiff_task
 
+    def _run_and_did_complete(
+        self,
+        spiff_task: SpiffTask,
+        app: flask.app.Flask | None = None,
+        user: Any | None = None,
+        process_model_identifier: str | None = None,
+        process_instance_id: int | None = None,
+    ) -> None:
+        try:
+            if app is None:
+                spiff_task.run()
+            else:
+                if process_model_identifier is None or process_instance_id is None:
+                    raise ValueError("process_model_identifier and process_instance_id are required when app is provided.")
+                self._run(spiff_task, app, user, process_model_identifier, process_instance_id)
+        except RetryScheduledError:
+            return
+
+        self.delegate.did_complete_task(spiff_task)
+
     def spiff_run(
         self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
     ) -> TaskRunnability:
@@ -191,8 +212,7 @@ class ExecutionStrategy:
             elif num_steps == 1:
                 spiff_task = engine_steps[0]
                 self.delegate.will_complete_task(spiff_task)
-                spiff_task.run()
-                self.delegate.did_complete_task(spiff_task)
+                self._run_and_did_complete(spiff_task)
             elif num_steps > 1:
                 user = None
                 if hasattr(g, "user"):
@@ -291,6 +311,8 @@ class ExecutionStrategy:
                 try:
                     spiff_task = future.result()
                     completed_tasks.append(spiff_task)
+                except RetryScheduledError:
+                    pass
                 except Exception as exception:
                     failed_task = future_to_task[id(future)]
                     task_info = (
@@ -322,14 +344,13 @@ class ExecutionStrategy:
     ) -> None:
         for spiff_task in engine_steps:
             self.delegate.will_complete_task(spiff_task)
-            self._run(
+            self._run_and_did_complete(
                 spiff_task,
                 current_app._get_current_object(),
                 user,
                 process_instance.process_model_identifier,
                 process_instance.id,
             )
-            self.delegate.did_complete_task(spiff_task)
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):

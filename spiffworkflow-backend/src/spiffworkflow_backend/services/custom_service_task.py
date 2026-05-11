@@ -6,9 +6,14 @@ from typing import Any
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.services.service_task_delegate import Accepted202Exception
 from spiffworkflow_backend.services.service_task_delegate import logger
+
+
+class RetryScheduledError(Exception):
+    """Signals that a service task retry was scheduled and completion should be skipped."""
 
 
 class CustomServiceTask(ServiceTask):  # type: ignore
@@ -45,7 +50,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         except Exception as e:
             if self.retries is not None and self.should_retry(spiff_task, e):
                 self.schedule_retry(spiff_task)
-                return None
+                raise RetryScheduledError from None
 
             logger.exception("Error executing Service Task '%s': %s", self.operation_name, str(e))
             wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
@@ -58,6 +63,13 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         self.clear_retry_state(spiff_task)
 
         return True
+
+    def _run(self, spiff_task: SpiffTask) -> bool | None:
+        try:
+            return super()._run(spiff_task)
+        except RetryScheduledError:
+            spiff_task._set_state(TaskState.STARTED)
+            raise
 
     def clear_retry_state(self, spiff_task: SpiffTask) -> None:
         spiff_task.internal_data.pop(self.RETRIES_ATTEMPTED_KEY, None)
