@@ -11,6 +11,7 @@ from flask import request
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.routes.authentication_controller import verify_token
 from spiffworkflow_backend.services.oauth_service import OAuthService
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -76,4 +77,5 @@ def authentication_callback(
         verify_token(request.args.get("token"), force_run=True)
         response = request.args["response"]
         SecretService.update_secret(f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True)
+    db.session.commit()
     return redirect(f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/configuration")

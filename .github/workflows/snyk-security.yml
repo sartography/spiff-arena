@@ -107,7 +107,7 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.32.6
         with:
           sarif_file: spiffworkflow-backend/snyk-code.sarif
   snyk-frontend:
@@ -137,6 +137,9 @@ jobs:
         with:
           node-version: 18.x
       - run: npm install
+      - name: Install nested BPMN package dependencies
+        run: npm install --ignore-scripts --package-lock=false
+        working-directory: spiffworkflow-frontend/packages/bpmn-js-spiffworkflow-react
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
@@ -150,9 +153,26 @@ jobs:
         # env:
         #   DEBUG: "*snyk*"
 
-        # Build the docker image for testing
-      - name: Build a Docker image
-        run: docker build -t spiffworkflow-frontend/snyk-test .
+      # These are just needed for snyk
+      - name: Remove node_modules
+        run: rm -rf node_modules
+      - name: Remove node_modules
+        run: rm -rf node_modules
+        working-directory: spiffworkflow-frontend/packages/bpmn-js-spiffworkflow-react
+
+      # Build the docker image for testing
+      - name: Setup version.json
+        run: 'echo ''{"version": "snyk_test"}'' >version_info.json'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build Docker image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: spiffworkflow-frontend
+          load: true
+          platforms: linux/amd64
+          push: false # Don't push yet
+          tags: spiffworkflow-frontend/snyk-test
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
         # pruning repeated subdependencies because it fails otherwise
@@ -160,6 +180,6 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.32.6
         with:
           sarif_file: spiffworkflow-frontend/snyk-code.sarif

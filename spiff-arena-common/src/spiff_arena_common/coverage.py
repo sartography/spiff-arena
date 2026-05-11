@@ -20,7 +20,8 @@ def tally(cov):
     all = 0
     breakdown = {}
     for id in cov.all:
-        c = len(cov.completed[id])
+        completed_tasks = cov.completed[id] & cov.all[id]
+        c = len(completed_tasks)
         a = len(cov.all[id])
         breakdown[id] = Tally(c, a, c / a * 100)
         completed += c
@@ -41,7 +42,12 @@ def task_coverage(ctx):
         if id not in completed:
             completed[id] = set()
         spec = json.loads(spec)["spec"]
-        all[id] = set([t for t in spec["task_specs"]])
+        all[id] = set(
+            task_id
+            for task_id, task_spec in spec["task_specs"].items()
+            if task_spec.get("bpmn_id")
+        )
+        completed[id] &= all[id]
         missing[id] = all[id] - completed[id]
 
     cov = TestCov(all, completed, missing)

@@ -10,6 +10,7 @@ from lxml import etree  # type: ignore
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -85,6 +86,56 @@ class TestProcessModelService(BaseTest):
         ]
         assert [group.id for group in permitted_groups[0].process_groups[0].process_groups] == ["root/branch_000/leaf"]
         assert matcher_call_count <= 500
+
+    def test_process_group_delete_bulk_checks_nested_models_for_instances(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.create_process_group("bulk_delete_group")
+
+        nested_models = [
+            SimpleNamespace(id="bulk_delete_group/model_one"),
+            SimpleNamespace(id="bulk_delete_group/model_two"),
+            SimpleNamespace(id="bulk_delete_group/model_three"),
+        ]
+
+        class QueryStub:
+            def __init__(self) -> None:
+                self.filter_call_count = 0
+                self.filtered_identifiers: list[str] = []
+
+            def with_entities(self, *_args: object) -> "QueryStub":
+                return self
+
+            def filter(self, criterion: object) -> "QueryStub":
+                self.filter_call_count += 1
+                right_value = getattr(getattr(criterion, "right", None), "value", None)
+                if isinstance(right_value, list):
+                    self.filtered_identifiers = right_value
+                elif right_value is not None:
+                    self.filtered_identifiers = [right_value]
+                return self
+
+            def all(self) -> list[tuple[str]]:
+                if "bulk_delete_group/model_two" in self.filtered_identifiers:
+                    return [("bulk_delete_group/model_two",)]
+                return []
+
+        query_stub = QueryStub()
+        monkeypatch.setattr(ProcessModelService, "_ProcessModelService__get_all_nested_models", lambda _path: nested_models)
+        monkeypatch.setattr(
+            __import__("spiffworkflow_backend.models.process_instance", fromlist=["ProcessInstanceModel"]).ProcessInstanceModel,
+            "query",
+            query_stub,
+        )
+
+        with pytest.raises(ProcessModelWithInstancesNotDeletableError, match="bulk_delete_group"):
+            ProcessModelService.process_group_delete("bulk_delete_group")
+
+        assert query_stub.filter_call_count == 1
+        assert query_stub.filtered_identifiers == [model.id for model in nested_models]
 
     def test_can_update_specified_attributes(
         self,

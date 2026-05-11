@@ -754,12 +754,18 @@ class ProcessModelService(FileSystemService):
         path = cls.full_path_from_id(process_group_id)
         if os.path.exists(path):
             nested_models = cls.__get_all_nested_models(path)
-            for process_model in nested_models:
-                instances = ProcessInstanceModel.query.filter(
-                    ProcessInstanceModel.process_model_identifier == process_model.id
-                ).all()
-                if len(instances) > 0:
-                    problem_models.append(process_model)
+            nested_model_identifiers = [process_model.id for process_model in nested_models]
+            models_with_instances: set[str] = set()
+            if nested_model_identifiers:
+                process_model_identifier_column: Any = ProcessInstanceModel.process_model_identifier
+                instance_rows = (
+                    ProcessInstanceModel.query.with_entities(process_model_identifier_column)
+                    .filter(process_model_identifier_column.in_(nested_model_identifiers))
+                    .all()
+                )
+                models_with_instances = {instance_row[0] for instance_row in instance_rows}
+
+            problem_models = [process_model for process_model in nested_models if process_model.id in models_with_instances]
             if len(problem_models) > 0:
                 raise ProcessModelWithInstancesNotDeletableError(
                     f"We cannot delete the group `{process_group_id}`, there are"
