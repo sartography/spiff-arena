@@ -8,7 +8,9 @@ from flask import Flask
 from flask import g
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -25,19 +27,23 @@ class TestLongRunningService(BaseTest):
         user: UserModel,
         expected_count: int,
     ) -> None:
-        """Call the tasks/service-tasks-awaiting-callback endpoint and assert the expected number of tasks are returned."""
-        response = client.get(
-            "/v1.0/tasks/service-tasks-awaiting-callback",
-            headers=self.logged_in_headers(user),
+        task_models = (
+            TaskModel.query.join(TaskDefinitionModel)
+            .join(ProcessInstanceModel)
+            .filter(
+                TaskModel.state == "STARTED",
+                TaskDefinitionModel.typename == "ServiceTask",
+                ProcessInstanceModel.process_initiator_id == user.id,
+                ProcessInstanceModel.status == "waiting",
+            )
+            .all()
         )
-        assert response.status_code == 200
-        response_json = response.json()
-        assert response_json["pagination"]["total"] == expected_count
-        for r in response_json["results"]:
-            assert r["id"] is not None
-            assert r["process_instance_id"] is not None
-            assert r["title"] is not None
-            assert r["process_model_identifier"] is not None
+        assert len(task_models) == expected_count
+        for task_model in task_models:
+            assert task_model.guid is not None
+            assert task_model.process_instance_id is not None
+            assert task_model.task_definition.bpmn_name or task_model.task_definition.bpmn_identifier
+            assert task_model.process_instance.process_model_identifier is not None
 
     def test_connector_receives_additional_metadata(
         self,

@@ -228,63 +228,6 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
     return _get_tasks(page=page, per_page=per_page)
 
 
-def service_task_list_awaiting_callback(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    user_id = g.user.id
-    task_models = (
-        db.session.query(TaskModel)  # type: ignore
-        .join(TaskDefinitionModel)
-        .join(ProcessInstanceModel)
-        .filter(
-            TaskModel.state == "STARTED",
-            TaskDefinitionModel.typename == "ServiceTask",
-            ProcessInstanceModel.process_initiator_id == user_id,
-            ProcessInstanceModel.status == "waiting",
-        )
-        .add_columns(
-            TaskModel.guid,
-            TaskModel.state,
-            TaskModel.process_instance_id,
-            TaskDefinitionModel.bpmn_name.label("task_name"),  # type: ignore
-            TaskDefinitionModel.bpmn_identifier,
-            TaskDefinitionModel.typename,
-            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_model_display_name,
-        )
-        .order_by(
-            desc(TaskModel.process_instance_id)  # type: ignore
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    results = []
-    for row in task_models.items:
-        results.append(
-            {
-                "id": row.guid,
-                "name": row.bpmn_identifier,
-                "title": row.task_name or row.bpmn_identifier,
-                "type": row.typename,
-                "state": row.state,
-                "process_instance_id": row.process_instance_id,
-                "process_instance_status": row.process_instance_status,
-                "process_model_identifier": row.process_model_identifier,
-                "process_model_display_name": row.process_model_display_name,
-            }
-        )
-
-    response_json = {
-        "results": results,
-        "pagination": {
-            "count": len(task_models.items),
-            "total": task_models.total,
-            "pages": task_models.pages,
-        },
-    }
-
-    return make_response(jsonify(response_json), 200)
-
-
 # DEPRECATED: used to drive old homepage
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     return _get_tasks(
