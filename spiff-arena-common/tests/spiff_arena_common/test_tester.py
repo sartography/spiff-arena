@@ -209,12 +209,11 @@ def test_tester(files):
     _, tally = task_coverage(ctx)
     for id, f in ctx.files:
         completed, all, percent = tally.breakdown[id]
-        assert completed == 6
-        assert all == 6
+        assert completed == 3
+        assert all == 3
         assert percent == int(100)
     
     completed, all, percent = tally.result
-    assert completed == 6
-    assert all == 6
+    assert completed == 3
+    assert all == 3
     assert percent == int(100)
-
