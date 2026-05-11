@@ -188,6 +188,25 @@ spiff_testResult = test()</bpmn:script>
 </bpmn:definitions>
 """)
 
+ut_parent = ("ut_parent.bpmn", """
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Parent" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Parent_Process" name="Parent_Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_Parent">
+      <bpmn:outgoing>Flow_Parent_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:callActivity id="Call_Ut" name="Run UT" calledElement="Process_1770128055928">
+      <bpmn:incoming>Flow_Parent_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_Parent_End</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="EndEvent_Parent">
+      <bpmn:incoming>Flow_Parent_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Parent_Start" sourceRef="StartEvent_Parent" targetRef="Call_Ut" />
+    <bpmn:sequenceFlow id="Flow_Parent_End" sourceRef="Call_Ut" targetRef="EndEvent_Parent" />
+  </bpmn:process>
+</bpmn:definitions>
+""")
+
 @pytest.mark.parametrize(
     "files",
     [
@@ -293,3 +312,71 @@ def test_run_tests_with_recordings_reports_schema_failure(tmp_path):
     assert not result.wasSuccessful()
     assert not ctx.test_cases[0].wasSuccessful
     assert "ut.schema.json" in output
+
+
+def test_run_tests_with_recordings_accepts_artifact_outcome_schema(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "outcome.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "case_id": {"type": "string"},
+    "last_task_data": {
+      "type": "object",
+      "properties": {
+        "some_field": {"const": "jj"}
+      },
+      "required": ["some_field"]
+    }
+  },
+  "required": ["case_id", "last_task_data"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert ctx.test_cases[0].wasSuccessful
+
+
+def test_run_tests_with_recordings_preloads_dependencies_for_call_activities(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    parsed = []
+    for file in [ut_parent, ut]:
+        specs, err = specs_from_xml([file])
+        assert err is None
+        parsed.append((file[0], specs))
+
+    ctx, result, output = run_tests_with_recordings(
+        parsed,
+        [("ut_parent.bpmn", str(recording_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert ctx.test_cases[0].wasSuccessful
