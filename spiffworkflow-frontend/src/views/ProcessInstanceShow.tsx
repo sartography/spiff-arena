@@ -43,6 +43,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Alert,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -1513,6 +1514,67 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
+  const taskRetryDetails = (task: BasicTask) => {
+    const retryCount = task.properties_json.internal_data?.spiff__retry_count;
+    const retryAt = task.properties_json.internal_data?.spiff__retry_at;
+    const configuredRetries = task.task_definition_properties_json.retries;
+
+    if (typeof retryCount === 'undefined' && typeof retryAt === 'undefined') {
+      return null;
+    }
+
+    const retryAtInSeconds =
+      typeof retryAt === 'undefined' ? null : Number(retryAt);
+    const formattedRetryAt =
+      retryAtInSeconds === null || Number.isNaN(retryAtInSeconds)
+        ? null
+        : DateAndTimeService.convertSecondsToFormattedDateTime(
+            retryAtInSeconds,
+          );
+    const retryCountNumber =
+      typeof retryCount === 'undefined' ? null : Number(retryCount);
+    const hasRetryAttemptsRemaining =
+      retryCountNumber !== null &&
+      !Number.isNaN(retryCountNumber) &&
+      retryCountNumber > 0;
+
+    return (
+      <Alert severity="info" className="with-tiny-bottom-margin">
+        <Typography variant="subtitle2" component="div">
+          {t('task_retry_scheduled')}
+        </Typography>
+        <dl>
+          <Typography component="dt" variant="subtitle2">
+            {t('retries_remaining')}:
+          </Typography>
+          <Typography component="dd" variant="body2">
+            {retryCount ?? 'N/A'}
+          </Typography>
+        </dl>
+        {typeof configuredRetries !== 'undefined' ? (
+          <dl>
+            <Typography component="dt" variant="subtitle2">
+              {t('configured_retries')}:
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {configuredRetries}
+            </Typography>
+          </dl>
+        ) : null}
+        {hasRetryAttemptsRemaining && formattedRetryAt ? (
+          <dl>
+            <Typography component="dt" variant="subtitle2">
+              {t('next_retry_attempt')}:
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {formattedRetryAt}
+            </Typography>
+          </dl>
+        ) : null}
+      </Alert>
+    );
+  };
+
   const switchToTask = (
     taskGuid: string,
     taskListToUse: BasicTask[] | null,
@@ -1745,6 +1807,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <br />
             </div>
           ) : null}
+          {taskRetryDetails(taskToDisplay)}
           <br />
           {taskActionDetails()}
           {taskInstanceSelector()}

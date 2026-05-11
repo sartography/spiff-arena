@@ -59,6 +59,11 @@ export interface RecentProcessModel {
 export interface TaskPropertiesJson {
   parent: string;
   last_state_change: number;
+  internal_data?: {
+    spiff__retry_at?: number | string;
+    spiff__retry_count?: number | string;
+    [key: string]: any;
+  };
 }
 
 export interface EventDefinition {
@@ -72,6 +77,7 @@ export interface EventDefinition {
 export interface TaskDefinitionPropertiesJson {
   spec: string;
   event_definition: EventDefinition;
+  retries?: number;
 }
 
 export interface SignalButton {
