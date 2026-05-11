@@ -12,9 +12,23 @@ from spiffworkflow_backend.services.service_task_delegate import logger
 
 
 class CustomServiceTask(ServiceTask):  # type: ignore
-    def __init__(self, *args: Any, retries: int | None = None, **kwargs: Any) -> None:
+    DEFAULT_RETRY_BACKOFF_BASE = 3
+    RETRIES_ATTEMPTED_KEY = "spiff__retries_attempted"
+    RETRY_AT_KEY = "spiff__retry_at"
+
+    def __init__(
+        self,
+        *args: Any,
+        retries: int | None = None,
+        retry_backoff_base: int | None = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.retries = retries
+        resolved_retry_backoff_base = self.DEFAULT_RETRY_BACKOFF_BASE if retry_backoff_base is None else int(retry_backoff_base)
+        if resolved_retry_backoff_base < 1:
+            raise ValueError("retry_backoff_base must be a positive integer.")
+        self.retry_backoff_base = resolved_retry_backoff_base
 
     def _execute(self, spiff_task: SpiffTask) -> bool | None:
         def evaluate(param: dict) -> dict:
@@ -41,40 +55,54 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         parsed_result = json.loads(result)
         spiff_task.data[self.result_variable] = parsed_result
 
-        # If we succeeded, clear the retry counter if it exists
-        spiff_task.internal_data.pop("spiff__retry_count", None)
-        spiff_task.internal_data.pop("spiff__retry_at", None)
+        self.clear_retry_state(spiff_task)
 
         return True
+
+    def clear_retry_state(self, spiff_task: SpiffTask) -> None:
+        spiff_task.internal_data.pop(self.RETRIES_ATTEMPTED_KEY, None)
+        spiff_task.internal_data.pop(self.RETRY_AT_KEY, None)
+
+    def get_retries_attempted(self, spiff_task: SpiffTask) -> int:
+        retry_attempts = spiff_task.internal_data.get(self.RETRIES_ATTEMPTED_KEY)
+        if retry_attempts is not None:
+            normalized_retry_attempts = int(retry_attempts)
+            spiff_task.internal_data[self.RETRIES_ATTEMPTED_KEY] = normalized_retry_attempts
+            return normalized_retry_attempts
+        return 0
+
+    def consume_scheduled_retry(self, spiff_task: SpiffTask) -> None:
+        spiff_task.internal_data[self.RETRIES_ATTEMPTED_KEY] = self.get_retries_attempted(spiff_task) + 1
+        spiff_task.internal_data.pop(self.RETRY_AT_KEY, None)
 
     def should_retry(self, spiff_task: SpiffTask, exception: Exception) -> bool:
         from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 
         if not ServiceTaskDelegate.is_transient_error(exception):
             return False
+        if self.retries is None:
+            return False
 
-        # Check retry counter
-        retry_count = spiff_task.internal_data.get("spiff__retry_count", self.retries)
-        return int(retry_count) > 0
+        return self.get_retries_attempted(spiff_task) < int(self.retries)
 
     def schedule_retry(self, spiff_task: SpiffTask) -> None:
         if self.retries is None:
             raise ValueError("Cannot schedule a retry without a configured retry count.")
-        current_retry = spiff_task.internal_data.get("spiff__retry_count", self.retries)
-        next_retry = int(current_retry) - 1
-        spiff_task.internal_data["spiff__retry_count"] = next_retry
 
-        # Exponential backoff: 2s, 4s, 8s, 16s, ...
-        attempt_number = int(self.retries) - int(current_retry)
-        delay = 2 ** (attempt_number + 1)
+        retries_attempted = self.get_retries_attempted(spiff_task)
+        next_retry_number = retries_attempted + 1
+        delay = self.retry_backoff_base**next_retry_number
         run_at = round(time.time() + delay)
 
         logger.info(
             f"Scheduling retry for Service Task '{self.operation_name}' (task_id: {spiff_task.id}). "
-            f"Remaining retries: {next_retry}. Backoff delay: {delay}s."
+            f"Retry #{next_retry_number} scheduled. "
+            f"Retries remaining: {max(int(self.retries) - retries_attempted, 0)}. "
+            f"Backoff delay: {delay}s."
         )
 
-        spiff_task.internal_data["spiff__retry_at"] = run_at
+        spiff_task.internal_data[self.RETRIES_ATTEMPTED_KEY] = retries_attempted
+        spiff_task.internal_data[self.RETRY_AT_KEY] = run_at
 
         # Return None to indicate the task is still in progress (STARTED).
         return None

@@ -53,6 +53,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
+from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -672,7 +673,10 @@ class WorkflowExecutionService:
 
             retry_at = spiff_task.internal_data.get("spiff__retry_at")
             if retry_at is not None and int(retry_at) <= current_time:
-                spiff_task.internal_data.pop("spiff__retry_at", None)
+                if isinstance(spiff_task.task_spec, CustomServiceTask):
+                    spiff_task.task_spec.consume_scheduled_retry(spiff_task)
+                else:
+                    spiff_task.internal_data.pop("spiff__retry_at", None)
                 spiff_task._set_state(TaskState.READY)
 
     def is_happening_soon(self, time_in_seconds: int) -> bool:

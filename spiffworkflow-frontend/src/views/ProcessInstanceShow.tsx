@@ -1515,11 +1515,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const taskRetryDetails = (task: BasicTask) => {
-    const retryCount = task.properties_json.internal_data?.spiff__retry_count;
     const retryAt = task.properties_json.internal_data?.spiff__retry_at;
+    const retriesAttempted =
+      task.properties_json.internal_data?.spiff__retries_attempted;
     const configuredRetries = task.task_definition_properties_json.retries;
 
-    if (typeof retryCount === 'undefined' && typeof retryAt === 'undefined') {
+    if (
+      typeof retriesAttempted === 'undefined' &&
+      typeof retryAt === 'undefined'
+    ) {
       return null;
     }
 
@@ -1531,24 +1535,41 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         : DateAndTimeService.convertSecondsToFormattedDateTime(
             retryAtInSeconds,
           );
-    const retryCountNumber =
-      typeof retryCount === 'undefined' ? null : Number(retryCount);
-    const hasRetryAttemptsRemaining =
-      retryCountNumber !== null &&
-      !Number.isNaN(retryCountNumber) &&
-      retryCountNumber > 0;
+    const configuredRetriesNumber =
+      typeof configuredRetries === 'undefined'
+        ? null
+        : Number(configuredRetries);
+    const retriesAttemptedNumber =
+      typeof retriesAttempted === 'undefined' ? null : Number(retriesAttempted);
+    const normalizedRetriesAttempted =
+      retriesAttemptedNumber === null || Number.isNaN(retriesAttemptedNumber)
+        ? null
+        : Math.max(0, retriesAttemptedNumber);
+    const retriesRemaining =
+      normalizedRetriesAttempted === null ||
+      configuredRetriesNumber === null ||
+      Number.isNaN(configuredRetriesNumber)
+        ? null
+        : Math.max(configuredRetriesNumber - normalizedRetriesAttempted, 0);
+    const nextRetryNumber =
+      formattedRetryAt &&
+      normalizedRetriesAttempted !== null &&
+      retriesRemaining !== null &&
+      retriesRemaining > 0
+        ? normalizedRetriesAttempted + 1
+        : null;
 
     return (
       <Alert severity="info" className="with-tiny-bottom-margin">
         <Typography variant="subtitle2" component="div">
-          {t('task_retry_scheduled')}
+          {t('task_retry_details')}
         </Typography>
         <dl>
           <Typography component="dt" variant="subtitle2">
             {t('retries_remaining')}:
           </Typography>
           <Typography component="dd" variant="body2">
-            {retryCount ?? 'N/A'}
+            {retriesRemaining ?? 'N/A'}
           </Typography>
         </dl>
         {typeof configuredRetries !== 'undefined' ? (
@@ -1561,7 +1582,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Typography>
           </dl>
         ) : null}
-        {hasRetryAttemptsRemaining && formattedRetryAt ? (
+        {nextRetryNumber !== null ? (
+          <dl>
+            <Typography component="dt" variant="subtitle2">
+              {t('next_retry_number')}:
+            </Typography>
+            <Typography component="dd" variant="body2">
+              {nextRetryNumber}
+            </Typography>
+          </dl>
+        ) : null}
+        {formattedRetryAt ? (
           <dl>
             <Typography component="dt" variant="subtitle2">
               {t('next_retry_attempt')}:

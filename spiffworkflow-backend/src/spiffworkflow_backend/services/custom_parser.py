@@ -22,6 +22,7 @@ class CustomServiceTaskParser(ServiceTaskParser):  # type: ignore[misc]
         postscript = extensions.get("postScript")
 
         retries = None
+        retry_backoff_base = None
         xpath = xpath_eval(self.node, SPIFFWORKFLOW_NSMAP)
         retry_elements = xpath("./bpmn:extensionElements/spiffworkflow:serviceTaskOperator/spiffworkflow:retry")
         if retry_elements:
@@ -29,6 +30,12 @@ class CustomServiceTaskParser(ServiceTaskParser):  # type: ignore[misc]
             if retries_val:
                 with contextlib.suppress(ValueError):
                     retries = int(retries_val)
+            retry_backoff_base_val = retry_elements[0].get("backoff_base")
+            if retry_backoff_base_val:
+                with contextlib.suppress(ValueError):
+                    parsed_retry_backoff_base = int(retry_backoff_base_val)
+                    if parsed_retry_backoff_base > 0:
+                        retry_backoff_base = parsed_retry_backoff_base
 
         return cast(
             CustomServiceTask,
@@ -41,6 +48,7 @@ class CustomServiceTaskParser(ServiceTaskParser):  # type: ignore[misc]
                 prescript=prescript,
                 postscript=postscript,
                 retries=retries,
+                retry_backoff_base=retry_backoff_base,
                 **self.bpmn_attributes,
             ),
         )
