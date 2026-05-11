@@ -1551,27 +1551,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       Number.isNaN(configuredRetriesNumber)
         ? null
         : Math.max(configuredRetriesNumber - normalizedRetriesAttempted, 0);
-    const nextRetryNumber =
-      formattedRetryAt &&
-      normalizedRetriesAttempted !== null &&
-      retriesRemaining !== null &&
-      retriesRemaining > 0
-        ? normalizedRetriesAttempted + 1
-        : null;
 
     return (
       <Alert severity="info" className="with-tiny-bottom-margin">
         <Typography variant="subtitle2" component="div">
           {t('task_retry_details')}
         </Typography>
-        <dl>
-          <Typography component="dt" variant="subtitle2">
-            {t('retries_remaining')}:
-          </Typography>
-          <Typography component="dd" variant="body2">
-            {retriesRemaining ?? 'N/A'}
-          </Typography>
-        </dl>
         {typeof configuredRetries !== 'undefined' ? (
           <dl>
             <Typography component="dt" variant="subtitle2">
@@ -1582,16 +1567,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Typography>
           </dl>
         ) : null}
-        {nextRetryNumber !== null ? (
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('next_retry_number')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              {nextRetryNumber}
-            </Typography>
-          </dl>
-        ) : null}
+        <dl>
+          <Typography component="dt" variant="subtitle2">
+            {t('retries_remaining')}:
+          </Typography>
+          <Typography component="dd" variant="body2">
+            {retriesRemaining ?? 'N/A'}
+          </Typography>
+        </dl>
         {formattedRetryAt ? (
           <dl>
             <Typography component="dt" variant="subtitle2">
