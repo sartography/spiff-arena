@@ -42,7 +42,11 @@ def task_coverage(ctx):
         if id not in completed:
             completed[id] = set()
         spec = json.loads(spec)["spec"]
-        all[id] = set([t for t in spec["task_specs"]])
+        all[id] = set(
+            task_id
+            for task_id, task_spec in spec["task_specs"].items()
+            if task_spec.get("bpmn_id")
+        )
         completed[id] &= all[id]
         missing[id] = all[id] - completed[id]
 

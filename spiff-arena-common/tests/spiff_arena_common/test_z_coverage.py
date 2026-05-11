@@ -103,3 +103,42 @@ def test_task_coverage_ignores_subprocess_tasks_completed_in_parent_state():
     parent_tally = tally.breakdown["Parent"]
     assert parent_tally.completed == parent_tally.all
     assert parent_tally.percent == 100
+
+
+def test_task_coverage_counts_only_task_specs_with_bpmn_ids():
+    class FakeTestCase:
+        state = {
+            "subprocesses": {
+                "fake": {
+                    "spec": "FakeProcess",
+                    "tasks": {
+                        "generated": {"state": 64, "task_spec": "Start"},
+                        "real": {"state": 64, "task_spec": "Task_One"},
+                    },
+                },
+            },
+        }
+
+    class FakeContext:
+        test_cases = [FakeTestCase()]
+        specs = {
+            "FakeProcess": """
+                {
+                    "spec": {
+                        "task_specs": {
+                            "Start": {"bpmn_id": null},
+                            "Task_One": {"bpmn_id": "Task_One"},
+                            "Task_Two": {"bpmn_id": "Task_Two"}
+                        }
+                    }
+                }
+            """,
+        }
+
+    cov, tally = task_coverage(FakeContext())
+
+    assert cov.all["FakeProcess"] == {"Task_One", "Task_Two"}
+    assert cov.completed["FakeProcess"] == {"Task_One"}
+    assert cov.missing["FakeProcess"] == {"Task_Two"}
+    assert tally.breakdown["FakeProcess"].completed == 1
+    assert tally.breakdown["FakeProcess"].all == 2
