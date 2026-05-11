@@ -121,23 +121,18 @@ class BpmnRecordingTestCase(unittest.TestCase):
         self.specs = json.dumps(self.specs, cls=SpiffJsonEncoder)
 
     def _workflow_data(self, response):
-        completed = response.get("completed")
-        if completed:
-            self.assertIn("result", response)
-            return response["result"]
-
-        self.assertIn("pending_tasks", response)
-        pending = response["pending_tasks"]
-        if len(pending) == 0:
+        if not response.get("completed"):
             error_msg = f"Test file: {self.file}\n"
-            error_msg += "Expected pending tasks but found none (workflow not completed but stuck).\n"
+            error_msg += f"Recording file: {self.recording_file}\n"
+            error_msg += "Recording workflow did not complete.\n"
             response_copy = dict(response)
             if "state" in response_copy:
                 del response_copy["state"]
             error_msg += f"Response:\n{json.dumps(response_copy, indent=2)}\n"
             self.fail(error_msg)
-        self.assertIn("data", pending[0])
-        return pending[0]["data"]
+
+        self.assertIn("result", response)
+        return response["result"]
 
     def _validate_schema(self, data):
         if not self.schema_file:
