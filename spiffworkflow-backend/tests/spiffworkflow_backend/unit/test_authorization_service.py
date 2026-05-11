@@ -97,9 +97,15 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = sorted(
             [
-                ("/event-error-details/some-process-group:some-process-model:*", "read"),
+                (
+                    "/event-error-details/some-process-group:some-process-model:*",
+                    "read",
+                ),
                 ("/logs/some-process-group:some-process-model:*", "read"),
-                ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
+                (
+                    "/logs/typeahead-filter-values/some-process-group:some-process-model:*",
+                    "read",
+                ),
                 ("/message-models/some-process-group:some-process-model:*", "read"),
                 ("/all-message-models/some-process-group:some-process-model:*", "read"),
                 ("/process-data/some-process-group:some-process-model:*", "read"),
@@ -131,15 +137,39 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model:*",
                     "delete",
                 ),
-                ("/process-instance-events/some-process-group:some-process-model:*", "read"),
-                ("/process-instance-run/some-process-group:some-process-model:*", "create"),
-                ("/process-instances/for-me/some-process-group:some-process-model:*", "read"),
+                (
+                    "/process-instance-events/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
+                    "/process-instance-run/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-instances/for-me/some-process-group:some-process-model:*",
+                    "read",
+                ),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
-                ("/process-model-import/some-process-group:some-process-model:*", "create"),
-                ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
-                ("/process-model-publish/some-process-group:some-process-model:*", "create"),
-                ("/process-model-tests/create/some-process-group:some-process-model:*", "create"),
-                ("/process-model-tests/run/some-process-group:some-process-model:*", "create"),
+                (
+                    "/process-model-import/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-model-natural-language/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-model-publish/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-model-tests/create/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-model-tests/run/some-process-group:some-process-model:*",
+                    "create",
+                ),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
@@ -161,7 +191,10 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = sorted(
             [
-                ("/event-error-details/some-process-group:some-process-model:*", "read"),
+                (
+                    "/event-error-details/some-process-group:some-process-model:*",
+                    "read",
+                ),
                 (
                     "/logs/some-process-group:some-process-model:*",
                     "read",
@@ -174,13 +207,22 @@ class TestAuthorizationService(BaseTest):
                     "/process-data-file-download/some-process-group:some-process-model:*",
                     "read",
                 ),
-                ("/process-instance-events/some-process-group:some-process-model:*", "read"),
-                ("/process-instance-run/some-process-group:some-process-model:*", "create"),
+                (
+                    "/process-instance-events/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
+                    "/process-instance-run/some-process-group:some-process-model:*",
+                    "create",
+                ),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model:*",
                     "read",
                 ),
-                ("/process-instances/some-process-group:some-process-model:*", "create"),
+                (
+                    "/process-instances/some-process-group:some-process-model:*",
+                    "create",
+                ),
             ]
         )
         permissions_to_assign = AuthorizationService.explode_permissions("start", "PG:/some-process-group/some-process-model")
@@ -195,13 +237,19 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = sorted(
             [
-                ("/event-error-details/some-process-group:some-process-model/*", "read"),
+                (
+                    "/event-error-details/some-process-group:some-process-model/*",
+                    "read",
+                ),
                 ("/logs/some-process-group:some-process-model/*", "read"),
                 (
                     "/process-data-file-download/some-process-group:some-process-model/*",
                     "read",
                 ),
-                ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
+                (
+                    "/logs/typeahead-filter-values/some-process-group:some-process-model/*",
+                    "read",
+                ),
                 ("/message-models/some-process-group:some-process-model/*", "read"),
                 ("/all-message-models/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
@@ -225,15 +273,39 @@ class TestAuthorizationService(BaseTest):
                     "/process-instances/some-process-group:some-process-model/*",
                     "delete",
                 ),
-                ("/process-instance-events/some-process-group:some-process-model/*", "read"),
-                ("/process-instance-run/some-process-group:some-process-model/*", "create"),
-                ("/process-instances/for-me/some-process-group:some-process-model/*", "read"),
+                (
+                    "/process-instance-events/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                (
+                    "/process-instance-run/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-instances/for-me/some-process-group:some-process-model/*",
+                    "read",
+                ),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
-                ("/process-model-import/some-process-group:some-process-model/*", "create"),
-                ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
-                ("/process-model-publish/some-process-group:some-process-model/*", "create"),
-                ("/process-model-tests/create/some-process-group:some-process-model/*", "create"),
-                ("/process-model-tests/run/some-process-group:some-process-model/*", "create"),
+                (
+                    "/process-model-import/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-model-natural-language/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-model-publish/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-model-tests/create/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-model-tests/run/some-process-group:some-process-model/*",
+                    "create",
+                ),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
@@ -263,18 +335,30 @@ class TestAuthorizationService(BaseTest):
                     "/logs/some-process-group:some-process-model/*",
                     "read",
                 ),
-                ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
+                (
+                    "/logs/typeahead-filter-values/some-process-group:some-process-model/*",
+                    "read",
+                ),
                 (
                     "/process-data-file-download/some-process-group:some-process-model/*",
                     "read",
                 ),
-                ("/process-instance-events/some-process-group:some-process-model/*", "read"),
-                ("/process-instance-run/some-process-group:some-process-model/*", "create"),
+                (
+                    "/process-instance-events/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                (
+                    "/process-instance-run/some-process-group:some-process-model/*",
+                    "create",
+                ),
                 (
                     "/process-instances/for-me/some-process-group:some-process-model/*",
                     "read",
                 ),
-                ("/process-instances/some-process-group:some-process-model/*", "create"),
+                (
+                    "/process-instances/some-process-group:some-process-model/*",
+                    "create",
+                ),
             ]
         )
         permissions_to_assign = AuthorizationService.explode_permissions("start", "PM:/some-process-group/some-process-model")
@@ -544,7 +628,10 @@ class TestAuthorizationService(BaseTest):
             self._expected_basic_permissions()
             + [
                 ("/can-run-privileged-script/*", "create"),
+                ("/data-stores/*", "create"),
+                ("/data-stores/*", "delete"),
                 ("/data-stores/*", "read"),
+                ("/data-stores/*", "update"),
                 ("/debug/*", "create"),
                 ("/event-error-details/*", "read"),
                 ("/extensions-get-data/*", "read"),
@@ -838,7 +925,10 @@ class TestAuthorizationService(BaseTest):
             )
             human_task_count = (
                 HumanTaskUserModel.query.join(HumanTaskModel)
-                .filter(HumanTaskUserModel.user_id == user_two.id, HumanTaskModel.completed == True)  # noqa: E712
+                .filter(
+                    HumanTaskUserModel.user_id == user_two.id,
+                    HumanTaskModel.completed,
+                )  # noqa: E712
                 .count()
             )
             assert human_task_count == 2
@@ -927,9 +1017,17 @@ class TestAuthorizationService(BaseTest):
             temp_yaml_file.close()
 
             # Mock the permissions file path
-            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH", temp_yaml_file.name):
+            with self.app_config_mock(
+                app,
+                "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH",
+                temp_yaml_file.name,
+            ):
                 # Set OIDC as the authority for user groups
-                with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+                with self.app_config_mock(
+                    app,
+                    "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS",
+                    True,
+                ):
                     # Create an OIDC user with the /admin group
                     oidc_user = AuthorizationService.create_user_from_sign_in(
                         {
