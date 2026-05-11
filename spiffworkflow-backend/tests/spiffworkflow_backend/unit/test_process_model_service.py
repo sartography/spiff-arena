@@ -1,19 +1,142 @@
 import os
 import re
 import sys
+from types import SimpleNamespace
 
 import pytest
 from flask import Flask
 from lxml import etree  # type: ignore
 
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelService(BaseTest):
+    def test_get_process_groups_user_has_permissions_to_avoids_quadratic_permission_scans(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        branch_count = 50
+        process_groups = [
+            ProcessGroup(
+                id="root",
+                display_name="root",
+                process_groups=[
+                    ProcessGroup(
+                        id=f"root/branch_{branch_index:03d}",
+                        display_name=f"root/branch_{branch_index:03d}",
+                        process_groups=[
+                            ProcessGroup(
+                                id=f"root/branch_{branch_index:03d}/leaf",
+                                display_name=f"root/branch_{branch_index:03d}/leaf",
+                            )
+                        ],
+                    )
+                    for branch_index in range(branch_count)
+                ],
+            )
+        ]
+
+        permission_assignments = []
+        for branch_index in range(branch_count):
+            modified_branch_identifier = f"root:branch_{branch_index:03d}"
+            permission_assignments.append(
+                SimpleNamespace(
+                    permission="read",
+                    grant_type="permit",
+                    permission_target=SimpleNamespace(uri=f"/process-models/{modified_branch_identifier}:leaf:model"),
+                )
+            )
+            if branch_index % 2 == 1:
+                permission_assignments.append(
+                    SimpleNamespace(
+                        permission="read",
+                        grant_type="deny",
+                        permission_target=SimpleNamespace(uri=f"/process-groups/{modified_branch_identifier}"),
+                    )
+                )
+
+        matcher_call_count = 0
+        original_matcher = AuthorizationService.target_uri_matches_actual_uri
+
+        def counted_matcher(target_uri: str, actual_uri: str) -> bool:
+            nonlocal matcher_call_count
+            matcher_call_count += 1
+            return original_matcher(target_uri, actual_uri)
+
+        monkeypatch.setattr(AuthorizationService, "target_uri_matches_actual_uri", counted_matcher)
+
+        with app.app_context():
+            permitted_groups = ProcessModelService.get_process_groups_user_has_permissions_to(
+                process_groups=process_groups,
+                permission_assignments=permission_assignments,
+                permission_to_check="read",
+                permission_base_uri="/process-groups",
+            )
+
+        assert [group.id for group in permitted_groups] == ["root"]
+        assert [group.id for group in permitted_groups[0].process_groups] == [
+            f"root/branch_{branch_index:03d}" for branch_index in range(branch_count) if branch_index % 2 == 0
+        ]
+        assert [group.id for group in permitted_groups[0].process_groups[0].process_groups] == ["root/branch_000/leaf"]
+        assert matcher_call_count <= 500
+
+    def test_process_group_delete_bulk_checks_nested_models_for_instances(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.create_process_group("bulk_delete_group")
+
+        nested_models = [
+            SimpleNamespace(id="bulk_delete_group/model_one"),
+            SimpleNamespace(id="bulk_delete_group/model_two"),
+            SimpleNamespace(id="bulk_delete_group/model_three"),
+        ]
+
+        class QueryStub:
+            def __init__(self) -> None:
+                self.filter_call_count = 0
+                self.filtered_identifiers: list[str] = []
+
+            def with_entities(self, *_args: object) -> "QueryStub":
+                return self
+
+            def filter(self, criterion: object) -> "QueryStub":
+                self.filter_call_count += 1
+                right_value = getattr(getattr(criterion, "right", None), "value", None)
+                if isinstance(right_value, list):
+                    self.filtered_identifiers = right_value
+                elif right_value is not None:
+                    self.filtered_identifiers = [right_value]
+                return self
+
+            def all(self) -> list[tuple[str]]:
+                if "bulk_delete_group/model_two" in self.filtered_identifiers:
+                    return [("bulk_delete_group/model_two",)]
+                return []
+
+        query_stub = QueryStub()
+        monkeypatch.setattr(ProcessModelService, "_ProcessModelService__get_all_nested_models", lambda _path: nested_models)
+        monkeypatch.setattr(
+            __import__("spiffworkflow_backend.models.process_instance", fromlist=["ProcessInstanceModel"]).ProcessInstanceModel,
+            "query",
+            query_stub,
+        )
+
+        with pytest.raises(ProcessModelWithInstancesNotDeletableError, match="bulk_delete_group"):
+            ProcessModelService.process_group_delete("bulk_delete_group")
+
+        assert query_stub.filter_call_count == 1
+        assert query_stub.filtered_identifiers == [model.id for model in nested_models]
+
     def test_can_update_specified_attributes(
         self,
         app: Flask,

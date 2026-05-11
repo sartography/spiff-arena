@@ -363,6 +363,23 @@ def next_task(workflow, state, from_task=None):
         return task
     return None
 
+
+def print_unittest_break(reason, **fields):
+    payload = {
+        "event": "unittest-break",
+        "strategy": "unittest",
+        "reason": reason,
+        **fields,
+    }
+    print(json.dumps(payload, sort_keys=True), flush=True)
+
+
+def print_progress(iteration):
+    print(json.dumps({
+        "event": "progress",
+        "iteration": iteration,
+    }, sort_keys=True), flush=True)
+
 def _advance_workflow(workflow, task, strategy_name, compress_response=False, session_id=None):
     iters = 0
     lazy_loads_list = None
@@ -386,7 +403,7 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
 
         # Report progress every 50 iterations for UI feedback
         if iters % 50 == 0:
-            print(f"[progress] iteration: {iters}", flush=True)
+            print_progress(iters)
 
         if task.state == TaskState.STARTED:
             task.complete()
@@ -398,6 +415,14 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
         if not (strategy_name == "unittest" and cached_fixture_file):
             lazy_loads_list = lazy_loads(workflow)
             if any(spec not in workflow.subprocess_specs for spec in lazy_loads_list):
+                if strategy_name == "unittest":
+                    print_unittest_break(
+                        "missing_lazy_loads",
+                        iteration=iters,
+                        missing_specs=[
+                            spec for spec in lazy_loads_list if spec not in workflow.subprocess_specs
+                        ],
+                    )
                 break
 
         # Optimization: try searching from completed task first (fast path)
@@ -406,6 +431,12 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
         if not task:
             task = next_task(workflow, TaskState.READY)
         if not task:
+            if strategy_name == "unittest" and not workflow.completed:
+                print_unittest_break(
+                    "no_ready_task",
+                    iteration=iters,
+                    task_id=getattr(completed_task.task_spec, "bpmn_id", None),
+                )
             break
         elif strategy_name == "oneAtATime" and task.task_spec.bpmn_id:
             break
@@ -436,13 +467,36 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
 
                     # If recording is exhausted (index < 0), let task run interactively
                     if index < 0:
+                        print_unittest_break(
+                            "fixture_exhausted",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            fixture_file=fixture_file,
+                            fixture_index=index,
+                        )
                         break
 
                     if index >= len(stack):
+                        print_unittest_break(
+                            "fixture_index_out_of_bounds",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            fixture_file=fixture_file,
+                            fixture_index=index,
+                            fixture_length=len(stack),
+                        )
                         break
 
                     expected = stack[index]
                     if task.task_spec.bpmn_id != expected["id"]:
+                        print_unittest_break(
+                            "fixture_task_mismatch",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            expected_task_id=expected["id"],
+                            fixture_file=fixture_file,
+                            fixture_index=index,
+                        )
                         break
 
                     task.run()
@@ -452,9 +506,20 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                     # Fallback to inline fixture (process-models compatibility)
                     stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
                     if not stack:
+                        print_unittest_break(
+                            "missing_inline_fixture",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                        )
                         break
                     expected = stack.pop()
                     if task.task_spec.bpmn_id != expected["id"]:
+                        print_unittest_break(
+                            "fixture_task_mismatch",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            expected_task_id=expected["id"],
+                        )
                         break
                     task.run()
                     task.data.update(expected["data"])
