@@ -70,6 +70,17 @@ class TestServiceTaskRetries(BaseTest):
             }
         )
 
+    def proxy_success_with_upstream_failure_response(self, mock_response: Any, upstream_status: int = 500) -> None:
+        mock_response.status_code = 200
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.ok = True
+        mock_response.text = json.dumps(
+            {
+                "command_response": {"body": "{}", "http_status": upstream_status},
+                "command_response_version": 2,
+            }
+        )
+
     def test_service_task_retry_settings_are_serialized(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         processor, _process_instance = self.load_retry_processor()
         service_task_specs = self.service_task_specs_in(processor.serialize())
@@ -124,6 +135,31 @@ class TestServiceTaskRetries(BaseTest):
             event_type=ProcessInstanceEventType.task_completed.value,
         ).first()
         assert completion_event is None
+
+        future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
+        assert future_task is not None
+        assert future_task.completed is False
+
+    def test_service_task_retries_on_upstream_failure_in_successful_proxy_response(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        processor, _process_instance = self.load_retry_processor()
+
+        with patch("requests.post") as mock_post:
+            self.proxy_success_with_upstream_failure_response(mock_post.return_value)
+            custom_service_task_time, workflow_execution_service_time = self.patch_retry_time()
+            with custom_service_task_time, workflow_execution_service_time:
+                with (
+                    patch("celery.current_app.send_task"),
+                    patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
+                ):
+                    with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+                        processor.do_engine_steps(save=True)
+
+        service_task = self.get_service_task(processor)
+        assert service_task.state == TaskState.STARTED
+        assert service_task.internal_data.get("spiff__retries_attempted") == 0
+        assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
 
         future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
         assert future_task is not None

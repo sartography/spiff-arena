@@ -188,7 +188,9 @@ class ExecutionStrategy:
                 spiff_task.run()
             else:
                 if process_model_identifier is None or process_instance_id is None:
-                    raise ValueError("process_model_identifier and process_instance_id are required when app is provided.")
+                    raise ValueError(
+                        "process_model_identifier and process_instance_id are required when app is provided."
+                    )
                 self._run(spiff_task, app, user, process_model_identifier, process_instance_id)
         except RetryScheduledError:
             return

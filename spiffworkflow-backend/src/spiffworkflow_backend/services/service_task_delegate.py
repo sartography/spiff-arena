@@ -257,6 +257,7 @@ class ServiceTaskDelegate:
         operator_identifier: str,
     ) -> None:
         base_error = None
+        error_status_code = status_code
         if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
         elif (
@@ -266,6 +267,7 @@ class ServiceTaskDelegate:
             and parsed_response["command_response"].get("http_status", 0) >= 300
         ):
             upstream_status = parsed_response["command_response"]["http_status"]
+            error_status_code = upstream_status
             base_error = {
                 "error_code": f"ServiceTaskHttpError{upstream_status}",
                 "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
@@ -292,7 +294,7 @@ class ServiceTaskDelegate:
                 "error_code": base_error["error_code"],
                 "message": base_error["message"],
                 "operator_identifier": operator_identifier,
-                "status_code": status_code,
+                "status_code": error_status_code,
                 "command_response_body": response_text,
             }
             cls.catch_error_codes(spiff_task, error_dict)
