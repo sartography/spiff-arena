@@ -2506,7 +2506,7 @@ wheels = [
 [[package]]
 name = "spiffworkflow"
 version = "3.1.2"
-source = { git = "https://github.com/sartography/SpiffWorkflow?rev=service-task-retries#a5ebfe769b112f0043adec7faeb16aba6061ae1c" }
+source = { git = "https://github.com/sartography/SpiffWorkflow?rev=service-task-retries#12bd97871f0b846a88dd72facb5a3fd75186bbb2" }
 dependencies = [
     { name = "lxml" },
 ]
