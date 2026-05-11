@@ -2,7 +2,7 @@ import pytest
 
 from spiff_arena_common.coverage import task_coverage
 from spiff_arena_common.runner import specs_from_xml
-from spiff_arena_common.tester import run_tests
+from spiff_arena_common.tester import run_tests, run_tests_with_recordings
 
 ut = ("ut.bpmn", """
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
@@ -217,3 +217,79 @@ def test_tester(files):
     assert completed == 3
     assert all == 3
     assert percent == int(100)
+
+
+def test_run_tests_with_recordings_runs_main_file_with_recording_and_schema(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "jj"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "ut.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "some_field": {"const": "jj"}
+  },
+  "required": ["some_field"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert result.wasSuccessful(), output
+    assert result.testsRun == 1
+    assert ctx.test_cases[0].wasSuccessful
+
+    _, tally = task_coverage(ctx)
+    ut_tally = tally.breakdown["Process_1770128055928"]
+    assert ut_tally.completed == 3
+    assert ut_tally.all == 3
+    assert ut_tally.percent == 100
+
+
+def test_run_tests_with_recordings_reports_schema_failure(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": [
+    {
+      "id": "ut_task",
+      "data": {"some_field": "wrong"}
+    }
+  ]
+}
+""")
+    schema_file = tmp_path / "ut.schema.json"
+    schema_file.write_text("""
+{
+  "type": "object",
+  "properties": {
+    "some_field": {"const": "jj"}
+  },
+  "required": ["some_field"]
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file), str(schema_file))],
+    )
+
+    assert not result.wasSuccessful()
+    assert not ctx.test_cases[0].wasSuccessful
+    assert "ut.schema.json" in output
