@@ -314,6 +314,26 @@ def test_run_tests_with_recordings_reports_schema_failure(tmp_path):
     assert "ut.schema.json" in output
 
 
+def test_run_tests_with_recordings_requires_workflow_completion(tmp_path):
+    recording_file = tmp_path / "ut_recording.json"
+    recording_file.write_text("""
+{
+  "pendingTaskStack": []
+}
+""")
+    specs, err = specs_from_xml([ut])
+    assert err is None
+
+    ctx, result, output = run_tests_with_recordings(
+        [("ut.bpmn", specs)],
+        [("ut.bpmn", str(recording_file))],
+    )
+
+    assert not result.wasSuccessful()
+    assert not ctx.test_cases[0].wasSuccessful
+    assert "Recording workflow did not complete" in output
+
+
 def test_run_tests_with_recordings_accepts_artifact_outcome_schema(tmp_path):
     recording_file = tmp_path / "ut_recording.json"
     recording_file.write_text("""
