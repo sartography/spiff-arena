@@ -47,8 +47,6 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
 
     def to_dict(self, spec):  # type: ignore
         dct = super().to_dict(spec)
-        dct["retries"] = spec.retries
-        dct["retry_backoff_base"] = spec.retry_backoff_base
         return dct
 
 
