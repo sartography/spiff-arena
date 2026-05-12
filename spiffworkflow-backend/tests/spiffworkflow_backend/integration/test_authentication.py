@@ -154,7 +154,8 @@ class TestAuthentication(BaseTest):
             )
             response = None
             response = client.post(
-                f"/v1.0/login_with_access_token?access_token={access_token}&authentication_identifier=default",
+                "/v1.0/login_with_access_token?authentication_identifier=default",
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             assert response.status_code == 200
             assert len(user.groups) == 3
@@ -174,7 +175,8 @@ class TestAuthentication(BaseTest):
                 }
             )
             response = client.post(
-                f"/v1.0/login_with_access_token?access_token={access_token}&authentication_identifier=default",
+                "/v1.0/login_with_access_token?authentication_identifier=default",
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             assert response.status_code == 200
             user = UserModel.query.filter_by(username=user.username).first()

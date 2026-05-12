@@ -379,7 +379,6 @@ def main() -> int:
             f"{args.backend_base_url}/v1.0/login_with_access_token",
             headers=headers,
             params={
-                "access_token": access_token,
                 "authentication_identifier": args.authentication_identifier,
             },
             timeout=args.timeout,
