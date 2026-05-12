@@ -394,21 +394,6 @@ class MessageService:
         message_instance_send.counterpart_id = message_instance_receive.id
         db.session.add(message_instance_send)
 
-        if message_instance_send.message_instance_uuid:
-            duplicate_messages = (
-                MessageInstanceModel.query.filter_by(
-                    message_type=MessageTypes.send.value,
-                    name=message_instance_send.name,
-                    status=MessageStatuses.ready.value,
-                    message_instance_uuid=message_instance_send.message_instance_uuid,
-                )
-                .filter(MessageInstanceModel.id != message_instance_send.id)
-                .all()
-            )
-            for duplicate_message in duplicate_messages:
-                duplicate_message.status = MessageStatuses.cancelled.value
-                db.session.add(duplicate_message)
-
     @classmethod
     def _handle_correlation_failure(
         cls,

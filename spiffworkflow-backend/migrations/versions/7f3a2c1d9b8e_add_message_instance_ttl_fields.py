@@ -23,7 +23,7 @@ def upgrade():
         batch_op.create_index(
             batch_op.f("ix_message_instance_message_instance_uuid"),
             ["message_instance_uuid"],
-            unique=False,
+            unique=True,
         )
         batch_op.create_index(batch_op.f("ix_message_instance_expires_at_in_seconds"), ["expires_at_in_seconds"], unique=False)
 
