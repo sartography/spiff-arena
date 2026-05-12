@@ -1315,9 +1315,6 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    def refresh_waiting_tasks(self) -> None:
-        self.bpmn_process_instance.refresh_waiting_tasks()
-
     def do_engine_steps(
         self,
         exit_at: None = None,

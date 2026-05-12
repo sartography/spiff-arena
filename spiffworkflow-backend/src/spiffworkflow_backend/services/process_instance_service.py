@@ -806,7 +806,6 @@ class ProcessInstanceService:
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if should_queue_process_instance(execution_mode):
-            processor.bpmn_process_instance.refresh_waiting_tasks()
             tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
             JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
         elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):

@@ -455,7 +455,6 @@ class ProcessModelTestRunner:
                     f" {next_task.task_spec.bpmn_id} because it is of type '{task_type}'"
                 )
             self._execute_task(next_task, test_case_task_key, test_case_task_properties)
-            bpmn_process_instance.refresh_waiting_tasks()
             next_task = self._get_next_task(bpmn_process_instance)
 
         error_message = None

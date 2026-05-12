@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 from billiard import current_process  # type: ignore
@@ -94,6 +95,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
 
     try:
         task_guid_for_requeueing = task_guid
+        future_task_was_rescheduled = False
         with ProcessInstanceQueueService.dequeued(process_instance):
             # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
             # has a should_break_before that will exit if there are instructions.
@@ -115,14 +117,17 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
                     .filter(TaskModel.state.in_(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
                     .first()
                 )
+                future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
                 if completed_task_model is not None:
-                    future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
                     if future_task is not None:
                         future_task.completed = True
                         db.session.add(future_task)
                         db.session.commit()
                         task_guid_for_requeueing = None
-        if task_runnability == TaskRunnability.has_ready_tasks:
+                elif future_task is not None and future_task.run_at_in_seconds > round(time.time()):
+                    future_task_was_rescheduled = True
+                    task_guid_for_requeueing = None
+        if task_runnability == TaskRunnability.has_ready_tasks and not future_task_was_rescheduled:
             queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
         return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
     except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
