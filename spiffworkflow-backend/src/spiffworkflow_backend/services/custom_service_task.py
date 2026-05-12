@@ -4,6 +4,8 @@ import time
 from typing import Any
 from typing import cast
 
+from flask import current_app
+from flask import has_app_context
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -53,7 +55,7 @@ class CustomServiceTask(ServiceTask):  # type: ignore
                 self.schedule_retry(spiff_task)
                 raise RetryScheduledError from None
 
-            logger.exception("Error executing Service Task '%s': %s", self.operation_name, str(e))
+            self.log_terminal_failure(spiff_task, e)
             wte = WorkflowTaskException("Error executing Service Task", task=spiff_task, exception=e)
             wte.add_note(str(e))
             raise wte from e
@@ -88,6 +90,43 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         spiff_task.internal_data[self.RETRIES_ATTEMPTED_KEY] = self.get_retries_attempted(spiff_task) + 1
         spiff_task.internal_data.pop(self.RETRY_AT_KEY, None)
 
+    def get_process_instance_id(self, spiff_task: SpiffTask) -> Any:
+        process_instance_id = None
+        if process_instance_id is None and has_app_context():
+            tld = current_app.config.get("THREAD_LOCAL_DATA")
+            process_instance_id = getattr(tld, "process_instance_id", None)
+        if process_instance_id is None:
+            from spiffworkflow_backend.models.task import TaskModel
+
+            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+            if task_model is not None:
+                process_instance_id = task_model.process_instance_id
+        return process_instance_id
+
+    def log_terminal_failure(self, spiff_task: SpiffTask, exception: Exception) -> None:
+        from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
+
+        retries_attempted = self.get_retries_attempted(spiff_task)
+        retryable_error = ServiceTaskDelegate.is_transient_error(exception)
+        retry_state = "not_retryable"
+        if retryable_error:
+            retry_state = "not_configured" if self.retries is None else "exhausted"
+        logger.error(
+            "Service Task '%s' failed and will not retry. "
+            "process_instance_id=%s task_id=%s bpmn_id=%s retry_state=%s "
+            "retryable_error=%s retries_attempted=%s max_retries=%s error_type=%s error=%s",
+            self.operation_name,
+            self.get_process_instance_id(spiff_task),
+            spiff_task.id,
+            self.bpmn_id,
+            retry_state,
+            retryable_error,
+            retries_attempted,
+            self.retries,
+            exception.__class__.__name__,
+            exception,
+        )
+
     def should_retry(self, spiff_task: SpiffTask, exception: Exception) -> bool:
         from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 
@@ -107,11 +146,20 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         delay = self.retry_backoff_base**next_retry_number
         run_at = round(time.time() + delay)
 
-        logger.info(
-            f"Scheduling retry for Service Task '{self.operation_name}' (task_id: {spiff_task.id}). "
-            f"Retry #{next_retry_number} scheduled. "
-            f"Retries remaining: {max(int(self.retries) - retries_attempted, 0)}. "
-            f"Backoff delay: {delay}s."
+        logger.warning(
+            "Service Task '%s' failed and will retry. "
+            "process_instance_id=%s task_id=%s bpmn_id=%s next_retry_number=%s "
+            "max_retries=%s retries_attempted=%s retries_remaining=%s retry_at=%s delay_seconds=%s",
+            self.operation_name,
+            self.get_process_instance_id(spiff_task),
+            spiff_task.id,
+            self.bpmn_id,
+            next_retry_number,
+            self.retries,
+            retries_attempted,
+            max(int(self.retries) - retries_attempted, 0),
+            run_at,
+            delay,
         )
 
         spiff_task.internal_data[self.RETRIES_ATTEMPTED_KEY] = retries_attempted

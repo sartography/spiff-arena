@@ -121,7 +121,7 @@ class TestServiceTaskRetries(BaseTest):
     def test_service_task_retries_on_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         processor, _process_instance = self.load_retry_processor()
 
-        with patch("requests.get") as mock_get:
+        with patch("requests.get") as mock_get, patch("spiffworkflow_backend.services.custom_service_task.logger") as logger:
             self.transient_failure_response(mock_get)
             custom_service_task_time, workflow_execution_service_time = self.patch_retry_time()
             with custom_service_task_time, workflow_execution_service_time:
@@ -146,6 +146,10 @@ class TestServiceTaskRetries(BaseTest):
         future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
         assert future_task is not None
         assert future_task.completed is False
+        assert logger.warning.call_count == 1
+        assert "failed and will retry" in logger.warning.call_args.args[0]
+        assert logger.warning.call_args.args[2] == _process_instance.id
+        assert logger.exception.call_count == 0
 
     def test_service_task_retries_on_upstream_failure_in_successful_proxy_response(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
@@ -292,7 +296,7 @@ class TestServiceTaskRetries(BaseTest):
     def test_service_task_does_not_retry_on_permanent_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         processor, _process_instance = self.load_retry_processor()
 
-        with patch("requests.get") as mock_get:
+        with patch("requests.get") as mock_get, patch("spiffworkflow_backend.services.custom_service_task.logger") as logger:
             mock_get.return_value.status_code = 400
             mock_get.return_value.headers = {"Content-Type": "application/json"}
             mock_get.return_value.ok = False
@@ -312,3 +316,8 @@ class TestServiceTaskRetries(BaseTest):
         service_task = self.get_service_task(processor)
         assert service_task.state == TaskState.ERROR
         assert "spiff__retries_attempted" not in service_task.internal_data
+        assert logger.error.call_count == 1
+        assert "failed and will not retry" in logger.error.call_args.args[0]
+        assert logger.error.call_args.args[2] == _process_instance.id
+        assert logger.error.call_args.args[5] == "not_retryable"
+        assert logger.exception.call_count == 0
