@@ -1,3 +1,5 @@
+import json
+
 from spiff_arena_common.coverage import task_coverage
 from spiff_arena_common.runner import specs_from_xml
 from spiff_arena_common.tester import run_tests
@@ -142,3 +144,97 @@ def test_task_coverage_counts_only_task_specs_with_bpmn_ids():
     assert cov.missing["FakeProcess"] == {"Task_Two"}
     assert tally.breakdown["FakeProcess"].completed == 1
     assert tally.breakdown["FakeProcess"].all == 2
+
+
+def test_task_coverage_counts_embedded_subprocess_tasks_but_not_call_activity_tasks():
+    def specs(spec, subprocess_specs=None):
+        return {
+            "spec": spec,
+            "subprocess_specs": subprocess_specs or {},
+        }
+
+    parent_spec = {
+        "name": "Parent",
+        "task_specs": {
+            "Start": {"bpmn_id": "Start", "typename": "StartEvent"},
+            "Embedded": {
+                "bpmn_id": "Embedded",
+                "typename": "SubWorkflowTask",
+                "spec": "EmbeddedProcess",
+            },
+            "Call_Other": {
+                "bpmn_id": "Call_Other",
+                "typename": "CallActivity",
+                "spec": "CalledProcess",
+            },
+            "End": {"bpmn_id": "End", "typename": "EndEvent"},
+        },
+    }
+    embedded_spec = {
+        "name": "EmbeddedProcess",
+        "task_specs": {
+            "Embedded_Start": {"bpmn_id": "Embedded_Start", "typename": "StartEvent"},
+            "Embedded_Task": {"bpmn_id": "Embedded_Task", "typename": "ScriptTask"},
+            "Embedded_End": {"bpmn_id": "Embedded_End", "typename": "EndEvent"},
+        },
+    }
+    called_spec = {
+        "name": "CalledProcess",
+        "task_specs": {
+            "Called_Task": {"bpmn_id": "Called_Task", "typename": "ScriptTask"},
+        },
+    }
+    serialized_specs = {
+        "Parent": json.dumps(specs(parent_spec, {"EmbeddedProcess": embedded_spec})),
+        "CalledProcess": json.dumps(specs(called_spec)),
+    }
+
+    class FakeTestCase:
+        coverage_spec_id = "Parent"
+        state = {
+            "tasks": {
+                "start": {"state": 64, "task_spec": "Start"},
+                "embedded": {"state": 64, "task_spec": "Embedded"},
+                "call": {"state": 64, "task_spec": "Call_Other"},
+                "end": {"state": 64, "task_spec": "End"},
+            },
+            "subprocesses": {
+                "embedded": {
+                    "spec": "EmbeddedProcess",
+                    "tasks": {
+                        "embedded_start": {"state": 64, "task_spec": "Embedded_Start"},
+                        "embedded_task": {"state": 64, "task_spec": "Embedded_Task"},
+                        "embedded_end": {"state": 64, "task_spec": "Embedded_End"},
+                    },
+                },
+                "called": {
+                    "spec": "CalledProcess",
+                    "tasks": {
+                        "called_task": {"state": 64, "task_spec": "Called_Task"},
+                    },
+                },
+            },
+        }
+
+    class FakeContext:
+        test_cases = [FakeTestCase()]
+        specs = serialized_specs
+
+    cov, tally = task_coverage(FakeContext())
+
+    assert cov.all["Parent"] == {
+        "Start",
+        "Embedded",
+        "Call_Other",
+        "End",
+        "Embedded_Start",
+        "Embedded_Task",
+        "Embedded_End",
+    }
+    assert cov.completed["Parent"] == cov.all["Parent"]
+    assert cov.all["CalledProcess"] == {"Called_Task"}
+    assert cov.completed["CalledProcess"] == {"Called_Task"}
+    assert tally.breakdown["Parent"].completed == 7
+    assert tally.breakdown["Parent"].all == 7
+    assert tally.breakdown["CalledProcess"].completed == 1
+    assert tally.breakdown["CalledProcess"].all == 1
