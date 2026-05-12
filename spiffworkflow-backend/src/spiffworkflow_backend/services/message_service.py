@@ -100,7 +100,7 @@ class MessageService:
                     ]
                 )
             )
-            .filter(MessageInstanceModel.expires_at_in_seconds > now_in_seconds)
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) > now_in_seconds)
             .order_by(MessageInstanceModel.id)
             .first(),
         )
@@ -114,7 +114,7 @@ class MessageService:
                 status=MessageStatuses.ready.value,
             )
             .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
-            .filter(MessageInstanceModel.expires_at_in_seconds <= now)
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) <= now)
             .all()
         )
         for message_instance in expired_messages:
@@ -638,8 +638,8 @@ class MessageService:
             name=message_name,
             payload=body,
             user_id=g.user.id,
-            message_instance_identifier=message_instance_identifier,  # type: ignore[arg-type]
-            expires_at_in_seconds=expires_at_in_seconds,  # type: ignore[arg-type]
+            message_instance_identifier=message_instance_identifier,
+            expires_at_in_seconds=expires_at_in_seconds,
         )
         db.session.add(message_instance)
         db.session.commit()
