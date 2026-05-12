@@ -157,11 +157,6 @@ paths:
 
   /login_with_access_token:
     parameters:
-      - name: access_token
-        in: query
-        required: false
-        schema:
-          type: string
       - name: authentication_identifier
         in: query
         required: true
