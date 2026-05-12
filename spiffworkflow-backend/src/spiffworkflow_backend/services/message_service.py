@@ -103,11 +103,10 @@ class MessageService:
         return ttl
 
     @classmethod
-    def _find_unexpired_message_with_uuid(
+    def _find_message_with_uuid(
         cls,
         message_name: str,
         message_instance_uuid: str | None,
-        now_in_seconds: int,
     ) -> MessageInstanceModel | None:
         if not message_instance_uuid:
             return None
@@ -118,16 +117,6 @@ class MessageService:
                 name=message_name,
                 message_instance_uuid=message_instance_uuid,
             )
-            .filter(
-                MessageInstanceModel.status.in_(  # type: ignore
-                    [
-                        MessageStatuses.ready.value,
-                        MessageStatuses.running.value,
-                        MessageStatuses.completed.value,
-                    ]
-                )
-            )
-            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) > now_in_seconds)
             .order_by(MessageInstanceModel.id)
             .first(),
         )
@@ -605,10 +594,9 @@ class MessageService:
         expires_at_in_seconds = now_in_seconds + ttl if ttl > 0 else None
         cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
 
-        existing_message_instance = cls._find_unexpired_message_with_uuid(
+        existing_message_instance = cls._find_message_with_uuid(
             message_name,
             message_instance_uuid,
-            now_in_seconds,
         )
         if existing_message_instance is not None:
             if existing_message_instance.payload != body:
