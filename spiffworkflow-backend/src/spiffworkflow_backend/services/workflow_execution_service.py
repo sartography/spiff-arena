@@ -585,6 +585,7 @@ class WorkflowExecutionService:
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.process_instance_saver = process_instance_saver
+        self.new_waiting_message_names: set[str] = set()
 
     # names of methods that do spiff stuff:
     # processor.do_engine_steps calls:
@@ -620,6 +621,7 @@ class WorkflowExecutionService:
         should_schedule_waiting_timer_events: bool = True,
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
+        self.new_waiting_message_names = set()
         if needs_dequeue and self.process_instance_model.persistence_level != "none":
             with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
@@ -639,7 +641,7 @@ class WorkflowExecutionService:
                 self.process_instance_completer(self.bpmn_process_instance)
 
             self.process_bpmn_events()
-            self.queue_waiting_receive_messages()
+            self.new_waiting_message_names = self.queue_waiting_receive_messages()
             return task_runnability
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
@@ -732,9 +734,10 @@ class WorkflowExecutionService:
                 bpmn_process.properties_json["bpmn_events"] = []
                 db.session.add(bpmn_process)
 
-    def queue_waiting_receive_messages(self) -> None:
+    def queue_waiting_receive_messages(self) -> set[str]:
         waiting_events = self.bpmn_process_instance.waiting_events()
         waiting_message_events = list(filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events))
+        new_waiting_message_names: set[str] = set()
 
         waiting_message_names = {event.name for event in waiting_message_events}
 
@@ -758,6 +761,7 @@ class WorkflowExecutionService:
                 continue
 
             # Create a new Message Instance
+            new_waiting_message_names.add(event.name)
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
                 user_id=self.process_instance_model.process_initiator_id,
@@ -781,3 +785,5 @@ class WorkflowExecutionService:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
                 db.session.add(bpmn_process)
+
+        return new_waiting_message_names
