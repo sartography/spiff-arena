@@ -52,7 +52,7 @@ class MessageService:
     def _validated_time_to_live(
         cls,
         time_to_live_in_seconds: int | None,
-        message_instance_identifier: str | None,
+        message_instance_uuid: str | None,
     ) -> int:
         ttl = time_to_live_in_seconds or 0
         if ttl < 0:
@@ -67,29 +67,29 @@ class MessageService:
                 message=f"time_to_live_in_seconds must be less than or equal to {cls.MAX_TIME_TO_LIVE_SECONDS}.",
                 status_code=400,
             )
-        if ttl > 0 and not message_instance_identifier:
+        if ttl > 0 and not message_instance_uuid:
             raise ApiError(
-                error_code="message_instance_identifier_required",
-                message="message_instance_identifier is required when time_to_live_in_seconds is greater than 0.",
+                error_code="message_instance_uuid_required",
+                message="message_instance_uuid is required when time_to_live_in_seconds is greater than 0.",
                 status_code=400,
             )
         return ttl
 
     @classmethod
-    def _find_unexpired_message_with_identifier(
+    def _find_unexpired_message_with_uuid(
         cls,
         message_name: str,
-        message_instance_identifier: str | None,
+        message_instance_uuid: str | None,
         now_in_seconds: int,
     ) -> MessageInstanceModel | None:
-        if not message_instance_identifier:
+        if not message_instance_uuid:
             return None
         return cast(
             MessageInstanceModel | None,
             MessageInstanceModel.query.filter_by(
                 message_type=MessageTypes.send.value,
                 name=message_name,
-                message_instance_identifier=message_instance_identifier,
+                message_instance_uuid=message_instance_uuid,
             )
             .filter(
                 MessageInstanceModel.status.in_(  # type: ignore
@@ -367,13 +367,13 @@ class MessageService:
         message_instance_send.counterpart_id = message_instance_receive.id
         db.session.add(message_instance_send)
 
-        if message_instance_send.message_instance_identifier:
+        if message_instance_send.message_instance_uuid:
             duplicate_messages = (
                 MessageInstanceModel.query.filter_by(
                     message_type=MessageTypes.send.value,
                     name=message_instance_send.name,
                     status=MessageStatuses.ready.value,
-                    message_instance_identifier=message_instance_send.message_instance_identifier,
+                    message_instance_uuid=message_instance_send.message_instance_uuid,
                 )
                 .filter(MessageInstanceModel.id != message_instance_send.id)
                 .all()
@@ -584,24 +584,24 @@ class MessageService:
         body: dict[str, Any],
         execution_mode: str | None = None,
         time_to_live_in_seconds: int | None = None,
-        message_instance_identifier: str | None = None,
+        message_instance_uuid: str | None = None,
     ) -> MessageInstanceModel:
         message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
-        ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_identifier)
+        ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_uuid)
         now_in_seconds = cls.current_time_in_seconds()
         expires_at_in_seconds = now_in_seconds + ttl if ttl > 0 else None
         cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
 
-        existing_message_instance = cls._find_unexpired_message_with_identifier(
+        existing_message_instance = cls._find_unexpired_message_with_uuid(
             message_name,
-            message_instance_identifier,
+            message_instance_uuid,
             now_in_seconds,
         )
         if existing_message_instance is not None:
             if existing_message_instance.payload != body:
                 raise ApiError(
-                    error_code="message_instance_identifier_conflict",
-                    message=("A message with the same message_instance_identifier already exists with a different payload."),
+                    error_code="message_instance_uuid_conflict",
+                    message=("A message with the same message_instance_uuid already exists with a different payload."),
                     status_code=409,
                 )
             return existing_message_instance
@@ -613,7 +613,7 @@ class MessageService:
             name=message_name,
             payload=body,
             user_id=g.user.id,
-            message_instance_identifier=message_instance_identifier,
+            message_instance_uuid=message_instance_uuid,
             expires_at_in_seconds=expires_at_in_seconds,
         )
         db.session.add(message_instance)

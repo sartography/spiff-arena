@@ -18,11 +18,11 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table("message_instance", schema=None) as batch_op:
-        batch_op.add_column(sa.Column("message_instance_identifier", sa.String(length=255), nullable=True))
+        batch_op.add_column(sa.Column("message_instance_uuid", sa.String(length=255), nullable=True))
         batch_op.add_column(sa.Column("expires_at_in_seconds", sa.Integer(), nullable=True))
         batch_op.create_index(
-            batch_op.f("ix_message_instance_message_instance_identifier"),
-            ["message_instance_identifier"],
+            batch_op.f("ix_message_instance_message_instance_uuid"),
+            ["message_instance_uuid"],
             unique=False,
         )
         batch_op.create_index(batch_op.f("ix_message_instance_expires_at_in_seconds"), ["expires_at_in_seconds"], unique=False)
@@ -31,6 +31,6 @@ def upgrade():
 def downgrade():
     with op.batch_alter_table("message_instance", schema=None) as batch_op:
         batch_op.drop_index(batch_op.f("ix_message_instance_expires_at_in_seconds"))
-        batch_op.drop_index(batch_op.f("ix_message_instance_message_instance_identifier"))
+        batch_op.drop_index(batch_op.f("ix_message_instance_message_instance_uuid"))
         batch_op.drop_column("expires_at_in_seconds")
-        batch_op.drop_column("message_instance_identifier")
+        batch_op.drop_column("message_instance_uuid")

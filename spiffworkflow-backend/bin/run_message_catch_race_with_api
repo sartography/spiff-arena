@@ -19,13 +19,13 @@ fi
 process_model_identifier="${1:-admin/message-catch-race}"
 message_name="${2:-race_callback}"
 race_id="${3:-race-$(date +%s)-$$}"
-message_instance_identifier="${4:-message-${race_id}}"
+message_instance_uuid="${4:-message-${race_id}}"
 username="${5:-admin}"
 password="${6:-admin}"
 realm_name="${7:-spiffworkflow}"
 
 if [[ -z "${process_model_identifier}" ]]; then
-  echo >&2 "usage: $(basename "$0") [process_model_identifier: OPTIONAL] [message_name: OPTIONAL] [race_id: OPTIONAL] [message_instance_identifier: OPTIONAL] [username: OPTIONAL] [password: OPTIONAL] [realm_name: OPTIONAL]"
+  echo >&2 "usage: $(basename "$0") [process_model_identifier: OPTIONAL] [message_name: OPTIONAL] [race_id: OPTIONAL] [message_instance_uuid: OPTIONAL] [username: OPTIONAL] [password: OPTIONAL] [realm_name: OPTIONAL]"
   exit 1
 fi
 
@@ -65,7 +65,7 @@ fi
 
 echo "manual_task=${task_guid}"
 echo "publishing_early_message=${message_name} race_id=${race_id}"
-early_response=$(post_json "${BACKEND_BASE_URL}/v1.0/messages/${message_name}?time_to_live_in_seconds=60&message_instance_identifier=${message_instance_identifier}" "$access_token" "{\"race_id\":\"${race_id}\"}")
+early_response=$(post_json "${BACKEND_BASE_URL}/v1.0/messages/${message_name}?time_to_live_in_seconds=60&message_instance_uuid=${message_instance_uuid}" "$access_token" "{\"race_id\":\"${race_id}\"}")
 echo "$early_response" | jq -c .
 buffered_message_status=$(jq -r '.message_instance.status // empty' <<<"$early_response")
 if [[ "$buffered_message_status" != "ready" ]]; then

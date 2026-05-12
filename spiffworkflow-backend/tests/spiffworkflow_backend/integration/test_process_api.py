@@ -1262,7 +1262,7 @@ class TestProcessApi(BaseTest):
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
 
-    def test_message_send_with_ttl_requires_message_instance_identifier(
+    def test_message_send_with_ttl_requires_message_instance_uuid(
         self,
         app: Flask,
         client: TestClient,
@@ -1277,9 +1277,9 @@ class TestProcessApi(BaseTest):
 
         assert response.status_code == 400
         assert response.json()
-        assert response.json()["error_code"] == "message_instance_identifier_required"
+        assert response.json()["error_code"] == "message_instance_uuid_required"
 
-    def test_message_send_with_ttl_buffers_and_deduplicates_by_message_instance_identifier(
+    def test_message_send_with_ttl_buffers_and_deduplicates_by_message_instance_uuid(
         self,
         app: Flask,
         client: TestClient,
@@ -1287,7 +1287,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         payload = {"customer_id": "sartography", "po_number": "1001"}
-        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_identifier=approval-1001"
+        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-1001"
 
         response = client.post(
             url,
@@ -1309,7 +1309,7 @@ class TestProcessApi(BaseTest):
         assert duplicate_response.status_code == 202, duplicate_response.text
         assert duplicate_response.json()
         assert duplicate_response.json()["message_instance"]["id"] == message_instance_id
-        assert MessageInstanceModel.query.filter_by(message_instance_identifier="approval-1001").count() == 1
+        assert MessageInstanceModel.query.filter_by(message_instance_uuid="approval-1001").count() == 1
 
         conflict_response = client.post(
             url,
@@ -1318,7 +1318,7 @@ class TestProcessApi(BaseTest):
         )
         assert conflict_response.status_code == 409, conflict_response.text
         assert conflict_response.json()
-        assert conflict_response.json()["error_code"] == "message_instance_identifier_conflict"
+        assert conflict_response.json()["error_code"] == "message_instance_uuid_conflict"
 
     def test_message_send_with_ttl_expires_buffered_message(
         self,
@@ -1328,7 +1328,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         payload = {"customer_id": "sartography", "po_number": "1001"}
-        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=1&message_instance_identifier=approval-expiring"
+        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=1&message_instance_uuid=approval-expiring"
 
         with patch.object(MessageService, "current_time_in_seconds", return_value=1000):
             response = client.post(
@@ -1381,7 +1381,7 @@ class TestProcessApi(BaseTest):
             "description": "Ya!, a-ok bud!",
         }
         response = client.post(
-            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_identifier=approval-before-subscribe",
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-before-subscribe",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=payload,
         )
@@ -1428,7 +1428,7 @@ class TestProcessApi(BaseTest):
 
         db.session.refresh(process_instance)
         assert process_instance.status == "complete"
-        message_instance = MessageInstanceModel.query.filter_by(message_instance_identifier="approval-before-subscribe").first()
+        message_instance = MessageInstanceModel.query.filter_by(message_instance_uuid="approval-before-subscribe").first()
         assert message_instance is not None
         assert message_instance.status == "completed"
 

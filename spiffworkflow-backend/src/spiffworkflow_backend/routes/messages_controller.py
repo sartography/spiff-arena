@@ -129,14 +129,14 @@ def message_send(
     body: dict[str, Any],
     execution_mode: str | None = None,
     time_to_live_in_seconds: int | None = None,
-    message_instance_identifier: str | None = None,
+    message_instance_uuid: str | None = None,
 ) -> flask.wrappers.Response:
     receiver_message = MessageService.run_process_model_from_message(
         modified_message_name,
         body,
         execution_mode,
         time_to_live_in_seconds=time_to_live_in_seconds,
-        message_instance_identifier=message_instance_identifier,
+        message_instance_uuid=message_instance_uuid,
     )
     process_instance = _process_instance_for_message_response(receiver_message)
     if process_instance is None:
@@ -186,7 +186,7 @@ def _message_instance_response(message_instance: MessageInstanceModel) -> dict[s
         "name": message_instance.name,
         "message_type": message_instance.message_type,
         "status": message_instance.status,
-        "message_instance_identifier": message_instance.message_instance_identifier,
+        "message_instance_uuid": message_instance.message_instance_uuid,
         "expires_at_in_seconds": message_instance.expires_at_in_seconds,
     }
 

@@ -50,7 +50,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     # The correlation keys of the process at the time the message was created.
     correlation_keys: dict = db.Column(db.JSON)
     # Optional caller-provided idempotency key for externally posted messages.
-    message_instance_identifier: str | None = db.Column(db.String(255), nullable=True, index=True)
+    message_instance_uuid: str | None = db.Column(db.String(255), nullable=True, index=True)
     expires_at_in_seconds: int | None = db.Column(db.Integer, nullable=True, index=True)
     status: str = db.Column(db.String(20), nullable=False, default="ready", index=True)
     user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore

@@ -3265,7 +3265,7 @@ paths:
           type: integer
           minimum: 0
           maximum: 300
-      - name: message_instance_identifier
+      - name: message_instance_uuid
         in: query
         required: false
         description: Caller-provided idempotency key. Required when time_to_live_in_seconds is greater than 0.
