@@ -1,7 +1,7 @@
 from flask import g
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_model_import_service import ModelAliasNotFoundError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 
@@ -34,6 +34,6 @@ def process_model_import(modified_process_group_id: str, body: dict) -> tuple[di
         f"User: {g.user.username} imported process model from {import_source_type} "
         f"({repository_url}) into {unmodified_process_group_id}"
     )
-    _commit_and_push_to_git(commit_message)
+    GitService.commit_on_save(commit_message)
 
     return {"process_model": process_model.to_dict(), "import_source": repository_url}, 201

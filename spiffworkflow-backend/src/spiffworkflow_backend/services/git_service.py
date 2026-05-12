@@ -128,6 +128,14 @@ class GitService:
         return cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
 
     @classmethod
+    def commit_on_save(cls, message: str) -> None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:
+            git_output = cls.commit(message=message)
+            current_app.logger.info(f"git output: {git_output}")
+        else:
+            current_app.logger.info("Git commit on save is disabled")
+
+    @classmethod
     def check_for_basic_configs(cls, raise_on_missing: bool = True) -> bool:
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
             if raise_on_missing:
