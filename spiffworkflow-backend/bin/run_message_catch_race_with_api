@@ -19,7 +19,7 @@ fi
 process_model_identifier="${1:-admin/message-catch-race}"
 message_name="${2:-race_callback}"
 race_id="${3:-race-$(date +%s)-$$}"
-message_instance_uuid="${4:-message-${race_id}}"
+message_instance_uuid="${4:-$(uuidgen 2>/dev/null || uv run python -c 'import uuid; print(uuid.uuid4())')}"
 username="${5:-admin}"
 password="${6:-admin}"
 realm_name="${7:-spiffworkflow}"

@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table("message_instance", schema=None) as batch_op:
-        batch_op.add_column(sa.Column("message_instance_uuid", sa.String(length=255), nullable=True))
+        batch_op.add_column(sa.Column("message_instance_uuid", sa.String(length=40), nullable=True))
         batch_op.add_column(sa.Column("expires_at_in_seconds", sa.Integer(), nullable=True))
         batch_op.create_index(
             batch_op.f("ix_message_instance_message_instance_uuid"),

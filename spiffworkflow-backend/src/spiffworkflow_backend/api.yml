@@ -3271,7 +3271,9 @@ paths:
         description: Caller-provided idempotency key. Required when time_to_live_in_seconds is greater than 0.
         schema:
           type: string
-          maxLength: 255
+          format: uuid
+          maxLength: 40
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     post:
       tags:
         - Messages

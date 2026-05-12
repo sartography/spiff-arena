@@ -1287,7 +1287,8 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         payload = {"customer_id": "sartography", "po_number": "1001"}
-        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-1001"
+        message_instance_uuid = "11111111-1111-4111-8111-111111111111"
+        url = f"/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid={message_instance_uuid}"
 
         response = client.post(
             url,
@@ -1309,7 +1310,7 @@ class TestProcessApi(BaseTest):
         assert duplicate_response.status_code == 202, duplicate_response.text
         assert duplicate_response.json()
         assert duplicate_response.json()["message_instance"]["id"] == message_instance_id
-        assert MessageInstanceModel.query.filter_by(message_instance_uuid="approval-1001").count() == 1
+        assert MessageInstanceModel.query.filter_by(message_instance_uuid=message_instance_uuid).count() == 1
 
         conflict_response = client.post(
             url,
@@ -1320,6 +1321,21 @@ class TestProcessApi(BaseTest):
         assert conflict_response.json()
         assert conflict_response.json()["error_code"] == "message_instance_uuid_conflict"
 
+    def test_message_send_with_ttl_rejects_invalid_message_instance_uuid(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-1001",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "1001"},
+        )
+
+        assert response.status_code == 400
+
     def test_message_send_with_ttl_expires_buffered_message(
         self,
         app: Flask,
@@ -1328,7 +1344,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         payload = {"customer_id": "sartography", "po_number": "1001"}
-        url = "/v1.0/messages/Approval Result?time_to_live_in_seconds=1&message_instance_uuid=approval-expiring"
+        url = (
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=1&message_instance_uuid=22222222-2222-4222-8222-222222222222"
+        )
 
         with patch.object(MessageService, "current_time_in_seconds", return_value=1000):
             response = client.post(
@@ -1381,7 +1399,8 @@ class TestProcessApi(BaseTest):
             "description": "Ya!, a-ok bud!",
         }
         response = client.post(
-            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-before-subscribe",
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60"
+            "&message_instance_uuid=33333333-3333-4333-8333-333333333333",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
             json=payload,
         )
@@ -1428,7 +1447,9 @@ class TestProcessApi(BaseTest):
 
         db.session.refresh(process_instance)
         assert process_instance.status == "complete"
-        message_instance = MessageInstanceModel.query.filter_by(message_instance_uuid="approval-before-subscribe").first()
+        message_instance = MessageInstanceModel.query.filter_by(
+            message_instance_uuid="33333333-3333-4333-8333-333333333333"
+        ).first()
         assert message_instance is not None
         assert message_instance.status == "completed"
 

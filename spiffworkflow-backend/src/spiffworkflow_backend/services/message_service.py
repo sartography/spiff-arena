@@ -4,6 +4,7 @@ from collections.abc import Generator
 from collections.abc import Iterable
 from typing import Any
 from typing import cast
+from uuid import UUID
 
 from flask import current_app
 from flask import g
@@ -47,6 +48,32 @@ class MessageService:
     @classmethod
     def current_time_in_seconds(cls) -> int:
         return round(time.time())
+
+    @classmethod
+    def _validated_message_instance_uuid(cls, message_instance_uuid: str | None) -> str | None:
+        if message_instance_uuid is None:
+            return None
+        if len(message_instance_uuid) > 40:
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be 40 characters or fewer.",
+                status_code=400,
+            )
+        try:
+            parsed_uuid = UUID(message_instance_uuid)
+        except ValueError as exception:
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be a valid UUID.",
+                status_code=400,
+            ) from exception
+        if str(parsed_uuid) != message_instance_uuid.lower():
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be a valid UUID.",
+                status_code=400,
+            )
+        return message_instance_uuid
 
     @classmethod
     def _validated_time_to_live(
@@ -588,6 +615,7 @@ class MessageService:
     ) -> MessageInstanceModel:
         message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
         ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_uuid)
+        message_instance_uuid = cls._validated_message_instance_uuid(message_instance_uuid)
         now_in_seconds = cls.current_time_in_seconds()
         expires_at_in_seconds = now_in_seconds + ttl if ttl > 0 else None
         cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
