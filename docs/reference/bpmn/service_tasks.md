@@ -28,7 +28,7 @@ Service Tasks in SpiffWorkflow allow you to configure HTTP requests and other AP
 You can configure retries directly on a service task operator:
 
 ```xml
-<spiffworkflow:retry retries="3" backoff_base="2" />
+<spiffworkflow:retry retries="3" />
 ```
 
 - `retries` is the maximum retry count.
