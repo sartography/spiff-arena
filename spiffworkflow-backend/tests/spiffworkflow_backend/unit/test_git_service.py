@@ -60,6 +60,30 @@ class TestGitService(BaseTest):
         )
         assert output == "This output should not end in space"
 
+    def test_commit_on_save_commits_when_enabled(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        mock_commit = mocker.patch.object(GitService, "commit", return_value="commit output")
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE", True):
+            GitService.commit_on_save("User: test commit")
+
+        mock_commit.assert_called_once_with(message="User: test commit")
+
+    def test_commit_on_save_skips_commit_when_disabled(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        mock_commit = mocker.patch.object(GitService, "commit")
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE", False):
+            GitService.commit_on_save("User: test commit")
+
+        mock_commit.assert_not_called()
+
     def test_force_sync_to_webhook_revision_stashes_and_backs_up_local_state(
         self,
         app: Flask,

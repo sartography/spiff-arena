@@ -18,7 +18,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
@@ -268,7 +268,7 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     db.session.add(data_store_model)
     db.session.commit()
 
-    _commit_and_push_to_git(f"User: {g.user.username} added data store {data_store_model.identifier}")
+    GitService.commit_on_save(f"User: {g.user.username} added data store {data_store_model.identifier}")
     return make_response(jsonify({"ok": True}), 200)
 
 

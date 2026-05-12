@@ -14,9 +14,9 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
@@ -42,7 +42,7 @@ def process_group_create(body: dict) -> flask.wrappers.Response:
         )
 
     ProcessModelService.add_process_group(process_group)
-    _commit_and_push_to_git(f"User: {g.user.username} added process group {process_group.id}")
+    GitService.commit_on_save(f"User: {g.user.username} added process group {process_group.id}")
     return make_response(jsonify(process_group), 201)
 
 
@@ -63,7 +63,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
             status_code=400,
         ) from exception
 
-    _commit_and_push_to_git(f"User: {g.user.username} deleted process group {process_group_id}")
+    GitService.commit_on_save(f"User: {g.user.username} deleted process group {process_group_id}")
     return make_response(jsonify({"ok": True}), 200)
 
 
@@ -90,7 +90,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
     MessageDefinitionService.save_all_message_models(all_message_models)
     db.session.commit()
 
-    _commit_and_push_to_git(f"User: {g.user.username} updated process group {process_group_id}")
+    GitService.commit_on_save(f"User: {g.user.username} updated process group {process_group_id}")
     return make_response(jsonify(process_group), 200)
 
 
@@ -154,5 +154,7 @@ def process_group_show(
 def process_group_move(modified_process_group_identifier: str, new_location: str) -> flask.wrappers.Response:
     original_process_group_id = _un_modify_modified_process_model_id(modified_process_group_identifier)
     new_process_group = ProcessModelService.process_group_move(original_process_group_id, new_location)
-    _commit_and_push_to_git(f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}")
+    GitService.commit_on_save(
+        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
+    )
     return make_response(jsonify(new_process_group), 200)

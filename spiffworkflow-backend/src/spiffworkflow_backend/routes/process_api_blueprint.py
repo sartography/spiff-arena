@@ -315,14 +315,6 @@ def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str,
     return return_value, parameter_name
 
 
-def _commit_and_push_to_git(message: str) -> None:
-    if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:
-        git_output = GitService.commit(message=message)
-        current_app.logger.info(f"git output: {git_output}")
-    else:
-        current_app.logger.info("Git commit on save is disabled")
-
-
 def _un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
     return modified_process_model_identifier.replace(":", "/")
 
