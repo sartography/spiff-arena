@@ -7,6 +7,9 @@ from flask.app import Flask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    celery_task_process_instance_run,
+)
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -196,6 +199,50 @@ class TestServiceTaskRetries(BaseTest):
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data.get("spiff__retries_attempted") == 1
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 9
+
+    def test_service_task_worker_does_not_immediately_requeue_rescheduled_retry(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        processor, process_instance = self.load_retry_processor()
+
+        with patch("requests.get") as mock_get:
+            self.transient_failure_response(mock_get)
+            custom_service_task_time, workflow_execution_service_time = self.patch_retry_time()
+            with custom_service_task_time, workflow_execution_service_time:
+                with patch("celery.current_app.send_task"):
+                    with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+                        processor.do_engine_steps(save=True)
+
+            service_task = self.get_service_task(processor)
+            assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
+
+            db.session.expire_all()
+            reloaded_process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).one()
+
+            with (
+                patch(
+                    "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+                ) as current_process,
+                patch("spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.time.time",
+                      return_value=self.fake_now + 3),
+                patch("spiffworkflow_backend.services.custom_service_task.time.time", return_value=self.fake_now + 3),
+                patch("spiffworkflow_backend.services.workflow_execution_service.time.time", return_value=self.fake_now + 3),
+                patch("celery.current_app.send_task") as send_task,
+            ):
+                current_process.return_value.index = 0
+                with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+                    celery_task_process_instance_run.run(reloaded_process_instance.id, str(service_task.id))
+
+        assert mock_get.call_count == 2
+
+        reloaded_processor = ProcessInstanceProcessor(ProcessInstanceModel.query.filter_by(id=process_instance.id).one())
+        reloaded_service_task = self.get_service_task(reloaded_processor)
+        assert reloaded_service_task.state == TaskState.STARTED
+        assert reloaded_service_task.internal_data.get("spiff__retries_attempted") == 1
+        assert reloaded_service_task.internal_data.get("spiff__retry_at") == self.fake_now + 12
+
+        assert send_task.call_count == 1
+        assert send_task.call_args.kwargs["countdown"] == 10
 
     def test_service_task_fails_after_exhausting_retries(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         processor, _process_instance = self.load_retry_processor()
