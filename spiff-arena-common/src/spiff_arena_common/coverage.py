@@ -57,11 +57,11 @@ def cov_tasks(test_cases, embedded_subprocess_owners=None):
                 if task["state"] == 64:
                     yield coverage_spec_id, task["task_spec"]
         for _, sp in state["subprocesses"].items():
-            id = sp["spec"]
-            id = embedded_subprocess_owners.get(id, id)
+            spec_id = sp["spec"]
+            spec_id = embedded_subprocess_owners.get(spec_id, spec_id)
             for _, task in sp["tasks"].items():
                 if task["state"] == 64:
-                    yield id, task["task_spec"]
+                    yield spec_id, task["task_spec"]
 
 def tally(cov):
     completed = 0
