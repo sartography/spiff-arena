@@ -9,9 +9,7 @@ from flask.app import Flask
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
-    celery_task_process_instance_run,
-)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import celery_task_process_instance_run
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -229,8 +227,10 @@ class TestServiceTaskRetries(BaseTest):
                 patch(
                     "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
                 ) as current_process,
-                patch("spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.time.time",
-                      return_value=self.fake_now + 3),
+                patch(
+                    "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.time.time",
+                    return_value=self.fake_now + 3,
+                ),
                 patch("spiffworkflow_backend.services.custom_service_task.time.time", return_value=self.fake_now + 3),
                 patch("spiffworkflow_backend.services.workflow_execution_service.time.time", return_value=self.fake_now + 3),
                 patch("celery.current_app.send_task") as send_task,
