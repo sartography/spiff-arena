@@ -181,31 +181,6 @@ class MessageService:
         return None
 
     @classmethod
-    def correlate_ready_send_messages_for_names(
-        cls,
-        message_names: Iterable[str],
-        execution_mode: str | None = None,
-    ) -> None:
-        cls.expire_ready_send_messages()
-        names = list(set(message_names))
-        if not names:
-            return
-
-        message_instances_send: list[MessageInstanceModel] = (
-            MessageInstanceModel.query.filter_by(
-                message_type=MessageTypes.send.value,
-                status=MessageStatuses.ready.value,
-            )
-            .filter(MessageInstanceModel.name.in_(names))  # type: ignore
-            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
-            .order_by(MessageInstanceModel.id)
-            .all()
-        )
-
-        for message_instance_send in message_instances_send:
-            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
-
-    @classmethod
     def correlate_ready_send_messages_for_process_instance(
         cls,
         message_names: Iterable[str],
