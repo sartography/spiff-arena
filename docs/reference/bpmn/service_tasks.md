@@ -33,8 +33,8 @@ You can configure retries directly on a service task operator:
 
 - `retries` is the maximum retry count.
 - `backoff_base` is optional (default is `3`).
-- Retry delay uses exponential backoff (`backoff_base^attempt`, e.g. `3s`, `9s`, `27s` by default).
-- Retries are intended for transient failures (such as network issues, HTTP `5xx`, or `429` responses). Permanent failures (such as HTTP `4xx`) fail the task without retry.
+- Retry delay uses exponential backoff where retry number starts at `1` (`backoff_base^retry_number`, so default delays are `3s`, `9s`, `27s`).
+- Retries are intended for transient failures (such as network issues, HTTP `5xx`, or `429`). Most other `4xx` failures are treated as permanent and fail without retry.
 
 Below, we’ll walk through detailed setup instructions for two examples to illustrate different configurations and use cases.
 
