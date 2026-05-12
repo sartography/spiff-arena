@@ -12,6 +12,7 @@ export const DEFAULT_PAGE = 1;
 export const doNothing = () => {
   return undefined;
 };
+import i18next from './i18n';
 
 export const matchNumberRegex = /^[0-9,.-]*$/;
 
@@ -256,16 +257,16 @@ export const isANumber = (str: string | number | null) => {
 
 export const getProcessStatus = (processInstance: ProcessInstance | string) => {
   if (typeof processInstance === 'string') {
-    return i18n.t(`status_${processInstance}`);
+    return i18next.t(`status_${processInstance}`);
   }
-  return i18n.t(`status_${processInstance.status}`);
+  return i18next.t(`status_${processInstance.status}`);
 };
 
 export const getMessageType = (messageInstance: MessageInstance | string) => {
   if (typeof messageInstance === 'string') {
-    return i18n.t(`message_type_${messageInstance}`);
+    return i18next.t(`message_type_${messageInstance}`);
   }
-  return i18n.t(`message_type_${messageInstance.message_type}`);
+  return i18next.t(`message_type_${messageInstance.message_type}`);
 };
 
 export const getLastMilestoneFromProcessInstance = (
@@ -275,13 +276,13 @@ export const getLastMilestoneFromProcessInstance = (
   let valueToUse = value;
   if (!valueToUse) {
     if (processInstance.status === 'not_started') {
-      valueToUse = i18n.t('milestone_created');
+      valueToUse = i18next.t('milestone_created');
     } else if (
       ['complete', 'error', 'terminated'].includes(processInstance.status)
     ) {
-      valueToUse = i18n.t('milestone_completed');
+      valueToUse = i18next.t('milestone_completed');
     } else {
-      valueToUse = i18n.t('milestone_started');
+      valueToUse = i18next.t('milestone_started');
     }
   }
   let truncatedValue = valueToUse;
