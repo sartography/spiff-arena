@@ -4,7 +4,7 @@ import {
   getTemplate,
   getUiOptions,
 } from '@rjsf/utils';
-import React from 'react';
+import { useState } from 'react';
 import { TextInput } from '@carbon/react';
 import { getCommonAttributes } from '../../helpers';
 import { matchNumberRegex } from '../../../helpers';
@@ -97,9 +97,9 @@ export default function NumericRangeField({
   const minNumber = schema.minimum;
   const maxNumber = schema.maximum;
   const min = formData?.min;
-  const [minValue, setMinValue] = React.useState(min?.toString() || '');
+  const [minValue, setMinValue] = useState(min?.toString() || '');
   const max = formData?.max;
-  const [maxValue, setMaxValue] = React.useState(max?.toString() || '');
+  const [maxValue, setMaxValue] = useState(max?.toString() || '');
 
   // the text input eventually breaks when the number gets too big.
   // we are not sure what the cut off really is but seems unlikely

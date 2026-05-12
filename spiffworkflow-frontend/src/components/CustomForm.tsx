@@ -1,4 +1,5 @@
-import validator from '@rjsf/validator-ajv8';
+// eslint-disable-next-line import-x/no-rename-default
+import rjsfValidator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
@@ -14,7 +15,7 @@ import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericR
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
 
-ajvErrors(validator.ajv);
+ajvErrors(rjsfValidator.ajv);
 
 /**
  * NOTE There is a bug with the MuiForm where if a property in the jsonschema has
@@ -563,7 +564,7 @@ export default function CustomForm({
     schema,
     uiSchema,
     widgets: rjsfWidgets,
-    validator,
+    validator: rjsfValidator,
     customValidate,
     noValidate,
     fields: rjsfFields,

@@ -45,6 +45,10 @@ class CustomServiceTaskConverter(ServiceTaskConverter):  # type: ignore
     def __init__(self, target_class, registry, typename: str = "ServiceTask"):  # type: ignore
         super().__init__(target_class, registry, typename)
 
+    def to_dict(self, spec):  # type: ignore
+        dct = super().to_dict(spec)
+        return dct
+
 
 SPIFF_CONFIG[StandardLoopTask] = StandardLoopTaskConverter
 SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter

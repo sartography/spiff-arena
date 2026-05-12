@@ -23,16 +23,6 @@ The result data will be stored in the service task's configured result variable,
 
 See the examples for the proper request and response formats, see [Using Callback URLs](../../explanation/dev/connector_proxy_examples.md#using-callback-urls-long-running-tasks) in the Connector Proxy API Examples page.
 
-## Monitoring Waiting Tasks
-
-SpiffWorkflow provides an endpoint to list all service tasks that are currently waiting for a callback:
-
-```text
-GET /tasks/service-tasks-awaiting-callback
-```
-
-This can be useful for monitoring and debugging long-running processes. 
-
 ## Summary
 
 1. Configure a service task in your BPMN diagram as usual.

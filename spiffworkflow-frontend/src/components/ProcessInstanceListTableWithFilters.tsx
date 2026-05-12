@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -76,7 +70,7 @@ import {
 } from '../interfaces';
 
 // MUI
-import ProcessModelSearchCarbon from './ProcessModelSearchCarbon';
+import ProcessModelSearch from './ProcessModelSearchCarbon';
 
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
@@ -1531,7 +1525,7 @@ export default function ProcessInstanceListTableWithFilters({
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
-            <ProcessModelSearchCarbon
+            <ProcessModelSearch
               onChange={(selection: any) => {
                 const pmSelectionId = selection.selectedItem
                   ? selection.selectedItem.id
