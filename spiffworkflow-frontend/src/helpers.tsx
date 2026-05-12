@@ -6,8 +6,6 @@ import {
   MessageInstance,
   ProcessInstance,
 } from './interfaces';
-import i18n from './i18n';
-
 export const DEFAULT_PER_PAGE = 50;
 export const DEFAULT_PAGE = 1;
 

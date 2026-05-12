@@ -1,4 +1,4 @@
-import React, { createContext, useState } from 'react';
+import { createContext, useMemo, useState } from 'react';
 import { ErrorForDisplay } from '../interfaces';
 
 type ErrorContextType = {
@@ -22,7 +22,7 @@ export default function APIErrorProvider({ children }) {
   };
   const removeError = () => setError(null);
 
-  const contextValue = React.useMemo(
+  const contextValue = useMemo(
     () => ({
       error,
       addError: (newError: ErrorForDisplay | null) => {

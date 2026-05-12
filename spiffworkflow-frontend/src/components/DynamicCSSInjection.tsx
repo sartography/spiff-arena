@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 // @ts-ignore - Ignoring TS1259 error about default import for DOMPurify
-import DOMPurify from 'dompurify';
+import domPurify from 'dompurify'; // eslint-disable-line import-x/no-rename-default
 
 interface DynamicCSSInjectionProps {
   cssContent: string;
@@ -30,7 +30,7 @@ function DynamicCSSInjection({ cssContent, id }: DynamicCSSInjectionProps) {
     styleElement.setAttribute('id', `spiff-extension-css-${id}`);
     // Sanitize CSS content to prevent CSS injection attacks
     // DOMPurify supports CSS mode but TypeScript types don't reflect this
-    const sanitizedCSS = DOMPurify.sanitize(cssContent, {
+    const sanitizedCSS = domPurify.sanitize(cssContent, {
       FORBID_TAGS: ['style', 'link'],
       // @ts-expect-error - CSS profile is supported by DOMPurify but not in its TypeScript definition
       USE_PROFILES: { css: true },
