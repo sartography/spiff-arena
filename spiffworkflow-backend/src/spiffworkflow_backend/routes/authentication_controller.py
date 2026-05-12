@@ -198,7 +198,20 @@ def login_return(
 
 
 # FIXME: share more code with login_return and maybe attempt to get a refresh token
-def login_with_access_token(access_token: str, authentication_identifier: str) -> Response:
+def login_with_access_token(authentication_identifier: str, access_token: str | None = None) -> Response:
+    if access_token is None:
+        authorization_header = request.headers.get("Authorization", "")
+        bearer_prefix = "Bearer "
+        if authorization_header.startswith(bearer_prefix):
+            access_token = authorization_header[len(bearer_prefix) :]
+
+    if not access_token:
+        raise ApiError(
+            error_code="missing_token",
+            message="Login failed. Please try again",
+            status_code=401,
+        )
+
     decoded_token = _get_decoded_token(access_token)
 
     if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):

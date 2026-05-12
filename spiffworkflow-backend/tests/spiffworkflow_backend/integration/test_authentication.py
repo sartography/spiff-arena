@@ -198,6 +198,33 @@ class TestAuthentication(BaseTest):
             self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
             self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
 
+    def test_login_with_access_token_accepts_bearer_token(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = self.find_or_create_user("testing@example.com")
+        user.email = "testing@example.com"
+        user.service = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        user.service_id = f"service:{user.service}::service_id:{user.service_id}"
+        db.session.add(user)
+        db.session.commit()
+
+        access_token = user.encode_auth_token(
+            {
+                "iss": user.service,
+                "sub": user.service_id,
+                "aud": "spiffworkflow-backend",
+            }
+        )
+        response = client.post(
+            "/v1.0/login_with_access_token?authentication_identifier=default",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 200
+
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,

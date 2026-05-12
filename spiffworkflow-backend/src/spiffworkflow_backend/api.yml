@@ -159,7 +159,7 @@ paths:
     parameters:
       - name: access_token
         in: query
-        required: true
+        required: false
         schema:
           type: string
       - name: authentication_identifier
