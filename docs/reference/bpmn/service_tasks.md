@@ -33,7 +33,7 @@ You can configure retries directly on a service task operator:
 
 - `retries` is the maximum retry count.
 - `backoff_base` is optional (default is `3`).
-- Retry delay (in seconds) uses exponential backoff where retry number starts at `1` (`backoff_base^retry_number`): first retry `3s`, second `9s`, third `27s` with defaults.
+- Retry delay (in seconds) uses exponential backoff (`backoff_base^retry_number`, where `retry_number` starts at `1`). With default `backoff_base=3`: first retry after `3s`, second after `9s`, third after `27s`.
 - Retry eligibility is determined automatically by SpiffArena: transient failures (for example network issues, HTTP `5xx`, and `429`) can retry; most other `4xx` failures are treated as permanent and fail without retry.
 
 Below, we’ll walk through detailed setup instructions for two examples to illustrate different configurations and use cases.
