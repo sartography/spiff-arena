@@ -5,7 +5,6 @@ from typing import Any
 from typing import cast
 
 from flask import current_app
-from flask import has_app_context
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -92,9 +91,12 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
     def get_process_instance_id(self, spiff_task: SpiffTask) -> Any:
         process_instance_id = None
-        if process_instance_id is None and has_app_context():
+        try:
             tld = current_app.config.get("THREAD_LOCAL_DATA")
             process_instance_id = getattr(tld, "process_instance_id", None)
+        # if no current_app
+        except RuntimeError:
+            process_instance_id = None
         if process_instance_id is None:
             from spiffworkflow_backend.models.task import TaskModel
 
