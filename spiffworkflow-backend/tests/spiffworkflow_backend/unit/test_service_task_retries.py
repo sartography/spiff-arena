@@ -1,5 +1,7 @@
 import json
 from typing import Any
+from typing import Protocol
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -20,6 +22,10 @@ from spiffworkflow_backend.services.process_instance_processor import ProcessIns
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+
+class SupportsCeleryTaskRun(Protocol):
+    def run(self, process_instance_id: int, task_guid: str | None = None) -> dict[str, Any]: ...
 
 
 class TestServiceTaskRetries(BaseTest):
@@ -231,7 +237,9 @@ class TestServiceTaskRetries(BaseTest):
             ):
                 current_process.return_value.index = 0
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                    celery_task_process_instance_run.run(reloaded_process_instance.id, str(service_task.id))
+                    cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(
+                        reloaded_process_instance.id, str(service_task.id)
+                    )
 
         assert mock_get.call_count == 2
 

@@ -199,7 +199,7 @@ class ExecutionStrategy:
         self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
     ) -> TaskRunnability:
         while True:
-            bpmn_process_instance.refresh_waiting_tasks()
+            bpmn_process_instance.refresh_due_waiting_tasks()
             self.should_do_before(bpmn_process_instance, process_instance_model)
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
@@ -650,7 +650,6 @@ class WorkflowExecutionService:
                         f" instance ({self.process_instance_model.id})."
                     )
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
             self.refresh_due_service_task_retries()
 
             # TODO: implicit re-entrant locks here `with_dequeued`

@@ -657,7 +657,6 @@ def _interstitial_stream(
                     processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
                     processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                     processor.save()  # Fixme - maybe find a way not to do this on every loop?
-                    processor.refresh_waiting_tasks()
 
                 except WorkflowTaskException as wfe:
                     api_error = ApiError.from_workflow_exception(
