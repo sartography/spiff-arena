@@ -3,6 +3,7 @@ import time
 from collections.abc import Generator
 from collections.abc import Iterable
 from typing import Any
+from typing import cast
 
 from flask import current_app
 from flask import g
@@ -83,7 +84,8 @@ class MessageService:
     ) -> MessageInstanceModel | None:
         if not message_instance_identifier:
             return None
-        return (
+        return cast(
+            MessageInstanceModel | None,
             MessageInstanceModel.query.filter_by(
                 message_type=MessageTypes.send.value,
                 name=message_name,
@@ -100,7 +102,7 @@ class MessageService:
             )
             .filter(MessageInstanceModel.expires_at_in_seconds > now_in_seconds)
             .order_by(MessageInstanceModel.id)
-            .first()
+            .first(),
         )
 
     @classmethod
@@ -111,7 +113,7 @@ class MessageService:
                 message_type=MessageTypes.send.value,
                 status=MessageStatuses.ready.value,
             )
-            .filter(MessageInstanceModel.expires_at_in_seconds.isnot(None))
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
             .filter(MessageInstanceModel.expires_at_in_seconds <= now)
             .all()
         )
@@ -195,7 +197,7 @@ class MessageService:
                 status=MessageStatuses.ready.value,
             )
             .filter(MessageInstanceModel.name.in_(names))  # type: ignore
-            .filter(MessageInstanceModel.expires_at_in_seconds.isnot(None))
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
             .order_by(MessageInstanceModel.id)
             .all()
         )
@@ -222,7 +224,7 @@ class MessageService:
                 status=MessageStatuses.ready.value,
             )
             .filter(MessageInstanceModel.name.in_(names))  # type: ignore
-            .filter(MessageInstanceModel.expires_at_in_seconds.isnot(None))
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
             .order_by(MessageInstanceModel.id)
             .all()
         )
@@ -636,8 +638,8 @@ class MessageService:
             name=message_name,
             payload=body,
             user_id=g.user.id,
-            message_instance_identifier=message_instance_identifier,
-            expires_at_in_seconds=expires_at_in_seconds,
+            message_instance_identifier=message_instance_identifier,  # type: ignore[arg-type]
+            expires_at_in_seconds=expires_at_in_seconds,  # type: ignore[arg-type]
         )
         db.session.add(message_instance)
         db.session.commit()

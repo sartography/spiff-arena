@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 from flask import jsonify
@@ -160,13 +161,21 @@ def message_send(
 
 
 def _process_instance_for_message_response(message_instance: MessageInstanceModel) -> ProcessInstanceModel | None:
-    if message_instance.process_instance_id is not None:
-        return ProcessInstanceModel.query.filter_by(id=message_instance.process_instance_id).first()
+    process_instance_id = cast(int | None, message_instance.process_instance_id)
+    if process_instance_id is not None:
+        return cast(
+            ProcessInstanceModel | None,
+            ProcessInstanceModel.query.filter_by(id=process_instance_id).first(),
+        )
 
-    if message_instance.counterpart_id is not None:
-        counterpart_message = MessageInstanceModel.query.filter_by(id=message_instance.counterpart_id).first()
+    counterpart_id = cast(int | None, message_instance.counterpart_id)
+    if counterpart_id is not None:
+        counterpart_message = MessageInstanceModel.query.filter_by(id=counterpart_id).first()
         if counterpart_message is not None and counterpart_message.process_instance_id is not None:
-            return ProcessInstanceModel.query.filter_by(id=counterpart_message.process_instance_id).first()
+            return cast(
+                ProcessInstanceModel | None,
+                ProcessInstanceModel.query.filter_by(id=counterpart_message.process_instance_id).first(),
+            )
 
     return None
 
