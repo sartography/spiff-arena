@@ -624,9 +624,7 @@ class MessageService:
             if existing_message_instance.payload != body:
                 raise ApiError(
                     error_code="message_instance_identifier_conflict",
-                    message=(
-                        "A message with the same message_instance_identifier already exists with a different payload."
-                    ),
+                    message=("A message with the same message_instance_identifier already exists with a different payload."),
                     status_code=409,
                 )
             return existing_message_instance

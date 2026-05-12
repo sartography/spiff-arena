@@ -1428,9 +1428,7 @@ class TestProcessApi(BaseTest):
 
         db.session.refresh(process_instance)
         assert process_instance.status == "complete"
-        message_instance = MessageInstanceModel.query.filter_by(
-            message_instance_identifier="approval-before-subscribe"
-        ).first()
+        message_instance = MessageInstanceModel.query.filter_by(message_instance_identifier="approval-before-subscribe").first()
         assert message_instance is not None
         assert message_instance.status == "completed"
 
