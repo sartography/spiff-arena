@@ -23,6 +23,19 @@ Service Tasks in SpiffWorkflow allow you to configure HTTP requests and other AP
 - **Parameter Syntax**: Headers, query parameters, and URLs require JSON-like syntax compatible with Python dictionaries.
 - **Response Variables**: Use response variables to store data retrieved from service tasks. These variables can be referenced in later tasks for display or further processing.
 
+### Retries for Transient Failures
+
+You can configure retries directly on a service task operator:
+
+```xml
+<spiffworkflow:retry retries="3" backoff_base="2" />
+```
+
+- `retries` is the maximum retry count.
+- `backoff_base` is optional (default is `3`).
+- Retry delay uses exponential backoff (`backoff_base^attempt`, e.g. `3s`, `9s`, `27s` by default).
+- Retries are intended for transient failures (such as network issues, HTTP `5xx`, or `429` responses). Permanent failures (such as HTTP `4xx`) fail the task without retry.
+
 Below, we’ll walk through detailed setup instructions for two examples to illustrate different configurations and use cases.
 
 ### Example 1: Fetching Mock Data from JSONPlaceholder API
@@ -98,4 +111,3 @@ Below is workflow overview:
 4. **URL**:
    - **url**: `'https://api.bamboohr.com/api/gateway.php/{your_company_subdomain}/v1/employees/directory'`
      - Replace `{your_company_subdomain}` with your BambooHR subdomain.
-
