@@ -94,7 +94,7 @@ class TestServiceTaskRetries(BaseTest):
 
         assert len(service_task_specs) == 1
         assert service_task_specs[0]["retries"] == 3
-        assert service_task_specs[0]["retry_backoff_base"] == 3
+        assert "retry_backoff_base" not in service_task_specs[0]
 
     def test_service_task_retry_backoff_base_can_be_overridden_in_bpmn(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
@@ -195,7 +195,7 @@ class TestServiceTaskRetries(BaseTest):
                     service_task = self.get_service_task(processor)
                     assert service_task.state == TaskState.STARTED
                     assert service_task.task_spec.retries == 3
-                    assert service_task.task_spec.retry_backoff_base == 3
+                    assert service_task.task_spec.retry_backoff_base is None
                     assert service_task.internal_data.get("spiff__retries_attempted") == 0
 
                     service_task.internal_data["spiff__retry_at"] = self.fake_now - 1

@@ -32,10 +32,9 @@ class CustomServiceTask(ServiceTask):  # type: ignore
     ) -> None:
         super().__init__(*args, **kwargs)
         self.retries = retries
-        resolved_retry_backoff_base = self.DEFAULT_RETRY_BACKOFF_BASE if retry_backoff_base is None else int(retry_backoff_base)
-        if resolved_retry_backoff_base < 1:
+        if retry_backoff_base is not None and int(retry_backoff_base) < 1:
             raise ValueError("retry_backoff_base must be a positive integer.")
-        self.retry_backoff_base = resolved_retry_backoff_base
+        self.retry_backoff_base = int(retry_backoff_base) if retry_backoff_base is not None else None
 
     def _execute(self, spiff_task: SpiffTask) -> bool | None:
         def evaluate(param: dict) -> dict:
@@ -94,7 +93,6 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         try:
             tld = current_app.config.get("THREAD_LOCAL_DATA")
             process_instance_id = getattr(tld, "process_instance_id", None)
-        # if no current_app
         except RuntimeError:
             process_instance_id = None
         if process_instance_id is None:
@@ -139,13 +137,18 @@ class CustomServiceTask(ServiceTask):  # type: ignore
 
         return self.get_retries_attempted(spiff_task) < int(self.retries)
 
+    def get_effective_retry_backoff_base(self) -> int:
+        if self.retry_backoff_base is None:
+            return self.DEFAULT_RETRY_BACKOFF_BASE
+        return int(self.retry_backoff_base)
+
     def schedule_retry(self, spiff_task: SpiffTask) -> None:
         if self.retries is None:
             raise ValueError("Cannot schedule a retry without a configured retry count.")
 
         retries_attempted = self.get_retries_attempted(spiff_task)
         next_retry_number = retries_attempted + 1
-        delay = self.retry_backoff_base**next_retry_number
+        delay = self.get_effective_retry_backoff_base() ** next_retry_number
         run_at = round(time.time() + delay)
 
         logger.warning(
