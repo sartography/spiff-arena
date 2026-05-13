@@ -315,10 +315,6 @@ def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str,
     return return_value, parameter_name
 
 
-def _un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
-    return modified_process_model_identifier.replace(":", "/")
-
-
 def _find_process_instance_by_id_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:

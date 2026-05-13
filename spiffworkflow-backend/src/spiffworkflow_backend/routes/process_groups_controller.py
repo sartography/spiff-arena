@@ -14,7 +14,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
@@ -47,7 +47,7 @@ def process_group_create(body: dict) -> flask.wrappers.Response:
 
 
 def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Response:
-    process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_id)
 
     try:
         ProcessModelService.process_group_delete(process_group_id)
@@ -72,7 +72,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
         include_item: body[include_item] for include_item in PROCESS_GROUP_KEYS_TO_UPDATE_FROM_API if include_item in body
     }
 
-    process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_id)
     if not ProcessModelService.is_process_group_identifier(process_group_id):
         raise ApiError(
             error_code="process_group_does_not_exist",
@@ -121,7 +121,7 @@ def process_group_list(
 def process_group_show(
     modified_process_group_id: str,
 ) -> Any:
-    process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_id)
     has_access_to_group_without_considering_subgroups_and_models = True
     try:
         AuthorizationService.check_permission_for_request()
@@ -152,7 +152,7 @@ def process_group_show(
 
 
 def process_group_move(modified_process_group_identifier: str, new_location: str) -> flask.wrappers.Response:
-    original_process_group_id = _un_modify_modified_process_model_id(modified_process_group_identifier)
+    original_process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_identifier)
     new_process_group = ProcessModelService.process_group_move(original_process_group_id, new_location)
     GitService.commit_on_save(
         f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
