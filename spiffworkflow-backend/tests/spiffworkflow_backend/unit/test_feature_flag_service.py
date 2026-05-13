@@ -28,25 +28,25 @@ class TestFeatureFlagService(BaseTest):
             pytest.param(False, False),
         ],
     )
+    @pytest.mark.usefixtures("no_feature_flags")
     def test_default_enabled_v0(
         self,
-        no_feature_flags: None,
         default_enabled: bool,
         expected: bool,
     ) -> None:
         assert FeatureFlagService.feature_enabled("some_feature", default_enabled) == expected
 
+    @pytest.mark.usefixtures("no_feature_flags")
     def test_default_feature_flag_value_overrides_passed_in_default_enabled(
         self,
-        no_feature_flags: None,
     ) -> None:
         FeatureFlagService.set_feature_flags({"some_feature": False}, {})
         assert not FeatureFlagService.feature_enabled("some_feature", True)
 
+    @pytest.mark.usefixtures("no_feature_flags")
     def test_process_model_override_feature_flag_value_overrides_passed_in_default_enabled(
         self,
         app: Flask,
-        no_feature_flags: None,
     ) -> None:
         self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
@@ -55,10 +55,10 @@ class TestFeatureFlagService(BaseTest):
         )
         assert not FeatureFlagService.feature_enabled("some_feature", True)
 
+    @pytest.mark.usefixtures("no_feature_flags")
     def test_process_model_override_feature_flag_value_overrides_default_feature_flag_value(
         self,
         app: Flask,
-        no_feature_flags: None,
     ) -> None:
         self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
@@ -67,10 +67,10 @@ class TestFeatureFlagService(BaseTest):
         )
         assert not FeatureFlagService.feature_enabled("some_feature", True)
 
+    @pytest.mark.usefixtures("no_feature_flags")
     def test_does_not_consider_other_features(
         self,
         app: Flask,
-        no_feature_flags: None,
     ) -> None:
         self._set_tld_process_model_identifier(app)
         FeatureFlagService.set_feature_flags(
