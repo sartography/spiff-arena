@@ -73,7 +73,7 @@ class MessageService:
                 message="message_instance_uuid must be a valid UUID.",
                 status_code=400,
             )
-        return message_instance_uuid
+        return str(parsed_uuid)
 
     @classmethod
     def _validated_time_to_live(
