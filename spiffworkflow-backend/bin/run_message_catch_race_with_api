@@ -398,7 +398,7 @@ function complete_and_verify_correlation() {
   local completed_receive completed_receive_id
 
   echo "${label}_completing_manual_task=${label_task_guid} race_id=${label_race_id}"
-  complete_body=$(jq -nc --arg race_id "$label_race_id" '{race_id: $race_id}')
+  complete_body=$(jq -nc '{}')
   complete_result=$(curl_with_status PUT "${BACKEND_BASE_URL}/v1.0/tasks/${label_instance_id}/${label_task_guid}?execution_mode=synchronous" "$token" -H "Content-Type: application/json" --data "$complete_body")
   complete_status=$(response_status "$complete_result")
   complete_response=$(response_body "$complete_result")
