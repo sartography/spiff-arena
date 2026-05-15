@@ -43,7 +43,7 @@ class MessageServiceError(Exception):
 
 
 class MessageService:
-    MAX_TIME_TO_LIVE_SECONDS = 60
+    MAX_TIME_TO_LIVE_SECONDS = 300
 
     @classmethod
     def current_time_in_seconds(cls) -> int:
@@ -105,7 +105,6 @@ class MessageService:
     @classmethod
     def _find_message_with_uuid(
         cls,
-        message_name: str,
         message_instance_uuid: str | None,
     ) -> MessageInstanceModel | None:
         if not message_instance_uuid:
@@ -114,7 +113,6 @@ class MessageService:
             MessageInstanceModel | None,
             MessageInstanceModel.query.filter_by(
                 message_type=MessageTypes.send.value,
-                name=message_name,
                 message_instance_uuid=message_instance_uuid,
             )
             .order_by(MessageInstanceModel.id)
@@ -636,14 +634,13 @@ class MessageService:
         cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
 
         existing_message_instance = cls._find_message_with_uuid(
-            message_name,
             message_instance_uuid,
         )
         if existing_message_instance is not None:
-            if existing_message_instance.payload != body:
+            if existing_message_instance.name != message_name or existing_message_instance.payload != body:
                 raise ApiError(
                     error_code="message_instance_uuid_conflict",
-                    message=("A message with the same message_instance_uuid already exists with a different payload."),
+                    message=("A message with the same message_instance_uuid already exists for a different message or payload."),
                     status_code=409,
                 )
             return existing_message_instance

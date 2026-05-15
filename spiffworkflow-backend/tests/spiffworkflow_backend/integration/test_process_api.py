@@ -1288,7 +1288,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         payload = {"customer_id": "sartography", "po_number": "1001"}
         message_instance_uuid = "11111111-1111-4111-8111-111111111111"
-        url = f"/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid={message_instance_uuid}"
+        url = f"/v1.0/messages/Approval Result?time_to_live_in_seconds=300&message_instance_uuid={message_instance_uuid}"
 
         response = client.post(
             url,
@@ -1320,6 +1320,33 @@ class TestProcessApi(BaseTest):
         assert conflict_response.status_code == 409, conflict_response.text
         assert conflict_response.json()
         assert conflict_response.json()["error_code"] == "message_instance_uuid_conflict"
+
+        different_message_response = client.post(
+            f"/v1.0/messages/OtherApprovalResult?time_to_live_in_seconds=60&message_instance_uuid={message_instance_uuid}",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=payload,
+        )
+        assert different_message_response.status_code == 409, different_message_response.text
+        assert different_message_response.json()
+        assert different_message_response.json()["error_code"] == "message_instance_uuid_conflict"
+
+    def test_message_send_with_ttl_rejects_ttl_above_five_minutes(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=301"
+            "&message_instance_uuid=44444444-4444-4444-8444-444444444444",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "1001"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()
+        assert response.json()["status"] == 400
 
     def test_message_send_with_ttl_rejects_invalid_message_instance_uuid(
         self,
