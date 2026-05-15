@@ -169,6 +169,33 @@ def request_headers(args: argparse.Namespace, access_token: str | None = None) -
     return headers
 
 
+def login_with_access_token(
+    session: requests.Session,
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    access_token: str,
+) -> None:
+    params = {
+        "authentication_identifier": args.authentication_identifier,
+    }
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/login_with_access_token",
+        headers=headers,
+        params=params,
+        timeout=args.timeout,
+    )
+
+    if response.status_code == 400 and "access_token" in response.text:
+        response = session.post(
+            f"{args.backend_base_url}/v1.0/login_with_access_token",
+            headers=headers,
+            params={**params, "access_token": access_token},
+            timeout=args.timeout,
+        )
+
+    check_response(response, "login_with_access_token", {200, 204, 302})
+
+
 def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
     payload = {
         "id": group_id,
@@ -438,7 +465,7 @@ def print_summary(results: list[MessageResult], final_statuses: list[ProcessInst
     if errored_after_accept:
         print("\nProcess instances that were accepted and later became error:")
         for status_result in sorted(errored_after_accept, key=lambda r: r.process_instance_id)[:20]:
-            print(f"- process_instance={status_result.process_instance_id} body={status_result.response_text}")
+            print(f"- {status_result.process_instance_id}")
 
     if bad_final_fetches:
         print("\nProcess instances that could not be re-fetched cleanly:")
@@ -482,15 +509,7 @@ def main() -> int:
     headers = request_headers(args, access_token)
 
     if access_token:
-        response = session.post(
-            f"{args.backend_base_url}/v1.0/login_with_access_token",
-            headers=headers,
-            params={
-                "authentication_identifier": args.authentication_identifier,
-            },
-            timeout=args.timeout,
-        )
-        check_response(response, "login_with_access_token", {200, 204, 302})
+        login_with_access_token(session, args, headers, access_token)
 
     group_id, process_model_id, message_name = ensure_process_model(session, args, headers)
     results = run_load(args, headers, group_id, message_name)
