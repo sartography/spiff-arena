@@ -68,7 +68,8 @@
   "overrides": {
     "postcss-preset-env": {
       "autoprefixer": "10.4.5"
-    }
+    },
+    "yaml": "^2.9.0"
   },
   "scripts": {
     "build": "vite build",
