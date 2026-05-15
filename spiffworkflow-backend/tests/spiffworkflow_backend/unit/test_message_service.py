@@ -280,7 +280,9 @@ class TestMessageService(BaseTest):
         try:
             MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
         except WorkflowExecutionServiceError as e:
-            assert "The process instance encountered an error and failed after starting." in e.notes
+            process_instance = ProcessInstanceModel.query.filter_by(status=ProcessInstanceStatus.error.value).first()
+            assert process_instance is not None
+            assert f"The process instance {process_instance.id} encountered an error and failed after starting." in e.notes
 
     def test_can_send_message_to_multiple_process_models(
         self,

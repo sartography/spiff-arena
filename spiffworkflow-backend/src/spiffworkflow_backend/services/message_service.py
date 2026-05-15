@@ -449,7 +449,12 @@ class MessageService:
             ErrorHandlingService.handle_error(receiving_process_instance, exception)
 
         if isinstance(exception, SpiffWorkflowException):
-            exception.add_note("The process instance encountered an error and failed after starting.")
+            if receiving_process_instance is not None:
+                exception.add_note(
+                    f"The process instance {receiving_process_instance.id} encountered an error and failed after starting."
+                )
+            else:
+                exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
     def correlate_all_message_instances(
