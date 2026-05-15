@@ -21,6 +21,24 @@ def get_version_info_data() -> dict[str, Any]:
     return version_info_data_dict
 
 
+def get_public_version_info_data() -> dict[str, Any]:
+    version_info_data = get_version_info_data()
+    public_version_info_data = {}
+
+    version = version_info_data.get("org.opencontainers.image.version")
+    revision = version_info_data.get("org.opencontainers.image.revision")
+    created = version_info_data.get("org.opencontainers.image.created")
+
+    if version:
+        public_version_info_data["version"] = version
+    if revision:
+        public_version_info_data["revision"] = revision
+    if created:
+        public_version_info_data["created"] = created
+
+    return public_version_info_data
+
+
 def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
     connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
