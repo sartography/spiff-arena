@@ -282,7 +282,9 @@ class TestMessageService(BaseTest):
         except WorkflowExecutionServiceError as e:
             process_instance = ProcessInstanceModel.query.filter_by(status=ProcessInstanceStatus.error.value).first()
             assert process_instance is not None
-            assert f"The process instance {process_instance.id} encountered an error and failed after starting." in e.notes
+            assert (
+                f"The process instance {process_instance.id} encountered an error and failed after starting." in e.notes
+            )
 
     def test_can_send_message_to_multiple_process_models(
         self,

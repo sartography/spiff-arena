@@ -196,7 +196,24 @@ def login_with_access_token(
     check_response(response, "login_with_access_token", {200, 204, 302})
 
 
+def process_group_exists(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> bool:
+    response = session.get(
+        f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier(group_id)}",
+        headers=headers,
+        timeout=args.timeout,
+    )
+    if response.status_code == 200:
+        return True
+    if response.status_code == 400 and "process_group_cannot_be_found" in response.text:
+        return False
+    check_response(response, "check process group", {200})
+    return True
+
+
 def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
+    if process_group_exists(session, args, headers, group_id):
+        return
+
     payload = {
         "id": group_id,
         "display_name": group_id,
