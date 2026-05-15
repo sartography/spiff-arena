@@ -1,0 +1,42 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: "0 10 * * 1-5" # 10:00 UTC weekdays
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run in dry-run mode (lookup only, no PRs)"
+        type: boolean
+        default: false
+
+# Prevent concurrent Renovate runs from creating duplicate PRs
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  renovate:
+    name: Run Renovate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      # Note: PRs created with GITHUB_TOKEN won't auto-trigger CI workflows.
+      # To enable that, replace with a PAT (repo scope) in RENOVATE_TOKEN secret.
+      - name: Run Renovate
+        uses: renovatebot/github-action@3633cede7d4d4598438e654eac4a695e46004420 # v46.1.7
+        env:
+          RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'lookup' || '' }}
+          LOG_LEVEL: info
+        with:
+          configurationFile: renovate.json5
+          token: ${{ github.token }}
