@@ -86,7 +86,7 @@ jobs:
       - name: Normalize branch name
         id: normalize_branch_name
         run: |
-          BRANCH_NAME=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed -r 's/[^a-z0-9]+/-/g' | sed -r 's/^-+|-+$//g')
+          BRANCH_NAME=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed -r 's/[^a-z0-9]+/-/g' | sed -r 's/^-+|-+$//g')
           echo "normalized_branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Get current date
@@ -114,7 +114,11 @@ jobs:
         run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Generate full image tag
         id: full_tag
-        run: echo "full_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.normalize_branch_name.outputs.normalized_branch_name }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}" >> "$GITHUB_OUTPUT"
+        run: echo "full_tag=${{ env.REGISTRY }}/${IMAGE_NAME}:${STEPS_NORMALIZE_BRANCH_NAME_OUTPUTS_NORMALIZED_BRANCH_NAME}-${STEPS_DATE_OUTPUTS_DATE}-${STEPS_COMMIT_SHA_OUTPUTS_SHA_SHORT}" >> "$GITHUB_OUTPUT"
+        env:
+          STEPS_NORMALIZE_BRANCH_NAME_OUTPUTS_NORMALIZED_BRANCH_NAME: ${{ steps.normalize_branch_name.outputs.normalized_branch_name }}
+          STEPS_DATE_OUTPUTS_DATE: ${{ steps.date.outputs.date }}
+          STEPS_COMMIT_SHA_OUTPUTS_SHA_SHORT: ${{ steps.commit_sha.outputs.sha_short }}
       - name: Build Docker image
         uses: docker/build-push-action@v7.0.0
         with:
@@ -173,4 +177,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Adding markdown
-        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
+        run: echo 'TAGS ${STEPS_META_OUTPUTS_TAGS}' >> "$GITHUB_STEP_SUMMARY"
+        env:
+          STEPS_META_OUTPUTS_TAGS: ${{ steps.meta.outputs.tags }}
