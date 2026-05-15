@@ -141,6 +141,8 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v6
@@ -234,6 +236,8 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -259,11 +263,14 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Checkout Samples
         uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
+          persist-credentials: false
       - name: start_backend
         run: ./bin/build_and_run_with_docker_compose
         timeout-minutes: 20
@@ -281,6 +288,7 @@ jobs:
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -365,6 +373,7 @@ jobs:
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
+          persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@v6.3.0
         with:
@@ -397,11 +406,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Checkout Samples
         uses: actions/checkout@v6
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
+          persist-credentials: false
       - name: start_keycloak
         working-directory: ./spiffworkflow-backend
         run: ./keycloak/bin/start_keycloak
