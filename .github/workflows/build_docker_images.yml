@@ -158,6 +158,7 @@ jobs:
         if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
         with:
           sarif_file: "trivy-results.sarif"
+          category: "${{ matrix.context }}"
 
       - name: Push Docker image
         uses: docker/build-push-action@v7.0.0
