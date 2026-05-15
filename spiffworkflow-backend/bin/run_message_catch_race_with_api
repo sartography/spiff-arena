@@ -23,6 +23,8 @@ message_instance_uuid="${4:-$(uuidgen 2>/dev/null || uv run python -c 'import uu
 username="${5:-admin}"
 password="${6:-admin}"
 realm_name="${7:-spiffworkflow}"
+script_started_at_in_seconds=$(date +%s)
+start_message_name="race_start"
 
 if [[ -z "${process_model_identifier}" ]]; then
   echo >&2 "usage: $(basename "$0") [process_model_identifier: OPTIONAL] [message_name: OPTIONAL] [race_id: OPTIONAL] [message_instance_uuid: OPTIONAL] [username: OPTIONAL] [password: OPTIONAL] [realm_name: OPTIONAL]"
@@ -60,17 +62,26 @@ function write_embedded_bpmn() {
       <bpmn:correlationPropertyRef>race_id</bpmn:correlationPropertyRef>
     </bpmn:correlationKey>
   </bpmn:collaboration>
+  <bpmn:message id="Message_race_start" name="race_start" />
   <bpmn:message id="Message_race_callback" name="race_callback" />
   <bpmn:correlationProperty id="race_id" name="race_id">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="Message_race_start">
+      <bpmn:formalExpression>race_id</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="Message_race_callback">
       <bpmn:formalExpression>race_id</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="Process_message_catch_race_9k4v7m" name="Message Catch Race" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1">
+    <bpmn:startEvent id="StartEvent_race_start" name="Race start" spiffworkflow:isMatchingCorrelation="true">
       <bpmn:outgoing>Flow_start_to_sleep</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_race_start" messageRef="Message_race_start">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>start_payload</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_start_to_sleep" sourceRef="StartEvent_1" targetRef="Task_wait_for_callback" />
+    <bpmn:sequenceFlow id="Flow_start_to_sleep" sourceRef="StartEvent_race_start" targetRef="Task_wait_for_callback" />
     <bpmn:manualTask id="Task_wait_for_callback" name="Wait for callback">
       <bpmn:incoming>Flow_start_to_sleep</bpmn:incoming>
       <bpmn:outgoing>Flow_sleep_to_receive</bpmn:outgoing>
@@ -79,10 +90,18 @@ function write_embedded_bpmn() {
       </bpmn:extensionElements>
     </bpmn:manualTask>
     <bpmn:sequenceFlow id="Flow_sleep_to_receive" sourceRef="Task_wait_for_callback" targetRef="Event_receive_callback" />
-    <bpmn:intermediateCatchEvent id="Event_receive_callback" name="Receive callback">
+    <bpmn:intermediateCatchEvent id="Event_receive_callback" name="Receive callback" spiffworkflow:isMatchingCorrelation="true">
       <bpmn:incoming>Flow_sleep_to_receive</bpmn:incoming>
       <bpmn:outgoing>Flow_receive_to_end</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_receive_callback" messageRef="Message_race_callback" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_receive_callback" messageRef="Message_race_callback">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>callback_payload</spiffworkflow:messageVariable>
+          <spiffworkflow:processVariableCorrelation>
+            <spiffworkflow:propertyId>race_id</spiffworkflow:propertyId>
+            <spiffworkflow:expression>start_payload["race_id"]</spiffworkflow:expression>
+          </spiffworkflow:processVariableCorrelation>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_receive_to_end" sourceRef="Event_receive_callback" targetRef="Event_end" />
     <bpmn:endEvent id="Event_end">
@@ -94,7 +113,7 @@ function write_embedded_bpmn() {
       <bpmndi:BPMNShape id="Participant_message_catch_race_di" bpmnElement="Participant_message_catch_race" isHorizontal="true">
         <dc:Bounds x="100" y="80" width="760" height="180" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+      <bpmndi:BPMNShape id="StartEvent_race_start_di" bpmnElement="StartEvent_race_start">
         <dc:Bounds x="160" y="149" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_wait_for_callback_di" bpmnElement="Task_wait_for_callback">
@@ -238,125 +257,232 @@ function post_json() {
 function search_messages() {
   local token="$1"
   local body="$2"
-  curl --silent --show-error -X POST "${BACKEND_BASE_URL}/v1.0/messages" -H "Authorization: Bearer ${token}" -H "Content-Type: application/json" --data "$body"
+  curl --silent --show-error -X POST "${BACKEND_BASE_URL}/v1.0/messages?per_page=1000" -H "Authorization: Bearer ${token}" -H "Content-Type: application/json" --data "$body"
 }
 
 function process_instance_status() {
   local token="$1"
-  curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${process_instance_id}" -H "Authorization: Bearer ${token}" | jq -r '.status'
+  local instance_id="$2"
+  curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${instance_id}" -H "Authorization: Bearer ${token}" | jq -r '.status'
+}
+
+function new_uuid() {
+  uuidgen 2>/dev/null || uv run python -c 'import uuid; print(uuid.uuid4())'
+}
+
+function create_waiting_instance() {
+  local token="$1"
+  local label="$2"
+  local label_race_id="$3"
+  local start_body start_result start_status start_response process_instance_id progress_result task task_type task_state task_guid
+
+  start_body=$(jq -nc --arg race_id "$label_race_id" '{race_id: $race_id}')
+  start_result=$(curl_with_status POST "${BACKEND_BASE_URL}/v1.0/messages/${start_message_name}?execution_mode=synchronous" "$token" -H "Content-Type: application/json" --data "$start_body")
+  start_status=$(response_status "$start_result")
+  start_response=$(response_body "$start_result")
+  if [[ "$start_status" != "200" ]]; then
+    echo >&2 "ERROR: Expected ${label} message start to return HTTP 200. status=${start_status} body=${start_response}"
+    exit 1
+  fi
+
+  process_instance_id=$(jq -r '.process_instance.id // empty' <<<"$start_response")
+  if ! grep -qE '^[0-9]+$' <<<"$process_instance_id"; then
+    echo >&2 "ERROR: Did not receive valid process instance id when message-starting ${label}. result was ${start_response}"
+    exit 1
+  fi
+
+  echo >&2 "${label}_process_instance=${process_instance_id}"
+  jq -c .process_instance <<<"$start_response" >&2
+
+  progress_result=$(curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/tasks/progress/${process_instance_id}" -H "Authorization: Bearer ${token}")
+  task=$(jq '.task' <<<"$progress_result")
+  task_type=$(jq -r '.type' <<<"$task")
+  task_state=$(jq -r '.state' <<<"$task")
+  task_guid=$(jq -r '.id' <<<"$task")
+
+  if [[ "$task_type" != "ManualTask" || "$task_state" != "READY" ]]; then
+    echo >&2 "ERROR: Expected ${label} to land on a READY ManualTask, got: ${task}"
+    exit 1
+  fi
+
+  echo "${process_instance_id}:${task_guid}"
+}
+
+function publish_and_verify_cached_message() {
+  local token="$1"
+  local label="$2"
+  local label_instance_id="$3"
+  local label_race_id="$4"
+  local label_message_uuid="$5"
+  local early_result early_status early_response buffered_message_status buffered_message_id
+  local cached_send_query cached_send_response cached_send cached_send_id pre_complete_process_messages pre_complete_receive_count
+
+  echo >&2 "${label}_manual_task_waiting=true"
+  echo >&2 "${label}_publishing_early_message=${message_name} race_id=${label_race_id}"
+  early_result=$(curl_with_status POST "${BACKEND_BASE_URL}/v1.0/messages/${message_name}?time_to_live_in_seconds=60&message_instance_uuid=${label_message_uuid}" "$token" -H "Content-Type: application/json" --data "{\"race_id\":\"${label_race_id}\"}")
+  early_status=$(response_status "$early_result")
+  early_response=$(response_body "$early_result")
+  jq -c . <<<"$early_response" >&2
+  if [[ "$early_status" != "202" ]]; then
+    echo >&2 "ERROR: Expected ${label} early publish to return HTTP 202 while no receiver is waiting. status=${early_status} body=${early_response}"
+    exit 1
+  fi
+
+  buffered_message_status=$(jq -r '.message_instance.status // empty' <<<"$early_response")
+  buffered_message_id=$(jq -r '.message_instance.id // empty' <<<"$early_response")
+  if [[ "$buffered_message_status" != "ready" ]]; then
+    echo >&2 "ERROR: Expected ${label} early publish to be buffered as a ready message."
+    exit 1
+  fi
+  if ! grep -qE '^[0-9]+$' <<<"$buffered_message_id"; then
+    echo >&2 "ERROR: Expected ${label} early publish response to include a buffered message id. body=${early_response}"
+    exit 1
+  fi
+
+  cached_send_query=$(jq -nc --arg name "$message_name" --argjson created_after "$script_started_at_in_seconds" '{name: $name, message_type: ["send"], status: ["ready"], created_after: $created_after}')
+  cached_send_response=$(search_messages "$token" "$cached_send_query")
+  cached_send=$(jq -c --arg uuid "$label_message_uuid" '.results[] | select(.message_instance_uuid == $uuid)' <<<"$cached_send_response")
+  if [[ -z "$cached_send" ]]; then
+    echo >&2 "ERROR: Expected to find ${label} cached ready send message with message_instance_uuid=${label_message_uuid}. search result was ${cached_send_response}"
+    exit 1
+  fi
+  cached_send_id=$(jq -r '.id' <<<"$cached_send")
+  if [[ "$cached_send_id" != "$buffered_message_id" ]]; then
+    echo >&2 "ERROR: ${label} cached send id ${cached_send_id} did not match publish response id ${buffered_message_id}."
+    exit 1
+  fi
+  echo >&2 "${label}_cached_message=${cached_send_id} status=ready expires_at=$(jq -r '.expires_at_in_seconds // empty' <<<"$cached_send")"
+
+  pre_complete_process_messages=$(curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/messages?process_instance_id=${label_instance_id}" -H "Authorization: Bearer ${token}")
+  pre_complete_receive_count=$(jq --arg name "$message_name" '[.results[] | select(.name == $name and .message_type == "receive")] | length' <<<"$pre_complete_process_messages")
+  if [[ "$pre_complete_receive_count" != "0" ]]; then
+    echo >&2 "ERROR: Expected no receive message before completing ${label} manual task. process messages were ${pre_complete_process_messages}"
+    exit 1
+  fi
+
+  echo "$cached_send_id"
+}
+
+function verify_ready_cached_message() {
+  local token="$1"
+  local label="$2"
+  local label_message_uuid="$3"
+  local expected_send_id="$4"
+  local cached_send_query cached_send_response cached_send cached_send_id
+
+  cached_send_query=$(jq -nc --arg name "$message_name" --argjson created_after "$script_started_at_in_seconds" '{name: $name, message_type: ["send"], status: ["ready"], created_after: $created_after}')
+  cached_send_response=$(search_messages "$token" "$cached_send_query")
+  cached_send=$(jq -c --arg uuid "$label_message_uuid" '.results[] | select(.message_instance_uuid == $uuid)' <<<"$cached_send_response")
+  if [[ -z "$cached_send" ]]; then
+    echo >&2 "ERROR: Expected ${label} cached message to still be ready. search result was ${cached_send_response}"
+    exit 1
+  fi
+  cached_send_id=$(jq -r '.id' <<<"$cached_send")
+  if [[ "$cached_send_id" != "$expected_send_id" ]]; then
+    echo >&2 "ERROR: Expected ${label} cached message id ${expected_send_id} to remain ready, got ${cached_send_id}."
+    exit 1
+  fi
+  echo "${label}_cached_message_still_ready=true"
+}
+
+function complete_and_verify_correlation() {
+  local token="$1"
+  local label="$2"
+  local label_instance_id="$3"
+  local label_task_guid="$4"
+  local label_race_id="$5"
+  local label_message_uuid="$6"
+  local expected_send_id="$7"
+  local complete_body complete_result complete_status complete_response final_status
+  local completed_message_query completed_message_response completed_send completed_send_id completed_send_counterpart_id
+  local completed_receive completed_receive_id
+
+  echo "${label}_completing_manual_task=${label_task_guid} race_id=${label_race_id}"
+  complete_body=$(jq -nc --arg race_id "$label_race_id" '{race_id: $race_id}')
+  complete_result=$(curl_with_status PUT "${BACKEND_BASE_URL}/v1.0/tasks/${label_instance_id}/${label_task_guid}?execution_mode=synchronous" "$token" -H "Content-Type: application/json" --data "$complete_body")
+  complete_status=$(response_status "$complete_result")
+  complete_response=$(response_body "$complete_result")
+  echo "$complete_response" | jq -c .
+  if [[ "$complete_status" != "200" ]]; then
+    echo >&2 "ERROR: Expected ${label} manual task completion to return HTTP 200. status=${complete_status} body=${complete_response}"
+    exit 1
+  fi
+
+  final_status=$(process_instance_status "$token" "$label_instance_id")
+  if [[ "$final_status" != "complete" ]]; then
+    echo >&2 "ERROR: Expected ${label} process instance ${label_instance_id} to complete after the cached message was consumed. status=${final_status}"
+    exit 1
+  fi
+
+  completed_message_query=$(jq -nc --arg name "$message_name" --argjson created_after "$script_started_at_in_seconds" '{name: $name, message_type: ["send", "receive"], created_after: $created_after}')
+  completed_message_response=$(search_messages "$token" "$completed_message_query")
+  completed_send=$(jq -c --arg uuid "$label_message_uuid" '.results[] | select(.message_instance_uuid == $uuid and .message_type == "send")' <<<"$completed_message_response")
+  if [[ -z "$completed_send" ]]; then
+    echo >&2 "ERROR: Expected to find ${label} cached send message ${expected_send_id} after manual task completion. search result was ${completed_message_response}"
+    exit 1
+  fi
+  completed_send_id=$(jq -r '.id' <<<"$completed_send")
+  completed_send_status=$(jq -r '.status // empty' <<<"$completed_send")
+  completed_send_counterpart_id=$(jq -r '.counterpart_id // empty' <<<"$completed_send")
+  if [[ "$completed_send_id" != "$expected_send_id" || "$completed_send_status" != "completed" || ! "$completed_send_counterpart_id" =~ ^[0-9]+$ ]]; then
+    echo >&2 "ERROR: ${label} send message was not completed and counterpart-linked as expected: ${completed_send}"
+    exit 1
+  fi
+
+  completed_receive=$(jq -c --arg process_instance_id "$label_instance_id" --arg counterpart_id "$completed_send_id" '.results[] | select((.process_instance_id | tostring) == $process_instance_id and (.counterpart_id | tostring) == $counterpart_id and .message_type == "receive")' <<<"$completed_message_response")
+  if [[ -z "$completed_receive" ]]; then
+    echo >&2 "ERROR: Expected ${label} completed receive message on process_instance=${label_instance_id} linked to send=${completed_send_id}. search result was ${completed_message_response}"
+    exit 1
+  fi
+  completed_receive_id=$(jq -r '.id' <<<"$completed_receive")
+  completed_receive_status=$(jq -r '.status // empty' <<<"$completed_receive")
+  completed_receive_correlation_keys=$(jq -c '.correlation_keys // {}' <<<"$completed_receive")
+  expected_receive_correlation_keys=$(jq -nc --arg race_id "$label_race_id" '{MainCorrelationKey: {race_id: $race_id}}')
+  if [[ "$completed_receive_id" != "$completed_send_counterpart_id" ]]; then
+    echo >&2 "ERROR: ${label} send counterpart ${completed_send_counterpart_id} did not match receive id ${completed_receive_id}."
+    exit 1
+  fi
+  if [[ "$completed_receive_status" != "completed" ]]; then
+    echo >&2 "ERROR: ${label} receive message was not completed as expected: ${completed_receive}"
+    exit 1
+  fi
+  if [[ "$completed_receive_correlation_keys" != "$expected_receive_correlation_keys" ]]; then
+    echo >&2 "ERROR: ${label} receive correlation keys ${completed_receive_correlation_keys} did not match expected ${expected_receive_correlation_keys}."
+    exit 1
+  fi
+
+  echo "${label}_process_instance=${label_instance_id} status=${final_status}"
+  echo "${label}_send_message=${completed_send_id} receive_message=${completed_receive_id} status=completed"
 }
 
 access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$realm_name")
 curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?authentication_identifier=default" -H "Authorization: Bearer $access_token" >/dev/null
 install_embedded_process_model "$access_token"
 
-create_result=$(curl --silent --show-error -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}" -H "Authorization: Bearer $access_token")
-process_instance_id=$(jq -r '.id' <<<"$create_result")
-if ! grep -qE '^[0-9]+$' <<<"$process_instance_id"; then
-  echo >&2 "ERROR: Did not receive valid process instance id when instantiating process model. result was ${create_result}"
-  exit 1
-fi
+race_id_one="${race_id}-one"
+race_id_two="${race_id}-two"
+message_instance_uuid_one="$message_instance_uuid"
+message_instance_uuid_two=$(new_uuid)
 
-run_result=$(curl --silent --show-error -X POST "${BACKEND_BASE_URL}/v1.0/process-instances/${modified_process_model_identifier}/${process_instance_id}/run?execution_mode=synchronous" -H "Authorization: Bearer $access_token")
-echo "process_instance=${process_instance_id}"
-echo "$run_result" | jq -c .
+instance_one=$(create_waiting_instance "$access_token" "one" "$race_id_one")
+process_instance_id_one="${instance_one%%:*}"
+task_guid_one="${instance_one#*:}"
 
-progress_result=$(curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/tasks/progress/${process_instance_id}" -H "Authorization: Bearer $access_token")
-task=$(jq '.task' <<<"$progress_result")
-task_type=$(jq -r '.type' <<<"$task")
-task_state=$(jq -r '.state' <<<"$task")
-task_guid=$(jq -r '.id' <<<"$task")
+instance_two=$(create_waiting_instance "$access_token" "two" "$race_id_two")
+process_instance_id_two="${instance_two%%:*}"
+task_guid_two="${instance_two#*:}"
 
-if [[ "$task_type" != "ManualTask" || "$task_state" != "READY" ]]; then
-  echo >&2 "ERROR: Expected to land on a READY ManualTask, got: ${task}"
-  exit 1
-fi
+cached_send_id_one=$(publish_and_verify_cached_message "$access_token" "one" "$process_instance_id_one" "$race_id_one" "$message_instance_uuid_one")
+cached_send_id_two=$(publish_and_verify_cached_message "$access_token" "two" "$process_instance_id_two" "$race_id_two" "$message_instance_uuid_two")
 
-echo "manual_task=${task_guid}"
-echo "publishing_early_message=${message_name} race_id=${race_id}"
-early_result=$(curl_with_status POST "${BACKEND_BASE_URL}/v1.0/messages/${message_name}?time_to_live_in_seconds=60&message_instance_uuid=${message_instance_uuid}" "$access_token" -H "Content-Type: application/json" --data "{\"race_id\":\"${race_id}\"}")
-early_status=$(response_status "$early_result")
-early_response=$(response_body "$early_result")
-echo "$early_response" | jq -c .
-if [[ "$early_status" != "202" ]]; then
-  echo >&2 "ERROR: Expected early publish to return HTTP 202 while no receiver is waiting. status=${early_status} body=${early_response}"
-  exit 1
-fi
-buffered_message_status=$(jq -r '.message_instance.status // empty' <<<"$early_response")
-buffered_message_id=$(jq -r '.message_instance.id // empty' <<<"$early_response")
-if [[ "$buffered_message_status" != "ready" ]]; then
-  echo >&2 "ERROR: Expected early publish to be buffered as a ready message."
-  exit 1
-fi
-if ! grep -qE '^[0-9]+$' <<<"$buffered_message_id"; then
-  echo >&2 "ERROR: Expected early publish response to include a buffered message id. body=${early_response}"
-  exit 1
-fi
+echo "verified_two_cached_messages_waiting=true"
 
-cached_send_query=$(jq -nc --arg name "$message_name" '{name: $name, message_type: ["send"], status: ["ready"]}')
-cached_send_response=$(search_messages "$access_token" "$cached_send_query")
-cached_send=$(jq -c --arg uuid "$message_instance_uuid" '.results[] | select(.message_instance_uuid == $uuid)' <<<"$cached_send_response")
-if [[ -z "$cached_send" ]]; then
-  echo >&2 "ERROR: Expected to find cached ready send message with message_instance_uuid=${message_instance_uuid}. search result was ${cached_send_response}"
-  exit 1
-fi
-cached_send_id=$(jq -r '.id' <<<"$cached_send")
-if [[ "$cached_send_id" != "$buffered_message_id" ]]; then
-  echo >&2 "ERROR: Cached send id ${cached_send_id} did not match publish response id ${buffered_message_id}."
-  exit 1
-fi
-echo "cached_message=${cached_send_id} status=ready expires_at=$(jq -r '.expires_at_in_seconds // empty' <<<"$cached_send")"
-
-pre_complete_process_messages=$(curl --silent --show-error "${BACKEND_BASE_URL}/v1.0/messages?process_instance_id=${process_instance_id}" -H "Authorization: Bearer ${access_token}")
-pre_complete_receive_count=$(jq --arg name "$message_name" '[.results[] | select(.name == $name and .message_type == "receive")] | length' <<<"$pre_complete_process_messages")
-if [[ "$pre_complete_receive_count" != "0" ]]; then
-  echo >&2 "ERROR: Expected no receive message before completing the manual task. process messages were ${pre_complete_process_messages}"
-  exit 1
-fi
-echo "verified_cached_message_waiting=true"
-
-echo "completing_manual_task=${task_guid}"
-complete_result=$(curl_with_status PUT "${BACKEND_BASE_URL}/v1.0/tasks/${process_instance_id}/${task_guid}?execution_mode=synchronous" "$access_token" -H "Content-Type: application/json" --data '{}')
-complete_status=$(response_status "$complete_result")
-complete_response=$(response_body "$complete_result")
-echo "$complete_response" | jq -c .
-if [[ "$complete_status" != "200" ]]; then
-  echo >&2 "ERROR: Expected manual task completion to return HTTP 200. status=${complete_status} body=${complete_response}"
-  exit 1
-fi
-
-final_status=$(process_instance_status "$access_token")
-if [[ "$final_status" != "complete" ]]; then
-  echo >&2 "ERROR: Expected process instance ${process_instance_id} to complete after the cached message was consumed. status=${final_status}"
-  exit 1
-fi
-
-completed_message_query=$(jq -nc --arg name "$message_name" '{name: $name, message_type: ["send", "receive"], status: ["completed"]}')
-completed_message_response=$(search_messages "$access_token" "$completed_message_query")
-completed_send=$(jq -c --arg uuid "$message_instance_uuid" '.results[] | select(.message_instance_uuid == $uuid and .message_type == "send")' <<<"$completed_message_response")
-if [[ -z "$completed_send" ]]; then
-  echo >&2 "ERROR: Expected cached send message ${cached_send_id} to be completed after manual task completion. search result was ${completed_message_response}"
-  exit 1
-fi
-completed_send_id=$(jq -r '.id' <<<"$completed_send")
-completed_send_counterpart_id=$(jq -r '.counterpart_id // empty' <<<"$completed_send")
-if [[ "$completed_send_id" != "$cached_send_id" || ! "$completed_send_counterpart_id" =~ ^[0-9]+$ ]]; then
-  echo >&2 "ERROR: Completed send message was not counterpart-linked as expected: ${completed_send}"
-  exit 1
-fi
-
-completed_receive=$(jq -c --arg process_instance_id "$process_instance_id" --arg counterpart_id "$completed_send_id" '.results[] | select((.process_instance_id | tostring) == $process_instance_id and (.counterpart_id | tostring) == $counterpart_id and .message_type == "receive")' <<<"$completed_message_response")
-if [[ -z "$completed_receive" ]]; then
-  echo >&2 "ERROR: Expected a completed receive message on process_instance=${process_instance_id} linked to send=${completed_send_id}. search result was ${completed_message_response}"
-  exit 1
-fi
-completed_receive_id=$(jq -r '.id' <<<"$completed_receive")
-if [[ "$completed_receive_id" != "$completed_send_counterpart_id" ]]; then
-  echo >&2 "ERROR: Send counterpart ${completed_send_counterpart_id} did not match receive id ${completed_receive_id}."
-  exit 1
-fi
+# Complete instance two first. This proves the cached messages are matched by correlation,
+# not by whichever ready send message was created first.
+complete_and_verify_correlation "$access_token" "two" "$process_instance_id_two" "$task_guid_two" "$race_id_two" "$message_instance_uuid_two" "$cached_send_id_two"
+verify_ready_cached_message "$access_token" "one" "$message_instance_uuid_one" "$cached_send_id_one"
+complete_and_verify_correlation "$access_token" "one" "$process_instance_id_one" "$task_guid_one" "$race_id_one" "$message_instance_uuid_one" "$cached_send_id_one"
 
 echo "repro_complete"
 echo "ttl_cache_verified=true"
-echo "process_instance=${process_instance_id} status=${final_status}"
-echo "send_message=${completed_send_id} receive_message=${completed_receive_id} status=completed"
+echo "correlation_routing_verified=true"
