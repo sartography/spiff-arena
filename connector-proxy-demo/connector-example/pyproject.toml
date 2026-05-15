@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "connector_example", from = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
 
 [tool.poetry.group.dev.dependencies]
