@@ -154,22 +154,19 @@ class MessageService:
         """
         cls.expire_ready_send_messages()
 
-        # Thread safe via db locking - don't try to progress the same send message over multiple instances
-        if message_instance_send.status != MessageStatuses.ready.value:
+        if not cls._claim_ready_message_instance(message_instance_send):
             return None
 
         if (
             message_instance_send.expires_at_in_seconds is not None
             and message_instance_send.expires_at_in_seconds <= cls.current_time_in_seconds()
         ):
-            message_instance_send.status = MessageStatuses.cancelled.value
-            db.session.add(message_instance_send)
-            db.session.commit()
+            cls._transition_message_instance_status(
+                message_instance_send,
+                MessageStatuses.running.value,
+                MessageStatuses.cancelled.value,
+            )
             return None
-
-        message_instance_send.status = MessageStatuses.running.value
-        db.session.add(message_instance_send)
-        db.session.commit()
 
         message_instance_receive: MessageInstanceModel | None = None
 
@@ -265,6 +262,9 @@ class MessageService:
                         if not receiving_process_instance.can_receive_message():
                             continue
 
+                        if not cls._claim_ready_message_instance(message_instance_receive):
+                            continue
+
                         processor_receive_to_use = None
                         if (
                             processor_receive is not None
@@ -305,6 +305,44 @@ class MessageService:
         return None
 
     @classmethod
+    def _claim_ready_message_instance(cls, message_instance: MessageInstanceModel) -> bool:
+        """Atomically claim a ready message instance before delivery."""
+        return cls._transition_message_instance_status(
+            message_instance,
+            MessageStatuses.ready.value,
+            MessageStatuses.running.value,
+        )
+
+    @classmethod
+    def _transition_message_instance_status(
+        cls,
+        message_instance: MessageInstanceModel,
+        from_status: str,
+        to_status: str,
+    ) -> bool:
+        rows_updated = (
+            db.session.query(MessageInstanceModel)
+            .filter(
+                MessageInstanceModel.id == message_instance.id,
+                MessageInstanceModel.status == from_status,
+            )
+            .update(
+                {
+                    "status": to_status,
+                    "updated_at_in_seconds": cls.current_time_in_seconds(),
+                },
+                synchronize_session=False,
+            )
+        )
+        db.session.commit()
+        if rows_updated == 0:
+            db.session.expire(message_instance)
+            return False
+
+        db.session.refresh(message_instance)
+        return True
+
+    @classmethod
     def _try_start_new_process_for_message(
         cls,
         message_instance_send: MessageInstanceModel,
@@ -343,6 +381,9 @@ class MessageService:
                     raise MessageServiceError(
                         f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
                     )
+
+                if not cls._claim_ready_message_instance(message_instance_receive):
+                    return None
 
                 cls.process_message_receive(
                     receiving_process_instance,
