@@ -36,6 +36,7 @@ jobs:
         uses: renovatebot/github-action@3633cede7d4d4598438e654eac4a695e46004420 # v46.1.7
         env:
           RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'lookup' || '' }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
           LOG_LEVEL: info
         with:
           configurationFile: renovate.json5

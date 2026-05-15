@@ -14,7 +14,6 @@
   // --- Integrity & Supply Chain ---
   // Convert mutable tag refs (e.g. @v4) to immutable SHA commit hashes.
   "pinDigests": true,
-  "pinDigestsHelper": true,
 
   // --- Flaw Remediation ---
   // Cool-off prevents pulling retracted releases.
