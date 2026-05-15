@@ -9,6 +9,8 @@ jobs:
   clean-ghcr:
     name: Delete old main container images
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Fetch protected multi-arch digests
         id: multi_arch_digests
