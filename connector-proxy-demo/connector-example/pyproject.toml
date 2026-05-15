@@ -13,7 +13,7 @@ spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffwo
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.6.0"
 ruff = "^0.0.292"
-pytest = "^8.4.0"
+pytest = "^9.0.3"
 
 
 [build-system]
