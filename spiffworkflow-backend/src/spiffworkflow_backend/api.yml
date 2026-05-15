@@ -157,11 +157,6 @@ paths:
 
   /login_with_access_token:
     parameters:
-      - name: access_token
-        in: query
-        required: true
-        schema:
-          type: string
       - name: authentication_identifier
         in: query
         required: true
@@ -3271,6 +3266,23 @@ paths:
           enum:
             - synchronous
             - asynchronous
+      - name: time_to_live_in_seconds
+        in: query
+        required: false
+        description: Seconds to buffer an unmatched message. A value of 0 means the message must match immediately; it is not stored.
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 300
+      - name: message_instance_uuid
+        in: query
+        required: false
+        description: Caller-provided idempotency key. Required when time_to_live_in_seconds is greater than 0.
+        schema:
+          type: string
+          format: uuid
+          maxLength: 40
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     post:
       tags:
         - Messages
@@ -3292,6 +3304,14 @@ paths:
                   task_data:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
                   process_instance:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+        "202":
+          description: Message accepted and buffered until a matching receiver is available
+          content:
+            application/json:
+              schema:
+                properties:
+                  message_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /messages/{modified_message_name}/process-model:

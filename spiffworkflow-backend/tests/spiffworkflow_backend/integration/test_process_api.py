@@ -13,9 +13,11 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
@@ -29,6 +31,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -1258,6 +1261,225 @@ class TestProcessApi(BaseTest):
         process_instance_data = processor.get_data()
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
+
+    def test_message_send_with_ttl_requires_message_instance_uuid(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "1001"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()
+        assert response.json()["error_code"] == "message_instance_uuid_required"
+
+    def test_message_send_with_ttl_buffers_and_deduplicates_by_message_instance_uuid(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        payload = {"customer_id": "sartography", "po_number": "1001"}
+        message_instance_uuid = "11111111-1111-4111-8111-111111111111"
+        url = f"/v1.0/messages/Approval Result?time_to_live_in_seconds=300&message_instance_uuid={message_instance_uuid}"
+
+        response = client.post(
+            url,
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=payload,
+        )
+
+        assert response.status_code == 202, response.text
+        assert response.json()
+        assert response.json()["message_instance"]["status"] == "ready"
+        message_instance_id = response.json()["message_instance"]["id"]
+
+        duplicate_response = client.post(
+            url,
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=payload,
+        )
+
+        assert duplicate_response.status_code == 202, duplicate_response.text
+        assert duplicate_response.json()
+        assert duplicate_response.json()["message_instance"]["id"] == message_instance_id
+        assert MessageInstanceModel.query.filter_by(message_instance_uuid=message_instance_uuid).count() == 1
+
+        conflict_response = client.post(
+            url,
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "DIFFERENT"},
+        )
+        assert conflict_response.status_code == 409, conflict_response.text
+        assert conflict_response.json()
+        assert conflict_response.json()["error_code"] == "message_instance_uuid_conflict"
+
+        different_message_response = client.post(
+            f"/v1.0/messages/OtherApprovalResult?time_to_live_in_seconds=60&message_instance_uuid={message_instance_uuid}",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=payload,
+        )
+        assert different_message_response.status_code == 409, different_message_response.text
+        assert different_message_response.json()
+        assert different_message_response.json()["error_code"] == "message_instance_uuid_conflict"
+
+    def test_message_send_with_ttl_rejects_ttl_above_five_minutes(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=301"
+            "&message_instance_uuid=44444444-4444-4444-8444-444444444444",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "1001"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()
+        assert response.json()["status"] == 400
+
+    def test_message_send_with_ttl_rejects_invalid_message_instance_uuid(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60&message_instance_uuid=approval-1001",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={"customer_id": "sartography", "po_number": "1001"},
+        )
+
+        assert response.status_code == 400
+
+    def test_message_send_with_ttl_expires_buffered_message(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        payload = {"customer_id": "sartography", "po_number": "1001"}
+        url = (
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=1&message_instance_uuid=22222222-2222-4222-8222-222222222222"
+        )
+
+        with patch.object(MessageService, "current_time_in_seconds", return_value=1000):
+            response = client.post(
+                url,
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json=payload,
+            )
+
+        assert response.status_code == 202, response.text
+        assert response.json()
+        first_message_instance_id = response.json()["message_instance"]["id"]
+
+        with patch.object(MessageService, "current_time_in_seconds", return_value=1002):
+            duplicate_after_expiration_response = client.post(
+                url,
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json=payload,
+            )
+
+        assert duplicate_after_expiration_response.status_code == 202, duplicate_after_expiration_response.text
+        assert duplicate_after_expiration_response.json()
+        assert duplicate_after_expiration_response.json()["message_instance"]["id"] == first_message_instance_id
+        assert duplicate_after_expiration_response.json()["message_instance"]["status"] == "cancelled"
+        expired_message_instance = MessageInstanceModel.query.filter_by(id=first_message_instance_id).first()
+        assert expired_message_instance is not None
+        assert expired_message_instance.status == "cancelled"
+
+    def test_buffered_ttl_message_is_delivered_when_receive_event_becomes_available(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "test_message_send"
+        process_model_id = "message_sender"
+        bpmn_file_name = "message_sender.bpmn"
+        bpmn_file_location = "message_send_one_conversation"
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+        payload = {
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "Ya!, a-ok bud!",
+        }
+        response = client.post(
+            "/v1.0/messages/Approval Result?time_to_live_in_seconds=60"
+            "&message_instance_uuid=33333333-3333-4333-8333-333333333333",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json=payload,
+        )
+        assert response.status_code == 202, response.text
+        assert response.json()
+        assert response.json()["message_instance"]["status"] == "ready"
+
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model.id,
+            self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+            json={},
+        )
+        assert response.json() is not None
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        task = processor.get_all_user_tasks()[0]
+        human_task = process_instance.active_human_tasks[0]
+
+        invoice_payload = {
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "But seriously.",
+        }
+        ProcessInstanceService.complete_form_task(
+            processor,
+            task,
+            invoice_payload,
+            with_super_admin_user,
+            human_task,
+            execution_mode=ProcessInstanceExecutionMode.synchronous.value,
+        )
+        processor.save()
+
+        db.session.refresh(process_instance)
+        assert process_instance.status == "complete"
+        message_instance = MessageInstanceModel.query.filter_by(
+            message_instance_uuid="33333333-3333-4333-8333-333333333333"
+        ).first()
+        assert message_instance is not None
+        assert message_instance.status == "completed"
 
     def test_message_send_errors_when_providing_message_to_suspended_process_instance(
         self,

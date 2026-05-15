@@ -8,6 +8,8 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance import MessageStatuses
+from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -22,6 +24,47 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessageService(BaseTest):
+    def test_can_claim_ready_message_instance_only_once(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        for message_type in (MessageTypes.send.value, MessageTypes.receive.value):
+            message_instance = MessageInstanceModel(
+                message_type=message_type,
+                name=f"{message_type}_message",
+                payload={},
+                status=MessageStatuses.ready.value,
+            )
+            db.session.add(message_instance)
+            db.session.commit()
+
+            assert MessageService._claim_ready_message_instance(message_instance) is True
+            assert message_instance.status == MessageStatuses.running.value
+
+            assert MessageService._claim_ready_message_instance(message_instance) is False
+            assert message_instance.status == MessageStatuses.running.value
+
+    def test_correlate_send_message_does_not_requeue_already_claimed_send(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        message_instance = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="already_claimed_message",
+            payload={},
+            status=MessageStatuses.ready.value,
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+        assert MessageService._claim_ready_message_instance(message_instance) is True
+
+        assert MessageService.correlate_send_message(message_instance) is None
+
+        db.session.refresh(message_instance)
+        assert message_instance.status == MessageStatuses.running.value
+
     def test_messages_feb_24(
         self,
         app: Flask,
@@ -237,7 +280,9 @@ class TestMessageService(BaseTest):
         try:
             MessageService.run_process_model_from_message("test_bad_process", {}, ProcessInstanceExecutionMode.synchronous.value)
         except WorkflowExecutionServiceError as e:
-            assert "The process instance encountered an error and failed after starting." in e.notes
+            process_instance = ProcessInstanceModel.query.filter_by(status=ProcessInstanceStatus.error.value).first()
+            assert process_instance is not None
+            assert f"The process instance {process_instance.id} encountered an error and failed after starting." in e.notes
 
     def test_can_send_message_to_multiple_process_models(
         self,

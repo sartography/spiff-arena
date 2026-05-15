@@ -1,6 +1,10 @@
 import contextlib
+import time
 from collections.abc import Generator
+from collections.abc import Iterable
 from typing import Any
+from typing import cast
+from uuid import UUID
 
 from flask import current_app
 from flask import g
@@ -39,31 +43,140 @@ class MessageServiceError(Exception):
 
 
 class MessageService:
+    MAX_TIME_TO_LIVE_SECONDS = 300
+
+    @classmethod
+    def current_time_in_seconds(cls) -> int:
+        return round(time.time())
+
+    @classmethod
+    def _validated_message_instance_uuid(cls, message_instance_uuid: str | None) -> str | None:
+        if message_instance_uuid is None:
+            return None
+        if len(message_instance_uuid) > 40:
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be 40 characters or fewer.",
+                status_code=400,
+            )
+        try:
+            parsed_uuid = UUID(message_instance_uuid)
+        except ValueError as exception:
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be a valid UUID.",
+                status_code=400,
+            ) from exception
+        if str(parsed_uuid) != message_instance_uuid.lower():
+            raise ApiError(
+                error_code="invalid_message_instance_uuid",
+                message="message_instance_uuid must be a valid UUID.",
+                status_code=400,
+            )
+        return str(parsed_uuid)
+
+    @classmethod
+    def _validated_time_to_live(
+        cls,
+        time_to_live_in_seconds: int | None,
+        message_instance_uuid: str | None,
+    ) -> int:
+        ttl = time_to_live_in_seconds or 0
+        if ttl < 0:
+            raise ApiError(
+                error_code="invalid_time_to_live",
+                message="time_to_live_in_seconds must be greater than or equal to 0.",
+                status_code=400,
+            )
+        if ttl > cls.MAX_TIME_TO_LIVE_SECONDS:
+            raise ApiError(
+                error_code="invalid_time_to_live",
+                message=f"time_to_live_in_seconds must be less than or equal to {cls.MAX_TIME_TO_LIVE_SECONDS}.",
+                status_code=400,
+            )
+        if ttl > 0 and not message_instance_uuid:
+            raise ApiError(
+                error_code="message_instance_uuid_required",
+                message="message_instance_uuid is required when time_to_live_in_seconds is greater than 0.",
+                status_code=400,
+            )
+        return ttl
+
+    @classmethod
+    def _find_message_with_uuid(
+        cls,
+        message_instance_uuid: str | None,
+    ) -> MessageInstanceModel | None:
+        if not message_instance_uuid:
+            return None
+        return cast(
+            MessageInstanceModel | None,
+            MessageInstanceModel.query.filter_by(
+                message_type=MessageTypes.send.value,
+                message_instance_uuid=message_instance_uuid,
+            )
+            .order_by(MessageInstanceModel.id)
+            .first(),
+        )
+
+    @classmethod
+    def expire_ready_send_messages(cls, now_in_seconds: int | None = None, commit: bool = True) -> None:
+        now = now_in_seconds if now_in_seconds is not None else cls.current_time_in_seconds()
+        expired_messages = (
+            MessageInstanceModel.query.filter_by(
+                message_type=MessageTypes.send.value,
+                status=MessageStatuses.ready.value,
+            )
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) <= now)
+            .all()
+        )
+        for message_instance in expired_messages:
+            message_instance.status = MessageStatuses.cancelled.value
+            db.session.add(message_instance)
+        if expired_messages and commit:
+            db.session.commit()
+
     @classmethod
     def correlate_send_message(
         cls,
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None = None,
+        receiving_process_instance_id: int | None = None,
+        processor_receive: ProcessInstanceProcessor | None = None,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
         :return: the message instance that received this message.
         """
-        # Thread safe via db locking - don't try to progress the same send message over multiple instances
-        if message_instance_send.status != MessageStatuses.ready.value:
+        cls.expire_ready_send_messages()
+
+        if not cls._claim_ready_message_instance(message_instance_send):
             return None
 
-        message_instance_send.status = MessageStatuses.running.value
-        db.session.add(message_instance_send)
-        db.session.commit()
+        if (
+            message_instance_send.expires_at_in_seconds is not None
+            and message_instance_send.expires_at_in_seconds <= cls.current_time_in_seconds()
+        ):
+            cls._transition_message_instance_status(
+                message_instance_send,
+                MessageStatuses.running.value,
+                MessageStatuses.cancelled.value,
+            )
+            return None
 
         message_instance_receive: MessageInstanceModel | None = None
 
         # Let the methods handle the exceptions to ensure the proper variables are set so we do not lose errors
 
         # First, try to find an existing process instance waiting for this message
-        message_instance_receive = cls._try_correlate_with_existing_receiver(message_instance_send, execution_mode)
+        message_instance_receive = cls._try_correlate_with_existing_receiver(
+            message_instance_send,
+            execution_mode,
+            receiving_process_instance_id=receiving_process_instance_id,
+            processor_receive=processor_receive,
+        )
         if message_instance_receive is not None:
             return message_instance_receive
 
@@ -79,21 +192,58 @@ class MessageService:
         return None
 
     @classmethod
+    def correlate_ready_send_messages_for_process_instance(
+        cls,
+        message_names: Iterable[str],
+        receiving_process_instance: ProcessInstanceModel,
+        processor_receive: ProcessInstanceProcessor,
+        execution_mode: str | None = None,
+    ) -> None:
+        cls.expire_ready_send_messages()
+        names = list(set(message_names))
+        if not names:
+            return
+
+        message_instances_send: list[MessageInstanceModel] = (
+            MessageInstanceModel.query.filter_by(
+                message_type=MessageTypes.send.value,
+                status=MessageStatuses.ready.value,
+            )
+            .filter(MessageInstanceModel.name.in_(names))  # type: ignore
+            .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
+
+        for message_instance_send in message_instances_send:
+            cls.correlate_send_message(
+                message_instance_send,
+                execution_mode=execution_mode,
+                receiving_process_instance_id=receiving_process_instance.id,
+                processor_receive=processor_receive,
+            )
+
+    @classmethod
     def _try_correlate_with_existing_receiver(
         cls,
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None,
+        receiving_process_instance_id: int | None = None,
+        processor_receive: ProcessInstanceProcessor | None = None,
     ) -> MessageInstanceModel | None:
         """Try to find and correlate with an existing process instance waiting for this message."""
-        available_receive_messages: list[MessageInstanceModel] = (
-            MessageInstanceModel.query.options(selectinload(MessageInstanceModel.correlation_rules))
-            .filter_by(
-                name=message_instance_send.name,
-                status=MessageStatuses.ready.value,
-                message_type=MessageTypes.receive.value,
-            )
-            .all()
+        available_receive_messages_query = MessageInstanceModel.query.options(
+            selectinload(MessageInstanceModel.correlation_rules)
+        ).filter_by(
+            name=message_instance_send.name,
+            status=MessageStatuses.ready.value,
+            message_type=MessageTypes.receive.value,
         )
+        if receiving_process_instance_id is not None:
+            available_receive_messages_query = available_receive_messages_query.filter_by(
+                process_instance_id=receiving_process_instance_id
+            )
+        available_receive_messages: list[MessageInstanceModel] = available_receive_messages_query.all()
 
         receiving_process_instance: ProcessInstanceModel | None = None
         message_instance_receive: MessageInstanceModel | None = None
@@ -110,15 +260,28 @@ class MessageService:
                         if not receiving_process_instance.can_receive_message():
                             continue
 
+                        if not cls._claim_ready_message_instance(message_instance_receive):
+                            continue
+
+                        processor_receive_to_use = None
+                        if (
+                            processor_receive is not None
+                            and processor_receive.process_instance_model.id == receiving_process_instance.id
+                        ):
+                            processor_receive_to_use = processor_receive
+
                         cls.process_message_receive(
                             receiving_process_instance,
                             message_instance_receive,
                             message_instance_send,
                             execution_mode=execution_mode,
-                            processor_receive=None,
+                            processor_receive=processor_receive_to_use,
                         )
                         cls._mark_messages_completed(message_instance_send, message_instance_receive)
-                        db.session.commit()
+                        if processor_receive_to_use is not None:
+                            processor_receive_to_use.save()
+                        else:
+                            db.session.commit()
 
                         if should_queue_process_instance(execution_mode=execution_mode):
                             queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
@@ -138,6 +301,44 @@ class MessageService:
             raise
 
         return None
+
+    @classmethod
+    def _claim_ready_message_instance(cls, message_instance: MessageInstanceModel) -> bool:
+        """Atomically claim a ready message instance before delivery."""
+        return cls._transition_message_instance_status(
+            message_instance,
+            MessageStatuses.ready.value,
+            MessageStatuses.running.value,
+        )
+
+    @classmethod
+    def _transition_message_instance_status(
+        cls,
+        message_instance: MessageInstanceModel,
+        from_status: str,
+        to_status: str,
+    ) -> bool:
+        rows_updated = (
+            db.session.query(MessageInstanceModel)
+            .filter(
+                MessageInstanceModel.id == message_instance.id,
+                MessageInstanceModel.status == from_status,
+            )
+            .update(
+                {
+                    "status": to_status,
+                    "updated_at_in_seconds": cls.current_time_in_seconds(),
+                },
+                synchronize_session=False,
+            )
+        )
+        db.session.commit()
+        if rows_updated == 0:
+            db.session.expire(message_instance)
+            return False
+
+        db.session.refresh(message_instance)
+        return True
 
     @classmethod
     def _try_start_new_process_for_message(
@@ -178,6 +379,9 @@ class MessageService:
                     raise MessageServiceError(
                         f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
                     )
+
+                if not cls._claim_ready_message_instance(message_instance_receive):
+                    return None
 
                 cls.process_message_receive(
                     receiving_process_instance,
@@ -245,7 +449,12 @@ class MessageService:
             ErrorHandlingService.handle_error(receiving_process_instance, exception)
 
         if isinstance(exception, SpiffWorkflowException):
-            exception.add_note("The process instance encountered an error and failed after starting.")
+            if receiving_process_instance is not None:
+                exception.add_note(
+                    f"The process instance {receiving_process_instance.id} encountered an error and failed after starting."
+                )
+            else:
+                exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
     def correlate_all_message_instances(
@@ -253,6 +462,7 @@ class MessageService:
         execution_mode: str | None = None,
     ) -> None:
         """Look at ALL the Send and Receive Messages and attempt to find correlations."""
+        cls.expire_ready_send_messages()
         message_instances_send: list[MessageInstanceModel] = MessageInstanceModel.query.filter_by(
             message_type=MessageTypes.send.value,
             status=MessageStatuses.ready.value,
@@ -418,8 +628,27 @@ class MessageService:
         modified_message_name: str,
         body: dict[str, Any],
         execution_mode: str | None = None,
+        time_to_live_in_seconds: int | None = None,
+        message_instance_uuid: str | None = None,
     ) -> MessageInstanceModel:
         message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
+        ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_uuid)
+        message_instance_uuid = cls._validated_message_instance_uuid(message_instance_uuid)
+        now_in_seconds = cls.current_time_in_seconds()
+        expires_at_in_seconds = now_in_seconds + ttl if ttl > 0 else None
+        cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
+
+        existing_message_instance = cls._find_message_with_uuid(
+            message_instance_uuid,
+        )
+        if existing_message_instance is not None:
+            if existing_message_instance.name != message_name or existing_message_instance.payload != body:
+                raise ApiError(
+                    error_code="message_instance_uuid_conflict",
+                    message=("A message with the same message_instance_uuid already exists for a different message or payload."),
+                    status_code=409,
+                )
+            return existing_message_instance
 
         # Create the send message
         # TODO: support the full message id - including process group - in message instance
@@ -428,11 +657,15 @@ class MessageService:
             name=message_name,
             payload=body,
             user_id=g.user.id,
+            message_instance_uuid=message_instance_uuid,
+            expires_at_in_seconds=expires_at_in_seconds,
         )
         db.session.add(message_instance)
         db.session.commit()
         receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
         if receiver_message is None:
+            if ttl > 0:
+                return message_instance
             db.session.delete(message_instance)
             db.session.commit()
             raise (
