@@ -21,9 +21,14 @@ from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_dat
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
+
+
+def version_info() -> flask.wrappers.Response:
+    return make_response(jsonify(get_public_version_info_data()), 200)
 
 
 def message_form_show(

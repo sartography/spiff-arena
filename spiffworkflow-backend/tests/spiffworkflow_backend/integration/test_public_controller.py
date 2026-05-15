@@ -1,4 +1,5 @@
 import re
+from unittest.mock import patch
 
 from flask import Flask
 from starlette.testclient import TestClient
@@ -13,6 +14,25 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestPublicController(BaseTest):
+    def test_version_info_is_available_without_authentication(
+        self,
+        client: TestClient,
+    ) -> None:
+        version_info = {
+            "version": "main-2026-05-12_17-59-26-6bfb694",
+            "revision": "6bfb694044244009fe3dd78ae987a9dbae218014",
+            "created": "2026-05-12T17:59:27.226Z",
+        }
+
+        with patch(
+            "spiffworkflow_backend.routes.public_controller.get_public_version_info_data",
+            return_value=version_info,
+        ):
+            response = client.get("/v1.0/version-info")
+
+        assert response.status_code == 200
+        assert response.json() == version_info
+
     def test_can_get_a_form_from_message_start_event(
         self,
         app: Flask,

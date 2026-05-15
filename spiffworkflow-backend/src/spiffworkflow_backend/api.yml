@@ -282,6 +282,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /version-info:
+    get:
+      operationId: spiffworkflow_backend.routes.public_controller.version_info
+      summary: Returns minimal version information for the application
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns selected OCI image metadata from version_info.json when available.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfo"
+
   /debug/process-instance-with-most-tasks:
     get:
       operationId: spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks
@@ -4155,6 +4169,22 @@ components:
           items:
             type: string
           description: Fields to sort by, prefix with '-' for descending order
+    VersionInfo:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: string
+          description: Value of org.opencontainers.image.version.
+          example: main-2026-05-12_17-59-26-6bfb694
+        revision:
+          type: string
+          description: Value of org.opencontainers.image.revision.
+          example: 6bfb694044244009fe3dd78ae987a9dbae218014
+        created:
+          type: string
+          description: Value of org.opencontainers.image.created.
+          example: "2026-05-12T17:59:27.226Z"
     OkTrue:
       properties:
         ok:
