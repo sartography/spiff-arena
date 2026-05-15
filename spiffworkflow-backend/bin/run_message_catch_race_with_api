@@ -456,7 +456,7 @@ function complete_and_verify_correlation() {
 }
 
 access_token=$(uv run python "${script_dir}/get_token" "$username" "$password" "$realm_name")
-curl --silent -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?authentication_identifier=default" -H "Authorization: Bearer $access_token" >/dev/null
+curl --fail-with-body --silent -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?authentication_identifier=default" -H "Authorization: Bearer $access_token" >/dev/null
 install_embedded_process_model "$access_token"
 
 race_id_one="${race_id}-one"
