@@ -11,6 +11,7 @@ import math
 import time
 from typing import Any
 from urllib.parse import urlencode
+from urllib.parse import urlparse
 
 import jwt
 import yaml
@@ -31,6 +32,12 @@ openid_blueprint = Blueprint("openid", __name__, template_folder="templates", st
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
 SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
 SPIFF_OPEN_ID_ALGORITHM = "RS256"
+
+
+def _is_safe_redirect_url(url: str) -> bool:
+    """Validate that a redirect URL uses an allowed scheme and has a hostname."""
+    parsed = urlparse(url)
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
 
 
 # just so /openid responds so we can route to it with url_for for populating issuer
@@ -85,7 +92,10 @@ def form_submit() -> Any:
             "code": request.values["Uname"] + OPEN_ID_CODE,
             "session_state": "",
         }
-        url = request.values.get("redirect_uri") + "?" + urlencode(data)
+        redirect_uri = request.values.get("redirect_uri", "")
+        if not _is_safe_redirect_url(redirect_uri):
+            return make_response("Invalid redirect_uri", 400)
+        url = redirect_uri + "?" + urlencode(data)
         return redirect(url)
     else:
         host_url = _host_url_without_root_path()
@@ -152,6 +162,8 @@ def token() -> Response:
 @openid_blueprint.route("/end_session", methods=["GET"])
 def end_session() -> Response:
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
+    if not _is_safe_redirect_url(redirect_url):
+        redirect_url = "http://localhost"
     request.args.get("id_token_hint")
     response = redirect(redirect_url)
     return make_response(response.get_data(), response.status_code, response.headers)
