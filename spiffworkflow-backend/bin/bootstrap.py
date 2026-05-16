@@ -42,7 +42,7 @@ def _bootstrap_users() -> None:
         api_key_name = f"SPIFFWORKFLOW_API_KEY_{username}"
         SecretService.add_secret(api_key_name, api_key, user.id)
 
-        print(f"Bootstrapped user {username} with api key: {api_key}")
+        print(f"Bootstrapped user {username} with api key stored in secret: {api_key_name}")
 
     db.session.commit()
 
