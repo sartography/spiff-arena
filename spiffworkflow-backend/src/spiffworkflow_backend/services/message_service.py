@@ -3,6 +3,7 @@ import time
 from collections.abc import Generator
 from collections.abc import Iterable
 from typing import Any
+from typing import NoReturn
 from typing import cast
 from uuid import UUID
 
@@ -144,6 +145,7 @@ class MessageService:
         execution_mode: str | None = None,
         receiving_process_instance_id: int | None = None,
         processor_receive: ProcessInstanceProcessor | None = None,
+        claim_message_instance: bool = True,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
@@ -152,8 +154,13 @@ class MessageService:
         """
         cls.expire_ready_send_messages()
 
-        if not cls._claim_ready_message_instance(message_instance_send):
-            return None
+        if claim_message_instance:
+            if not cls._claim_ready_message_instance(message_instance_send):
+                return None
+        elif message_instance_send.status != MessageStatuses.running.value:
+            raise MessageServiceError(
+                f"Message instance {message_instance_send.id} must be running when claim_message_instance is False."
+            )
 
         if (
             message_instance_send.expires_at_in_seconds is not None
@@ -457,6 +464,30 @@ class MessageService:
                 exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
+    def _mark_send_message_not_accepted(cls, message_instance_send: MessageInstanceModel, failure_cause: str) -> None:
+        message_instance_send.status = MessageStatuses.not_accepted.value
+        message_instance_send.failure_cause = failure_cause
+        db.session.add(message_instance_send)
+        db.session.commit()
+
+    @classmethod
+    def _message_not_accepted_message(cls, modified_message_name: str) -> str:
+        return (
+            "No running process instances correlate with the given message"
+            f" name of '{modified_message_name}'.  And this message name is not"
+            " currently associated with any process Start Event. Nothing"
+            " to do."
+        )
+
+    @classmethod
+    def _raise_message_not_accepted(cls, message: str) -> NoReturn:
+        raise ApiError(
+            error_code="message_not_accepted",
+            message=message,
+            status_code=400,
+        )
+
+    @classmethod
     def correlate_all_message_instances(
         cls,
         execution_mode: str | None = None,
@@ -648,6 +679,10 @@ class MessageService:
                     message=("A message with the same message_instance_uuid already exists for a different message or payload."),
                     status_code=409,
                 )
+            if existing_message_instance.status == MessageStatuses.not_accepted.value:
+                cls._raise_message_not_accepted(
+                    existing_message_instance.failure_cause or cls._message_not_accepted_message(modified_message_name)
+                )
             return existing_message_instance
 
         # Create the send message
@@ -656,30 +691,24 @@ class MessageService:
             message_type=MessageTypes.send.value,
             name=message_name,
             payload=body,
+            status=MessageStatuses.running.value,
             user_id=g.user.id,
             message_instance_uuid=message_instance_uuid,
             expires_at_in_seconds=expires_at_in_seconds,
         )
         db.session.add(message_instance)
         db.session.commit()
-        receiver_message = cls.correlate_send_message(message_instance, execution_mode=execution_mode)
+        receiver_message = cls.correlate_send_message(
+            message_instance,
+            execution_mode=execution_mode,
+            claim_message_instance=False,
+        )
         if receiver_message is None:
             if ttl > 0:
                 return message_instance
-            db.session.delete(message_instance)
-            db.session.commit()
-            raise (
-                ApiError(
-                    error_code="message_not_accepted",
-                    message=(
-                        "No running process instances correlate with the given message"
-                        f" name of '{modified_message_name}'.  And this message name is not"
-                        " currently associated with any process Start Event. Nothing"
-                        " to do."
-                    ),
-                    status_code=400,
-                )
-            )
+            message_not_accepted = cls._message_not_accepted_message(modified_message_name)
+            cls._mark_send_message_not_accepted(message_instance, message_not_accepted)
+            cls._raise_message_not_accepted(message_not_accepted)
         return receiver_message
 
     @classmethod

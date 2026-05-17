@@ -3269,7 +3269,7 @@ paths:
       - name: time_to_live_in_seconds
         in: query
         required: false
-        description: Seconds to buffer an unmatched message. A value of 0 means the message must match immediately; it is not stored.
+        description: Seconds to buffer an unmatched message. A value of 0 means the message must match immediately; rejected messages may be retained with status not_accepted for audit and debugging.
         schema:
           type: integer
           minimum: 0
