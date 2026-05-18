@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from werkzeug.exceptions import HTTPException
@@ -9,6 +10,7 @@ from werkzeug.exceptions import NotFound
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
+from spiffworkflow_backend.services.monitoring_service import ensure_prometheus_multiproc_dir
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
 from spiffworkflow_backend.services.monitoring_service import should_capture_exception_in_sentry
 
@@ -22,6 +24,14 @@ class Generic500HTTPException(HTTPException):
 
 
 class TestMonitoringService(unittest.TestCase):
+    def test_ensure_prometheus_multiproc_dir_creates_configured_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            prometheus_multiproc_dir = os.path.join(tmp_dir, "prometheus_multiproc")
+            with patch.dict(os.environ, {"PROMETHEUS_MULTIPROC_DIR": prometheus_multiproc_dir}):
+                ensure_prometheus_multiproc_dir()
+
+            self.assertTrue(os.path.isdir(prometheus_multiproc_dir))
+
     def test_get_public_version_info_data_returns_minimal_metadata(self) -> None:
         current_dir = os.getcwd()
         try:
