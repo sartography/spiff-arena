@@ -295,6 +295,7 @@ class AuthorizationService:
             "spiffworkflow_backend.routes.debug_controller.url_info",
             "spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks",
             "spiffworkflow_backend.routes.health_controller.status",
+            "spiffworkflow_backend.routes.public_controller.version_info",
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
             "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",

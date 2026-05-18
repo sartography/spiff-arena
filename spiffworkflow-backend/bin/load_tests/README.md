@@ -26,3 +26,29 @@ Useful options:
 ```sh
 uv run python bin/load_tests/concurrent_message_starts.py --help
 ```
+
+## Message Start Double Delivery Race
+
+Use this for the race where a message-start request returns 200, then the process instance later errors with
+`WorkflowException: This process is not waiting for <message_name>`.
+
+```sh
+uv run python bin/load_tests/message_start_double_delivery_race.py --requests 200 --workers 40
+```
+
+The script creates a temporary message-start process model that parks each process instance on a manual task, sends many
+identical `booking_id` message-start POSTs using asynchronous execution, waits for the background message processor window,
+then re-fetches the returned process instances. Old vulnerable code can show process instances that were accepted and later
+became `error`; fixed code should leave them in a non-error status.
+
+For a heavier pre-fix repro attempt that spans multiple APScheduler ticks:
+
+```sh
+uv run python bin/load_tests/message_start_double_delivery_race.py --requests 200 --workers 40 --batches 6 --batch-delay-seconds 2 --settle-seconds 15
+```
+
+Useful options:
+
+```sh
+uv run python bin/load_tests/message_start_double_delivery_race.py --help
+```

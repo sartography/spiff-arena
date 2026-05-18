@@ -9,6 +9,8 @@ jobs:
   clean-ghcr:
     name: Delete old main container images
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Fetch protected multi-arch digests
         id: multi_arch_digests
@@ -59,7 +61,7 @@ jobs:
           echo "skip_shas=${skip_shas}" >> "${GITHUB_OUTPUT}"
 
       - name: Delete 'spiff' main containers older than three months
-        uses: snok/container-retention-policy@v3.0.1
+        uses: snok/container-retention-policy@3b0972b2276b171b212f8c4efbca59ebba26eceb # v3.0.1
         with:
           account: sartography
           cut-off: 3months

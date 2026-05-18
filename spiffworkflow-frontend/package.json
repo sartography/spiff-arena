@@ -68,7 +68,8 @@
   "overrides": {
     "postcss-preset-env": {
       "autoprefixer": "10.4.5"
-    }
+    },
+    "yaml": "^2.9.0"
   },
   "scripts": {
     "build": "vite build",
@@ -125,7 +126,7 @@
     "eslint-plugin-sonarjs": "^4.0.3",
     "eslint-plugin-unused-imports": "^4.1.4",
     "jsdom": "^26.1.0",
-    "prettier": "^3.3.2",
+    "prettier": "^3.8.3",
     "sass-embedded": "^1.99.0",
     "typescript-eslint": "^8.59.0",
     "vitest": "^3.2.4"

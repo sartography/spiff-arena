@@ -51,6 +51,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.interfaces import PotentialOwner
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -1411,6 +1412,15 @@ class ProcessInstanceProcessor:
             needs_dequeue=needs_dequeue,
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
+        if save and execution_service.new_waiting_message_names:
+            from spiffworkflow_backend.services.message_service import MessageService
+
+            MessageService.correlate_ready_send_messages_for_process_instance(
+                execution_service.new_waiting_message_names,
+                self.process_instance_model,
+                self,
+                execution_mode=ProcessInstanceExecutionMode.synchronous.value,
+            )
         self.check_all_tasks()
 
         # Debug logs for engine steps completion

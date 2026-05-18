@@ -12,6 +12,15 @@ if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]]; then
   exit 1
 fi
 
+# Refresh per-worker databases from the base database to ensure schema is current.
+# Stale worker databases (from previous migration revisions) cause spurious failures.
+if [[ -f ./src/instance/db_unit_testing.sqlite3 ]]; then
+  workers=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 8)
+  for i in $(seq 0 $((workers - 1))); do
+    cp ./src/instance/db_unit_testing.sqlite3 ./src/instance/db_unit_testing_gw${i}.sqlite3
+  done
+fi
+
 # check if python package pytest-xdist is installed
 if ! uv run python -c "import xdist" &>/dev/null; then
   echo >&2 -e "ERROR: please install the python package pytest-xdist by running uv install"

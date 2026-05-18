@@ -13,3 +13,25 @@ if [[ -f "version_info.json" ]]; then
 fi
 
 npm run build
+
+mkdir -p dist
+node <<'NODE' >dist/version-info
+const versionInfo = JSON.parse(process.env.VITE_VERSION_INFO || '{}');
+const publicVersionInfo = {};
+
+const version = versionInfo['org.opencontainers.image.version'];
+const revision = versionInfo['org.opencontainers.image.revision'];
+const created = versionInfo['org.opencontainers.image.created'];
+
+if (version) {
+  publicVersionInfo.version = version;
+}
+if (revision) {
+  publicVersionInfo.revision = revision;
+}
+if (created) {
+  publicVersionInfo.created = created;
+}
+
+process.stdout.write(`${JSON.stringify(publicVersionInfo, null, 2)}\n`);
+NODE

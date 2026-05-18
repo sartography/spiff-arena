@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 from flask import jsonify
@@ -127,9 +128,27 @@ def message_send(
     modified_message_name: str,
     body: dict[str, Any],
     execution_mode: str | None = None,
+    time_to_live_in_seconds: int | None = None,
+    message_instance_uuid: str | None = None,
 ) -> flask.wrappers.Response:
-    receiver_message = MessageService.run_process_model_from_message(modified_message_name, body, execution_mode)
-    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    receiver_message = MessageService.run_process_model_from_message(
+        modified_message_name,
+        body,
+        execution_mode,
+        time_to_live_in_seconds=time_to_live_in_seconds,
+        message_instance_uuid=message_instance_uuid,
+    )
+    process_instance = _process_instance_for_message_response(receiver_message)
+    if process_instance is None:
+        response_json = {
+            "message_instance": _message_instance_response(receiver_message),
+        }
+        return Response(
+            json.dumps(response_json),
+            status=202,
+            mimetype="application/json",
+        )
+
     response_json = {
         "task_data": process_instance.get_data(),
         "process_instance": process_instance.serialized(),
@@ -139,6 +158,37 @@ def message_send(
         status=200,
         mimetype="application/json",
     )
+
+
+def _process_instance_for_message_response(message_instance: MessageInstanceModel) -> ProcessInstanceModel | None:
+    process_instance_id = cast(int | None, message_instance.process_instance_id)
+    if process_instance_id is not None:
+        return cast(
+            ProcessInstanceModel | None,
+            ProcessInstanceModel.query.filter_by(id=process_instance_id).first(),
+        )
+
+    counterpart_id = cast(int | None, message_instance.counterpart_id)
+    if counterpart_id is not None:
+        counterpart_message = MessageInstanceModel.query.filter_by(id=counterpart_id).first()
+        if counterpart_message is not None and counterpart_message.process_instance_id is not None:
+            return cast(
+                ProcessInstanceModel | None,
+                ProcessInstanceModel.query.filter_by(id=counterpart_message.process_instance_id).first(),
+            )
+
+    return None
+
+
+def _message_instance_response(message_instance: MessageInstanceModel) -> dict[str, Any]:
+    return {
+        "id": message_instance.id,
+        "name": message_instance.name,
+        "message_type": message_instance.message_type,
+        "status": message_instance.status,
+        "message_instance_uuid": message_instance.message_instance_uuid,
+        "expires_at_in_seconds": message_instance.expires_at_in_seconds,
+    }
 
 
 def get_process_model_for_message(modified_message_name: str) -> flask.wrappers.Response:
