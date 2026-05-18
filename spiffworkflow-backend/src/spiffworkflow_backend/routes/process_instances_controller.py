@@ -698,7 +698,8 @@ def _get_process_instance(
             if process_model_with_diagram.primary_file_name:
                 name_of_file_with_diagram = process_model_with_diagram.primary_file_name
         except Exception as ex:
-            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
+            current_app.logger.warning(f"Failed to retrieve process model for diagram: {ex}")
+            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve process model for diagram."
 
     if process_model_with_diagram and name_of_file_with_diagram:
         bpmn_xml_file_contents = None
@@ -709,7 +710,8 @@ def _get_process_instance(
                 file_name=name_of_file_with_diagram,
             )
         except GitCommandError as ex:
-            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
+            current_app.logger.warning(f"Failed to retrieve BPMN XML from git: {ex}")
+            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve BPMN XML from version control."
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     process_instance_as_dict = process_instance.serialized_with_metadata()

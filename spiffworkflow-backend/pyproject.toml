@@ -26,7 +26,7 @@ dependencies = [
     "psycopg2 >= 2.9.10, <2.10",
     "typing-extensions >= 4.12.2",
     "spiffworkflow-connector-command",
-    "werkzeug >= 2.3",
+    "werkzeug >= 3.1.6",
     "connexion[swagger-ui, flask, uvicorn] == 3.3.0",
     "lxml >= 6.1.0",
     "PyJWT >= 2.10.1",
