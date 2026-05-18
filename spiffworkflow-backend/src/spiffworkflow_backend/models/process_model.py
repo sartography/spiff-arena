@@ -83,6 +83,10 @@ class ProcessModelInfo:
 
         return identifier.replace("/", ":")
 
+    @classmethod
+    def unmodify_process_identifier_from_path_param(cls, identifier: str) -> str:
+        return identifier.replace(":", "/")
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the ProcessModelInfo object to a dictionary."""
         data = dataclasses.asdict(self)

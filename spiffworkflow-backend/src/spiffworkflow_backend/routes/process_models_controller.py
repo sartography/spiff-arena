@@ -25,7 +25,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -225,7 +224,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 
 
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
-    original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    original_process_model_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
     GitService.commit_on_save(
         f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
@@ -234,7 +233,7 @@ def process_model_move(modified_process_model_identifier: str, new_location: str
 
 
 def process_model_copy(modified_process_model_identifier: str, body: dict[str, str]) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
 
     # Generate default display name from last segment of ID if not provided
     display_name = body.get("display_name")
@@ -259,7 +258,7 @@ def process_model_publish(modified_process_model_identifier: str, branch_to_upda
         raise MissingGitConfigsError(
             "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. This is required for publishing process models"
         )
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     pr_url = GitService().publish(process_model_identifier, branch_to_update)
     data = {"ok": True, "pr_url": pr_url}
     return make_response(jsonify(data), 200)
@@ -565,7 +564,7 @@ def _get_process_group_from_modified_identifier(
             status_code=400,
         )
 
-    unmodified_process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    unmodified_process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_id)
     process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
@@ -661,7 +660,7 @@ def process_model_validate(
 def process_model_milestone_list(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
@@ -671,7 +670,7 @@ def process_model_milestone_list(
 
 
 def get_human_task_definitions(modified_process_model_identifier: str) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     bpmn_definition_to_task_definitions_mappings: dict = {}
     BpmnProcessService.persist_bpmn_process_definition(process_model_identifier, bpmn_definition_to_task_definitions_mappings)
     human_tasks = BpmnProcessService.extract_human_task_definitions(bpmn_definition_to_task_definitions_mappings)

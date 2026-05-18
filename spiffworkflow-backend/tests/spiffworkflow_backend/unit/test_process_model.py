@@ -19,6 +19,11 @@ class TestProcessModel(BaseTest):
         process_model_one = self._create_test_process_model(id="model_one", display_name="Model One")
         assert process_model_one.files == []
 
+    def test_unmodifies_process_identifier_from_path_param(self) -> None:
+        modified_identifier = ProcessModelInfo.modify_process_identifier_for_path_param("test_group/process_model")
+
+        assert ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_identifier) == "test_group/process_model"
+
     def test_can_run_process_model_with_call_activities_when_in_same_process_model_directory(
         self,
         app: Flask,

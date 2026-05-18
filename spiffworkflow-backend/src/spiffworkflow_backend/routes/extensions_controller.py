@@ -11,7 +11,6 @@ from flask.wrappers import Response
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -135,7 +134,7 @@ def _raise_unless_extensions_api_enabled() -> None:
 
 
 def _get_process_model_identifier(modified_process_model_identifier: str) -> str:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     return _add_extension_group_identifier_it_not_present(process_model_identifier)
 
 
