@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.11-slim-bookworm AS base
+FROM python:3.13.13-slim-trixie AS base
 
 ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -20,10 +20,9 @@ FROM base AS deployment
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
-# libsqlite3-0=3.40.1-2+deb12u2 is to fix https://avd.aquasec.com/nvd/2025/cve-2025-6965/
 RUN apt-get update \
   && apt-get clean -y \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 libsqlite3-0=3.40.1-2+deb12u2 \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 \
   && rm -rf /var/lib/apt/lists/*
 
 
@@ -32,16 +31,11 @@ RUN apt-get update \
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-# poetry 1.4 seems to cause an issue where it errors with
-#   This error originates from the build backend, and is likely not a
-#   problem with poetry but with lazy-object-proxy (1.7.1) not supporting PEP 517 builds.
-#   You can verify this by running 'pip wheel --use-pep517 "lazy-object-proxy (==1.7.1) ; python_version >= "3.6""'.
-# Pinnning to 1.3.2 to attempt to avoid it.
-RUN pip install poetry==1.6.1
+RUN pip install poetry==2.4.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q gcc libssl-dev pkg-config libsqlite3-0=3.40.1-2+deb12u2
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q gcc libssl-dev pkg-config
 
 # poetry install takes a long time and can be cached if dependencies don't change,
 # so that's why we tolerate running it twice.

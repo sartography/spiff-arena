@@ -79,13 +79,13 @@ class TestDataStoreItemListFiltering(BaseTest):
             url += f"&secondary_key={secondary_key}"
         return client.get(url, headers=self.logged_in_headers(user))
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_by_top_level_key_only(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         response = self._get(client, with_super_admin_user, top_level_key="instance_1")
         assert response.status_code == 200
@@ -93,13 +93,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert len(results) == 2
         assert all(r["top_level_key"] == "instance_1" for r in results)
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_by_secondary_key_only(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         response = self._get(client, with_super_admin_user, secondary_key="model_a")
         assert response.status_code == 200
@@ -107,13 +107,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert len(results) == 2
         assert all(r["secondary_key"] == "model_a" for r in results)
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_by_both_keys(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         response = self._get(
             client,
@@ -128,13 +128,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert results[0]["secondary_key"] == "model_b"
         assert results[0]["value"] == {"status": "pending"}
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_returns_empty_for_no_match(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         response = self._get(client, with_super_admin_user, top_level_key="nonexistent")
         assert response.status_code == 200
@@ -142,13 +142,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert len(results) == 0
         assert response.json()["pagination"]["total"] == 0
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_no_filter_returns_all_items_via_standard_path(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         """When neither key is provided, should return all entries in flat format."""
         response = self._get(client, with_super_admin_user)
@@ -157,24 +157,24 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert len(results) == 5
         assert all("top_level_key" in r and "secondary_key" in r and "value" in r for r in results)
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_returns_404_for_nonexistent_store(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         response = self._get(client, with_super_admin_user, identifier="no_such_store", top_level_key="x")
         assert response.status_code == 404
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_pagination(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&secondary_key=model_b&per_page=1&page=1"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
@@ -183,13 +183,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert response.json()["pagination"]["total"] == 2
         assert response.json()["pagination"]["pages"] == 2
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_paginate_false_returns_all_results(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&paginate=false"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))
@@ -199,13 +199,13 @@ class TestDataStoreItemListFiltering(BaseTest):
         assert response.json()["pagination"]["total"] == 5
         assert response.json()["pagination"]["pages"] == 1
 
+    @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_paginate_false_with_filter(
         self,
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-        with_populated_kkv_store: KKVDataStoreModel,
     ) -> None:
         url = "/v1.0/data-stores/kkv/test_store/items?location=test_location&secondary_key=model_a&paginate=false"
         response = client.get(url, headers=self.logged_in_headers(with_super_admin_user))

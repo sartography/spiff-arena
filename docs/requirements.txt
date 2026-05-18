@@ -5,7 +5,7 @@ attrs>=24.3.0
 Babel==2.17.0
 beautifulsoup4==4.12.3
 cattrs==25.1.1
-certifi==2024.7.4
+certifi==2025.11.12
 charset-normalizer==3.4.3
 click==8.1.7
 colorama==0.4.6
@@ -13,7 +13,7 @@ esbonio==0.16.4
 furo==2025.7.19
 idna==3.10
 imagesize==1.4.1
-Jinja2==3.1.4
+Jinja2==3.1.6
 lazy-object-proxy==1.12.0
 livereload==2.7.0
 lsprotocol==2025.0.0
@@ -24,10 +24,10 @@ mdurl==0.1.2
 myst-parser==5.0.0
 packaging==25.0
 pygls==2.1.1
-Pygments==2.19.2
+Pygments==2.20.0
 pyspellchecker==0.9.0
 PyYAML==6.0.1
-requests==2.32.3
+requests==2.33.1
 six==1.17.0
 snowballstemmer==2.2.0
 soupsieve==2.7
@@ -46,8 +46,8 @@ sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 sphinxcontrib-mermaid==0.9.2
 sphinx-tags==0.1.0
-tornado==6.4.2
+tornado==6.5.5
 typeguard==4.3.0
 Unidecode==1.3.8
-urllib3==2.6.3
+urllib3==2.7.0
 wrapt==1.16.0

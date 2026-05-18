@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from flask import Flask
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -8,12 +9,20 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestTaskService(BaseTest):
+    def test_task_model_error_includes_error_message(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(TaskModelError, "get_task_trace", classmethod(lambda cls, task_model: []))
+
+        error = TaskModelError("the task failed", task_model=object())  # type: ignore[arg-type]
+
+        assert "the task failed" in str(error)
+
     def test_can_get_full_bpmn_process_path(
         self,
         app: Flask,

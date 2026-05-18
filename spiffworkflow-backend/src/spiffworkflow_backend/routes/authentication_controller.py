@@ -148,6 +148,9 @@ def login_return(
     error_description: str | None = None,
     session_state: str = "",
 ) -> Response | None:
+    # Some OpenID providers include this callback parameter, but we do not need it.
+    del session_state
+
     if error:
         return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
 

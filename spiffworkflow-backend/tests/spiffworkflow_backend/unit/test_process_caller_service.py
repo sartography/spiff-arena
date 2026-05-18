@@ -22,7 +22,8 @@ def with_clean_cache(app: Flask) -> Generator[None, None, None]:
 
 
 @pytest.fixture()
-def with_no_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
+def with_no_process_callers(request: pytest.FixtureRequest) -> Generator[None, None, None]:
+    request.getfixturevalue("with_clean_cache")
     yield
 
 
@@ -40,7 +41,8 @@ def create_reference_cache(identifier: str) -> ReferenceCacheModel:
 
 
 @pytest.fixture()
-def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, None]:
+def with_single_process_caller(request: pytest.FixtureRequest) -> Generator[None, None, None]:
+    request.getfixturevalue("with_clean_cache")
     ReferenceCacheService.add_new_generation({})
     cache_generation = CacheGenerationModel(cache_table="reference_cache")
     db.session.add(cache_generation)
@@ -56,7 +58,8 @@ def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, 
 
 
 @pytest.fixture()
-def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
+def with_multiple_process_callers(request: pytest.FixtureRequest) -> Generator[None, None, None]:
+    request.getfixturevalue("with_clean_cache")
     ReferenceCacheService.add_new_generation({})
     called_cache = create_reference_cache("called_many")
 
@@ -70,36 +73,43 @@ def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, Non
 
 
 class TestProcessCallerService(BaseTest):
-    def test_has_zero_count_when_empty(self, with_no_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_no_process_callers")
+    def test_has_zero_count_when_empty(self) -> None:
         assert ProcessCallerService.count() == 0
 
-    def test_has_expected_count_when_not_empty(self, with_multiple_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_multiple_process_callers")
+    def test_has_expected_count_when_not_empty(self) -> None:
         assert ProcessCallerService.count() == 3
 
-    def test_can_clear_the_cache(self, with_multiple_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_multiple_process_callers")
+    def test_can_clear_the_cache(self) -> None:
         ProcessCallerService.clear_cache()
         assert ProcessCallerService.count() == 0
 
-    def test_can_clear_the_cache_when_empty(self, with_no_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_no_process_callers")
+    def test_can_clear_the_cache_when_empty(self) -> None:
         ProcessCallerService.clear_cache()
         assert ProcessCallerService.count() == 0
 
-    def test_can_clear_the_cache_for_process_id(self, with_single_process_caller: None) -> None:
+    @pytest.mark.usefixtures("with_single_process_caller")
+    def test_can_clear_the_cache_for_process_id(self) -> None:
         assert ProcessCallerService.count() != 0
         reference_cache = ReferenceCacheModel.basic_query().filter_by(identifier="called_once").first()
         assert reference_cache is not None
         ProcessCallerService.clear_cache_for_process_ids([reference_cache.id])
         assert ProcessCallerService.count() == 0
 
-    def test_can_clear_the_cache_for_calling_process_id(self, with_multiple_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_multiple_process_callers")
+    def test_can_clear_the_cache_for_calling_process_id(self) -> None:
         reference_cache = ReferenceCacheModel.basic_query().filter_by(identifier="one_caller").first()
         assert reference_cache is not None
         assert ProcessCallerService.count() == 3
         ProcessCallerService.clear_cache_for_process_ids([reference_cache.id])
         assert ProcessCallerService.count() == 2
 
+    @pytest.mark.usefixtures("with_single_process_caller", "with_multiple_process_callers")
     def test_can_clear_the_cache_for_callee_caller_process_id(
-        self, with_single_process_caller: None, with_multiple_process_callers: None
+        self,
     ) -> None:
         reference_cache = ReferenceCacheModel.basic_query().filter_by(identifier="one_caller").first()
         assert reference_cache is not None
@@ -107,22 +117,23 @@ class TestProcessCallerService(BaseTest):
         ProcessCallerService.clear_cache_for_process_ids([reference_cache.id])
         assert ProcessCallerService.count() == 3
 
+    @pytest.mark.usefixtures("with_single_process_caller", "with_multiple_process_callers")
     def test_can_clear_the_cache_for_process_id_and_leave_other_process_ids_alone(
         self,
-        with_single_process_caller: None,
-        with_multiple_process_callers: None,
     ) -> None:
         reference_cache = ReferenceCacheModel.basic_query().filter_by(identifier="called_many").first()
         assert reference_cache is not None
         ProcessCallerService.clear_cache_for_process_ids([reference_cache.id])
         assert ProcessCallerService.count() == 1
 
-    def test_raises_if_calling_reference_cache_does_not_exist(self, with_no_process_callers: None) -> None:
+    @pytest.mark.usefixtures("with_no_process_callers")
+    def test_raises_if_calling_reference_cache_does_not_exist(self) -> None:
         with pytest.raises(CallingProcessNotFoundError):
             ProcessCallerService.add_caller("DNE", [])
             assert ProcessCallerService.count() == 0
 
-    def test_raises_if_called_reference_cache_does_not_exist(self, with_single_process_caller: None) -> None:
+    @pytest.mark.usefixtures("with_single_process_caller")
+    def test_raises_if_called_reference_cache_does_not_exist(self) -> None:
         db.session.commit()
         with pytest.raises(CalledProcessNotFoundError):
             ProcessCallerService.add_caller("calling_cache", ["DNE"])

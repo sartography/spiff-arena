@@ -6,8 +6,8 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authentication_service import AuthenticationService  # noqa: F401
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -40,7 +40,9 @@ def webhook(body: dict) -> Response:
         )
 
     process_model = _get_process_model_for_instantiation(
-        _un_modify_modified_process_model_id(current_app.config["SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER"])
+        ProcessModelInfo.unmodify_process_identifier_from_path_param(
+            current_app.config["SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER"]
+        )
     )
     ProcessInstanceService.create_and_run_process_instance(
         process_model=process_model,

@@ -1,0 +1,81 @@
+{
+  // Renovate configuration for spiff-arena monorepo.
+  // Adapted from GSA-TTS/scanning-service defaults.
+  // Docs: https://docs.renovatebot.com/configuration-options/
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "extends": [
+    "config:recommended",       // sensible baseline configuration
+    "replacements:all",         // auto-migrate deprecated/renamed packages
+    "abandonments:recommended", // flag packages with no release in 1 year
+    ":dependencyDashboard"
+  ],
+
+  // --- Integrity & Supply Chain ---
+  // Convert mutable tag refs (e.g. @v4) to immutable SHA commit hashes.
+  "pinDigests": true,
+
+  // --- Flaw Remediation ---
+  // Cool-off prevents pulling retracted releases.
+  "minimumReleaseAge": "2 days",
+
+  // When updating a dependency, also bump the lower bound in manifest files
+  // (e.g. pyproject.toml, package.json) to match the resolved version.
+  // Without this, only lock files are updated and manifests drift.
+  "rangeStrategy": "bump",
+
+  // Immediate PRs for known CVEs — bypasses schedule window.
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "schedule": []
+  },
+
+  // --- Scheduling & Throttling ---
+  "schedule": ["before 7am every weekday"],
+  "timezone": "America/New_York",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 1,
+
+  // --- Labels ---
+  "labels": ["dependencies"],
+
+  // --- Package Rules ---
+  "packageRules": [
+    // GitHub Actions — group all, SHA-pin for integrity
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "addLabels": ["github-actions"]
+    },
+
+    // npm — group patch/minor to reduce PR noise
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "npm patch/minor",
+      "addLabels": ["npm"]
+    },
+
+    // Python (uv, poetry, pip) — group patch/minor
+    {
+      "matchManagers": ["pip_requirements", "poetry", "pep621"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "Python patch/minor",
+      "addLabels": ["python"]
+    },
+
+    // Docker — group all
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "Docker",
+      "addLabels": ["docker"]
+    },
+
+    // Flag abandoned/replaced packages for review
+    {
+      "matchUpdateTypes": ["replacement"],
+      "addLabels": ["abandoned-dependency"]
+    }
+  ]
+}

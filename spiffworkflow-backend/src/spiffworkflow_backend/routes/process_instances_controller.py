@@ -43,7 +43,6 @@ from spiffworkflow_backend.routes.process_api_blueprint import _find_process_ins
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
@@ -63,7 +62,7 @@ from spiffworkflow_backend.utils.api_logging import log_api_interaction
 def process_instance_create(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
 
     process_instance = _process_instance_create(process_model_identifier)
     return make_response(jsonify(process_instance.serialized()), 201)
@@ -698,7 +697,8 @@ def _get_process_instance(
             if process_model_with_diagram.primary_file_name:
                 name_of_file_with_diagram = process_model_with_diagram.primary_file_name
         except Exception as ex:
-            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
+            current_app.logger.warning(f"Failed to retrieve process model for diagram: {ex}")
+            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve process model for diagram."
 
     if process_model_with_diagram and name_of_file_with_diagram:
         bpmn_xml_file_contents = None
@@ -709,7 +709,8 @@ def _get_process_instance(
                 file_name=name_of_file_with_diagram,
             )
         except GitCommandError as ex:
-            process_instance.bpmn_xml_file_contents_retrieval_error = str(ex)
+            current_app.logger.warning(f"Failed to retrieve BPMN XML from git: {ex}")
+            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve BPMN XML from version control."
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     process_instance_as_dict = process_instance.serialized_with_metadata()

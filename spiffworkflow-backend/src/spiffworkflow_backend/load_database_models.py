@@ -35,9 +35,6 @@ from spiffworkflow_backend.models.cache_generation import (
 from spiffworkflow_backend.models.reference_cache import (
     ReferenceCacheModel,
 )  # noqa: F401
-from spiffworkflow_backend.models.process_caller import (
-    ProcessCallerCacheModel,
-)  # noqa: F401
 from spiffworkflow_backend.models.message_instance import (
     MessageInstanceModel,
 )  # noqa: F401
