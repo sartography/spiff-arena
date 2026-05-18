@@ -103,6 +103,11 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   uv run python bin/refresh_all_caches.py
 fi
 
+if [[ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]]; then
+  rm -rf "$PROMETHEUS_MULTIPROC_DIR"
+  mkdir -p "$PROMETHEUS_MULTIPROC_DIR"
+fi
+
 log_info "Starting gunicorn server"
 # THIS MUST BE THE LAST COMMAND!
 # Run with gunicorn as per recommendation from uvicorn
