@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Create a temporary message-start process and fire concurrent message starts.
+"""Reproduce message-start double-delivery races against a live backend.
 
-This is intended as a live-server regression harness for message-start races.
+This targets the failure shape where POST /messages returns 200 for a message-start
+process, then the just-started process instance is later marked error with:
+
+    SpiffWorkflow.exceptions.WorkflowException: This process is not waiting for <message_name>
+
 Start Spiff first, for example with `run-spiff-arena`, then run:
 
-    uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --workers 20
+    uv run python bin/load_tests/message_start_double_delivery_race.py --requests 200 --workers 40
 """
 
 from __future__ import annotations
@@ -38,14 +42,19 @@ BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
   id="Definitions_{process_id}"
   targetNamespace="http://bpmn.io/schema/bpmn">
   <bpmn:process id="{process_id}" isExecutable="true">
-    <bpmn:startEvent id="message_start_event" name="Concurrent message start">
-      <bpmn:outgoing>Flow_start_to_end</bpmn:outgoing>
+    <bpmn:startEvent id="Start_message" name="Check payment failed">
+      <bpmn:outgoing>Flow_start_to_wait</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_start" messageRef="Message_start" />
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_start_to_end" sourceRef="message_start_event" targetRef="Event_done" />
+    <bpmn:manualTask id="Task_wait" name="Wait after message start">
+      <bpmn:incoming>Flow_start_to_wait</bpmn:incoming>
+      <bpmn:outgoing>Flow_wait_to_end</bpmn:outgoing>
+    </bpmn:manualTask>
     <bpmn:endEvent id="Event_done">
-      <bpmn:incoming>Flow_start_to_end</bpmn:incoming>
+      <bpmn:incoming>Flow_wait_to_end</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_start_to_wait" sourceRef="Start_message" targetRef="Task_wait" />
+    <bpmn:sequenceFlow id="Flow_wait_to_end" sourceRef="Task_wait" targetRef="Event_done" />
   </bpmn:process>
   <bpmn:message id="Message_start" name="{message_name}">
     <bpmn:extensionElements>
@@ -54,15 +63,22 @@ BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
   </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="{process_id}">
-      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="message_start_event">
+      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="Start_message">
         <dc:Bounds x="180" y="160" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="Event_done">
-        <dc:Bounds x="390" y="160" width="36" height="36" />
+      <bpmndi:BPMNShape id="ManualTask_di" bpmnElement="Task_wait">
+        <dc:Bounds x="300" y="138" width="120" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_start_to_end_di" bpmnElement="Flow_start_to_end">
+      <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="Event_done">
+        <dc:Bounds x="510" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_start_to_wait_di" bpmnElement="Flow_start_to_wait">
         <di:waypoint x="216" y="178" />
-        <di:waypoint x="390" y="178" />
+        <di:waypoint x="300" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_wait_to_end_di" bpmnElement="Flow_wait_to_end">
+        <di:waypoint x="420" y="178" />
+        <di:waypoint x="510" y="178" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
@@ -73,6 +89,7 @@ BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 @dataclass
 class MessageResult:
     index: int
+    batch: int
     status_code: int
     elapsed_seconds: float
     process_instance_id: int | None
@@ -81,13 +98,21 @@ class MessageResult:
     response_text: str
 
     @property
+    def accepted(self) -> bool:
+        return self.status_code == 200 and self.process_instance_id is not None and self.error_code is None
+
+
+@dataclass
+class ProcessInstanceStatusResult:
+    process_instance_id: int
+    status_code: int
+    status: str | None
+    error_code: str | None
+    response_text: str
+
+    @property
     def ok(self) -> bool:
-        return (
-            self.status_code == 200
-            and self.process_instance_id is not None
-            and self.process_instance_status == "complete"
-            and self.error_code is None
-        )
+        return self.status_code == 200 and self.status != "error" and self.error_code is None
 
 
 def modified_identifier(identifier: str) -> str:
@@ -144,11 +169,55 @@ def request_headers(args: argparse.Namespace, access_token: str | None = None) -
     return headers
 
 
+def login_with_access_token(
+    session: requests.Session,
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    access_token: str,
+) -> None:
+    params = {
+        "authentication_identifier": args.authentication_identifier,
+    }
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/login_with_access_token",
+        headers=headers,
+        params=params,
+        timeout=args.timeout,
+    )
+
+    if response.status_code == 400 and "access_token" in response.text:
+        response = session.post(
+            f"{args.backend_base_url}/v1.0/login_with_access_token",
+            headers=headers,
+            params={**params, "access_token": access_token},
+            timeout=args.timeout,
+        )
+
+    check_response(response, "login_with_access_token", {200, 204, 302})
+
+
+def process_group_exists(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> bool:
+    response = session.get(
+        f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier(group_id)}",
+        headers=headers,
+        timeout=args.timeout,
+    )
+    if response.status_code == 200:
+        return True
+    if response.status_code == 400 and "process_group_cannot_be_found" in response.text:
+        return False
+    check_response(response, "check process group", {200})
+    return True
+
+
 def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
+    if process_group_exists(session, args, headers, group_id):
+        return
+
     payload = {
         "id": group_id,
         "display_name": group_id,
-        "description": "Temporary group for concurrent message-start load testing",
+        "description": "Temporary group for message-start double-delivery race testing",
         "display_order": 0,
         "admin": False,
     }
@@ -168,7 +237,7 @@ def create_process_model(
     payload = {
         "id": process_model_id,
         "display_name": process_model_id,
-        "description": "Temporary model for concurrent message-start load testing",
+        "description": "Temporary model for message-start double-delivery race testing",
         "fault_or_suspend_on_exception": "fault",
         "exception_notification_addresses": [],
     }
@@ -218,7 +287,7 @@ def set_primary_bpmn(
             "primary_file_name": file_name,
             "primary_process_id": process_id,
             "display_name": process_model_id,
-            "description": "Temporary model for concurrent message-start load testing",
+            "description": "Temporary model for message-start double-delivery race testing",
             "fault_or_suspend_on_exception": "fault",
             "exception_notification_addresses": [],
         },
@@ -227,13 +296,13 @@ def set_primary_bpmn(
     check_response(response, "set primary BPMN", {200})
 
 
-def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> tuple[str, str]:
+def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> tuple[str, str, str]:
     suffix = args.suffix or str(int(time.time()))
-    group_id = args.group_id or f"load_test/concurrent_message_starts_{suffix}"
-    process_model_id = f"{group_id}/message_receiver"
-    process_id = f"Process_concurrent_message_starts_{suffix}".replace("-", "_")
-    message_name = args.message_name or f"concurrent_message_start_{suffix}"
-    file_name = "message_start_load_test.bpmn"
+    group_id = args.group_id or f"load_test/message_start_double_delivery_{suffix}"
+    process_model_id = f"{group_id}/message_start_waiter"
+    process_id = f"Process_message_start_double_delivery_{suffix}".replace("-", "_")
+    message_name = args.message_name or f"check_payment_failed_v2_request_{suffix}"
+    file_name = "message_start_double_delivery_race.bpmn"
 
     create_process_group(session, args, headers, "load_test")
     create_process_group(session, args, headers, group_id)
@@ -248,15 +317,17 @@ def ensure_process_model(session: requests.Session, args: argparse.Namespace, he
     )
     set_primary_bpmn(session, args, headers, process_model_id, file_name, process_id)
 
-    return group_id, message_name
+    return group_id, process_model_id, message_name
 
 
-def send_message(args: argparse.Namespace, headers: dict[str, str], modified_message_name: str, index: int) -> MessageResult:
-    payload = {
-        "request_index": index,
-        "sent_at": time.time(),
-        "payload": {"email": f"load-test-{index}@example.com"},
-    }
+def send_message(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    modified_message_name: str,
+    batch: int,
+    index: int,
+) -> MessageResult:
+    payload = {"booking_id": args.booking_id}
     start = time.perf_counter()
     try:
         response = requests.post(
@@ -275,6 +346,7 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
         process_instance = data.get("process_instance") if isinstance(data, dict) else None
         return MessageResult(
             index=index,
+            batch=batch,
             status_code=response.status_code,
             elapsed_seconds=elapsed,
             process_instance_id=process_instance.get("id") if isinstance(process_instance, dict) else None,
@@ -286,6 +358,7 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
         elapsed = time.perf_counter() - start
         return MessageResult(
             index=index,
+            batch=batch,
             status_code=0,
             elapsed_seconds=elapsed,
             process_instance_id=None,
@@ -295,56 +368,141 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
         )
 
 
+def fetch_process_instance_status(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    process_model_id: str,
+    process_instance_id: int,
+) -> ProcessInstanceStatusResult:
+    try:
+        response = requests.get(
+            f"{args.backend_base_url}/v1.0/process-instances/{modified_identifier(process_model_id)}/{process_instance_id}",
+            headers=headers,
+            timeout=args.timeout,
+        )
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+
+        return ProcessInstanceStatusResult(
+            process_instance_id=process_instance_id,
+            status_code=response.status_code,
+            status=data.get("status") if isinstance(data, dict) else None,
+            error_code=data.get("error_code") if isinstance(data, dict) else None,
+            response_text=response.text[:2000],
+        )
+    except Exception as exception:
+        return ProcessInstanceStatusResult(
+            process_instance_id=process_instance_id,
+            status_code=0,
+            status=None,
+            error_code=exception.__class__.__name__,
+            response_text=str(exception),
+        )
+
+
 def run_load(args: argparse.Namespace, headers: dict[str, str], group_id: str, message_name: str) -> list[MessageResult]:
     modified_message_name = f"{modified_identifier(group_id)}:{message_name}"
-    if args.warm_up:
-        print(f"Warming up message '{modified_message_name}' before the concurrent phase")
-        warm_up_result = send_message(args, headers, modified_message_name, -1)
-        if not warm_up_result.ok:
-            raise RuntimeError(f"warm-up message failed: {warm_up_result.response_text}")
-
     print(
-        f"Firing {args.requests} message starts with {args.workers} workers against message '{modified_message_name}' "
-        f"using execution_mode={args.execution_mode}"
+        f"Firing {args.batches} batch(es) of {args.requests} message starts with {args.workers} workers "
+        f"against message '{modified_message_name}' using execution_mode={args.execution_mode} "
+        f"and booking_id={args.booking_id}"
     )
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-        futures = [executor.submit(send_message, args, headers, modified_message_name, i) for i in range(args.requests)]
+
+    results: list[MessageResult] = []
+    for batch in range(args.batches):
+        if batch > 0 and args.batch_delay_seconds > 0:
+            time.sleep(args.batch_delay_seconds)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = [
+                executor.submit(send_message, args, headers, modified_message_name, batch, index)
+                for index in range(args.requests)
+            ]
+            results.extend(future.result() for future in concurrent.futures.as_completed(futures))
+    return results
+
+
+def fetch_final_statuses(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    process_model_id: str,
+    results: list[MessageResult],
+) -> list[ProcessInstanceStatusResult]:
+    process_instance_ids = sorted({result.process_instance_id for result in results if result.process_instance_id is not None})
+    if not process_instance_ids:
+        return []
+
+    if args.settle_seconds > 0:
+        print(f"Waiting {args.settle_seconds:.1f}s before re-fetching process instances")
+        time.sleep(args.settle_seconds)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(args.workers, len(process_instance_ids))) as executor:
+        futures = [
+            executor.submit(fetch_process_instance_status, args, headers, process_model_id, process_instance_id)
+            for process_instance_id in process_instance_ids
+        ]
         return [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def print_summary(results: list[MessageResult]) -> None:
-    successes = [r for r in results if r.ok]
-    failures = [r for r in results if not r.ok]
+def print_summary(results: list[MessageResult], final_statuses: list[ProcessInstanceStatusResult]) -> None:
+    accepted = [r for r in results if r.accepted]
+    rejected = [r for r in results if not r.accepted]
     elapsed_values = [r.elapsed_seconds for r in results]
+    process_instance_ids = [r.process_instance_id for r in accepted if r.process_instance_id is not None]
+    final_status_counts: dict[str, int] = {}
+    for status_result in final_statuses:
+        status_key = status_result.status or f"http_{status_result.status_code}"
+        final_status_counts[status_key] = final_status_counts.get(status_key, 0) + 1
 
-    print("\nConcurrent Message Start Summary")
-    print(f"Total: {len(results)}")
-    print(f"Successes: {len(successes)}")
-    print(f"Failures: {len(failures)}")
+    print("\nMessage Start Double-Delivery Race Summary")
+    print(f"Total POSTs: {len(results)}")
+    print(f"Accepted POSTs: {len(accepted)}")
+    print(f"Rejected POSTs: {len(rejected)}")
+    print(f"Unique returned process instances: {len(set(process_instance_ids))}")
     if elapsed_values:
         print(
-            "Latency min/median/max: "
+            "POST latency min/median/max: "
             f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / {max(elapsed_values):.3f}s"
         )
+    if final_status_counts:
+        print(f"Final process-instance statuses: {final_status_counts}")
 
-    process_instance_ids = [r.process_instance_id for r in successes if r.process_instance_id is not None]
-    print(f"Unique successful process instances: {len(set(process_instance_ids))}")
+    errored_after_accept = [s for s in final_statuses if s.status == "error"]
+    bad_final_fetches = [s for s in final_statuses if not s.ok and s.status != "error"]
 
-    if failures:
-        print("\nFailures:")
-        for result in sorted(failures, key=lambda r: r.index)[:20]:
+    if rejected:
+        print("\nRejected or failed POSTs:")
+        for result in sorted(rejected, key=lambda r: (r.batch, r.index))[:20]:
             print(
-                f"- request={result.index} http={result.status_code} status={result.process_instance_status} "
-                f"error={result.error_code} body={result.response_text}"
+                f"- batch={result.batch} request={result.index} http={result.status_code} "
+                f"status={result.process_instance_status} error={result.error_code} body={result.response_text}"
+            )
+
+    if errored_after_accept:
+        print("\nProcess instances that were accepted and later became error:")
+        for status_result in sorted(errored_after_accept, key=lambda r: r.process_instance_id)[:20]:
+            print(f"- {status_result.process_instance_id}")
+
+    if bad_final_fetches:
+        print("\nProcess instances that could not be re-fetched cleanly:")
+        for status_result in sorted(bad_final_fetches, key=lambda r: r.process_instance_id)[:20]:
+            print(
+                f"- process_instance={status_result.process_instance_id} http={status_result.status_code} "
+                f"status={status_result.status} error={status_result.error_code} body={status_result.response_text}"
             )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend-base-url", default=DEFAULT_BACKEND_BASE_URL)
-    parser.add_argument("--requests", type=int, default=50)
-    parser.add_argument("--workers", type=int, default=20)
-    parser.add_argument("--execution-mode", default="synchronous", choices=["synchronous", "asynchronous"])
+    parser.add_argument("--requests", type=int, default=200, help="Number of message POSTs per batch")
+    parser.add_argument("--workers", type=int, default=40)
+    parser.add_argument("--batches", type=int, default=1)
+    parser.add_argument("--batch-delay-seconds", type=float, default=0)
+    parser.add_argument("--settle-seconds", type=float, default=12)
+    parser.add_argument("--booking-id", type=int, default=786556518)
+    parser.add_argument("--execution-mode", default="asynchronous", choices=["synchronous", "asynchronous"])
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
@@ -358,13 +516,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--group-id", help="Use an existing or deterministic process group path")
     parser.add_argument("--message-name", help="Use an existing or deterministic message name")
     parser.add_argument("--suffix", help="Suffix for generated group/model/message identifiers")
-    parser.add_argument(
-        "--no-warm-up",
-        action="store_false",
-        dest="warm_up",
-        help="Skip the single warm-up message and include cold BPMN definition persistence in the stress test",
-    )
-    parser.set_defaults(warm_up=True)
     return parser.parse_args()
 
 
@@ -375,20 +526,16 @@ def main() -> int:
     headers = request_headers(args, access_token)
 
     if access_token:
-        response = session.post(
-            f"{args.backend_base_url}/v1.0/login_with_access_token",
-            headers=headers,
-            params={
-                "authentication_identifier": args.authentication_identifier,
-            },
-            timeout=args.timeout,
-        )
-        check_response(response, "login_with_access_token", {200, 204, 302})
+        login_with_access_token(session, args, headers, access_token)
 
-    group_id, message_name = ensure_process_model(session, args, headers)
+    group_id, process_model_id, message_name = ensure_process_model(session, args, headers)
     results = run_load(args, headers, group_id, message_name)
-    print_summary(results)
-    return 0 if all(result.ok for result in results) else 1
+    final_statuses = fetch_final_statuses(args, headers, process_model_id, results)
+    print_summary(results, final_statuses)
+
+    accepted_ok = all(result.accepted for result in results)
+    final_statuses_ok = all(status_result.ok for status_result in final_statuses)
+    return 0 if accepted_ok and final_statuses_ok else 1
 
 
 if __name__ == "__main__":
