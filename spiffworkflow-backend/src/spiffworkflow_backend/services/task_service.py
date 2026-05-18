@@ -55,6 +55,7 @@ class TaskModelError(Exception):
         offset: int | None = None,
         error_line: str | None = None,
     ):
+        super().__init__(error_msg)
         self.task_model = task_model
         self.line_number = line_number
         self.offset = offset
