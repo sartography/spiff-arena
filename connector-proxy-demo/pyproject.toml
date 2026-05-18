@@ -5,7 +5,7 @@ description = "An example showing how to use the Spiffworkflow-proxy's Flask Blu
 authors = ["Dan <dan@sartography.com>"]
 license = "LGPL"
 readme = "README.md"
-#packages = [{include = "connector_proxy_demo", from = "."}]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
