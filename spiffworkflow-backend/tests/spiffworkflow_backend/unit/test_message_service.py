@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import Messa
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -88,6 +89,7 @@ class TestMessageService(BaseTest):
             receiving_process_instance_id: int | None = None,
             processor_receive: ProcessInstanceProcessor | None = None,
             claim_message_instance: bool = True,
+            instrumentation: MessageSendInstrumentation | None = None,
         ) -> MessageInstanceModel | None:
             ready_message_count = int(
                 MessageInstanceModel.query.filter_by(
@@ -108,6 +110,7 @@ class TestMessageService(BaseTest):
                 receiving_process_instance_id=receiving_process_instance_id,
                 processor_receive=processor_receive,
                 claim_message_instance=claim_message_instance,
+                instrumentation=instrumentation,
             )
 
         with patch.object(MessageService, "correlate_send_message", side_effect=observing_correlate_send_message):

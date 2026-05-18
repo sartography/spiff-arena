@@ -30,6 +30,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import Messa
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -146,16 +147,23 @@ class MessageService:
         receiving_process_instance_id: int | None = None,
         processor_receive: ProcessInstanceProcessor | None = None,
         claim_message_instance: bool = True,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
         :return: the message instance that received this message.
         """
-        cls.expire_ready_send_messages()
+        if instrumentation is not None:
+            with instrumentation.phase("correlate_expire_ready_send_messages"):
+                cls.expire_ready_send_messages()
+        else:
+            cls.expire_ready_send_messages()
 
         if claim_message_instance:
-            if not cls._claim_ready_message_instance(message_instance_send):
+            with instrumentation.phase("claim_send_message") if instrumentation is not None else contextlib.nullcontext():
+                claimed_send_message = cls._claim_ready_message_instance(message_instance_send)
+            if not claimed_send_message:
                 return None
         elif message_instance_send.status != MessageStatuses.running.value:
             raise MessageServiceError(
@@ -178,24 +186,36 @@ class MessageService:
         # Let the methods handle the exceptions to ensure the proper variables are set so we do not lose errors
 
         # First, try to find an existing process instance waiting for this message
-        message_instance_receive = cls._try_correlate_with_existing_receiver(
-            message_instance_send,
-            execution_mode,
-            receiving_process_instance_id=receiving_process_instance_id,
-            processor_receive=processor_receive,
-        )
+        with instrumentation.phase("correlate_existing_receiver") if instrumentation is not None else contextlib.nullcontext():
+            message_instance_receive = cls._try_correlate_with_existing_receiver(
+                message_instance_send,
+                execution_mode,
+                receiving_process_instance_id=receiving_process_instance_id,
+                processor_receive=processor_receive,
+                instrumentation=instrumentation,
+            )
         if message_instance_receive is not None:
+            if instrumentation is not None:
+                instrumentation.set_correlation_result("existing_receive")
             return message_instance_receive
 
         # No existing receiver found, try to start a new process
-        message_instance_receive = cls._try_start_new_process_for_message(message_instance_send, execution_mode)
+        with instrumentation.phase("correlate_message_start") if instrumentation is not None else contextlib.nullcontext():
+            message_instance_receive = cls._try_start_new_process_for_message(
+                message_instance_send,
+                execution_mode,
+                instrumentation=instrumentation,
+            )
         if message_instance_receive is not None:
+            if instrumentation is not None:
+                instrumentation.set_correlation_result("message_start")
             return message_instance_receive
 
         # No match found - reset send message to ready so it can be tried again later
-        message_instance_send.status = MessageStatuses.ready.value
-        db.session.add(message_instance_send)
-        db.session.commit()
+        with instrumentation.phase("reset_unmatched_send_message") if instrumentation is not None else contextlib.nullcontext():
+            message_instance_send.status = MessageStatuses.ready.value
+            db.session.add(message_instance_send)
+            db.session.commit()
         return None
 
     @classmethod
@@ -237,6 +257,7 @@ class MessageService:
         execution_mode: str | None,
         receiving_process_instance_id: int | None = None,
         processor_receive: ProcessInstanceProcessor | None = None,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> MessageInstanceModel | None:
         """Try to find and correlate with an existing process instance waiting for this message."""
         available_receive_messages_query = MessageInstanceModel.query.options(
@@ -283,6 +304,7 @@ class MessageService:
                             message_instance_send,
                             execution_mode=execution_mode,
                             processor_receive=processor_receive_to_use,
+                            instrumentation=instrumentation,
                         )
                         cls._mark_messages_completed(message_instance_send, message_instance_receive)
                         if processor_receive_to_use is not None:
@@ -352,6 +374,7 @@ class MessageService:
         cls,
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> MessageInstanceModel | None:
         """Try to start a new process instance that can receive this message."""
 
@@ -375,19 +398,28 @@ class MessageService:
                 user,
                 message_instance_send=message_instance_send,
                 execution_mode=execution_mode,
+                instrumentation=instrumentation,
             ) as (receiving_process_instance, processor_receive):
-                message_instance_receive = MessageInstanceModel.query.filter_by(
-                    process_instance_id=receiving_process_instance.id,
-                    message_type=MessageTypes.receive.value,
-                    status=MessageStatuses.ready.value,
-                ).first()
+                receive_message_phase = (
+                    instrumentation.phase("find_started_process_receive_message")
+                    if instrumentation is not None
+                    else contextlib.nullcontext()
+                )
+                with receive_message_phase:
+                    message_instance_receive = MessageInstanceModel.query.filter_by(
+                        process_instance_id=receiving_process_instance.id,
+                        message_type=MessageTypes.receive.value,
+                        status=MessageStatuses.ready.value,
+                    ).first()
 
                 if message_instance_receive is None:
                     raise MessageServiceError(
                         f"Expected to find a receive message instance for newly started process {receiving_process_instance.id}"
                     )
 
-                if not cls._claim_ready_message_instance(message_instance_receive):
+                with instrumentation.phase("claim_receive_message") if instrumentation is not None else contextlib.nullcontext():
+                    claimed_receive_message = cls._claim_ready_message_instance(message_instance_receive)
+                if not claimed_receive_message:
                     return None
 
                 cls.process_message_receive(
@@ -396,6 +428,7 @@ class MessageService:
                     message_instance_send,
                     execution_mode=execution_mode,
                     processor_receive=processor_receive,
+                    instrumentation=instrumentation,
                 )
                 cls._mark_messages_completed(message_instance_send, message_instance_receive)
                 processor_receive.save()
@@ -513,6 +546,7 @@ class MessageService:
         user: UserModel,
         message_instance_send: MessageInstanceModel | None = None,
         execution_mode: str | None = None,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> tuple[ProcessInstanceModel, ProcessInstanceProcessor]:
         """Start up a process instance, so it is ready to catch the event."""
         with cls._started_process_with_message(
@@ -520,6 +554,7 @@ class MessageService:
             user,
             message_instance_send=message_instance_send,
             execution_mode=execution_mode,
+            instrumentation=instrumentation,
         ) as result:
             return result
 
@@ -531,14 +566,25 @@ class MessageService:
         user: UserModel,
         message_instance_send: MessageInstanceModel | None = None,
         execution_mode: str | None = None,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> Generator[tuple[ProcessInstanceModel, ProcessInstanceProcessor], None, None]:
-        receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            message_triggerable_process_model.process_model_identifier, user, commit_db=False
-        )
-        db.session.flush()
+        with instrumentation.phase("create_process_instance") if instrumentation is not None else contextlib.nullcontext():
+            receiving_process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+                message_triggerable_process_model.process_model_identifier,
+                user,
+                commit_db=False,
+                instrumentation=instrumentation,
+            )
+            db.session.flush()
         with ProcessInstanceQueueService.dequeued(receiving_process_instance):
-            processor_receive = ProcessInstanceProcessor(receiving_process_instance)
-            cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
+            initialize_processor_phase = (
+                instrumentation.phase("initialize_process_instance_processor")
+                if instrumentation is not None
+                else contextlib.nullcontext()
+            )
+            with initialize_processor_phase:
+                processor_receive = ProcessInstanceProcessor(receiving_process_instance)
+                cls._cancel_non_matching_start_events(processor_receive, message_triggerable_process_model)
 
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
@@ -554,7 +600,8 @@ class MessageService:
 
             # Persist the new receiver before it handles the message. A message-triggered service task can expose a callback
             # URL immediately, and that callback runs in another request.
-            processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
+            with instrumentation.phase("initial_engine_steps") if instrumentation is not None else contextlib.nullcontext():
+                processor_receive.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name, needs_dequeue=False)
             yield (receiving_process_instance, processor_receive)
 
     @staticmethod
@@ -564,6 +611,7 @@ class MessageService:
         message_instance_send: MessageInstanceModel,
         execution_mode: str | None = None,
         processor_receive: ProcessInstanceProcessor | None = None,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> None:
         correlation_properties = []
         for cr in message_instance_receive.correlation_rules:
@@ -578,9 +626,10 @@ class MessageService:
             name=message_instance_send.name,
             correlation_properties=correlation_properties,
         )
-        correlations = bpmn_message.calculate_correlations(
-            CustomBpmnScriptEngine(), bpmn_message.correlation_properties, message_instance_send.payload
-        )
+        with instrumentation.phase("calculate_message_correlations") if instrumentation is not None else contextlib.nullcontext():
+            correlations = bpmn_message.calculate_correlations(
+                CustomBpmnScriptEngine(), bpmn_message.correlation_properties, message_instance_send.payload
+            )
         bpmn_event = BpmnEvent(
             event_definition=bpmn_message,
             payload=message_instance_send.payload,
@@ -596,26 +645,30 @@ class MessageService:
             processor_receive_to_use = ProcessInstanceProcessor(receiving_process_instance)
             save_engine_steps = True
 
-        processor_receive_to_use.bpmn_process_instance.send_event(bpmn_event)
+        with instrumentation.phase("send_bpmn_message_event") if instrumentation is not None else contextlib.nullcontext():
+            processor_receive_to_use.bpmn_process_instance.send_event(bpmn_event)
 
         if should_queue_process_instance(execution_mode=execution_mode):
             # even if we are queueing, we ran a "send_event" call up above, and it updated some tasks.
             # we need to serialize these task updates to the db. do_engine_steps with save does that.
-            processor_receive_to_use.do_engine_steps(
-                save=save_engine_steps, execution_strategy_name="run_current_ready_tasks", needs_dequeue=save_engine_steps
-            )
+            with instrumentation.phase("receive_engine_steps") if instrumentation is not None else contextlib.nullcontext():
+                processor_receive_to_use.do_engine_steps(
+                    save=save_engine_steps, execution_strategy_name="run_current_ready_tasks", needs_dequeue=save_engine_steps
+                )
         elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(receiving_process_instance):
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                 execution_strategy_name = "greedy"
-            processor_receive_to_use.do_engine_steps(
-                save=save_engine_steps, execution_strategy_name=execution_strategy_name, needs_dequeue=save_engine_steps
-            )
+            with instrumentation.phase("receive_engine_steps") if instrumentation is not None else contextlib.nullcontext():
+                processor_receive_to_use.do_engine_steps(
+                    save=save_engine_steps, execution_strategy_name=execution_strategy_name, needs_dequeue=save_engine_steps
+                )
 
-        message_instance_receive.status = MessageStatuses.completed.value
-        db.session.add(message_instance_receive)
-        if save_engine_steps:
-            db.session.commit()
+        with instrumentation.phase("complete_receive_message") if instrumentation is not None else contextlib.nullcontext():
+            message_instance_receive.status = MessageStatuses.completed.value
+            db.session.add(message_instance_receive)
+            if save_engine_steps:
+                db.session.commit()
 
     @classmethod
     def find_message_triggerable_process_model(cls, modified_message_name: str) -> MessageTriggerableProcessModel:
@@ -665,51 +718,110 @@ class MessageService:
         message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
         ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_uuid)
         message_instance_uuid = cls._validated_message_instance_uuid(message_instance_uuid)
+        instrumentation = MessageSendInstrumentation(
+            modified_message_name=modified_message_name,
+            message_name=message_name,
+            execution_mode=execution_mode,
+            ttl=ttl,
+            message_instance_uuid=message_instance_uuid,
+        )
+        message_instance: MessageInstanceModel | None = None
         now_in_seconds = cls.current_time_in_seconds()
         expires_at_in_seconds = now_in_seconds + ttl if ttl > 0 else None
-        cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
 
-        existing_message_instance = cls._find_message_with_uuid(
-            message_instance_uuid,
-        )
-        if existing_message_instance is not None:
-            if existing_message_instance.name != message_name or existing_message_instance.payload != body:
-                raise ApiError(
-                    error_code="message_instance_uuid_conflict",
-                    message=("A message with the same message_instance_uuid already exists for a different message or payload."),
-                    status_code=409,
-                )
-            if existing_message_instance.status == MessageStatuses.not_accepted.value:
-                cls._raise_message_not_accepted(
-                    existing_message_instance.failure_cause or cls._message_not_accepted_message(modified_message_name)
-                )
-            return existing_message_instance
+        try:
+            with instrumentation.phase("expire_ready_send_messages"):
+                cls.expire_ready_send_messages(now_in_seconds=now_in_seconds)
 
-        # Create the send message
-        # TODO: support the full message id - including process group - in message instance
-        message_instance = MessageInstanceModel(
-            message_type=MessageTypes.send.value,
-            name=message_name,
-            payload=body,
-            status=MessageStatuses.running.value,
-            user_id=g.user.id,
-            message_instance_uuid=message_instance_uuid,
-            expires_at_in_seconds=expires_at_in_seconds,
-        )
-        db.session.add(message_instance)
-        db.session.commit()
-        receiver_message = cls.correlate_send_message(
-            message_instance,
-            execution_mode=execution_mode,
-            claim_message_instance=False,
-        )
-        if receiver_message is None:
-            if ttl > 0:
-                return message_instance
-            message_not_accepted = cls._message_not_accepted_message(modified_message_name)
-            cls._mark_send_message_not_accepted(message_instance, message_not_accepted)
-            cls._raise_message_not_accepted(message_not_accepted)
-        return receiver_message
+            with instrumentation.phase("find_existing_message_uuid"):
+                existing_message_instance = cls._find_message_with_uuid(
+                    message_instance_uuid,
+                )
+
+            if existing_message_instance is not None:
+                if existing_message_instance.name != message_name or existing_message_instance.payload != body:
+                    instrumentation.finish(
+                        "message_instance_uuid_conflict",
+                        message_instance_id=existing_message_instance.id,
+                        error_code="message_instance_uuid_conflict",
+                    )
+                    raise ApiError(
+                        error_code="message_instance_uuid_conflict",
+                        message=(
+                            "A message with the same message_instance_uuid already exists for a different message or payload."
+                        ),
+                        status_code=409,
+                    )
+                if existing_message_instance.status == MessageStatuses.not_accepted.value:
+                    instrumentation.finish(
+                        "not_accepted",
+                        message_instance_id=existing_message_instance.id,
+                        error_code="message_not_accepted",
+                    )
+                    cls._raise_message_not_accepted(
+                        existing_message_instance.failure_cause or cls._message_not_accepted_message(modified_message_name)
+                    )
+                instrumentation.finish("idempotent_replay", message_instance_id=existing_message_instance.id)
+                return existing_message_instance
+
+            # Create the send message
+            # TODO: support the full message id - including process group - in message instance
+            message_instance = MessageInstanceModel(
+                message_type=MessageTypes.send.value,
+                name=message_name,
+                payload=body,
+                status=MessageStatuses.running.value,
+                user_id=g.user.id,
+                message_instance_uuid=message_instance_uuid,
+                expires_at_in_seconds=expires_at_in_seconds,
+            )
+            with instrumentation.phase("create_send_message"):
+                db.session.add(message_instance)
+                db.session.commit()
+
+            receiver_message = cls.correlate_send_message(
+                message_instance,
+                execution_mode=execution_mode,
+                claim_message_instance=False,
+                instrumentation=instrumentation,
+            )
+            if receiver_message is None:
+                if ttl > 0:
+                    instrumentation.finish("buffered", message_instance_id=message_instance.id)
+                    return message_instance
+                message_not_accepted = cls._message_not_accepted_message(modified_message_name)
+                with instrumentation.phase("mark_send_message_not_accepted"):
+                    cls._mark_send_message_not_accepted(message_instance, message_not_accepted)
+                instrumentation.finish(
+                    "not_accepted",
+                    message_instance_id=message_instance.id,
+                    error_code="message_not_accepted",
+                )
+                cls._raise_message_not_accepted(message_not_accepted)
+
+            instrumentation.finish(
+                instrumentation.correlation_result or "correlated",
+                message_instance_id=message_instance.id,
+                receiver_message_instance_id=receiver_message.id,
+                process_instance_id=receiver_message.process_instance_id,
+            )
+            return receiver_message
+        except ApiError as exception:
+            if not instrumentation.finished:
+                instrumentation.finish(
+                    "api_error",
+                    message_instance_id=message_instance.id if message_instance is not None else None,
+                    error_code=exception.error_code,
+                )
+            raise
+        except Exception as exception:
+            if not instrumentation.finished:
+                instrumentation.finish(
+                    "error",
+                    message_instance_id=message_instance.id if message_instance is not None else None,
+                    error_code=exception.__class__.__name__,
+                )
+            raise
 
     @classmethod
     def _cancel_non_matching_start_events(

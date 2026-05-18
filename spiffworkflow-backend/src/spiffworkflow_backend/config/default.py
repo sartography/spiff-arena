@@ -228,6 +228,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
 config_from_env("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET")
 config_from_env("SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH")
+config_from_env("SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS", default=10)
 # If the BPMN spec dir is a subdir within a git repo, rather than the entire git repo, this is the path to that subdir
 config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_SUBDIR_WITHIN_REPO")
 
