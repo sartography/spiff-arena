@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.13.0-trixie-slim AS base
+FROM node:24.15.0-trixie-slim AS base
 
 RUN mkdir /app
 
