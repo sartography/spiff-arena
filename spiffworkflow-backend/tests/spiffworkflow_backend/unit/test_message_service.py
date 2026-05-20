@@ -69,6 +69,26 @@ class TestMessageService(BaseTest):
         db.session.refresh(message_instance)
         assert message_instance.status == MessageStatuses.running.value
 
+    def test_mark_send_message_not_accepted_does_not_overwrite_claimed_message(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        message_instance = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="claimed_message",
+            payload={},
+            status=MessageStatuses.running.value,
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+
+        marked_not_accepted = MessageService._mark_send_message_not_accepted(message_instance, "no receiver")
+
+        assert marked_not_accepted is False
+        assert message_instance.status == MessageStatuses.running.value
+        assert message_instance.failure_cause is None
+
     def test_run_process_model_from_message_owns_send_before_correlating(
         self,
         app: Flask,

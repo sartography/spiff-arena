@@ -497,11 +497,29 @@ class MessageService:
                 exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
-    def _mark_send_message_not_accepted(cls, message_instance_send: MessageInstanceModel, failure_cause: str) -> None:
-        message_instance_send.status = MessageStatuses.not_accepted.value
-        message_instance_send.failure_cause = failure_cause
-        db.session.add(message_instance_send)
+    def _mark_send_message_not_accepted(cls, message_instance_send: MessageInstanceModel, failure_cause: str) -> bool:
+        rows_updated = (
+            db.session.query(MessageInstanceModel)
+            .filter(
+                MessageInstanceModel.id == message_instance_send.id,
+                MessageInstanceModel.status == MessageStatuses.ready.value,
+            )
+            .update(
+                {
+                    "status": MessageStatuses.not_accepted.value,
+                    "failure_cause": failure_cause,
+                    "updated_at_in_seconds": cls.current_time_in_seconds(),
+                },
+                synchronize_session=False,
+            )
+        )
         db.session.commit()
+        if rows_updated == 0:
+            db.session.expire(message_instance_send)
+            return False
+
+        db.session.refresh(message_instance_send)
+        return True
 
     @classmethod
     def _message_not_accepted_message(cls, modified_message_name: str) -> str:
@@ -791,7 +809,10 @@ class MessageService:
                     return message_instance
                 message_not_accepted = cls._message_not_accepted_message(modified_message_name)
                 with instrumentation.phase("mark_send_message_not_accepted"):
-                    cls._mark_send_message_not_accepted(message_instance, message_not_accepted)
+                    marked_not_accepted = cls._mark_send_message_not_accepted(message_instance, message_not_accepted)
+                if not marked_not_accepted:
+                    instrumentation.finish("idempotent_replay", message_instance_id=message_instance.id)
+                    return message_instance
                 instrumentation.finish(
                     "not_accepted",
                     message_instance_id=message_instance.id,
