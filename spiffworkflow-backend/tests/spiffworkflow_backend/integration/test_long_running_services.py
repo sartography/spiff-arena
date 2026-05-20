@@ -8,6 +8,7 @@ from flask import Flask
 from flask import g
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
@@ -259,7 +260,9 @@ class TestLongRunningService(BaseTest):
         assert response.status_code == 200
         assert response.json()["type"] == "Default End Event"
 
-        process_instance = ProcessInstanceService().get_process_instance(receiver_message.process_instance_id)
+        process_instance_id = receiver_message.process_instance_id
+        db.session.remove()  # type: ignore
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance.status == "complete"
 
     def test__parallel_202_service_task_accepts_immediate_callback(
