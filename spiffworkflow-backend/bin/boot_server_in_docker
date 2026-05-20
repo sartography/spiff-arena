@@ -114,8 +114,8 @@ if [[ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]]; then
     exit 1
   fi
 
-  rm -rf "$PROMETHEUS_MULTIPROC_DIR"
-  mkdir -p "$PROMETHEUS_MULTIPROC_DIR"
+  rm -rf "$prometheus_multiproc_dir_resolved"
+  mkdir -p "$prometheus_multiproc_dir_resolved"
 fi
 
 log_info "Starting gunicorn server"
