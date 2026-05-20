@@ -54,5 +54,5 @@ LABEL source="https://github.com/sartography/spiff-arena/connector-proxy-demo"
 LABEL description="Demo connector proxy component for SpiffWorkflow"
 
 COPY --from=setup /app /app
-
+RUN poetry --version
 CMD ["./bin/boot_server_in_docker"]
