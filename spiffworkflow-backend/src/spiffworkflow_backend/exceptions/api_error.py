@@ -277,23 +277,13 @@ def handle_exception(app: Flask, request: ConnexionRequest, exception: Exception
         if should_notify_sentry(exception):
             id = capture_exception(exception)
 
-            if isinstance(exception, ApiError):
-                current_app.logger.info(
-                    f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}"
-                )
-
             organization_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
             project_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
             if organization_slug and project_slug:
                 sentry_link = f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
 
-            # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
-            # seems to break the sentry sdk context where we no longer get back
-            # an event id or send out tags like username
-            if current_app.debug:
-                current_app.logger.error(str(exception), exc_info=exception)
-            else:
-                current_app.logger.exception(exception)
+            error_code_message = f" with error code {exception.error_code}" if isinstance(exception, ApiError) else ""
+            current_app.logger.info(f"Captured exception in Sentry{error_code_message}: {sentry_link or id}")
         else:
             current_app.logger.warning(
                 f"Received exception: {exception}. Since we do not want this particular"

@@ -5,6 +5,7 @@ The Reference section contains detailed information about SpiffWorkflow's compon
 ```{toctree}
 :maxdepth: 1
 bpmn/index
+api/index
 glossary
 frequently_asked_questions
 spiff_flavored_bpmn

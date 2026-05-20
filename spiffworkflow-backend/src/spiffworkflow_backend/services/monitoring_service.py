@@ -39,7 +39,14 @@ def get_public_version_info_data() -> dict[str, Any]:
     return public_version_info_data
 
 
+def ensure_prometheus_multiproc_dir() -> None:
+    prometheus_multiproc_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
+    if prometheus_multiproc_dir:
+        os.makedirs(prometheus_multiproc_dir, exist_ok=True)
+
+
 def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
+    ensure_prometheus_multiproc_dir()
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
     connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
     version_info_data = get_version_info_data()

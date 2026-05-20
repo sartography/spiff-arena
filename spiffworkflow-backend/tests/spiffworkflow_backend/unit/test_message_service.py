@@ -1,10 +1,13 @@
 import time
+from unittest.mock import patch
 from uuid import UUID
 
+import pytest
 from flask import Flask
 from flask import g
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -14,6 +17,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import Messa
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -64,6 +68,130 @@ class TestMessageService(BaseTest):
 
         db.session.refresh(message_instance)
         assert message_instance.status == MessageStatuses.running.value
+
+    def test_mark_send_message_not_accepted_does_not_overwrite_claimed_message(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        message_instance = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="claimed_message",
+            payload={},
+            status=MessageStatuses.running.value,
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+
+        marked_not_accepted = MessageService._mark_send_message_not_accepted(message_instance, "no receiver")
+
+        assert marked_not_accepted is False
+        assert message_instance.status == MessageStatuses.running.value
+        assert message_instance.failure_cause is None
+
+    def test_run_process_model_from_message_owns_send_before_correlating(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        load_test_spec(
+            "test_group/simple-message-receive",
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="message_start_event.bpmn",
+        )
+        g.user = self.find_or_create_user()
+        original_correlate_send_message = MessageService.correlate_send_message
+        observed_statuses: list[tuple[str, int, bool | None]] = []
+
+        def observing_correlate_send_message(
+            message_instance: MessageInstanceModel,
+            execution_mode: str | None = None,
+            receiving_process_instance_id: int | None = None,
+            processor_receive: ProcessInstanceProcessor | None = None,
+            claim_message_instance: bool = True,
+            instrumentation: MessageSendInstrumentation | None = None,
+        ) -> MessageInstanceModel | None:
+            ready_message_count = int(
+                MessageInstanceModel.query.filter_by(
+                    id=message_instance.id,
+                    status=MessageStatuses.ready.value,
+                ).count()
+            )
+            observed_statuses.append(
+                (
+                    message_instance.status,
+                    ready_message_count,
+                    claim_message_instance,
+                )
+            )
+            return original_correlate_send_message(
+                message_instance,
+                execution_mode=execution_mode,
+                receiving_process_instance_id=receiving_process_instance_id,
+                processor_receive=processor_receive,
+                claim_message_instance=claim_message_instance,
+                instrumentation=instrumentation,
+            )
+
+        with patch.object(MessageService, "correlate_send_message", side_effect=observing_correlate_send_message):
+            receiver_message = MessageService.run_process_model_from_message(
+                "message_one",
+                {},
+                ProcessInstanceExecutionMode.synchronous.value,
+            )
+
+        assert receiver_message.status == MessageStatuses.completed.value
+        assert observed_statuses == [(MessageStatuses.running.value, 0, False)]
+
+    def test_run_process_model_from_message_keeps_not_accepted_send_for_debugging(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        g.user = self.find_or_create_user()
+
+        with pytest.raises(ApiError) as exception_info:
+            MessageService.run_process_model_from_message(
+                "message_without_receiver",
+                {"booking_id": 1001},
+                ProcessInstanceExecutionMode.asynchronous.value,
+            )
+
+        assert exception_info.value.error_code == "message_not_accepted"
+        message_instance = MessageInstanceModel.query.filter_by(name="message_without_receiver").first()
+        assert message_instance is not None
+        assert message_instance.status == MessageStatuses.not_accepted.value
+        assert message_instance.payload == {"booking_id": 1001}
+        assert message_instance.failure_cause == exception_info.value.message
+
+    def test_retried_not_accepted_message_instance_uuid_returns_same_error(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        g.user = self.find_or_create_user()
+        message_instance_uuid = "55555555-5555-4555-8555-555555555555"
+
+        with pytest.raises(ApiError) as first_exception_info:
+            MessageService.run_process_model_from_message(
+                "message_without_receiver",
+                {"booking_id": 1001},
+                ProcessInstanceExecutionMode.asynchronous.value,
+                message_instance_uuid=message_instance_uuid,
+            )
+
+        with pytest.raises(ApiError) as second_exception_info:
+            MessageService.run_process_model_from_message(
+                "message_without_receiver",
+                {"booking_id": 1001},
+                ProcessInstanceExecutionMode.asynchronous.value,
+                message_instance_uuid=message_instance_uuid,
+            )
+
+        assert first_exception_info.value.error_code == "message_not_accepted"
+        assert second_exception_info.value.error_code == "message_not_accepted"
+        assert second_exception_info.value.message == first_exception_info.value.message
+        assert MessageInstanceModel.query.filter_by(message_instance_uuid=message_instance_uuid).count() == 1
 
     def test_messages_feb_24(
         self,

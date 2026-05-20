@@ -4,6 +4,7 @@ import hashlib
 import json
 import time
 from collections.abc import Generator
+from contextlib import nullcontext
 from contextlib import suppress
 from datetime import datetime
 from datetime import timezone
@@ -68,6 +69,7 @@ from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
@@ -133,27 +135,39 @@ class ProcessInstanceService:
         user: UserModel,
         start_configuration: StartConfiguration | None = None,
         load_bpmn_process_model: bool = True,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> tuple[ProcessInstanceModel, StartConfiguration]:
         git_revision_error = None
-        try:
-            current_git_revision = GitService.get_current_revision()
-        except GitCommandError as ex:
-            git_revision_error = ex
-            current_git_revision = None
+        with instrumentation.phase("create_process_instance.get_git_revision") if instrumentation is not None else nullcontext():
+            try:
+                current_git_revision = GitService.get_current_revision()
+            except GitCommandError as ex:
+                git_revision_error = ex
+                current_git_revision = None
 
         if load_bpmn_process_model:
-            BpmnProcessService.persist_bpmn_process_definition(process_model.id)
+            with (
+                instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
+                if instrumentation is not None
+                else nullcontext()
+            ):
+                BpmnProcessService.persist_bpmn_process_definition(process_model.id)
 
-        process_instance_model = ProcessInstanceModel(
-            status=ProcessInstanceStatus.not_started.value,
-            process_initiator_id=user.id,
-            process_model_identifier=process_model.id,
-            process_model_display_name=process_model.display_name,
-            start_in_seconds=round(time.time()),
-            bpmn_version_control_type="git",
-            bpmn_version_control_identifier=current_git_revision,
-        )
-        db.session.add(process_instance_model)
+        with (
+            instrumentation.phase("create_process_instance.add_process_instance")
+            if instrumentation is not None
+            else nullcontext()
+        ):
+            process_instance_model = ProcessInstanceModel(
+                status=ProcessInstanceStatus.not_started.value,
+                process_initiator_id=user.id,
+                process_model_identifier=process_model.id,
+                process_model_display_name=process_model.display_name,
+                start_in_seconds=round(time.time()),
+                bpmn_version_control_type="git",
+                bpmn_version_control_identifier=current_git_revision,
+            )
+            db.session.add(process_instance_model)
 
         if git_revision_error is not None:
             message = (
@@ -163,10 +177,20 @@ class ProcessInstanceService:
             current_app.logger.warning(message)
 
         if start_configuration is None:
-            start_configuration = cls.next_start_event_configuration(process_instance_model)
+            with (
+                instrumentation.phase("create_process_instance.next_start_event_configuration")
+                if instrumentation is not None
+                else nullcontext()
+            ):
+                start_configuration = cls.next_start_event_configuration(process_instance_model)
         _, delay_in_seconds, _ = start_configuration
         run_at_in_seconds = round(time.time()) + delay_in_seconds
-        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
+        with (
+            instrumentation.phase("create_process_instance.enqueue_process_instance")
+            if instrumentation is not None
+            else nullcontext()
+        ):
+            ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return (process_instance_model, start_configuration)
 
     @classmethod
@@ -392,14 +416,25 @@ class ProcessInstanceService:
         user: UserModel,
         commit_db: bool = True,
         load_bpmn_process_model: bool = True,
+        instrumentation: MessageSendInstrumentation | None = None,
     ) -> ProcessInstanceModel:
-        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        with instrumentation.phase("create_process_instance.get_process_model") if instrumentation is not None else nullcontext():
+            process_model = ProcessModelService.get_process_model(process_model_identifier)
         process_instance_model, (cycle_count, _, duration_in_seconds) = cls.create_process_instance(
-            process_model, user, load_bpmn_process_model=load_bpmn_process_model
+            process_model,
+            user,
+            load_bpmn_process_model=load_bpmn_process_model,
+            instrumentation=instrumentation,
         )
-        cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
+        with (
+            instrumentation.phase("create_process_instance.register_process_model_cycles")
+            if instrumentation is not None
+            else nullcontext()
+        ):
+            cls.register_process_model_cycles(process_model_identifier, cycle_count, duration_in_seconds)
         if commit_db:
-            db.session.commit()
+            with instrumentation.phase("create_process_instance.commit") if instrumentation is not None else nullcontext():
+                db.session.commit()
 
         log_extras = {
             "milestone": "Started",

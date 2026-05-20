@@ -60,6 +60,41 @@ class TestGitService(BaseTest):
         )
         assert output == "This output should not end in space"
 
+    def test_current_revision_uses_short_ttl_cache(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        GitService.clear_current_revision_cache()
+        mock_run = mocker.patch.object(GitService, "run_shell_command_to_get_stdout", return_value="abc1234")
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS", 30):
+            assert GitService.get_current_revision() == "abc1234"
+            assert GitService.get_current_revision() == "abc1234"
+
+        repo_path = app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        mock_run.assert_called_once_with(["rev-parse", "--short", "HEAD"], context_directory=repo_path)
+        GitService.clear_current_revision_cache()
+
+    def test_current_revision_cache_can_be_disabled(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        GitService.clear_current_revision_cache()
+        mock_run = mocker.patch.object(
+            GitService,
+            "run_shell_command_to_get_stdout",
+            side_effect=["abc1234", "def5678"],
+        )
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS", 0):
+            assert GitService.get_current_revision() == "abc1234"
+            assert GitService.get_current_revision() == "def5678"
+
+        assert mock_run.call_count == 2
+        GitService.clear_current_revision_cache()
+
     def test_commit_on_save_commits_when_enabled(
         self,
         app: Flask,

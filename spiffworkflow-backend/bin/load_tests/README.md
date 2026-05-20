@@ -29,8 +29,10 @@ uv run python bin/load_tests/concurrent_message_starts.py --help
 
 ## Message Start Double Delivery Race
 
-Use this for the race where a message-start request returns 200, then the process instance later errors with
-`WorkflowException: This process is not waiting for <message_name>`.
+Use this for message-start races between API requests and background message processing. It covers the shape where a
+message-start request returns 200, then the process instance later errors with
+`WorkflowException: This process is not waiting for <message_name>`, and it can also surface rejected POSTs when a
+background worker claims an API-created send message before the API handler finishes correlating it.
 
 ```sh
 uv run python bin/load_tests/message_start_double_delivery_race.py --requests 200 --workers 40

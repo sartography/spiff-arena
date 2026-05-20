@@ -2,10 +2,13 @@ import os
 import re
 import shutil
 import subprocess  # noqa we need the subprocess module to safely run the git commands
+import threading
+import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
+from typing import ClassVar
 
 from flask import current_app
 from flask import g
@@ -43,10 +46,30 @@ class WebhookSyncDetails:
 
 # TOOD: check for the existence of git and configs on bootup if publishing is enabled
 class GitService:
+    _CURRENT_REVISION_CACHE: ClassVar[dict[tuple[str, bool], tuple[float, str]]] = {}
+    _CURRENT_REVISION_CACHE_LOCK: ClassVar[threading.Lock] = threading.Lock()
+
     @classmethod
     def get_current_revision(cls, short_rev: bool = True) -> str:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        ttl_seconds = float(current_app.config["SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS"])
+        cache_key = (bpmn_spec_absolute_dir, short_rev)
 
+        if ttl_seconds > 0:
+            now = time.monotonic()
+            with cls._CURRENT_REVISION_CACHE_LOCK:
+                cached_revision = cls._CURRENT_REVISION_CACHE.get(cache_key)
+                if cached_revision is not None and cached_revision[0] > now:
+                    return cached_revision[1]
+
+                current_revision = cls._get_current_revision_uncached(bpmn_spec_absolute_dir, short_rev)
+                cls._CURRENT_REVISION_CACHE[cache_key] = (time.monotonic() + ttl_seconds, current_revision)
+                return current_revision
+
+        return cls._get_current_revision_uncached(bpmn_spec_absolute_dir, short_rev)
+
+    @classmethod
+    def _get_current_revision_uncached(cls, bpmn_spec_absolute_dir: str, short_rev: bool) -> str:
         git_command = ["rev-parse"]
         if short_rev:
             git_command.append("--short")
@@ -54,6 +77,11 @@ class GitService:
 
         # The value includes a carriage return character at the end, so we don't grab the last character
         return cls.run_shell_command_to_get_stdout(git_command, context_directory=bpmn_spec_absolute_dir)
+
+    @classmethod
+    def clear_current_revision_cache(cls) -> None:
+        with cls._CURRENT_REVISION_CACHE_LOCK:
+            cls._CURRENT_REVISION_CACHE.clear()
 
     @classmethod
     def get_instance_file_contents_for_revision(
@@ -125,7 +153,9 @@ class GitService:
             message,
             branch_name_to_use,
         ]
-        return cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
+        result = cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
+        cls.clear_current_revision_cache()
+        return result
 
     @classmethod
     def commit_on_save(cls, message: str) -> None:
@@ -315,6 +345,7 @@ class GitService:
         cls.run_shell_command(
             ["pull", "--rebase"], context_directory=current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         )
+        cls.clear_current_revision_cache()
         DataSetupService.refresh_process_model_caches()
         return True
 
@@ -348,6 +379,7 @@ class GitService:
         )
         cls.run_shell_command(["reset", "--hard", git_revision_after], context_directory=bpmn_spec_absolute_dir)
         cls.run_shell_command(["clean", "-fd"], context_directory=bpmn_spec_absolute_dir)
+        cls.clear_current_revision_cache()
         DataSetupService.refresh_process_model_caches()
         current_app.logger.info(
             "Force sync completed for branch '%s' at revision '%s'",
