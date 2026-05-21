@@ -160,7 +160,9 @@ const tokenizeExpression = (expression: string): ExpressionToken[] => {
       continue;
     }
 
-    const numberMatch = expression.slice(index).match(/^(?:\d+(?:\.\d*)?|\.\d+)/);
+    const numberMatch = expression
+      .slice(index)
+      .match(/^(?:\d+(?:\.\d*)?|\.\d+)/);
     if (numberMatch) {
       tokens.push({ type: 'number', value: Number(numberMatch[0]) });
       index += numberMatch[0].length;
@@ -243,7 +245,9 @@ export const evaluateCalculatedExpression = (
       return identifierValue(token.value as string);
     }
 
-    throw new Error(`Unexpected token "${token.value}" in calculated expression`);
+    throw new Error(
+      `Unexpected token "${token.value}" in calculated expression`,
+    );
   };
 
   const parseTerm = () => {
@@ -271,7 +275,9 @@ export const evaluateCalculatedExpression = (
   }
   const result = parseExpression();
   if (index !== tokens.length) {
-    throw new Error(`Unexpected token "${tokens[index].value}" in calculated expression`);
+    throw new Error(
+      `Unexpected token "${tokens[index].value}" in calculated expression`,
+    );
   }
   return Number.isFinite(result) ? result : undefined;
 };
@@ -282,7 +288,10 @@ const cloneData = (value: any): any => {
   }
   if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, childValue]) => [key, cloneData(childValue)]),
+      Object.entries(value).map(([key, childValue]) => [
+        key,
+        cloneData(childValue),
+      ]),
     );
   }
   return value;
@@ -330,7 +339,12 @@ const applyCalculatedFieldsInPlace = (
 
   if (Array.isArray(data) && schema.items) {
     data.forEach((item) =>
-      applyCalculatedFieldsInPlace(schema.items, uiSchema.items ?? {}, item, rootData),
+      applyCalculatedFieldsInPlace(
+        schema.items,
+        uiSchema.items ?? {},
+        item,
+        rootData,
+      ),
     );
     return;
   }
@@ -339,46 +353,48 @@ const applyCalculatedFieldsInPlace = (
     return;
   }
 
-  Object.entries(schema.properties ?? {}).forEach(([propertyKey, propertySchema]) => {
-    const propertySchemaToUse = propertySchema as any;
-    const propertyUiSchema = uiSchema[propertyKey] ?? {};
-    const options = uiOptions(propertyUiSchema);
+  Object.entries(schema.properties ?? {}).forEach(
+    ([propertyKey, propertySchema]) => {
+      const propertySchemaToUse = propertySchema as any;
+      const propertyUiSchema = uiSchema[propertyKey] ?? {};
+      const options = uiOptions(propertyUiSchema);
 
-    if (propertyUiSchema['ui:field'] === 'calculated') {
-      if (typeof options.expression === 'string') {
-        data[propertyKey] = applyPrecision(
-          evaluateCalculatedExpression(options.expression, data, rootData),
-          options,
+      if (propertyUiSchema['ui:field'] === 'calculated') {
+        if (typeof options.expression === 'string') {
+          data[propertyKey] = applyPrecision(
+            evaluateCalculatedExpression(options.expression, data, rootData),
+            options,
+          );
+        }
+        return;
+      }
+
+      if (propertySchemaToUse?.items && Array.isArray(data[propertyKey])) {
+        applyCalculatedFieldsInPlace(
+          propertySchemaToUse,
+          propertyUiSchema,
+          data[propertyKey],
+          rootData,
+        );
+        return;
+      }
+
+      if (propertySchemaToUse?.properties) {
+        if (
+          data[propertyKey] === undefined &&
+          hasCalculatedDescendant(propertySchemaToUse, propertyUiSchema)
+        ) {
+          data[propertyKey] = {};
+        }
+        applyCalculatedFieldsInPlace(
+          propertySchemaToUse,
+          propertyUiSchema,
+          data[propertyKey],
+          rootData,
         );
       }
-      return;
-    }
-
-    if (propertySchemaToUse?.items && Array.isArray(data[propertyKey])) {
-      applyCalculatedFieldsInPlace(
-        propertySchemaToUse,
-        propertyUiSchema,
-        data[propertyKey],
-        rootData,
-      );
-      return;
-    }
-
-    if (propertySchemaToUse?.properties) {
-      if (
-        data[propertyKey] === undefined &&
-        hasCalculatedDescendant(propertySchemaToUse, propertyUiSchema)
-      ) {
-        data[propertyKey] = {};
-      }
-      applyCalculatedFieldsInPlace(
-        propertySchemaToUse,
-        propertyUiSchema,
-        data[propertyKey],
-        rootData,
-      );
-    }
-  });
+    },
+  );
 };
 
 export const applyCalculatedFields = (
@@ -435,7 +451,9 @@ export function FormattedNumberWidget({
     );
     setDisplayValue(nextDisplayValue);
     if (!disabled && !readonly) {
-      onChange(coerceFormattedNumberValue(nextDisplayValue, schema, widgetOptions));
+      onChange(
+        coerceFormattedNumberValue(nextDisplayValue, schema, widgetOptions),
+      );
     }
   };
 
@@ -454,7 +472,11 @@ export function FormattedNumberWidget({
       onBlur={(event: any) =>
         onBlur?.(
           id,
-          coerceFormattedNumberValue(event.currentTarget.value, schema, widgetOptions),
+          coerceFormattedNumberValue(
+            event.currentTarget.value,
+            schema,
+            widgetOptions,
+          ),
         )
       }
       onChange={handleChange}

@@ -566,12 +566,20 @@ export default function CustomForm({
   );
 
   const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
-    const nextFormData = applyCalculatedFields(schema, uiSchema, event.formData);
+    const nextFormData = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
     onChange?.({ ...event, formData: nextFormData }, fieldId);
   };
 
   const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
-    const nextFormData = applyCalculatedFields(schema, uiSchema, event.formData);
+    const nextFormData = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
     onSubmit?.({ ...event, formData: nextFormData }, nativeEvent);
   };
 

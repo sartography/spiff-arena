@@ -21,7 +21,9 @@ describe('formatted number helpers', () => {
   });
 
   it('submits string schema values as unformatted numeric strings', () => {
-    expect(coerceFormattedNumberValue('1,234', { type: 'string' })).toBe('1234');
+    expect(coerceFormattedNumberValue('1,234', { type: 'string' })).toBe(
+      '1234',
+    );
   });
 
   it('preserves empty values as undefined', () => {
@@ -29,9 +31,9 @@ describe('formatted number helpers', () => {
   });
 
   it('honors non-negative schemas when normalizing input', () => {
-    expect(stripNumberFormatting('-1,234', { type: 'number', minimum: 0 })).toBe(
-      '1234',
-    );
+    expect(
+      stripNumberFormatting('-1,234', { type: 'number', minimum: 0 }),
+    ).toBe('1234');
   });
 });
 
@@ -83,7 +85,6 @@ describe('calculated field helpers', () => {
 
     expect(applyCalculatedFields(schema, {}, formData)).toBe(formData);
   });
-
 
   it('creates and calculates Emerson-style TOTAL objects with root-path expressions', () => {
     const schema = {
@@ -211,7 +212,8 @@ describe('calculated field helpers', () => {
             totalAccrued: {
               'ui:field': 'calculated',
               'ui:options': {
-                expression: 'days_0_90 + days_91_180 + days_181_365 + over1Year',
+                expression:
+                  'days_0_90 + days_91_180 + days_181_365 + over1Year',
               },
             },
           },
@@ -219,7 +221,8 @@ describe('calculated field helpers', () => {
         totalAccrued: {
           'ui:field': 'calculated',
           'ui:options': {
-            expression: 'buGroupSummary.FCTL.totalAccrued + buGroupSummary.MSOL.totalAccrued',
+            expression:
+              'buGroupSummary.FCTL.totalAccrued + buGroupSummary.MSOL.totalAccrued',
           },
         },
       },
