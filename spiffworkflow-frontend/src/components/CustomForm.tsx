@@ -3,7 +3,14 @@ import rjsfValidator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
-import { ComponentType, ReactNode, useEffect, useRef } from 'react';
+import {
+  ComponentType,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@mui/material';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -12,8 +19,14 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import {
+  applyCalculatedFields,
+  CalculatedField,
+  FormattedNumberWidget,
+} from '../rjsf/formEnhancements';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
+import { Notification } from './Notification';
 
 ajvErrors(rjsfValidator.ajv);
 
@@ -95,11 +108,13 @@ export default function CustomForm({
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
+    formattedNumber: FormattedNumberWidget,
   };
 
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    calculated: CalculatedField,
   };
 
   const rjsfTemplates: any = {};
@@ -553,14 +568,77 @@ export default function CustomForm({
     );
   }
 
+  const calculatedFieldsResult = useMemo(
+    () => applyCalculatedFields(schema, uiSchema, formData),
+    [schema, uiSchema, formData],
+  );
+  const formDataWithCalculatedFields = calculatedFieldsResult.formState;
+  const [calculationWarning, setCalculationWarning] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (calculatedFieldsResult.warning) {
+      setCalculationWarning(calculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+  }, [calculatedFieldsResult.warning]);
+
+  const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
+    if (!onChange) {
+      return;
+    }
+    const nextCalculatedFieldsResult = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+    onChange(
+      { ...event, formData: nextCalculatedFieldsResult.formState },
+      fieldId,
+    );
+  };
+
+  const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
+    if (!onSubmit) {
+      return;
+    }
+    const nextCalculatedFieldsResult = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+    onSubmit(
+      { ...event, formData: nextCalculatedFieldsResult.formState },
+      nativeEvent,
+    );
+  };
+
   const formProps = {
     id,
     key,
     className,
     disabled,
-    formData,
-    onChange,
-    onSubmit,
+    formData: formDataWithCalculatedFields,
+    onChange: onChangeWithCalculatedFields,
+    onSubmit: onSubmitWithCalculatedFields,
     schema,
     uiSchema,
     widgets: rjsfWidgets,
@@ -572,5 +650,19 @@ export default function CustomForm({
     omitExtraData: true,
   };
 
-  return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
+  return (
+    <>
+      {calculationWarning && (
+        <Notification
+          title="Calculated field warning"
+          type="warning"
+          timeout={8000}
+          onClose={() => setCalculationWarning(null)}
+        >
+          {calculationWarning}
+        </Notification>
+      )}
+      <MuiForm {...formProps}>{childrenToUse}</MuiForm>
+    </>
+  );
 }

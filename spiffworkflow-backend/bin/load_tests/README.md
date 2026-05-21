@@ -39,7 +39,7 @@ uv run python bin/load_tests/message_start_double_delivery_race.py --requests 20
 ```
 
 The script creates a temporary message-start process model that parks each process instance on a manual task, sends many
-identical `booking_id` message-start POSTs using asynchronous execution, waits for the background message processor window,
+identical `reference_id` message-start POSTs using asynchronous execution, waits for the background message processor window,
 then re-fetches the returned process instances. Old vulnerable code can show process instances that were accepted and later
 became `error`; fixed code should leave them in a non-error status.
 

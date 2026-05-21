@@ -11,7 +11,7 @@ For the full request and response schema, use the generated OpenAPI documentatio
 POST /v1.0/messages/{modified_message_name}
 Content-Type: application/json
 
-{"booking_id": 787862449}
+{"reference_id": 787862449}
 ```
 
 `modified_message_name` is the BPMN message name, with slashes replaced by colons when a process group prefix is needed.

@@ -153,7 +153,7 @@ class TestMessageService(BaseTest):
         with pytest.raises(ApiError) as exception_info:
             MessageService.run_process_model_from_message(
                 "message_without_receiver",
-                {"booking_id": 1001},
+                {"reference_id": 1001},
                 ProcessInstanceExecutionMode.asynchronous.value,
             )
 
@@ -161,7 +161,7 @@ class TestMessageService(BaseTest):
         message_instance = MessageInstanceModel.query.filter_by(name="message_without_receiver").first()
         assert message_instance is not None
         assert message_instance.status == MessageStatuses.not_accepted.value
-        assert message_instance.payload == {"booking_id": 1001}
+        assert message_instance.payload == {"reference_id": 1001}
         assert message_instance.failure_cause == exception_info.value.message
 
     def test_retried_not_accepted_message_instance_uuid_returns_same_error(
@@ -175,7 +175,7 @@ class TestMessageService(BaseTest):
         with pytest.raises(ApiError) as first_exception_info:
             MessageService.run_process_model_from_message(
                 "message_without_receiver",
-                {"booking_id": 1001},
+                {"reference_id": 1001},
                 ProcessInstanceExecutionMode.asynchronous.value,
                 message_instance_uuid=message_instance_uuid,
             )
@@ -183,7 +183,7 @@ class TestMessageService(BaseTest):
         with pytest.raises(ApiError) as second_exception_info:
             MessageService.run_process_model_from_message(
                 "message_without_receiver",
-                {"booking_id": 1001},
+                {"reference_id": 1001},
                 ProcessInstanceExecutionMode.asynchronous.value,
                 message_instance_uuid=message_instance_uuid,
             )

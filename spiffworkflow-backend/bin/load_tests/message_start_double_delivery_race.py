@@ -327,7 +327,7 @@ def send_message(
     batch: int,
     index: int,
 ) -> MessageResult:
-    payload = {"booking_id": args.booking_id}
+    payload = {"reference_id": args.reference_id}
     start = time.perf_counter()
     try:
         response = requests.post(
@@ -407,7 +407,7 @@ def run_load(args: argparse.Namespace, headers: dict[str, str], group_id: str, m
     print(
         f"Firing {args.batches} batch(es) of {args.requests} message starts with {args.workers} workers "
         f"against message '{modified_message_name}' using execution_mode={args.execution_mode} "
-        f"and booking_id={args.booking_id}"
+        f"and reference_id={args.reference_id}"
     )
 
     results: list[MessageResult] = []
@@ -501,7 +501,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batches", type=int, default=1)
     parser.add_argument("--batch-delay-seconds", type=float, default=0)
     parser.add_argument("--settle-seconds", type=float, default=12)
-    parser.add_argument("--booking-id", type=int, default=786556518)
+    parser.add_argument("--reference-id", type=int, default=786556518)
     parser.add_argument("--execution-mode", default="asynchronous", choices=["synchronous", "asynchronous"])
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
