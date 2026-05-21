@@ -1,6 +1,6 @@
 import { FieldProps, WidgetProps } from '@rjsf/utils';
 import { TextInput } from '@carbon/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getCommonAttributes } from './helpers';
 
 const isPlainObject = (value: any) =>
@@ -36,18 +36,18 @@ const allowsNegative = (schema: any, options: any = {}) => {
   return !(typeof schema?.minimum === 'number' && schema.minimum >= 0);
 };
 
-export const stripNumberFormatting = (
+const normalizeNumberInput = (
   value: any,
   schema: any = {},
   options: any = {},
 ) => {
   if (value === null || value === undefined) {
-    return '';
+    return { normalized: '', hasInvalidFractionalPart: false };
   }
 
   const rawValue = String(value).replace(/,/g, '').trim();
   if (!rawValue) {
-    return '';
+    return { normalized: '', hasInvalidFractionalPart: false };
   }
 
   const negative = allowsNegative(schema, options) && rawValue.startsWith('-');
@@ -56,24 +56,42 @@ export const stripNumberFormatting = (
   const integerDigits = integerPart.replace(/\D/g, '');
   const limit = decimalLimitFor(schema, options);
   const decimalDigits = decimalParts.join('').replace(/\D/g, '');
+  const hasInvalidFractionalPart = limit === 0 && decimalDigits.length > 0;
 
   let normalized = `${negative ? '-' : ''}${integerDigits}`;
-  if (limit !== 0 && body.includes('.')) {
+  if (body.includes('.')) {
     const limitedDecimalDigits =
-      limit === null ? decimalDigits : decimalDigits.slice(0, limit);
+      limit === null || limit === 0
+        ? decimalDigits
+        : decimalDigits.slice(0, limit);
     normalized = `${normalized}.${limitedDecimalDigits}`;
   }
 
   if (normalized === '-' || normalized === '-.') {
-    return normalized;
+    return { normalized, hasInvalidFractionalPart };
   }
   if (normalized === '.' || normalized === '') {
-    return body.includes('.') ? '0.' : '';
+    return {
+      normalized: body.includes('.') ? '0.' : '',
+      hasInvalidFractionalPart,
+    };
   }
   if (normalized.startsWith('-.')) {
-    return `-0${normalized.slice(1)}`;
+    return {
+      normalized: `-0${normalized.slice(1)}`,
+      hasInvalidFractionalPart,
+    };
   }
-  return normalized;
+
+  return { normalized, hasInvalidFractionalPart };
+};
+
+export const stripNumberFormatting = (
+  value: any,
+  schema: any = {},
+  options: any = {},
+) => {
+  return normalizeNumberInput(value, schema, options).normalized;
 };
 
 export const formatNumberForDisplay = (
@@ -103,8 +121,15 @@ export const coerceFormattedNumberValue = (
   schema: any = {},
   options: any = {},
 ) => {
-  const normalized = stripNumberFormatting(value, schema, options);
+  const { normalized, hasInvalidFractionalPart } = normalizeNumberInput(
+    value,
+    schema,
+    options,
+  );
   if (!normalized || normalized === '-' || normalized === '-.') {
+    return undefined;
+  }
+  if (hasInvalidFractionalPart) {
     return undefined;
   }
 
@@ -317,6 +342,31 @@ const hasCalculatedDescendant = (
   );
 };
 
+const countCalculatedDescendants = (
+  schema: any = {},
+  uiSchema: any = {},
+): number => {
+  const currentNodeCount = uiSchema?.['ui:field'] === 'calculated' ? 1 : 0;
+  if (schema?.items) {
+    return (
+      currentNodeCount +
+      countCalculatedDescendants(schema.items, uiSchema?.items ?? {})
+    );
+  }
+  return (
+    currentNodeCount +
+    Object.keys(schema?.properties ?? {}).reduce(
+      (count, propertyKey) =>
+        count +
+        countCalculatedDescendants(
+          schema.properties[propertyKey],
+          uiSchema?.[propertyKey] ?? {},
+        ),
+      0,
+    )
+  );
+};
+
 const applyPrecision = (value: any, options: any) => {
   if (value === undefined) {
     return value;
@@ -332,68 +382,81 @@ const applyCalculatedFieldsInPlace = (
   uiSchema: any = {},
   data: any,
   rootData: any,
-) => {
+): boolean => {
   if (!schema || !uiSchema || data === null || data === undefined) {
-    return;
+    return false;
   }
 
   if (Array.isArray(data) && schema.items) {
-    data.forEach((item) =>
-      applyCalculatedFieldsInPlace(
-        schema.items,
-        uiSchema.items ?? {},
-        item,
-        rootData,
-      ),
+    return data.reduce(
+      (changed, item) =>
+        applyCalculatedFieldsInPlace(
+          schema.items,
+          uiSchema.items ?? {},
+          item,
+          rootData,
+        ) || changed,
+      false,
     );
-    return;
   }
 
   if (!isPlainObject(data)) {
-    return;
+    return false;
   }
 
-  Object.entries(schema.properties ?? {}).forEach(
-    ([propertyKey, propertySchema]) => {
+  return Object.entries(schema.properties ?? {}).reduce<boolean>(
+    (changed, [propertyKey, propertySchema]) => {
       const propertySchemaToUse = propertySchema as any;
       const propertyUiSchema = uiSchema[propertyKey] ?? {};
       const options = uiOptions(propertyUiSchema);
 
       if (propertyUiSchema['ui:field'] === 'calculated') {
         if (typeof options.expression === 'string') {
-          data[propertyKey] = applyPrecision(
+          const nextValue = applyPrecision(
             evaluateCalculatedExpression(options.expression, data, rootData),
             options,
           );
+          if (!Object.is(data[propertyKey], nextValue)) {
+            data[propertyKey] = nextValue;
+            return true;
+          }
         }
-        return;
+        return changed;
       }
 
       if (propertySchemaToUse?.items && Array.isArray(data[propertyKey])) {
-        applyCalculatedFieldsInPlace(
-          propertySchemaToUse,
-          propertyUiSchema,
-          data[propertyKey],
-          rootData,
+        return (
+          applyCalculatedFieldsInPlace(
+            propertySchemaToUse,
+            propertyUiSchema,
+            data[propertyKey],
+            rootData,
+          ) || changed
         );
-        return;
       }
 
       if (propertySchemaToUse?.properties) {
+        let nextChanged = changed;
         if (
           data[propertyKey] === undefined &&
           hasCalculatedDescendant(propertySchemaToUse, propertyUiSchema)
         ) {
           data[propertyKey] = {};
+          nextChanged = true;
         }
-        applyCalculatedFieldsInPlace(
-          propertySchemaToUse,
-          propertyUiSchema,
-          data[propertyKey],
-          rootData,
+        return (
+          applyCalculatedFieldsInPlace(
+            propertySchemaToUse,
+            propertyUiSchema,
+            data[propertyKey],
+            rootData,
+          ) || nextChanged
         );
       }
+
+      return changed;
     },
+    false,
   );
 };
 
@@ -407,7 +470,27 @@ export const applyCalculatedFields = (
   }
 
   const nextFormData = cloneData(formData ?? {});
-  applyCalculatedFieldsInPlace(schema, uiSchema, nextFormData, nextFormData);
+  const maxPasses = countCalculatedDescendants(schema, uiSchema) + 1;
+  let changed = false;
+
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    changed = applyCalculatedFieldsInPlace(
+      schema,
+      uiSchema,
+      nextFormData,
+      nextFormData,
+    );
+    if (!changed) {
+      break;
+    }
+  }
+
+  if (changed) {
+    throw new Error(
+      'Calculated fields did not stabilize. Check for circular dependencies.',
+    );
+  }
+
   return nextFormData;
 };
 
@@ -428,7 +511,7 @@ export function FormattedNumberWidget({
   label,
   rawErrors = [],
 }: WidgetProps) {
-  const widgetOptions = options ?? {};
+  const widgetOptions = useMemo(() => options ?? {}, [options]);
   const commonAttributes = getCommonAttributes(
     label || '',
     schema,

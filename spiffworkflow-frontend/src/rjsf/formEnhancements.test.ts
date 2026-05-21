@@ -35,6 +35,13 @@ describe('formatted number helpers', () => {
       stripNumberFormatting('-1,234', { type: 'number', minimum: 0 }),
     ).toBe('1234');
   });
+
+  it('keeps invalid fractional input visible for integer schemas and rejects it', () => {
+    expect(formatNumberForDisplay('12.9', { type: 'integer' })).toBe('12.9');
+    expect(
+      coerceFormattedNumberValue('12.9', { type: 'integer' }),
+    ).toBeUndefined();
+  });
 });
 
 describe('calculated field helpers', () => {
@@ -86,7 +93,7 @@ describe('calculated field helpers', () => {
     expect(applyCalculatedFields(schema, {}, formData)).toBe(formData);
   });
 
-  it('creates and calculates Emerson-style TOTAL objects with root-path expressions', () => {
+  it('creates and calculates TOTAL objects with root-path expressions', () => {
     const schema = {
       type: 'object',
       properties: {
@@ -259,6 +266,47 @@ describe('calculated field helpers', () => {
         },
         totalAccrued: 1250,
       },
+    });
+  });
+
+  it('re-runs calculations when a field depends on a later sibling', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        grandTotal: { type: 'number' },
+        subtotal: { type: 'number' },
+        tax: { type: 'number' },
+        base: { type: 'number' },
+        fee: { type: 'number' },
+      },
+    };
+    const uiSchema = {
+      grandTotal: {
+        'ui:field': 'calculated',
+        'ui:options': {
+          expression: 'subtotal + tax',
+        },
+      },
+      subtotal: {
+        'ui:field': 'calculated',
+        'ui:options': {
+          expression: 'base + fee',
+        },
+      },
+    };
+
+    expect(
+      applyCalculatedFields(schema, uiSchema, {
+        base: 10,
+        fee: 5,
+        tax: 2,
+      }),
+    ).toEqual({
+      base: 10,
+      fee: 5,
+      tax: 2,
+      subtotal: 15,
+      grandTotal: 17,
     });
   });
 });
