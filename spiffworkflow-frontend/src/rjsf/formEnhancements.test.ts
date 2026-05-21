@@ -90,10 +90,13 @@ describe('calculated field helpers', () => {
     };
     const formData = { amount: 100 };
 
-    expect(applyCalculatedFields(schema, {}, formData)).toBe(formData);
+    expect(applyCalculatedFields(schema, {}, formData)).toEqual({
+      formState: formData,
+      stabilized: true,
+    });
   });
 
-  it('creates and calculates TOTAL objects with root-path expressions', () => {
+  it('creates and calculates Emerson-style TOTAL objects with root-path expressions', () => {
     const schema = {
       type: 'object',
       properties: {
@@ -167,15 +170,18 @@ describe('calculated field helpers', () => {
         },
       }),
     ).toEqual({
-      accrualSummary: {
-        buGroupSummary: {
-          FCTL: { totalAccrued: 10 },
-          MSOL: { totalAccrued: 20 },
-          SYSS: { totalAccrued: 30 },
-          TOTAL: { totalAccrued: 60 },
+      formState: {
+        accrualSummary: {
+          buGroupSummary: {
+            FCTL: { totalAccrued: 10 },
+            MSOL: { totalAccrued: 20 },
+            SYSS: { totalAccrued: 30 },
+            TOTAL: { totalAccrued: 60 },
+          },
+          totalAccrued: 60,
         },
-        totalAccrued: 60,
       },
+      stabilized: true,
     });
   });
 
@@ -251,21 +257,24 @@ describe('calculated field helpers', () => {
     };
 
     expect(applyCalculatedFields(schema, uiSchema, formData)).toEqual({
-      accrualSummary: {
-        buGroupSummary: {
-          FCTL: {
-            days_0_90: 1000,
-            days_91_180: 200,
-            days_181_365: null,
-            over1Year: '',
-            totalAccrued: 1200,
+      formState: {
+        accrualSummary: {
+          buGroupSummary: {
+            FCTL: {
+              days_0_90: 1000,
+              days_91_180: 200,
+              days_181_365: null,
+              over1Year: '',
+              totalAccrued: 1200,
+            },
+            MSOL: {
+              totalAccrued: 50,
+            },
           },
-          MSOL: {
-            totalAccrued: 50,
-          },
+          totalAccrued: 1250,
         },
-        totalAccrued: 1250,
       },
+      stabilized: true,
     });
   });
 
@@ -302,11 +311,45 @@ describe('calculated field helpers', () => {
         tax: 2,
       }),
     ).toEqual({
-      base: 10,
-      fee: 5,
-      tax: 2,
-      subtotal: 15,
-      grandTotal: 17,
+      formState: {
+        base: 10,
+        fee: 5,
+        tax: 2,
+        subtotal: 15,
+        grandTotal: 17,
+      },
+      stabilized: true,
+    });
+  });
+
+  it('returns a warning instead of throwing when calculations do not stabilize', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        a: { type: 'number' },
+        b: { type: 'number' },
+      },
+    };
+    const uiSchema = {
+      a: {
+        'ui:field': 'calculated',
+        'ui:options': {
+          expression: 'b + 1',
+        },
+      },
+      b: {
+        'ui:field': 'calculated',
+        'ui:options': {
+          expression: 'a + 1',
+        },
+      },
+    };
+
+    expect(applyCalculatedFields(schema, uiSchema, {})).toEqual({
+      formState: { a: 5, b: 6 },
+      stabilized: false,
+      warning:
+        'Could not calculate value. Check expression for circular dependencies.',
     });
   });
 });

@@ -460,13 +460,22 @@ const applyCalculatedFieldsInPlace = (
   );
 };
 
+export type ApplyCalculatedFieldsResult = {
+  formState: any;
+  stabilized: boolean;
+  warning?: string;
+};
+
 export const applyCalculatedFields = (
   schema: any = {},
   uiSchema: any = {},
   formData: any = {},
-) => {
+): ApplyCalculatedFieldsResult => {
   if (!hasCalculatedDescendant(schema, uiSchema)) {
-    return formData ?? {};
+    return {
+      formState: formData ?? {},
+      stabilized: true,
+    };
   }
 
   const nextFormData = cloneData(formData ?? {});
@@ -486,12 +495,19 @@ export const applyCalculatedFields = (
   }
 
   if (changed) {
-    throw new Error(
-      'Calculated fields did not stabilize. Check for circular dependencies.',
-    );
+    const warning =
+      'Could not calculate value. Check expression for circular dependencies.';
+    return {
+      formState: nextFormData,
+      stabilized: false,
+      warning,
+    };
   }
 
-  return nextFormData;
+  return {
+    formState: nextFormData,
+    stabilized: true,
+  };
 };
 
 export function FormattedNumberWidget({
