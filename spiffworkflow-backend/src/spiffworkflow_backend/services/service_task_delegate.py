@@ -21,6 +21,7 @@ from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
+from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -333,6 +334,7 @@ class ServiceTaskDelegate:
                             json=params,
                             headers=request_headers,
                             timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+                            proxies=connector_proxy_request_proxies(),
                         )
 
                     status_code = proxied_response.status_code
@@ -403,6 +405,7 @@ class ServiceTaskDelegateService:
                 f"{connector_proxy_url()}/v1/commands",
                 headers=connector_proxy_api_key_headers(),
                 timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+                proxies=connector_proxy_request_proxies(),
             )
 
             if response.status_code != 200:
@@ -421,6 +424,7 @@ class ServiceTaskDelegateService:
                 f"{connector_proxy_url()}/v1/auths",
                 headers=connector_proxy_api_key_headers(),
                 timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+                proxies=connector_proxy_request_proxies(),
             )
 
             if response.status_code != 200:
