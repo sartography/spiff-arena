@@ -3,7 +3,7 @@ import rjsfValidator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
-import { ComponentType, ReactNode, useEffect, useRef } from 'react';
+import { ComponentType, ReactNode, useEffect, useMemo, useRef } from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@mui/material';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -12,6 +12,11 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import {
+  applyCalculatedFields,
+  CalculatedField,
+  FormattedNumberWidget,
+} from '../rjsf/formEnhancements';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
 
@@ -95,11 +100,13 @@ export default function CustomForm({
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
+    formattedNumber: FormattedNumberWidget,
   };
 
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    calculated: CalculatedField,
   };
 
   const rjsfTemplates: any = {};
@@ -553,14 +560,29 @@ export default function CustomForm({
     );
   }
 
+  const formDataWithCalculatedFields = useMemo(
+    () => applyCalculatedFields(schema, uiSchema, formData),
+    [schema, uiSchema, formData],
+  );
+
+  const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
+    const nextFormData = applyCalculatedFields(schema, uiSchema, event.formData);
+    onChange?.({ ...event, formData: nextFormData }, fieldId);
+  };
+
+  const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
+    const nextFormData = applyCalculatedFields(schema, uiSchema, event.formData);
+    onSubmit?.({ ...event, formData: nextFormData }, nativeEvent);
+  };
+
   const formProps = {
     id,
     key,
     className,
     disabled,
-    formData,
-    onChange,
-    onSubmit,
+    formData: formDataWithCalculatedFields,
+    onChange: onChangeWithCalculatedFields,
+    onSubmit: onSubmitWithCalculatedFields,
     schema,
     uiSchema,
     widgets: rjsfWidgets,
