@@ -72,9 +72,11 @@ class TestLongRunningService(BaseTest):
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
             assert "spiff__process_instance_id" in json_data, "process_instance_id should exist in POST data"
+            assert "spiff__process_model_identifier" in json_data, "process_model_identifier should exist in POST data"
             assert "spiff__task_id" in json_data, "task_id should exist in POST data"
             assert "spiff__callback_url" in json_data, "callback_url should exist in POST data"
             assert json_data["spiff__process_instance_id"] == process_instance.id
+            assert json_data["spiff__process_model_identifier"] == process_model_id
 
             # If it is not a successful 200 (and not a 202) the the process should be fully completed without any
             # additional call.
