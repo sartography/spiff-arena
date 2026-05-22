@@ -402,7 +402,13 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         operation_params: dict[str, Any],
         spiff_task: SpiffTask,
     ) -> str:
-        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task, self.__get_process_instance_id())
+        return ServiceTaskDelegate.call_connector(
+            operation_name,
+            operation_params,
+            spiff_task,
+            self.__get_process_instance_id(),
+            self.__get_process_model_identifier(),
+        )
 
 
 SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])

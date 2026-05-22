@@ -302,7 +302,12 @@ class ServiceTaskDelegate:
 
     @classmethod
     def call_connector(
-        cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask, process_instance_id: int | None
+        cls,
+        operator_identifier: str,
+        bpmn_params: Any,
+        spiff_task: SpiffTask,
+        process_instance_id: int | None,
+        process_model_identifier: str | None = None,
     ) -> str:
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         request_method = "POST"
@@ -312,6 +317,7 @@ class ServiceTaskDelegate:
             with sentry_sdk.start_span(op="call-connector", name=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__process_instance_id"] = process_instance_id
+                params["spiff__process_model_identifier"] = process_model_identifier
                 params["spiff__task_id"] = str(spiff_task.id)
                 params["spiff__task_data"] = task_data
                 params["spiff__callback_url"] = build_public_api_v1_url(
