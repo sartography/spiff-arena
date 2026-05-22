@@ -41,7 +41,7 @@
     "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
     "diagram-js": "^15.4.0",
-    "dmn-js": "^17.4.0",
+    "dmn-js": "^17.8.1",
     "dmn-js-properties-panel": "^3.8.3",
     "dompurify": "^3.2.6",
     "i18next": "^25.4.2",
