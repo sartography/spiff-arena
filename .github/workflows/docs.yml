@@ -4,23 +4,26 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'docs/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'docs/**'
 
 # Security: restrict GITHUB_TOKEN to least privilege.
 # See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
 permissions:
   contents: read
 
-defaults:
-  run:
-    working-directory: docs
-
 jobs:
   build:
     name: build-docs
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
     steps:
       - name: Check out the repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -37,3 +40,36 @@ jobs:
       - name: Build
         run: |
           ./bin/build --ci
+
+  sync-to-website:
+    name: sync-docs-to-website
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Check out website repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: sartography/SpiffWorks_Website
+          token: ${{ secrets.SPIFFWORKS_WEBSITE_UPDATE_TOKEN }}
+          path: website-repo
+
+      - name: Sync docs source files
+        run: |
+          mkdir -p website-repo/docs/spiff-arena/
+          rsync -av --delete docs/ website-repo/docs/spiff-arena/
+
+      - name: Commit and push
+        working-directory: website-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/spiff-arena/
+          git diff --staged --quiet && echo "No changes to sync." && exit 0
+          git commit -m "docs(spiff-arena): sync from ${{ github.repository }}@${{ github.sha }}"
+          git push
