@@ -47,7 +47,10 @@ from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnviron
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # noqa: E402
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # noqa: E402
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # noqa: E402
-from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser  # noqa: E402
+from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser, SpiffStartEventParser  # noqa: E402
+from SpiffWorkflow.bpmn.specs.defaults import StartEvent  # noqa: E402
+from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition as BpmnMessageEventDefinition  # noqa: E402
+from SpiffWorkflow.bpmn.serializer.default.task_spec import EventConverter  # noqa: E402
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser  # noqa: E402
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # noqa: E402
 from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter  # noqa: E402
@@ -114,6 +117,21 @@ class CustomSendTaskConverter(SendReceiveTaskConverter):
     def __init__(self, target_class, registry, typename = "SendTask"):
         super().__init__(target_class, registry, typename)
 
+class CustomStartEvent(StartEvent):
+    def _update_hook(self, my_task):
+        if isinstance(self.event_definition, BpmnMessageEventDefinition):
+            return True  # bypass message-waiting; go straight to READY for user input
+        return super()._update_hook(my_task)
+
+    def _run(self, my_task):
+        if isinstance(self.event_definition, BpmnMessageEventDefinition):
+            return None  # pause in STARTED state; user will provide the message payload
+        return super()._run(my_task)
+
+class CustomStartEventConverter(EventConverter):
+    def __init__(self, target_class, registry, typename="StartEvent"):
+        super().__init__(target_class, registry, typename)
+
 class CustomParser(SpiffBpmnParser):
     DATA_STORE_CLASSES = {
         "JSONFileDataStore": JSONFileDataStore,
@@ -126,6 +144,7 @@ class CustomParser(SpiffBpmnParser):
     OVERRIDE_PARSER_CLASSES.update({full_tag("userTask"): (SpiffTaskParser, CustomUserTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("receiveTask"): (SpiffReceiveTaskParser, CustomReceiveTask)})
     OVERRIDE_PARSER_CLASSES.update({full_tag("sendTask"): (SpiffSendTaskParser, CustomSendTask)})
+    OVERRIDE_PARSER_CLASSES.update({full_tag("startEvent"): (SpiffStartEventParser, CustomStartEvent)})
 
 
 SPIFF_CONFIG[CustomManualTask] = CustomManualTaskConverter
@@ -134,6 +153,7 @@ SPIFF_CONFIG[CustomServiceTask] = CustomServiceTaskConverter
 SPIFF_CONFIG[CustomUserTask] = CustomUserTaskConverter
 SPIFF_CONFIG[CustomReceiveTask] = CustomReceiveTaskConverter
 SPIFF_CONFIG[CustomSendTask] = CustomSendTaskConverter
+SPIFF_CONFIG[CustomStartEvent] = CustomStartEventConverter
 
 del SPIFF_CONFIG[ManualTask]
 del SPIFF_CONFIG[NoneTask]
@@ -141,6 +161,7 @@ del SPIFF_CONFIG[ServiceTask]
 del SPIFF_CONFIG[UserTask]
 del SPIFF_CONFIG[ReceiveTask]
 del SPIFF_CONFIG[SendTask]
+del SPIFF_CONFIG[StartEvent]
 
 class CustomEnvironment(TaskDataEnvironment):
     def __init__(self):
@@ -442,7 +463,11 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
             break
         elif strategy_name == "greedy":
             if task.task_spec.__class__.__name__.startswith("Custom"):
-                break
+                # Non-message start events (e.g. NoneEventDefinition) should still auto-complete
+                if isinstance(task.task_spec, CustomStartEvent) and not isinstance(task.task_spec.event_definition, BpmnMessageEventDefinition):
+                    pass
+                else:
+                    break
         elif strategy_name == "unittest":
             if task.task_spec.__class__.__name__.startswith("Custom"):
                 # Check for file-based fixture first (ed recording playback)
