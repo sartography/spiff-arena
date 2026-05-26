@@ -104,101 +104,247 @@ Upon creating a new BPMN file, open it to access the editor.
 
 SpiffArena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
 
-#### Dynamic Enumerations
+#### Dynamic Form Content with Jinja
 
-Dynamic enumerations allow you to provide users with a list of options (in a select/dropdown) that can change based on variables in the process instance.
+Spiff Arena renders a User Task's JSON Schema and UI Schema files through Jinja before parsing them as JSON.
+This means schema files can use task data to build dynamic titles, descriptions, enum choices, object properties, array item definitions, and UI schema settings.
 
-This feature is useful when you want to present users with choices based on an external data source or based on something that happened while the process was running.
+This is the preferred pattern for dynamic form content.
+Older schemas may use `options_from_task_data_var:...`; that pattern is deprecated and should not be used for new forms.
 
-To implement dynamic enumerations, update the list of enumeration values by setting a variable in task data.
+Use `tojson` whenever injecting strings, lists, dictionaries, booleans, or numbers into schema JSON.
+The rendered output must be valid JSON.
+The form builder's Data View can be used to preview how task data affects the rendered schema.
 
-In a script task, that would look like this:
+For example, a Script Task can prepare options like this:
+
 ```python
-#python
-    fruits = [
-        {
-            "value": "apples",
-            "label": "Apples"
-        },
-        {
-            "value": "oranges",
-            "label": "Oranges"
-        },
-        {
-            "value": "bananas",
-            "label": "Bananas"
-        }
-    ]
+fruits = [
+    {"value": "apples", "label": "Apples"},
+    {"value": "oranges", "label": "Oranges"},
+    {"value": "bananas", "label": "Bananas"},
+]
 ```
-Instead of using a script task to define the options directly, you could request information from a user using a form, access an API, or query an external database.
 
-Then use JSON like this (note the `options_from_task_data_var:fruits`) when defining the form in order to pull information from the variable called `fruits` that you defined in task data:
-```json
-    {
-        "title": "Dropdown list",
-        "description": "A dropdown list with options pulled from existing Task Data. IMPORTANT - Add 'fruits' to Task Data before using this component!!!",
-        "type": "object",
-        "properties": {
-            "favoriteFruit": {
-                "title": "Select your favorite fruit",
-                "type": "string",
-                "anyOf": [
-                    "options_from_task_data_var:fruits"
-                ]
-            }
-        }
-    }
-```
-#### Dynamic Array Fields from Task Data
+Then the JSON Schema can render a dynamic dropdown from that task data:
 
-SpiffArena now supports dynamically generated array fields using data from the process instance. This allows developers to define array items (e.g., subfields of an object) at runtime using a task data variable.
-
-This feature is similar to Dynamic Enumerations but instead of supplying dropdown options, you're providing an array schema definition dynamically via a task variable.
-
-##### Example Use Case: Dynamically Defined Parcel ID Structure
-
-**JSON Schema**:
-
-```json
+```jinja
 {
+  "title": "Dropdown List",
   "type": "object",
   "properties": {
-    "parcelID": {
-      "title": "Parcel ID",
-      "type": "array",
-      "items": [
-        "options_from_task_data_var:parcelID_fields"
+    "favoriteFruit": {
+      "title": "Select your favorite fruit",
+      "type": "string",
+      "anyOf": [
+        {% for fruit in fruits %}
+        {
+          "type": "string",
+          "enum": [{{ fruit.value | tojson }}],
+          "title": {{ fruit.label | tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
       ]
     }
   }
 }
 ```
 
-**Python Script Example**:
+Jinja can also build dynamic object properties.
+For example, a Script Task can define the parcel ID fields that should be collected:
 
 ```python
 parcelID_fields = [
-    {
-        "title": "Ward",
-        "type": "string",
-    },
-    {
-        "title": "Lot",
-        "type": "string",
-    },
-    {
-        "title": "Plot",
-        "type": "string",
-    },
-    {
-        "title": "Other Field",
-        "type": "string",
-    }
+    {"name": "ward", "title": "Ward", "type": "string"},
+    {"name": "lot", "title": "Lot", "type": "string"},
+    {"name": "plot", "title": "Plot", "type": "string"},
 ]
 ```
 
-* The variable `parcelID_fields` must be defined in Task Data before the form is rendered.
-* Each dictionary in the array should match the structure expected by JSON Schema Forms (e.g., with `title`, `type`, etc.).
+The JSON Schema can render one property for each configured field:
+
+```jinja
+{
+  "title": "Parcel ID",
+  "type": "object",
+  "properties": {
+    "parcelID": {
+      "title": "Parcel ID",
+      "type": "object",
+      "properties": {
+        {% for field in parcelID_fields %}
+        "{{ field.name }}": {
+          "title": {{ field.title | tojson }},
+          "type": {{ field.type | tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      }
+    }
+  }
+}
+```
+
+This pattern works for dynamic UI Schema settings as well.
+For example, a UI Schema can render readonly settings from task data:
+
+```jinja
+{
+  {% for field_name in readonly_fields %}
+  "{{ field_name }}": {
+    "ui:readonly": true
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+}
+```
+
+```{admonition} Deprecated dynamic form syntax
+The `options_from_task_data_var:...` syntax is still supported for older process models, but use Jinja-rendered schemas for new work.
+Jinja is more general, works in both JSON Schema and UI Schema files, and makes the final rendered schema easier to preview in the form builder.
+```
+
+#### Hiding Fields from Task Data
+
+Spiff Arena can hide form fields by setting `form_ui_hidden_fields` in task data before the User Task.
+Use dotted paths for nested object fields.
+
+```python
+form_ui_hidden_fields = [
+    "veryImportantFieldButOnlySometimes",
+    "building.floor",
+]
+```
+
+At runtime, Spiff Arena applies the equivalent UI Schema settings:
+
+```json
+{
+  "veryImportantFieldButOnlySometimes": {
+    "ui:widget": "hidden"
+  },
+  "building": {
+    "floor": {
+      "ui:widget": "hidden"
+    }
+  }
+}
+```
+
+Prefer Jinja-rendered UI Schema files when the visibility logic is complex or when the generated UI Schema should be explicit in the form source.
+
+#### Formatted Number Widget
+
+Use `ui:widget: "formattedNumber"` when users should enter numeric values with thousands separators while still submitting numeric data.
+
+JSON Schema example:
+
+```json
+{
+  "title": "Amounts",
+  "type": "object",
+  "properties": {
+    "amount": {
+      "title": "Amount",
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}
+```
+
+UI Schema example:
+
+```json
+{
+  "amount": {
+    "ui:widget": "formattedNumber"
+  }
+}
+```
+
+The widget displays `1234567.89` as `1,234,567.89`.
+For `type: "number"` or `type: "integer"` fields, the submitted value is numeric.
+For `type: "string"` fields, the submitted value is an unformatted numeric string.
+
+Use `ui:options.decimals` to limit decimal places and `ui:options.allowNegative` to explicitly allow or disallow negative values.
+If `allowNegative` is not set, a schema with `minimum: 0` prevents negative values.
+Integer schemas reject fractional values.
+
+```json
+{
+  "amount": {
+    "ui:widget": "formattedNumber",
+    "ui:options": {
+      "decimals": 2,
+      "allowNegative": false
+    }
+  }
+}
+```
+
+#### Calculated Fields
+
+Use `ui:field: "calculated"` for read-only values that are computed from other form fields while the user edits the form.
+Calculated values are included in submitted form data.
+
+JSON Schema example:
+
+```json
+{
+  "title": "Country Totals",
+  "type": "object",
+  "properties": {
+    "countries": {
+      "type": "object",
+      "properties": {
+        "ARGENTINA": { "title": "Argentina", "type": "number" },
+        "MEXICO": { "title": "Mexico", "type": "number" },
+        "TOTAL": { "title": "Total", "type": "number" }
+      }
+    }
+  }
+}
+```
+
+UI Schema example:
+
+```json
+{
+  "countries": {
+    "ARGENTINA": { "ui:widget": "formattedNumber" },
+    "MEXICO": { "ui:widget": "formattedNumber" },
+    "TOTAL": {
+      "ui:field": "calculated",
+      "ui:options": {
+        "expression": "ARGENTINA + MEXICO",
+        "format": "number",
+        "decimals": 2
+      }
+    }
+  }
+}
+```
+
+Calculated expressions support `+`, `-`, `*`, `/`, and parentheses.
+Field names resolve relative to the current object first.
+Use `$.` to reference values from the root form data:
+
+```json
+{
+  "summaryTotal": {
+    "ui:field": "calculated",
+    "ui:options": {
+      "expression": "$.countries.ARGENTINA + $.countries.MEXICO",
+      "format": "currency",
+      "currency": "USD",
+      "decimals": 2
+    }
+  }
+}
+```
+
+Empty strings, `null`, and missing numeric values are treated as `0`.
+Spiff Arena shows a warning if calculated fields do not stabilize, such as when two calculated fields depend on each other.
+
 #### Checkbox Validation
 
 Checkbox validation ensures that checkboxes, especially required boolean fields, are properly validated.
@@ -217,6 +363,51 @@ Regex validation allows you to validate text input fields based on regular expre
 This is useful when you need to ensure that user inputs match a specific pattern or format, such as email addresses or phone numbers.
 
 In your JSON schema, include a `pattern` property with a regular expression pattern that defines the valid format for the input field.
+Use `validationErrorMessage` on the schema property when the default validation message is not clear enough for end users.
+
+```json
+{
+  "email": {
+    "title": "Email",
+    "type": "string",
+    "pattern": "^[^@]+@[^@]+\\.[^@]+$",
+    "validationErrorMessage": "Enter a valid email address."
+  }
+}
+```
+
+#### JSON Text Validation
+
+Use `ui:options.validateJson: true` when a string field should contain valid JSON.
+The field is still submitted as a string.
+Validation only checks that the value can be parsed as JSON.
+
+JSON Schema example:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "payload": {
+      "title": "Payload",
+      "type": "string"
+    }
+  }
+}
+```
+
+UI Schema example:
+
+```json
+{
+  "payload": {
+    "ui:widget": "textarea",
+    "ui:options": {
+      "validateJson": true
+    }
+  }
+}
+```
 
 #### Date Range Selector
 
@@ -243,15 +434,15 @@ Example for UI schema:
 ```
 #### Date Validation
 
-Date validation when compared to another date allows you to ensure that a date field meets certain criteria concerning another date field.
+Spiff Arena supports `minimumDate` and `maximumDate` schema extensions for comparing date fields to `today` or to another field in the same form.
 
 **Minimum date validation**
 
 For instance, you can require that a date must be equal to or greater than another date within the form.
 
-- To implement date validation compared to another date, use your JSON schema and specify the date field to compare with using the "minimumDate" property with a format like "field:field_name:start_or_end."
+- To implement date validation compared to another date, use your JSON schema and specify the date field to compare with using the `minimumDate` property with a format like `field:field_name:start_or_end`.
 
-- "start_or_end" can be either "start" or "end".
+- `start_or_end` can be either `start` or `end`.
   You can choose to use "end" if the reference field is part of a range.
 
 This is an example where the end_date must be after the start_date:
@@ -283,7 +474,7 @@ Here’s an example where `delivery_date` must be on or before `end_date`:
 }
 ```
 
-If the referenced field is a date range, and you want to validate against the end of that range, the same `field:end_date` reference can be used, as the `maximumDate` will intuitively apply to the end of the range.
+If the referenced field is a date range, use `field:range_field:start` or `field:range_field:end` to specify which side of the range should be compared.
 
 Using maximum date validation, you can prevent dates from exceeding a certain threshold, which is essential for managing project timelines, delivery schedules, or any scenario where the latest permissible date is a factor.
 
@@ -296,7 +487,8 @@ Workflow processes often require the enforcement of minimum and maximum date con
 
 This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
-#### Handling Deserialized datetime Objects
+##### Handling Deserialized datetime Objects
+
 When working with datetime values in SpiffWorkflow, it's important to ensure that scripts correctly handle deserialized objects. 
 
 For example, here the `current_time` variable **appears** in Task Data as a dictionary:  
@@ -323,7 +515,7 @@ Therefore, use `strftime()` directly on the `datetime` object:
 cdt_datetime = current_time.strftime('%Y-%m-%dT%H:%M:%S%z')
 ```
 
-#### JSON Schema Configuration:
+##### JSON Schema Configuration:
 
 The "test-maximum-date-schema.json" process model outlines a form structure that includes fields for `end_date`, `delivery_date`, and `delivery_date_range`, each with constraints on the earliest and latest dates that can be selected.
 
@@ -354,26 +546,27 @@ The "test-maximum-date-schema.json" process model outlines a form structure that
 }
 ```
 
-#### Field Descriptions:
+##### Field Descriptions:
 
 - **End Date**: The final date by which all activities should be completed.
 - **Preferred Delivery Date**: A single date indicating when the delivery of a service or product is preferred, bounded by today's date and the `end_date`.
 - **Preferred Delivery Date Range**: A span of dates indicating an acceptable window for delivery, constrained by today's date and the `end_date`.
 
-#### Implementation:
+##### Implementation:
 
 The schema enforces the following rules:
 
 - The `Preferred Delivery Date` cannot be earlier than today (the `minimumDate`) and not later than the `end_date` (the `maximumDate`).
 - The `Preferred Delivery Date Range` must start no earlier than today and end no later than the `end_date`.
 
-### Display Fields Side-By-Side on Same Row
+#### Display Fields Side-By-Side on Same Row
 
 When designing forms, it's often more user-friendly to display related fields, such as First Name and Last Name, side by side on the same row, rather than stacked vertically.
 
-The `ui:layout` attribute in your form's JSON schema enables this by allowing you to specify how fields are displayed relative to each other, controlling the grid columns each field occupies for a responsive design.
+The `ui:layout` attribute belongs in the UI Schema for an object.
+It arranges fields into rows and grid columns.
 
-#### Form Schema Example:
+##### Form Schema Example:
 
 Define your form fields in the JSON schema as follows:
 
@@ -390,7 +583,7 @@ Define your form fields in the JSON schema as follows:
 }
 ```
 
-#### `ui:layout` Configuration:
+##### `ui:layout` Configuration:
 
 The `ui:layout` attribute accepts an array of objects, each representing a conceptual "row" of fields.
 Here's how to use it:
@@ -408,13 +601,16 @@ Here's how to use it:
 ```
 
 ![Styling_Form](/images/styling_forms.png)
-#### Key Points:
+
+##### Key Points:
 
 - **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
 - **Responsive Columns**: Values (`sm`, `md`, `lg`) indicate the number of grid columns a field should occupy, ensuring the form remains functional and visually appealing across devices.
 - **Simplified Configuration**: If column widths are unspecified, the layout will automatically adjust, providing flexibility in design.
+- **Complete Field List**: Include every field that should render for that object. Fields omitted from `ui:layout` may not appear where expected.
 
-#### Example Illustrated:
+##### Example Illustrated:
+
 In this setup, we’re arranging `firstName` and `lastName` to appear in the same row, as they are grouped in the first element of the `ui:layout` array.
 
 We specify that `firstName` should occupy 4 columns on large displays, with `lastName` also taking up 4 columns, together filling the full row of 8 columns on large screens. For medium screens, the layout adapts to 5 columns, and for small screens, it adjusts to 4 columns. 
@@ -447,7 +643,7 @@ To add help text to a web form field, use the following format:
 
 The text specified in the `"ui:help"` attribute will be displayed inside the form when the process starts, providing users with the necessary guidance.
 
-#### Example:
+##### Example:
 
 Consider a form with two fields: `form_num_1` and `system_generated_number`.
 Here's how you can add help text to the `form_num_1` field and make the `system_generated_number` field read-only:
@@ -474,11 +670,11 @@ In the example above:
 
 By incorporating such help texts, you can enhance the user experience and ensure that users fill out the form correctly.
 
-### Markdown Widget for rjsf Forms
+#### Markdown Widget for RJSF Forms
 
-The **Markdown Widget** enhances rjsf forms by allowing users to input and preview markdown text directly within the form.
+The **Markdown Widget** enhances RJSF forms by allowing users to input and preview markdown text directly within the form.
 
-To incorporate the markdown widget into your rjsf form, follow these steps:
+To incorporate the markdown widget into your RJSF form, follow these steps:
 
 1. **Create a Text Field**: In your rjsf form JSON schema, define a standard text field where you want the markdown content to be entered.
 
@@ -490,9 +686,45 @@ To incorporate the markdown widget into your rjsf form, follow these steps:
 
 ![rjsf markdown](/images/rsjf_markdown.png)
 
-#### Numeric Range Field
+#### Typeahead Widget
 
-#### Overview
+Use `ui:widget: "typeahead"` to search selectable records from a configured typeahead data source.
+
+JSON Schema example:
+
+```json
+{
+  "title": "Location",
+  "type": "object",
+  "properties": {
+    "city": {
+      "title": "Select a city",
+      "type": "string"
+    }
+  }
+}
+```
+
+UI Schema example:
+
+```json
+{
+  "city": {
+    "ui:widget": "typeahead",
+    "ui:options": {
+      "category": "cities",
+      "itemFormat": "{name} ({state}, {country})"
+    }
+  }
+}
+```
+
+The `category` option selects the typeahead data source.
+The `itemFormat` option controls display text using keys from returned records.
+The stored value is the selected record serialized as JSON.
+If `category` is missing, the form displays an error for that field.
+
+#### Numeric Range Field
 
 The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges.
 This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
@@ -503,32 +735,37 @@ Below is an example JSON schema that includes the numeric range field:
 
 ```json
 {
-  "title": "Example Schema",
+  "title": "Compensation Search",
   "type": "object",
   "properties": {
-    "numericRange": {
+    "compensation": {
+      "title": "Compensation (yearly), USD",
       "type": "object",
-      "title": "Numeric Range",
-      "minimum": {
-        "type": "number",
-        "title": "Minimum Value"
-      },
-      "maximum": {
-        "type": "number",
-        "title": "Maximum Value"
+      "minimum": 0,
+      "maximum": 999999999,
+      "properties": {
+        "min": {
+          "title": "Minimum Value",
+          "type": "number"
+        },
+        "max": {
+          "title": "Maximum Value",
+          "type": "number"
+        }
       }
     }
   }
 }
 ```
 
-This schema defines a numeric range object with `min` and `max` properties, both of which are required.
+The object must use `min` and `max` property names.
+The top-level `minimum` and `maximum` values define the allowed bounds.
 
-#### UI Schema Example
+##### UI Schema Example
 
 ```json
 {
-  "numericRange": {
+  "compensation": {
     "ui:field": "numeric-range"
   }
 }
@@ -538,7 +775,7 @@ This schema defines a numeric range object with `min` and `max` properties, both
 
 This will automatically validate that the max value cannot be less than the min value.
 
-#### Adding a New Button for Repeating Sections in Forms
+#### Repeating Sections in Forms
 
 Nested forms or repeating sections are designed to collect an array of objects, where each object represents a set of related information.
 For instance, in a task management form, you might need to collect multiple tasks, each with its title and completion status.
@@ -579,43 +816,35 @@ This structure can be represented in the form's schema as follows:
 
 ![Nested Forms](/images/Nested_form_display.png)
 
-By using this feature, you can effectively implement new buttons for nested forms or repeating sections, improving the form's usability for collecting multiple related entries from users.
+By using this feature, you can collect multiple related entries from users.
+RJSF automatically renders controls to add and remove items in the array.
 
-#### Character counter
+#### Submit Button Text
 
-To give the user feedback about how they are doing in terms of staying within the limits imposed by the field, you can display a character counter.
-
-##### JSON Schema Configuration
-
-To do this, your JSON schema must contain a string with a `maxLength`, like this:
+Use `ui:submitButtonOptions` or `ui:options.submitButtonOptions` to customize the submit button text.
 
 ```json
 {
-  "title": "String with character counter",
-  "type": "object",
-  "properties": {
-    "my_hot_string": {
-      "type": "string",
-      "maxLength": 100
+  "ui:submitButtonOptions": {
+    "submitText": "Send Request"
+  }
+}
+```
+
+The equivalent nested form is also supported:
+
+```json
+{
+  "ui:options": {
+    "submitButtonOptions": {
+      "submitText": "Send Request"
     }
   }
 }
 ```
 
-##### UI Schema Configuration
-
-Your UI Schema will need a `ui:options` specifying `counter: true`, like this:
-
-```json
-{
-  "my_hot_string": {
-    "ui:options": {
-      "counter": true
-    }
-  }
-}
-```
-
+User Tasks default to `Submit`.
+Manual Tasks default to `Continue`.
 
 ## Guest User Task
 
