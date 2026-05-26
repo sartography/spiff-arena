@@ -488,6 +488,7 @@ Workflow processes often require the enforcement of minimum and maximum date con
 This scenario demonstrates the configuration of both `minimumDate` and `maximumDate` validations within a form, ensuring that selected dates fall within a specific period defined by other date fields in the workflow.
 
 ##### Handling Deserialized datetime Objects
+
 When working with datetime values in SpiffWorkflow, it's important to ensure that scripts correctly handle deserialized objects. 
 
 For example, here the `current_time` variable **appears** in Task Data as a dictionary:  
@@ -600,6 +601,7 @@ Here's how to use it:
 ```
 
 ![Styling_Form](/images/styling_forms.png)
+
 ##### Key Points:
 
 - **Layout Design**: The `ui:layout` specifies that `firstName` and `lastName` should appear side by side. Each field's size adjusts according to the screen size (small, medium, large), utilizing grid columns for responsive design.
@@ -608,6 +610,7 @@ Here's how to use it:
 - **Complete Field List**: Include every field that should render for that object. Fields omitted from `ui:layout` may not appear where expected.
 
 ##### Example Illustrated:
+
 In this setup, we’re arranging `firstName` and `lastName` to appear in the same row, as they are grouped in the first element of the `ui:layout` array.
 
 We specify that `firstName` should occupy 4 columns on large displays, with `lastName` also taking up 4 columns, together filling the full row of 8 columns on large screens. For medium screens, the layout adapts to 5 columns, and for small screens, it adjusts to 4 columns. 
