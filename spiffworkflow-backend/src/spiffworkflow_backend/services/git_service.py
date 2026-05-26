@@ -333,6 +333,9 @@ class GitService:
         if webhook_details is None:
             return False
 
+        cls.clear_current_revision_cache()
+        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+
         git_revision_before_pull = cls.get_current_revision(short_rev=False)
         git_revision_after = webhook_details.after
         if git_revision_before_pull == git_revision_after:
@@ -343,7 +346,7 @@ class GitService:
             return False
 
         cls.run_shell_command(
-            ["pull", "--rebase"], context_directory=current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+            ["pull", "--rebase"], context_directory=bpmn_spec_absolute_dir
         )
         cls.clear_current_revision_cache()
         DataSetupService.refresh_process_model_caches()
@@ -359,6 +362,7 @@ class GitService:
         if webhook_details.ref != f"refs/heads/{webhook_details.git_branch}":
             return False
 
+        cls.clear_current_revision_cache()
         git_revision_before_sync = cls.get_current_revision(short_rev=False)
         git_revision_after = webhook_details.after
         worktree_status = cls._get_worktree_status(bpmn_spec_absolute_dir)

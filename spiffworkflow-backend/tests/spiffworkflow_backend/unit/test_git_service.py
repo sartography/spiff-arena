@@ -4,6 +4,8 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import call
 
+import pytest
+
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
     from typing_extensions import TypedDict
@@ -34,6 +36,12 @@ class GitWebhook(TypedDict):
 
 
 class TestGitService(BaseTest):
+    @pytest.fixture(autouse=True)
+    def clear_revision_cache(self) -> None:
+        GitService.clear_current_revision_cache()
+        yield
+        GitService.clear_current_revision_cache()
+
     @staticmethod
     def _build_webhook(
         branch_name: str = "sandbox",
@@ -165,6 +173,57 @@ class TestGitService(BaseTest):
             call(["clean", "-fd"], context_directory=repo_path),
         ]
         mock_refresh.assert_called_once_with()
+
+    def test_force_sync_to_webhook_revision_refreshes_cached_revision_before_sync(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        webhook = self._build_webhook()
+        current_revision = "1111111111111111111111111111111111111111"
+        revision_for_head = {"value": webhook["after"]}
+
+        def stdout_side_effect(command: list[str], context_directory: str | None = None, prepend_with_git: bool = True) -> str:
+            if command == ["config", "--get", "remote.origin.url"]:
+                return webhook["repository"]["clone_url"]
+            if command == ["rev-parse", "HEAD"]:
+                return revision_for_head["value"]
+            if command == ["status", "--porcelain"]:
+                return " M pull-process-models-from-git.bpmn\n?? scratch.txt"
+            raise AssertionError(f"Unexpected git stdout command: {command}")
+
+        mocker.patch.object(GitService, "run_shell_command_to_get_stdout", side_effect=stdout_side_effect)
+        mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
+        mocker.patch.object(GitService, "run_shell_command_as_boolean", return_value=False)
+        mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")
+        mocker.patch(
+            "spiffworkflow_backend.services.git_service.uuid.uuid4", return_value=SimpleNamespace(hex="deadbeefcafebabe")
+        )
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS", 30):
+            assert GitService.get_current_revision(short_rev=False) == webhook["after"]
+            revision_for_head["value"] = current_revision
+
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH", "sandbox"):
+                result = GitService.force_sync_to_webhook_revision(webhook)
+
+        repo_path = app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        assert result is True
+        assert mock_run_shell_command.mock_calls == [
+            call(["fetch", "origin", "sandbox"], context_directory=repo_path),
+            call(
+                ["stash", "push", "--include-untracked", "--message", "spiff-force-sync-stash-deadbeef"],
+                context_directory=repo_path,
+            ),
+            call(
+                ["branch", "spiff-force-sync-backup-111111111111-deadbeef", current_revision],
+                context_directory=repo_path,
+            ),
+            call(["reset", "--hard", webhook["after"]], context_directory=repo_path),
+            call(["clean", "-fd"], context_directory=repo_path),
+        ]
 
     def test_force_sync_to_webhook_revision_resets_clean_checkout_without_backup(
         self,
