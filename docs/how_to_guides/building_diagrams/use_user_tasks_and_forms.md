@@ -816,11 +816,6 @@ This structure can be represented in the form's schema as follows:
 By using this feature, you can collect multiple related entries from users.
 RJSF automatically renders controls to add and remove items in the array.
 
-#### Character Counter
-
-Character counter support is deprecated until it is restored or confirmed in the active RJSF theme.
-Do not rely on `ui:options.counter` or `ui:field: "character-counter"` for new forms.
-
 #### Submit Button Text
 
 Use `ui:submitButtonOptions` or `ui:options.submitButtonOptions` to customize the submit button text.
