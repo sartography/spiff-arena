@@ -11,6 +11,7 @@ from spiffworkflow_connector_command.command_interface import CommandResponseDic
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 from sqlalchemy import and_
 
+from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -503,6 +504,31 @@ class TestServiceTaskDelegate(BaseTest):
                     "http": "http://excellent-test-proxy:3128",
                     "https": "http://excellent-test-proxy:3128",
                 }
+
+    def test_available_connectors_includes_internal_http_connectors(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "connector1"}])
+
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.return_value = mock_response
+            available_connectors = ServiceTaskService.available_connectors()
+
+        available_connector_ids = {connector["id"] for connector in available_connectors}
+        internal_connector_ids = {connector["id"] for connector in http_connector.commands}
+        assert internal_connector_ids.issubset(available_connector_ids)
+        assert "connector1" in available_connector_ids
+
+    def test_available_connectors_returns_internal_http_connectors_when_connector_proxy_is_unavailable(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.side_effect = Exception("connection refused")
+            available_connectors = ServiceTaskService.available_connectors()
+
+        assert available_connectors == http_connector.commands
 
     def test_authentication_list_sends_api_key_header_when_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None

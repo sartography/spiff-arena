@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from json import JSONDecodeError
@@ -405,6 +406,25 @@ class ServiceTaskDelegate:
 
 class ServiceTaskDelegateService:
     @staticmethod
+    def _internal_connectors() -> list[dict[str, Any]]:
+        return copy.deepcopy(http_connector.commands)
+
+    @staticmethod
+    def _with_internal_connectors(connectors: Any) -> list[dict[str, Any]]:
+        internal_connectors = ServiceTaskDelegateService._internal_connectors()
+        internal_connector_ids = {connector["id"] for connector in internal_connectors}
+
+        if not isinstance(connectors, list):
+            return internal_connectors
+
+        proxy_connectors = [
+            copy.deepcopy(connector)
+            for connector in connectors
+            if isinstance(connector, dict) and connector.get("id") not in internal_connector_ids
+        ]
+        return internal_connectors + proxy_connectors
+
+    @staticmethod
     def available_connectors() -> Any:
         try:
             response = safe_requests.get(
@@ -415,13 +435,13 @@ class ServiceTaskDelegateService:
             )
 
             if response.status_code != 200:
-                return []
+                return ServiceTaskDelegateService._internal_connectors()
 
             parsed_response = json.loads(response.text)
-            return parsed_response
+            return ServiceTaskDelegateService._with_internal_connectors(parsed_response)
         except Exception as e:
             current_app.logger.error(e)
-            return []
+            return ServiceTaskDelegateService._internal_connectors()
 
     @staticmethod
     def authentication_list() -> Any:
