@@ -240,6 +240,12 @@ Example:
 
 This configuration tells the SpiffWorkflow frontend to render a form based on `user_data_schema.json` and `user_data_uischema.json` when this User Task becomes active. The data submitted through this form becomes part of the task's data.
 
+Before the frontend receives a User Task form, Spiff Arena renders the referenced JSON Schema and UI Schema files through Jinja using the task data for that task.
+This allows process authors to build dynamic form labels, options, visibility settings, and schema fragments without using custom frontend code.
+
+The final rendered schema must be valid JSON.
+Use the `tojson` filter when injecting strings, lists, dictionaries, booleans, or numbers into JSON Schema or UI Schema files.
+
 ## Error Definitions (`bpmn:error`)
 
 When defining Error Events, SpiffWorkflow allows specifying a variable name whose value should be captured as part of the error's payload when the error is thrown.

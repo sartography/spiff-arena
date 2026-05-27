@@ -388,25 +388,6 @@ export default function CustomForm({
     }
   };
 
-  const checkCharacterCounter = (
-    formDataToCheck: any,
-    propertyKey: string,
-    errors: any,
-    jsonSchema: any,
-    _uiSchemaPassedIn?: any,
-  ) => {
-    if (
-      jsonSchema.required &&
-      jsonSchema.required.includes(propertyKey) &&
-      (formDataToCheck[propertyKey] === undefined ||
-        formDataToCheck[propertyKey] === '')
-    ) {
-      errors[propertyKey].addError(
-        `must have required property '${propertyKey}'`,
-      );
-    }
-  };
-
   const checkFieldsWithCustomValidations = (
     jsonSchema: any,
     formDataToCheck: any,
@@ -483,20 +464,6 @@ export default function CustomForm({
           currentUiSchema['ui:field'] === 'numeric-range'
         ) {
           checkNumericRange(
-            formDataToCheck,
-            propertyKey,
-            errors,
-            jsonSchemaToUse,
-            currentUiSchema,
-          );
-        }
-
-        if (
-          currentUiSchema &&
-          'ui:field' in currentUiSchema &&
-          currentUiSchema['ui:field'] === 'character-counter'
-        ) {
-          checkCharacterCounter(
             formDataToCheck,
             propertyKey,
             errors,

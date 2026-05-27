@@ -132,13 +132,12 @@ class TestGitService(BaseTest):
         def stdout_side_effect(command: list[str], context_directory: str | None = None, prepend_with_git: bool = True) -> str:
             if command == ["config", "--get", "remote.origin.url"]:
                 return webhook["repository"]["clone_url"]
-            if command == ["rev-parse", "HEAD"]:
-                return current_revision
             if command == ["status", "--porcelain"]:
                 return " M pull-process-models-from-git.bpmn\n?? scratch.txt"
             raise AssertionError(f"Unexpected git stdout command: {command}")
 
         mocker.patch.object(GitService, "run_shell_command_to_get_stdout", side_effect=stdout_side_effect)
+        mocker.patch.object(GitService, "get_current_revision", return_value=current_revision)
         mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
         mocker.patch.object(GitService, "run_shell_command_as_boolean", return_value=False)
         mock_refresh = mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")
@@ -179,13 +178,12 @@ class TestGitService(BaseTest):
         def stdout_side_effect(command: list[str], context_directory: str | None = None, prepend_with_git: bool = True) -> str:
             if command == ["config", "--get", "remote.origin.url"]:
                 return webhook["repository"]["clone_url"]
-            if command == ["rev-parse", "HEAD"]:
-                return current_revision
             if command == ["status", "--porcelain"]:
                 return ""
             raise AssertionError(f"Unexpected git stdout command: {command}")
 
         mocker.patch.object(GitService, "run_shell_command_to_get_stdout", side_effect=stdout_side_effect)
+        mocker.patch.object(GitService, "get_current_revision", return_value=current_revision)
         mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
         mocker.patch.object(GitService, "run_shell_command_as_boolean", return_value=True)
         mock_refresh = mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")
@@ -214,13 +212,12 @@ class TestGitService(BaseTest):
         def stdout_side_effect(command: list[str], context_directory: str | None = None, prepend_with_git: bool = True) -> str:
             if command == ["config", "--get", "remote.origin.url"]:
                 return webhook["repository"]["clone_url"]
-            if command == ["rev-parse", "HEAD"]:
-                return webhook["after"]
             if command == ["status", "--porcelain"]:
                 return ""
             raise AssertionError(f"Unexpected git stdout command: {command}")
 
         mocker.patch.object(GitService, "run_shell_command_to_get_stdout", side_effect=stdout_side_effect)
+        mocker.patch.object(GitService, "get_current_revision", return_value=webhook["after"])
         mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
         mock_merge_base = mocker.patch.object(GitService, "run_shell_command_as_boolean")
         mock_refresh = mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")

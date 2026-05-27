@@ -228,7 +228,7 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
    - Uses a dropdown list for users to select their Gatorade flavor.
    - **Form Configuration**:
 
-   ```json
+   ```jinja
    {
      "title": "",
      "description": "The dropdown list below is built from data read in from a JSON file.",
@@ -237,13 +237,22 @@ This JSON array contains various Gatorade flavors, each with attributes for `nam
        "selected": {
          "title": "Select your flavor of Gatorade",
          "type": "string",
-         "anyOf": ["options_from_task_data_var:gator_select"]
+         "anyOf": [
+           {% for flavor in gator_select %}
+           {
+             "type": "string",
+             "enum": [{{ flavor.value | tojson }}],
+             "title": {{ flavor.label | tojson }}
+           }{% if not loop.last %},{% endif %}
+           {% endfor %}
+         ]
        }
      }
    }
    ```
 
    - The JSON schema defines the structure for the user form, sourcing options from the `gator_select` array.
+   - Older examples may use `options_from_task_data_var:gator_select`; prefer Jinja-rendered schema values for new forms.
 
 4. **Manual Task: View Gatorade Selection**
    - **Pre-Script**: Matches the user-selected flavor to its full details in the `gatorade_flavors` array.

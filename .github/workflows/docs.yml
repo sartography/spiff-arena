@@ -60,7 +60,9 @@ jobs:
           path: website-repo
 
       - name: Sync docs source files
-        run: rsync -av --delete docs/ website-repo/docs/spiff-arena/
+        run: |
+          mkdir -p website-repo/docs/spiff-arena/
+          rsync -av --delete docs/ website-repo/docs/spiff-arena/
 
       - name: Commit and push
         working-directory: website-repo
