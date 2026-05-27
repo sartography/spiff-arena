@@ -1,18 +1,18 @@
-# SpiffWorkflow's SpiffArena Documentation
+# Spiff Arena Documentation
 
-SpiffArena is the web application for creating, editing, running, and administering BPMN processes powered by the SpiffWorkflow engine.
-Use these docs when you are working with the SpiffArena frontend, process model repository structure, user tasks, connector proxies, permissions, deployment, or operational behavior.
+Spiff Arena is the web application for creating, editing, running, and administering BPMN processes powered by the SpiffWorkflow engine.
+Use these docs when you are working with the Spiff Arena frontend, process model repository structure, user tasks, connector proxies, permissions, deployment, or operational behavior.
 
 For engine-level examples and BPMN library guidance, see [SpiffExample](spiffexample/index).
 
 ---
 
-## In This SpiffArena Documentation
+## In This Spiff Arena Documentation
 
 ```{toctree}
 :maxdepth: 2
 :hidden:
-:caption: SpiffArena
+:caption: Spiff Arena
 
 tutorials/index
 how_to_guides/index
@@ -22,15 +22,15 @@ reference/index
 
 ## [Tutorials](tutorials/index)
 
-**Start here**: A hands-on introduction to SpiffArena for new users.
+**Start here**: A hands-on introduction to Spiff Arena for new users.
 
 ## [How-to guides](how_to_guides/index)
 
-**Step-by-step guides**: Covering key SpiffArena operations and common tasks.
+**Step-by-step guides**: Covering key Spiff Arena operations and common tasks.
 
 ## [Reference](reference/index)
 
-**Technical information**: SpiffArena specifications, APIs, configuration, and architecture.
+**Technical information**: Spiff Arena specifications, APIs, configuration, and architecture.
 
 ## [Explanation](explanation/index)
 
@@ -58,12 +58,12 @@ reference/index
 
 ## Project and Community
 
-SpiffArena is part of the open-source SpiffWorkflow ecosystem, and the project welcomes community contributions, suggestions, and feedback.
+Spiff Arena is part of the open-source SpiffWorkflow ecosystem, and the project welcomes community contributions, suggestions, and feedback.
 
 - [Join our online chat](https://discord.gg/F6Kb7HNK7B)
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
-- Thinking about using SpiffArena for your next project? [Get in touch!](https://www.spiffworkflow.org/)
+- Thinking about using Spiff Arena for your next project? [Get in touch!](https://www.spiffworkflow.org/)
 
 ## Additional Documentation
 
@@ -83,7 +83,7 @@ spiffexample/index
 
 ## [Event Monitoring](event_monitoring/index)
 
-**SpiffArena analytics**: Review process usage, duration, milestones, errors, exports, and API access for operational reporting.
+**Spiff Arena analytics**: Review process usage, duration, milestones, errors, exports, and API access for operational reporting.
 
 ## [SpiffExample](spiffexample/index)
 
