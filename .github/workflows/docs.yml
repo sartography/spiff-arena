@@ -66,6 +66,10 @@ jobs:
           token: ${{ secrets.SPIFFWORKS_WEBSITE_UPDATE_TOKEN }}
           path: website-repo
 
+      - name: Verify docs-html is non-empty
+        run: |
+          [[ -f docs-html/index.html ]] || { echo "docs-html/index.html missing — aborting sync"; exit 1; }
+
       - name: Sync built HTML to website
         run: |
           mkdir -p website-repo/static/docs/spiff-arena/
