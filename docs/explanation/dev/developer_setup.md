@@ -34,7 +34,7 @@ There is a [Running SpiffWorkflow Locally with Docker](https://www.spiffworkflow
 
 ## 3. Non-Docker setup
 
-Please see the instructions in the [spiff-arena README](https://github.com/sartography/spiff-arena/?tab=readme-ov-file#backend-setup-local).
+Please see the instructions in the [spiff-arena README](https://github.com/sartography/spiff-arena/).
 
 ## 4. Running Windows?
 * Install Docker desktop app 
