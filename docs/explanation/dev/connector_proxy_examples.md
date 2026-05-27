@@ -47,6 +47,22 @@ POST /v1/do/http/PostRequest
 }
 ```
 
+`data` is sent as JSON by default. To send a form-encoded request body, set `body_format` to `form`:
+
+```json
+{
+  "url": "https://auth.example.com/realms/demo/protocol/openid-connect/token",
+  "headers": { "Content-Type": "application/x-www-form-urlencoded" },
+  "body_format": "form",
+  "data": {
+    "grant_type": "password",
+    "client_id": "admin-cli",
+    "username": "admin",
+    "password": "secret"
+  }
+}
+```
+
 ### Execute a DELETE Request
 
 **Endpoint:**
