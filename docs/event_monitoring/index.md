@@ -12,10 +12,6 @@ That documentation includes:
 - Overview, Active, Complete, and Errors views;
 - BPMN diagram overlays for tasks and milestones;
 - duration thresholds and color schemes;
-- CSV export behavior;
-- analytics API authentication, request bodies, identifiers, and endpoint groups.
-
-For the live interactive API reference, see [https://emerson.spiff.works/analytics/docs](https://emerson.spiff.works/analytics/docs).
 
 Use the SpiffArena documentation when you are working with the main workflow application, deployment, permissions, process model management, connector proxies, forms, user tasks, and runtime administration.
 Use Event Monitoring when you need operational analytics for running SpiffArena process models.
