@@ -19,7 +19,7 @@
 
 {%- block content %}
 <div class="docs-wrapper">
-  <aside class="docs-sidebar" id="docs-sidebar" aria-hidden="true">
+  <aside class="docs-sidebar" id="docs-sidebar">
     <div class="docs-sidebar-inner">
       {%- include "globaltoc.html" %}
       <div class="docs-search">
@@ -59,6 +59,8 @@
   var backdrop = document.getElementById('docs-sidebar-backdrop');
   if (!toggle || !sidebar) return;
 
+  var mql = window.matchMedia('(max-width: 700px)');
+
   function openSidebar() {
     sidebar.classList.add('open');
     sidebar.setAttribute('aria-hidden', 'false');
@@ -74,6 +76,25 @@
     toggle.setAttribute('aria-label', 'Open navigation');
     if (backdrop) backdrop.classList.remove('open');
   }
+
+  function onBreakpointChange(e) {
+    if (e.matches) {
+      // entered mobile: sidebar is off-canvas unless already open
+      if (!sidebar.classList.contains('open')) {
+        sidebar.setAttribute('aria-hidden', 'true');
+      }
+    } else {
+      // entered desktop: sidebar is always visible, reset mobile state
+      sidebar.classList.remove('open');
+      sidebar.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open navigation');
+      if (backdrop) backdrop.classList.remove('open');
+    }
+  }
+
+  mql.addEventListener('change', onBreakpointChange);
+  onBreakpointChange(mql); // set correct initial state
 
   toggle.addEventListener('click', function () {
     sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
