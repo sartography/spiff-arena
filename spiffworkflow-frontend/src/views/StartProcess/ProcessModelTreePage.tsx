@@ -14,7 +14,7 @@ import {
   Button,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Can } from '@casl/react';
 import { Subject } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -37,6 +37,8 @@ import {
   ProcessGroupLite,
   DataStore,
   ProcessModel,
+  ProcessModelSortOption,
+  ProcessModelStatsMap,
 } from '../../interfaces';
 import {
   modifyProcessIdentifierForPathParam,
@@ -100,6 +102,9 @@ export default function ProcessModelTreePage({
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   // const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [treeCollapsed] = useState(false);
+  const [sortBy, setSortBy] = useState<ProcessModelSortOption>('alphabetical');
+  const [showOnlyRun, setShowOnlyRun] = useState(false);
+  const [modelStats, setModelStats] = useState<ProcessModelStatsMap>({});
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
@@ -125,6 +130,15 @@ export default function ProcessModelTreePage({
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
+
+  useEffect(() => {
+    HttpService.makeCallToBackend({
+      path: '/process-models/stats',
+      successCallback: (result: ProcessModelStatsMap) => {
+        setModelStats(result);
+      },
+    });
+  }, []);
 
   /** Recursively flatten the entire hierarchy of process groups and models */
   const flattenAllItems = useCallback(
@@ -395,11 +409,35 @@ export default function ProcessModelTreePage({
   };
   /// ////
 
-  /**
-   * For now, we're just pasting together some info fields that make sense.
-   * This is simple and works and is easily expanded,
-   * but eventually might need to be more robust.
-   */
+  const sortAndFilterModels = useCallback(
+    (items: ProcessModel[]): ProcessModel[] => {
+      let result = [...items];
+      if (showOnlyRun) {
+        result = result.filter((m) => modelStats[m.id]?.instance_count > 0);
+      }
+      result.sort((a, b) => {
+        if (sortBy === 'recently_ran') {
+          const aTime = modelStats[a.id]?.last_run_in_seconds ?? 0;
+          const bTime = modelStats[b.id]?.last_run_in_seconds ?? 0;
+          return bTime - aTime;
+        }
+        if (sortBy === 'most_used') {
+          const aCount = modelStats[a.id]?.instance_count ?? 0;
+          const bCount = modelStats[b.id]?.instance_count ?? 0;
+          return bCount - aCount;
+        }
+        return a.display_name.localeCompare(b.display_name);
+      });
+      return result;
+    },
+    [sortBy, showOnlyRun, modelStats],
+  );
+
+  const displayedModels = useMemo(
+    () => sortAndFilterModels(models),
+    [models, sortAndFilterModels],
+  );
+
   const handleSearch = useDebouncedCallback((search: string) => {
     // Indicate to user this is a search result.
     setCrumbs([
@@ -521,7 +559,14 @@ export default function ProcessModelTreePage({
               justifyContent: 'center',
             }}
           >
-            <SearchBar callback={handleSearch} stream={clickStream} />
+            <SearchBar
+              callback={handleSearch}
+              stream={clickStream}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              showOnlyRun={showOnlyRun}
+              onShowOnlyRunChange={setShowOnlyRun}
+            />
           </Stack>
 
           <Stack
@@ -683,7 +728,7 @@ export default function ProcessModelTreePage({
                     >
                       <Typography>
                         {t('process_models_with_count', {
-                          count: models.length,
+                          count: displayedModels.length,
                         })}
                       </Typography>
                       {currentProcessGroup && (
@@ -708,15 +753,15 @@ export default function ProcessModelTreePage({
                   </AccordionSummary>
                   <AccordionDetails>
                     <Box sx={gridProps}>
-                      {models.map((model: ProcessModel) => (
+                      {displayedModels.map((model: ProcessModel) => (
                         <ProcessModelCard
                           key={model.id}
                           model={model}
                           stream={clickStream}
                           lastSelected={currentProcessGroup || {}}
+                          stats={modelStats[model.id]}
                           onStartProcess={() => {
                             if (setNavElementCallback) {
-                              // remove the TreePanel from the SideNav when starting a process
                               setNavElementCallback(null);
                             }
                           }}

@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { getStorageValue } from '../../services/LocalStorageService';
-import { ProcessModel } from '../../interfaces';
+import { ProcessModel, ProcessModelStats } from '../../interfaces';
 
 const defaultStyle = {
   ':hover': {
@@ -36,18 +36,31 @@ const defaultStyle = {
  * Eventually might refactor to a common component, but at this time
  * it's useful to keep them separate.
  */
+function formatTimeAgo(epochSeconds: number | null | undefined): string {
+  if (!epochSeconds) return '';
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - epochSeconds;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+  return `${Math.floor(diff / 2592000)}mo ago`;
+}
+
 export default function ProcessModelCard({
   model,
   stream,
   lastSelected,
   onStartProcess,
   onViewProcess,
+  stats,
 }: {
   model: ProcessModel;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
   onViewProcess?: () => void;
+  stats?: ProcessModelStats;
 }) {
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] =
@@ -176,6 +189,17 @@ export default function ProcessModelCard({
             >
               {model.description || '--'}
             </Typography>
+            {stats && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', mt: 0.5 }}
+              >
+                {stats.instance_count} run{stats.instance_count !== 1 ? 's' : ''}
+                {stats.last_run_in_seconds
+                  ? ` · last ${formatTimeAgo(stats.last_run_in_seconds)}`
+                  : ''}
+              </Typography>
+            )}
           </Stack>
         </CardContent>
       </CardActionArea>

@@ -336,6 +336,15 @@ export interface MetadataExtractionPath {
   path: string;
 }
 
+export interface ProcessModelStats {
+  instance_count: number;
+  last_run_in_seconds: number | null;
+}
+
+export type ProcessModelStatsMap = Record<string, ProcessModelStats>;
+
+export type ProcessModelSortOption = 'alphabetical' | 'recently_ran' | 'most_used';
+
 export interface ProcessModel {
   id: string;
   description: string;
