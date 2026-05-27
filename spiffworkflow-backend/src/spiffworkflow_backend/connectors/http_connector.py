@@ -124,9 +124,7 @@ def _connector_response(http_response: requests.Response, include_response_heade
 
     # The in-process connector completed successfully. Downstream status belongs in
     # command_response.http_status, not in the connector wrapper status.
-    return HttpConnectorResponse(
-        text=json.dumps(return_dict), status_code=200, headers=dict(http_response.headers)
-    )
+    return HttpConnectorResponse(text=json.dumps(return_dict), status_code=200, headers=dict(http_response.headers))
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
