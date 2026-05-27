@@ -60,6 +60,7 @@ Forms in SpiffWorkflow enable you to create intuitive user interfaces for collec
 Let's dive in and explore the possibilities of creating forms in Spiff Arena and Ed.
 
 ### Creating Forms
+
 Here are the ways to create forms:
 
 1. **Using JSON Schema**
