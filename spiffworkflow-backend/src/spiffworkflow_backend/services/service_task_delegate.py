@@ -260,16 +260,19 @@ class ServiceTaskDelegate:
     ) -> None:
         base_error = None
         error_status_code = status_code
-        if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
-            base_error = parsed_response["error"]
-        elif (
+        upstream_status = None
+        if (
             "command_response_version" in parsed_response
             and parsed_response.get("command_response_version", 0) > 1
             and isinstance(parsed_response.get("command_response"), dict)
-            and parsed_response["command_response"].get("http_status", 0) >= 300
         ):
-            upstream_status = parsed_response["command_response"]["http_status"]
-            error_status_code = upstream_status
+            upstream_status = parsed_response["command_response"].get("http_status")
+            if isinstance(upstream_status, int) and upstream_status >= 300:
+                error_status_code = upstream_status
+
+        if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
+            base_error = parsed_response["error"]
+        elif isinstance(upstream_status, int) and upstream_status >= 300:
             base_error = {
                 "error_code": f"ServiceTaskHttpError{upstream_status}",
                 "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
@@ -312,7 +315,7 @@ class ServiceTaskDelegate:
     ) -> str:
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         request_method = "POST"
-        current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
+        current_app.logger.info(f"Calling service task connector: {operator_identifier}")
         task_data = spiff_task.data
         with sentry_sdk.start_span(op="connector_by_name", name=operator_identifier):
             with sentry_sdk.start_span(op="call-connector", name=call_url):
@@ -334,8 +337,17 @@ class ServiceTaskDelegate:
                 proxied_response: http_connector.HttpConnectorResponse | requests.Response
                 try:
                     if http_connector.does(operator_identifier):
+                        current_app.logger.info(
+                            "Calling embedded connector using connector: %s",
+                            operator_identifier,
+                        )
                         proxied_response = http_connector.do(operator_identifier, params)
                     else:
+                        current_app.logger.info(
+                            "Calling external connector proxy using connector: %s url: %s",
+                            operator_identifier,
+                            call_url,
+                        )
                         proxied_response = requests.post(
                             call_url,
                             json=params,
