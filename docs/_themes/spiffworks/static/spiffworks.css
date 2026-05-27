@@ -399,6 +399,9 @@ body {
 
 .docs-content li { margin-bottom: 0.4rem; line-height: 1.75; }
 
+.docs-content li > p { margin: 0px; margin-bottom: 0.25rem; }
+.docs-content li > p:last-child { margin-bottom: 0; }
+
 .docs-content li > ul,
 .docs-content li > ol { margin-top: 0.3rem; margin-bottom: 0.3rem; }
 
