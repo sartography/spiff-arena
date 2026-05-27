@@ -98,7 +98,7 @@ def _connector_response(http_response: requests.Response, include_response_heade
     content_type = http_response.headers.get("Content-Type", "")
     raw_response = http_response.text
 
-    if "application/json" in content_type:
+    if "application/json" in content_type and raw_response:
         command_response = json.loads(raw_response)
     else:
         command_response = {"raw_response": raw_response}
@@ -122,10 +122,9 @@ def _connector_response(http_response: requests.Response, include_response_heade
         "spiff__logs": [],
     }
 
-    # return a mimicked version an actual http response object
-    return HttpConnectorResponse(
-        text=json.dumps(return_dict), status_code=http_response.status_code, headers=dict(http_response.headers)
-    )
+    # The in-process connector completed successfully. Downstream status belongs in
+    # command_response.http_status, not in the connector wrapper status.
+    return HttpConnectorResponse(text=json.dumps(return_dict), status_code=200, headers=dict(http_response.headers))
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
