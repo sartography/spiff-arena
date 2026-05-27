@@ -140,7 +140,7 @@ docker compose up -d
 
 **A:** When creating a new process model in Spiff Arena, the "notification addresses" field is used to specify recipients for notifications related to that process.
 The "metadata extractions" field is used to extract specific metadata from the process.
-Detailed documentation for both fields is available.
+See the [Notification Addresses documentation](/how_to_guides/deployment/manage_permissions) and [Metadata Extractions documentation](/how_to_guides/use_custom_process_metadata) for details.
 It's worth noting that the functionality of "Notification Addresses" might undergo changes in the future to centralize the logic and avoid splitting configurations.
 
 ### **22: Issues with Spiff Arena Frontend Loading**
