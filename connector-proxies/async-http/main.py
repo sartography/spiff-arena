@@ -1,4 +1,5 @@
 import logging
+import re
 
 import falcon.asgi
 import httpx
@@ -10,27 +11,47 @@ logger = logging.getLogger(__name__)
 
 http_client = httpx.AsyncClient(timeout=None)
 
-SENSITIVE_FIELD_NAMES = {
-    "admin_client_secret",
-    "admin_password",
-    "api_key",
-    "authorization",
-    "basic_auth_password",
-    "client_secret",
-    "password",
-    "smtp_password",
-    "temporary_password",
-}
+SENSITIVE_FIELD_NAME_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        r"(^|_)(authorization|authentication|auth)($|_)",
+        r"(^|_)(password|passwd|pwd)($|_)",
+        r"(^|_)secret($|_)",
+        r"(^|_)(token|jwt|bearer)($|_)",
+        r"(^|_)credential(s)?($|_)",
+        r"(^|_)cookie($|_)",
+        r"(^|_)session($|_)",
+        r"(^|_)(api_?key|access_key|private_key|secret_key|key)($|_)",
+        r"(^|_)csrf($|_)",
+    )
+)
+
+SENSITIVE_VALUE_FIELD_DESCRIPTORS = ("id", "name", "field", "field_name", "key")
+
+
+def normalized_field_name(field_name):
+    camel_spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", str(field_name))
+    return re.sub(r"[^a-z0-9]+", "_", camel_spaced.lower()).strip("_")
+
+
+def is_sensitive_field_name(field_name):
+    normalized_name = normalized_field_name(field_name)
+    return any(pattern.search(normalized_name) for pattern in SENSITIVE_FIELD_NAME_PATTERNS)
+
+
+def is_sensitive_value_field(key, value):
+    if normalized_field_name(key) != "value":
+        return False
+    if value.get("type") == "password":
+        return True
+    return any(is_sensitive_field_name(value.get(descriptor, "")) for descriptor in SENSITIVE_VALUE_FIELD_DESCRIPTORS)
 
 
 def redacted(value):
     if isinstance(value, dict):
         redacted_value = {}
         for key, child in value.items():
-            key_lower = key.lower()
-            if key_lower in SENSITIVE_FIELD_NAMES or (
-                key_lower == "value" and value.get("type") == "password"
-            ):
+            if is_sensitive_field_name(key) or is_sensitive_value_field(key, value):
                 redacted_value[key] = "***REDACTED***"
             else:
                 redacted_value[key] = redacted(child)
