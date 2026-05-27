@@ -18,3 +18,17 @@ def test_connector_response_handles_empty_json_response_body() -> None:
     assert response_body["command_response"]["http_status"] == 202
     assert response_body["command_response"]["body"] == {"raw_response": ""}
     assert response_body["error"] is None
+
+
+def test_connector_response_preserves_non_202_status_for_retry_handling() -> None:
+    response = requests.Response()
+    response.status_code = 500
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"message": "failed"}'
+
+    connector_response = _connector_response(response)
+
+    response_body = json.loads(connector_response.text)
+    assert connector_response.status_code == 500
+    assert response_body["command_response"]["http_status"] == 500
+    assert response_body["error"]["error_code"] == "HttpError500"

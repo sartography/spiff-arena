@@ -122,11 +122,11 @@ def _connector_response(http_response: requests.Response, include_response_heade
         "spiff__logs": [],
     }
 
-    # The wrapper call to the in-process connector succeeded even when the upstream HTTP status is non-2xx.
-    # Preserve upstream status in command_response.http_status so service task error handling can inspect it.
-    return HttpConnectorResponse(
-        text=json.dumps(return_dict), status_code=200, headers=dict(http_response.headers)
-    )
+    wrapper_status = 200 if http_response.status_code == 202 else http_response.status_code
+
+    # A 202 from the upstream HTTP service means "accepted" for normal HTTP APIs like SendGrid.
+    # Do not let it look like the connector proxy's async callback handshake.
+    return HttpConnectorResponse(text=json.dumps(return_dict), status_code=wrapper_status, headers=dict(http_response.headers))
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
