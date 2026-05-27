@@ -1,5 +1,3 @@
-# Spiff Arena and Ed Documentation Gap Audit
-
 This audit covers public documentation for Spiff Arena and Ed.
 It intentionally excludes SpiffWorkflow Engine internals.
 
