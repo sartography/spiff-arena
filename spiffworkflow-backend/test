@@ -1,0 +1,17 @@
+./bin/call_api \
+  '/messages/examples:crm:spiffdemo-trial-signup-http:spiffdemo_trial_signup_http?execution_mode=synchronous' \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  --data-binary @- <<'JSON'
+{
+  "payload": {
+    "email": "new-customer@example.test",
+    "first_name": "New",
+    "last_name": "Customer",
+    "keycloak_base_url": "http://localhost:7002",
+    "realm": "spiffworkflow",
+    "trial_days": 30,
+    "send_email": false
+  }
+}
+JSON
