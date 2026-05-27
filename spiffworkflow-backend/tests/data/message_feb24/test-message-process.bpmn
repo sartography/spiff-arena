@@ -37,7 +37,7 @@
     </bpmn:receiveTask>
     <bpmn:sendTask id="Activity_1re9jdj" name="Send Message A" messageRef="A">
       <bpmn:extensionElements>
-        <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="response">
+        <spiffworkflow:serviceTaskOperator id="http/PostRequest" resultVariable="response">
           <spiffworkflow:parameters>
             <spiffworkflow:parameter id="url" type="str" value="url" />
             <spiffworkflow:parameter id="headers" type="any" value="headers" />

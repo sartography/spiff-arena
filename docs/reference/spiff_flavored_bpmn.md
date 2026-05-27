@@ -106,7 +106,7 @@ Service Tasks in SpiffWorkflow are extended to allow for specific operations, mo
 
 This element defines the service operation.
 
-- **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequestV2`. Other operators may exist for different HTTP methods or service types.
+- **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequest`. Other operators may exist for different HTTP methods or service types.
 - **`resultVariable`**: (Optional) The name of the process variable where the response from the service call will be stored. If not provided, the response isn't stored in a specific variable. The response stored in `resultVariable` is a dict that contains the following:
   - `body`: The response body. Often a Python dictionary/list for JSON responses, otherwise a string.
   - `status_code`: Integer HTTP status code (e.g., `200`, `404`).
@@ -125,7 +125,7 @@ This container holds all input parameters for the service operator.
     - **As a string literal**: Enclose in double quotes within the XML attribute (e.g., `value="&#34;https://api.example.com&#34;"`).
     - **As a JSON string literal (for `type="any"`)**: Provide a JSON formatted string (e.g., `value="{&#34;Content-Type&#34;: &#34;application/json&#34;}"`).
 
-**Common Parameters for `http/PostRequestV2`:**
+**Common Parameters for `http/PostRequest`:**
 
 1. **`url`** (`type="str"`): (Required) The target URL for the HTTP POST request.
 
@@ -162,7 +162,7 @@ This container holds all input parameters for the service operator.
 ```xml
 <bpmn:serviceTask id="MyHttpPostTask" name="Send POST Request">
   <bpmn:extensionElements>
-    <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="post_response">
+    <spiffworkflow:serviceTaskOperator id="http/PostRequest" resultVariable="post_response">
       <spiffworkflow:parameters>
         <spiffworkflow:parameter id="url" type="str" value="&#34;https://api.example.com/submit&#34;" />
         <spiffworkflow:parameter id="headers" type="any" value="my_headers_variable" /> <!-- my_headers_variable is a dict process variable -->
