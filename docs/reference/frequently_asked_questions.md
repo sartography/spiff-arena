@@ -209,6 +209,9 @@ ServiceTasks in Spiff Arena utilize a concept called Connector Proxy, an externa
 For tasks like checking if an API is functioning correctly, you can set up a Connector Proxy to handle the request.
 See [Configure a Connector Proxy](/how_to_guides/deployment/configure_a_connector_proxy).
 If you want to bypass security features of the restricted script engine and import modules from your script tasks, you can set the environment variable: `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false`
+**Security warning:** Setting `SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE=false` disables the restricted script engine and is for local development only.
+It is insecure and unsafe for production because it may allow arbitrary module imports and remote code execution.
+Use ServiceTasks with a Connector Proxy for external integrations instead, and remove this override before deploying to production.
 
 ### **26: Storage of Properties Data in Spiff Arena**
 
