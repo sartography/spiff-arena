@@ -96,7 +96,7 @@ describe('calculated field helpers', () => {
     });
   });
 
-  it('creates and calculates Emerson-style TOTAL objects with root-path expressions', () => {
+  it('creates and calculates TOTAL objects with root-path expressions', () => {
     const schema = {
       type: 'object',
       properties: {
