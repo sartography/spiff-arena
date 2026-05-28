@@ -9,3 +9,20 @@
 html.writer-html5 .rst-content table.docutils td>p, html.writer-html5 .rst-content table.docutils th>p {
     line-height: 1.5rem;
 }
+
+.wy-menu-vertical p.caption {
+    height: auto;
+    line-height: 1.4;
+    padding-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+
+.wy-menu-vertical p.caption:first-child {
+    padding-top: 0;
+}
+
+.wy-menu-vertical p.caption:not(:first-child) {
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+}

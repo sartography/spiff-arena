@@ -10,7 +10,7 @@
 # if we want that again some day, here were the docs in that sub-folder docs dir:
 #   https://github.com/sartography/spiff-arena/blob/d9b303db782b1004a818c426283e9cfbc5ed0ec7/spiffworkflow-backend/docs/conf.py
 
-project = "SpiffWorkflow"
+project = "SpiffArena"
 copyright = "2026, SpiffWorks"
 author = "SpiffWorks"  # Very ok to add your name here.
 release = "0.1"
