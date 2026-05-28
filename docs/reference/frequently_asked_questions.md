@@ -24,8 +24,8 @@
 **A:** Yes, here are some references:
 
 - [SpiffExample CLI](https://github.com/sartography/spiff-example-cli)
-- [Spiff Arena documentation](https://spiff-arena.readthedocs.io/en/latest/)
-- [SpiffWorkflow Documentation](https://spiffworkflow.readthedocs.io/en/stable/index.html)
+- [Spiff Arena documentation](https://spiff.works/docs/spiff-arena/)
+- [SpiffWorkflow Documentation](https://spiff.works/docs/spiffworkflow/)
 - [Getting Started with SpiffWorkflow](https://www.spiffworkflow.org/posts/articles/get_started/)
 
 ### **4. Understanding Task Data in Custom Connectors**
@@ -265,7 +265,7 @@ A practical application of this might be when two processes need to interact but
 
 **A:** To create custom tasks or services in SpiffWorkflow, you have several options:
 
-1. **Using Spiff Arena**: You can author a diagram in Spiff Arena, which provides a user-friendly interface for designing your workflow. Once your diagram is complete, save it in the standard BPMN XML format. This diagram can then be executed in the SpiffWorkflow library as per the documentation available [here](https://spiffworkflow.readthedocs.io/en/latest/).
+1. **Using Spiff Arena**: You can author a diagram in Spiff Arena, which provides a user-friendly interface for designing your workflow. Once your diagram is complete, save it in the standard BPMN XML format. This diagram can then be executed in the SpiffWorkflow library as per the documentation available [here](https://spiff.works/docs/spiffworkflow/).
 2. **BPMN IO Extensions**: If you prefer to work outside of Spiff Arena, you can use the BPMN IO extensions directly, available at [this GitHub repository](https://github.com/sartography/bpmn-js-spiffworkflow). Similar to Spiff Arena, you'll save your custom diagram in BPMN XML format for execution in SpiffWorkflow.
 3. **Service Tasks**: For creating service tasks in Spiff Arena, see [Service Tasks](/reference/bpmn/service_tasks) and [Configure a Connector Proxy](/how_to_guides/deployment/configure_a_connector_proxy).
 4. **Defining Custom Applications**: If your workflow requires calling custom applications, you can define these within your BPMN diagram. For working outside of Spiff Arena, ensure to provide hooks in the diagram editor to list available methods, services, etc. While Spiff Arena and its Connector Proxy offer a streamlined approach for this, you have the flexibility to write your own connectors if needed.
@@ -404,7 +404,7 @@ can I resolve this?
 
 3. **Quick Fix for Completion:** If your script task is simple and should be marked as "COMPLETED" immediately after execution, ensure that the `execute` method in your scripting environment returns `True`. This return value explicitly indicates that the task has completed its execution successfully.
 
-4. **Documentation Reference:** For more detailed information on how SpiffWorkflow handles task states and hooks, you can refer to the [SpiffWorkflow documentation](https://spiffworkflow.readthedocs.io/en/latest/concepts.html#hooks). This resource provides insights into the internal workings of task state management and how you can customize it for your specific needs.
+4. **Documentation Reference:** For more detailed information on how SpiffWorkflow handles task states and hooks, you can refer to the [SpiffWorkflow documentation](https://spiff.works/docs/spiffworkflow/concepts.html#hooks). This resource provides insights into the internal workings of task state management and how you can customize it for your specific needs.
 
 5. **Custom Code Integration:** If you observe different behaviors between the Spiff CLI environment and your platform, it's important to ensure that the scripting environment and return values are consistently implemented across both. Differences in the scripting environment or the way the `execute` method is defined can lead to varying task states.
 

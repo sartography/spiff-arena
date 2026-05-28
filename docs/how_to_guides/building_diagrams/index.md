@@ -1,7 +1,7 @@
 # Build Diagrams
 
 These guides cover process-model authoring patterns that apply when building BPMN diagrams for Spiff Arena.
-If you are authoring in the browser with Ed, see the standalone [Ed documentation](https://spiff-ed.readthedocs.io/en/latest/).
+If you are authoring in the browser with Ed, see the standalone [Ed documentation](https://spiff.works/docs/ed/).
 
 ```{toctree}
 :maxdepth: 1
