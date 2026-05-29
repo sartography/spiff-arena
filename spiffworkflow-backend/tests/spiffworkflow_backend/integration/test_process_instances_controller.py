@@ -401,3 +401,45 @@ class TestProcessInstancesController(BaseTest):
         milestone_names = response.json()
         assert "First Model Milestone" in milestone_names
         assert "Second Model Milestone" not in milestone_names
+
+    def test_unique_milestone_name_list_uses_model_scoped_read_permission(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "runs_without_input/sample",
+            process_model_source_directory="sample",
+        )
+        privileged_user = self.create_user_with_permission(
+            username="privileged_user_model_scoped",
+            target_uri="/process-instances/unique-milestone-names",
+            permission_names=["read"],
+        )
+        self.add_permissions_to_user(
+            privileged_user,
+            target_uri="/process-instances/runs_without_input:sample/*",
+            permission_names=["read"],
+        )
+        other_user = self.find_or_create_user(username="other_user_model_scoped")
+
+        privileged_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=privileged_user
+        )
+        privileged_instance.last_milestone_bpmn_name = "Privileged Model Scoped Milestone"
+
+        other_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=other_user
+        )
+        other_instance.last_milestone_bpmn_name = "Other Model Scoped Milestone"
+        db.session.commit()
+
+        response = client.get(
+            "/v1.0/process-instances/unique-milestone-names?process_model_identifier=runs_without_input/sample",
+            headers=self.logged_in_headers(privileged_user),
+        )
+        assert response.status_code == 200
+        milestone_names = response.json()
+        assert "Privileged Model Scoped Milestone" in milestone_names
+        assert "Other Model Scoped Milestone" in milestone_names

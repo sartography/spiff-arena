@@ -660,11 +660,23 @@ def unique_milestone_name_list(
     if process_model_identifier:
         filters.append({"field_name": "process_model_identifier", "field_value": process_model_identifier})
 
-    should_scope_to_requesting_user = with_relation_to_me or not AuthorizationService.user_has_permission(
-        user=g.user,
-        permission="read",
-        target_uri="/process-instances",
-    )
+    has_process_instance_read_permission = False
+    if process_model_identifier:
+        modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(process_model_identifier)
+        has_process_instance_read_permission = AuthorizationService.user_has_permission(
+            user=g.user,
+            permission="read",
+            target_uri=f"/process-instances/{modified_process_model_identifier}/*",
+        )
+
+    if not has_process_instance_read_permission:
+        has_process_instance_read_permission = AuthorizationService.user_has_permission(
+            user=g.user,
+            permission="read",
+            target_uri="/process-instances",
+        )
+
+    should_scope_to_requesting_user = with_relation_to_me or not has_process_instance_read_permission
     if should_scope_to_requesting_user:
         filters.append({"field_name": "with_relation_to_me", "field_value": True})
 
