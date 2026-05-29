@@ -1,11 +1,19 @@
 import json
+import threading
+from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 from flask import Flask
+from flask import g
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -20,19 +28,22 @@ class TestLongRunningService(BaseTest):
         user: UserModel,
         expected_count: int,
     ) -> None:
-        """Call the tasks/service-tasks-awaiting-callback endpoint and assert the expected number of tasks are returned."""
-        response = client.get(
-            "/v1.0/tasks/service-tasks-awaiting-callback",
-            headers=self.logged_in_headers(user),
+        task_models = (
+            TaskModel.query.join(TaskDefinitionModel)
+            .join(ProcessInstanceModel)
+            .filter(
+                TaskModel.state == "STARTED",
+                TaskDefinitionModel.typename == "ServiceTask",
+                ProcessInstanceModel.process_initiator_id == user.id,
+                ProcessInstanceModel.status == "waiting",
+            )
+            .all()
         )
-        assert response.status_code == 200
-        response_json = response.json()
-        assert response_json["pagination"]["total"] == expected_count
-        for r in response_json["results"]:
-            assert r["id"] is not None
-            assert r["process_instance_id"] is not None
-            assert r["title"] is not None
-            assert r["process_model_identifier"] is not None
+        assert len(task_models) == expected_count
+        for task_model in task_models:
+            assert task_model.guid is not None
+            assert task_model.process_instance_id is not None
+            assert task_model.task_definition.bpmn_name or task_model.task_definition.bpmn_identifier
 
     def test_connector_receives_additional_metadata(
         self,
@@ -61,9 +72,11 @@ class TestLongRunningService(BaseTest):
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
             assert "spiff__process_instance_id" in json_data, "process_instance_id should exist in POST data"
+            assert "spiff__process_model_identifier" in json_data, "process_model_identifier should exist in POST data"
             assert "spiff__task_id" in json_data, "task_id should exist in POST data"
             assert "spiff__callback_url" in json_data, "callback_url should exist in POST data"
             assert json_data["spiff__process_instance_id"] == process_instance.id
+            assert json_data["spiff__process_model_identifier"] == process_model_id
 
             # If it is not a successful 200 (and not a 202) the the process should be fully completed without any
             # additional call.
@@ -145,6 +158,178 @@ class TestLongRunningService(BaseTest):
         task_model = TaskModel.query.filter_by(guid=spiff__task_id).first()
         assert task_model is not None
         assert task_model.state == "COMPLETED"
+
+    def test__202_callback_url_uses_public_backend_base(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "https://frontend.example.com"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
+        ):
+            with app.test_request_context():
+                process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+                processor = ProcessInstanceProcessor(process_instance)
+                with patch("requests.post") as mock_post:
+                    mock_post.return_value.status_code = 202
+                    mock_post.return_value.ok = True
+                    mock_post.return_value.text = json.dumps({})
+                    processor.do_engine_steps(save=True)
+                callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
+                spiff_task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
+
+        assert callback_url == f"https://backend.example.com/api/v1.0/tasks/{process_instance.id}/{spiff_task_id}/callback"
+
+    def test__message_started_202_service_task_accepts_immediate_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """A callback can arrive while a message-started instance is still inside its initial service task."""
+        process_model_id = "test_group/message_start_service_task"
+        load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="message_start_service_task",
+        )
+
+        callback_can_retry = threading.Event()
+        callback_finished = threading.Event()
+        callback_waiting_on_lock = threading.Event()
+        callback_result: dict[str, Any] = {}
+        callback_thread: threading.Thread | None = None
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+        callback_headers = self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"})
+
+        def submit_callback(callback_url: str) -> None:
+            try:
+                callback_result["response"] = client.put(
+                    callback_url,
+                    headers=callback_headers,
+                    json=content,
+                )
+            finally:
+                callback_finished.set()
+
+        def mock_connector_post(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            nonlocal callback_thread
+            json_data = kwargs.get("json", {})
+            assert isinstance(json_data, dict)
+            callback_url = json_data["spiff__callback_url"]
+            assert isinstance(callback_url, str)
+            callback_thread = threading.Thread(target=submit_callback, args=(callback_url,))
+            callback_thread.start()
+            while not callback_finished.is_set() and not callback_waiting_on_lock.is_set():
+                callback_finished.wait(timeout=0.01)
+            return SimpleNamespace(status_code=202, ok=True, text=json.dumps({}), headers={})
+
+        def wait_for_message_run_to_finish(_seconds: int) -> None:
+            callback_waiting_on_lock.set()
+            callback_can_retry.wait(timeout=5)
+
+        g.user = with_super_admin_user
+        with (
+            patch("requests.post", side_effect=mock_connector_post),
+            patch("spiffworkflow_backend.services.process_instance_queue_service.time.sleep", wait_for_message_run_to_finish),
+        ):
+            try:
+                receiver_message = MessageService.run_process_model_from_message("test_group:quick_callback_service_task", {})
+            finally:
+                callback_can_retry.set()
+
+        assert callback_thread is not None
+        callback_thread.join(timeout=5)
+        assert not callback_thread.is_alive()
+
+        response = callback_result["response"]
+        assert response.status_code == 200
+        assert response.json()["type"] == "Default End Event"
+
+        process_instance_id = receiver_message.process_instance_id
+        db.session.remove()  # type: ignore
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
+        assert process_instance.status == "complete"
+
+    def test__parallel_202_service_task_accepts_immediate_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """A callback can arrive before a parallel branch has finished the same engine run."""
+        process_model_id = "test_group/parallel_service_task_callback"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="parallel_service_task_callback",
+        )
+
+        callback_finished = threading.Event()
+        callback_result: dict[str, Any] = {}
+        callback_thread: threading.Thread | None = None
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+        callback_headers = self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"})
+
+        def submit_callback(callback_url: str) -> None:
+            try:
+                callback_result["response"] = client.put(
+                    callback_url,
+                    headers=callback_headers,
+                    json=content,
+                )
+            finally:
+                callback_finished.set()
+
+        def mock_connector_post(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            nonlocal callback_thread
+            json_data = kwargs.get("json", {})
+            assert isinstance(json_data, dict)
+            callback_url = json_data["spiff__callback_url"]
+            assert isinstance(callback_url, str)
+            callback_thread = threading.Thread(target=submit_callback, args=(callback_url,))
+            callback_thread.start()
+            return SimpleNamespace(status_code=202, ok=True, text=json.dumps({}), headers={})
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post", side_effect=mock_connector_post):
+                processor.do_engine_steps(save=True)
+
+        assert callback_thread is not None
+        callback_thread.join(timeout=5)
+        assert not callback_thread.is_alive()
+
+        response = callback_result["response"]
+        assert response.status_code == 200
+        assert response.json()["type"] == "Default End Event"
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
 
     def test__202_error_response(
         self,

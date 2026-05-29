@@ -8,6 +8,13 @@ server {
     # previously returned nginx error in response body: 414 Request-URI Too Large
     large_client_header_buffers 4 16k;
 
+    location = /version-info {
+        root /usr/share/nginx/html;
+        default_type application/json;
+        add_header Cache-Control "no-store";
+        try_files /version-info =404;
+    }
+
     location / {
         root /usr/share/nginx/html;
         try_files $uri $uri/ /index.html;

@@ -1,4 +1,4 @@
-FROM python:3.12.1-slim-bookworm
+FROM python:3.13.13-slim-trixie
 
 ARG USER_ID
 ARG USER_NAME
@@ -18,4 +18,4 @@ RUN adduser --uid $USER_ID --gid $GROUP_ID $USER_NAME
 RUN git config --global --add safe.directory *
 
 RUN pip install --upgrade pip
-RUN pip install uv==0.6.16
+RUN pip install uv==0.10.0

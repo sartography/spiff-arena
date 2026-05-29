@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from json import JSONDecodeError
@@ -9,6 +10,7 @@ from flask import current_app
 from flask import g
 from security import safe_requests  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # type: ignore
 from SpiffWorkflow.spiff.specs.event_definitions import EscalationEventDefinition
@@ -19,6 +21,8 @@ from spiffworkflow_connector_command.command_interface import CommandErrorDict
 from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
+from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
+from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
@@ -31,7 +35,9 @@ class ConnectorProxyError(Exception):
 
 
 class UncaughtServiceTaskError(Exception):
-    pass
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class Accepted202Exception(Exception):  # noqa N818
@@ -73,6 +79,37 @@ def _format_log_value(value: Any) -> str:
     return json.dumps(value, indent=2, sort_keys=True, default=str)
 
 
+def _redact_sensitive_headers(headers: dict[str, Any] | None) -> dict[str, Any] | None:
+    if headers is None:
+        return None
+
+    sensitive_header_names = {
+        "authorization",
+        "proxy-authorization",
+        "spiff-connector-proxy-api-key",
+    }
+    sensitive_header_substrings = [
+        "auth",
+        "token",
+        "secret",
+        "password",
+        "api-key",
+        "apikey",
+        "cookie",
+    ]
+    redacted_headers: dict[str, Any] = {}
+    for key, value in headers.items():
+        key_lower = str(key).lower()
+        if key_lower in sensitive_header_names or any(
+            sensitive_substring in key_lower for sensitive_substring in sensitive_header_substrings
+        ):
+            redacted_headers[key] = "<redacted>"
+        else:
+            redacted_headers[key] = value
+
+    return redacted_headers
+
+
 def _log_connector_proxy_request(operator_identifier: str, method: str, url: str, headers: dict[str, Any], body: Any) -> None:
     if not connector_proxy_http_logging_enabled():
         return
@@ -81,7 +118,7 @@ def _log_connector_proxy_request(operator_identifier: str, method: str, url: str
         operator_identifier,
         method,
         url,
-        _format_log_value(headers),
+        _format_log_value(_redact_sensitive_headers(headers)),
         _format_log_value(body),
     )
 
@@ -91,13 +128,14 @@ def _log_connector_proxy_response(
 ) -> None:
     if not connector_proxy_http_logging_enabled():
         return
+    response_headers = dict(headers) if headers is not None else None
     logger.info(
         "Connector proxy response\nOperator: %s\nMethod: %s\nURL: %s\nStatus: %s\nHeaders:\n%s\nBody:\n%s",
         operator_identifier,
         method,
         url,
         status_code,
-        _format_log_value(dict(headers) if headers is not None else headers),
+        _format_log_value(_redact_sensitive_headers(response_headers)),
         _format_log_value(body),
     )
 
@@ -112,7 +150,7 @@ def _log_connector_proxy_exception(
         operator_identifier,
         method,
         url,
-        _format_log_value(headers),
+        _format_log_value(_redact_sensitive_headers(headers)),
         _format_log_value(body),
         exception.__class__.__name__,
         exception,
@@ -120,6 +158,21 @@ def _log_connector_proxy_exception(
 
 
 class ServiceTaskDelegate:
+    @classmethod
+    def is_transient_error(cls, exception: Exception) -> bool:
+        if isinstance(exception, UncaughtServiceTaskError):
+            status_code = exception.status_code or 500
+            # 5xx are server errors, 429 is too many requests
+            return status_code >= 500 or status_code == 429
+        if isinstance(exception, WorkflowTaskException) and hasattr(exception, "exception") and exception.exception:
+            return cls.is_transient_error(exception.exception)
+        if isinstance(exception, requests.exceptions.RequestException):
+            # Most request exceptions (timeouts, connection errors) are transient
+            # but we exclude some like 4xx errors if they are wrapped here
+            return True
+        # General exceptions are treated as transient for retries if configured
+        return not isinstance(exception, ValueError | TypeError | KeyError | AttributeError)
+
     @classmethod
     def handle_template_substitutions(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -194,7 +247,7 @@ class ServiceTaskDelegate:
                 message_from_status_code,
                 f"The original message: {error['message']}",
             ]
-            raise UncaughtServiceTaskError(" ::: ".join(message))
+            raise UncaughtServiceTaskError(" ::: ".join(message), status_code=error["status_code"])
 
     @classmethod
     def check_for_errors(
@@ -206,15 +259,20 @@ class ServiceTaskDelegate:
         operator_identifier: str,
     ) -> None:
         base_error = None
-        if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
-            base_error = parsed_response["error"]
-        elif (
+        error_status_code = status_code
+        upstream_status = None
+        if (
             "command_response_version" in parsed_response
             and parsed_response.get("command_response_version", 0) > 1
             and isinstance(parsed_response.get("command_response"), dict)
-            and parsed_response["command_response"].get("http_status", 0) >= 300
         ):
-            upstream_status = parsed_response["command_response"]["http_status"]
+            upstream_status = parsed_response["command_response"].get("http_status")
+            if isinstance(upstream_status, int) and upstream_status >= 300:
+                error_status_code = upstream_status
+
+        if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
+            base_error = parsed_response["error"]
+        elif isinstance(upstream_status, int) and upstream_status >= 300:
             base_error = {
                 "error_code": f"ServiceTaskHttpError{upstream_status}",
                 "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
@@ -241,28 +299,34 @@ class ServiceTaskDelegate:
                 "error_code": base_error["error_code"],
                 "message": base_error["message"],
                 "operator_identifier": operator_identifier,
-                "status_code": status_code,
+                "status_code": error_status_code,
                 "command_response_body": response_text,
             }
             cls.catch_error_codes(spiff_task, error_dict)
 
     @classmethod
     def call_connector(
-        cls, operator_identifier: str, bpmn_params: Any, spiff_task: SpiffTask, process_instance_id: int | None
+        cls,
+        operator_identifier: str,
+        bpmn_params: Any,
+        spiff_task: SpiffTask,
+        process_instance_id: int | None,
+        process_model_identifier: str | None = None,
     ) -> str:
         call_url = f"{connector_proxy_url()}/v1/do/{operator_identifier}"
         request_method = "POST"
-        current_app.logger.info(f"Calling connector proxy using connector: {operator_identifier}")
+        current_app.logger.info(f"Calling service task connector: {operator_identifier}")
         task_data = spiff_task.data
         with sentry_sdk.start_span(op="connector_by_name", name=operator_identifier):
             with sentry_sdk.start_span(op="call-connector", name=call_url):
                 params = {k: cls.value_with_secrets_replaced(v["value"]) for k, v in bpmn_params.items()}
                 params["spiff__process_instance_id"] = process_instance_id
+                params["spiff__process_model_identifier"] = process_model_identifier
                 params["spiff__task_id"] = str(spiff_task.id)
                 params["spiff__task_data"] = task_data
-                api_path_prefix = current_app.config["SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX"]
-                params["spiff__callback_url"] = (
-                    f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}{api_path_prefix}/tasks/{process_instance_id}/{spiff_task.id}/callback"
+                params["spiff__callback_url"] = build_public_api_v1_url(
+                    current_app.config["SPIFFWORKFLOW_BACKEND_URL"],
+                    f"tasks/{process_instance_id}/{spiff_task.id}/callback",
                 )
                 params = DefaultRegistry().convert(params)
                 request_headers = connector_proxy_api_key_headers()
@@ -270,15 +334,26 @@ class ServiceTaskDelegate:
                 response_text = ""
                 status_code = 0
                 parsed_response: dict = {}
+                proxied_response: http_connector.HttpConnectorResponse | requests.Response
                 try:
                     if http_connector.does(operator_identifier):
+                        current_app.logger.info(
+                            "Calling embedded connector using connector: %s",
+                            operator_identifier,
+                        )
                         proxied_response = http_connector.do(operator_identifier, params)
                     else:
+                        current_app.logger.info(
+                            "Calling external connector proxy using connector: %s url: %s",
+                            operator_identifier,
+                            call_url,
+                        )
                         proxied_response = requests.post(
                             call_url,
                             json=params,
                             headers=request_headers,
                             timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+                            proxies=connector_proxy_request_proxies(),
                         )
 
                     status_code = proxied_response.status_code
@@ -343,22 +418,42 @@ class ServiceTaskDelegate:
 
 class ServiceTaskDelegateService:
     @staticmethod
+    def _internal_connectors() -> list[dict[str, Any]]:
+        return copy.deepcopy(http_connector.commands)
+
+    @staticmethod
+    def _with_internal_connectors(connectors: Any) -> list[dict[str, Any]]:
+        internal_connectors = ServiceTaskDelegateService._internal_connectors()
+        internal_connector_ids = {connector["id"] for connector in internal_connectors}
+
+        if not isinstance(connectors, list):
+            return internal_connectors
+
+        proxy_connectors = [
+            copy.deepcopy(connector)
+            for connector in connectors
+            if isinstance(connector, dict) and connector.get("id") not in internal_connector_ids
+        ]
+        return internal_connectors + proxy_connectors
+
+    @staticmethod
     def available_connectors() -> Any:
         try:
             response = safe_requests.get(
                 f"{connector_proxy_url()}/v1/commands",
                 headers=connector_proxy_api_key_headers(),
                 timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+                proxies=connector_proxy_request_proxies(),
             )
 
             if response.status_code != 200:
-                return []
+                return ServiceTaskDelegateService._internal_connectors()
 
             parsed_response = json.loads(response.text)
-            return parsed_response
+            return ServiceTaskDelegateService._with_internal_connectors(parsed_response)
         except Exception as e:
             current_app.logger.error(e)
-            return []
+            return ServiceTaskDelegateService._internal_connectors()
 
     @staticmethod
     def authentication_list() -> Any:
@@ -367,6 +462,7 @@ class ServiceTaskDelegateService:
                 f"{connector_proxy_url()}/v1/auths",
                 headers=connector_proxy_api_key_headers(),
                 timeout=HTTP_REQUEST_TIMEOUT_SECONDS,
+                proxies=connector_proxy_request_proxies(),
             )
 
             if response.status_code != 200:

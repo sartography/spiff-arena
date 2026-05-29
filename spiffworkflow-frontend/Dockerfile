@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.13.0-trixie-slim AS base
+FROM node:24.15.0-trixie-slim AS base
 
 RUN mkdir /app
 
@@ -10,7 +10,7 @@ WORKDIR /app
 # vim ftw
 RUN apt-get update \
   && apt-get clean -y \
-  && apt-get install -y -q \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
   curl \
   procps \
   vim-tiny \
@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 # Setup image for installing JS dependencies.
 FROM base AS setup
 
-COPY package.json package-lock.json /app/
+COPY package.json package-lock.json .npmrc /app/
 
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
@@ -42,7 +42,7 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29.5-alpine
+FROM nginx:1.29-alpine
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash

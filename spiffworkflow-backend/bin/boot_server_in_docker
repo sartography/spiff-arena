@@ -103,6 +103,21 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
   uv run python bin/refresh_all_caches.py
 fi
 
+if [[ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]]; then
+  if ! prometheus_multiproc_dir_resolved="$(realpath -m -- "$PROMETHEUS_MULTIPROC_DIR")"; then
+    echo >&2 "ERROR: PROMETHEUS_MULTIPROC_DIR could not be resolved safely: '$PROMETHEUS_MULTIPROC_DIR'. Refusing to remove it."
+    exit 1
+  fi
+
+  if [[ -z "$prometheus_multiproc_dir_resolved" ]] || [[ "$prometheus_multiproc_dir_resolved" == "/" ]] || [[ "${#prometheus_multiproc_dir_resolved}" -le 1 ]]; then
+    echo >&2 "ERROR: PROMETHEUS_MULTIPROC_DIR resolves to an unsafe path: '$prometheus_multiproc_dir_resolved'. Refusing to remove it."
+    exit 1
+  fi
+
+  rm -rf "$prometheus_multiproc_dir_resolved"
+  mkdir -p "$prometheus_multiproc_dir_resolved"
+fi
+
 log_info "Starting gunicorn server"
 # THIS MUST BE THE LAST COMMAND!
 # Run with gunicorn as per recommendation from uvicorn

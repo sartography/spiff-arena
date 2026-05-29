@@ -23,10 +23,8 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
-from spiffworkflow_backend.routes.process_api_blueprint import _un_modify_modified_process_model_id
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -101,7 +99,7 @@ def process_model_create(
 
     SpecFileService.update_file(process_model_info, f"{process_model_id_for_bpmn_file}.bpmn", contents.encode())
 
-    _commit_and_push_to_git(f"User: {g.user.username} created process model {process_model_info.id}")
+    GitService.commit_on_save(f"User: {g.user.username} created process model {process_model_info.id}")
     return make_response(jsonify(process_model_info.to_dict()), 201)
 
 
@@ -123,7 +121,7 @@ def process_model_delete(
             status_code=400,
         ) from exception
 
-    _commit_and_push_to_git(f"User: {g.user.username} deleted process model {process_model_identifier}")
+    GitService.commit_on_save(f"User: {g.user.username} deleted process model {process_model_identifier}")
     return make_response(jsonify({"ok": True}), 200)
 
 
@@ -166,7 +164,7 @@ def process_model_update(
         primary_file_contents = SpecFileService.get_data(process_model, process_model.primary_file_name)
         SpecFileService.update_file(process_model, process_model.primary_file_name, primary_file_contents)
 
-    _commit_and_push_to_git(f"User: {g.user.username} updated process model {process_model_identifier}")
+    GitService.commit_on_save(f"User: {g.user.username} updated process model {process_model_identifier}")
 
     if "metadata_extraction_paths" in body_filtered:
         try:
@@ -226,14 +224,16 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 
 
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
-    original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    original_process_model_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
-    _commit_and_push_to_git(f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}")
+    GitService.commit_on_save(
+        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
+    )
     return make_response(jsonify(new_process_model), 200)
 
 
 def process_model_copy(modified_process_model_identifier: str, body: dict[str, str]) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
 
     # Generate default display name from last segment of ID if not provided
     display_name = body.get("display_name")
@@ -241,7 +241,9 @@ def process_model_copy(modified_process_model_identifier: str, body: dict[str, s
         display_name = body["id"].split("/")[-1]
 
     new_process_model = ProcessModelService.copy_process_model(process_model_identifier, body["id"], display_name)
-    _commit_and_push_to_git(f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}")
+    GitService.commit_on_save(
+        f"User: {g.user.username} copied process model {process_model_identifier} to {new_process_model.id}"
+    )
 
     # Update the process model cache for the new copied model
     DataSetupService.refresh_single_process_model_cache(new_process_model.id)
@@ -256,7 +258,7 @@ def process_model_publish(modified_process_model_identifier: str, branch_to_upda
         raise MissingGitConfigsError(
             "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. This is required for publishing process models"
         )
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     pr_url = GitService().publish(process_model_identifier, branch_to_update)
     data = {"ok": True, "pr_url": pr_url}
     return make_response(jsonify(data), 200)
@@ -340,7 +342,7 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
             )
         ) from exception
 
-    _commit_and_push_to_git(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
+    GitService.commit_on_save(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
     return make_response(jsonify({"ok": True}), 200)
 
 
@@ -525,7 +527,7 @@ def process_model_create_with_natural_language(modified_process_group_id: str, b
     for file_name, contents in files_to_update.items():
         SpecFileService.update_file(process_model_info, file_name, contents)
 
-    _commit_and_push_to_git(f"User: {g.user.username} created process model via natural language: {process_model_info.id}")
+    GitService.commit_on_save(f"User: {g.user.username} created process model via natural language: {process_model_info.id}")
 
     default_report_metadata = ProcessInstanceReportService.system_metadata_map("default")
     if default_report_metadata is None:
@@ -562,7 +564,7 @@ def _get_process_group_from_modified_identifier(
             status_code=400,
         )
 
-    unmodified_process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    unmodified_process_group_id = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_group_id)
     process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
@@ -634,7 +636,7 @@ def _create_or_update_process_model_file(
     file.process_model_id = process_model.id
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
-    _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
+    GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):
         DataSetupService.refresh_single_process_model_cache(process_model_identifier)
@@ -658,7 +660,7 @@ def process_model_validate(
 def process_model_milestone_list(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     process_model = _get_process_model(process_model_identifier)
 
     files = ProcessModelService.get_process_model_files(process_model)
@@ -668,7 +670,7 @@ def process_model_milestone_list(
 
 
 def get_human_task_definitions(modified_process_model_identifier: str) -> flask.wrappers.Response:
-    process_model_identifier = _un_modify_modified_process_model_id(modified_process_model_identifier)
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
     bpmn_definition_to_task_definitions_mappings: dict = {}
     BpmnProcessService.persist_bpmn_process_definition(process_model_identifier, bpmn_definition_to_task_definitions_mappings)
     human_tasks = BpmnProcessService.extract_human_task_definitions(bpmn_definition_to_task_definitions_mappings)

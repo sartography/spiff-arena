@@ -18,7 +18,7 @@
 2. Under _Platform configurations,_ select "+ Add a platform"
 3. In the pane that opens, select _Web_.
 4. Under _Redirect URIs,_ add `http://localhost:8000/v1.0/login_return`
-5. Leave _Front-chanel logout URL_ blank.
+5. Leave _Front-channel logout URL_ blank.
 6. Leave the checkboxes unchecked under _Implicit grant and hybrid flows._
 7. Click _Configure._
 
@@ -51,7 +51,7 @@ The basic steps are:
 
 For more information about these settings read the [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims?tabs=appui#configure-groups-optional-claims)
 
-## Configure Spiff Workflow
+## Configure SpiffWorkflow Backend
 
 Set the following environment variables on your SpiffWorkflow backend server to connect with your Azure Entra instance:
 
@@ -59,7 +59,7 @@ Set the following environment variables on your SpiffWorkflow backend server to 
 # OpenID Server URL
 SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=https://login.microsoftonline.com/<YOUR_DIRECTORY_(TENANT)_ID>
 
-# Client ID and Secret Key from Okta
+# Client ID and Secret Key from Azure Entra
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID=<YOUR_CLIENT_ID>
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY=<YOUR_CLIENT_SECRET_KEY>
 

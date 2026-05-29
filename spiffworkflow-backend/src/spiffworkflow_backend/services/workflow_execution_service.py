@@ -28,10 +28,10 @@ from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin
 from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
-from SpiffWorkflow.bpmn.specs.mixins.events.event_types import CatchingEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.intermediate_event import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskFilter  # type: ignore
 from SpiffWorkflow.util.task import TaskState
@@ -53,6 +53,8 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
+from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
+from spiffworkflow_backend.services.custom_service_task import RetryScheduledError
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -173,11 +175,31 @@ class ExecutionStrategy:
 
             return spiff_task
 
+    def _run_and_did_complete(
+        self,
+        spiff_task: SpiffTask,
+        app: flask.app.Flask | None = None,
+        user: Any | None = None,
+        process_model_identifier: str | None = None,
+        process_instance_id: int | None = None,
+    ) -> None:
+        try:
+            if app is None:
+                spiff_task.run()
+            else:
+                if process_model_identifier is None or process_instance_id is None:
+                    raise ValueError("process_model_identifier and process_instance_id are required when app is provided.")
+                self._run(spiff_task, app, user, process_model_identifier, process_instance_id)
+        except RetryScheduledError:
+            return
+
+        self.delegate.did_complete_task(spiff_task)
+
     def spiff_run(
         self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
     ) -> TaskRunnability:
         while True:
-            bpmn_process_instance.refresh_waiting_tasks()
+            bpmn_process_instance.refresh_due_waiting_tasks()
             self.should_do_before(bpmn_process_instance, process_instance_model)
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
@@ -190,8 +212,7 @@ class ExecutionStrategy:
             elif num_steps == 1:
                 spiff_task = engine_steps[0]
                 self.delegate.will_complete_task(spiff_task)
-                spiff_task.run()
-                self.delegate.did_complete_task(spiff_task)
+                self._run_and_did_complete(spiff_task)
             elif num_steps > 1:
                 user = None
                 if hasattr(g, "user"):
@@ -290,6 +311,8 @@ class ExecutionStrategy:
                 try:
                     spiff_task = future.result()
                     completed_tasks.append(spiff_task)
+                except RetryScheduledError:
+                    pass
                 except Exception as exception:
                     failed_task = future_to_task[id(future)]
                     task_info = (
@@ -321,14 +344,13 @@ class ExecutionStrategy:
     ) -> None:
         for spiff_task in engine_steps:
             self.delegate.will_complete_task(spiff_task)
-            self._run(
+            self._run_and_did_complete(
                 spiff_task,
                 current_app._get_current_object(),
                 user,
                 process_instance.process_model_identifier,
                 process_instance.id,
             )
-            self.delegate.did_complete_task(spiff_task)
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):
@@ -585,6 +607,7 @@ class WorkflowExecutionService:
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.process_instance_saver = process_instance_saver
+        self.new_waiting_message_names: set[str] = set()
 
     # names of methods that do spiff stuff:
     # processor.do_engine_steps calls:
@@ -620,6 +643,7 @@ class WorkflowExecutionService:
         should_schedule_waiting_timer_events: bool = True,
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
+        self.new_waiting_message_names = set()
         if needs_dequeue and self.process_instance_model.persistence_level != "none":
             with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
                 if tripped:
@@ -628,7 +652,7 @@ class WorkflowExecutionService:
                         f" instance ({self.process_instance_model.id})."
                     )
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
+            self.refresh_due_service_task_retries()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
             task_runnability = self.execution_strategy.spiff_run(
@@ -639,7 +663,7 @@ class WorkflowExecutionService:
                 self.process_instance_completer(self.bpmn_process_instance)
 
             self.process_bpmn_events()
-            self.queue_waiting_receive_messages()
+            self.new_waiting_message_names = self.queue_waiting_receive_messages()
             return task_runnability
         except WorkflowTaskException as wte:
             ProcessInstanceTmpService.add_event_to_process_instance(
@@ -663,6 +687,20 @@ class WorkflowExecutionService:
                     if should_schedule_waiting_timer_events:
                         self.schedule_waiting_timer_events()
 
+    def refresh_due_service_task_retries(self) -> None:
+        current_time = round(time.time())
+        for spiff_task in self.bpmn_process_instance.get_tasks(state=TaskState.STARTED):
+            if not isinstance(spiff_task.task_spec, ServiceTask):
+                continue
+
+            retry_at = spiff_task.internal_data.get("spiff__retry_at")
+            if retry_at is not None and int(retry_at) <= current_time:
+                if isinstance(spiff_task.task_spec, CustomServiceTask):
+                    spiff_task.task_spec.consume_scheduled_retry(spiff_task)
+                else:
+                    spiff_task.internal_data.pop("spiff__retry_at", None)
+                spiff_task._set_state(TaskState.READY)
+
     def is_happening_soon(self, time_in_seconds: int) -> bool:
         # if it is supposed to happen in less than the amount of time we take between polling runs
         return time_in_seconds - time.time() < int(
@@ -672,12 +710,20 @@ class WorkflowExecutionService:
     def schedule_waiting_timer_events(self) -> None:
         # TODO: update to always insert records so we can remove user_input_required and possibly waiting apscheduler jobs
         if current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"]:
-            waiting_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING, spec_class=CatchingEvent)
-            for spiff_task in waiting_tasks:
-                event = spiff_task.task_spec.event_definition.details(spiff_task)
-                if "Time" in event.event_type:
-                    time_string = event.value
-                    run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+            # Check for waiting tasks AND started service tasks with retry_at
+            relevant_tasks = self.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.STARTED)
+            for spiff_task in relevant_tasks:
+                run_at_in_seconds = None
+                if spiff_task.state == TaskState.WAITING and hasattr(spiff_task.task_spec, "event_definition"):
+                    event = spiff_task.task_spec.event_definition.details(spiff_task)
+                    if "Time" in event.event_type:
+                        time_string = event.value
+                        run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+
+                if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.internal_data:
+                    run_at_in_seconds = spiff_task.internal_data["spiff__retry_at"]
+
+                if run_at_in_seconds is not None:
                     queued_to_run_at_in_seconds = None
                     if self.is_happening_soon(run_at_in_seconds):
                         if queue_future_task_if_appropriate(
@@ -732,9 +778,10 @@ class WorkflowExecutionService:
                 bpmn_process.properties_json["bpmn_events"] = []
                 db.session.add(bpmn_process)
 
-    def queue_waiting_receive_messages(self) -> None:
+    def queue_waiting_receive_messages(self) -> set[str]:
         waiting_events = self.bpmn_process_instance.waiting_events()
         waiting_message_events = list(filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events))
+        new_waiting_message_names: set[str] = set()
 
         waiting_message_names = {event.name for event in waiting_message_events}
 
@@ -758,6 +805,7 @@ class WorkflowExecutionService:
                 continue
 
             # Create a new Message Instance
+            new_waiting_message_names.add(event.name)
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
                 user_id=self.process_instance_model.process_initiator_id,
@@ -781,3 +829,5 @@ class WorkflowExecutionService:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
                 db.session.add(bpmn_process)
+
+        return new_waiting_message_names

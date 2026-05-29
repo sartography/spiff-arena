@@ -266,7 +266,7 @@ class BaseTest:
         because of permissions, user might be required now..., not sure yet.
         """
         if process_model_location is None:
-            process_model_location = file_name.split(".")[0]
+            process_model_location = file_name.split(".", maxsplit=1)[0]
         if process_model is None:
             process_model = load_test_spec(
                 process_model_id=process_model_id,
@@ -626,6 +626,8 @@ class BaseTest:
     def copy_example_process_models() -> None:
         source = os.path.abspath(os.path.join(FileSystemService.root_path(), "..", "..", "..", "process_models_example_dir"))
         destination = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        if os.path.exists(destination):
+            shutil.rmtree(destination)
         shutil.copytree(source, destination)
 
     def round_last_state_change(self, bpmn_process_dict: dict | list) -> None:

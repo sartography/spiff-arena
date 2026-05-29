@@ -148,6 +148,9 @@ def login_return(
     error_description: str | None = None,
     session_state: str = "",
 ) -> Response | None:
+    # Some OpenID providers include this callback parameter, but we do not need it.
+    del session_state
+
     if error:
         return make_response(render_template("login_error.html", error=error, error_description=error_description), 401)
 
@@ -190,7 +193,6 @@ def login_return(
 
     else:
         # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
-        current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
             error_code="missing_token",
             message="Login failed. Please try again",
@@ -199,7 +201,20 @@ def login_return(
 
 
 # FIXME: share more code with login_return and maybe attempt to get a refresh token
-def login_with_access_token(access_token: str, authentication_identifier: str) -> Response:
+def login_with_access_token(authentication_identifier: str) -> Response:
+    access_token = None
+    authorization_header = request.headers.get("Authorization", "")
+    bearer_prefix = "Bearer "
+    if authorization_header.startswith(bearer_prefix):
+        access_token = authorization_header[len(bearer_prefix) :]
+
+    if not access_token:
+        raise ApiError(
+            error_code="missing_token",
+            message="Login failed. Please try again",
+            status_code=401,
+        )
+
     decoded_token = _get_decoded_token(access_token)
 
     if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
@@ -444,7 +459,6 @@ def _get_decoded_token(token: str) -> dict:
     if "iss" in decoded_token:
         return decoded_token
     else:
-        current_app.logger.error(f"Unknown token type in get_decoded_token: token: {token}")
         raise ApiError(
             error_code="unknown_token",
             message="Unknown token type in get_decoded_token",

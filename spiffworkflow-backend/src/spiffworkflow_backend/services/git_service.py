@@ -2,7 +2,13 @@ import os
 import re
 import shutil
 import subprocess  # noqa we need the subprocess module to safely run the git commands
+import threading
+import time
 import uuid
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any
+from typing import ClassVar
 
 from flask import current_app
 from flask import g
@@ -31,12 +37,39 @@ class GitCommandError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class WebhookSyncDetails:
+    ref: str
+    after: str
+    git_branch: str
+
+
 # TOOD: check for the existence of git and configs on bootup if publishing is enabled
 class GitService:
+    _CURRENT_REVISION_CACHE: ClassVar[dict[tuple[str, bool], tuple[float, str]]] = {}
+    _CURRENT_REVISION_CACHE_LOCK: ClassVar[threading.Lock] = threading.Lock()
+
     @classmethod
     def get_current_revision(cls, short_rev: bool = True) -> str:
         bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        ttl_seconds = float(current_app.config["SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS"])
+        cache_key = (bpmn_spec_absolute_dir, short_rev)
 
+        if ttl_seconds > 0:
+            now = time.monotonic()
+            with cls._CURRENT_REVISION_CACHE_LOCK:
+                cached_revision = cls._CURRENT_REVISION_CACHE.get(cache_key)
+                if cached_revision is not None and cached_revision[0] > now:
+                    return cached_revision[1]
+
+                current_revision = cls._get_current_revision_uncached(bpmn_spec_absolute_dir, short_rev)
+                cls._CURRENT_REVISION_CACHE[cache_key] = (time.monotonic() + ttl_seconds, current_revision)
+                return current_revision
+
+        return cls._get_current_revision_uncached(bpmn_spec_absolute_dir, short_rev)
+
+    @classmethod
+    def _get_current_revision_uncached(cls, bpmn_spec_absolute_dir: str, short_rev: bool) -> str:
         git_command = ["rev-parse"]
         if short_rev:
             git_command.append("--short")
@@ -44,6 +77,11 @@ class GitService:
 
         # The value includes a carriage return character at the end, so we don't grab the last character
         return cls.run_shell_command_to_get_stdout(git_command, context_directory=bpmn_spec_absolute_dir)
+
+    @classmethod
+    def clear_current_revision_cache(cls) -> None:
+        with cls._CURRENT_REVISION_CACHE_LOCK:
+            cls._CURRENT_REVISION_CACHE.clear()
 
     @classmethod
     def get_instance_file_contents_for_revision(
@@ -115,7 +153,17 @@ class GitService:
             message,
             branch_name_to_use,
         ]
-        return cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
+        result = cls.run_shell_command_to_get_stdout(shell_command, prepend_with_git=False)
+        cls.clear_current_revision_cache()
+        return result
+
+    @classmethod
+    def commit_on_save(cls, message: str) -> None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:
+            git_output = cls.commit(message=message)
+            current_app.logger.info(f"git output: {git_output}")
+        else:
+            current_app.logger.info("Git commit on save is disabled")
 
     @classmethod
     def check_for_basic_configs(cls, raise_on_missing: bool = True) -> bool:
@@ -206,14 +254,12 @@ class GitService:
 
         return result
 
-    # only supports github right now
     @classmethod
-    def handle_web_hook(cls, webhook: dict) -> bool:
+    def _validate_webhook_repo_matches_origin(cls, webhook: Mapping[str, Any], bpmn_spec_absolute_dir: str) -> None:
         if "repository" not in webhook or "clone_url" not in webhook["repository"]:
             raise InvalidGitWebhookBodyError(f"Cannot find required keys of 'repository:clone_url' from webhook body: {webhook}")
         repo = webhook["repository"]
         valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
-        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         config_clone_url = cls.run_shell_command_to_get_stdout(
             ["config", "--get", "remote.origin.url"], context_directory=bpmn_spec_absolute_dir
         )
@@ -222,36 +268,124 @@ class GitService:
                 f"Configured clone url does not match the repo URLs from webhook: {config_clone_url} =/= {valid_clone_urls}"
             )
 
+    @classmethod
+    def _get_worktree_status(cls, context_directory: str) -> str:
+        return cls.run_shell_command_to_get_stdout(["status", "--porcelain"], context_directory=context_directory)
+
+    @classmethod
+    def _validate_and_extract_webhook(cls, webhook: Mapping[str, Any]) -> WebhookSyncDetails | None:
+        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        cls._validate_webhook_repo_matches_origin(webhook, bpmn_spec_absolute_dir)
+
         # Test webhook requests have a zen koan and hook info.
         if "zen" in webhook or "hook_id" in webhook:
-            return False
+            return None
 
         if "ref" not in webhook:
             raise InvalidGitWebhookBodyError(f"Could not find the 'ref' arg in the webhook body: {webhook}")
         if "after" not in webhook:
             raise InvalidGitWebhookBodyError(f"Could not find the 'after' arg in the webhook body: {webhook}")
 
-        git_revision_before_pull = cls.get_current_revision(short_rev=False)
-        git_revision_after = webhook["after"]
-        if git_revision_before_pull == git_revision_after:
-            current_app.logger.info("Skipping git pull because we already have the current git revision, git boy!")
-            return True
-
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
+        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
+        if git_branch is None:
             raise MissingGitConfigsError(
                 "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is"
                 " required for updating the repository as a result of the webhook"
             )
 
-        ref = webhook["ref"]
-        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
-        if ref != f"refs/heads/{git_branch}":
+        return WebhookSyncDetails(ref=webhook["ref"], after=webhook["after"], git_branch=git_branch)
+
+    @classmethod
+    def _preserve_local_state_before_force_sync(
+        cls,
+        context_directory: str,
+        current_revision: str,
+        target_revision: str,
+        worktree_status: str,
+    ) -> None:
+        backup_suffix = uuid.uuid4().hex[:8]
+        if worktree_status:
+            stash_name = f"spiff-force-sync-stash-{backup_suffix}"
+            current_app.logger.warning("Stashing local git changes before force sync to %s", target_revision)
+            cls.run_shell_command(
+                ["stash", "push", "--include-untracked", "--message", stash_name],
+                context_directory=context_directory,
+            )
+            current_app.logger.warning("Created git stash '%s' before force sync", stash_name)
+
+        if current_revision != target_revision and not cls.run_shell_command_as_boolean(
+            ["merge-base", "--is-ancestor", current_revision, target_revision],
+            context_directory=context_directory,
+        ):
+            backup_branch = f"spiff-force-sync-backup-{current_revision[:12]}-{backup_suffix}"
+            cls.run_shell_command(["branch", backup_branch, current_revision], context_directory=context_directory)
+            current_app.logger.warning(
+                "Created backup branch '%s' before force sync from %s to %s",
+                backup_branch,
+                current_revision,
+                target_revision,
+            )
+
+    # only supports github right now
+    @classmethod
+    def handle_web_hook(cls, webhook: Mapping[str, Any]) -> bool:
+        webhook_details = cls._validate_and_extract_webhook(webhook)
+        if webhook_details is None:
+            return False
+
+        git_revision_before_pull = cls.get_current_revision(short_rev=False)
+        git_revision_after = webhook_details.after
+        if git_revision_before_pull == git_revision_after:
+            current_app.logger.info("Skipping git pull because we already have the current git revision, git boy!")
+            return True
+
+        if webhook_details.ref != f"refs/heads/{webhook_details.git_branch}":
             return False
 
         cls.run_shell_command(
             ["pull", "--rebase"], context_directory=current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         )
+        cls.clear_current_revision_cache()
         DataSetupService.refresh_process_model_caches()
+        return True
+
+    @classmethod
+    def force_sync_to_webhook_revision(cls, webhook: Mapping[str, Any]) -> bool:
+        bpmn_spec_absolute_dir = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        webhook_details = cls._validate_and_extract_webhook(webhook)
+        if webhook_details is None:
+            return False
+
+        if webhook_details.ref != f"refs/heads/{webhook_details.git_branch}":
+            return False
+
+        git_revision_before_sync = cls.get_current_revision(short_rev=False)
+        git_revision_after = webhook_details.after
+        worktree_status = cls._get_worktree_status(bpmn_spec_absolute_dir)
+        if git_revision_before_sync == git_revision_after and worktree_status == "":
+            current_app.logger.info(
+                "Skipping git force sync because we already have the current git revision and the working tree is clean."
+            )
+            return True
+
+        current_app.logger.info(
+            "Force syncing process models from branch '%s' to revision '%s'",
+            webhook_details.git_branch,
+            git_revision_after,
+        )
+        cls.run_shell_command(["fetch", "origin", webhook_details.git_branch], context_directory=bpmn_spec_absolute_dir)
+        cls._preserve_local_state_before_force_sync(
+            bpmn_spec_absolute_dir, git_revision_before_sync, git_revision_after, worktree_status
+        )
+        cls.run_shell_command(["reset", "--hard", git_revision_after], context_directory=bpmn_spec_absolute_dir)
+        cls.run_shell_command(["clean", "-fd"], context_directory=bpmn_spec_absolute_dir)
+        cls.clear_current_revision_cache()
+        DataSetupService.refresh_process_model_caches()
+        current_app.logger.info(
+            "Force sync completed for branch '%s' at revision '%s'",
+            webhook_details.git_branch,
+            git_revision_after,
+        )
         return True
 
     @classmethod

@@ -3,6 +3,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.user import UserModel
@@ -21,7 +22,9 @@ class SecretServiceTestHelpers(BaseTest):
     test_process_model_description = "Om nom nom delicious cookies"
 
     def add_test_secret(self, user: UserModel) -> SecretModel:
-        return SecretService().add_secret(self.test_key, self.test_value, user.id)
+        secret = SecretService().add_secret(self.test_key, self.test_value, user.id)
+        db.session.commit()
+        return secret
 
     def add_test_process(self, client: TestClient, user: UserModel) -> ProcessModelInfo:
         self.create_process_group_with_api(
@@ -55,6 +58,24 @@ class TestSecretService(SecretServiceTestHelpers):
         assert test_secret.key == self.test_key
         assert SecretService._decrypt(test_secret.value) == self.test_value
         assert test_secret.user_id == with_super_admin_user.id
+
+    def test_add_secret_does_not_commit(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        commit_calls: list[None] = []
+
+        def fake_commit() -> None:
+            commit_calls.append(None)
+
+        monkeypatch.setattr(db.session, "commit", fake_commit)
+
+        SecretService.add_secret(self.test_key, self.test_value, with_super_admin_user.id)
+
+        assert commit_calls == []
 
     def test_add_secret_duplicate_key_fails(
         self,
@@ -107,6 +128,25 @@ class TestSecretService(SecretServiceTestHelpers):
         assert new_secret
         assert SecretService._decrypt(new_secret.value) == "new_secret_value"  # noqa: S105
 
+    def test_update_secret_does_not_commit(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.add_test_secret(with_super_admin_user)
+        commit_calls: list[None] = []
+
+        def fake_commit() -> None:
+            commit_calls.append(None)
+
+        monkeypatch.setattr(db.session, "commit", fake_commit)
+
+        SecretService.update_secret(self.test_key, "new_secret_value", with_super_admin_user.id)
+
+        assert commit_calls == []
+
     def test_update_secret_bad_secret_fails(
         self,
         app: Flask,
@@ -135,6 +175,25 @@ class TestSecretService(SecretServiceTestHelpers):
         SecretService.delete_secret(self.test_key, with_super_admin_user.id)
         secrets = SecretModel.query.all()
         assert len(secrets) == 0
+
+    def test_delete_secret_does_not_commit(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.add_test_secret(with_super_admin_user)
+        commit_calls: list[None] = []
+
+        def fake_commit() -> None:
+            commit_calls.append(None)
+
+        monkeypatch.setattr(db.session, "commit", fake_commit)
+
+        SecretService.delete_secret(self.test_key, with_super_admin_user.id)
+
+        assert commit_calls == []
 
     def test_delete_secret_bad_secret_fails(
         self,

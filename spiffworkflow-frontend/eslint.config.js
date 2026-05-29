@@ -1,4 +1,5 @@
 import { FlatCompat } from '@eslint/eslintrc';
+import { fixupConfigRules } from '@eslint/compat';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import tseslint from 'typescript-eslint';
@@ -12,7 +13,7 @@ const compat = new FlatCompat({
 });
 
 export default tseslint.config(
-  ...compat.config({
+  ...fixupConfigRules(compat.config({
     settings: {
       react: {
         createClass: 'createReactClass', // Regex for Component Factory to use,
@@ -29,9 +30,9 @@ export default tseslint.config(
     },
     ignorePatterns: ['src/rjsf/carbon_theme/**/*'],
     extends: [
-      'plugin:import/errors',
-      'plugin:import/typescript',
-      'plugin:import/warnings',
+      'plugin:import-x/errors',
+      'plugin:import-x/typescript',
+      'plugin:import-x/warnings',
       'plugin:prettier/recommended',
       'plugin:react-hooks/recommended',
       'plugin:react/recommended',
@@ -54,6 +55,20 @@ export default tseslint.config(
       '@typescript-eslint/no-shadow': ['error'],
       'jest/expect-expect': 'off',
       'react/jsx-no-bind': 'off',
+      'react-hooks/config': 'off',
+      'react-hooks/error-boundaries': 'off',
+      'react-hooks/gating': 'off',
+      'react-hooks/globals': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/incompatible-library': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/set-state-in-render': 'off',
+      'react-hooks/static-components': 'off',
+      'react-hooks/unsupported-syntax': 'off',
+      'react-hooks/use-memo': 'off',
       // FIXME: turn this back on someday
       'react/jsx-key': 'off',
       'jsx-a11y/no-autofocus': 'off',
@@ -65,7 +80,7 @@ export default tseslint.config(
       ],
       'react/react-in-jsx-scope': 'off',
       'react/require-default-props': 'off',
-      'import/prefer-default-export': 'off',
+      'import-x/prefer-default-export': 'off',
       'no-unused-vars': 'off',
       'sonarjs/cognitive-complexity': 'off',
       'sonarjs/fixme-tag': 'off',
@@ -92,7 +107,7 @@ export default tseslint.config(
           ignoreRestSiblings: true,
         },
       ],
-      'import/extensions': [
+      'import-x/extensions': [
         'error',
         'ignorePackages',
         {
@@ -112,5 +127,5 @@ export default tseslint.config(
         },
       },
     ],
-  }),
+  })),
 );

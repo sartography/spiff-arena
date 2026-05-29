@@ -72,9 +72,10 @@ export interface BpmnEditorCallbacks {
  * ```
  */
 export function useBpmnEditorCallbacks(
-  options: UseBpmnEditorCallbacksOptions
+  options: UseBpmnEditorCallbacksOptions,
 ): BpmnEditorCallbacks {
-  const { apiService, processModel, canAccessMessages, messageModelListPath } = options;
+  const { apiService, processModel, canAccessMessages, messageModelListPath } =
+    options;
 
   /**
    * Handle service tasks requested event
@@ -98,7 +99,7 @@ export function useBpmnEditorCallbacks(
           console.error('Error fetching service tasks:', error);
         });
     },
-    [apiService]
+    [apiService],
   );
 
   /**
@@ -126,7 +127,7 @@ export function useBpmnEditorCallbacks(
           console.error('Error fetching data stores:', error);
         });
     },
-    [apiService, processModel?.parent_groups]
+    [apiService, processModel?.parent_groups],
   );
 
   /**
@@ -135,18 +136,22 @@ export function useBpmnEditorCallbacks(
    */
   const onJsonSchemaFilesRequested = useCallback(
     (event: any) => {
-      const re = /.*[-.]schema.json/;
       if (processModel?.files) {
-        const jsonFiles = processModel.files.filter((f) => f.name.match(re));
+        const jsonFiles = processModel.files.filter(
+          (f) =>
+            f.name.endsWith('-schema.json') || f.name.endsWith('.schema.json'),
+        );
         const options = jsonFiles.map((f) => {
           return { label: f.name, value: f.name };
         });
         event.eventBus.fire('spiff.json_schema_files.returned', { options });
       } else {
-        console.warn('Process model or files not available for JSON schema request');
+        console.warn(
+          'Process model or files not available for JSON schema request',
+        );
       }
     },
-    [processModel?.files]
+    [processModel?.files],
   );
 
   /**
@@ -168,7 +173,7 @@ export function useBpmnEditorCallbacks(
         console.warn('Process model or files not available for DMN request');
       }
     },
-    [processModel?.files]
+    [processModel?.files],
   );
 
   /**
@@ -198,7 +203,7 @@ export function useBpmnEditorCallbacks(
           console.error('Error fetching messages:', error);
         });
     },
-    [apiService, canAccessMessages, messageModelListPath]
+    [apiService, canAccessMessages, messageModelListPath],
   );
 
   return {
@@ -217,7 +222,7 @@ export function useBpmnEditorCallbacks(
 export function findFileNameForReferenceId(
   processModel: ProcessModel | null | undefined,
   id: string,
-  type: string
+  type: string,
 ): ProcessFile | null {
   if (!processModel?.files) {
     return null;

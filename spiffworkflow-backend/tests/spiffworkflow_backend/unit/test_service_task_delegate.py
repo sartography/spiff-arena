@@ -11,14 +11,17 @@ from spiffworkflow_connector_command.command_interface import CommandResponseDic
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 from sqlalchemy import and_
 
+from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.service_task_delegate import _redact_sensitive_headers
 from spiffworkflow_backend.services.service_task_delegate import connector_proxy_api_key_headers
 from spiffworkflow_backend.services.service_task_delegate import logger as service_task_logger
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
@@ -383,6 +386,25 @@ class TestServiceTaskDelegate(BaseTest):
             result = connector_proxy_api_key_headers()
             assert result == {"Spiff-Connector-Proxy-Api-Key": "my-secret-key"}
 
+    def test_connector_proxy_request_proxies_returns_none_when_not_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL", None):
+            result = connector_proxy_request_proxies()
+            assert result is None
+
+    def test_connector_proxy_request_proxies_returns_http_and_https_proxy(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with self.app_config_mock(
+            app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL", "http://excellent-test-proxy:3128"
+        ):
+            result = connector_proxy_request_proxies()
+            assert result == {
+                "http": "http://excellent-test-proxy:3128",
+                "https": "http://excellent-test-proxy:3128",
+            }
+
     def test_call_connector_sends_api_key_header_when_configured(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
@@ -413,6 +435,43 @@ class TestServiceTaskDelegate(BaseTest):
                 _, call_kwargs = mock_post.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
 
+    def test_call_connector_uses_connector_proxy_http_proxy_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        spiff_task = processor.next_task()
+
+        command_response: CommandResponseDict = {
+            "body": json.dumps({"we_did_it": True}),
+            "mimetype": "application/json",
+        }
+        connector_response: ConnectorProxyResponseDict = {
+            "command_response": command_response,
+            "error": None,
+            "command_response_version": 2,
+        }
+
+        with self.app_config_mock(
+            app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL", "http://excellent-test-proxy:3128"
+        ):
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 200
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps(connector_response)
+                ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
+                _, call_kwargs = mock_post.call_args
+                assert call_kwargs.get("proxies") == {
+                    "http": "http://excellent-test-proxy:3128",
+                    "https": "http://excellent-test-proxy:3128",
+                }
+
     def test_available_connectors_sends_api_key_header_when_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
@@ -427,6 +486,50 @@ class TestServiceTaskDelegate(BaseTest):
                 _, call_kwargs = mock_safe_requests.get.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
 
+    def test_available_connectors_uses_connector_proxy_http_proxy_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "connector1"}])
+
+        with self.app_config_mock(
+            app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL", "http://excellent-test-proxy:3128"
+        ):
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+                mock_safe_requests.get.return_value = mock_response
+                ServiceTaskService.available_connectors()
+                _, call_kwargs = mock_safe_requests.get.call_args
+                assert call_kwargs.get("proxies") == {
+                    "http": "http://excellent-test-proxy:3128",
+                    "https": "http://excellent-test-proxy:3128",
+                }
+
+    def test_available_connectors_includes_internal_http_connectors(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "connector1"}])
+
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.return_value = mock_response
+            available_connectors = ServiceTaskService.available_connectors()
+
+        available_connector_ids = {connector["id"] for connector in available_connectors}
+        internal_connector_ids = {connector["id"] for connector in http_connector.commands}
+        assert internal_connector_ids.issubset(available_connector_ids)
+        assert "connector1" in available_connector_ids
+
+    def test_available_connectors_returns_internal_http_connectors_when_connector_proxy_is_unavailable(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.side_effect = Exception("connection refused")
+            available_connectors = ServiceTaskService.available_connectors()
+
+        assert available_connectors == http_connector.commands
+
     def test_authentication_list_sends_api_key_header_when_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
@@ -440,6 +543,25 @@ class TestServiceTaskDelegate(BaseTest):
                 ServiceTaskService.authentication_list()
                 _, call_kwargs = mock_safe_requests.get.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
+
+    def test_authentication_list_uses_connector_proxy_http_proxy_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "auth1"}])
+
+        with self.app_config_mock(
+            app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL", "http://excellent-test-proxy:3128"
+        ):
+            with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+                mock_safe_requests.get.return_value = mock_response
+                ServiceTaskService.authentication_list()
+                _, call_kwargs = mock_safe_requests.get.call_args
+                assert call_kwargs.get("proxies") == {
+                    "http": "http://excellent-test-proxy:3128",
+                    "https": "http://excellent-test-proxy:3128",
+                }
 
     def test_complete_waiting_callback_completes_process(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
@@ -489,3 +611,25 @@ class TestServiceTaskDelegate(BaseTest):
             f"Expected to find '{contains_message}' in: {response_text}"
         )
         assert bool(re.search(rf"\b{status_code}\b", response_text)), f"Expected to find '{status_code}' in: {response_text}"
+
+
+def test_redact_sensitive_headers_redacts_sensitive_variants() -> None:
+    headers = {
+        "Authorization": "Bearer secret-token",
+        "Cookie": "session=abc123",
+        "Set-Cookie": "session=abc123; HttpOnly",
+        "X-Auth-Token": "auth-token-value",
+        "X-Amz-Security-Token": "aws-session-token",
+        "X-Goog-Api-Key": "google-api-key",
+        "Content-Type": "application/json",
+    }
+
+    assert _redact_sensitive_headers(headers) == {
+        "Authorization": "<redacted>",
+        "Cookie": "<redacted>",
+        "Set-Cookie": "<redacted>",
+        "X-Auth-Token": "<redacted>",
+        "X-Amz-Security-Token": "<redacted>",
+        "X-Goog-Api-Key": "<redacted>",
+        "Content-Type": "application/json",
+    }

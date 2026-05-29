@@ -135,9 +135,13 @@ These are the schema definitions returned by async-http and should be treated as
 - `params` *(optional, any/object)* — Query string parameters
 
 ### DELETE / PATCH / POST / PUT commands
-- `data` *(optional, any/object)* — JSON request body
+- `data` *(optional, any/object)* — request body.
+- `body_format` *(optional, string)* — how to send `data`; defaults to `json`. Supported values are `json`, `form`, `raw`, and `none`.
+- `include_response_headers` *(optional, boolean)* — when true, include upstream response headers in `command_response.headers`.
 
 > **Note:** In this example, `DeleteRequest` is advertised with `data` (not `params`) in the command schema.
+
+The embedded Arena HTTP connector also supports `body_format` and `include_response_headers` on its standard write commands.
 
 ---
 

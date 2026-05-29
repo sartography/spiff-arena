@@ -157,11 +157,6 @@ paths:
 
   /login_with_access_token:
     parameters:
-      - name: access_token
-        in: query
-        required: true
-        schema:
-          type: string
       - name: authentication_identifier
         in: query
         required: true
@@ -286,6 +281,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+
+  /version-info:
+    get:
+      operationId: spiffworkflow_backend.routes.public_controller.version_info
+      summary: Returns minimal version information for the application
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns selected OCI image metadata from version_info.json when available.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfo"
 
   /debug/process-instance-with-most-tasks:
     get:
@@ -2212,40 +2221,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /tasks/service-tasks-awaiting-callback:
-    parameters:
-      - name: page
-        in: query
-        required: false
-        description: The page number to return. Defaults to page 1.
-        schema:
-          type: integer
-      - name: per_page
-        in: query
-        required: false
-        description: The page number to return. Defaults to page 1.
-        schema:
-          type: integer
-    get:
-      tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.tasks_controller.service_task_list_awaiting_callback
-      summary: returns the list of service tasks that are currently waiting for a callback.
-      responses:
-        "200":
-          description: list of tasks
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  results:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Task"
-                  pagination:
-                    $ref: "#/components/schemas/Pagination"
-
   /tasks/for-me:
     parameters:
       - name: page
@@ -3304,6 +3279,23 @@ paths:
           enum:
             - synchronous
             - asynchronous
+      - name: time_to_live_in_seconds
+        in: query
+        required: false
+        description: Seconds to buffer an unmatched message. A value of 0 means the message must match immediately; rejected messages may be retained with status not_accepted for audit and debugging.
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 300
+      - name: message_instance_uuid
+        in: query
+        required: false
+        description: Caller-provided idempotency key. Required when time_to_live_in_seconds is greater than 0.
+        schema:
+          type: string
+          format: uuid
+          maxLength: 40
+          pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     post:
       tags:
         - Messages
@@ -3325,6 +3317,14 @@ paths:
                   task_data:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
                   process_instance:
+                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+        "202":
+          description: Message accepted and buffered until a matching receiver is available
+          content:
+            application/json:
+              schema:
+                properties:
+                  message_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /messages/{modified_message_name}/process-model:
@@ -3976,9 +3976,28 @@ paths:
       - name: per_page
         in: query
         required: false
-        description: The page number to return. Defaults to page 1.
+        description: Number of items per page. Defaults to 100.
         schema:
           type: integer
+      - name: top_level_key
+        in: query
+        required: false
+        description: Filter KKV entries by top-level key (e.g. process instance ID). Can be used alone or with secondary_key.
+        schema:
+          type: string
+      - name: secondary_key
+        in: query
+        required: false
+        description: Filter KKV entries by secondary key (e.g. process model). Can be used alone or with top_level_key.
+        schema:
+          type: string
+      - name: paginate
+        in: query
+        required: false
+        description: Defaults to true. Pass false to return all entries unpaginated
+        schema:
+          type: boolean
+          default: true
     get:
       operationId: spiffworkflow_backend.routes.data_store_controller.data_store_item_list
       summary: Returns a paginated list of the contents of a data store.
@@ -3995,6 +4014,30 @@ paths:
       responses:
         "200":
           description: A list of the data stored in the requested data store.
+    put:
+      operationId: spiffworkflow_backend.routes.data_store_controller.data_store_write_items
+      summary: Write entries into a KKV data store.
+      description: >
+        Upserts entries into a KKV data store. Body is a JSON object mapping top_level_key to {secondary_key: value}. Set a value to null to delete that entry. Set a top_level_key to null to delete all entries for that key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      tags:
+        - Data Stores
+      responses:
+        "200":
+          description: Confirmation that the entries were written.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
   /data-stores/{data_store_type}/{identifier}:
     parameters:
       - name: data_store_type
@@ -4139,6 +4182,22 @@ components:
           items:
             type: string
           description: Fields to sort by, prefix with '-' for descending order
+    VersionInfo:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: string
+          description: Value of org.opencontainers.image.version.
+          example: main-2026-05-12_17-59-26-6bfb694
+        revision:
+          type: string
+          description: Value of org.opencontainers.image.revision.
+          example: 6bfb694044244009fe3dd78ae987a9dbae218014
+        created:
+          type: string
+          description: Value of org.opencontainers.image.created.
+          example: "2026-05-12T17:59:27.226Z"
     OkTrue:
       properties:
         ok:
@@ -4385,7 +4444,10 @@ components:
           id: study_identification
           name: Study Identification
           title: IRB Review
-          documentation: "# Heading 1\n\nMarkdown documentation text goes here"
+          documentation: "# Heading 1
+
+
+            Markdown documentation text goes here"
           type: form
           state: ready
     TaskInstructionsForEndUser:
@@ -4552,7 +4614,10 @@ components:
         id: study_identification
         name: Study Identification
         title: IRB Review
-        documentation: "# Heading 1\n\nMarkdown documentation text goes here"
+        documentation: "# Heading 1
+
+
+          Markdown documentation text goes here"
         type: form
         state: ready
         form:
@@ -4586,7 +4651,10 @@ components:
                 - id: "description"
                   value: "Description text goes here"
                 - id: "help"
-                  value: "# Heading 1\n\nMarkdown help text goes here"
+                  value: "# Heading 1
+
+
+                    Markdown help text goes here"
                 - id: "required_expression"
                   value: "model.my_boolean_field_id && model.my_enum_field_value !== 'something'"
                 - id: "hide_expression"

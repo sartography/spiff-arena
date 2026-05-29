@@ -8,8 +8,9 @@ import sentry_sdk
 from connexion import FlaskApp
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
-from werkzeug.exceptions import MethodNotAllowed
 from werkzeug.exceptions import NotFound
+
+from spiffworkflow_backend.exceptions.api_error import should_notify_sentry
 
 
 def get_version_info_data() -> dict[str, Any]:
@@ -20,7 +21,32 @@ def get_version_info_data() -> dict[str, Any]:
     return version_info_data_dict
 
 
+def get_public_version_info_data() -> dict[str, Any]:
+    version_info_data = get_version_info_data()
+    public_version_info_data = {}
+
+    version = version_info_data.get("org.opencontainers.image.version")
+    revision = version_info_data.get("org.opencontainers.image.revision")
+    created = version_info_data.get("org.opencontainers.image.created")
+
+    if version:
+        public_version_info_data["version"] = version
+    if revision:
+        public_version_info_data["revision"] = revision
+    if created:
+        public_version_info_data["created"] = created
+
+    return public_version_info_data
+
+
+def ensure_prometheus_multiproc_dir() -> None:
+    prometheus_multiproc_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
+    if prometheus_multiproc_dir:
+        os.makedirs(prometheus_multiproc_dir, exist_ok=True)
+
+
 def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
+    ensure_prometheus_multiproc_dir()
     metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
     connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
     version_info_data = get_version_info_data()
@@ -54,6 +80,19 @@ def traces_sampler(sampling_context: Any) -> Any:
     return 0.01
 
 
+def should_capture_exception_in_sentry(exc_value: BaseException) -> bool:
+    if isinstance(exc_value, NotFound):
+        return False
+    status_code = getattr(exc_value, "code", None)
+    if status_code is None:
+        status_code = getattr(exc_value, "status_code", None)
+    if status_code in [404, 405]:
+        return False
+    if not isinstance(exc_value, Exception):
+        return True
+    return should_notify_sentry(exc_value)
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     sentry_dsn = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN")
 
@@ -65,10 +104,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
     def before_send(event: Any, hint: Any) -> Any:
         if "exc_info" in hint:
             _exc_type, exc_value, _tb = hint["exc_info"]
-            # NotFound is mostly from web crawlers
-            if isinstance(exc_value, NotFound):
-                return None
-            if isinstance(exc_value, MethodNotAllowed):
+            if not should_capture_exception_in_sentry(exc_value):
                 return None
         return event
 

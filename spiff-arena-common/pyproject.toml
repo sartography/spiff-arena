@@ -1,6 +1,6 @@
 [project]
 name = "spiff-arena-common"
-version = "0.1.17"
+version = "0.1.36"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
@@ -12,6 +12,17 @@ requires-python = ">=3.10, <3.13"
 #	"jsonschema",
 #	"SpiffWorkflow"
 #]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "Jinja2",
+    "jsonschema",
+    "SpiffWorkflow",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["hatchling"]

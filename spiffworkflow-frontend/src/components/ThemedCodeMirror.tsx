@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material';
-import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
 /**
  * A themed wrapper around CodeMirror that automatically applies the app's theme
@@ -31,5 +31,5 @@ export default function ThemedCodeMirror(props: ReactCodeMirrorProps) {
     theme: codeMirrorTheme,
   };
 
-  return <CodeMirror {...defaultProps} {...props} />;
+  return <ReactCodeMirror {...defaultProps} {...props} />;
 }

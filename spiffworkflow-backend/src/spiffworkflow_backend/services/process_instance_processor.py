@@ -51,6 +51,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
+from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.interfaces import PotentialOwner
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -390,11 +391,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                 super().execute(task, script, methods)
                 current_app.logger.debug(f"SCRIPT TASK EXECUTION - COMPLETED: {task_name} (ID: {task_id})")
             return True
-        except WorkflowException as e:
-            current_app.logger.error(f"SCRIPT TASK EXECUTION - WORKFLOW EXCEPTION: {str(e)}")
-            raise e
+        except WorkflowException:
+            raise
         except Exception as e:
-            current_app.logger.error(f"SCRIPT TASK EXECUTION - EXCEPTION: {str(e)}")
             raise self.create_task_exec_exception(task, script, e) from e
 
     def call_service(
@@ -403,7 +402,13 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         operation_params: dict[str, Any],
         spiff_task: SpiffTask,
     ) -> str:
-        return ServiceTaskDelegate.call_connector(operation_name, operation_params, spiff_task, self.__get_process_instance_id())
+        return ServiceTaskDelegate.call_connector(
+            operation_name,
+            operation_params,
+            spiff_task,
+            self.__get_process_instance_id(),
+            self.__get_process_model_identifier(),
+        )
 
 
 SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
@@ -1317,9 +1322,6 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    def refresh_waiting_tasks(self) -> None:
-        self.bpmn_process_instance.refresh_waiting_tasks()
-
     def do_engine_steps(
         self,
         exit_at: None = None,
@@ -1416,6 +1418,15 @@ class ProcessInstanceProcessor:
             needs_dequeue=needs_dequeue,
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
+        if save and execution_service.new_waiting_message_names:
+            from spiffworkflow_backend.services.message_service import MessageService
+
+            MessageService.correlate_ready_send_messages_for_process_instance(
+                execution_service.new_waiting_message_names,
+                self.process_instance_model,
+                self,
+                execution_mode=ProcessInstanceExecutionMode.synchronous.value,
+            )
         self.check_all_tasks()
 
         # Debug logs for engine steps completion

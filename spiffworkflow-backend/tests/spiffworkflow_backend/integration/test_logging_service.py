@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from flask.app import Flask
@@ -13,6 +14,11 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestLoggingService(BaseTest):
+    def test_logger_setup_disables_propagation(self, app: Flask) -> None:
+        logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
+        assert logger.handlers
+        assert logger.propagate is False
+
     def test_logging_service_detailed_logs(
         self,
         app: Flask,

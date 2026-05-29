@@ -26,9 +26,9 @@ dependencies = [
     "psycopg2 >= 2.9.10, <2.10",
     "typing-extensions >= 4.12.2",
     "spiffworkflow-connector-command",
-    "werkzeug >= 2.3",
+    "werkzeug >= 3.1.6",
     "connexion[swagger-ui, flask, uvicorn] == 3.3.0",
-    "lxml >= 5.3.1",
+    "lxml >= 6.1.0",
     "PyJWT >= 2.10.1",
     "APScheduler >=3.6.0",
     "Jinja2 >= 3.1.6",
@@ -45,7 +45,7 @@ dependencies = [
     "simplejson >= 3.20.1",
     "pytz >= 2025.2",
     "dateparser >= 1.2.0",
-    "cryptography >= 44.0",
+    "cryptography >= 46.0.7",
     "prometheus-flask-exporter >= 0.23.1",
     "sqlalchemy >= 2.0.31",
     # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
@@ -62,14 +62,14 @@ dependencies = [
     # https://github.com/pixee/python-security/blob/6256809dac1c45530e5eeef8b48032a2bbd6b7d6/src/security/safe_command/api.py#L640
     "security >= 1.3.1",
     "spiff-arena-common>=0.1.0",
-    "authlib>=1.6.0",
+    "authlib>=1.6.11",
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
 ]
 
 [dependency-groups]
 dev = [
-    "coverage[toml] >= 7.7",
+    "coverage[toml] >= 7.13.5",
     "safety >= 3.2.14",
     "mypy >= 0.961",
     "typeguard >= 4",
@@ -96,13 +96,18 @@ dev = [
 ]
 
 [tool.uv.sources]
-SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", tag = "v3.1.3a2" }
+SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", tag = "v3.1.3a3" }
 # SpiffWorkflow = { path = "../../SpiffWorkflow", editable = true }
 spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", branch = "main" }
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", branch = "scoped-session-delete" }
 
 [tool.uv]
 package = true
+constraint-dependencies = [
+    "mako>=1.3.11",
+    "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.26",
+]
 
 [project.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
@@ -213,14 +218,13 @@ line-length = 130
 target-version = "py310"
 
 exclude = [
-  "migrations",
-  "bin/load_test_message_start_event.py"
+  "migrations"
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
 "tests/**/*.py" = ["PLR2004", "S101"]  # PLR2004 is about magic vars, S101 allows assert
-"bin/*.py" = ["T"]  # it's ok to print things in scripts
+"bin/**/*.py" = ["T"]  # it's ok to print things in scripts
 
 [tool.ruff.lint.isort]
 force-single-line = true

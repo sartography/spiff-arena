@@ -1,5 +1,5 @@
 import { render, cleanup } from '@testing-library/react';
-import DOMPurify from 'dompurify';
+import domPurify from 'dompurify'; // eslint-disable-line import-x/no-rename-default
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import DynamicCSSInjection from '../components/DynamicCSSInjection';
 
@@ -36,7 +36,7 @@ describe('DynamicCSSInjection', () => {
     render(<DynamicCSSInjection cssContent={maliciousCSS} id={testId} />);
 
     // Check that DOMPurify.sanitize was called with the expected parameters
-    expect(DOMPurify.sanitize).toHaveBeenCalledWith(
+    expect(domPurify.sanitize).toHaveBeenCalledWith(
       maliciousCSS,
       expect.objectContaining({
         FORBID_TAGS: ['style', 'link'],

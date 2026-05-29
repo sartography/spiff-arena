@@ -90,8 +90,9 @@ class TestThreadedExecution(BaseTest):
         task_models = TaskModel.query.filter_by(bpmn_process_id=bpmn_process_id).all()
         script_tasks = list(
             filter(
-                lambda tm: tm.task_definition.bpmn_name is not None
-                and tm.task_definition.bpmn_name.startswith(task_name_starts_with),
+                lambda tm: (
+                    tm.task_definition.bpmn_name is not None and tm.task_definition.bpmn_name.startswith(task_name_starts_with)
+                ),
                 task_models,
             )
         )

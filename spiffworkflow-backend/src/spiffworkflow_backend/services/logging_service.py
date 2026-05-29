@@ -211,6 +211,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     # these loggers have been deemed too verbose to be useful
     obscure_loggers_to_exclude_from_main_logging = [
+        "celery.redirected",
         "connexion",
         "flask_cors.core",
         "flask_cors.extension",
@@ -278,6 +279,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                     the_handler.setFormatter(log_formatter)
                     level_number = logging.getLevelName(log_level_to_use)
                     the_handler.setLevel(level_number)
+                logger_for_name.propagate = False
             level_number = logging.getLevelName(log_level_to_use)
             logger_for_name.setLevel(level_number)
 

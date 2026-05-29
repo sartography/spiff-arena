@@ -2,7 +2,7 @@
 
 Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
-In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language.
+In Spiff Arena, the scripting language used for writing scripts is Python, a widely used programming language.
 
 Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
@@ -152,8 +152,8 @@ These are great for user forms where you want to modify and clean up the form re
 ## What can you do and not do in Script Tasks?
 
 - Keywords and operands can be used without restrictions
-- SpiffArena uses RestrictedPython under the hood, which allows certain ['safe names' from the collection of builtins](https://github.com/zopefoundation/RestrictedPython/blob/master/src/RestrictedPython/Guards.py#L27C5-L28C7)
-- SpiffArena extends this list with [additional 'global names' (builtins and modules)](https://github.com/search?q=repo%3Asartography%2Fspiff-arena+symbol%3ACustomBpmnScriptEngine&type=code)
+- Spiff Arena uses RestrictedPython under the hood, which allows certain ['safe names' from the collection of builtins](https://github.com/zopefoundation/RestrictedPython/blob/master/src/RestrictedPython/Guards.py)
+- Spiff Arena extends this list with [additional 'global names' (builtins and modules)](https://github.com/search?q=repo%3Asartography%2Fspiff-arena+symbol%3ACustomBpmnScriptEngine&type=code)
 - When you store variables in script tasks, be aware that these will be added to the process context. As such, they must be JSON serializable. This means that you can't store sets, for example. If you run into another example that is worth documenting, please submit a documentation pull request.
 
 ## Custom functions available to script tasks

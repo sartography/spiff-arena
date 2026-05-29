@@ -1,8 +1,16 @@
-import validator from '@rjsf/validator-ajv8';
+// eslint-disable-next-line import-x/no-rename-default
+import rjsfValidator from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
-import { ComponentType, ReactNode, useEffect, useRef } from 'react';
+import {
+  ComponentType,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { RegistryFieldsType } from '@rjsf/utils';
 import { Button } from '@mui/material';
 import { Form as MuiForm } from '@rjsf/mui';
@@ -11,10 +19,16 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import {
+  applyCalculatedFields,
+  CalculatedField,
+  FormattedNumberWidget,
+} from '../rjsf/formEnhancements';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
 import { matchNumberRegex } from '../helpers';
+import { Notification } from './Notification';
 
-ajvErrors(validator.ajv);
+ajvErrors(rjsfValidator.ajv);
 
 /**
  * NOTE There is a bug with the MuiForm where if a property in the jsonschema has
@@ -94,11 +108,13 @@ export default function CustomForm({
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
+    formattedNumber: FormattedNumberWidget,
   };
 
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    calculated: CalculatedField,
   };
 
   const rjsfTemplates: any = {};
@@ -372,25 +388,6 @@ export default function CustomForm({
     }
   };
 
-  const checkCharacterCounter = (
-    formDataToCheck: any,
-    propertyKey: string,
-    errors: any,
-    jsonSchema: any,
-    _uiSchemaPassedIn?: any,
-  ) => {
-    if (
-      jsonSchema.required &&
-      jsonSchema.required.includes(propertyKey) &&
-      (formDataToCheck[propertyKey] === undefined ||
-        formDataToCheck[propertyKey] === '')
-    ) {
-      errors[propertyKey].addError(
-        `must have required property '${propertyKey}'`,
-      );
-    }
-  };
-
   const checkFieldsWithCustomValidations = (
     jsonSchema: any,
     formDataToCheck: any,
@@ -475,20 +472,6 @@ export default function CustomForm({
           );
         }
 
-        if (
-          currentUiSchema &&
-          'ui:field' in currentUiSchema &&
-          currentUiSchema['ui:field'] === 'character-counter'
-        ) {
-          checkCharacterCounter(
-            formDataToCheck,
-            propertyKey,
-            errors,
-            jsonSchemaToUse,
-            currentUiSchema,
-          );
-        }
-
         // recurse through all nested properties as well
         let formDataToSend = formDataToCheck[propertyKey];
         if (formDataToSend) {
@@ -552,18 +535,81 @@ export default function CustomForm({
     );
   }
 
+  const calculatedFieldsResult = useMemo(
+    () => applyCalculatedFields(schema, uiSchema, formData),
+    [schema, uiSchema, formData],
+  );
+  const formDataWithCalculatedFields = calculatedFieldsResult.formState;
+  const [calculationWarning, setCalculationWarning] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (calculatedFieldsResult.warning) {
+      setCalculationWarning(calculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+  }, [calculatedFieldsResult.warning]);
+
+  const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
+    if (!onChange) {
+      return;
+    }
+    const nextCalculatedFieldsResult = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+    onChange(
+      { ...event, formData: nextCalculatedFieldsResult.formState },
+      fieldId,
+    );
+  };
+
+  const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
+    if (!onSubmit) {
+      return;
+    }
+    const nextCalculatedFieldsResult = applyCalculatedFields(
+      schema,
+      uiSchema,
+      event.formData,
+    );
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    } else {
+      setCalculationWarning(null);
+    }
+    onSubmit(
+      { ...event, formData: nextCalculatedFieldsResult.formState },
+      nativeEvent,
+    );
+  };
+
   const formProps = {
     id,
     key,
     className,
     disabled,
-    formData,
-    onChange,
-    onSubmit,
+    formData: formDataWithCalculatedFields,
+    onChange: onChangeWithCalculatedFields,
+    onSubmit: onSubmitWithCalculatedFields,
     schema,
     uiSchema,
     widgets: rjsfWidgets,
-    validator,
+    validator: rjsfValidator,
     customValidate,
     noValidate,
     fields: rjsfFields,
@@ -571,5 +617,19 @@ export default function CustomForm({
     omitExtraData: true,
   };
 
-  return <MuiForm {...formProps}>{childrenToUse}</MuiForm>;
+  return (
+    <>
+      {calculationWarning && (
+        <Notification
+          title="Calculated field warning"
+          type="warning"
+          timeout={8000}
+          onClose={() => setCalculationWarning(null)}
+        >
+          {calculationWarning}
+        </Notification>
+      )}
+      <MuiForm {...formProps}>{childrenToUse}</MuiForm>
+    </>
+  );
 }

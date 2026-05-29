@@ -1,4 +1,4 @@
-import i18n from '../i18n';
+import i18next from '../i18n';
 
 // https://gist.github.com/caiotarifa/30ae974f2293c761f3139dd194abd9e5
 type Locales = {
@@ -20,19 +20,19 @@ type Locales = {
 
 export const TimeAgo = (function awesomeFunc() {
   const getLocales: () => Locales = () => ({
-    prefix: i18n.t('time_ago_prefix'),
-    sufix: i18n.t('time_ago_suffix'),
-    seconds: i18n.t('time_less_than_minute'),
-    minute: i18n.t('time_about_minute'),
-    minutes: i18n.t('time_minutes'),
-    hour: i18n.t('time_about_hour'),
-    hours: i18n.t('time_about_hours'),
-    day: i18n.t('time_day'),
-    days: i18n.t('time_days'),
-    month: i18n.t('time_about_month'),
-    months: i18n.t('time_months'),
-    year: i18n.t('time_about_year'),
-    years: i18n.t('time_years'),
+    prefix: i18next.t('time_ago_prefix'),
+    sufix: i18next.t('time_ago_suffix'),
+    seconds: i18next.t('time_less_than_minute'),
+    minute: i18next.t('time_about_minute'),
+    minutes: i18next.t('time_minutes'),
+    hour: i18next.t('time_about_hour'),
+    hours: i18next.t('time_about_hours'),
+    day: i18next.t('time_day'),
+    days: i18next.t('time_days'),
+    month: i18next.t('time_about_month'),
+    months: i18next.t('time_months'),
+    year: i18next.t('time_about_year'),
+    years: i18next.t('time_years'),
   });
 
   function inWords(timeAgo: number): string {

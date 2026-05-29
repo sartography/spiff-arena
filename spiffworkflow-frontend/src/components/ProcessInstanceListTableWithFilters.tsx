@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -78,7 +72,7 @@ import {
 } from '../interfaces';
 
 // MUI
-import ProcessModelSearchCarbon from './ProcessModelSearchCarbon';
+import ProcessModelSearch from './ProcessModelSearchCarbon';
 
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
@@ -273,7 +267,7 @@ export default function ProcessInstanceListTableWithFilters({
   // it can be used to create a link to the process instances list page to reconstruct the report.
   const [reportHash, setReportHash] = useState<string | null>(null);
 
-  const lastRequestedInitatorSearchTerm = useRef<string>();
+  const lastRequestedInitatorSearchTerm = useRef<string | undefined>(undefined);
 
   const dateParametersToAlwaysFilterBy: DateParameters = useMemo(() => {
     return {
@@ -1578,7 +1572,7 @@ export default function ProcessInstanceListTableWithFilters({
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
-            <ProcessModelSearchCarbon
+            <ProcessModelSearch
               onChange={(selection: any) => {
                 const pmSelectionId = selection.selectedItem
                   ? selection.selectedItem.id

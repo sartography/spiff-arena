@@ -119,7 +119,7 @@ cp-poetry-i:
 	$(IN_CONNECTOR_PROXY) poetry install
 
 cp-poetry-lock:
-	$(IN_CONNECTOR_PROXY) poetry lock --no-update
+	$(IN_CONNECTOR_PROXY) poetry lock
 
 cp-logs:
 	docker logs -f $(CONNECTOR_PROXY_CONTAINER)

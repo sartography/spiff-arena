@@ -53,23 +53,27 @@ def with_loaded_reference_cache(app: Flask, with_db_and_bpmn_file_cleanup: None)
 
 
 class TestReferenceCacheService(BaseTest):
-    def test_can_find_data_store_in_current_location(self, with_loaded_reference_cache: None) -> None:
+    @pytest.mark.usefixtures("with_loaded_reference_cache")
+    def test_can_find_data_store_in_current_location(self) -> None:
         location = ReferenceCacheService.upsearch(
             "misc/jonjon/generic-data-store-area/test-level-1", "contacts_datastore", "data_store"
         )
         assert location == "misc/jonjon/generic-data-store-area/test-level-1"
 
-    def test_can_find_data_store_in_upsearched_location(self, with_loaded_reference_cache: None) -> None:
+    @pytest.mark.usefixtures("with_loaded_reference_cache")
+    def test_can_find_data_store_in_upsearched_location(self) -> None:
         location = ReferenceCacheService.upsearch(
             "misc/jonjon/generic-data-store-area/test-level-2", "contacts_datastore", "data_store"
         )
         assert location == "misc/jonjon"
 
-    def test_does_not_find_data_store_in_non_upsearched_location(self, with_loaded_reference_cache: None) -> None:
+    @pytest.mark.usefixtures("with_loaded_reference_cache")
+    def test_does_not_find_data_store_in_non_upsearched_location(self) -> None:
         location = ReferenceCacheService.upsearch("some/other/place", "contacts_datastore", "data_store")
         assert location is None
 
-    def test_can_find_data_store_in_upsearched_root_location(self, with_loaded_reference_cache: None) -> None:
+    @pytest.mark.usefixtures("with_loaded_reference_cache")
+    def test_can_find_data_store_in_upsearched_root_location(self) -> None:
         location = ReferenceCacheService.upsearch(
             "misc/jonjon/generic-data-store-area/test-level-2", "contacts_datastore_root", "data_store"
         )

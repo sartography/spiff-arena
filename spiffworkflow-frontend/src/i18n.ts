@@ -1,6 +1,6 @@
-import i18n from 'i18next';
+import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import I18nextBrowserLanguageDetector from 'i18next-browser-languagedetector';
 
 import enUS from './locales/en_us/translation.json';
 import ptBR from './locales/pt_br/translation.json';
@@ -12,9 +12,9 @@ import csCZ from './locales/cs_cz/translation.json';
 import zhCN from './locales/zh_cn/translation.json';
 import frFR from './locales/fr_fr/translation.json';
 
-// eslint-disable-next-line import/no-named-as-default-member
-i18n
-  .use(LanguageDetector)
+// eslint-disable-next-line import-x/no-named-as-default-member
+i18next
+  .use(I18nextBrowserLanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
@@ -37,4 +37,4 @@ i18n
     },
   });
 
-export default i18n;
+export default i18next;

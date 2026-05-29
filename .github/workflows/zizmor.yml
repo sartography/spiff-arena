@@ -1,0 +1,50 @@
+name: zizmor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+  schedule:
+    - cron: "0 12 * * 3" # Wednesday 12:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: GitHub Actions security analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Install zizmor
+        env:
+          ZIZMOR_VERSION: "1.25.0"
+          ZIZMOR_SHA256: "a16853f39c9e059aed04f3f7961acb75468af67b235ae36a9faff337d61e3d24"
+        run: |
+          curl -sfL "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-x86_64-unknown-linux-gnu.tar.gz" -o /tmp/zizmor.tar.gz
+          echo "${ZIZMOR_SHA256}  /tmp/zizmor.tar.gz" | sha256sum -c -
+          tar xzf /tmp/zizmor.tar.gz -C /tmp
+          chmod +x /tmp/zizmor
+          sudo mv /tmp/zizmor /usr/local/bin/
+
+      - name: Run zizmor
+        run: zizmor --format sarif .github/workflows/ > results.sarif
+
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v3
+        with:
+          sarif_file: results.sarif
+          category: zizmor

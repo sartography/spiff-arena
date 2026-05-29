@@ -1,21 +1,30 @@
 import json
+from collections.abc import Callable
 from typing import Any
+from typing import TypeAlias
 
 import flask.wrappers
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import request
 
+from spiffworkflow_backend.data_stores.crud import DataStoreCRUD
 from spiffworkflow_backend.data_stores.json import JSONDataStore
 from spiffworkflow_backend.data_stores.kkv import KKVDataStore
 from spiffworkflow_backend.data_stores.typeahead import TypeaheadDataStore
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
+from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
-DATA_STORES = {
+DataStoreClass: TypeAlias = type[DataStoreCRUD]
+
+DATA_STORES: dict[str, tuple[DataStoreClass, str]] = {
     "json": (JSONDataStore, "JSON Data Store"),
     "kkv": (KKVDataStore, "Keyed Key-Value Data Store"),
     "typeahead": (TypeaheadDataStore, "Typeahead Data Store"),
@@ -23,7 +32,10 @@ DATA_STORES = {
 
 
 def data_store_list(
-    process_group_identifier: str | None = None, upsearch: bool = False, page: int = 1, per_page: int = 100
+    process_group_identifier: str | None = None,
+    upsearch: bool = False,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Returns a list of the names of all the data stores."""
     data_stores = []
@@ -56,56 +68,140 @@ def data_store_types() -> flask.wrappers.Response:
     return make_response(jsonify(data_store_types), 200)
 
 
-def _build_response(
-    data_store_class: Any, identifier: str, location: str | None, page: int, per_page: int
+def _paginated_response(
+    query: Any,
+    item_mapper: Callable,
+    page: int,
+    per_page: int,
+    paginate: bool,
 ) -> flask.wrappers.Response:
-    data_store_query = data_store_class.get_data_store_query(identifier, location)
-    data = data_store_query.paginate(page=page, per_page=per_page, error_out=False)
-    results = []
-    for item in data.items:
-        result = data_store_class.build_response_item(item)
-        results.append(result)
-    response_json = {
-        "results": results,
-        "pagination": {
+    if paginate:
+        data = query.paginate(page=page, per_page=per_page, error_out=False)
+        results = [item_mapper(item) for item in data.items]
+        pagination = {
             "count": len(data.items),
             "total": data.total,
             "pages": data.pages,
-        },
-    }
-    return make_response(jsonify(response_json), 200)
+        }
+    else:
+        items = query.all()
+        results = [item_mapper(item) for item in items]
+        pagination = {"count": len(results), "total": len(results), "pages": 1}
+    return make_response(jsonify({"results": results, "pagination": pagination}), 200)
+
+
+def _build_response(
+    data_store_class: DataStoreClass,
+    identifier: str,
+    location: str | None,
+    page: int,
+    per_page: int,
+    paginate: bool,
+) -> flask.wrappers.Response:
+    query = data_store_class.get_data_store_query(identifier, location)
+    return _paginated_response(query, data_store_class.build_response_item, page, per_page, paginate)
 
 
 def data_store_item_list(
-    data_store_type: str, identifier: str, location: str | None = None, page: int = 1, per_page: int = 100
+    data_store_type: str,
+    identifier: str,
+    location: str | None = None,
+    page: int = 1,
+    per_page: int = 100,
+    top_level_key: str | None = None,
+    secondary_key: str | None = None,
+    paginate: bool = True,
 ) -> flask.wrappers.Response:
     """Returns a list of the items in a data store."""
 
     if data_store_type not in DATA_STORES:
-        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+        raise ApiError(
+            "unknown_data_store",
+            f"Unknown data store type: {data_store_type}",
+            status_code=400,
+        )
+
+    top_level_key = top_level_key or None
+    secondary_key = secondary_key or None
+
+    if data_store_type == "kkv":
+        return _kkv_filtered_items(identifier, location, top_level_key, secondary_key, page, per_page, paginate)
 
     data_store_class, _ = DATA_STORES[data_store_type]
-    return _build_response(data_store_class, identifier, location, page, per_page)
+    return _build_response(data_store_class, identifier, location, page, per_page, paginate)
+
+
+def _kkv_filtered_items(
+    identifier: str,
+    location: str | None,
+    top_level_key: str | None,
+    secondary_key: str | None,
+    page: int,
+    per_page: int,
+    paginate: bool,
+) -> flask.wrappers.Response:
+    """Return KKV entries filtered by top_level_key and/or secondary_key."""
+    store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+    if store_model is None:
+        raise ApiError(
+            "could_not_locate_data_store",
+            f"Could not locate KKV data store '{identifier}' at location '{location}'.",
+            status_code=404,
+        )
+
+    query = db.session.query(KKVDataStoreEntryModel).filter_by(kkv_data_store_id=store_model.id)
+    if top_level_key is not None:
+        query = query.filter_by(top_level_key=top_level_key)
+    if secondary_key is not None:
+        query = query.filter_by(secondary_key=secondary_key)
+
+    query = query.order_by(
+        KKVDataStoreEntryModel.top_level_key,
+        KKVDataStoreEntryModel.secondary_key,
+        KKVDataStoreEntryModel.id,
+    )
+
+    def _kkv_item_mapper(entry: KKVDataStoreEntryModel) -> dict:
+        return {
+            "top_level_key": entry.top_level_key,
+            "secondary_key": entry.secondary_key,
+            "value": entry.value,
+        }
+
+    return _paginated_response(query, _kkv_item_mapper, page, per_page, paginate)
 
 
 def data_store_clear(
-    data_store_type: str, identifier: str, location: str | None = None, page: int = 1, per_page: int = 100
+    data_store_type: str,
+    identifier: str,
+    location: str | None = None,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Clears the items in a data store."""
 
     if data_store_type not in DATA_STORES:
-        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+        raise ApiError(
+            "unknown_data_store",
+            f"Unknown data store type: {data_store_type}",
+            status_code=400,
+        )
 
     data_store_class, _ = DATA_STORES[data_store_type]
     data_store_class.clear(identifier, location)
-    return _build_response(data_store_class, identifier, location, page, per_page)
+    return _build_response(data_store_class, identifier, location, page, per_page, paginate=True)
 
 
 def data_store_delete(data_store_type: str, identifier: str, process_group_identifier: str) -> flask.wrappers.Response:
     """Deletes a data store."""
 
     if data_store_type not in DATA_STORES:
-        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+        raise ApiError(
+            "unknown_data_store",
+            f"Unknown data store type: {data_store_type}",
+            status_code=400,
+        )
 
     data_store_class, _ = DATA_STORES[data_store_type]
     data_store_class.delete(identifier, process_group_identifier)
@@ -150,7 +246,11 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
         ) from e
 
     if data_store_type not in DATA_STORES:
-        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+        raise ApiError(
+            "unknown_data_store",
+            f"Unknown data store type: {data_store_type}",
+            status_code=400,
+        )
 
     data_store_class, _ = DATA_STORES[data_store_type]
 
@@ -168,15 +268,19 @@ def _data_store_upsert(body: dict, insert: bool) -> flask.wrappers.Response:
     db.session.add(data_store_model)
     db.session.commit()
 
-    _commit_and_push_to_git(f"User: {g.user.username} added data store {data_store_model.identifier}")
+    GitService.commit_on_save(f"User: {g.user.username} added data store {data_store_model.identifier}")
     return make_response(jsonify({"ok": True}), 200)
 
 
 def _write_specification_to_process_group(
-    data_store_type: str, data_store_model: JSONDataStore | KKVDataStore | TypeaheadDataStore
+    data_store_type: str,
+    data_store_model: JSONDataStore | KKVDataStore | TypeaheadDataStore,
 ) -> None:
     process_group = ProcessModelService.get_process_group(
-        data_store_model.location, find_direct_nested_items=False, find_all_nested_items=False, create_if_not_exists=True
+        data_store_model.location,
+        find_direct_nested_items=False,
+        find_all_nested_items=False,
+        create_if_not_exists=True,
     )
 
     if data_store_type not in process_group.data_store_specifications:
@@ -197,7 +301,11 @@ def data_store_show(data_store_type: str, identifier: str, process_group_identif
     """Returns a description of a data store."""
 
     if data_store_type not in DATA_STORES:
-        raise ApiError("unknown_data_store", f"Unknown data store type: {data_store_type}", status_code=400)
+        raise ApiError(
+            "unknown_data_store",
+            f"Unknown data store type: {data_store_type}",
+            status_code=400,
+        )
 
     data_store_class, _ = DATA_STORES[data_store_type]
     data_store_query = data_store_class.get_data_store_query(identifier, process_group_identifier)
@@ -220,3 +328,101 @@ def data_store_show(data_store_type: str, identifier: str, process_group_identif
     }
 
     return make_response(jsonify(response), 200)
+
+
+def data_store_write_items(data_store_type: str, identifier: str, location: str | None = None) -> flask.wrappers.Response:
+    """Write entries into a KKV data store.
+
+    Accepts a JSON body of the form:
+        {
+            "<top_level_key>": {
+                "<secondary_key>": <value>,
+                ...
+            },
+            ...
+        }
+
+    Follows the same semantics as KKVDataStore.set():
+    - If a top_level_key maps to None, all entries for that top_level_key are deleted.
+    - If a secondary_key maps to None, that specific entry is deleted.
+    - Otherwise, the entry is upserted (created or updated).
+    """
+    if data_store_type != "kkv":
+        raise ApiError(
+            "unsupported_data_store_type",
+            f"Writing items is only supported for KKV data stores, got: {data_store_type}",
+            status_code=400,
+        )
+
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        raise ApiError(
+            "invalid_request_body",
+            "Request body must be a JSON object mapping top_level_key to {secondary_key: value}.",
+            status_code=400,
+        )
+
+    store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
+
+    if store_model is None:
+        raise ApiError(
+            "could_not_locate_data_store",
+            f"Could not locate KKV data store '{identifier}' at location '{location}'.",
+            status_code=404,
+        )
+
+    for top_level_key, second_level in body.items():
+        if not isinstance(top_level_key, str):
+            raise ApiError(
+                "invalid_top_level_key",
+                "Top-level keys must be strings.",
+                status_code=400,
+            )
+
+        if second_level is None:
+            models = (
+                db.session.query(KKVDataStoreEntryModel)
+                .filter_by(kkv_data_store_id=store_model.id, top_level_key=top_level_key)
+                .all()
+            )
+            for model_to_delete in models:
+                db.session.delete(model_to_delete)
+            continue
+
+        if not isinstance(second_level, dict):
+            raise ApiError(
+                "invalid_secondary_level",
+                f"Value for top_level_key '{top_level_key}' must be a dict or null.",
+                status_code=400,
+            )
+
+        for secondary_key, value in second_level.items():
+            model = (
+                db.session.query(KKVDataStoreEntryModel)
+                .filter_by(
+                    kkv_data_store_id=store_model.id,
+                    top_level_key=top_level_key,
+                    secondary_key=secondary_key,
+                )
+                .first()
+            )
+
+            if model is None and value is None:
+                continue
+            if value is None:
+                db.session.delete(model)
+                continue
+
+            if model is None:
+                model = KKVDataStoreEntryModel(
+                    kkv_data_store_id=store_model.id,
+                    top_level_key=top_level_key,
+                    secondary_key=secondary_key,
+                    value=value,
+                )
+            else:
+                model.value = value
+            db.session.add(model)
+
+    SpiffworkflowBaseDBModel.commit_with_rollback_on_exception()
+    return make_response(jsonify({"ok": True}), 200)
