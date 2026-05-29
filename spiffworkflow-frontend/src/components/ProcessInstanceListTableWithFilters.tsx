@@ -233,6 +233,7 @@ export default function ProcessInstanceListTableWithFilters({
     string | null
   >(null);
   const [lastMilestones, setLastMilestones] = useState<string[]>([]);
+  const uniqueMilestoneNamesRequestId = useRef(0);
   const hasLoadedReportMetadata = reportMetadata !== null;
   const processModelIdentifierForMilestoneNames = useMemo(() => {
     if (!reportMetadata) {
@@ -511,6 +512,9 @@ export default function ProcessInstanceListTableWithFilters({
   ]);
 
   useEffect(() => {
+    const requestId = uniqueMilestoneNamesRequestId.current + 1;
+    uniqueMilestoneNamesRequestId.current = requestId;
+
     if (!filtersEnabled || !permissionsLoaded) {
       return;
     }
@@ -525,6 +529,9 @@ export default function ProcessInstanceListTableWithFilters({
       path: uniqueMilestoneNamesPath,
       httpMethod: 'GET',
       successCallback: (lastMilestoneArray: string[]) => {
+        if (uniqueMilestoneNamesRequestId.current !== requestId) {
+          return;
+        }
         setLastMilestones(lastMilestoneArray.sort());
       },
     });
