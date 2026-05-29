@@ -127,7 +127,9 @@ test('it builds milestone names path for scoped process instance views', () => {
       withRelationToMe: false,
       processModelIdentifier: null,
     }),
-  ).toEqual('/process-instances/unique-milestone-names?with_relation_to_me=true');
+  ).toEqual(
+    '/process-instances/unique-milestone-names?with_relation_to_me=true',
+  );
 
   expect(
     buildUniqueMilestoneNamesPath({
