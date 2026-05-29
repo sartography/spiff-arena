@@ -161,7 +161,7 @@ jobs:
             echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
           fi
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4.34.1
+        uses: github/codeql-action/upload-sarif@v4.35.1
         if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
         with:
           sarif_file: "trivy-results.sarif"
