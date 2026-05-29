@@ -22,7 +22,7 @@
     "@mui/x-data-grid": "^7.25.0",
     "@mui/x-tree-view": "^7.25.0",
     "@preact/preset-vite": "^2.10.2",
-    "@rjsf/core": "^6.5.1",
+    "@rjsf/core": "^6.5.3",
     "@rjsf/mui": "^6.5.1",
     "@rjsf/utils": "^6.5.1",
     "@rjsf/validator-ajv8": "^6.5.1",
