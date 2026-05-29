@@ -153,15 +153,22 @@ test('it builds milestone names path for scoped process instance views', () => {
 });
 
 test('it preserves the selected milestone in the available options', () => {
-  expect(
-    mergeSelectedStringOption(['Milestone A', 'Milestone B'], null),
-  ).toEqual(['Milestone A', 'Milestone B']);
+  const milestoneA = 'Milestone A';
+  const milestoneB = 'Milestone B';
+  const milestoneC = 'Milestone C';
+  const availableMilestones = [milestoneA, milestoneB];
 
-  expect(
-    mergeSelectedStringOption(['Milestone A', 'Milestone B'], 'Milestone B'),
-  ).toEqual(['Milestone A', 'Milestone B']);
+  expect(mergeSelectedStringOption(availableMilestones, null)).toEqual(
+    availableMilestones,
+  );
 
-  expect(
-    mergeSelectedStringOption(['Milestone A', 'Milestone B'], 'Milestone C'),
-  ).toEqual(['Milestone C', 'Milestone A', 'Milestone B']);
+  expect(mergeSelectedStringOption(availableMilestones, milestoneB)).toEqual(
+    availableMilestones,
+  );
+
+  expect(mergeSelectedStringOption(availableMilestones, milestoneC)).toEqual([
+    milestoneC,
+    milestoneA,
+    milestoneB,
+  ]);
 });
