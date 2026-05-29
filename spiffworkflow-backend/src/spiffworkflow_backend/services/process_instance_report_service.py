@@ -694,7 +694,7 @@ class ProcessInstanceReportService:
             process_instance_query = cls.filter_by_with_relation_to_me(process_instance_query, user)
         milestone_column = ProcessInstanceModel.__table__.c.last_milestone_bpmn_name
         rows = (
-            process_instance_query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name)
+            process_instance_query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name)  # type: ignore
             .filter(
                 milestone_column.is_not(None),
                 milestone_column != "",
