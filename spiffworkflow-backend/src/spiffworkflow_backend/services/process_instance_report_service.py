@@ -666,6 +666,45 @@ class ProcessInstanceReportService:
         return process_instance_query
 
     @classmethod
+    def filter_by_with_relation_to_me(cls, process_instance_query: Query, user: UserModel) -> Query:
+        process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(  # type: ignore
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == user.id,
+            ),
+        )
+        process_instance_query = process_instance_query.filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == user.id,
+            )
+        )
+        return process_instance_query
+
+    @classmethod
+    def unique_milestone_names(cls, filters: list[FilterValue], user: UserModel | None = None) -> list[str]:
+        process_instance_query = cls.get_basic_query(filters)
+        with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
+        if with_relation_to_me is True:
+            if user is None:
+                raise ProcessInstanceReportCannotBeRunError(
+                    "A user must be specified to fetch milestone names with with_relation_to_me."
+                )
+            process_instance_query = cls.filter_by_with_relation_to_me(process_instance_query, user)
+        milestone_column = ProcessInstanceModel.__table__.c.last_milestone_bpmn_name
+        rows = (
+            process_instance_query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name)  # type: ignore
+            .filter(
+                milestone_column.is_not(None),
+                milestone_column != "",
+            )
+            .distinct()
+            .all()
+        )
+        return sorted([row[0] for row in rows if row[0] is not None])
+
+    @classmethod
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,
@@ -698,19 +737,7 @@ class ProcessInstanceReportService:
         ):
             if user is None:
                 raise ProcessInstanceReportCannotBeRunError("A user must be specified to run report with with_relation_to_me")
-            process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(  # type: ignore
-                HumanTaskUserModel,
-                and_(
-                    HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                    HumanTaskUserModel.user_id == user.id,
-                ),
-            )
-            process_instance_query = process_instance_query.filter(
-                or_(
-                    HumanTaskUserModel.id.is_not(None),
-                    ProcessInstanceModel.process_initiator_id == user.id,
-                )
-            )
+            process_instance_query = cls.filter_by_with_relation_to_me(process_instance_query, user)
 
         if instances_with_tasks_completed_by_me is True and instances_with_tasks_waiting_for_me is True:
             raise ProcessInstanceReportMetadataInvalidError(
