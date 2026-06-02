@@ -13,12 +13,12 @@ from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 TEN_MINUTES = 60 * 10
@@ -40,7 +40,9 @@ def celery_task_event_notifier_run(
     worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
     current_app.logger.info(worker_intro_log_message)
 
-    process_model = _get_process_model(current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"])
+    process_model = ProcessModelService.get_process_model_or_raise_api_error(
+        current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+    )
     data = {
         "event": {
             "event_type": event_type,

@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/rule.json
+
+id: no-routes-imports-in-lower-layers
+language: Python
+severity: error
+message: Lower backend layers must not import route/controller modules. Move shared behavior to services or helpers.
+files:
+  - src/spiffworkflow_backend/background_processing/**/*.py
+  - src/spiffworkflow_backend/data_stores/**/*.py
+  - src/spiffworkflow_backend/models/**/*.py
+  - src/spiffworkflow_backend/scripts/**/*.py
+  - src/spiffworkflow_backend/services/**/*.py
+rule:
+  any:
+    - pattern: from spiffworkflow_backend import routes
+    - pattern: from spiffworkflow_backend.routes import $$$NAMES
+    - pattern: from spiffworkflow_backend.routes.$$$MOD import $$$NAMES
+    - pattern: import spiffworkflow_backend.routes
+    - pattern: import spiffworkflow_backend.routes.$$$MOD

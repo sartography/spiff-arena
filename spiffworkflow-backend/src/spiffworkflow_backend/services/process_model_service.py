@@ -275,6 +275,19 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     @classmethod
+    def get_process_model_or_raise_api_error(cls, process_model_id: str) -> ProcessModelInfo:
+        try:
+            return cls.get_process_model(process_model_id)
+        except ProcessEntityNotFoundError as exception:
+            raise (
+                ApiError(
+                    error_code="process_model_cannot_be_found",
+                    message=f"Process model cannot be found: {process_model_id}",
+                    status_code=400,
+                )
+            ) from exception
+
+    @classmethod
     def get_process_model_files(cls, process_model: ProcessModelInfo) -> list[File]:
         files = FileSystemService.get_sorted_files(process_model)
         for f in files:

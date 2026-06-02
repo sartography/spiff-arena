@@ -1,0 +1,12 @@
+id: no-routes-imports-in-lower-layers
+valid:
+  - from spiffworkflow_backend.services.process_model_service import ProcessModelService
+  - import spiffworkflow_backend.services.process_model_service
+  - |
+    endpoint_name = "spiffworkflow_backend.routes.health_controller.status"
+invalid:
+  - from spiffworkflow_backend import routes
+  - from spiffworkflow_backend.routes import process_api_blueprint
+  - from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+  - import spiffworkflow_backend.routes
+  - import spiffworkflow_backend.routes.process_api_blueprint
