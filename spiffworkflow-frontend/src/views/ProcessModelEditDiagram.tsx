@@ -52,7 +52,6 @@ import {
   useBpmnEditorScriptState,
   useScriptUnitTestsState,
   runScriptUnitTest,
-  MessageEditorDialog,
   MarkdownEditorDialog,
   JsonSchemaEditorDialog,
   FileNameEditorDialog,
@@ -61,18 +60,16 @@ import {
   ScriptEditorDialog,
   useDiagramNavigationStack,
   useDiagramNavigationHandlers,
-  fireMessageSave,
   closeMarkdownEditorWithUpdate,
   closeJsonSchemaEditorWithUpdate,
-  closeMessageEditorAndRefresh,
   closeScriptEditorWithUpdate,
 } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import type { DiagramNavigationItem } from '../../packages/bpmn-js-spiffworkflow-react/src';
 import { spiffBpmnApiService } from '../services/SpiffBpmnApiService';
 import {
-  getGroupFromModifiedModelId,
   modifyProcessIdentifierForPathParam,
   setPageTitle,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import {
   PermissionsToCheck,
@@ -84,7 +81,6 @@ import { Notification } from '../components/Notification';
 import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
-import { MessageEditor } from '../components/messages/MessageEditor';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
@@ -171,21 +167,17 @@ export default function ProcessModelEditDiagram() {
     canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
     messageModelListPath: targetUris.messageModelListPath,
   });
-  const { onMessagesRequested } = bpmnEditorCallbacks;
   const {
     onLaunchScriptEditor,
     onLaunchMarkdownEditor,
-    onLaunchMessageEditor,
     onLaunchJsonSchemaEditor: launchJsonSchemaEditor,
     onSearchProcessModels,
     scriptEditorState,
     markdownEditorState,
-    messageEditorState,
     jsonSchemaEditorState,
     processSearchState,
     closeScriptEditor,
     closeMarkdownEditor,
-    closeMessageEditor,
     closeJsonSchemaEditor,
     selectProcessSearchResult,
   } = useBpmnEditorModals();
@@ -212,6 +204,32 @@ export default function ProcessModelEditDiagram() {
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
+  const modifiedProcessModelId = params.process_model_id || '';
+
+  // Navigate to the Messages page to edit a message model rather than opening
+  // an inline modal. This makes it clear the message is a shared resource.
+  const onLaunchMessageEditor = useCallback(
+    (event: any) => {
+      const messageId = event?.value?.messageId;
+      if (messageId) {
+        const nextSearchParams = new URLSearchParams({
+          message_id: messageId,
+          tab: 'models',
+        });
+        const sourceLocation = unModifyProcessIdentifierForPathParam(
+          modifiedProcessModelId,
+        );
+        if (sourceLocation) {
+          nextSearchParams.set('source_location', sourceLocation);
+        }
+        window.open(`/messages?${nextSearchParams.toString()}`, '_blank');
+      } else {
+        window.open('/messages?tab=models', '_blank');
+      }
+    },
+    [modifiedProcessModelId],
+  );
 
   const { addError, removeError } = useAPIError();
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
@@ -220,9 +238,6 @@ export default function ProcessModelEditDiagram() {
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
-
-  // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
-  const modifiedProcessModelId = params.process_model_id || '';
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
@@ -985,49 +1000,6 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
-  const handleMessageEditorClose = () => {
-    closeMessageEditorAndRefresh(
-      messageEditorState?.event,
-      closeMessageEditor,
-      onMessagesRequested,
-    );
-  };
-
-  const handleMessageEditorSave = (_event: any) => {
-    if (messageEditorState?.event?.eventBus) {
-      fireMessageSave(messageEditorState.event.eventBus);
-    }
-  };
-
-  const messageEditor = () => {
-    // do not render this component until we actually want to display it
-    if (!messageEditorState) {
-      return null;
-    }
-    return (
-      <MessageEditorDialog
-        open={!!messageEditorState}
-        onClose={handleMessageEditorClose}
-        onSave={handleMessageEditorSave}
-        title={t('diagram_message_editor_title')}
-        description={t('diagram_message_editor_description')}
-        saveLabel={t('diagram_message_editor_save')}
-        closeLabel={t('diagram_message_editor_close')}
-        renderEditor={() => (
-          <MessageEditor
-            modifiedProcessGroupIdentifier={getGroupFromModifiedModelId(
-              modifiedProcessModelId,
-            )}
-            messageId={messageEditorState.messageId}
-            correlationProperties={messageEditorState.correlationProperties}
-            messageEvent={messageEditorState.event}
-            elementId={messageEditorState.elementId}
-          />
-        )}
-      />
-    );
-  };
-
   const processSearchOnClose = (selection: ProcessReference) => {
     selectProcessSearchResult(selection?.identifier);
   };
@@ -1260,6 +1232,7 @@ export default function ProcessModelEditDiagram() {
           <Notification
             title={t('diagram_notifications_unsaved_changes_title')}
             type="error"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             data-testid="process-model-file-changed"
             hideCloseButton
           >
@@ -1279,7 +1252,6 @@ export default function ProcessModelEditDiagram() {
         {markdownEditor()}
         {jsonSchemaEditor()}
         {processModelSelector()}
-        {messageEditor()}
       </>
     );
   };
