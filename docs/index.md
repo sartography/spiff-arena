@@ -3,7 +3,7 @@
 Spiff Arena is the web application for creating, editing, running, and administering BPMN processes powered by the SpiffWorkflow engine.
 Use these docs when you are working with the Spiff Arena frontend, process model repository structure, user tasks, connector proxies, permissions, deployment, or operational behavior.
 
-For engine-level examples and BPMN library guidance, see [SpiffWorkflow Library](spiffworkflow/index).
+For engine-level examples and BPMN library guidance, see the [SpiffWorkflow Library documentation](https://spiff.works/docs/spiffworkflow/).
 
 ---
 
