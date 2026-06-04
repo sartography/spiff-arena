@@ -16,4 +16,4 @@ deployment/index
 extend_the_system/index
 ```
 
-For browser-based BPMN authoring in Ed, see the [Ed overview](../ed/index).
+For browser-based BPMN authoring in Ed, see the [Ed documentation](https://spiff.works/docs/ed/).
