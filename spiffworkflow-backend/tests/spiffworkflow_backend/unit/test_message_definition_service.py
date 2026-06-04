@@ -11,6 +11,20 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestMessageDefinitionService(BaseTest):
+    def test_descendant_location_detects_more_specific_target(self) -> None:
+        assert MessageDefinitionService._is_descendant_location(
+            "order",
+            "order/request-for-information",
+        )
+        assert not MessageDefinitionService._is_descendant_location(
+            "order/request-for-information",
+            "order",
+        )
+        assert not MessageDefinitionService._is_descendant_location(
+            "order",
+            "order-archive",
+        )
+
     def test_preserves_process_model_identifiers_when_usage_map_is_not_provided(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:

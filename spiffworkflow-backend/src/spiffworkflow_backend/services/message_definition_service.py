@@ -225,9 +225,7 @@ class MessageDefinitionService:
                 continue
 
             sanitized_messages[identifier] = {
-                k: v
-                for k, v in message_definition.items()
-                if k not in {"id", "location", PROCESS_MODEL_IDENTIFIERS_METADATA_KEY}
+                k: v for k, v in message_definition.items() if k not in {"id", "location", PROCESS_MODEL_IDENTIFIERS_METADATA_KEY}
             }
 
         return sanitized_messages
@@ -281,6 +279,10 @@ class MessageDefinitionService:
             raise
 
     @classmethod
+    def _is_descendant_location(cls, source_process_group_id: str, target_process_group_id: str) -> bool:
+        return target_process_group_id.startswith(f"{source_process_group_id}/")
+
+    @classmethod
     def move_message_between_groups(
         cls,
         source_process_group: ProcessGroup,
@@ -298,6 +300,12 @@ class MessageDefinitionService:
         source_messages = dict(source_process_group.messages or {})
         if source_message_identifier not in source_messages:
             raise ValueError(f"Message '{source_message_identifier}' was not found at '{source_process_group.id}'")
+        if cls._is_descendant_location(source_process_group.id, target_process_group.id):
+            raise ValueError(
+                f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
+                f"to descendant location '{target_process_group.id}'. Create a duplicate message at the more "
+                "specific location instead."
+            )
 
         target_messages = dict(target_process_group.messages or {})
         source_messages.pop(source_message_identifier, None)

@@ -290,6 +290,68 @@ class TestProcessGroupsController(BaseTest):
         assert moved_message.process_model_identifiers == ["order/request-for-information/request-for-information"]
         assert "_process_model_identifiers" not in target_process_group.messages["request-for-information-received"]
 
+    def test_move_message_definition_to_child_location_is_rejected(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order",
+        ).one()
+        original_message.process_model_identifiers = ["order/order-process"]
+        db.session.add(original_message)
+        db.session.commit()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order/request-for-information",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order/request-for-information",
+                    "schema": {},
+                },
+            },
+        )
+
+        assert move_response.status_code == 400
+        assert move_response.json() is not None
+        assert move_response.json()["error_code"] == "invalid_message_model"
+
+        original_message_after_move_attempt = MessageModel.query.filter_by(id=original_message.id).one()
+        assert original_message_after_move_attempt.identifier == "request-for-information-received"
+        assert original_message_after_move_attempt.location == "order"
+        assert original_message_after_move_attempt.process_model_identifiers == ["order/order-process"]
+
+        source_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+        target_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        assert source_process_group.messages == {"request-for-information-received": {"schema": {}}}
+        assert target_process_group.messages is None
+
     def test_process_group_list(
         self,
         app: Flask,
