@@ -107,6 +107,20 @@ vi.mock('../CustomForm', () => {
           >
             save
           </button>
+          <button
+            data-testid="save-message-with-invalid-schema"
+            onClick={() =>
+              latestCustomFormProps.onSubmit({
+                formData: {
+                  ...latestCustomFormProps.formData,
+                  schema: '{',
+                },
+              })
+            }
+            type="button"
+          >
+            save invalid schema
+          </button>
         </>
       );
     },
@@ -508,5 +522,62 @@ describe('MessageEditor', () => {
         schema: { type: 'object' },
       },
     });
+  });
+
+  it('shows an error notification instead of alerting when the schema is invalid', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[]}
+        elementId="Task_1"
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Order',
+        messages: {
+          [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
+            correlation_properties: {},
+            schema: {},
+          },
+        },
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [
+          {
+            id: 1441,
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+          },
+        ],
+      });
+    });
+
+    await act(async () => {
+      screen.getByTestId('save-message-with-invalid-schema').click();
+    });
+
+    expect(screen.getByTestId('message-schema-error')).toBeInTheDocument();
+    expect(screen.getByText('invalid_schema_error')).toBeInTheDocument();
+    expect(
+      makeCallToBackend.mock.calls
+        .map((call) => call[0])
+        .some((call) => call.httpMethod === 'PUT'),
+    ).toBe(false);
   });
 });

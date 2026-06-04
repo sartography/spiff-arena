@@ -100,6 +100,9 @@ export function MessageEditor({
     useState<boolean>(false);
   const [displayNotSyncedMessage, setDisplayNotSyncedMessage] =
     useState<boolean>(false);
+  const [schemaErrorMessage, setSchemaErrorMessage] = useState<string | null>(
+    null,
+  );
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const [currentMessageLocation, setCurrentMessageLocation] = useState<
     string | null
@@ -222,9 +225,10 @@ export function MessageEditor({
       try {
         updatedMessagesForId.schema = JSON.parse(formData.schema || '{}');
       } catch (e) {
-        alert(t('invalid_schema_error', { error: e }));
+        setSchemaErrorMessage(t('invalid_schema_error', { error: e }));
         return;
       }
+      setSchemaErrorMessage(null);
 
       const selectedSharedMessageOption =
         sharedMessageOptionsById[formData.useExistingSharedMessageId || ''];
@@ -655,6 +659,16 @@ export function MessageEditor({
             onClose={() => setDisplayNotSyncedMessage(false)}
           >
             {t('save_warning_message')}
+          </Notification>
+        ) : null}
+        {schemaErrorMessage ? (
+          <Notification
+            title={t('error')}
+            type="error"
+            data-testid="message-schema-error"
+            onClose={() => setSchemaErrorMessage(null)}
+          >
+            {schemaErrorMessage}
           </Notification>
         ) : null}
         <CustomForm
