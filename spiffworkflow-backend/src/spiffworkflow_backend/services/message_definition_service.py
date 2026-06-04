@@ -15,6 +15,9 @@ class MessageDefinitionConflictError(ValueError):
     pass
 
 
+PROCESS_MODEL_IDENTIFIERS_METADATA_KEY = "_process_model_identifiers"
+
+
 class MessageDefinitionService:
     @classmethod
     def _message_model_from_message(
@@ -44,6 +47,8 @@ class MessageDefinitionService:
             message_model.id = resolved_message_id
         if existing_model is not None:
             message_model.process_model_identifiers = list(existing_model.process_model_identifiers or [])
+        elif isinstance(message_definition.get(PROCESS_MODEL_IDENTIFIERS_METADATA_KEY), list):
+            message_model.process_model_identifiers = sorted(message_definition[PROCESS_MODEL_IDENTIFIERS_METADATA_KEY])
 
         return message_model
 
@@ -219,7 +224,11 @@ class MessageDefinitionService:
                 sanitized_messages[identifier] = message_definition
                 continue
 
-            sanitized_messages[identifier] = {k: v for k, v in message_definition.items() if k not in {"id", "location"}}
+            sanitized_messages[identifier] = {
+                k: v
+                for k, v in message_definition.items()
+                if k not in {"id", "location", PROCESS_MODEL_IDENTIFIERS_METADATA_KEY}
+            }
 
         return sanitized_messages
 
@@ -295,6 +304,16 @@ class MessageDefinitionService:
         if source_message_identifier != target_message_identifier:
             source_messages.pop(target_message_identifier, None)
             target_messages.pop(source_message_identifier, None)
+
+        source_message_model = MessageModel.query.filter_by(
+            identifier=source_message_identifier,
+            location=source_process_group.id,
+        ).first()
+        if source_message_model is not None:
+            message_definition = {
+                **message_definition,
+                PROCESS_MODEL_IDENTIFIERS_METADATA_KEY: list(source_message_model.process_model_identifiers or []),
+            }
 
         sanitized = cls.strip_metadata({target_message_identifier: message_definition}) or {}
         target_messages[target_message_identifier] = sanitized[target_message_identifier]

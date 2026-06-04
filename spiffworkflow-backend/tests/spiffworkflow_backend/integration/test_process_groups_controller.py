@@ -5,6 +5,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -255,6 +256,9 @@ class TestProcessGroupsController(BaseTest):
             identifier="request-for-information-received",
             location="order/request-for-information",
         ).one()
+        original_message.process_model_identifiers = ["order/request-for-information/request-for-information"]
+        db.session.add(original_message)
+        db.session.commit()
 
         move_response = client.put(
             "/v1.0/process-groups/order:request-for-information/messages/request-for-information-received/move",
@@ -283,6 +287,8 @@ class TestProcessGroupsController(BaseTest):
         moved_message = MessageModel.query.filter_by(id=original_message.id).one()
         assert moved_message.identifier == "request-for-information-received"
         assert moved_message.location == "order"
+        assert moved_message.process_model_identifiers == ["order/request-for-information/request-for-information"]
+        assert "_process_model_identifiers" not in target_process_group.messages["request-for-information-received"]
 
     def test_process_group_list(
         self,
