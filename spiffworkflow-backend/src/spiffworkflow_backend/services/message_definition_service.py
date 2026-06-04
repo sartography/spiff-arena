@@ -17,6 +17,7 @@ class MessageDefinitionConflictError(ValueError):
 
 
 PROCESS_MODEL_IDENTIFIERS_METADATA_KEY = "_process_model_identifiers"
+PROCESS_MODEL_IDENTIFIERS_TO_DISPLAY_IN_MOVE_ERROR = 2
 
 
 class MessageDefinitionService:
@@ -296,6 +297,15 @@ class MessageDefinitionService:
         )
 
     @classmethod
+    def _format_process_model_identifiers_for_move_error(cls, process_model_identifiers: list[str]) -> str:
+        displayed_process_model_identifiers = process_model_identifiers[:PROCESS_MODEL_IDENTIFIERS_TO_DISPLAY_IN_MOVE_ERROR]
+        remaining_count = len(process_model_identifiers) - len(displayed_process_model_identifiers)
+        message = ", ".join(displayed_process_model_identifiers)
+        if remaining_count > 0:
+            message += f", and {remaining_count} more"
+        return message
+
+    @classmethod
     def move_message_between_groups(
         cls,
         source_process_group: ProcessGroup,
@@ -332,10 +342,13 @@ class MessageDefinitionService:
                 else []
             )
             if out_of_scope_process_model_identifiers:
+                formatted_process_model_identifiers = cls._format_process_model_identifiers_for_move_error(
+                    out_of_scope_process_model_identifiers
+                )
                 raise ValueError(
                     f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
                     f"to descendant location '{target_process_group.id}' because these process models would no "
-                    f"longer be in scope: {', '.join(out_of_scope_process_model_identifiers)}. Create a duplicate "
+                    f"longer be in scope: {formatted_process_model_identifiers}. Create a duplicate "
                     "message at the more specific location instead."
                 )
             message_definition = {

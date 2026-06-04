@@ -318,7 +318,11 @@ class TestProcessGroupsController(BaseTest):
             identifier="request-for-information-received",
             location="order",
         ).one()
-        original_message.process_model_identifiers = ["order/order-process"]
+        original_message.process_model_identifiers = [
+            "order/first-process",
+            "order/second-process",
+            "order/third-process",
+        ]
         db.session.add(original_message)
         db.session.commit()
 
@@ -339,11 +343,17 @@ class TestProcessGroupsController(BaseTest):
         assert move_response.status_code == 400
         assert move_response.json() is not None
         assert move_response.json()["error_code"] == "invalid_message_model"
+        assert "order/first-process, order/second-process, and 1 more" in move_response.json()["message"]
+        assert "order/third-process" not in move_response.json()["message"]
 
         original_message_after_move_attempt = MessageModel.query.filter_by(id=original_message.id).one()
         assert original_message_after_move_attempt.identifier == "request-for-information-received"
         assert original_message_after_move_attempt.location == "order"
-        assert original_message_after_move_attempt.process_model_identifiers == ["order/order-process"]
+        assert original_message_after_move_attempt.process_model_identifiers == [
+            "order/first-process",
+            "order/second-process",
+            "order/third-process",
+        ]
 
         source_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
         target_process_group = ProcessModelService.get_process_group(

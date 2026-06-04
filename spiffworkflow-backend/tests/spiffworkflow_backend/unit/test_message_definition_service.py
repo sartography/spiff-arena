@@ -36,6 +36,19 @@ class TestMessageDefinitionService(BaseTest):
 
         assert out_of_scope_process_model_identifiers == ["order/order-process"]
 
+    def test_format_process_model_identifiers_for_move_error_truncates_after_two_models(self) -> None:
+        assert (
+            MessageDefinitionService._format_process_model_identifiers_for_move_error(
+                [
+                    "order/first-process",
+                    "order/second-process",
+                    "order/third-process",
+                    "order/fourth-process",
+                ]
+            )
+            == "order/first-process, order/second-process, and 2 more"
+        )
+
     def test_preserves_process_model_identifiers_when_usage_map_is_not_provided(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
