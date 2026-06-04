@@ -25,6 +25,17 @@ class TestMessageDefinitionService(BaseTest):
             "order-archive",
         )
 
+    def test_out_of_scope_process_model_identifiers_returns_usages_that_cannot_see_target_location(self) -> None:
+        out_of_scope_process_model_identifiers = MessageDefinitionService._out_of_scope_process_model_identifiers(
+            [
+                "order/order-process",
+                "order/request-for-information/request-for-information",
+            ],
+            "order/request-for-information",
+        )
+
+        assert out_of_scope_process_model_identifiers == ["order/order-process"]
+
     def test_preserves_process_model_identifiers_when_usage_map_is_not_provided(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:

@@ -9,6 +9,7 @@ from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 
 
 class MessageDefinitionConflictError(ValueError):
@@ -283,6 +284,18 @@ class MessageDefinitionService:
         return target_process_group_id.startswith(f"{source_process_group_id}/")
 
     @classmethod
+    def _out_of_scope_process_model_identifiers(
+        cls,
+        process_model_identifiers: list[str],
+        target_process_group_id: str,
+    ) -> list[str]:
+        return sorted(
+            process_model_id
+            for process_model_id in process_model_identifiers
+            if target_process_group_id not in UpsearchService.upsearch_locations(process_model_id)
+        )
+
+    @classmethod
     def move_message_between_groups(
         cls,
         source_process_group: ProcessGroup,
@@ -300,12 +313,6 @@ class MessageDefinitionService:
         source_messages = dict(source_process_group.messages or {})
         if source_message_identifier not in source_messages:
             raise ValueError(f"Message '{source_message_identifier}' was not found at '{source_process_group.id}'")
-        if cls._is_descendant_location(source_process_group.id, target_process_group.id):
-            raise ValueError(
-                f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
-                f"to descendant location '{target_process_group.id}'. Create a duplicate message at the more "
-                "specific location instead."
-            )
 
         target_messages = dict(target_process_group.messages or {})
         source_messages.pop(source_message_identifier, None)
@@ -318,9 +325,22 @@ class MessageDefinitionService:
             location=source_process_group.id,
         ).first()
         if source_message_model is not None:
+            process_model_identifiers = list(source_message_model.process_model_identifiers or [])
+            out_of_scope_process_model_identifiers = (
+                cls._out_of_scope_process_model_identifiers(process_model_identifiers, target_process_group.id)
+                if cls._is_descendant_location(source_process_group.id, target_process_group.id)
+                else []
+            )
+            if out_of_scope_process_model_identifiers:
+                raise ValueError(
+                    f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
+                    f"to descendant location '{target_process_group.id}' because these process models would no "
+                    f"longer be in scope: {', '.join(out_of_scope_process_model_identifiers)}. Create a duplicate "
+                    "message at the more specific location instead."
+                )
             message_definition = {
                 **message_definition,
-                PROCESS_MODEL_IDENTIFIERS_METADATA_KEY: list(source_message_model.process_model_identifiers or []),
+                PROCESS_MODEL_IDENTIFIERS_METADATA_KEY: process_model_identifiers,
             }
 
         sanitized = cls.strip_metadata({target_message_identifier: message_definition}) or {}
