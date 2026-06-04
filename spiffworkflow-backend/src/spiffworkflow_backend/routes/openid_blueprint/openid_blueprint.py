@@ -26,11 +26,11 @@ from flask import url_for
 from flask.wrappers import Response
 
 from spiffworkflow_backend.config.openid.rsa_keys import OpenIdConfigsForDevOnly
+from spiffworkflow_backend.constants import SPIFF_OPEN_ID_KEY_ID
 
 openid_blueprint = Blueprint("openid", __name__, template_folder="templates", static_folder="static")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
-SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
 SPIFF_OPEN_ID_ALGORITHM = "RS256"
 
 

@@ -1,10 +1,18 @@
 import time
+from typing import Any
+from typing import Protocol
+from typing import cast
 
+import pytest
 from flask import Flask
 from pytest_mock.plugin import MockerFixture
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import SpiffCeleryWorkerError
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import celery_task_event_notifier_run
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -16,6 +24,15 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+
+class SupportsCeleryEventNotifierTaskRun(Protocol):
+    def run(
+        self,
+        updated_process_instance_id: int,
+        process_model_identifier: str,
+        event_type: str,
+    ) -> dict[str, Any]: ...
 
 
 class TestBackgroundProcessingService(BaseTest):
@@ -186,6 +203,26 @@ class TestBackgroundProcessingService(BaseTest):
                     (process_instance.id, process_instance.process_model_identifier, "process_instance_complete"),
                 )
                 assert mock.call_count == 1
+
+    def test_event_notifier_worker_wraps_missing_process_model_without_api_error(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with self.app_config_mock(
+            app,
+            "SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL",
+            "missing/event-notifier-process-model",
+        ):
+            with pytest.raises(SpiffCeleryWorkerError) as exception:
+                cast(SupportsCeleryEventNotifierTaskRun, celery_task_event_notifier_run).run(
+                    1,
+                    "group/process-model",
+                    "human_tasks_changed",
+                )
+
+        assert isinstance(exception.value.__cause__, ProcessEntityNotFoundError)
+        assert not isinstance(exception.value.__cause__, ApiError)
 
     def _load_up_a_future_task_and_return_instance(
         self, process_model: ProcessModelInfo | None = None, should_schedule_waiting_timer_events: bool = True

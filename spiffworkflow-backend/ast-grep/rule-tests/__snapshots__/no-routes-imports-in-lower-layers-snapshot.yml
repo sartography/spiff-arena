@@ -1,0 +1,32 @@
+id: no-routes-imports-in-lower-layers
+snapshots:
+  from spiffworkflow_backend import routes:
+    labels:
+    - source: from spiffworkflow_backend import routes
+      style: primary
+      start: 0
+      end: 40
+  from spiffworkflow_backend.routes import process_api_blueprint:
+    labels:
+    - source: from spiffworkflow_backend.routes import process_api_blueprint
+      style: primary
+      start: 0
+      end: 62
+  from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model:
+    labels:
+    - source: from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+      style: primary
+      start: 0
+      end: 81
+  import spiffworkflow_backend.routes:
+    labels:
+    - source: import spiffworkflow_backend.routes
+      style: primary
+      start: 0
+      end: 35
+  import spiffworkflow_backend.routes.process_api_blueprint:
+    labels:
+    - source: import spiffworkflow_backend.routes.process_api_blueprint
+      style: primary
+      start: 0
+      end: 57

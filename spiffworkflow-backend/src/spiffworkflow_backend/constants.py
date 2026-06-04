@@ -1,4 +1,5 @@
 SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION = "5"
+SPIFF_OPEN_ID_KEY_ID = "spiffworkflow_backend_open_id"
 
 # so we can tell if a migration has changed or if there is a new one
 SPIFFWORKFLOW_BACKEND_DATA_MIGRATION_CHECKSUM = {
