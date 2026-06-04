@@ -218,7 +218,7 @@ class TestMessages(BaseTest):
             cp = {p["identifier"]: p["retrieval_expression"] for p in message["correlation_properties"]}
             assert cp == expected_correlation_properties[message["identifier"]]
 
-    def test_process_group_update_can_move_message_to_new_location_using_existing_message_id(
+    def test_process_group_update_rejects_existing_message_id_at_different_location(
         self,
         app: Flask,
         client: TestClient,
@@ -263,11 +263,8 @@ class TestMessages(BaseTest):
                 },
             },
         )
-        assert response.status_code == 200
+        assert response.status_code == 400
 
-        updated_message = MessageModel.query.filter_by(id=original_message_id).one()
-        assert updated_message.identifier == "request-for-information-received"
-        assert updated_message.location == "order/request-for-information"
-
-        parent_message = MessageModel.query.filter_by(identifier="request-for-information-received", location="order").first()
-        assert parent_message is None
+        original_message = MessageModel.query.filter_by(id=original_message_id).one()
+        assert original_message.identifier == "request-for-information-received"
+        assert original_message.location == "order"

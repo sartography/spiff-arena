@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.message_definition_service import MessageDefinitionConflictError
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
@@ -94,6 +95,12 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
             updated_process_groups={process_group_id: process_group},
             process_groups_with_message_metadata={process_group_id: process_group_with_message_metadata},
         )
+    except MessageDefinitionConflictError as exception:
+        raise ApiError(
+            error_code="message_definition_conflict",
+            message=str(exception),
+            status_code=409,
+        ) from exception
     except ValueError as exception:
         raise ApiError(
             error_code="invalid_message_model",
@@ -231,6 +238,8 @@ def move_message_definition(
             target_message_identifier=target_message_identifier,
             message_definition=message_definition,
         )
+    except MessageDefinitionConflictError as exception:
+        raise ApiError(error_code="message_definition_conflict", message=str(exception), status_code=409) from exception
     except ValueError as exception:
         error_code = "message_definition_not_found" if "was not found at" in str(exception) else "invalid_message_model"
         raise ApiError(error_code=error_code, message=str(exception), status_code=400) from exception

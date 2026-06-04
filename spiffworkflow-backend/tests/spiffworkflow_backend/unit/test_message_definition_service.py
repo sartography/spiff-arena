@@ -1,8 +1,11 @@
+import pytest
 from flask.app import Flask
+from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.services.message_definition_service import MessageDefinitionConflictError
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -48,3 +51,59 @@ class TestMessageDefinitionService(BaseTest):
             location="order",
         ).one()
         assert refreshed_message_model.process_model_identifiers == ["order/request-for-information"]
+
+    def test_save_rejects_supplied_message_id_for_different_location(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        existing_message_model = MessageModel(
+            identifier="request-for-information-received",
+            location="order",
+            schema={},
+        )
+        db.session.add(existing_message_model)
+        db.session.commit()
+
+        message_model = MessageModel(
+            identifier="request-for-information-received",
+            location="order/request-for-information",
+            schema={},
+        )
+        message_model.id = existing_message_model.id
+
+        with pytest.raises(ValueError, match="belongs to a different message"):
+            MessageDefinitionService.save_all_message_models(
+                {
+                    (
+                        "request-for-information-received",
+                        "order/request-for-information",
+                    ): message_model
+                }
+            )
+
+    def test_save_raises_conflict_when_supplied_message_id_is_inserted_concurrently(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        message_model = MessageModel(
+            identifier="request-for-information-received",
+            location="order",
+            schema={},
+        )
+        message_model.id = 123
+
+        def raise_integrity_error() -> None:
+            raise IntegrityError("insert", {}, Exception("duplicate key"))
+
+        monkeypatch.setattr(db.session, "flush", raise_integrity_error)
+
+        try:
+            with pytest.raises(MessageDefinitionConflictError, match="created concurrently"):
+                MessageDefinitionService.save_all_message_models(
+                    {
+                        (
+                            "request-for-information-received",
+                            "order",
+                        ): message_model
+                    }
+                )
+        finally:
+            db.session.rollback()

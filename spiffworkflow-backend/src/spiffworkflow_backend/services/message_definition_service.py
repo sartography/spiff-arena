@@ -1,6 +1,7 @@
 from typing import Any
 
 from flask import current_app
+from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
@@ -8,6 +9,10 @@ from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
+
+class MessageDefinitionConflictError(ValueError):
+    pass
 
 
 class MessageDefinitionService:
@@ -30,13 +35,6 @@ class MessageDefinitionService:
 
         resolved_message_id: int | None = None
         if message_id is not None:
-            model_by_id = MessageModel.query.filter_by(id=message_id).first()
-            if model_by_id is not None and model_by_id.identifier != identifier:
-                raise ValueError(
-                    f"Supplied message_id {message_id} belongs to a different message"
-                    f" ('{model_by_id.identifier}' at '{model_by_id.location}')."
-                    f" Cannot reuse this id for '{identifier}' at '{message_location}'."
-                )
             resolved_message_id = message_id
         else:
             resolved_message_id = existing_message_id
@@ -120,16 +118,61 @@ class MessageDefinitionService:
                 if usage_map
                 else list(message_model.process_model_identifiers or [])
             )
-            message_model_to_merge = MessageModel(
+            message_model_to_save = MessageModel(
                 identifier=message_model.identifier,
                 location=message_model.location,
                 schema=message_model.schema,
                 process_model_identifiers=process_model_identifiers,
             )
-            if message_model.id is not None:
-                message_model_to_merge.id = message_model.id
+            message_id: int | None = getattr(message_model, "id", None)
+            if message_id is not None:
+                locked_message_model = MessageModel.query.filter_by(id=message_id).with_for_update().first()
+                if locked_message_model is not None:
+                    if (
+                        locked_message_model.identifier != message_model.identifier
+                        or locked_message_model.location != message_model.location
+                    ):
+                        raise ValueError(
+                            f"Supplied message_id {message_id} belongs to a different message"
+                            f" ('{locked_message_model.identifier}' at '{locked_message_model.location}')."
+                            f" Cannot reuse this id for '{message_model.identifier}' at '{message_model.location}'."
+                        )
+                    merged_message_model = locked_message_model
+                    merged_message_model.schema = message_model.schema
+                    merged_message_model.process_model_identifiers = process_model_identifiers
+                else:
+                    message_model_to_save.id = message_id
+                    db.session.add(message_model_to_save)
+                    try:
+                        db.session.flush()
+                    except IntegrityError as exception:
+                        raise MessageDefinitionConflictError(
+                            f"Message id {message_id} was created concurrently. Please reload and try again."
+                        ) from exception
+                    merged_message_model = message_model_to_save
+            else:
+                locked_message_model = (
+                    MessageModel.query.filter_by(
+                        identifier=message_model.identifier,
+                        location=message_model.location,
+                    )
+                    .with_for_update()
+                    .first()
+                )
+                if locked_message_model is not None:
+                    merged_message_model = locked_message_model
+                    merged_message_model.schema = message_model.schema
+                    merged_message_model.process_model_identifiers = process_model_identifiers
+                else:
+                    db.session.add(message_model_to_save)
+                    try:
+                        db.session.flush()
+                    except IntegrityError as exception:
+                        raise MessageDefinitionConflictError(
+                            "Message definition was created concurrently. Please reload and try again."
+                        ) from exception
+                    merged_message_model = message_model_to_save
 
-            merged_message_model: MessageModel = db.session.merge(message_model_to_merge)
             db.session.flush()
 
             MessageCorrelationPropertyModel.query.filter_by(message_id=merged_message_model.id).delete()
