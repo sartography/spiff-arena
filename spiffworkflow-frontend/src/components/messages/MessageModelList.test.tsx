@@ -3,6 +3,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MessageModelList from './MessageModelList';
 
+const SYSTEM_MESSAGE_SOURCE_LOCATION = 'misc/system-message-notification';
+const SYSTEM_MESSAGE_GROUP_LOCATION = 'misc';
+const MESSAGE_EDITOR_TEST_ID = 'message-editor';
+
 const { makeCallToBackend, messageEditorMock } = vi.hoisted(() => {
   return {
     makeCallToBackend: vi.fn(),
@@ -146,9 +150,50 @@ describe('MessageModelList', () => {
         name: 'request-for-information-received (order/request-for-information)',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('message-editor')).toHaveAttribute(
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toHaveAttribute(
       'data-hide-submit-button',
       'true',
+    );
+  });
+
+  it('opens an editable unsaved message model from the initial source location', async () => {
+    render(
+      <MemoryRouter>
+        <MessageModelList
+          initialMessageId="Message_SystemMessageNotification"
+          initialSourceLocation={SYSTEM_MESSAGE_SOURCE_LOCATION}
+        />
+      </MemoryRouter>,
+    );
+
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/all-message-models');
+
+    expect(listCall).toBeTruthy();
+
+    await act(async () => {
+      listCall.successCallback({ messages: [] });
+    });
+
+    expect(
+      screen.getByText('Message_SystemMessageNotification'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(SYSTEM_MESSAGE_SOURCE_LOCATION).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('heading', {
+        name: `Message_SystemMessageNotification (${SYSTEM_MESSAGE_GROUP_LOCATION})`,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toHaveAttribute(
+      'data-message-id',
+      'Message_SystemMessageNotification',
+    );
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toHaveAttribute(
+      'data-location',
+      SYSTEM_MESSAGE_GROUP_LOCATION,
     );
   });
 
@@ -180,11 +225,13 @@ describe('MessageModelList', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'edit' }));
 
-    expect(screen.getByTestId('message-editor')).toBeInTheDocument();
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
 
-    expect(screen.queryByTestId('message-editor')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId(MESSAGE_EDITOR_TEST_ID),
+    ).not.toBeInTheDocument();
   });
 
   it('opens a blank message editor after validating the chosen create location', async () => {
@@ -226,11 +273,11 @@ describe('MessageModelList', () => {
       });
     });
 
-    expect(screen.getByTestId('message-editor')).toHaveAttribute(
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toHaveAttribute(
       'data-message-id',
       '',
     );
-    expect(screen.getByTestId('message-editor')).toHaveAttribute(
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toHaveAttribute(
       'data-location',
       'order:request-for-information',
     );

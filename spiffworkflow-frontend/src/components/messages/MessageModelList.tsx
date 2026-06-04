@@ -128,6 +128,58 @@ const getInitialSelectedMessageModel = (
   return matches.length === 1 ? matches[0] : null;
 };
 
+const messageModelExists = (
+  messages: MessageModelResponse[],
+  identifier: string,
+  location: string,
+) => {
+  return messages.some((messageModel) => {
+    return (
+      messageModel.identifier === identifier &&
+      messageModel.location === location
+    );
+  });
+};
+
+const processGroupLocationForSource = (sourceLocation: string) => {
+  const normalizedSourceLocation = sourceLocation.replace(/(^\/+|\/+$)/g, '');
+  const pathParts = normalizedSourceLocation.split('/');
+  if (pathParts.length <= 1) {
+    return normalizedSourceLocation;
+  }
+
+  return pathParts.slice(0, -1).join('/');
+};
+
+const initialUnsavedMessageModel = (
+  messages: MessageModelResponse[],
+  initialMessageId?: string,
+  initialSourceLocation?: string,
+): MessageModelResponse | null => {
+  if (!initialMessageId || !initialSourceLocation) {
+    return null;
+  }
+
+  if (
+    getInitialSelectedMessageModel(
+      messages,
+      initialMessageId,
+      initialSourceLocation,
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    id: 0,
+    identifier: initialMessageId,
+    location: processGroupLocationForSource(initialSourceLocation),
+    schema: {},
+    correlation_properties: [],
+    process_model_identifiers: [initialSourceLocation],
+  };
+};
+
 export default function MessageModelList({
   processGroupId,
   initialMessageId,
@@ -165,7 +217,22 @@ export default function MessageModelList({
       HttpService.makeCallToBackend({
         path: listPath,
         successCallback: (result: { messages: MessageModelResponse[] }) => {
-          const messages = result.messages || [];
+          let messages = result.messages || [];
+          const unsavedMessageModel = initialUnsavedMessageModel(
+            messages,
+            initialMessageId,
+            initialSourceLocation,
+          );
+          if (
+            unsavedMessageModel &&
+            !messageModelExists(
+              messages,
+              unsavedMessageModel.identifier,
+              unsavedMessageModel.location,
+            )
+          ) {
+            messages = [unsavedMessageModel, ...messages];
+          }
           setMessageModels(messages);
 
           if (selectedMessage === null) {
