@@ -290,6 +290,101 @@ class TestProcessGroupsController(BaseTest):
         assert moved_message.process_model_identifiers == ["order/request-for-information/request-for-information"]
         assert "_process_model_identifiers" not in target_process_group.messages["request-for-information-received"]
 
+    def test_move_message_definition_with_rename_preserves_unrelated_messages(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_source_messages_response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "source-message": {
+                        "schema": {"title": "Source message"},
+                    },
+                    "renamed-message": {
+                        "schema": {"title": "Unrelated source message"},
+                    },
+                },
+            },
+        )
+        assert create_source_messages_response.status_code == 200
+
+        create_target_messages_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "source-message": {
+                        "schema": {"title": "Unrelated target message"},
+                    }
+                },
+            },
+        )
+        assert create_target_messages_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="source-message",
+            location="order/request-for-information",
+        ).one()
+        source_unrelated_message = MessageModel.query.filter_by(
+            identifier="renamed-message",
+            location="order/request-for-information",
+        ).one()
+        target_unrelated_message = MessageModel.query.filter_by(
+            identifier="source-message",
+            location="order",
+        ).one()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order:request-for-information/messages/source-message/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order",
+                "target_message_identifier": "renamed-message",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order",
+                    "schema": {"title": "Source message"},
+                },
+            },
+        )
+
+        assert move_response.status_code == 200
+
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+
+        assert source_process_group.messages == {
+            "renamed-message": {
+                "schema": {"title": "Unrelated source message"},
+            }
+        }
+        assert target_process_group.messages == {
+            "source-message": {
+                "schema": {"title": "Unrelated target message"},
+            },
+            "renamed-message": {
+                "schema": {"title": "Source message"},
+            },
+        }
+
+        moved_message = MessageModel.query.filter_by(id=original_message.id).one()
+        assert moved_message.identifier == "renamed-message"
+        assert moved_message.location == "order"
+        assert MessageModel.query.filter_by(id=source_unrelated_message.id).one().identifier == "renamed-message"
+        assert MessageModel.query.filter_by(id=target_unrelated_message.id).one().identifier == "source-message"
+
     def test_move_message_definition_to_child_location_is_rejected(
         self,
         app: Flask,

@@ -326,8 +326,10 @@ class MessageDefinitionService:
 
         target_messages = dict(target_process_group.messages or {})
         source_messages.pop(source_message_identifier, None)
-        if source_message_identifier != target_message_identifier:
-            source_messages.pop(target_message_identifier, None)
+        if (
+            source_process_group.id == target_process_group.id
+            and source_message_identifier != target_message_identifier
+        ):
             target_messages.pop(source_message_identifier, None)
 
         source_message_model = MessageModel.query.filter_by(
