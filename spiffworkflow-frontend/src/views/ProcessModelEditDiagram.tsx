@@ -13,6 +13,7 @@ import {
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  Button,
   ButtonGroup,
   Stack,
   TextareaAutosize,
@@ -83,6 +84,11 @@ import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import {
+  hasUnsyncedBpmnMessage,
+  MessageModelResponseForSync,
+  syncBpmnMessagesToMessageModels,
+} from '../components/messages/MessageModelSync';
 
 // State effects for managing error line decorations in script editor
 const addErrorLineEffect = StateEffect.define<{
@@ -131,6 +137,11 @@ export default function ProcessModelEditDiagram() {
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
+  const [displayMessageModelWarning, setDisplayMessageModelWarning] =
+    useState<boolean>(false);
+  const [messageModelsForSync, setMessageModelsForSync] = useState<
+    MessageModelResponseForSync[]
+  >([]);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
   const [scriptEditorTabValue, setScriptEditorTabValue] = useState<number>(0);
@@ -236,8 +247,9 @@ export default function ProcessModelEditDiagram() {
     null,
   );
   const [newFileName, setNewFileName] = useState('');
-  const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
-    useState(null);
+  const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] = useState<
+    string | null
+  >(null);
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
@@ -353,6 +365,47 @@ export default function ProcessModelEditDiagram() {
       displayName: processModelFile.name,
     });
   }, [processModelFile, updateTop]);
+
+  useEffect(() => {
+    const fileName = params.file_name || '';
+    const isCurrentFileDmn =
+      searchParams.get('file_type') === 'dmn' || fileName.endsWith('.dmn');
+    if (
+      !bpmnXmlForDiagramRendering ||
+      isCurrentFileDmn ||
+      !ability.can('GET', targetUris.messageModelListPath)
+    ) {
+      setDisplayMessageModelWarning(false);
+      return;
+    }
+
+    HttpService.makeCallToBackend({
+      path: `/message-models/${modifiedProcessModelId}`,
+      successCallback: (result: {
+        messages: MessageModelResponseForSync[];
+      }) => {
+        setMessageModelsForSync(result.messages || []);
+        setDisplayMessageModelWarning(
+          hasUnsyncedBpmnMessage(
+            bpmnXmlForDiagramRendering,
+            unModifyProcessIdentifierForPathParam(modifiedProcessModelId),
+            result.messages || [],
+          ),
+        );
+      },
+      failureCallback: () => {
+        setMessageModelsForSync([]);
+        setDisplayMessageModelWarning(false);
+      },
+    });
+  }, [
+    ability,
+    bpmnXmlForDiagramRendering,
+    modifiedProcessModelId,
+    params.file_name,
+    searchParams,
+    targetUris.messageModelListPath,
+  ]);
 
   /**
    * When the value of the Editor is updated dynamically async,
@@ -1244,6 +1297,53 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
+  const syncMessageModelsToDiagram = () => {
+    if (!bpmnXmlForDiagramRendering) {
+      return;
+    }
+
+    const syncedXml = syncBpmnMessagesToMessageModels(
+      bpmnXmlForDiagramRendering,
+      unModifyProcessIdentifierForPathParam(modifiedProcessModelId),
+      messageModelsForSync,
+    );
+    if (syncedXml === bpmnXmlForDiagramRendering) {
+      setDisplayMessageModelWarning(false);
+      return;
+    }
+
+    setBpmnXmlForDiagramRendering(syncedXml);
+    setDiagramHasChanges(true);
+    setDisplayMessageModelWarning(false);
+  };
+
+  const messageModelWarning = () => {
+    if (!displayMessageModelWarning) {
+      return null;
+    }
+
+    return (
+      <Notification
+        title={t('save_warning_title')}
+        type="warning"
+        data-testid="message-model-changed"
+        onClose={() => setDisplayMessageModelWarning(false)}
+      >
+        <>
+          {t('save_warning_message')}
+          <Button
+            color="inherit"
+            size="small"
+            sx={{ ml: 1 }}
+            onClick={syncMessageModelsToDiagram}
+          >
+            {t('update_diagram')}
+          </Button>
+        </>
+      </Notification>
+    );
+  };
+
   const pageModals = () => {
     return (
       <>
@@ -1274,6 +1374,7 @@ export default function ProcessModelEditDiagram() {
         {pageModals()}
 
         {unsavedChangesMessage()}
+        {messageModelWarning()}
         {saveFileMessage()}
         {appropriateEditor()}
       </>

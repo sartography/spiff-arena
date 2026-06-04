@@ -397,6 +397,7 @@
   "save_success_title": "Enregistrement réussi",
   "save_warning_message": "Il y a une différence entre la configuration actuelle et les données enregistrées. L'enregistrement est recommandé pour assurer la cohérence des données",
   "save_warning_title": "Veuillez enregistrer la configuration actuelle",
+  "update_diagram": "Update diagram",
   "retries_remaining": "Tentatives restantes",
   "schema_name": "Nom du schéma",
   "schema_name_requirements": "Le nom est requis, doit contenir au moins trois caractères, et doit être composé uniquement de caractères minuscules et de tirets.",

@@ -395,6 +395,7 @@
   "save_success_title": "Erfolgreich gespeichert",
   "save_warning_message": "Es gibt einen Unterschied zwischen der aktuellen Konfiguration und den gespeicherten Daten. Es wird empfohlen, die Änderungen zu speichern, um die Datenkonsistenz zu gewährleisten",
   "save_warning_title": "Bitte aktuelle Konfiguration speichern",
+  "update_diagram": "Update diagram",
   "retries_remaining": "Verbleibende Wiederholungen",
   "schema_name": "Schemabezeichnung",
   "schema_name_requirements": "Der Name ist erforderlich, muss mindestens drei Zeichen lang sein und darf nur Kleinbuchstaben und Bindestriche enthalten.",

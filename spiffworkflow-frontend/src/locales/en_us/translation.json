@@ -411,6 +411,7 @@
   "save_success_title": "Save successful",
   "save_warning_message": "There is a difference between the current configuration and the saved data. Saving is recommended to ensure data consistency",
   "save_warning_title": "Please save the current configuration",
+  "update_diagram": "Update diagram",
   "retries_remaining": "Retries remaining",
   "schema_name": "Schema Name",
   "schema_name_requirements": "Name is required, must be at least three characters, and must be all lowercase characters and hyphens.",

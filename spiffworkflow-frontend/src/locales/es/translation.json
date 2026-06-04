@@ -396,6 +396,7 @@
   "save_success_title": "Guardado exitosamente",
   "save_warning_message": "Hay una diferencia entre la configuración actual y los datos guardados. Se recomienda guardar para garantizar la consistencia de los datos",
   "save_warning_title": "Por favor guarde la configuración actual",
+  "update_diagram": "Update diagram",
   "retries_remaining": "Reintentos restantes",
   "schema_name": "Nombre del Esquema",
   "schema_name_requirements": "El nombre es obligatorio, debe tener al menos tres caracteres y contener solo letras minúsculas y guiones.",

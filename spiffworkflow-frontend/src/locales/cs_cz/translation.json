@@ -396,6 +396,7 @@
   "save_success_title": "Úspěšně uloženo",
   "save_warning_message": "Existuje rozdíl mezi aktuální konfigurací a uloženými daty. Pro zajištění konzistence dat doporučujeme provedené změny uložit",
   "save_warning_title": "Uložte prosím aktuální konfiguraci",
+  "update_diagram": "Update diagram",
   "retries_remaining": "Zbývající opakování",
   "schema_name": "Název schématu",
   "schema_name_requirements": "Název je povinný, musí mít alespoň tři znaky a obsahovat pouze malá písmena a pomlčky.",
