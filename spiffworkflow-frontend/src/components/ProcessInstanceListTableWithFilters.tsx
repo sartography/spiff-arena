@@ -42,9 +42,11 @@ import {
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
 import {
+  buildUniqueMilestoneNamesPath,
   getKeyByValue,
   getPageInfoFromSearchParams,
   getProcessStatus,
+  mergeSelectedStringOption,
   titleizeString,
   truncateString,
 } from '../helpers';
@@ -129,12 +131,17 @@ export default function ProcessInstanceListTableWithFilters({
   const { t } = useTranslation();
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceUniqueMilestoneNamesPath]: ['GET'],
     [targetUris.userSearch]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
+  const canReadUniqueMilestoneNames: boolean = ability.can(
+    'GET',
+    targetUris.processInstanceUniqueMilestoneNamesPath,
+  );
 
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
     null,
@@ -226,6 +233,29 @@ export default function ProcessInstanceListTableWithFilters({
     string | null
   >(null);
   const [lastMilestones, setLastMilestones] = useState<string[]>([]);
+  const uniqueMilestoneNamesRequestId = useRef(0);
+  const hasLoadedReportMetadata = reportMetadata !== null;
+  const processModelIdentifierForMilestoneNames = useMemo(() => {
+    if (!reportMetadata) {
+      return null;
+    }
+    const processModelFilter = reportMetadata.filter_by.find(
+      (reportFilter: ReportFilter) =>
+        reportFilter.field_name === 'process_model_identifier' &&
+        typeof reportFilter.field_value === 'string',
+    );
+    return (processModelFilter?.field_value as string) || null;
+  }, [reportMetadata]);
+  const uniqueMilestoneNamesPath = useMemo(() => {
+    return buildUniqueMilestoneNamesPath({
+      variant,
+      withRelationToMe,
+      processModelIdentifier: processModelIdentifierForMilestoneNames,
+    });
+  }, [processModelIdentifierForMilestoneNames, variant, withRelationToMe]);
+  const availableLastMilestones = useMemo(() => {
+    return mergeSelectedStringOption(lastMilestones, selectedLastMilestone);
+  }, [lastMilestones, selectedLastMilestone]);
   const systemReportOptions: string[] = useMemo(() => {
     return [
       'instances_with_tasks_waiting_for_me',
@@ -456,15 +486,6 @@ export default function ProcessInstanceListTableWithFilters({
       );
       setProcessStatusAllOptions(processStatusAllOptionsArray);
 
-      // Fetch distinct milestone values for filtering
-      HttpService.makeCallToBackend({
-        path: `/process-instances/unique-milestone-names`,
-        httpMethod: 'GET',
-        successCallback: (lastMilestoneArray: string[]) => {
-          setLastMilestones(lastMilestoneArray.sort());
-        },
-      });
-
       getReportMetadataWithReportHash();
     }
     const checkFiltersAndRun = () => {
@@ -488,6 +509,38 @@ export default function ProcessInstanceListTableWithFilters({
     // watch the variant prop so when switching between the "For Me" and "All" pi list tables
     // the api call to find the new process instances is made and the report metadata is updated.
     variant,
+  ]);
+
+  useEffect(() => {
+    const requestId = uniqueMilestoneNamesRequestId.current + 1;
+    uniqueMilestoneNamesRequestId.current = requestId;
+
+    if (!filtersEnabled || !permissionsLoaded) {
+      return;
+    }
+    if (!canReadUniqueMilestoneNames) {
+      setLastMilestones([]);
+      return;
+    }
+    if (!hasLoadedReportMetadata) {
+      return;
+    }
+    HttpService.makeCallToBackend({
+      path: uniqueMilestoneNamesPath,
+      httpMethod: 'GET',
+      successCallback: (lastMilestoneArray: string[]) => {
+        if (uniqueMilestoneNamesRequestId.current !== requestId) {
+          return;
+        }
+        setLastMilestones(lastMilestoneArray.sort());
+      },
+    });
+  }, [
+    canReadUniqueMilestoneNames,
+    filtersEnabled,
+    hasLoadedReportMetadata,
+    permissionsLoaded,
+    uniqueMilestoneNamesPath,
   ]);
 
   const removeFieldFromReportMetadata = (
@@ -1367,11 +1420,12 @@ export default function ProcessInstanceListTableWithFilters({
           <FormControl fullWidth margin="normal">
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{ flexGrow: 1 }}>
-                {lastMilestones.length > MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY ? (
+                {availableLastMilestones.length >
+                MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY ? (
                   <Autocomplete
                     disablePortal
                     id="last-milestone-autocomplete"
-                    options={lastMilestones}
+                    options={availableLastMilestones}
                     value={selectedLastMilestone}
                     getOptionLabel={(option) => option || ''}
                     renderOption={(props, option) => (
@@ -1418,7 +1472,7 @@ export default function ProcessInstanceListTableWithFilters({
                         setSelectedLastMilestone(value);
                       }}
                     >
-                      {lastMilestones.map((milestone) => (
+                      {availableLastMilestones.map((milestone) => (
                         <MenuItem key={milestone} value={milestone}>
                           {milestone}
                         </MenuItem>
