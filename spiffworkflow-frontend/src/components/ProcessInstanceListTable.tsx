@@ -65,8 +65,6 @@ type OwnProps = {
   variant?: string;
 };
 
-type SortDirection = 'asc' | 'desc';
-
 const SORTABLE_ACCESSORS = new Set([
   'id',
   'process_model_display_name',
@@ -75,44 +73,6 @@ const SORTABLE_ACCESSORS = new Set([
   'last_milestone_bpmn_name',
   'status',
 ]);
-
-/**
- * Returns the active sort direction for a column from the primary order field.
- */
-const getSortDirectionForAccessor = (
-  sortOrderBy: string[],
-  accessor: string,
-): SortDirection | null => {
-  const [primarySort] = sortOrderBy;
-  if (primarySort === accessor) {
-    return 'asc';
-  }
-  if (primarySort === `-${accessor}`) {
-    return 'desc';
-  }
-  return null;
-};
-
-/**
- * Builds backend order fields for the next header-click state.
- */
-const nextSortOrderBy = (
-  accessor: string,
-  current: SortDirection | null,
-): string[] => {
-  if (current === 'asc') {
-    return [];
-  }
-
-  const directionPrefix = current === null ? '-' : '';
-  const primarySort = `${directionPrefix}${accessor}`;
-  if (accessor === 'id') {
-    return [primarySort];
-  }
-
-  const idTiebreaker = `${directionPrefix}id`;
-  return [primarySort, idTiebreaker];
-};
 
 export default function ProcessInstanceListTable({
   additionalReportFilters,
@@ -133,6 +93,8 @@ export default function ProcessInstanceListTable({
   textToShowIfEmpty,
   variant = 'for-me',
 }: OwnProps) {
+  type SortDirection = 'asc' | 'desc';
+
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -515,10 +477,47 @@ export default function ProcessInstanceListTable({
   };
 
   /**
+   * Returns the active sort direction for a column from the primary order field.
+   */
+  const getSortDirectionForAccessor = (
+    accessor: string,
+  ): SortDirection | null => {
+    const [primarySort] = sortOrderBy;
+    if (primarySort === accessor) {
+      return 'asc';
+    }
+    if (primarySort === `-${accessor}`) {
+      return 'desc';
+    }
+    return null;
+  };
+
+  /**
+   * Builds backend order fields for the next header-click state.
+   */
+  const nextSortOrderBy = (
+    accessor: string,
+    current: SortDirection | null,
+  ): string[] => {
+    if (current === 'asc') {
+      return [];
+    }
+
+    const directionPrefix = current === null ? '-' : '';
+    const primarySort = `${directionPrefix}${accessor}`;
+    if (accessor === 'id') {
+      return [primarySort];
+    }
+
+    const idTiebreaker = `${directionPrefix}id`;
+    return [primarySort, idTiebreaker];
+  };
+
+  /**
    * Cycles a sortable column through descending, ascending, and default order.
    */
   const handleSortClick = (accessor: string) => {
-    const current = getSortDirectionForAccessor(sortOrderBy, accessor);
+    const current = getSortDirectionForAccessor(accessor);
     setSortOrderBy(nextSortOrderBy(accessor, current));
   };
 
@@ -628,7 +627,7 @@ export default function ProcessInstanceListTable({
                 const isSortable =
                   !!col.accessor && SORTABLE_ACCESSORS.has(col.accessor);
                 const direction = col.accessor
-                  ? getSortDirectionForAccessor(sortOrderBy, col.accessor)
+                  ? getSortDirectionForAccessor(col.accessor)
                   : null;
                 return (
                   <TableCell
