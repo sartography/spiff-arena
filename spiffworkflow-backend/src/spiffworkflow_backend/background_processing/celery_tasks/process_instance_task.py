@@ -40,9 +40,6 @@ def celery_task_event_notifier_run(
     worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
     current_app.logger.info(worker_intro_log_message)
 
-    process_model = ProcessModelService.get_process_model_or_raise_api_error(
-        current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
-    )
     data = {
         "event": {
             "event_type": event_type,
@@ -53,6 +50,9 @@ def celery_task_event_notifier_run(
         }
     }
     try:
+        process_model = ProcessModelService.get_process_model(
+            current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+        )
         ProcessInstanceService.create_and_run_process_instance(
             process_model=process_model,
             data_to_inject=data,
