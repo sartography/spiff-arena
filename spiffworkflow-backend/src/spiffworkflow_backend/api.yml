@@ -3070,11 +3070,11 @@ paths:
                 - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
-          description: Task completed
+          description: Callback accepted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Task"
+                $ref: "#/components/schemas/ServiceTaskCallbackOutcome"
 
   /tasks/{process_instance_id}/{task_guid}/allows-guest:
     parameters:
@@ -4203,6 +4203,38 @@ components:
         ok:
           type: boolean
           example: true
+    ServiceTaskCallbackOutcome:
+      properties:
+        ok:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum:
+            - completed
+            - retry_scheduled
+          example: completed
+        process_model_identifier:
+          type: string
+          example: test_group/retries
+        process_instance_id:
+          type: integer
+          example: 123
+        task_guid:
+          type: string
+          example: 88f9b549-5a29-483c-9f1e-10b7f534a258
+        retry_at:
+          type: integer
+          description: Unix timestamp in seconds when the retry is due.
+        retries_attempted:
+          type: integer
+          example: 0
+        retries_remaining:
+          type: integer
+          example: 3
+        max_retries:
+          type: integer
+          example: 3
     Locations:
       properties:
         locations:
