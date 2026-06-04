@@ -103,6 +103,7 @@ export function MessageEditor({
   const [schemaErrorMessage, setSchemaErrorMessage] = useState<string | null>(
     null,
   );
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const [currentMessageLocation, setCurrentMessageLocation] = useState<
     string | null
@@ -177,7 +178,7 @@ export function MessageEditor({
       location: string,
       processGroupToUpdate: ProcessGroup,
       successCallback: (response: ProcessGroup) => void,
-      failureCallback?: () => void,
+      failureCallback?: (error: { message?: string }) => void,
     ) => {
       HttpService.makeCallToBackend({
         path: `/process-groups/${modifyProcessIdentifierForPathParam(location)}`,
@@ -274,6 +275,9 @@ export function MessageEditor({
           ),
         });
       };
+      const updateFailure = (error: { message?: string }) => {
+        setSaveErrorMessage(error.message || t('error'));
+      };
 
       if (shouldInheritAncestorSharedMessage) {
         delete processGroupForUpdate.messages[newMessageId];
@@ -289,6 +293,7 @@ export function MessageEditor({
             );
             updateComplete(response);
           },
+          updateFailure,
         );
         return;
       }
@@ -303,6 +308,7 @@ export function MessageEditor({
           sourceLocation,
           processGroupForUpdate,
           updateComplete,
+          updateFailure,
         );
         return;
       }
@@ -311,6 +317,7 @@ export function MessageEditor({
           oldMessageId,
         )}/move`,
         successCallback: updateComplete,
+        failureCallback: updateFailure,
         httpMethod: 'PUT',
         postBody: {
           target_process_group_identifier: targetLocation,
@@ -328,8 +335,8 @@ export function MessageEditor({
       processGroup,
       saveProcessGroupAtLocation,
       sharedMessageOptionsById,
-      updateCorrelationPropertiesOnProcessGroup,
       t,
+      updateCorrelationPropertiesOnProcessGroup,
       onSave,
     ],
   );
@@ -669,6 +676,16 @@ export function MessageEditor({
             onClose={() => setSchemaErrorMessage(null)}
           >
             {schemaErrorMessage}
+          </Notification>
+        ) : null}
+        {saveErrorMessage ? (
+          <Notification
+            title={t('error')}
+            type="error"
+            data-testid="message-save-error"
+            onClose={() => setSaveErrorMessage(null)}
+          >
+            {saveErrorMessage}
           </Notification>
         ) : null}
         <CustomForm

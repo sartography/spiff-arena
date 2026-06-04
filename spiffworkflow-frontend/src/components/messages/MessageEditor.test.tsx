@@ -83,6 +83,21 @@ vi.mock('../CustomForm', () => {
             choose parent
           </button>
           <button
+            data-testid="choose-child-location"
+            onClick={() =>
+              latestCustomFormProps.onChange({
+                formData: {
+                  ...formData,
+                  processGroupIdentifier: 'order/request-for-information',
+                  useExistingSharedMessageId: 'none',
+                },
+              })
+            }
+            type="button"
+          >
+            move to child location
+          </button>
+          <button
             data-testid="customize-selected-message"
             onClick={() =>
               latestCustomFormProps.onChange({
@@ -439,6 +454,86 @@ describe('MessageEditor', () => {
         location: 'order',
       },
     });
+  });
+
+  it('shows an error notification when moving a message fails', async () => {
+    render(
+      <MessageEditor
+        modifiedProcessGroupIdentifier="order"
+        messageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
+        messageEvent={{ eventBus: { fire: vi.fn() } }}
+        correlationProperties={[]}
+        elementId="Task_1"
+      />,
+    );
+
+    const processGroupCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/process-groups/order');
+    const messageModelsCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/message-models/order');
+
+    await act(async () => {
+      processGroupCall.successCallback({
+        display_name: 'Order',
+        messages: {
+          [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
+            id: 1441,
+            location: 'order',
+            correlation_properties: {},
+            schema: {},
+          },
+        },
+      });
+    });
+
+    await act(async () => {
+      messageModelsCall.successCallback({
+        messages: [
+          {
+            id: 1441,
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+          },
+        ],
+      });
+    });
+
+    await act(async () => {
+      screen.getByTestId('choose-child-location').click();
+    });
+
+    await act(async () => {
+      screen.getByTestId('save-message').click();
+    });
+
+    const moveCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find(
+        (call) =>
+          call.path ===
+            `/process-groups/order/messages/${REQUEST_FOR_INFORMATION_MESSAGE_ID}/move` &&
+          call.httpMethod === 'PUT',
+      );
+
+    expect(moveCall).toBeTruthy();
+
+    await act(async () => {
+      moveCall.failureCallback({
+        message:
+          'Cannot move message because a process model would be out of scope.',
+      });
+    });
+
+    expect(screen.getByTestId('message-save-error')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Cannot move message because a process model would be out of scope.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('creates a local override when an inherited ancestor message is customized', async () => {
