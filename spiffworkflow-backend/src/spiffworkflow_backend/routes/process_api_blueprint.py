@@ -1,4 +1,3 @@
-import json
 import os
 import uuid
 from typing import Any
@@ -28,7 +27,6 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
@@ -44,8 +42,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.git_service import GitCommandError
-from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -53,7 +50,6 @@ from spiffworkflow_backend.services.process_instance_service import ProcessInsta
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
@@ -342,19 +338,7 @@ def _find_process_instance_by_id_or_raise(
 # process_model_id uses forward slashes on all OSes
 # this seems to return an object where process_model.id has backslashes on windows
 def _get_process_model(process_model_id: str) -> ProcessModelInfo:
-    process_model = None
-    try:
-        process_model = ProcessModelService.get_process_model(process_model_id)
-    except ProcessEntityNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_cannot_be_found",
-                message=f"Process model cannot be found: {process_model_id}",
-                status_code=400,
-            )
-        ) from exception
-
-    return process_model
+    return ProcessModelService.get_process_model_or_raise_api_error(process_model_id)
 
 
 def _find_principal_or_raise() -> PrincipalModel:
@@ -442,45 +426,12 @@ def _get_process_model_for_instantiation(
 def _prepare_form_data(
     form_file: str, process_model: ProcessModelInfo, task_model: TaskModel | None = None, revision: str | None = None
 ) -> dict:
-    try:
-        form_contents = GitService.get_file_contents_for_revision_if_git_revision(
-            process_model=process_model,
-            revision=revision,
-            file_name=form_file,
-        )
-    except GitCommandError as exception:
-        raise (
-            ApiError(
-                error_code="git_error_loading_form",
-                message=(
-                    f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
-                    f" '{revision}' no longer exists? Error was: {str(exception)}"
-                ),
-                status_code=400,
-            )
-        ) from exception
-
-    if task_model and task_model.data is not None:
-        try:
-            form_contents = JinjaService.render_jinja_template(form_contents, task=task_model)
-        except TaskModelError as wfe:
-            wfe.add_note(f"Error in Json Form File '{form_file}'")
-            api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
-            api_error.file_name = form_file
-            raise api_error from wfe
-
-    try:
-        # form_contents is a str
-        hot_dict: dict = json.loads(form_contents)
-        return hot_dict
-    except Exception as exception:
-        raise (
-            ApiError(
-                error_code="error_loading_form",
-                message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
-                status_code=400,
-            )
-        ) from exception
+    return FormSchemaService.prepare_form_data(
+        form_file=form_file,
+        process_model=process_model,
+        task_model=task_model,
+        revision=revision,
+    )
 
 
 def _task_submit_shared(

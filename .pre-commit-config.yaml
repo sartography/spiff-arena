@@ -55,3 +55,9 @@ repos:
         types: [text]
         stages: [pre-commit, pre-push, manual]
         exclude: "/migrations/"
+      - id: ast-grep
+        files: ^spiffworkflow-backend/
+        name: ast-grep
+        entry: bash -c 'uv --directory spiffworkflow-backend run ast-grep scan --report-style=short && uv --directory spiffworkflow-backend run ast-grep test'
+        language: system
+        pass_filenames: false
