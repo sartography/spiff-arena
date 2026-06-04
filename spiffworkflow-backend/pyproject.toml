@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 
 authors = [{ name = "Sartography", email = "sartography@users.noreply.github.com" }]
 
-urls = { homepage = "https://spiffworkflow.org", repository = "https://github.com/sartography/spiff-arena", documentation = "https://spiff-arena.readthedocs.io" }
+urls = { homepage = "https://spiff.works", repository = "https://github.com/sartography/spiff-arena", documentation = "https://spiff.works/docs/spiff-arena/" }
 
 dependencies = [
     "flask == 3.1.3",

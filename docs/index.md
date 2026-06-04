@@ -3,7 +3,7 @@
 Spiff Arena is the web application for creating, editing, running, and administering BPMN processes powered by the SpiffWorkflow engine.
 Use these docs when you are working with the Spiff Arena frontend, process model repository structure, user tasks, connector proxies, permissions, deployment, or operational behavior.
 
-For engine-level examples and BPMN library guidance, see [SpiffWorkflow Library](spiffworkflow/index).
+For engine-level examples and BPMN library guidance, see the [SpiffWorkflow Library documentation](https://spiff.works/docs/spiffworkflow/).
 
 ---
 
@@ -72,19 +72,9 @@ Spiff Arena is part of the open-source SpiffWorkflow ecosystem, and the project 
 :hidden:
 :caption: Additional Documentation
 
-ed/index
-analytics/index
-spiffworkflow/index
+SpiffWorks Learn <https://spiff.works/learn/>
 ```
 
-## [Ed](ed/index)
+## [SpiffWorks Learn](https://spiff.works/learn/)
 
-**Productivity-focused BPMN authoring**: Design, run, debug, sync, and refine executable process models with SpiffWorks Ed.
-
-## [Analytics](analytics/index)
-
-**Spiff Arena analytics**: Review process usage, duration, milestones, errors, exports, and API access for operational reporting.
-
-## [SpiffWorkflow Library](spiffworkflow/index)
-
-**Engine-level BPMN examples**: Learn how BPMN models become executable workflows in Python with examples for gateways, scripts, multi-instance tasks, DMN, messaging, timers, subprocesses, and serialization.
+Central entry point for Spiff Arena, Ed, Analytics, and SpiffWorkflow documentation.
