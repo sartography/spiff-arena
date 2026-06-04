@@ -21,6 +21,12 @@ type ParsedBpmnMessage = {
   }>;
 };
 
+type BpmnMessageSyncStatus = {
+  hasMissingMessageModel: boolean;
+  missingMessageModelIdentifiers: string[];
+  hasUnsyncedMessage: boolean;
+};
+
 const localNameEquals = (element: Element, localName: string) => {
   return (
     element.localName === localName || element.nodeName.endsWith(localName)
@@ -61,10 +67,24 @@ const parseBpmnMessages = (bpmnXml: string): ParsedBpmnMessage[] => {
       }
     });
 
-  const messagesByIdentifier: Record<
-    string,
-    ParsedBpmnMessage['correlationProperties']
-  > = {};
+  const buildParsedMessage = (messageRef: string): ParsedBpmnMessage => {
+    return {
+      identifiers: messageIdentifiersByReference[messageRef] || [messageRef],
+      messageRef,
+      correlationProperties: [],
+    };
+  };
+
+  const messagesByReference: Record<string, ParsedBpmnMessage> = {};
+  Array.from(xmlDocument.getElementsByTagName('*'))
+    .filter((element) => element.hasAttribute('messageRef'))
+    .forEach((messageReferenceElement) => {
+      const messageRef = messageReferenceElement.getAttribute('messageRef');
+      if (messageRef && !messagesByReference[messageRef]) {
+        messagesByReference[messageRef] = buildParsedMessage(messageRef);
+      }
+    });
+
   Array.from(xmlDocument.getElementsByTagName('*'))
     .filter((element) =>
       localNameEquals(element, 'correlationPropertyRetrievalExpression'),
@@ -84,32 +104,16 @@ const parseBpmnMessages = (bpmnXml: string): ParsedBpmnMessage[] => {
       const retrievalExpression =
         childTextByLocalName(retrievalExpressionElement, 'messagePath') ||
         childTextByLocalName(retrievalExpressionElement, 'formalExpression');
-      const identifiers = messageIdentifiersByReference[messageRef] || [
-        messageRef,
-      ];
-      identifiers.forEach((identifier) => {
-        if (!messagesByIdentifier[identifier]) {
-          messagesByIdentifier[identifier] = [];
-        }
-        messagesByIdentifier[identifier].push({
-          id: correlationPropertyId,
-          retrievalExpression,
-        });
+      if (!messagesByReference[messageRef]) {
+        messagesByReference[messageRef] = buildParsedMessage(messageRef);
+      }
+      messagesByReference[messageRef].correlationProperties.push({
+        id: correlationPropertyId,
+        retrievalExpression,
       });
     });
 
-  return Object.entries(messagesByIdentifier).map(
-    ([identifier, correlationProperties]) => {
-      const identifiers = messageIdentifiersByReference[identifier] || [
-        identifier,
-      ];
-      return {
-        identifiers,
-        messageRef: identifiers[0],
-        correlationProperties,
-      };
-    },
-  );
+  return Object.values(messagesByReference);
 };
 
 const matchingMessageModel = (
@@ -132,34 +136,74 @@ const matchingMessageModel = (
   );
 };
 
+const messageDisplayIdentifier = (parsedMessage: ParsedBpmnMessage) => {
+  return (
+    parsedMessage.identifiers.find(
+      (identifier) => identifier !== parsedMessage.messageRef,
+    ) || parsedMessage.messageRef
+  );
+};
+
 export const hasUnsyncedBpmnMessage = (
   bpmnXml: string,
   currentLocation: string,
   messageModels: MessageModelResponseForSync[],
 ) => {
-  const parsedMessages = parseBpmnMessages(bpmnXml);
-  return parsedMessages.some((parsedMessage) => {
-    const messageModel = matchingMessageModel(
-      parsedMessage,
-      currentLocation,
-      messageModels,
-    );
-    if (!messageModel) {
-      return true;
-    }
+  return getBpmnMessageSyncStatus(bpmnXml, currentLocation, messageModels)
+    .hasUnsyncedMessage;
+};
 
-    return !areCorrelationPropertiesInSync(
-      {
-        id: currentLocation,
-        display_name: currentLocation,
-        messages: {},
-      },
-      messageModel.identifier,
-      parsedMessage.correlationProperties,
-      currentLocation,
-      [messageModel],
-    );
-  });
+export const getBpmnMessageSyncStatus = (
+  bpmnXml: string,
+  currentLocation: string,
+  messageModels: MessageModelResponseForSync[],
+): BpmnMessageSyncStatus => {
+  const parsedMessages = parseBpmnMessages(bpmnXml);
+  return parsedMessages.reduce<BpmnMessageSyncStatus>(
+    (status, parsedMessage) => {
+      const messageModel = matchingMessageModel(
+        parsedMessage,
+        currentLocation,
+        messageModels,
+      );
+      if (!messageModel) {
+        return {
+          hasMissingMessageModel: true,
+          missingMessageModelIdentifiers: uniqueValues([
+            ...status.missingMessageModelIdentifiers,
+            messageDisplayIdentifier(parsedMessage),
+          ]),
+          hasUnsyncedMessage: true,
+        };
+      }
+
+      const isSynced = areCorrelationPropertiesInSync(
+        {
+          id: currentLocation,
+          display_name: currentLocation,
+          messages: {},
+        },
+        messageModel.identifier,
+        parsedMessage.correlationProperties,
+        currentLocation,
+        [messageModel],
+      );
+
+      if (!isSynced) {
+        return {
+          ...status,
+          hasUnsyncedMessage: true,
+        };
+      }
+
+      return status;
+    },
+    {
+      hasMissingMessageModel: false,
+      missingMessageModelIdentifiers: [],
+      hasUnsyncedMessage: false,
+    },
+  );
 };
 
 // eslint-disable-next-line sonarjs/no-clear-text-protocols

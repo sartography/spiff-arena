@@ -396,6 +396,8 @@
   "save_success_title": "Guardado com sucesso",
   "save_warning_message": "Existe uma diferença entre a configuração atual e os dados guardados. Para garantir a consistência dos dados, recomenda-se que guarde as alterações efetuadas",
   "save_warning_title": "Por favor, guarde a configuração atual",
+  "message_model_not_found_message": "The message definition referenced by this diagram could not be found: {{messageIdentifiers}}.",
+  "message_model_not_found_title": "Message model not found",
   "update_diagram": "Update diagram",
   "retries_remaining": "Tentativas restantes",
   "schema_name": "Nome do Esquema",

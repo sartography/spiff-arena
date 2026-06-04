@@ -85,7 +85,7 @@ import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery'
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import {
-  hasUnsyncedBpmnMessage,
+  getBpmnMessageSyncStatus,
   MessageModelResponseForSync,
   syncBpmnMessagesToMessageModels,
 } from '../components/messages/MessageModelSync';
@@ -96,6 +96,8 @@ const addErrorLineEffect = StateEffect.define<{
   error: string;
 }>();
 const clearErrorLineEffect = StateEffect.define<null>();
+
+type MessageModelWarningType = 'changed' | 'missing' | null;
 
 // State field to track error line decorations
 const errorLineField = StateField.define<DecorationSet>({
@@ -137,8 +139,10 @@ export default function ProcessModelEditDiagram() {
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
-  const [displayMessageModelWarning, setDisplayMessageModelWarning] =
-    useState<boolean>(false);
+  const [messageModelWarningType, setMessageModelWarningType] =
+    useState<MessageModelWarningType>(null);
+  const [missingMessageModelIdentifiers, setMissingMessageModelIdentifiers] =
+    useState<string[]>([]);
   const [messageModelsForSync, setMessageModelsForSync] = useState<
     MessageModelResponseForSync[]
   >([]);
@@ -375,7 +379,8 @@ export default function ProcessModelEditDiagram() {
       isCurrentFileDmn ||
       !ability.can('GET', targetUris.messageModelListPath)
     ) {
-      setDisplayMessageModelWarning(false);
+      setMessageModelWarningType(null);
+      setMissingMessageModelIdentifiers([]);
       return;
     }
 
@@ -385,17 +390,28 @@ export default function ProcessModelEditDiagram() {
         messages: MessageModelResponseForSync[];
       }) => {
         setMessageModelsForSync(result.messages || []);
-        setDisplayMessageModelWarning(
-          hasUnsyncedBpmnMessage(
-            bpmnXmlForDiagramRendering,
-            unModifyProcessIdentifierForPathParam(modifiedProcessModelId),
-            result.messages || [],
-          ),
+        const syncStatus = getBpmnMessageSyncStatus(
+          bpmnXmlForDiagramRendering,
+          unModifyProcessIdentifierForPathParam(modifiedProcessModelId),
+          result.messages || [],
         );
+        if (syncStatus.hasMissingMessageModel) {
+          setMissingMessageModelIdentifiers(
+            syncStatus.missingMessageModelIdentifiers,
+          );
+          setMessageModelWarningType('missing');
+        } else if (syncStatus.hasUnsyncedMessage) {
+          setMissingMessageModelIdentifiers([]);
+          setMessageModelWarningType('changed');
+        } else {
+          setMissingMessageModelIdentifiers([]);
+          setMessageModelWarningType(null);
+        }
       },
       failureCallback: () => {
         setMessageModelsForSync([]);
-        setDisplayMessageModelWarning(false);
+        setMissingMessageModelIdentifiers([]);
+        setMessageModelWarningType(null);
       },
     });
   }, [
@@ -1308,37 +1324,54 @@ export default function ProcessModelEditDiagram() {
       messageModelsForSync,
     );
     if (syncedXml === bpmnXmlForDiagramRendering) {
-      setDisplayMessageModelWarning(false);
+      setMissingMessageModelIdentifiers([]);
+      setMessageModelWarningType(null);
       return;
     }
 
     setBpmnXmlForDiagramRendering(syncedXml);
     setDiagramHasChanges(true);
-    setDisplayMessageModelWarning(false);
+    setMissingMessageModelIdentifiers([]);
+    setMessageModelWarningType(null);
   };
 
   const messageModelWarning = () => {
-    if (!displayMessageModelWarning) {
+    if (!messageModelWarningType) {
       return null;
     }
 
+    const messageModelIsMissing = messageModelWarningType === 'missing';
+
     return (
       <Notification
-        title={t('save_warning_title')}
-        type="warning"
+        title={
+          messageModelIsMissing
+            ? t('message_model_not_found_title')
+            : t('save_warning_title')
+        }
+        type={messageModelIsMissing ? 'error' : 'warning'}
         data-testid="message-model-changed"
-        onClose={() => setDisplayMessageModelWarning(false)}
+        onClose={() => {
+          setMissingMessageModelIdentifiers([]);
+          setMessageModelWarningType(null);
+        }}
       >
         <>
-          {t('save_warning_message')}
-          <Button
-            color="inherit"
-            size="small"
-            sx={{ ml: 1 }}
-            onClick={syncMessageModelsToDiagram}
-          >
-            {t('update_diagram')}
-          </Button>
+          {messageModelIsMissing
+            ? t('message_model_not_found_message', {
+                messageIdentifiers: missingMessageModelIdentifiers.join(', '),
+              })
+            : t('save_warning_message')}
+          {!messageModelIsMissing ? (
+            <Button
+              color="inherit"
+              size="small"
+              sx={{ ml: 1 }}
+              onClick={syncMessageModelsToDiagram}
+            >
+              {t('update_diagram')}
+            </Button>
+          ) : null}
         </>
       </Notification>
     );

@@ -397,6 +397,8 @@
   "save_success_title": "Enregistrement réussi",
   "save_warning_message": "Il y a une différence entre la configuration actuelle et les données enregistrées. L'enregistrement est recommandé pour assurer la cohérence des données",
   "save_warning_title": "Veuillez enregistrer la configuration actuelle",
+  "message_model_not_found_message": "The message definition referenced by this diagram could not be found: {{messageIdentifiers}}.",
+  "message_model_not_found_title": "Message model not found",
   "update_diagram": "Update diagram",
   "retries_remaining": "Tentatives restantes",
   "schema_name": "Nom du schéma",
