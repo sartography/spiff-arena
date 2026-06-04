@@ -336,10 +336,8 @@ class MessageDefinitionService:
         ).first()
         if source_message_model is not None:
             process_model_identifiers = list(source_message_model.process_model_identifiers or [])
-            out_of_scope_process_model_identifiers = (
-                cls._out_of_scope_process_model_identifiers(process_model_identifiers, target_process_group.id)
-                if cls._is_descendant_location(source_process_group.id, target_process_group.id)
-                else []
+            out_of_scope_process_model_identifiers = cls._out_of_scope_process_model_identifiers(
+                process_model_identifiers, target_process_group.id
             )
             if out_of_scope_process_model_identifiers:
                 formatted_process_model_identifiers = cls._format_process_model_identifiers_for_move_error(
@@ -347,7 +345,7 @@ class MessageDefinitionService:
                 )
                 raise ValueError(
                     f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
-                    f"to descendant location '{target_process_group.id}' because these process models would no "
+                    f"to target location '{target_process_group.id}' because these process models would no "
                     f"longer be in scope: {formatted_process_model_identifiers}. Create a duplicate "
                     "message at the more specific location instead."
                 )

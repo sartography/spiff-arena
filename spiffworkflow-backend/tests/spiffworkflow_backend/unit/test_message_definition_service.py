@@ -36,6 +36,14 @@ class TestMessageDefinitionService(BaseTest):
 
         assert out_of_scope_process_model_identifiers == ["order/order-process"]
 
+    def test_out_of_scope_process_model_identifiers_marks_sibling_moves_out_of_scope(self) -> None:
+        out_of_scope_process_model_identifiers = MessageDefinitionService._out_of_scope_process_model_identifiers(
+            ["order/request-for-information/request-for-information"],
+            "order/review",
+        )
+
+        assert out_of_scope_process_model_identifiers == ["order/request-for-information/request-for-information"]
+
     def test_format_process_model_identifiers_for_move_error_truncates_after_two_models(self) -> None:
         assert (
             MessageDefinitionService._format_process_model_identifiers_for_move_error(
