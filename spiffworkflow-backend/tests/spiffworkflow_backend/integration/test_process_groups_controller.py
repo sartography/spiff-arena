@@ -5,6 +5,8 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
@@ -103,6 +105,476 @@ class TestProcessGroupsController(BaseTest):
 
         process_group = ProcessModelService.get_process_group(group_id)
         assert process_group.display_name == "Modified Display Name"
+
+    def test_process_group_update_rejects_reusing_message_id_for_different_message(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("survey")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+        message_id = (
+            MessageModel.query.filter_by(
+                identifier="request-for-information-received",
+                location="order",
+            )
+            .one()
+            .id
+        )
+
+        response = client.put(
+            "/v1.0/process-groups/survey",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Survey",
+                "messages": {
+                    "some-other-message": {
+                        "id": message_id,
+                        "location": "survey",
+                        "schema": {},
+                    }
+                },
+            },
+        )
+
+        assert response.status_code == 400
+        assert response.json()["error_code"] == "invalid_message_model"
+
+    def test_move_message_definition_rolls_back_when_target_write_fails(
+        self,
+        app: Flask,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_update_process_group = ProcessModelService.update_process_group
+        update_calls = 0
+
+        def fail_on_second_update(process_group: ProcessGroup) -> ProcessGroup:
+            nonlocal update_calls
+            update_calls += 1
+            if update_calls == 2:
+                raise RuntimeError("simulated write failure")
+            return original_update_process_group(process_group)
+
+        monkeypatch.setattr(ProcessModelService, "update_process_group", fail_on_second_update)
+
+        response = client.put(
+            "/v1.0/process-groups/order:request-for-information/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "schema": {},
+                    "location": "order",
+                },
+            },
+        )
+
+        assert response.status_code == 500
+
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+
+        assert source_process_group.messages == {"request-for-information-received": {"schema": {}}}
+        assert target_process_group.messages in (None, {})
+
+        source_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order/request-for-information",
+        ).one_or_none()
+        target_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order",
+        ).one_or_none()
+
+        assert source_message is not None
+        assert target_message is None
+
+    def test_move_message_definition_moves_message_and_preserves_id(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order/request-for-information",
+        ).one()
+        original_message.process_model_identifiers = ["order/request-for-information/request-for-information"]
+        db.session.add(original_message)
+        db.session.commit()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order:request-for-information/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order",
+                    "schema": {},
+                },
+            },
+        )
+
+        assert move_response.status_code == 200
+
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+
+        assert source_process_group.messages == {}
+        assert target_process_group.messages == {"request-for-information-received": {"schema": {}}}
+
+        moved_message = MessageModel.query.filter_by(id=original_message.id).one()
+        assert moved_message.identifier == "request-for-information-received"
+        assert moved_message.location == "order"
+        assert moved_message.process_model_identifiers == ["order/request-for-information/request-for-information"]
+        assert "_process_model_identifiers" not in target_process_group.messages["request-for-information-received"]
+
+    def test_move_message_definition_with_rename_preserves_unrelated_messages(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_source_messages_response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "source-message": {
+                        "schema": {"title": "Source message"},
+                    },
+                    "renamed-message": {
+                        "schema": {"title": "Unrelated source message"},
+                    },
+                },
+            },
+        )
+        assert create_source_messages_response.status_code == 200
+
+        create_target_messages_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "source-message": {
+                        "schema": {"title": "Unrelated target message"},
+                    }
+                },
+            },
+        )
+        assert create_target_messages_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="source-message",
+            location="order/request-for-information",
+        ).one()
+        source_unrelated_message = MessageModel.query.filter_by(
+            identifier="renamed-message",
+            location="order/request-for-information",
+        ).one()
+        target_unrelated_message = MessageModel.query.filter_by(
+            identifier="source-message",
+            location="order",
+        ).one()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order:request-for-information/messages/source-message/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order",
+                "target_message_identifier": "renamed-message",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order",
+                    "schema": {"title": "Source message"},
+                },
+            },
+        )
+
+        assert move_response.status_code == 200
+
+        source_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        target_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+
+        assert source_process_group.messages == {
+            "renamed-message": {
+                "schema": {"title": "Unrelated source message"},
+            }
+        }
+        assert target_process_group.messages == {
+            "source-message": {
+                "schema": {"title": "Unrelated target message"},
+            },
+            "renamed-message": {
+                "schema": {"title": "Source message"},
+            },
+        }
+
+        moved_message = MessageModel.query.filter_by(id=original_message.id).one()
+        assert moved_message.identifier == "renamed-message"
+        assert moved_message.location == "order"
+        assert MessageModel.query.filter_by(id=source_unrelated_message.id).one().identifier == "renamed-message"
+        assert MessageModel.query.filter_by(id=target_unrelated_message.id).one().identifier == "source-message"
+
+    def test_move_message_definition_to_child_location_is_rejected(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order",
+        ).one()
+        original_message.process_model_identifiers = [
+            "order/first-process",
+            "order/second-process",
+            "order/third-process",
+        ]
+        db.session.add(original_message)
+        db.session.commit()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order/request-for-information",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order/request-for-information",
+                    "schema": {},
+                },
+            },
+        )
+
+        assert move_response.status_code == 400
+        assert move_response.json() is not None
+        assert move_response.json()["error_code"] == "invalid_message_model"
+        assert "order/first-process, order/second-process, and 1 more" in move_response.json()["message"]
+        assert "order/third-process" not in move_response.json()["message"]
+
+        original_message_after_move_attempt = MessageModel.query.filter_by(id=original_message.id).one()
+        assert original_message_after_move_attempt.identifier == "request-for-information-received"
+        assert original_message_after_move_attempt.location == "order"
+        assert original_message_after_move_attempt.process_model_identifiers == [
+            "order/first-process",
+            "order/second-process",
+            "order/third-process",
+        ]
+
+        source_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+        target_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        assert source_process_group.messages == {"request-for-information-received": {"schema": {}}}
+        assert target_process_group.messages is None
+
+    def test_move_message_definition_to_child_location_is_allowed_when_existing_usage_is_in_scope(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Order",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order",
+        ).one()
+        original_message.process_model_identifiers = ["order/request-for-information/request-for-information"]
+        db.session.add(original_message)
+        db.session.commit()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order/request-for-information",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order/request-for-information",
+                    "schema": {},
+                },
+            },
+        )
+
+        assert move_response.status_code == 200
+
+        source_process_group = ProcessModelService.get_process_group("order", find_direct_nested_items=False)
+        target_process_group = ProcessModelService.get_process_group(
+            "order/request-for-information", find_direct_nested_items=False
+        )
+        assert source_process_group.messages == {}
+        assert target_process_group.messages == {"request-for-information-received": {"schema": {}}}
+
+        moved_message = MessageModel.query.filter_by(id=original_message.id).one()
+        assert moved_message.identifier == "request-for-information-received"
+        assert moved_message.location == "order/request-for-information"
+        assert moved_message.process_model_identifiers == ["order/request-for-information/request-for-information"]
+
+    def test_move_message_definition_to_sibling_location_is_rejected_when_existing_usage_is_out_of_scope(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("order")
+        self.create_process_group("order/request-for-information")
+        self.create_process_group("order/review")
+
+        create_message_response = client.put(
+            "/v1.0/process-groups/order:request-for-information",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "display_name": "Request For Information",
+                "messages": {
+                    "request-for-information-received": {
+                        "schema": {},
+                    }
+                },
+            },
+        )
+        assert create_message_response.status_code == 200
+
+        original_message = MessageModel.query.filter_by(
+            identifier="request-for-information-received",
+            location="order/request-for-information",
+        ).one()
+        original_message.process_model_identifiers = ["order/request-for-information/request-for-information"]
+        db.session.add(original_message)
+        db.session.commit()
+
+        move_response = client.put(
+            "/v1.0/process-groups/order:request-for-information/messages/request-for-information-received/move",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={
+                "target_process_group_identifier": "order/review",
+                "target_message_identifier": "request-for-information-received",
+                "message_definition": {
+                    "id": original_message.id,
+                    "location": "order/review",
+                    "schema": {},
+                },
+            },
+        )
+
+        assert move_response.status_code == 400
+        assert move_response.json() is not None
+        assert move_response.json()["error_code"] == "invalid_message_model"
+        assert "order/request-for-information/request-for-information" in move_response.json()["message"]
+
+        original_message_after_move_attempt = MessageModel.query.filter_by(id=original_message.id).one()
+        assert original_message_after_move_attempt.identifier == "request-for-information-received"
+        assert original_message_after_move_attempt.location == "order/request-for-information"
+        assert original_message_after_move_attempt.process_model_identifiers == [
+            "order/request-for-information/request-for-information"
+        ]
 
     def test_process_group_list(
         self,

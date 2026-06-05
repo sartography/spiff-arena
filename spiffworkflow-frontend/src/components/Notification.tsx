@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { SnackbarCloseReason } from '@mui/material';
+import { SnackbarCloseReason, SnackbarOrigin } from '@mui/material';
 import { ObjectWithStringKeysAndValues } from '../interfaces';
 
 type OwnProps = {
@@ -23,6 +23,7 @@ type OwnProps = {
   allowTogglingFullMessage?: boolean;
   timeout?: number;
   withBottomMargin?: boolean;
+  anchorOrigin?: SnackbarOrigin;
   'data-testid'?: string;
 };
 
@@ -35,6 +36,7 @@ export function Notification({
   allowTogglingFullMessage = false,
   timeout,
   withBottomMargin = true,
+  anchorOrigin = { vertical: 'top', horizontal: 'right' },
   'data-testid': dataTestid,
 }: OwnProps) {
   const { t } = useTranslation();
@@ -57,7 +59,7 @@ export function Notification({
   return (
     <Snackbar
       open
-      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      anchorOrigin={anchorOrigin}
       autoHideDuration={timeout}
       onClose={onClose}
       {...additionalProps}
