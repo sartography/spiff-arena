@@ -344,9 +344,7 @@ class TestLongRunningService(BaseTest):
         process_instance, callback_url, task_guid = self.start_async_retry_process(app, with_super_admin_user)
 
         for _retry_number in range(3):
-            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch(
-                "celery.current_app.send_task"
-            ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch("celery.current_app.send_task"):
                 response = client.put(
                     callback_url,
                     headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
@@ -365,7 +363,12 @@ class TestLongRunningService(BaseTest):
         )
         response_dict = response.json()
         assert response.status_code == 400
+        assert response_dict["type"] == "about:blank"
         assert response_dict["title"] == "unexpected_workflow_exception"
+        assert response_dict["status"] == 400
+        assert response_dict["error_code"] == "unexpected_workflow_exception"
+        assert "Error executing Service Task" in response_dict["detail"]
+        assert "Error executing Service Task" in response_dict["message"]
 
         db.session.expire_all()
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
@@ -409,9 +412,7 @@ class TestLongRunningService(BaseTest):
         process_instance, callback_url, task_guid = self.start_async_retry_process(app, with_super_admin_user)
 
         for _retry_number in range(2):
-            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch(
-                "celery.current_app.send_task"
-            ):
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch("celery.current_app.send_task"):
                 response = client.put(
                     callback_url,
                     headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
@@ -522,6 +523,7 @@ class TestLongRunningService(BaseTest):
 
         g.user = with_super_admin_user
         with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", False),
             patch("requests.post", side_effect=mock_connector_post),
             patch("spiffworkflow_backend.services.process_instance_queue_service.time.sleep", wait_for_message_run_to_finish),
         ):
@@ -536,9 +538,13 @@ class TestLongRunningService(BaseTest):
 
         response = callback_result["response"]
         assert response.status_code == 200
-        assert response.json()["type"] == "Default End Event"
+        response_dict = response.json()
+        assert response_dict["ok"] is True
+        assert response_dict["status"] == "completed"
+        assert response_dict["process_model_identifier"] == process_model_id
 
         process_instance_id = receiver_message.process_instance_id
+        assert response_dict["process_instance_id"] == process_instance_id
         db.session.remove()  # type: ignore
         process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance.status == "complete"
@@ -590,7 +596,7 @@ class TestLongRunningService(BaseTest):
             callback_thread.start()
             return SimpleNamespace(status_code=202, ok=True, text=json.dumps({}), headers={})
 
-        with app.test_request_context():
+        with app.test_request_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", False):
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
             processor = ProcessInstanceProcessor(process_instance)
             with patch("requests.post", side_effect=mock_connector_post):
@@ -602,7 +608,11 @@ class TestLongRunningService(BaseTest):
 
         response = callback_result["response"]
         assert response.status_code == 200
-        assert response.json()["type"] == "Default End Event"
+        response_dict = response.json()
+        assert response_dict["ok"] is True
+        assert response_dict["status"] == "completed"
+        assert response_dict["process_model_identifier"] == process_model_id
+        assert response_dict["process_instance_id"] == process_instance.id
 
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"
