@@ -1,21 +1,21 @@
 # Display Content
 
-The SpiffArena platform offers powerful features for displaying content within your BPMN processes.
+The Spiff Arena platform offers powerful features for displaying content within your BPMN processes.
 Follow the steps below to effectively display content in your processes.
 
-In this guide, we'll explore how to effectively display content in SpiffArena, providing a seamless user experience and an engaging presentation of information.
+In this guide, we'll explore how to effectively display content in Spiff Arena, providing a seamless user experience and an engaging presentation of information.
 
 Let's dive in and learn the key aspects of displaying content within your workflows.
 
 ## Markdown: Formatting Content
 
-Markdown is a powerful tool for formatting and styling your content in SpiffArena.
+Markdown is a powerful tool for formatting and styling your content in Spiff Arena.
 
 With Markdown, you can easily add headings, lists, tables, hyperlinks, and more to enhance the readability and visual appeal of your displayed content.
 
 ## Jinja Templating: Dynamic Content Generation
 
-Jinja Templating in SpiffArena empowers you to generate dynamic content based on variables, conditions, and logic.
+Jinja Templating in Spiff Arena empowers you to generate dynamic content based on variables, conditions, and logic.
 By leveraging Jinja's syntax and functionality, you can customize your content to adapt to specific scenarios, display personalized information, or perform calculations based on collected data.
 
 ## Combining Markdown and Jinja: Unleashing the Power
@@ -26,7 +26,7 @@ We'll demonstrate using an example of how to leverage Markdown and Jinja togethe
 
 ## Basic Example for Displaying Content
 
-In our SpiffArena dashboard, we have a simple example of how to display content in the basics section.
+In our Spiff Arena dashboard, we have a simple example of how to display content in the basics section.
 
 Now, let's explore the process workflow of the content display process model and discover various ways to present content in different scenarios.
 

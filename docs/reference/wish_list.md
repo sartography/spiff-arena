@@ -50,7 +50,7 @@ This is not as far-fetched or difficult as it may initially seem.
 While Python is notoriously bad at parallel execution (the lovely GIL), we have already taken the most critical steps to ensuring it is possible:
 
 1. A team has demonstrated parallel execution using the core SpiffWorkflow library.
-2. We can keep a configurable number of "background" SpiffArena processes running that can pick up waiting tasks.
+2. We can keep a configurable number of "background" Spiff Arena processes running that can pick up waiting tasks.
 
 Given these things are already in place, we just need to lock processes at the task or branch level so that ready tasks on parallel branches can be picked up by different background processes at the same time.
 

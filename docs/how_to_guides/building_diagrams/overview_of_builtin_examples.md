@@ -40,7 +40,7 @@ General
 It serves as a label or identifier for the process.
 
 -   The ID is automatically populated by the system (default behavior).
-However, it can be updated by the user, but it must be unique across all of the processes within SpiffArena.
+However, it can be updated by the user, but it must be unique across all of the processes within Spiff Arena.
 
 -   By default, all processes are executable, which means the engine can run the process.
 
