@@ -18,7 +18,6 @@ from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_GROUP
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.service_account import ServiceAccountModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
