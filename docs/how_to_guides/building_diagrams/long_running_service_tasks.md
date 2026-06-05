@@ -21,6 +21,25 @@ The result data will be stored in the service task's configured result variable,
 
 If retries are configured, transient callback failures follow the service task retry policy.
 
+```mermaid
+sequenceDiagram
+    participant Spiff as Spiff Engine<br/>owns BPMN retry policy
+    participant Proxy as Connector Proxy<br/>returns 202 for async work
+
+    Spiff->>Proxy: Start service task<br/>retries=3
+    Proxy-->>Spiff: 202 Accepted
+
+    Proxy-->>Spiff: Callback: failure
+
+    Note over Spiff: Since this is still the same service task attempt,<br/>Spiff should apply configured retries
+
+    Spiff->>Proxy: Retry by dispatching task again
+    Proxy-->>Spiff: 202 Accepted
+
+    Proxy-->>Spiff: Callback: success
+    Spiff->>Spiff: Complete task
+```
+
 ### Callback Request Structure
 
 See the examples for the proper request and response formats, see [Using Callback URLs](../../explanation/dev/connector_proxy_examples.md#using-callback-urls-long-running-tasks) in the Connector Proxy API Examples page.
