@@ -22,8 +22,9 @@ The result data will be stored in the service task's configured result variable,
 If retries are configured, transient callback failures follow the service task retry policy.
 
 ```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
-    participant Spiff as Spiff Engine<br/>owns BPMN retry policy
+    participant Spiff as Spiff Engine<br/>owns retry policy
     participant Proxy as Connector Proxy<br/>returns 202 for async work
 
     Spiff->>Proxy: Start service task<br/>retries=3
