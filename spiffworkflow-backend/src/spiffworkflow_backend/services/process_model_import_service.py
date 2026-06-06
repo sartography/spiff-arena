@@ -9,6 +9,7 @@ import requests
 from flask import current_app
 from lxml import etree  # type: ignore
 
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -46,7 +47,87 @@ class ModelMarketplaceError(ImportError):
     """Exception raised when there are issues communicating with the model marketplace."""
 
 
+class InvalidFilestorePackageError(ImportError):
+    """Exception raised when a Files package cannot be imported."""
+
+
 class ProcessModelImportService:
+    @classmethod
+    def import_from_filestore_package(cls, package: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
+        process_group = cls._ensure_process_group(process_group_id)
+        files = cls._filestore_files(package)
+        model_dirs = cls._filestore_model_dirs(files)
+        process_models = []
+
+        for model_dir in model_dirs:
+            model_files = cls._filestore_files_for_model_dir(files, model_dir, model_dirs)
+            if not model_files:
+                continue
+
+            model_id = cls._filestore_model_id(package, model_dir)
+            full_process_model_id = f"{process_group.id}/{model_id}"
+            parent_group_id = "/".join(full_process_model_id.split("/")[:-1])
+            cls._ensure_process_group(parent_group_id)
+
+            model_info = cls._extract_process_model_info(model_files)
+            display_name = model_info.get("display_name", model_id.split("/")[-1].replace("-", " ").title())
+            description = model_info.get(
+                "description",
+                f"Imported from Files project {package.get('project_id')} snapshot {package.get('snapshot_id')}",
+            )
+
+            if ProcessModelService.is_process_model_identifier(full_process_model_id):
+                process_model = ProcessModelService.get_process_model(full_process_model_id)
+                ProcessModelService.update_process_model(
+                    process_model,
+                    {"display_name": display_name, "description": description},
+                )
+            else:
+                process_model = ProcessModelInfo(
+                    id=full_process_model_id,
+                    display_name=display_name,
+                    description=description,
+                )
+                ProcessModelService.add_process_model(process_model)
+
+            for file_name, file_content in model_files.items():
+                if file_name == "process_model.json":
+                    continue
+                SpecFileService.update_file(process_model, file_name, file_content)
+
+            if model_info.get("primary_file_name"):
+                process_model.primary_file_name = model_info.get("primary_file_name")
+
+            if model_info.get("primary_process_id"):
+                process_model.primary_process_id = model_info.get("primary_process_id")
+
+            ProcessModelService.update_process_model(process_model, {})
+            process_models.append(process_model)
+
+        if not process_models:
+            raise InvalidFilestorePackageError(
+                message="Files package did not contain an importable process model",
+                error_code="invalid_filestore_package",
+            )
+
+        return process_models
+
+    @classmethod
+    def _ensure_process_group(cls, process_group_id: str) -> ProcessGroup:
+        if ProcessModelService.is_process_group_identifier(process_group_id):
+            return ProcessModelService.get_process_group(process_group_id)
+
+        parent_group_id = "/".join(process_group_id.split("/")[:-1])
+        if parent_group_id:
+            cls._ensure_process_group(parent_group_id)
+
+        return ProcessModelService.add_process_group(
+            ProcessGroup(
+                id=process_group_id,
+                display_name=process_group_id.rsplit("/", maxsplit=1)[-1].replace("-", " ").title(),
+            )
+        )
+
     @classmethod
     def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
         process_group = ProcessModelService.get_process_group(process_group_id)
@@ -99,6 +180,103 @@ class ProcessModelImportService:
         owner, repo, branch, path = match.groups()
 
         return {"owner": owner, "repo": repo, "branch": branch, "path": path, "type": "tree" if "/tree/" in url else "blob"}
+
+    @classmethod
+    def _filestore_files(cls, package: dict[str, Any]) -> dict[str, bytes]:
+        raw_files = package.get("files")
+        if not isinstance(raw_files, list):
+            raise InvalidFilestorePackageError(
+                message="Files package must include a files array",
+                error_code="invalid_filestore_package",
+            )
+
+        files = {}
+        for raw_file in raw_files:
+            path = raw_file.get("path") if isinstance(raw_file, dict) else None
+            content = raw_file.get("content") if isinstance(raw_file, dict) else None
+            if not isinstance(path, str) or content is None:
+                continue
+            cls._validate_filestore_path(path)
+            files[path] = str(content).encode("utf-8")
+
+        if not files:
+            raise InvalidFilestorePackageError(
+                message="Files package did not include any files",
+                error_code="invalid_filestore_package",
+            )
+
+        return files
+
+    @staticmethod
+    def _validate_filestore_path(path: str) -> None:
+        parts = path.split("/")
+        if path.startswith("/") or "" in parts or ".." in parts:
+            raise InvalidFilestorePackageError(
+                message=f"Invalid Files package path: {path}",
+                error_code="invalid_filestore_package",
+            )
+
+    @classmethod
+    def _filestore_model_dirs(cls, files: dict[str, bytes]) -> list[str]:
+        explicit_dirs = {
+            cls._dirname(path) for path in files if path.endswith("/process_model.json") or path == "process_model.json"
+        }
+        if explicit_dirs:
+            return sorted(explicit_dirs)
+
+        bpmn_dirs = {cls._dirname(path) for path in files if path.endswith(".bpmn")}
+        if not bpmn_dirs:
+            raise InvalidFilestorePackageError(
+                message="Files package must contain at least one BPMN file",
+                error_code="invalid_filestore_package",
+            )
+
+        if bpmn_dirs == {""}:
+            return [""]
+
+        return sorted(bpmn_dirs)
+
+    @staticmethod
+    def _dirname(path: str) -> str:
+        return path.rsplit("/", 1)[0] if "/" in path else ""
+
+    @classmethod
+    def _filestore_files_for_model_dir(
+        cls,
+        files: dict[str, bytes],
+        model_dir: str,
+        model_dirs: list[str],
+    ) -> dict[str, bytes]:
+        model_files = {}
+        for path, content in files.items():
+            owner = cls._filestore_owner_model_dir(path, model_dirs)
+            if owner != model_dir:
+                continue
+
+            file_name = path.removeprefix(f"{model_dir}/") if model_dir else path
+            if file_name == "process_group.json":
+                continue
+            model_files[file_name] = content
+
+        return model_files
+
+    @classmethod
+    def _filestore_owner_model_dir(cls, path: str, model_dirs: list[str]) -> str:
+        owners = [model_dir for model_dir in model_dirs if path == model_dir or path.startswith(f"{model_dir}/")]
+        if "" in model_dirs and "/" not in path:
+            owners.append("")
+        return max(owners, key=len) if owners else ""
+
+    @classmethod
+    def _filestore_model_id(cls, package: dict[str, Any], model_dir: str) -> str:
+        if model_dir:
+            return "/".join(cls._slug(segment) for segment in model_dir.split("/"))
+        return cls._slug(str(package.get("project_id") or package.get("label") or "filestore-project"))
+
+    @staticmethod
+    def _slug(text: str) -> str:
+        slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", text).strip("-").lower()
+        return slug or "filestore-project"
 
     @classmethod
     def _fetch_files_from_github(cls, repo_info: dict[str, str]) -> dict[str, bytes]:

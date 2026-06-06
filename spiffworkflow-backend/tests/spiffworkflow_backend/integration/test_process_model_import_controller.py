@@ -5,6 +5,7 @@ to the API definitions. The tests will fail with 500 errors until the backend is
 restarted with the new API definitions.
 """
 
+from pathlib import Path
 from unittest.mock import patch
 
 from flask.app import Flask
@@ -12,11 +13,33 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessModelImportController(BaseTest):
+    def test_process_model_import_from_filestore_package_preserves_process_model_directories(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "files-project",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "main/main.bpmn", "content": bpmn.replace("Process_SimpleScript", "main_process")},
+                {"path": "called/activity.bpmn", "content": bpmn.replace("Process_SimpleScript", "called_activity")},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert [process_model.id for process_model in process_models] == ["filestore/called", "filestore/main"]
+        assert FileSystemService.get_data(process_models[0], "activity.bpmn").decode().find("called_activity") > -1
+        assert FileSystemService.get_data(process_models[1], "main.bpmn").decode().find("main_process") > -1
+
     def test_process_model_import_from_github(
         self,
         app: Flask,

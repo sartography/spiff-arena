@@ -1,3 +1,4 @@
+import requests
 from flask import current_app
 from flask import jsonify
 from flask import make_response
@@ -11,6 +12,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.services.authentication_service import AuthenticationService  # noqa: F401
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 
 
 # sample body:
@@ -54,6 +56,43 @@ def webhook(body: dict) -> Response:
     db.session.commit()
 
     return make_response(jsonify({"ok": True}), 200)
+
+
+def filestore_webhook(body: dict) -> Response:
+    if body.get("event") != "snapshot.created":
+        return make_response(jsonify({"ok": True, "process_models": []}), 200)
+
+    package = body.get("package")
+    if package is None:
+        arena_package_url = body.get("arena_package_url")
+        if not arena_package_url:
+            raise ApiError(
+                error_code="missing_arena_package_url",
+                message="Filestore snapshot webhook must include arena_package_url or package",
+                status_code=400,
+            )
+        response = requests.get(arena_package_url, timeout=30)
+        if response.status_code != 200:
+            raise ApiError(
+                error_code="filestore_package_fetch_failed",
+                message=f"Could not fetch Files arena package: {response.status_code}",
+                status_code=502,
+            )
+        package = response.json()
+
+    process_group_id = body.get("process_group_id") or current_app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_PROCESS_GROUP_ID"]
+    process_models = ProcessModelImportService.import_from_filestore_package(package, process_group_id)
+    GitService.commit_on_save(
+        f"Imported Files project {package.get('project_id')} snapshot {package.get('snapshot_id')} into {process_group_id}"
+    )
+
+    return make_response(
+        jsonify({
+            "ok": True,
+            "process_models": [process_model.to_dict() for process_model in process_models],
+        }),
+        200,
+    )
 
 
 def _enforce_github_auth() -> None:

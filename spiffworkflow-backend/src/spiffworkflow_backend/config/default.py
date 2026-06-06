@@ -241,6 +241,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_SUBDIR_WITHIN_REPO")
 # the github auth will use SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET from above.
 config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_ENFORCES_GITHUB_AUTH", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER")
+config_from_env("SPIFFWORKFLOW_BACKEND_FILESTORE_PROCESS_GROUP_ID", default="filestore")
 
 ### element units
 # disabling until we fix the "no such directory" error so we do not keep sending cypress errors
