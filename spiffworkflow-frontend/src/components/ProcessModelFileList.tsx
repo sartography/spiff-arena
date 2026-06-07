@@ -6,6 +6,7 @@ import {
   GetApp,
   Delete,
   Favorite,
+  OpenInNew,
   Visibility,
 } from '@mui/icons-material';
 import {
@@ -25,6 +26,7 @@ import { ProcessFile } from '../interfaces';
 import SpiffTooltip from './SpiffTooltip';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
+import { BACKEND_BASE_URL, ED_BASE_URL } from '../config';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -57,6 +59,18 @@ export default function ProcessModelFileList({
       }
     }
     return null;
+  };
+
+  const editInEdUrl = (processModelFile: ProcessFile) => {
+    if (!ED_BASE_URL || !processModelFile.name.match(/\.bpmn$/)) {
+      return null;
+    }
+
+    const url = new URL(ED_BASE_URL, window.location.origin);
+    url.searchParams.set('arenaBackendUrl', BACKEND_BASE_URL);
+    url.searchParams.set('processModelId', modifiedProcessModelId);
+    url.searchParams.set('fileName', processModelFile.name);
+    return url.toString();
   };
 
   const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
@@ -120,6 +134,24 @@ export default function ProcessModelFileList({
               href={editUrl}
             >
               {icon}
+            </IconButton>
+          </SpiffTooltip>
+        </Can>,
+      );
+    }
+    const edUrl = editInEdUrl(processModelFile);
+    if (edUrl) {
+      elements.push(
+        <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
+          <SpiffTooltip title="Edit in Ed" placement="top">
+            <IconButton
+              aria-label="Edit in Ed"
+              data-testid={`edit-in-ed-${processModelFile.name.replace('.', '-')}`}
+              href={edUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <OpenInNew />
             </IconButton>
           </SpiffTooltip>
         </Can>,
