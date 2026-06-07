@@ -71,7 +71,7 @@ def filestore_webhook(body: dict) -> Response:
                 message="Filestore snapshot webhook must include arena_package_url or package",
                 status_code=400,
             )
-        response = requests.get(arena_package_url, timeout=30)
+        response = requests.get(arena_package_url, headers=_filestore_headers(body), timeout=30)
         if response.status_code != 200:
             raise ApiError(
                 error_code="filestore_package_fetch_failed",
@@ -93,6 +93,11 @@ def filestore_webhook(body: dict) -> Response:
         }),
         200,
     )
+
+
+def _filestore_headers(body: dict) -> dict[str, str]:
+    tenant_id = body.get("tenant_id")
+    return {"SpiffWorkflow-Tenant": str(tenant_id)} if tenant_id else {}
 
 
 def _enforce_github_auth() -> None:
