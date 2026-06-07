@@ -35,9 +35,11 @@ class TestWebhooksController(BaseTest):
 
     def test_filestore_webhook_fetches_package_with_tenant_header(
         self,
+        app: Flask,
         client: TestClient,
         monkeypatch,
     ) -> None:
+        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET"] = "filestore-secret"
         package = {"project_id": "project-1", "snapshot_id": "snapshot-1", "files": []}
         package_response = Mock(status_code=200)
         package_response.json.return_value = package
@@ -48,14 +50,19 @@ class TestWebhooksController(BaseTest):
         monkeypatch.setattr(webhooks_controller.ProcessModelImportService, "import_from_filestore_package", import_package)
         monkeypatch.setattr(webhooks_controller.GitService, "commit_on_save", commit)
 
+        content = json.dumps({
+            "event": "snapshot.created",
+            "tenant_id": "gsa",
+            "arena_package_url": "https://files.example/package",
+        })
+
         response = client.post(
             "/v1.0/filestore-webhook",
-            headers={"Content-Type": "application/json"},
-            content=json.dumps({
-                "event": "snapshot.created",
-                "tenant_id": "gsa",
-                "arena_package_url": "https://files.example/package",
-            }).encode(),
+            headers={
+                "Content-Type": "application/json",
+                "SpiffWorkflow-Signature": f"sha256={self._create_encoded_signature(app, content, 'filestore-secret')}",
+            },
+            content=content.encode(),
         )
 
         assert response.status_code == 200
@@ -66,6 +73,21 @@ class TestWebhooksController(BaseTest):
         )
         import_package.assert_called_once()
 
-    def _create_encoded_signature(self, app: FlaskApp, request_data: str) -> str:
-        secret = app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
+    def test_filestore_webhook_rejects_bad_signature(
+        self,
+        app: Flask,
+        client: TestClient,
+    ) -> None:
+        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET"] = "filestore-secret"
+
+        response = client.post(
+            "/v1.0/filestore-webhook",
+            headers={"Content-Type": "application/json", "SpiffWorkflow-Signature": "sha256=bad"},
+            content=json.dumps({"event": "snapshot.created"}).encode(),
+        )
+
+        assert response.status_code == 401
+
+    def _create_encoded_signature(self, app: FlaskApp, request_data: str, secret: str | None = None) -> str:
+        secret = (secret or app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"]).encode()
         return HMAC(key=secret, msg=request_data.encode(), digestmod=sha256).hexdigest()

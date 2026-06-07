@@ -1,3 +1,7 @@
+from hashlib import sha256
+from hmac import HMAC
+from hmac import compare_digest
+
 import requests
 from flask import current_app
 from flask import jsonify
@@ -59,6 +63,8 @@ def webhook(body: dict) -> Response:
 
 
 def filestore_webhook(body: dict) -> Response:
+    _enforce_filestore_auth()
+
     if body.get("event") != "snapshot.created":
         return make_response(jsonify({"ok": True, "process_models": []}), 200)
 
@@ -98,6 +104,21 @@ def filestore_webhook(body: dict) -> Response:
 def _filestore_headers(body: dict) -> dict[str, str]:
     tenant_id = body.get("tenant_id")
     return {"SpiffWorkflow-Tenant": str(tenant_id)} if tenant_id else {}
+
+
+def _enforce_filestore_auth() -> None:
+    secret = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET")
+    if not secret:
+        return
+
+    auth_header = request.headers.get("SpiffWorkflow-Signature")
+    if not auth_header:
+        raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
+
+    received_sign = auth_header.split("sha256=")[-1].strip()
+    expected_sign = HMAC(key=secret.encode(), msg=request.data, digestmod=sha256).hexdigest()
+    if not compare_digest(received_sign, expected_sign):
+        raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
 
 
 def _enforce_github_auth() -> None:
