@@ -98,6 +98,7 @@ export default function ProcessInstanceListTable({
   ] = useState<ReportMetadata | null>(null);
 
   const [reportHash, setReportHash] = useState<string | null>(null);
+  const [sortOrderBy, setSortOrderBy] = useState<string[]>([]);
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
   const processInstanceShowPathPrefix =
@@ -161,6 +162,13 @@ export default function ProcessInstanceListTable({
         });
       }
 
+      if (sortOrderBy.length > 0) {
+        reportMetadataToUse = {
+          ...reportMetadataToUse,
+          order_by: sortOrderBy,
+        };
+      }
+
       const queryParamString = `per_page=${perPageToUse}&page=${page}`;
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
@@ -181,6 +189,7 @@ export default function ProcessInstanceListTable({
       reportMetadata,
       searchParams,
       setProcessInstancesFromResult,
+      sortOrderBy,
       stopRefreshing,
     ],
   );
@@ -456,12 +465,42 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const SORTABLE_ACCESSORS = new Set([
+    'id',
+    'process_model_display_name',
+    'start_in_seconds',
+    'end_in_seconds',
+    'last_milestone_bpmn_name',
+    'status',
+  ]);
+
+  const getSortDirectionForAccessor = (
+    accessor: string,
+  ): 'asc' | 'desc' | null => {
+    if (sortOrderBy.includes(accessor)) return 'asc';
+    if (sortOrderBy.includes(`-${accessor}`)) return 'desc';
+    return null;
+  };
+
+  const handleSortClick = (accessor: string) => {
+    const current = getSortDirectionForAccessor(accessor);
+    if (current === null) {
+      setSortOrderBy([`-${accessor}`]);
+    } else if (current === 'desc') {
+      setSortOrderBy([accessor]);
+    } else {
+      setSortOrderBy([]);
+    }
+  };
+
   const buildTable = () => {
-    const headers = reportColumns().map((column: ReportColumn) => {
-      return column.Header;
-    });
+    const headerColumns: { label: string; accessor: string | null }[] =
+      reportColumns().map((column: ReportColumn) => ({
+        label: column.Header,
+        accessor: column.accessor,
+      }));
     if (showActionsColumn) {
-      headers.push(t('action_column'));
+      headerColumns.push({ label: t('action_column'), accessor: null });
     }
 
     const rows = processInstances.map((processInstance: ProcessInstance) => {
@@ -556,18 +595,36 @@ export default function ProcessInstanceListTable({
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>
-              {headers.map((tableRowHeader: any) => (
-                <TableCell
-                  key={tableRowHeader}
-                  title={
-                    tableRowHeader === 'Id'
-                      ? t('process_id_tooltip')
-                      : undefined
-                  }
-                >
-                  <TableSortLabel>{tableRowHeader}</TableSortLabel>
-                </TableCell>
-              ))}
+              {headerColumns.map((col) => {
+                const isSortable =
+                  !!col.accessor && SORTABLE_ACCESSORS.has(col.accessor);
+                const direction = col.accessor
+                  ? getSortDirectionForAccessor(col.accessor)
+                  : null;
+                return (
+                  <TableCell
+                    key={col.label}
+                    title={
+                      col.label === 'Id' ? t('process_id_tooltip') : undefined
+                    }
+                    sortDirection={direction || false}
+                  >
+                    {isSortable ? (
+                      <TableSortLabel
+                        active={direction !== null}
+                        direction={direction || 'asc'}
+                        onClick={() =>
+                          col.accessor && handleSortClick(col.accessor)
+                        }
+                      >
+                        {col.label}
+                      </TableSortLabel>
+                    ) : (
+                      col.label
+                    )}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>{rows}</TableBody>
