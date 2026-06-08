@@ -39,7 +39,7 @@ class TestWebhooksController(BaseTest):
         client: TestClient,
         monkeypatch,
     ) -> None:
-        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET"] = "filestore-secret"
+        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET"] = "filestore-secret"
         package = {"project_id": "project-1", "snapshot_id": "snapshot-1", "files": []}
         package_response = Mock(status_code=200)
         package_response.json.return_value = package
@@ -47,6 +47,7 @@ class TestWebhooksController(BaseTest):
         import_package = Mock(return_value=[])
         commit = Mock()
         monkeypatch.setattr(webhooks_controller.requests, "get", get)
+        monkeypatch.setattr(webhooks_controller.time, "time", Mock(return_value=1780870000))
         monkeypatch.setattr(webhooks_controller.ProcessModelImportService, "import_from_filestore_package", import_package)
         monkeypatch.setattr(webhooks_controller.GitService, "commit_on_save", commit)
 
@@ -55,12 +56,21 @@ class TestWebhooksController(BaseTest):
             "tenant_id": "gsa",
             "arena_package_url": "https://files.example/package",
         })
+        timestamp = "1780870000"
 
         response = client.post(
             "/v1.0/filestore-webhook",
             headers={
                 "Content-Type": "application/json",
-                "SpiffWorkflow-Signature": f"sha256={self._create_encoded_signature(app, content, 'filestore-secret')}",
+                "SpiffWorkflow-Timestamp": timestamp,
+                "SpiffWorkflow-Signature": self._create_filestore_signature(
+                    "POST",
+                    "/v1.0/filestore-webhook",
+                    "gsa",
+                    timestamp,
+                    content,
+                    "filestore-secret",
+                ),
             },
             content=content.encode(),
         )
@@ -68,7 +78,18 @@ class TestWebhooksController(BaseTest):
         assert response.status_code == 200
         get.assert_called_once_with(
             "https://files.example/package",
-            headers={"SpiffWorkflow-Tenant": "gsa"},
+            headers={
+                "SpiffWorkflow-Tenant": "gsa",
+                "SpiffWorkflow-Timestamp": timestamp,
+                "SpiffWorkflow-Signature": self._create_filestore_signature(
+                    "GET",
+                    "/package",
+                    "gsa",
+                    timestamp,
+                    "",
+                    "filestore-secret",
+                ),
+            },
             timeout=30,
         )
         import_package.assert_called_once()
@@ -78,11 +99,15 @@ class TestWebhooksController(BaseTest):
         app: Flask,
         client: TestClient,
     ) -> None:
-        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET"] = "filestore-secret"
+        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET"] = "filestore-secret"
 
         response = client.post(
             "/v1.0/filestore-webhook",
-            headers={"Content-Type": "application/json", "SpiffWorkflow-Signature": "sha256=bad"},
+            headers={
+                "Content-Type": "application/json",
+                "SpiffWorkflow-Timestamp": "1780870000",
+                "SpiffWorkflow-Signature": "sha256=bad",
+            },
             content=json.dumps({"event": "snapshot.created"}).encode(),
         )
 
@@ -91,3 +116,21 @@ class TestWebhooksController(BaseTest):
     def _create_encoded_signature(self, app: FlaskApp, request_data: str, secret: str | None = None) -> str:
         secret = (secret or app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"]).encode()
         return HMAC(key=secret, msg=request_data.encode(), digestmod=sha256).hexdigest()
+
+    def _create_filestore_signature(
+        self,
+        method: str,
+        path: str,
+        tenant_id: str,
+        timestamp: str,
+        request_data: str,
+        secret: str,
+    ) -> str:
+        canonical = "\n".join([
+            method,
+            path,
+            tenant_id,
+            timestamp,
+            sha256(request_data.encode()).hexdigest(),
+        ])
+        return f"sha256={HMAC(key=secret.encode(), msg=canonical.encode(), digestmod=sha256).hexdigest()}"

@@ -1,6 +1,8 @@
+import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from urllib.parse import urlsplit
 
 import requests
 from flask import current_app
@@ -77,7 +79,7 @@ def filestore_webhook(body: dict) -> Response:
                 message="Filestore snapshot webhook must include arena_package_url or package",
                 status_code=400,
             )
-        response = requests.get(arena_package_url, headers=_filestore_headers(body), timeout=30)
+        response = requests.get(arena_package_url, headers=_filestore_headers("GET", arena_package_url, body), timeout=30)
         if response.status_code != 200:
             raise ApiError(
                 error_code="filestore_package_fetch_failed",
@@ -101,25 +103,85 @@ def filestore_webhook(body: dict) -> Response:
     )
 
 
-def _filestore_headers(body: dict) -> dict[str, str]:
-    tenant_id = body.get("tenant_id")
-    return {"SpiffWorkflow-Tenant": str(tenant_id)} if tenant_id else {}
+def _filestore_headers(method: str, url: str, body: dict) -> dict[str, str]:
+    tenant_id = str(body.get("tenant_id") or "")
+    headers = {"SpiffWorkflow-Tenant": tenant_id} if tenant_id else {}
+    secret = _filestore_shared_secret()
+    if not tenant_id or not secret:
+        return headers
+
+    timestamp = str(int(time.time()))
+    headers["SpiffWorkflow-Timestamp"] = timestamp
+    headers["SpiffWorkflow-Signature"] = _filestore_signature(
+        secret,
+        method,
+        _url_path(url),
+        tenant_id,
+        timestamp,
+        b"",
+    )
+    return headers
 
 
 def _enforce_filestore_auth() -> None:
-    secret = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_WEBHOOK_SECRET")
+    tenant_id = str((request.json or {}).get("tenant_id") or "")
+    secret = _filestore_shared_secret()
     if not secret:
         return
 
+    timestamp = request.headers.get("SpiffWorkflow-Timestamp")
     auth_header = request.headers.get("SpiffWorkflow-Signature")
-    if not auth_header:
+    if not timestamp or not auth_header:
         raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
 
-    received_sign = auth_header.split("sha256=")[-1].strip()
-    expected_sign = HMAC(key=secret.encode(), msg=request.data, digestmod=sha256).hexdigest()
-    if not compare_digest(received_sign, expected_sign):
+    try:
+        timestamp_value = int(timestamp)
+    except ValueError as exception:
+        raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401) from exception
+
+    if abs(time.time() - timestamp_value) > 300:
         raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
 
+    expected_sign = _filestore_signature(
+        secret,
+        request.method,
+        _url_path(request.full_path),
+        tenant_id,
+        timestamp,
+        request.get_data(),
+    )
+    if not compare_digest(auth_header, expected_sign):
+        raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
+
+
+def _filestore_shared_secret() -> str | None:
+    return current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET")
+
+
+def _filestore_signature(secret: str, method: str, path: str, tenant_id: str, timestamp: str, body: bytes) -> str:
+    canonical = "\n".join([
+        method.upper(),
+        path,
+        tenant_id,
+        timestamp,
+        sha256(body).hexdigest(),
+    ])
+    signature = HMAC(key=secret.encode(), msg=canonical.encode(), digestmod=sha256).hexdigest()
+    return f"sha256={signature}"
+
+
+def _url_path(url: str) -> str:
+    if url.endswith("?"):
+        url = url[:-1]
+    parsed = urlsplit(url)
+    if parsed.scheme or parsed.netloc:
+        path = parsed.path
+        if path.startswith("/api/"):
+            path = path[4:]
+        return path + (f"?{parsed.query}" if parsed.query else "")
+    if url.startswith("/api/"):
+        return url[4:]
+    return url
 
 def _enforce_github_auth() -> None:
     auth_header = request.headers.get("X-Hub-Signature-256")
