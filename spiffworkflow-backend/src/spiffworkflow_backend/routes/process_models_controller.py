@@ -18,6 +18,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
@@ -28,6 +29,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.filestore_client_service import FilestoreClientService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
@@ -378,6 +380,69 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
         file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
 
     return make_response(jsonify(file), 200)
+
+
+FILESTORE_FILE_TYPES = {FileType.bpmn.value, FileType.dmn.value, FileType.json.value, FileType.md.value}
+
+
+def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_name: str) -> Any:
+    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
+    process_group_id = _filestore_process_group_id(process_model)
+    files_path = _filestore_path(process_group_id, process_model.id, file_name)
+    files = _filestore_files(process_group_id)
+    if not any(file["path"] == files_path for file in files):
+        raise ApiError(
+            error_code="process_model_file_not_found",
+            message=f"File {file_name} not found in workflow {process_model_identifier}.",
+            status_code=404,
+        )
+
+    result = FilestoreClientService.ensure_project({
+        "arena_process_group_id": process_group_id,
+        "name": process_group_id,
+        "files": files,
+    })
+
+    return make_response(
+        jsonify({
+            "files_project_id": result["project"]["id"],
+            "files_path": files_path,
+            "files_tenant": FilestoreClientService.tenant_id(),
+        }),
+        200,
+    )
+
+
+def _filestore_process_group_id(process_model: ProcessModelInfo) -> str:
+    parts = process_model.id.rsplit("/", 1)
+    if len(parts) != 2:
+        raise ApiError(
+            error_code="process_group_id_not_found",
+            message=f"Process model {process_model.id} is not inside a process group.",
+            status_code=400,
+        )
+    return parts[0]
+
+
+def _filestore_files(process_group_id: str) -> list[dict[str, str]]:
+    files = []
+    for process_model in ProcessModelService.get_process_models(process_group_id, recursive=True, include_files=True):
+        for file in process_model.files or []:
+            if file.type not in FILESTORE_FILE_TYPES:
+                continue
+
+            files.append({
+                "path": _filestore_path(process_group_id, process_model.id, file.name),
+                "content": SpecFileService.get_data(process_model, file.name).decode("utf-8"),
+                "content_type": CONTENT_TYPES.get(file.type, file.content_type),
+            })
+    return files
+
+
+def _filestore_path(process_group_id: str, process_model_id: str, file_name: str) -> str:
+    model_path = process_model_id.removeprefix(f"{process_group_id}/")
+    return f"{model_path}/{file_name}" if model_path else file_name
 
 
 def process_model_test_run(

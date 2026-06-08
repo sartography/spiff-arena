@@ -26,7 +26,7 @@ import { ProcessFile } from '../interfaces';
 import SpiffTooltip from './SpiffTooltip';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import { BACKEND_BASE_URL, ED_BASE_URL } from '../config';
+import { ED_BASE_URL } from '../config';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -61,16 +61,37 @@ export default function ProcessModelFileList({
     return null;
   };
 
-  const editInEdUrl = (processModelFile: ProcessFile) => {
-    if (!ED_BASE_URL || !processModelFile.name.match(/\.bpmn$/)) {
-      return null;
+  const canEditInEd = (processModelFile: ProcessFile) =>
+    ED_BASE_URL && processModelFile.name.match(/\.bpmn$/);
+
+  const openInEd = (processModelFile: ProcessFile) => {
+    const target = window.open('about:blank', '_blank');
+    if (target) {
+      target.opener = null;
     }
 
-    const url = new URL(ED_BASE_URL, window.location.origin);
-    url.searchParams.set('arenaBackendUrl', BACKEND_BASE_URL);
-    url.searchParams.set('processModelId', modifiedProcessModelId);
-    url.searchParams.set('fileName', processModelFile.name);
-    return url.toString();
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}/files/${encodeURIComponent(processModelFile.name)}/edit-in-ed`,
+      httpMethod: 'POST',
+      successCallback: (result: any) => {
+        const url = new URL(ED_BASE_URL as string, window.location.origin);
+        url.searchParams.set('filesProjectId', result.files_project_id);
+        url.searchParams.set('filesPath', result.files_path);
+        if (result.files_tenant) {
+          url.searchParams.set('tenant', result.files_tenant);
+        }
+
+        if (target) {
+          target.location.href = url.toString();
+        } else {
+          window.location.href = url.toString();
+        }
+      },
+      failureCallback: (error: any) => {
+        target?.close();
+        addError({ message: error?.message || 'Could not open file in Ed.' });
+      },
+    });
   };
 
   const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
@@ -139,17 +160,14 @@ export default function ProcessModelFileList({
         </Can>,
       );
     }
-    const edUrl = editInEdUrl(processModelFile);
-    if (edUrl) {
+    if (canEditInEd(processModelFile)) {
       elements.push(
         <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
           <SpiffTooltip title="Edit in Ed" placement="top">
             <IconButton
               aria-label="Edit in Ed"
               data-testid={`edit-in-ed-${processModelFile.name.replace('.', '-')}`}
-              href={edUrl}
-              rel="noreferrer"
-              target="_blank"
+              onClick={() => openInEd(processModelFile)}
             >
               <OpenInNew />
             </IconButton>

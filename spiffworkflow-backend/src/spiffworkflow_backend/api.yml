@@ -2133,6 +2133,33 @@ paths:
                 items:
                   $ref: "#/components/schemas/TaskDefinition"
 
+  /process-models/{modified_process_model_identifier}/files/{file_name}/edit-in-ed:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified process model id
+        schema:
+          type: string
+      - name: file_name
+        in: path
+        required: true
+        description: The id of the spec file
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_edit_in_ed
+      summary: Ensures a process group exists in Files and returns Ed launch data
+      tags:
+        - Process Model Files
+      responses:
+        "200":
+          description: Files launch information for Ed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+
   /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
       - name: modified_process_model_identifier

@@ -9,6 +9,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes import process_models_controller
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -17,6 +18,46 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelsController(BaseTest):
+    def test_process_model_file_edit_in_ed_syncs_process_group_to_filestore(
+        self,
+        app: Flask,
+        client: TestClient,
+        monkeypatch,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        load_test_spec(
+            "filestore/main",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        load_test_spec(
+            "filestore/called",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        ensure_project = MagicMock(return_value={"project": {"id": "files-project"}})
+        monkeypatch.setattr(process_models_controller.FilestoreClientService, "ensure_project", ensure_project)
+        monkeypatch.setattr(process_models_controller.FilestoreClientService, "tenant_id", MagicMock(return_value="example"))
+
+        response = client.post(
+            "/v1.0/process-models/filestore:main/files/simple_script.bpmn/edit-in-ed",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "files_project_id": "files-project",
+            "files_path": "main/simple_script.bpmn",
+            "files_tenant": "example",
+        }
+        payload = ensure_project.call_args.args[0]
+        assert payload["arena_process_group_id"] == "filestore"
+        assert [file["path"] for file in payload["files"]] == [
+            "called/simple_script.bpmn",
+            "main/simple_script.bpmn",
+        ]
+
     def test_cannot_save_process_model_file_with_called_elements_user_does_not_have_access_to(
         self,
         app: Flask,
