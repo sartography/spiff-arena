@@ -445,6 +445,22 @@ def _filestore_path(process_group_id: str, process_model_id: str, file_name: str
     return f"{model_path}/{file_name}" if model_path else file_name
 
 
+def _sync_file_to_filestore(process_model: ProcessModelInfo, file: Any, content: bytes) -> None:
+    if not current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL"):
+        return
+    if file.type not in FILESTORE_FILE_TYPES:
+        return
+
+    process_group_id = _filestore_process_group_id(process_model)
+    FilestoreClientService.sync_file(
+        process_group_id=process_group_id,
+        project_name=process_group_id,
+        path=_filestore_path(process_group_id, process_model.id, file.name),
+        content=content.decode("utf-8"),
+        content_type=CONTENT_TYPES.get(file.type, file.content_type),
+    )
+
+
 def process_model_test_run(
     modified_process_model_identifier: str,
     test_case_file: str | None = None,
@@ -704,6 +720,7 @@ def _create_or_update_process_model_file(
     file.process_model_id = process_model.id
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
+    _sync_file_to_filestore(process_model, file, file_contents)
     GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):

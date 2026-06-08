@@ -14,13 +14,39 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 class FilestoreClientService:
     @classmethod
     def ensure_project(cls, payload: dict) -> dict:
-        url = cls._url("/v1/arena/projects/ensure")
+        return cls._post("/v1/arena/projects/ensure", payload, "Could not sync process model files to Files")
+
+    @classmethod
+    def sync_file(
+        cls,
+        process_group_id: str,
+        project_name: str,
+        path: str,
+        content: str,
+        content_type: str | None = None,
+    ) -> dict:
+        payload: dict = {
+            "arena_process_group_id": process_group_id,
+            "name": project_name,
+            "file": {
+                "path": path,
+                "content": content,
+            },
+        }
+        if content_type:
+            payload["file"]["content_type"] = content_type
+
+        return cls._post("/v1/arena/projects/files", payload, "Could not sync Arena file to Files")
+
+    @classmethod
+    def _post(cls, path: str, payload: dict, error_message: str) -> dict:
+        url = cls._url(path)
         body = json.dumps(payload)
         response = requests.post(url, data=body, headers=cls._headers("POST", url, body), timeout=30)
         if response.status_code != 200:
             raise ApiError(
                 error_code="filestore_sync_failed",
-                message=f"Could not sync process model files to Files: {response.status_code}",
+                message=f"{error_message}: {response.status_code}",
                 status_code=502,
             )
         return response.json()
@@ -44,14 +70,22 @@ class FilestoreClientService:
     def _headers(cls, method: str, url: str, body: str) -> dict[str, str]:
         tenant_id = cls.tenant_id()
         headers = {"Content-Type": "application/json", "SpiffWorkflow-Tenant": tenant_id}
-        secret = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET")
-        if not secret:
-            return headers
-
+        secret = cls._secret()
         timestamp = str(int(time.time()))
         headers["SpiffWorkflow-Timestamp"] = timestamp
         headers["SpiffWorkflow-Signature"] = cls._signature(secret, method, cls._path(url), tenant_id, timestamp, body)
         return headers
+
+    @classmethod
+    def _secret(cls) -> str:
+        secret = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET")
+        if not secret:
+            raise ApiError(
+                error_code="filestore_shared_secret_not_configured",
+                message="SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET is not configured",
+                status_code=501,
+            )
+        return secret
 
     @staticmethod
     def _signature(secret: str, method: str, path: str, tenant_id: str, timestamp: str, body: str) -> str:

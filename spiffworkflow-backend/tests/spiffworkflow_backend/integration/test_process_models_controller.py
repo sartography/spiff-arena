@@ -33,8 +33,8 @@ class TestProcessModelsController(BaseTest):
         )
         load_test_spec(
             "filestore/called",
-            bpmn_file_name="simple_script.bpmn",
-            process_model_source_directory="simple_script",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
         )
         ensure_project = MagicMock(return_value={"project": {"id": "files-project"}})
         monkeypatch.setattr(process_models_controller.FilestoreClientService, "ensure_project", ensure_project)
@@ -54,9 +54,48 @@ class TestProcessModelsController(BaseTest):
         payload = ensure_project.call_args.args[0]
         assert payload["arena_process_group_id"] == "filestore"
         assert [file["path"] for file in payload["files"]] == [
-            "called/simple_script.bpmn",
+            "called/hello_world.bpmn",
             "main/simple_script.bpmn",
         ]
+
+    def test_process_model_file_save_syncs_file_to_filestore(
+        self,
+        app: Flask,
+        client: TestClient,
+        monkeypatch,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
+        sync_file = MagicMock(return_value={"project": {"id": "files-project"}})
+        monkeypatch.setattr(process_models_controller.FilestoreClientService, "sync_file", sync_file)
+        process_model = load_test_spec(
+            "filestore/main",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        assert process_model.primary_file_name is not None
+        bpmn_file_data_bytes = SpecFileService.get_data(process_model, process_model.primary_file_name)
+        file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
+
+        response = client.put(
+            (
+                f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/"
+                f"{process_model.primary_file_name}?file_contents_hash={file_contents_hash}"
+            ),
+            files=[("file", (process_model.primary_file_name, bpmn_file_data_bytes))],
+            follow_redirects=True,
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        sync_file.assert_called_once_with(
+            process_group_id="filestore",
+            project_name="filestore",
+            path="main/simple_script.bpmn",
+            content=bpmn_file_data_bytes.decode("utf-8"),
+            content_type="text/xml",
+        )
 
     def test_cannot_save_process_model_file_with_called_elements_user_does_not_have_access_to(
         self,
