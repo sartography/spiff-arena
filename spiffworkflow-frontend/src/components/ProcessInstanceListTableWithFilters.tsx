@@ -82,6 +82,7 @@ import { Can } from '../contexts/Can';
 import Filters from './Filters';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
+import QuickFilterChips from './QuickFilterChips';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -547,6 +548,50 @@ export default function ProcessInstanceListTableWithFilters({
     }
     const reportMetadataCopy = { ...reportMetadataToUse };
     setReportMetadata(reportMetadataCopy);
+  };
+
+  const syncWidgetStateForField = (fieldName: string, fieldValue: any) => {
+    if (fieldName === 'process_status') {
+      setProcessStatusSelection(
+        fieldValue ? String(fieldValue).split(',') : [],
+      );
+    } else if (dateParametersToAlwaysFilterBy[fieldName]) {
+      const [setDate, setTime] = dateParametersToAlwaysFilterBy[fieldName];
+      if (fieldValue) {
+        setDate(
+          DateAndTimeService.convertSecondsToFormattedDateString(fieldValue),
+        );
+        setTime(
+          DateAndTimeService.convertSecondsToFormattedTimeHoursMinutes(
+            fieldValue,
+          ),
+        );
+      } else {
+        setDate('');
+        setTime('');
+      }
+    }
+  };
+
+  const applyQuickFilter = (
+    addFilters: ReportFilter[],
+    clearFieldNames: string[],
+  ) => {
+    if (!reportMetadata) {
+      return;
+    }
+    const next = { ...reportMetadata };
+    next.filter_by = reportMetadata.filter_by.filter(
+      (f: ReportFilter) => !clearFieldNames.includes(f.field_name),
+    );
+    clearFieldNames.forEach((fieldName) =>
+      syncWidgetStateForField(fieldName, null),
+    );
+    addFilters.forEach((f) => {
+      next.filter_by.push({ ...f });
+      syncWidgetStateForField(f.field_name, f.field_value);
+    });
+    setReportMetadata(next);
   };
 
   const handleProcessInstanceInitiatorSearchResult = (
@@ -1763,6 +1808,10 @@ export default function ProcessInstanceListTableWithFilters({
     resultsTable = (
       <>
         {refilterTextComponent}
+        <QuickFilterChips
+          reportMetadata={reportMetadata}
+          onApplyPreset={applyQuickFilter}
+        />
         <ProcessInstanceListTable
           autoReload={autoReloadEnabled}
           canCompleteAllTasks={canCompleteAllTasks}
