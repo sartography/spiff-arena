@@ -212,6 +212,8 @@
   "frontend_access_denied_message": "You don't have permission to access this application. Please contact your administrator.",
   "go": "Go",
   "group_by": "Group by",
+  "group_by_none": "No grouping",
+  "group_by_process_group": "Process group",
   "groups": "Groups",
   "guid": "Guid",
   "hide": "Hide",

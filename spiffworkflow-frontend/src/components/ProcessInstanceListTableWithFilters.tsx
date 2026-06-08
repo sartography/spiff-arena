@@ -82,6 +82,7 @@ import { Can } from '../contexts/Can';
 import Filters from './Filters';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
+import ProcessInstanceGroupByModel from './ProcessInstanceGroupByModel';
 import QuickFilterChips from './QuickFilterChips';
 
 type OwnProps = {
@@ -140,6 +141,7 @@ export default function ProcessInstanceListTableWithFilters({
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
     null,
   );
+  const [groupBy, setGroupBy] = useState<'none' | 'process_group'>('none');
 
   const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
 
@@ -1802,6 +1804,22 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
+  const groupByControl = (
+    <FormControl size="small" sx={{ minWidth: 180, my: 1 }}>
+      <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
+      <Select
+        labelId="group-by-label"
+        label={t('group_by')}
+        value={groupBy}
+        data-testid="process-instance-group-by"
+        onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
+      >
+        <MenuItem value="none">{t('group_by_none')}</MenuItem>
+        <MenuItem value="process_group">{t('group_by_process_group')}</MenuItem>
+      </Select>
+    </FormControl>
+  );
+
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
@@ -1812,23 +1830,34 @@ export default function ProcessInstanceListTableWithFilters({
           reportMetadata={reportMetadata}
           onApplyPreset={applyQuickFilter}
         />
-        <ProcessInstanceListTable
-          autoReload={autoReloadEnabled}
-          canCompleteAllTasks={canCompleteAllTasks}
-          filterComponent={filterComponent}
-          header={header}
-          onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
-          paginationClassName={paginationClassName}
-          paginationQueryParamPrefix={paginationQueryParamPrefix}
-          perPageOptions={perPageOptions}
-          reportMetadata={reportMetadata}
-          showActionsColumn={showActionsColumn}
-          showLinkToReport={showLinkToReport}
-          showRefreshButton
-          tableHtmlId={tableHtmlId}
-          textToShowIfEmpty={textToShowIfEmpty}
-          variant={variant}
-        />
+        {groupByControl}
+        {groupBy === 'process_group' ? (
+          <>
+            {filterComponent()}
+            <ProcessInstanceGroupByModel
+              reportMetadata={reportMetadata}
+              variant={variant}
+            />
+          </>
+        ) : (
+          <ProcessInstanceListTable
+            autoReload={autoReloadEnabled}
+            canCompleteAllTasks={canCompleteAllTasks}
+            filterComponent={filterComponent}
+            header={header}
+            onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
+            paginationClassName={paginationClassName}
+            paginationQueryParamPrefix={paginationQueryParamPrefix}
+            perPageOptions={perPageOptions}
+            reportMetadata={reportMetadata}
+            showActionsColumn={showActionsColumn}
+            showLinkToReport={showLinkToReport}
+            showRefreshButton
+            tableHtmlId={tableHtmlId}
+            textToShowIfEmpty={textToShowIfEmpty}
+            variant={variant}
+          />
+        )}
       </>
     );
   }
