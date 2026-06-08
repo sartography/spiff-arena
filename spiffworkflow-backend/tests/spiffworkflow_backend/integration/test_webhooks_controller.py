@@ -55,7 +55,7 @@ class TestWebhooksController(BaseTest):
 
         content = json.dumps({
             "event": "snapshot.created",
-            "tenant_id": "gsa",
+            "tenant_id": "tenant1",
             "project_id": "project-1",
             "arena_package_url": "https://files.example/package",
         })
@@ -65,12 +65,12 @@ class TestWebhooksController(BaseTest):
             "/v1.0/filestore-webhook",
             headers={
                 "Content-Type": "application/json",
-                "SpiffWorkflow-Tenant": "gsa",
+                "SpiffWorkflow-Tenant": "tenant1",
                 "SpiffWorkflow-Timestamp": timestamp,
                 "SpiffWorkflow-Signature": self._create_filestore_signature(
                     "POST",
                     "/v1.0/filestore-webhook",
-                    "gsa",
+                    "tenant1",
                     timestamp,
                     content,
                     "filestore-secret",
@@ -83,12 +83,12 @@ class TestWebhooksController(BaseTest):
         get.assert_called_once_with(
             "https://files.example/package",
             headers={
-                "SpiffWorkflow-Tenant": "gsa",
+                "SpiffWorkflow-Tenant": "tenant1",
                 "SpiffWorkflow-Timestamp": timestamp,
                 "SpiffWorkflow-Signature": self._create_filestore_signature(
                     "GET",
                     "/package",
-                    "gsa",
+                    "tenant1",
                     timestamp,
                     "",
                     "filestore-secret",
@@ -102,38 +102,6 @@ class TestWebhooksController(BaseTest):
             "arena_process_group_id": "filestore",
             "files": [],
         })
-
-    def test_filestore_webhook_accepts_old_tenant_header(
-        self,
-        app: Flask,
-        client: TestClient,
-        monkeypatch,
-    ) -> None:
-        app.config["SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET"] = "filestore-secret"  # noqa: S105
-        monkeypatch.setattr(webhooks_controller.time, "time", Mock(return_value=1780870000))
-        content = json.dumps({"event": "file.updated", "tenant_id": "gsa"})
-        timestamp = "1780870000"
-
-        response = client.post(
-            "/v1.0/filestore-webhook",
-            headers={
-                "Content-Type": "application/json",
-                "X-Spiff-Org": "gsa",
-                "SpiffWorkflow-Timestamp": timestamp,
-                "SpiffWorkflow-Signature": self._create_filestore_signature(
-                    "POST",
-                    "/v1.0/filestore-webhook",
-                    "gsa",
-                    timestamp,
-                    content,
-                    "filestore-secret",
-                ),
-            },
-            content=content.encode(),
-        )
-
-        assert response.status_code == 200
-        assert response.json() == {"ok": True, "process_models": []}
 
     def test_filestore_webhook_rejects_bad_signature(
         self,
@@ -163,19 +131,19 @@ class TestWebhooksController(BaseTest):
         monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET", "filestore-secret")
         monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID", "example")
         monkeypatch.setattr(webhooks_controller.time, "time", Mock(return_value=1780870000))
-        content = json.dumps({"event": "file.updated", "tenant_id": "gsa"})
+        content = json.dumps({"event": "file.updated", "tenant_id": "tenant1"})
         timestamp = "1780870000"
 
         response = client.post(
             "/v1.0/filestore-webhook",
             headers={
                 "Content-Type": "application/json",
-                "SpiffWorkflow-Tenant": "gsa",
+                "SpiffWorkflow-Tenant": "tenant1",
                 "SpiffWorkflow-Timestamp": timestamp,
                 "SpiffWorkflow-Signature": self._create_filestore_signature(
                     "POST",
                     "/v1.0/filestore-webhook",
-                    "gsa",
+                    "tenant1",
                     timestamp,
                     content,
                     "filestore-secret",
@@ -197,9 +165,9 @@ class TestWebhooksController(BaseTest):
             "/v1.0/filestore-webhook",
             headers={
                 "Content-Type": "application/json",
-                "SpiffWorkflow-Tenant": "gsa",
+                "SpiffWorkflow-Tenant": "tenant1",
             },
-            content=json.dumps({"event": "snapshot.created", "tenant_id": "gsa"}).encode(),
+            content=json.dumps({"event": "snapshot.created", "tenant_id": "tenant1"}).encode(),
         )
 
         assert response.status_code == 401

@@ -132,7 +132,7 @@ def _filestore_headers(method: str, url: str, body: dict) -> dict[str, str]:
 
 def _enforce_filestore_auth() -> None:
     tenant_id = str((request.json or {}).get("tenant_id") or "")
-    header_tenant_id = request.headers.get("SpiffWorkflow-Tenant") or request.headers.get("X-Spiff-Org") or ""
+    header_tenant_id = request.headers.get("SpiffWorkflow-Tenant") or ""
     if not tenant_id or tenant_id != header_tenant_id:
         raise ApiError(error_code="unauthorized", message="unauthorized", status_code=401)
 
