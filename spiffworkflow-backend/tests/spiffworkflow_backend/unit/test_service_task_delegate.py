@@ -268,7 +268,10 @@ class TestServiceTaskDelegate(BaseTest):
             assert "Connector proxy request" in request_call.args[0]
             assert request_call.args[2] == "POST"
             assert request_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-            assert request_call.args[4] == '{\n  "http": "http://<redacted>@excellent-test-proxy:3128",\n  "https": "http://<redacted>@excellent-test-proxy:3128"\n}'
+            assert (
+                request_call.args[4]
+                == '{\n  "http": "http://<redacted>@excellent-test-proxy:3128",\n  "https": "http://<redacted>@excellent-test-proxy:3128"\n}'
+            )
             assert "proxy-password" not in request_call.args[4]
             assert '"payload": {' in request_call.args[6]
             assert '"hello": "world"' in request_call.args[6]
