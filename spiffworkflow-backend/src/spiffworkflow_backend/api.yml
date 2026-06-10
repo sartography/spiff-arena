@@ -1077,26 +1077,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /filestore-webhook:
-    post:
-      operationId: spiffworkflow_backend.routes.webhooks_controller.filestore_webhook
-      summary: receives snapshot webhooks from the Files service and imports process model files.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
-      tags:
-        - git
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-
   /process-instances/for-me:
     parameters:
       - name: process_model_identifier

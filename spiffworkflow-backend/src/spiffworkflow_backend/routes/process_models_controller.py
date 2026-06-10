@@ -390,8 +390,7 @@ def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_n
     process_model = _get_process_model(process_model_identifier)
     process_group_id = _filestore_process_group_id(process_model)
     files_path = _filestore_path(process_group_id, process_model.id, file_name)
-    files = _filestore_files(process_group_id)
-    if not any(file["path"] == files_path for file in files):
+    if not FileSystemService.get_files(process_model, file_name):
         raise ApiError(
             error_code="process_model_file_not_found",
             message=f"File {file_name} not found in workflow {process_model_identifier}.",
@@ -401,7 +400,6 @@ def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_n
     result = FilestoreClientService.ensure_project({
         "arena_process_group_id": process_group_id,
         "name": process_group_id,
-        "files": files,
     })
 
     return make_response(
@@ -425,27 +423,12 @@ def _filestore_process_group_id(process_model: ProcessModelInfo) -> str:
     return parts[0]
 
 
-def _filestore_files(process_group_id: str) -> list[dict[str, str]]:
-    files = []
-    for process_model in ProcessModelService.get_process_models(process_group_id, recursive=True, include_files=True):
-        for file in process_model.files or []:
-            if file.type not in FILESTORE_FILE_TYPES:
-                continue
-
-            files.append({
-                "path": _filestore_path(process_group_id, process_model.id, file.name),
-                "content": SpecFileService.get_data(process_model, file.name).decode("utf-8"),
-                "content_type": CONTENT_TYPES.get(file.type, file.content_type),
-            })
-    return files
-
-
 def _filestore_path(process_group_id: str, process_model_id: str, file_name: str) -> str:
     model_path = process_model_id.removeprefix(f"{process_group_id}/")
     return f"{model_path}/{file_name}" if model_path else file_name
 
 
-def _sync_file_to_filestore(process_model: ProcessModelInfo, file: Any, content: bytes) -> None:
+def _sync_file_to_filestore(process_model: ProcessModelInfo, file: Any) -> None:
     if not current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL"):
         return
     if file.type not in FILESTORE_FILE_TYPES:
@@ -456,7 +439,6 @@ def _sync_file_to_filestore(process_model: ProcessModelInfo, file: Any, content:
         process_group_id=process_group_id,
         project_name=process_group_id,
         path=_filestore_path(process_group_id, process_model.id, file.name),
-        content=content.decode("utf-8"),
         content_type=CONTENT_TYPES.get(file.type, file.content_type),
     )
 
@@ -720,7 +702,7 @@ def _create_or_update_process_model_file(
     file.process_model_id = process_model.id
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
-    _sync_file_to_filestore(process_model, file, file_contents)
+    _sync_file_to_filestore(process_model, file)
     GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):

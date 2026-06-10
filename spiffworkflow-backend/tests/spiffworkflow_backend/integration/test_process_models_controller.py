@@ -53,10 +53,7 @@ class TestProcessModelsController(BaseTest):
         }
         payload = ensure_project.call_args.args[0]
         assert payload["arena_process_group_id"] == "filestore"
-        assert [file["path"] for file in payload["files"]] == [
-            "called/hello_world.bpmn",
-            "main/simple_script.bpmn",
-        ]
+        assert "files" not in payload
 
     def test_process_model_file_save_syncs_file_to_filestore(
         self,
@@ -93,7 +90,6 @@ class TestProcessModelsController(BaseTest):
             process_group_id="filestore",
             project_name="filestore",
             path="main/simple_script.bpmn",
-            content=bpmn_file_data_bytes.decode("utf-8"),
             content_type="text/xml",
         )
 

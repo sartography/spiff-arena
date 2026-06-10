@@ -22,7 +22,6 @@ class FilestoreClientService:
         process_group_id: str,
         project_name: str,
         path: str,
-        content: str,
         content_type: str | None = None,
     ) -> dict:
         payload: dict = {
@@ -30,7 +29,6 @@ class FilestoreClientService:
             "name": project_name,
             "file": {
                 "path": path,
-                "content": content,
             },
         }
         if content_type:

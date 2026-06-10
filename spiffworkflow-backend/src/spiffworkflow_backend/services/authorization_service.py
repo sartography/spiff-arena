@@ -299,7 +299,6 @@ class AuthorizationService:
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_begin",
             "spiffworkflow_backend.routes.service_tasks_controller.authentication_callback",
             "spiffworkflow_backend.routes.tasks_controller.task_allows_guest",
-            "spiffworkflow_backend.routes.webhooks_controller.filestore_webhook",
             "spiffworkflow_backend.routes.webhooks_controller.github_webhook_receive",
             "spiffworkflow_backend.routes.webhooks_controller.webhook",
             "flask.blueprints.send_static_file",
