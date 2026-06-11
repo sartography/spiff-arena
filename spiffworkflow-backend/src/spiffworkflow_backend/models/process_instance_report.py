@@ -23,7 +23,7 @@ from spiffworkflow_backend.models.user import UserModel
 
 class FilterValue(TypedDict):
     field_name: str
-    field_value: str | int | bool
+    field_value: str | int | float | bool
     operator: NotRequired[str]
 
 
