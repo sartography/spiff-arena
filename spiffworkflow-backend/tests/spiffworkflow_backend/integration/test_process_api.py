@@ -3047,6 +3047,48 @@ class TestProcessApi(BaseTest):
             expect_to_find_instance=False,
         )
 
+    def test_can_get_process_instance_list_with_numeric_process_metadata_range_filter(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
+        )
+
+        matching_process_instance = self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict={"key1": "100"}
+        )
+        self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict={"key1": "50"}
+        )
+
+        report_metadata: ReportMetadata = {
+            "columns": [
+                {"Header": "ID", "accessor": "id", "filterable": False},
+                {"Header": "Key one", "accessor": "key1", "filterable": False},
+            ],
+            "order_by": ["status"],
+            "filter_by": [
+                {"field_name": "key1", "field_value": 75, "operator": "greater_than_or_equal_to"},
+                {"field_name": "key1", "field_value": 125, "operator": "less_than"},
+            ],
+        }
+        process_instance_report = ProcessInstanceReportModel.create_report(
+            with_super_admin_user, "test_metadata_numeric_range", report_metadata
+        )
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=process_instance_report.get_report_metadata()
+        )
+
+        assert len(response.json()["results"]) == 1
+        assert response.json()["results"][0]["id"] == matching_process_instance.id
+        assert response.json()["results"][0]["key1"] == "100"
+
     def test_can_get_process_instance_list_with_report_metadata_and_process_initiator(
         self,
         app: Flask,
