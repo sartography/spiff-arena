@@ -207,7 +207,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: matrix.upload_coverage
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -216,14 +216,14 @@ jobs:
 
       # - name: Upload documentation
       #   if: matrix.session == 'docs-build'
-      #   uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      #   uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       #   with:
       #     name: docs
       #     path: docs/_build
       #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./spiffworkflow-backend/log/*.log"
@@ -350,7 +350,7 @@ jobs:
           mkdir -p ./pr
           echo "$PR_NUMBER" > ./pr/pr_number
       - name: Upload PR number as artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
         with:
           name: pr_number
@@ -375,7 +375,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Setup Node
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24.x
       - run: npm install
@@ -457,12 +457,12 @@ jobs:
         run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
       - name: Upload logs
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: spiffworkflow-backend-logs
           path: "./spiffworkflow-backend/log/*.log"
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: ${{ !cancelled() }}
         with:
           name: playwright-traces

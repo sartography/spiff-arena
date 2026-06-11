@@ -527,6 +527,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessGroup"
 
+  /process-groups/{modified_process_group_id}/messages/{source_message_identifier}/move:
+    parameters:
+      - name: modified_process_group_id
+        in: path
+        required: true
+        description: The unique id of the source process group.
+        schema:
+          type: string
+      - name: source_message_identifier
+        in: path
+        required: true
+        description: The identifier of the message definition to move.
+        schema:
+          type: string
+    put:
+      operationId: spiffworkflow_backend.routes.process_groups_controller.move_message_definition
+      summary: Move a message definition from one process group to another
+      tags:
+        - Process Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Process Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessGroup"
+
   /upsearch-locations:
     parameters:
       - name: location
@@ -1975,6 +2008,19 @@ paths:
       summary: Returns a list of all unique milestone names.
       tags:
         - Process Instances
+      parameters:
+        - name: with_relation_to_me
+          in: query
+          required: false
+          description: Limit milestone names to process instances related to the current user.
+          schema:
+            type: boolean
+        - name: process_model_identifier
+          in: query
+          required: false
+          description: Limit milestone names to the given process model identifier.
+          schema:
+            type: string
       responses:
         "200":
           description: List of unique milestone names.
@@ -3057,11 +3103,17 @@ paths:
                 - $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
       responses:
         "200":
-          description: Task completed
+          description: Callback accepted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Task"
+                $ref: "#/components/schemas/ServiceTaskCallbackOutcome"
+        "400":
+          description: Callback failed or rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTaskCallbackError"
 
   /tasks/{process_instance_id}/{task_guid}/allows-guest:
     parameters:
@@ -4190,6 +4242,72 @@ components:
         ok:
           type: boolean
           example: true
+    ServiceTaskCallbackOutcome:
+      type: object
+      required:
+        - ok
+        - status
+        - process_model_identifier
+        - process_instance_id
+      properties:
+        ok:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum:
+            - completed
+            - retry_scheduled
+          example: completed
+        process_model_identifier:
+          type: string
+          example: test_group/retries
+        process_instance_id:
+          type: integer
+          example: 123
+        task_guid:
+          type: string
+          example: 88f9b549-5a29-483c-9f1e-10b7f534a258
+        retry_at:
+          type: integer
+          description: Unix timestamp in seconds when the retry is due.
+        retries_attempted:
+          type: integer
+          example: 0
+        retries_remaining:
+          type: integer
+          example: 3
+        max_retries:
+          type: integer
+          example: 3
+    ServiceTaskCallbackError:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+        - status
+        - error_code
+        - message
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: unexpected_workflow_exception
+        detail:
+          type: string
+          example: Unexpected Workflow Error. Error executing Service Task.
+        status:
+          type: integer
+          example: 400
+        error_code:
+          type: string
+          example: unexpected_workflow_exception
+        message:
+          type: string
+          example: Unexpected Workflow Error. Error executing Service Task.
     Locations:
       properties:
         locations:

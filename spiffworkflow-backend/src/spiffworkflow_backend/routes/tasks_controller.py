@@ -26,9 +26,6 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_enabled_for_process_model,
-)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -507,15 +504,15 @@ def _complete_service_task_that_is_waiting_for_callback(
         user=user,
         execution_mode=execution_mode,
     )
-    if callback_result.next_task:
-        task = ProcessInstanceService.spiff_task_to_api_task(callback_result.processor, callback_result.next_task)
-        task.process_model_uses_queued_execution = queue_enabled_for_process_model()
-        return {"next_task": task}
-    return {
+    response = {
         "ok": True,
+        "status": "completed",
         "process_model_identifier": callback_result.process_instance.process_model_identifier,
         "process_instance_id": process_instance_id,
     }
+    if callback_result.callback_outcome is not None:
+        response.update(callback_result.callback_outcome)
+    return response
 
 
 def service_task_submit_callback(
@@ -525,8 +522,6 @@ def service_task_submit_callback(
 ) -> flask.wrappers.Response:
     with sentry_sdk.start_span(op="controller_action", name="tasks_controller.service_task_submit_callback"):
         response_item = _complete_service_task_that_is_waiting_for_callback(process_instance_id, task_guid, execution_mode)
-        if "next_task" in response_item:
-            response_item = response_item["next_task"]
         return make_response(jsonify(response_item), 200)
 
 

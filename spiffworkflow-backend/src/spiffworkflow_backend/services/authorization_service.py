@@ -37,7 +37,6 @@ from spiffworkflow_backend.models.user import SPIFF_GUEST_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
-from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -90,6 +89,7 @@ PUBLIC_AUTHENTICATION_EXCLUSION_LIST = [
     "spiffworkflow_backend.routes.public_controller.message_form_show",
     "spiffworkflow_backend.routes.public_controller.message_form_submit",
 ]
+OPENID_BLUEPRINT_MODULE_NAME = "spiffworkflow_backend.routes.openid_blueprint.openid_blueprint"
 
 
 class AuthorizationService:
@@ -324,11 +324,10 @@ class AuthorizationService:
             return True
 
         api_function_full_path, module = cls.get_fully_qualified_api_function_from_request()
-        if (
-            api_function_full_path
-            and (api_function_full_path in cls.authentication_exclusion_list())
-            or module == openid_blueprint
-        ):
+        module_name = module.__name__ if module is not None else None
+        if module_name == OPENID_BLUEPRINT_MODULE_NAME:
+            return True
+        if api_function_full_path and api_function_full_path in cls.authentication_exclusion_list():
             return True
 
         return False
@@ -616,6 +615,9 @@ class AuthorizationService:
 
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*"))
+        permissions_to_assign.append(
+            PermissionToAssign(permission="read", target_uri="/process-instances/unique-milestone-names")
+        )
 
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/script-assist/enabled"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/script-assist/process-message"))

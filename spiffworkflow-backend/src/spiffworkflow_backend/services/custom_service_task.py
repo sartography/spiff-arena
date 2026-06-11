@@ -10,7 +10,9 @@ from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.service_task_delegate import Accepted202Exception
+from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_delegate import logger
 
 
@@ -96,16 +98,12 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         except RuntimeError:
             process_instance_id = None
         if process_instance_id is None:
-            from spiffworkflow_backend.models.task import TaskModel
-
             task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
             if task_model is not None:
                 process_instance_id = task_model.process_instance_id
         return process_instance_id
 
     def log_terminal_failure(self, spiff_task: SpiffTask, exception: Exception) -> None:
-        from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
-
         retries_attempted = self.get_retries_attempted(spiff_task)
         retryable_error = ServiceTaskDelegate.is_transient_error(exception)
         retry_state = "not_retryable"
@@ -128,8 +126,6 @@ class CustomServiceTask(ServiceTask):  # type: ignore
         )
 
     def should_retry(self, spiff_task: SpiffTask, exception: Exception) -> bool:
-        from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
-
         if not ServiceTaskDelegate.is_transient_error(exception):
             return False
         if self.retries is None:

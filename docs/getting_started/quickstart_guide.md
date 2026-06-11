@@ -6,12 +6,12 @@
 👇 Throughout this step-by-step guide, we will walk you through key components of SpiffWorkflow, ensuring that you have a clear understanding of how to use the platform effectively.
 ```
 
-## 🚀 Getting Started with SpiffArena
+## 🚀 Getting Started with Spiff Arena
 
-Sartography, the company that shepherds the SpiffWorkflow and SpiffArena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
+Sartography, the company that shepherds the SpiffWorkflow and Spiff Arena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
-## How to Log in to SpiffArena
+## How to Log in to Spiff Arena
 
 ```{image} /images/Login.png
 :alt: Login Screen
@@ -20,17 +20,17 @@ Users can interact with pre-built models, make modifications, and visualize proc
 :align: right
 ```
 
-To begin your journey with SpiffArena, open your web browser and navigate to the SpiffArena website (currently spiffdemo.org).
+To begin your journey with Spiff Arena, open your web browser and navigate to the Spiff Arena website (currently spiffdemo.org).
 
 On the login screen, you will find the option to log in using Single Sign-On.
 Click the Single Sign-On button and select your preferred login method, such as using your Gmail account.
 
 ```{admonition} Note:
 Stay tuned as we expand our sign-on options beyond Gmail.
-More ways to access SpiffArena are coming your way!
+More ways to access Spiff Arena are coming your way!
 ```
 
-## How to Navigate through SpiffArena
+## How to Navigate through Spiff Arena
 
 This guide walks you through the updated SpiffWorkflow interface, highlighting its core sections, how to interact with workflows, and where to find key features for an improved user experience.
 

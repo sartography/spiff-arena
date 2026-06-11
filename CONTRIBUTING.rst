@@ -13,7 +13,7 @@ Here is a list of important resources for contributors:
 - `Code of Conduct`_
 
 .. _Source Code: https://github.com/sartography/spiff-arena
-.. _Documentation: https://spiff-arena.readthedocs.io/
+.. _Documentation: https://spiff.works/docs/spiff-arena/
 .. _Issue Tracker: https://github.com/sartography/spiff-arena/issues
 
 How to report a bug

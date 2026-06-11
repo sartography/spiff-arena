@@ -11,6 +11,7 @@ from spiffworkflow_connector_command.command_interface import CommandResponseDic
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 from sqlalchemy import and_
 
+from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -242,7 +243,14 @@ class TestServiceTaskDelegate(BaseTest):
                 "command_response_version": 2,
             }
 
-            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
+            with (
+                self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True),
+                self.app_config_mock(
+                    app,
+                    "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_HTTP_PROXY_URL",
+                    "http://proxy-user:proxy-password@excellent-test-proxy:3128",
+                ),
+            ):
                 with patch("requests.post") as mock_post:
                     mock_post.return_value.status_code = 200
                     mock_post.return_value.ok = True
@@ -260,16 +268,27 @@ class TestServiceTaskDelegate(BaseTest):
             assert "Connector proxy request" in request_call.args[0]
             assert request_call.args[2] == "POST"
             assert request_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-            assert '"payload": {' in request_call.args[5]
-            assert '"hello": "world"' in request_call.args[5]
+            assert (
+                request_call.args[4]
+                == '{\n  "http": "http://<redacted>@excellent-test-proxy:3128",\n  "https": "http://<redacted>@excellent-test-proxy:3128"\n}'
+            )
+            assert "proxy-password" not in request_call.args[4]
+            assert '"payload": {' in request_call.args[6]
+            assert '"hello": "world"' in request_call.args[6]
+            mock_post.assert_called_once()
+            assert mock_post.call_args.kwargs["proxies"] == {
+                "http": "http://proxy-user:proxy-password@excellent-test-proxy:3128",
+                "https": "http://proxy-user:proxy-password@excellent-test-proxy:3128",
+            }
 
             response_call = mock_logger_info.call_args_list[1]
             assert "Connector proxy response" in response_call.args[0]
             assert response_call.args[2] == "POST"
             assert response_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-            assert response_call.args[4] == 200
-            assert response_call.args[5] == '{\n  "Content-Type": "application/json"\n}'
-            assert '\\"we_did_it\\": true' in response_call.args[6]
+            assert response_call.args[4] == request_call.args[4]
+            assert response_call.args[5] == 200
+            assert response_call.args[6] == '{\n  "Content-Type": "application/json"\n}'
+            assert '\\"we_did_it\\": true' in response_call.args[7]
 
     def test_call_connector_logs_request_and_exception(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", "http://localhost:7004"):
@@ -301,10 +320,11 @@ class TestServiceTaskDelegate(BaseTest):
             assert "Connector proxy request failed" in error_call.args[0]
             assert error_call.args[2] == "POST"
             assert error_call.args[3] == "http://localhost:7004/v1/do/my_operation"
-            assert '"payload": {' in error_call.args[5]
-            assert '"hello": "world"' in error_call.args[5]
-            assert error_call.args[6] == "Exception"
-            assert str(error_call.args[7]) == "mocked error"
+            assert error_call.args[4] == "<not configured>"
+            assert '"payload": {' in error_call.args[6]
+            assert '"hello": "world"' in error_call.args[6]
+            assert error_call.args[7] == "Exception"
+            assert str(error_call.args[8]) == "mocked error"
 
     def test_can_capture_error_on_correct_multinstance_task(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
@@ -503,6 +523,31 @@ class TestServiceTaskDelegate(BaseTest):
                     "http": "http://excellent-test-proxy:3128",
                     "https": "http://excellent-test-proxy:3128",
                 }
+
+    def test_available_connectors_includes_internal_http_connectors(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = json.dumps([{"id": "connector1"}])
+
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.return_value = mock_response
+            available_connectors = ServiceTaskService.available_connectors()
+
+        available_connector_ids = {connector["id"] for connector in available_connectors}
+        internal_connector_ids = {connector["id"] for connector in http_connector.commands}
+        assert internal_connector_ids.issubset(available_connector_ids)
+        assert "connector1" in available_connector_ids
+
+    def test_available_connectors_returns_internal_http_connectors_when_connector_proxy_is_unavailable(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with patch("spiffworkflow_backend.services.service_task_delegate.safe_requests") as mock_safe_requests:
+            mock_safe_requests.get.side_effect = Exception("connection refused")
+            available_connectors = ServiceTaskService.available_connectors()
+
+        assert available_connectors == http_connector.commands
 
     def test_authentication_list_sends_api_key_header_when_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None

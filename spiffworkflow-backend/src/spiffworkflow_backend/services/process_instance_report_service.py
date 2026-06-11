@@ -47,6 +47,18 @@ class ProcessInstanceReportCannotBeRunError(Exception):
 
 class ProcessInstanceReportService:
     @classmethod
+    def metadata_value_expression_for_filter(cls, metadata_value: Any, filter_value: Any) -> Any:
+        if not isinstance(filter_value, bool) and isinstance(filter_value, (int, float)):
+            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
+                numeric_regex = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                return sqlalchemy.case(
+                    (metadata_value.op("~")(numeric_regex), sqlalchemy.cast(metadata_value, sqlalchemy.Float)),  # type: ignore[arg-type]
+                    else_=None,
+                )
+            return sqlalchemy.cast(metadata_value, sqlalchemy.Float)
+        return metadata_value
+
+    @classmethod
     def system_metadata_map(cls, metadata_key: str) -> ReportMetadata | None:
         # TODO replace with system reports that are loaded on launch (or similar)
         terminal_status_values = ",".join(ProcessInstanceModel.terminal_statuses())
@@ -563,14 +575,18 @@ class ProcessInstanceReportService:
             if len(filters_for_column) > 0:
                 for filter_for_column in filters_for_column:
                     isouter = False
+                    metadata_value_expression = cls.metadata_value_expression_for_filter(
+                        instance_metadata_alias.value,
+                        filter_for_column["field_value"],
+                    )
                     if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
                         join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "not_equals":
                         join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "greater_than_or_equal_to":
-                        join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
+                        join_conditions.append(metadata_value_expression >= filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "less_than":
-                        join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
+                        join_conditions.append(metadata_value_expression < filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "contains":
                         join_conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
                     elif filter_for_column["operator"] == "is_empty":
@@ -666,6 +682,45 @@ class ProcessInstanceReportService:
         return process_instance_query
 
     @classmethod
+    def filter_by_with_relation_to_me(cls, process_instance_query: Query, user: UserModel) -> Query:
+        process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(  # type: ignore
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == user.id,
+            ),
+        )
+        process_instance_query = process_instance_query.filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == user.id,
+            )
+        )
+        return process_instance_query
+
+    @classmethod
+    def unique_milestone_names(cls, filters: list[FilterValue], user: UserModel | None = None) -> list[str]:
+        process_instance_query = cls.get_basic_query(filters)
+        with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
+        if with_relation_to_me is True:
+            if user is None:
+                raise ProcessInstanceReportCannotBeRunError(
+                    "A user must be specified to fetch milestone names with with_relation_to_me."
+                )
+            process_instance_query = cls.filter_by_with_relation_to_me(process_instance_query, user)
+        milestone_column = ProcessInstanceModel.__table__.c.last_milestone_bpmn_name
+        rows = (
+            process_instance_query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name)  # type: ignore
+            .filter(
+                milestone_column.is_not(None),
+                milestone_column != "",
+            )
+            .distinct()
+            .all()
+        )
+        return sorted([row[0] for row in rows if row[0] is not None])
+
+    @classmethod
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,
@@ -698,19 +753,7 @@ class ProcessInstanceReportService:
         ):
             if user is None:
                 raise ProcessInstanceReportCannotBeRunError("A user must be specified to run report with with_relation_to_me")
-            process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(  # type: ignore
-                HumanTaskUserModel,
-                and_(
-                    HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                    HumanTaskUserModel.user_id == user.id,
-                ),
-            )
-            process_instance_query = process_instance_query.filter(
-                or_(
-                    HumanTaskUserModel.id.is_not(None),
-                    ProcessInstanceModel.process_initiator_id == user.id,
-                )
-            )
+            process_instance_query = cls.filter_by_with_relation_to_me(process_instance_query, user)
 
         if instances_with_tasks_completed_by_me is True and instances_with_tasks_waiting_for_me is True:
             raise ProcessInstanceReportMetadataInvalidError(

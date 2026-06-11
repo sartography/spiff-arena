@@ -2,7 +2,7 @@
 
 ## Setting the Environment Variable
 
-Once a `Connector Proxy` has been deployed, to integrate it with SpiffArena, we simply need to update an environment variable and restart the backend.
+Once a `Connector Proxy` has been deployed, to integrate it with Spiff Arena, we simply need to update an environment variable and restart the backend.
 If you're using the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/), open the docker-compose.yml file; otherwise, edit the environment variable in the way that is appropriate for your deployment.
 The variable we need to change is called `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL`.
 
@@ -35,7 +35,7 @@ docker compose up -d
 ## Securing the Connector Proxy with an API Key
 
 If your Connector Proxy is publicly accessible (for example, deployed as an AWS Lambda function with a public URL), you can restrict access to it using an API key.
-When configured, SpiffArena's backend will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the proxy.
+When configured, Spiff Arena's backend will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the proxy.
 Your connector proxy can then validate this header and reject requests that don't include the correct key.
 
 Set the API key using the `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY` environment variable:
@@ -44,7 +44,7 @@ Set the API key using the `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY` enviro
 SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY: "your-secret-api-key"
 ```
 
-When this variable is set, all requests from the SpiffArena backend to the connector proxy (command discovery, authentication listing, and command execution) will include:
+When this variable is set, all requests from the Spiff Arena backend to the connector proxy (command discovery, authentication listing, and command execution) will include:
 
 ```
 Spiff-Connector-Proxy-Api-Key: your-secret-api-key
@@ -62,7 +62,7 @@ In this demo, we deployed HTTP GET and POST connectors:
 
 ![Screenshot from 2023-04-06 16-38-02](https://user-images.githubusercontent.com/100367399/230489492-63cf88bf-7533-4160-95cb-d6194506dd5d.png)
 
-Choose the `http/GetRequest` operator ID and enter the [dog fact API](https://dog-api.kinduff.com/api/facts) URL.
+Choose the `http/GetRequest` operator ID and enter a publicly available test URL such as `https://httpbin.org/json`, or another API endpoint that you control.
 Remember to quote it since parameters are evaluated as Python expressions.
 
 ![Screenshot from 2023-04-06 16-50-42](https://user-images.githubusercontent.com/100367399/230491661-abdfdd3a-48f5-4f50-b6e5-9e3a5f562961.png)
@@ -71,6 +71,6 @@ Run the process and once it's complete, you can see the response in the workflow
 
 ![Screenshot from 2023-04-06 16-49-53](https://user-images.githubusercontent.com/100367399/230491713-9d3f9bd0-f284-4004-b00c-cb6dc94b53df.png)
 
-You have successfully configured a `Connector Proxy` for use with `SpiffArena`.
-You made a call from a workflow to get a dog fact.
+You have successfully configured a `Connector Proxy` for use with `Spiff Arena`.
+You made a call from a workflow to an external HTTP API.
 Now, imagine if that call was to communicate with an external system relevant to your business processes.

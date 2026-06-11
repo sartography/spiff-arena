@@ -34,7 +34,7 @@ There is a [Running SpiffWorkflow Locally with Docker](https://www.spiffworkflow
 
 ## 3. Non-Docker setup
 
-Please see the instructions in the [spiff-arena README](https://github.com/sartography/spiff-arena/?tab=readme-ov-file#backend-setup-local).
+Follow the spiff-arena README's local setup instructions for the [backend](https://github.com/sartography/spiff-arena/#backend-setup-local) and [frontend](https://github.com/sartography/spiff-arena/#frontend-setup-local): clone the repo, install the listed Python, `uv`, database, and Node dependencies, run the backend from `spiffworkflow-backend`, and run the frontend from `spiffworkflow-frontend`.
 
 ## 4. Running Windows?
 * Install Docker desktop app 

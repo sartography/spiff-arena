@@ -26,7 +26,7 @@ def do(id: str, params: dict[str, Any]) -> HttpConnectorResponse:
     url = params["url"]
     headers = params.get("headers")
     auth = _auth(params)
-    data = params.get("data")
+    body_kwargs = _request_body_kwargs(params)
 
     if url.startswith("http://local/"):
         # Use connexion test client directly to route through connexion middleware
@@ -49,14 +49,7 @@ def do(id: str, params: dict[str, Any]) -> HttpConnectorResponse:
         if query_params is not None:
             kwargs["params"] = query_params
 
-        # Handle request body - check if data should be treated as JSON
-        if data is not None:
-            # If data is a dict or list, treat it as JSON (matching requests semantics)
-            if isinstance(data, dict | list):
-                kwargs["json"] = data
-            else:
-                # Otherwise treat as raw data
-                kwargs["data"] = data
+        kwargs.update(body_kwargs)
 
         # Handle authentication
         if auth is not None:
@@ -74,22 +67,38 @@ def do(id: str, params: dict[str, Any]) -> HttpConnectorResponse:
     else:
         response = getattr(requests, handler)(
             url,
-            params.get("params"),
+            params=params.get("params"),
             headers=headers,
             auth=auth,
-            json=data,
             timeout=CONNECTOR_PROXY_COMMAND_TIMEOUT,
+            **body_kwargs,
         )
-    return _connector_response(response)
+    return _connector_response(response, include_response_headers=params.get("include_response_headers", False))
 
 
-def _connector_response(http_response: requests.Response) -> HttpConnectorResponse:
+def _request_body_kwargs(params: dict[str, Any]) -> dict[str, Any]:
+    body_format = str(params.get("body_format") or "json").lower()
+    data = params.get("data")
+
+    if body_format == "none" or data is None:
+        return {}
+    if body_format == "json":
+        return {"json": data}
+    if body_format == "form":
+        return {"data": data}
+    if body_format == "raw":
+        return {"data": json.dumps(data) if isinstance(data, dict | list) else data}
+
+    raise ValueError("body_format must be one of json, form, raw, or none")
+
+
+def _connector_response(http_response: requests.Response, include_response_headers: bool = False) -> HttpConnectorResponse:
     status = http_response.status_code
 
     content_type = http_response.headers.get("Content-Type", "")
     raw_response = http_response.text
 
-    if "application/json" in content_type:
+    if "application/json" in content_type and raw_response:
         command_response = json.loads(raw_response)
     else:
         command_response = {"raw_response": raw_response}
@@ -106,16 +115,16 @@ def _connector_response(http_response: requests.Response) -> HttpConnectorRespon
             "body": command_response,
             "mimetype": "application/json",
             "http_status": status,
+            "headers": dict(http_response.headers) if include_response_headers else {},
         },
         "command_response_version": 2,
         "error": error,
         "spiff__logs": [],
     }
 
-    # return a mimicked version an actual http response object
-    return HttpConnectorResponse(
-        text=json.dumps(return_dict), status_code=http_response.status_code, headers=dict(http_response.headers)
-    )
+    # The in-process connector completed successfully. Downstream status belongs in
+    # command_response.http_status, not in the connector wrapper status.
+    return HttpConnectorResponse(text=json.dumps(return_dict), status_code=200, headers=dict(http_response.headers))
 
 
 def _auth(params: dict[str, Any]) -> tuple[str, str] | None:
@@ -144,6 +153,8 @@ _ro_params = [
 _rw_params = [
     *_base_params,
     {"id": "data", "type": "any", "required": False},
+    {"id": "body_format", "type": "str", "required": False},
+    {"id": "include_response_headers", "type": "bool", "required": False},
     *_basic_auth_params,
 ]
 
