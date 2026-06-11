@@ -101,9 +101,10 @@ from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcess
 WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
 
 
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> Any:
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
+    return glbls[name]
 
 
 # This number is a little arbitrary but seems like a good number.
