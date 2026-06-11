@@ -3066,6 +3066,9 @@ class TestProcessApi(BaseTest):
         self.create_process_instance_with_synthetic_metadata(
             process_model=process_model, process_instance_metadata_dict={"key1": "50"}
         )
+        self.create_process_instance_with_synthetic_metadata(
+            process_model=process_model, process_instance_metadata_dict={"key1": "not-a-number"}
+        )
 
         report_metadata: ReportMetadata = {
             "columns": [

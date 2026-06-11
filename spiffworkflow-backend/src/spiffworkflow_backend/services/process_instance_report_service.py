@@ -49,6 +49,12 @@ class ProcessInstanceReportService:
     @classmethod
     def metadata_value_expression_for_filter(cls, metadata_value: Any, filter_value: Any) -> Any:
         if not isinstance(filter_value, bool) and isinstance(filter_value, (int, float)):
+            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
+                numeric_regex = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                return sqlalchemy.case(
+                    (metadata_value.op("~")(numeric_regex), sqlalchemy.cast(metadata_value, sqlalchemy.Float)),  # type: ignore[arg-type]
+                    else_=None,
+                )
             return sqlalchemy.cast(metadata_value, sqlalchemy.Float)
         return metadata_value
 
