@@ -1,5 +1,4 @@
 import copy
-import numbers
 import re
 from collections.abc import Generator
 from typing import Any
@@ -49,7 +48,7 @@ class ProcessInstanceReportCannotBeRunError(Exception):
 class ProcessInstanceReportService:
     @classmethod
     def metadata_value_expression_for_filter(cls, metadata_value: Any, filter_value: Any) -> Any:
-        if isinstance(filter_value, numbers.Number) and not isinstance(filter_value, bool):
+        if not isinstance(filter_value, bool) and isinstance(filter_value, (int, float)):
             return sqlalchemy.cast(metadata_value, sqlalchemy.Float)
         return metadata_value
 

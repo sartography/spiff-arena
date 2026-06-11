@@ -3079,7 +3079,7 @@ class TestProcessApi(BaseTest):
             ],
         }
         process_instance_report = ProcessInstanceReportModel.create_report(
-            with_super_admin_user, "test_metadata_numeric_range", report_metadata
+            "test_metadata_numeric_range", with_super_admin_user, report_metadata
         )
         response = self.post_to_process_instance_list(
             client, with_super_admin_user, report_metadata=process_instance_report.get_report_metadata()
