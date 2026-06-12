@@ -28,8 +28,13 @@ def _bootstrap_users() -> None:
             continue
 
         api_key_env_var = f"SPIFFWORKFLOW_API_KEY_{username}"
-        api_key = os.environ.get(api_key_env_var, ServiceAccountModel.generate_api_key())
+        configured_api_key = os.environ.get(api_key_env_var)
+        api_key = configured_api_key or ServiceAccountModel.generate_api_key()
         api_key_hash = ServiceAccountModel.hash_api_key(api_key)
+
+        if configured_api_key and ServiceAccountModel.query.filter(ServiceAccountModel.api_key_hash == api_key_hash).first():
+            print(f"Bootstrapped user {username} skipped because api key already exists")
+            continue
 
         service_account = ServiceAccountModel(
             name=user.username,
