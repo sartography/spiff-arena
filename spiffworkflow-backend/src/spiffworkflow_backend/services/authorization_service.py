@@ -428,7 +428,7 @@ class AuthorizationService:
                 )
                 raise HumanTaskAlreadyCompletedError(message)
             raise HumanTaskNotFoundError(
-                f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
+                f"Could find a human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
