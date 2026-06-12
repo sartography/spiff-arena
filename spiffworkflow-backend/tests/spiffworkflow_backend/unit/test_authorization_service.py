@@ -3,6 +3,7 @@ from flask import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.error import InvalidPermissionError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -88,6 +89,64 @@ class TestAuthorizationService(BaseTest):
             }
         )
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, finance_user, human_task)
+
+    def test_user_can_complete_task_when_stale_completed_human_task_row_exists(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        self.find_or_create_user("testuser1")
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        completed_human_task = process_instance.active_human_tasks[0]
+        completed_human_task.completed = True
+        db.session.add(completed_human_task)
+
+        active_human_task = HumanTaskModel(
+            process_instance_id=completed_human_task.process_instance_id,
+            process_model_display_name=completed_human_task.process_model_display_name,
+            bpmn_process_identifier=completed_human_task.bpmn_process_identifier,
+            form_file_name=completed_human_task.form_file_name,
+            ui_form_file_name=completed_human_task.ui_form_file_name,
+            task_guid=completed_human_task.task_guid,
+            task_id=completed_human_task.task_id,
+            task_name=completed_human_task.task_name,
+            task_title=completed_human_task.task_title,
+            task_type=completed_human_task.task_type,
+            task_status=completed_human_task.task_status,
+            lane_assignment_id=completed_human_task.lane_assignment_id,
+            lane_name=completed_human_task.lane_name,
+            json_metadata=completed_human_task.json_metadata,
+            completed=False,
+        )
+        db.session.add(active_human_task)
+        db.session.flush()
+        for human_task_user in completed_human_task.human_task_users:
+            db.session.add(
+                HumanTaskUserModel(
+                    user_id=human_task_user.user_id,
+                    human_task=active_human_task,
+                    added_by=human_task_user.added_by,
+                )
+            )
+        db.session.commit()
+
+        assert AuthorizationService.assert_user_can_complete_human_task(
+            process_instance.id,
+            active_human_task.task_id,
+            initiator_user,
+        )
 
     def test_explode_permissions_all_on_process_group(
         self,

@@ -413,18 +413,22 @@ class AuthorizationService:
         task_guid: str,
         user: UserModel,
     ) -> bool:
-        human_task = HumanTaskModel.query.filter_by(
+        human_task_query = HumanTaskModel.query.filter_by(
             task_id=task_guid,
             process_instance_id=process_instance_id,
-        ).first()
+        )
+
+        human_task = human_task_query.filter_by(completed=False).first()
         if human_task is None:
+            completed_human_task = human_task_query.filter_by(completed=True).first()
+            if completed_human_task is not None:
+                message = (
+                    f"Human task with task guid '{task_guid}' for process instance "
+                    f"'{process_instance_id}' has already been completed"
+                )
+                raise HumanTaskAlreadyCompletedError(message)
             raise HumanTaskNotFoundError(
                 f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
-            )
-
-        if human_task.completed:
-            raise HumanTaskAlreadyCompletedError(
-                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already been completed"
             )
 
         if user not in human_task.potential_owners:
