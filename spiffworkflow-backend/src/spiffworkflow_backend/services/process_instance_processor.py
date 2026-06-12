@@ -101,9 +101,10 @@ from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcess
 WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
 
 
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> Any:
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
+    return glbls[name]
 
 
 # This number is a little arbitrary but seems like a good number.
@@ -1192,7 +1193,11 @@ class ProcessInstanceProcessor:
             current_app.logger.info(
                 f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
             )
-            human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
+            human_task = HumanTaskModel.query.filter_by(
+                process_instance_id=self.process_instance_model.id,
+                task_id=task_id,
+                completed=False,
+            ).first()
             self.complete_task(spiff_task, user=user, human_task=human_task)
         elif execute:
             current_app.logger.info(

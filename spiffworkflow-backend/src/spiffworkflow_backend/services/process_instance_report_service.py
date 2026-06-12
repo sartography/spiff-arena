@@ -47,6 +47,18 @@ class ProcessInstanceReportCannotBeRunError(Exception):
 
 class ProcessInstanceReportService:
     @classmethod
+    def metadata_value_expression_for_filter(cls, metadata_value: Any, filter_value: Any) -> Any:
+        if not isinstance(filter_value, bool) and isinstance(filter_value, (int, float)):
+            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
+                numeric_regex = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$"
+                return sqlalchemy.case(
+                    (metadata_value.op("~")(numeric_regex), sqlalchemy.cast(metadata_value, sqlalchemy.Float)),  # type: ignore[arg-type]
+                    else_=None,
+                )
+            return sqlalchemy.cast(metadata_value, sqlalchemy.Float)
+        return metadata_value
+
+    @classmethod
     def system_metadata_map(cls, metadata_key: str) -> ReportMetadata | None:
         # TODO replace with system reports that are loaded on launch (or similar)
         terminal_status_values = ",".join(ProcessInstanceModel.terminal_statuses())
@@ -563,14 +575,18 @@ class ProcessInstanceReportService:
             if len(filters_for_column) > 0:
                 for filter_for_column in filters_for_column:
                     isouter = False
+                    metadata_value_expression = cls.metadata_value_expression_for_filter(
+                        instance_metadata_alias.value,
+                        filter_for_column["field_value"],
+                    )
                     if "operator" not in filter_for_column or filter_for_column["operator"] == "equals":
                         join_conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "not_equals":
                         join_conditions.append(instance_metadata_alias.value != filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "greater_than_or_equal_to":
-                        join_conditions.append(instance_metadata_alias.value >= filter_for_column["field_value"])
+                        join_conditions.append(metadata_value_expression >= filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "less_than":
-                        join_conditions.append(instance_metadata_alias.value < filter_for_column["field_value"])
+                        join_conditions.append(metadata_value_expression < filter_for_column["field_value"])
                     elif filter_for_column["operator"] == "contains":
                         join_conditions.append(instance_metadata_alias.value.like(f"%{filter_for_column['field_value']}%"))
                     elif filter_for_column["operator"] == "is_empty":
