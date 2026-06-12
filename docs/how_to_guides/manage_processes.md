@@ -90,7 +90,6 @@ The process instance remains suspended until you resume it.
 
 ```{admonition} Note
 Manual execution changes process history and can affect downstream data.
-If an active task appears in the task list but the task has already completed in the engine, inspect the process instance events and task records before changing data directly.
 ```
 
 ## Terminate a Process Instance
