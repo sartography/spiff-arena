@@ -27,7 +27,8 @@ def _bootstrap_users() -> None:
         if ServiceAccountModel.query.filter(ServiceAccountModel.user_id == user.id).first():
             continue
 
-        api_key = ServiceAccountModel.generate_api_key()
+        api_key_env_var = f"SPIFFWORKFLOW_API_KEY_{username}"
+        api_key = os.environ.get(api_key_env_var, ServiceAccountModel.generate_api_key())
         api_key_hash = ServiceAccountModel.hash_api_key(api_key)
 
         service_account = ServiceAccountModel(
@@ -39,10 +40,9 @@ def _bootstrap_users() -> None:
 
         db.session.add(service_account)
 
-        api_key_name = f"SPIFFWORKFLOW_API_KEY_{username}"
-        SecretService.add_secret(api_key_name, api_key, user.id)
+        SecretService.add_secret(api_key_env_var, api_key, user.id)
 
-        print(f"Bootstrapped user {username} with api key stored in secret: {api_key_name}")
+        print(f"Bootstrapped user {username} with api key stored in secret: {api_key_env_var}")
 
     db.session.commit()
 
