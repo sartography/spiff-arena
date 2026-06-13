@@ -69,20 +69,20 @@ class ProcessModelImportService:
             parent_group_id = "/".join(full_process_model_id.split("/")[:-1])
             cls._ensure_process_group(parent_group_id)
 
-            model_info = cls._extract_process_model_info(model_files)
-            display_name = model_info.get("display_name", model_id.split("/")[-1].replace("-", " ").title())
-            description = model_info.get(
-                "description",
-                f"Imported from Files project {package.get('project_id')} snapshot {package.get('snapshot_id')}",
-            )
+            existing_model = ProcessModelService.is_process_model_identifier(full_process_model_id)
+            has_model_json = "process_model.json" in model_files
+            model_info = cls._extract_process_model_info(model_files) if has_model_json or not existing_model else {}
 
-            if ProcessModelService.is_process_model_identifier(full_process_model_id):
+            if existing_model:
                 process_model = ProcessModelService.get_process_model(full_process_model_id)
-                ProcessModelService.update_process_model(
-                    process_model,
-                    {"display_name": display_name, "description": description},
-                )
+                if has_model_json:
+                    cls._update_process_model_from_filestore_info(process_model, model_info)
             else:
+                display_name = model_info.get("display_name", model_id.split("/")[-1].replace("-", " ").title())
+                description = model_info.get(
+                    "description",
+                    f"Imported from Files project {package.get('project_id')} snapshot {package.get('snapshot_id')}",
+                )
                 process_model = ProcessModelInfo(
                     id=full_process_model_id,
                     display_name=display_name,
@@ -95,13 +95,14 @@ class ProcessModelImportService:
                     continue
                 SpecFileService.update_file(process_model, file_name, file_content)
 
-            if model_info.get("primary_file_name"):
+            if not existing_model and model_info.get("primary_file_name"):
                 process_model.primary_file_name = model_info.get("primary_file_name")
 
-            if model_info.get("primary_process_id"):
+            if not existing_model and model_info.get("primary_process_id"):
                 process_model.primary_process_id = model_info.get("primary_process_id")
 
-            ProcessModelService.update_process_model(process_model, {})
+            if not existing_model and model_info:
+                ProcessModelService.update_process_model(process_model, {})
             process_models.append(process_model)
 
         if not process_models:
@@ -111,6 +112,20 @@ class ProcessModelImportService:
             )
 
         return process_models
+
+    @classmethod
+    def _update_process_model_from_filestore_info(
+        cls,
+        process_model: ProcessModelInfo,
+        model_info: dict[str, Any],
+    ) -> None:
+        updates = {}
+        for key in ("display_name", "description", "primary_file_name", "primary_process_id"):
+            if key in model_info and getattr(process_model, key) != model_info[key]:
+                updates[key] = model_info[key]
+
+        if updates:
+            ProcessModelService.update_process_model(process_model, updates)
 
     @classmethod
     def _ensure_process_group(cls, process_group_id: str) -> ProcessGroup:
