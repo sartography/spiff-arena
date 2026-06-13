@@ -227,6 +227,33 @@ class TestAuthentication(BaseTest):
 
         assert response.status_code == 200
 
+    def test_additional_valid_client_ids_are_valid_token_audiences(self, app: Flask) -> None:
+        auth_configs = [
+            {
+                **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+                "additional_valid_client_ids": "spiffworks-ed, other-client",
+            }
+        ]
+        now = round(time.time())
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", auth_configs):
+            assert AuthenticationService.valid_audiences("default") == [
+                auth_configs[0]["client_id"],
+                "spiffworks-ed",
+                "other-client",
+                "account",
+            ]
+            assert AuthenticationService.validate_decoded_token(
+                {
+                    "iss": auth_configs[0]["uri"],
+                    "sub": "samwise",
+                    "aud": "spiffworks-ed",
+                    "azp": "spiffworks-ed",
+                    "iat": now,
+                    "exp": now + 60,
+                },
+                "default",
+            )
+
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,
