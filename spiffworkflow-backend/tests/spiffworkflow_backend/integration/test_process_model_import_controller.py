@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -69,7 +70,7 @@ class TestProcessModelImportController(BaseTest):
     def test_process_model_import_from_filestore_file_update_names_root_model(
         self,
         app: Flask,
-        monkeypatch,
+        monkeypatch: pytest.MonkeyPatch,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
@@ -101,7 +102,7 @@ class TestProcessModelImportController(BaseTest):
     def test_process_model_import_from_filestore_file_update_only_updates_that_file(
         self,
         app: Flask,
-        monkeypatch,
+        monkeypatch: pytest.MonkeyPatch,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()

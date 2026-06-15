@@ -2,6 +2,7 @@ import json
 import time
 from hashlib import sha256
 from hmac import HMAC
+from typing import Any
 from urllib.parse import urljoin
 from urllib.parse import urlsplit
 
@@ -37,7 +38,7 @@ class FilestoreClientService:
         return cls._post("/v1/arena/projects/files", payload, "Could not sync Arena file to Files")
 
     @classmethod
-    def _post(cls, path: str, payload: dict, error_message: str) -> dict:
+    def _post(cls, path: str, payload: dict, error_message: str) -> dict[Any, Any]:
         url = cls._url(path)
         body = json.dumps(payload)
         response = requests.post(url, data=body, headers=cls.headers_for_request("POST", url, body), timeout=30)
@@ -47,11 +48,25 @@ class FilestoreClientService:
                 message=f"{error_message}: {response.status_code}",
                 status_code=502,
             )
-        return response.json()
+        response_json: object = response.json()
+        if not isinstance(response_json, dict):
+            raise ApiError(
+                error_code="filestore_sync_failed",
+                message=f"{error_message}: response was not a JSON object",
+                status_code=502,
+            )
+        return response_json
 
     @classmethod
     def tenant_id(cls) -> str:
-        return current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config["ENV_IDENTIFIER"]
+        tenant_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config["ENV_IDENTIFIER"]
+        if not isinstance(tenant_id, str):
+            raise ApiError(
+                error_code="filestore_tenant_id_not_configured",
+                message="SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID or ENV_IDENTIFIER must be a string",
+                status_code=501,
+            )
+        return tenant_id
 
     @classmethod
     def headers_for_request(cls, method: str, url: str, body: str) -> dict[str, str]:
@@ -60,7 +75,7 @@ class FilestoreClientService:
     @classmethod
     def _url(cls, path: str) -> str:
         base_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL")
-        if not base_url:
+        if not isinstance(base_url, str) or not base_url:
             raise ApiError(
                 error_code="filestore_not_configured",
                 message="SPIFFWORKFLOW_BACKEND_FILESTORE_URL is not configured",
@@ -81,7 +96,7 @@ class FilestoreClientService:
     @classmethod
     def _secret(cls) -> str:
         secret = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET")
-        if not secret:
+        if not isinstance(secret, str) or not secret:
             raise ApiError(
                 error_code="filestore_shared_secret_not_configured",
                 message="SPIFFWORKFLOW_BACKEND_FILESTORE_SHARED_SECRET is not configured",

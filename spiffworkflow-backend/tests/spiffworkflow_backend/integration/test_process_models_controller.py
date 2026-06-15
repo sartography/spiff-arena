@@ -3,6 +3,7 @@ from hashlib import sha256
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -22,7 +23,7 @@ class TestProcessModelsController(BaseTest):
         self,
         app: Flask,
         client: TestClient,
-        monkeypatch,
+        monkeypatch: pytest.MonkeyPatch,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
@@ -59,7 +60,7 @@ class TestProcessModelsController(BaseTest):
         self,
         app: Flask,
         client: TestClient,
-        monkeypatch,
+        monkeypatch: pytest.MonkeyPatch,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
