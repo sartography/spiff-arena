@@ -1,9 +1,9 @@
 [project]
 name = "spiff-arena-common"
-version = "0.1.36"
+version = "0.1.37"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.10"
 
 # Dependencies are intentionally commented out.
 # Specifying them causes issues when this package is loaded via micropip in Pyodide.
