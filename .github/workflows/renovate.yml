@@ -1,11 +1,6 @@
 name: Renovate
 
 on:
-  # Branch-scoped debug trigger so Renovate can be exercised from this branch
-  # without waiting for a manual dispatch.
-  push:
-    branches:
-      - renovate-get-prs
   schedule:
     - cron: "0 10 * * 1-5" # 10:00 UTC weekdays
   workflow_dispatch:
