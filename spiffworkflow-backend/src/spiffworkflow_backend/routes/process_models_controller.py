@@ -397,17 +397,21 @@ def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_n
             status_code=404,
         )
 
-    result = FilestoreClientService.ensure_project({
-        "arena_process_group_id": process_group_id,
-        "name": process_group_id,
-    })
+    result = FilestoreClientService.ensure_project(
+        {
+            "arena_process_group_id": process_group_id,
+            "name": process_group_id,
+        }
+    )
 
     return make_response(
-        jsonify({
-            "files_project_id": result["project"]["id"],
-            "files_path": files_path,
-            "files_tenant": FilestoreClientService.tenant_id(),
-        }),
+        jsonify(
+            {
+                "files_project_id": result["project"]["id"],
+                "files_path": files_path,
+                "files_tenant": FilestoreClientService.tenant_id(),
+            }
+        ),
         200,
     )
 

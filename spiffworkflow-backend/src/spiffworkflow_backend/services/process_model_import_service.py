@@ -81,6 +81,7 @@ class ProcessModelImportService:
         return cls.import_from_filestore_package(
             {
                 "project_id": payload.get("project_id"),
+                "project_name": payload.get("project_name"),
                 "files": [{"path": path, "content": content}],
             },
             process_group_id,
@@ -112,7 +113,7 @@ class ProcessModelImportService:
                 if has_model_json:
                     cls._update_process_model_from_filestore_info(process_model, model_info)
             else:
-                display_name = model_info.get("display_name", model_id.split("/")[-1].replace("-", " ").title())
+                display_name = model_info.get("display_name", cls._filestore_display_name(package, model_id, model_dir))
                 description = model_info.get(
                     "description",
                     f"Imported from Files project {package.get('project_id')} snapshot {package.get('snapshot_id')}",
@@ -320,7 +321,29 @@ class ProcessModelImportService:
     def _filestore_model_id(cls, package: dict[str, Any], model_dir: str) -> str:
         if model_dir:
             return "/".join(cls._slug(segment) for segment in model_dir.split("/"))
-        return cls._slug(str(package.get("project_id") or package.get("label") or "filestore-project"))
+        return cls._filestore_root_model_id(package)
+
+    @classmethod
+    def _filestore_root_model_id(cls, package: dict[str, Any]) -> str:
+        project_id = cls._slug(str(package.get("project_id") or package.get("label") or "filestore-project"))
+        project_name = package.get("project_name")
+        if not isinstance(project_name, str) or not project_name.strip():
+            return project_id
+
+        project_name = cls._slug(project_name)
+        return project_id if project_id.startswith(f"{project_name}-") else f"{project_name}-{project_id}"
+
+    @classmethod
+    def _filestore_display_name(cls, package: dict[str, Any], model_id: str, model_dir: str) -> str:
+        project_name = package.get("project_name")
+        project_id = package.get("project_id")
+        if not model_dir and isinstance(project_name, str) and project_name.strip():
+            display_name = project_name.strip()
+            if isinstance(project_id, str) and project_id.strip() and project_id.strip() not in display_name:
+                display_name = f"{display_name} {project_id.strip()}"
+            return display_name
+
+        return model_id.rsplit("/", maxsplit=1)[-1].replace("-", " ").title()
 
     @staticmethod
     def _slug(text: str) -> str:

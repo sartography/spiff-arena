@@ -43,6 +43,61 @@ class TestProcessModelImportController(BaseTest):
         assert FileSystemService.get_data(process_models[0], "activity.bpmn").decode().find("called_activity") > -1
         assert FileSystemService.get_data(process_models[1], "main.bpmn").decode().find("main_process") > -1
 
+    def test_process_model_import_from_filestore_package_names_root_model_without_moving_files(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        project_id = "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A"
+        package = {
+            "project_id": project_id,
+            "project_name": "Test4",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "test4.bpmn", "content": bpmn},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert len(process_models) == 1
+        assert process_models[0].id == f"filestore/test4-{project_id.lower()}"
+        assert process_models[0].display_name == f"Test4 {project_id}"
+        assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
+
+    def test_process_model_import_from_filestore_file_update_names_root_model(
+        self,
+        app: Flask,
+        monkeypatch,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        response = MagicMock(status_code=200)
+        response.json.return_value = {"content": bpmn}
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
+            MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.requests.get",
+            MagicMock(return_value=response),
+        )
+
+        process_models = ProcessModelImportService.import_filestore_file_update(
+            {
+                "project_id": "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A",
+                "project_name": "Test4",
+                "path": "test4.bpmn",
+                "file_url": "http://files.test/v1/projects/7638D555/files/test4.bpmn",
+            },
+            "filestore",
+        )
+
+        assert [process_model.id for process_model in process_models] == ["filestore/test4-7638d555-2e7f-48f0-8036-0c7cb58b9c5a"]
+        assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
+
     def test_process_model_import_from_filestore_file_update_only_updates_that_file(
         self,
         app: Flask,
