@@ -6,6 +6,7 @@ restarted with the new API definitions.
 """
 
 from pathlib import Path
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from flask.app import Flask
@@ -15,7 +16,9 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelImportController(BaseTest):
@@ -39,6 +42,51 @@ class TestProcessModelImportController(BaseTest):
         assert [process_model.id for process_model in process_models] == ["filestore/called", "filestore/main"]
         assert FileSystemService.get_data(process_models[0], "activity.bpmn").decode().find("called_activity") > -1
         assert FileSystemService.get_data(process_models[1], "main.bpmn").decode().find("main_process") > -1
+
+    def test_process_model_import_from_filestore_file_update_only_updates_that_file(
+        self,
+        app: Flask,
+        monkeypatch,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        load_test_spec(
+            "playground/samwise/hello",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        load_test_spec(
+            "playground/gandalf/secret",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        response = MagicMock(status_code=200)
+        response.json.return_value = {"content": bpmn.replace("Process_SimpleScript", "Process_Hello_Samwise")}
+        update_file = MagicMock(wraps=SpecFileService.update_file)
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
+            MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.requests.get",
+            MagicMock(return_value=response),
+        )
+        monkeypatch.setattr(SpecFileService, "update_file", update_file)
+
+        process_models = ProcessModelImportService.import_filestore_file_update(
+            {
+                "project_id": "playground",
+                "path": "samwise/hello/simple_script.bpmn",
+                "file_url": "http://files.test/v1/projects/playground/files/samwise/hello/simple_script.bpmn",
+            },
+            "playground",
+        )
+
+        assert [process_model.id for process_model in process_models] == ["playground/samwise/hello"]
+        assert update_file.call_count == 1
+        assert update_file.call_args.args[0].id == "playground/samwise/hello"
+        assert update_file.call_args.args[1] == "simple_script.bpmn"
 
     def test_process_model_import_from_github(
         self,

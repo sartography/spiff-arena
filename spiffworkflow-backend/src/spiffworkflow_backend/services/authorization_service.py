@@ -488,6 +488,17 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
+        if user_model is None and user_attributes.get("email"):
+            user_model = (
+                UserModel.query.filter(
+                    or_(
+                        UserModel.username == user_attributes["username"],
+                        UserModel.email == user_attributes["email"],
+                    )
+                )
+                .filter(UserModel.email == user_attributes["email"])
+                .first()
+            )
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             user_model = UserService().create_user(**user_attributes)

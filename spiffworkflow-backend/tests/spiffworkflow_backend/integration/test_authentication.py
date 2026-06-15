@@ -227,6 +227,34 @@ class TestAuthentication(BaseTest):
 
         assert response.status_code == 200
 
+    def test_login_with_access_token_adopts_existing_user_with_matching_email(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = UserService.create_user("samwise", "local_open_id", "samwise", email="samwise@example.com")
+        access_token = user.encode_auth_token(
+            {
+                "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                "sub": "keycloak-samwise",
+                "aud": "spiffworkflow-backend",
+                "preferred_username": "samwise",
+                "email": "samwise@example.com",
+            }
+        )
+
+        response = client.post(
+            "/v1.0/login_with_access_token?authentication_identifier=default",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 200
+        user = UserModel.query.filter_by(username="samwise").one()
+        assert user.email == "samwise@example.com"
+        assert user.service == app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        assert user.service_id == "keycloak-samwise"
+
     def test_additional_valid_client_ids_are_valid_token_audiences(self, app: Flask) -> None:
         auth_configs = [
             {

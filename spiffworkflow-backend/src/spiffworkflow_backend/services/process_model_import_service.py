@@ -11,6 +11,7 @@ from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.filestore_client_service import FilestoreClientService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -52,6 +53,39 @@ class InvalidFilestorePackageError(ImportError):
 
 
 class ProcessModelImportService:
+    @classmethod
+    def import_filestore_file_update(cls, payload: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
+        path = payload.get("path")
+        file_url = payload.get("file_url")
+        if not isinstance(path, str) or not isinstance(file_url, str):
+            raise InvalidFilestorePackageError(
+                message="Files update payload must include path and file_url",
+                error_code="invalid_filestore_package",
+            )
+
+        response = requests.get(file_url, headers=FilestoreClientService.headers_for_request("GET", file_url, ""), timeout=30)
+        if response.status_code != 200:
+            raise InvalidFilestorePackageError(
+                message=f"Could not fetch Files update: {response.status_code}",
+                error_code="invalid_filestore_package",
+            )
+
+        file_payload = response.json()
+        content = file_payload.get("content")
+        if not isinstance(content, str):
+            raise InvalidFilestorePackageError(
+                message="Files update response did not include content",
+                error_code="invalid_filestore_package",
+            )
+
+        return cls.import_from_filestore_package(
+            {
+                "project_id": payload.get("project_id"),
+                "files": [{"path": path, "content": content}],
+            },
+            process_group_id,
+        )
+
     @classmethod
     def import_from_filestore_package(cls, package: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
         process_group = cls._ensure_process_group(process_group_id)

@@ -40,7 +40,7 @@ class FilestoreClientService:
     def _post(cls, path: str, payload: dict, error_message: str) -> dict:
         url = cls._url(path)
         body = json.dumps(payload)
-        response = requests.post(url, data=body, headers=cls._headers("POST", url, body), timeout=30)
+        response = requests.post(url, data=body, headers=cls.headers_for_request("POST", url, body), timeout=30)
         if response.status_code != 200:
             raise ApiError(
                 error_code="filestore_sync_failed",
@@ -52,6 +52,10 @@ class FilestoreClientService:
     @classmethod
     def tenant_id(cls) -> str:
         return current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config["ENV_IDENTIFIER"]
+
+    @classmethod
+    def headers_for_request(cls, method: str, url: str, body: str) -> dict[str, str]:
+        return cls._headers(method, url, body)
 
     @classmethod
     def _url(cls, path: str) -> str:
