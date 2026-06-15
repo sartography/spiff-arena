@@ -31,25 +31,25 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "bpmn-js": "^17.0.0 || ^18.0.0",
-    "bpmn-js-properties-panel": "^5.0.0",
+    "bpmn-js-properties-panel": "^5.58.0",
     "bpmn-js-spiffworkflow": "*",
-    "dmn-js": "^17.0.0",
-    "dmn-js-properties-panel": "^3.0.0",
+    "dmn-js": "^17.8.1",
+    "dmn-js-properties-panel": "^3.11.1",
     "diagram-js": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
     "bpmn-js-cli": "^2.4.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-typescript": "^12.1.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.1",
-    "rollup": "^4.27.0",
+    "@rollup/plugin-commonjs": "^28.0.9",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "rollup": "^4.62.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"
