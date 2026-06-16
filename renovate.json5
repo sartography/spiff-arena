@@ -16,8 +16,9 @@
   "pinDigests": true,
 
   // --- Flaw Remediation ---
-  // Cool-off prevents pulling retracted releases.
-  "minimumReleaseAge": "2 days",
+  // Disabled for now because Renovate's internal stability status check is
+  // causing branch creation to abort before PR creation in GitHub Actions.
+  // Revisit after PR flow is healthy again.
 
   // When updating a dependency, also bump the lower bound in manifest files
   // (e.g. pyproject.toml, package.json) to match the resolved version.
