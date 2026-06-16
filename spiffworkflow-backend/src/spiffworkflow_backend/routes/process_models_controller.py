@@ -403,6 +403,12 @@ def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_n
             "name": process_group_id,
         }
     )
+    if not isinstance(result, dict):
+        raise ApiError(
+            error_code="filestore_sync_failed",
+            message="Could not sync process model files to Files: response did not include project.id",
+            status_code=502,
+        )
     project = result.get("project")
     if not isinstance(project, dict) or "id" not in project:
         raise ApiError(

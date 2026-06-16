@@ -1457,8 +1457,8 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "https://ed-fstore.dan-955.workers.dev/*",
-        "https://spiff-files-fstore.dan-955.workers.dev/*",
+        "https://ed-stg1.dan-955.workers.dev/*",
+        "https://filestore-stg1.dan-955.workers.dev/*",
         "https://ed-staging.dan-955.workers.dev/*",
         "https://ed.spiff.works/*",
         "https://ed-beta.dan-955.workers.dev/*",
@@ -1470,13 +1470,13 @@
       ],
       "webOrigins": [
         "http://127.0.0.1:*",
-        "https://spiff-files-fstore.dan-955.workers.dev",
+        "https://filestore-stg1.dan-955.workers.dev",
         "http://127.0.0.1:7007",
         "https://ed.spiff.works",
         "http://localhost:*",
         "https://ed-beta.dan-955.workers.dev",
         "http://localhost:7005",
-        "https://ed-fstore.dan-955.workers.dev",
+        "https://ed-stg1.dan-955.workers.dev",
         "https://ed-staging.dan-955.workers.dev"
       ],
       "notBefore": 0,
@@ -1493,7 +1493,7 @@
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "https://ed.spiff.works/*##https://ed-fstore.dan-955.workers.dev/*##https://ed-staging.dan-955.workers.dev/*##https://ed-beta.dan-955.workers.dev/*##https://spiff-files-fstore.dan-955.workers.dev/*##http://localhost:*/*##http://127.0.0.1:*/*##http://localhost:7005/*##http://127.0.0.1:7007/*##http://localhost:7007/*",
+        "post.logout.redirect.uris": "https://ed.spiff.works/*##https://ed-stg1.dan-955.workers.dev/*##https://ed-staging.dan-955.workers.dev/*##https://ed-beta.dan-955.workers.dev/*##https://filestore-stg1.dan-955.workers.dev/*##http://localhost:*/*##http://127.0.0.1:*/*##http://localhost:7005/*##http://127.0.0.1:7007/*##http://localhost:7007/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
