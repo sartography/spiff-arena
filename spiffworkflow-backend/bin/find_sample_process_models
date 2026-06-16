@@ -10,14 +10,14 @@ set -o errtrace -o errexit -o nounset -o pipefail
 if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  sibling_to_arena_root="${script_dir}/../../../sartography-process-models"
+  sibling_to_arena_root="${script_dir}/../../../sample-process-models"
   SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_arena_root"
   if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-    sibling_to_backend_root="${script_dir}/../../sartography-process-models"
+    sibling_to_backend_root="${script_dir}/../../sample-process-models"
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_backend_root"
     if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
       SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="$sibling_to_arena_root"
-      process_model_clone_url="https://github.com/sartography/sartography-process-models.git"
+      process_model_clone_url="https://github.com/sartography/sample-process-models.git"
       >&2 echo "could not find process model dir. cloning ${process_model_clone_url} to ${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
       git clone "$process_model_clone_url" "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
     fi
