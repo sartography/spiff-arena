@@ -255,6 +255,38 @@ class TestAuthentication(BaseTest):
         assert user.service == app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
         assert user.service_id == "keycloak-samwise"
 
+    def test_login_with_access_token_adopts_first_existing_user_with_matching_email(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        older_user = UserService.create_user("older_duplicate", "local_open_id", "older", email="duplicate@example.com")
+        newer_user = UserService.create_user("newer_duplicate", "local_open_id", "newer", email="duplicate@example.com")
+        older_user_id = older_user.id
+        newer_user_id = newer_user.id
+        access_token = older_user.encode_auth_token(
+            {
+                "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                "sub": "keycloak-duplicate",
+                "aud": "spiffworkflow-backend",
+                "preferred_username": "duplicate-login",
+                "email": "duplicate@example.com",
+            }
+        )
+
+        response = client.post(
+            "/v1.0/login_with_access_token?authentication_identifier=default",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 200
+        adopted_user = UserModel.query.filter_by(username="duplicate-login").one()
+        assert adopted_user.id == older_user_id
+        assert adopted_user.service == app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        assert adopted_user.service_id == "keycloak-duplicate"
+        assert UserModel.query.filter_by(id=newer_user_id).one().username == "newer_duplicate"
+
     def test_additional_valid_client_ids_are_valid_token_audiences(self, app: Flask) -> None:
         auth_configs = [
             {

@@ -490,13 +490,8 @@ class AuthorizationService:
         )
         if user_model is None and user_attributes.get("email"):
             user_model = (
-                UserModel.query.filter(
-                    or_(
-                        UserModel.username == user_attributes["username"],
-                        UserModel.email == user_attributes["email"],
-                    )
-                )
-                .filter(UserModel.email == user_attributes["email"])
+                UserModel.query.filter(UserModel.email == user_attributes["email"])
+                .order_by(UserModel.id)
                 .first()
             )
         if user_model is None:
