@@ -54,3 +54,16 @@ class TestFilestoreClientService:
 
         assert exception_info.value.error_code == "filestore_tenant_id_not_configured"
         assert exception_info.value.status_code == 501
+
+    @pytest.mark.parametrize("tenant_id", ["", "   "])
+    def test_tenant_id_raises_api_error_when_tenant_id_is_empty(
+        self, app: Flask, monkeypatch: pytest.MonkeyPatch, tenant_id: str
+    ) -> None:
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID", tenant_id)
+
+        with pytest.raises(ApiError) as exception_info:
+            FilestoreClientService.tenant_id()
+
+        assert exception_info.value.error_code == "filestore_tenant_id_not_configured"
+        assert exception_info.value.status_code == 501
+        assert "must be a non-empty string" in exception_info.value.message

@@ -73,13 +73,13 @@ class FilestoreClientService:
 
     @classmethod
     def tenant_id(cls) -> str:
-        tenant_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config.get(
-            "ENV_IDENTIFIER"
-        )
-        if not isinstance(tenant_id, str):
+        tenant_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID")
+        if tenant_id is None:
+            tenant_id = current_app.config.get("ENV_IDENTIFIER")
+        if not isinstance(tenant_id, str) or not tenant_id.strip():
             raise ApiError(
                 error_code="filestore_tenant_id_not_configured",
-                message="SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID or ENV_IDENTIFIER must be a string",
+                message="SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID or ENV_IDENTIFIER must be a non-empty string",
                 status_code=501,
             )
         return tenant_id
