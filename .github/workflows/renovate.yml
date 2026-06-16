@@ -9,6 +9,13 @@ on:
         description: "Run in dry-run mode (lookup only, no PRs)"
         type: boolean
         default: false
+      log_level:
+        description: "Renovate log level"
+        type: choice
+        options:
+          - info
+          - debug
+        default: info
 
 # Prevent concurrent Renovate runs from creating duplicate PRs
 concurrency:
@@ -30,14 +37,14 @@ jobs:
         with:
           persist-credentials: false
 
-      # Note: PRs created with GITHUB_TOKEN won't auto-trigger CI workflows.
-      # To enable that, replace with a PAT (repo scope) in RENOVATE_TOKEN secret.
+      # Prefer a PAT when available so Renovate PRs can trigger downstream CI,
+      # and fall back to GITHUB_TOKEN when no dedicated bot token is configured.
       - name: Run Renovate
         uses: renovatebot/github-action@3633cede7d4d4598438e654eac4a695e46004420 # v46.1.7
         env:
           RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'lookup' || '' }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
-          LOG_LEVEL: info
+          LOG_LEVEL: ${{ inputs.log_level || 'info' }}
         with:
           configurationFile: renovate.json5
-          token: ${{ github.token }}
+          token: ${{ secrets.RENOVATE_TOKEN || github.token }}
