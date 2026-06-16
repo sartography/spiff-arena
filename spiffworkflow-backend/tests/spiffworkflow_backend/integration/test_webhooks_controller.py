@@ -30,8 +30,11 @@ class TestWebhooksController(BaseTest):
         )
         assert response.status_code == 200
 
+    def test_create_encoded_signature_respects_empty_secret_override(self, app: Flask) -> None:
+        assert self._create_encoded_signature(app, "data", secret="") == HMAC(key=b"", msg=b"data", digestmod=sha256).hexdigest()
+
     def _create_encoded_signature(self, app: Flask, request_data: str, secret: str | None = None) -> str:
-        secret_value = secret or app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"]
+        secret_value = app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"] if secret is None else secret
         if not isinstance(secret_value, str):
             raise TypeError("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET must be a string")
         secret_bytes = secret_value.encode()

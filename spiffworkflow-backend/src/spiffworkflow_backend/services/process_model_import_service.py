@@ -65,14 +65,31 @@ class ProcessModelImportService:
             )
         cls._validate_filestore_file_url(file_url)
 
-        response = requests.get(file_url, headers=FilestoreClientService.headers_for_request("GET", file_url, ""), timeout=30)
+        try:
+            response = requests.get(file_url, headers=FilestoreClientService.headers_for_request("GET", file_url, ""), timeout=30)
+        except requests.RequestException as exception:
+            raise InvalidFilestorePackageError(
+                message=f"Could not fetch Files update: {exception}",
+                error_code="invalid_filestore_package",
+            ) from exception
         if response.status_code != 200:
             raise InvalidFilestorePackageError(
                 message=f"Could not fetch Files update: {response.status_code}",
                 error_code="invalid_filestore_package",
             )
 
-        file_payload = response.json()
+        try:
+            file_payload = response.json()
+        except ValueError as exception:
+            raise InvalidFilestorePackageError(
+                message=f"Files update response was not valid JSON: {exception}",
+                error_code="invalid_filestore_package",
+            ) from exception
+        if not isinstance(file_payload, dict):
+            raise InvalidFilestorePackageError(
+                message="Files update response was not a JSON object",
+                error_code="invalid_filestore_package",
+            )
         content = file_payload.get("content")
         if not isinstance(content, str):
             raise InvalidFilestorePackageError(

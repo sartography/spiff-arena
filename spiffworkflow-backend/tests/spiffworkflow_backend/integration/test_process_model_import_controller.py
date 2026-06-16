@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+import requests
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -178,6 +179,77 @@ class TestProcessModelImportController(BaseTest):
         assert "configured Files URL" in exception_info.value.message
         headers_for_request.assert_not_called()
         requests_get.assert_not_called()
+
+    def test_process_model_import_from_filestore_file_update_wraps_request_error(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
+            MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.requests.get",
+            MagicMock(side_effect=requests.Timeout("timed out")),
+        )
+
+        with pytest.raises(InvalidFilestorePackageError) as exception_info:
+            ProcessModelImportService.import_filestore_file_update(
+                {
+                    "project_id": "playground",
+                    "path": "samwise/hello/simple_script.bpmn",
+                    "file_url": "http://files.test/v1/projects/playground/files/simple_script.bpmn",
+                },
+                "playground",
+            )
+
+        assert exception_info.value.error_code == "invalid_filestore_package"
+        assert "Could not fetch Files update: timed out" in exception_info.value.message
+
+    @pytest.mark.parametrize(
+        ("json_side_effect", "json_return_value", "expected_message"),
+        [
+            (ValueError("not json"), None, "Files update response was not valid JSON: not json"),
+            (None, [], "Files update response was not a JSON object"),
+        ],
+    )
+    def test_process_model_import_from_filestore_file_update_rejects_invalid_json_response(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+        json_side_effect: ValueError | None,
+        json_return_value: object,
+        expected_message: str,
+    ) -> None:
+        response = MagicMock(status_code=200)
+        if json_side_effect is not None:
+            response.json.side_effect = json_side_effect
+        else:
+            response.json.return_value = json_return_value
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
+            MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.requests.get",
+            MagicMock(return_value=response),
+        )
+
+        with pytest.raises(InvalidFilestorePackageError) as exception_info:
+            ProcessModelImportService.import_filestore_file_update(
+                {
+                    "project_id": "playground",
+                    "path": "samwise/hello/simple_script.bpmn",
+                    "file_url": "http://files.test/v1/projects/playground/files/simple_script.bpmn",
+                },
+                "playground",
+            )
+
+        assert exception_info.value.error_code == "invalid_filestore_package"
+        assert expected_message in exception_info.value.message
 
     def test_process_model_import_from_github(
         self,
