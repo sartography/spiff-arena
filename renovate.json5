@@ -32,10 +32,13 @@
   },
 
   // --- Scheduling & Throttling ---
-  "schedule": ["before 7am every weekday"],
-  "timezone": "America/New_York",
+  // GitHub Actions already limits when Renovate runs. Keeping a second,
+  // narrow Renovate schedule here causes most updates to sit in "Awaiting
+  // Schedule" when GitHub starts the cron job hours late.
+  "prCreation": "immediate",
   "prConcurrentLimit": 5,
-  "prHourlyLimit": 1,
+  "branchConcurrentLimit": 5,
+  "prHourlyLimit": 0,
 
   // --- Labels ---
   "labels": ["dependencies"],
