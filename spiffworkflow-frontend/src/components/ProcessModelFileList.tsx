@@ -162,7 +162,11 @@ export default function ProcessModelFileList({
     }
     if (canEditInEd(processModelFile)) {
       elements.push(
-        <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
+        <Can
+          I="GET"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
           <SpiffTooltip title="Edit in Ed" placement="top">
             <IconButton
               aria-label="Edit in Ed"
