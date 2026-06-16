@@ -16,6 +16,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_import_service import InvalidFilestorePackageError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -77,6 +78,7 @@ class TestProcessModelImportController(BaseTest):
         response = MagicMock(status_code=200)
         response.json.return_value = {"content": bpmn}
 
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
         monkeypatch.setattr(
             "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
             MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
@@ -120,6 +122,7 @@ class TestProcessModelImportController(BaseTest):
         response.json.return_value = {"content": bpmn.replace("Process_SimpleScript", "Process_Hello_Samwise")}
         update_file = MagicMock(wraps=SpecFileService.update_file)
 
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
         monkeypatch.setattr(
             "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
             MagicMock(return_value={"SpiffWorkflow-Tenant": "default"}),
@@ -143,6 +146,38 @@ class TestProcessModelImportController(BaseTest):
         assert update_file.call_count == 1
         assert update_file.call_args.args[0].id == "playground/samwise/hello"
         assert update_file.call_args.args[1] == "simple_script.bpmn"
+
+    def test_process_model_import_from_filestore_file_update_rejects_non_filestore_url(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        headers_for_request = MagicMock()
+        requests_get = MagicMock()
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_FILESTORE_URL", "http://files.test")
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.FilestoreClientService.headers_for_request",
+            headers_for_request,
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.process_model_import_service.requests.get",
+            requests_get,
+        )
+
+        with pytest.raises(InvalidFilestorePackageError) as exception_info:
+            ProcessModelImportService.import_filestore_file_update(
+                {
+                    "project_id": "playground",
+                    "path": "samwise/hello/simple_script.bpmn",
+                    "file_url": "http://attacker.test/v1/projects/playground/files/simple_script.bpmn",
+                },
+                "playground",
+            )
+
+        assert exception_info.value.error_code == "invalid_filestore_package"
+        assert "configured Files URL" in exception_info.value.message
+        headers_for_request.assert_not_called()
+        requests_get.assert_not_called()
 
     def test_process_model_import_from_github(
         self,

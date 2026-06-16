@@ -41,14 +41,28 @@ class FilestoreClientService:
     def _post(cls, path: str, payload: dict, error_message: str) -> dict[Any, Any]:
         url = cls._url(path)
         body = json.dumps(payload)
-        response = requests.post(url, data=body, headers=cls.headers_for_request("POST", url, body), timeout=30)
+        try:
+            response = requests.post(url, data=body, headers=cls.headers_for_request("POST", url, body), timeout=30)
+        except requests.RequestException as exception:
+            raise ApiError(
+                error_code="filestore_sync_failed",
+                message=f"{error_message}: request failed: {exception}",
+                status_code=502,
+            ) from exception
         if response.status_code != 200:
             raise ApiError(
                 error_code="filestore_sync_failed",
                 message=f"{error_message}: {response.status_code}",
                 status_code=502,
             )
-        response_json: object = response.json()
+        try:
+            response_json: object = response.json()
+        except ValueError as exception:
+            raise ApiError(
+                error_code="filestore_sync_failed",
+                message=f"{error_message}: invalid JSON response: {exception}",
+                status_code=502,
+            ) from exception
         if not isinstance(response_json, dict):
             raise ApiError(
                 error_code="filestore_sync_failed",
@@ -59,7 +73,9 @@ class FilestoreClientService:
 
     @classmethod
     def tenant_id(cls) -> str:
-        tenant_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config["ENV_IDENTIFIER"]
+        tenant_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_TENANT_ID") or current_app.config.get(
+            "ENV_IDENTIFIER"
+        )
         if not isinstance(tenant_id, str):
             raise ApiError(
                 error_code="filestore_tenant_id_not_configured",

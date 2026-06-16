@@ -4,6 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 from typing import cast
+from urllib.parse import urlsplit
 
 import requests
 from flask import current_app
@@ -62,6 +63,7 @@ class ProcessModelImportService:
                 message="Files update payload must include path and file_url",
                 error_code="invalid_filestore_package",
             )
+        cls._validate_filestore_file_url(file_url)
 
         response = requests.get(file_url, headers=FilestoreClientService.headers_for_request("GET", file_url, ""), timeout=30)
         if response.status_code != 200:
@@ -263,6 +265,23 @@ class ProcessModelImportService:
         if path.startswith("/") or "" in parts or ".." in parts:
             raise InvalidFilestorePackageError(
                 message=f"Invalid Files package path: {path}",
+                error_code="invalid_filestore_package",
+            )
+
+    @staticmethod
+    def _validate_filestore_file_url(file_url: str) -> None:
+        base_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL")
+        if not isinstance(base_url, str) or not base_url:
+            raise InvalidFilestorePackageError(
+                message="SPIFFWORKFLOW_BACKEND_FILESTORE_URL is not configured",
+                error_code="invalid_filestore_package",
+            )
+
+        parsed_file_url = urlsplit(file_url)
+        parsed_base_url = urlsplit(base_url)
+        if parsed_file_url.scheme != parsed_base_url.scheme or parsed_file_url.netloc != parsed_base_url.netloc:
+            raise InvalidFilestorePackageError(
+                message="Files update file_url must match the configured Files URL",
                 error_code="invalid_filestore_package",
             )
 
