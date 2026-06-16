@@ -56,6 +56,39 @@ class TestProcessModelsController(BaseTest):
         assert payload["arena_process_group_id"] == "filestore"
         assert "files" not in payload
 
+    @pytest.mark.parametrize("ensure_project_result", [[], {}, {"project": None}, {"project": {}}, {"project": "bad"}])
+    def test_process_model_file_edit_in_ed_requires_project_id_from_filestore(
+        self,
+        app: Flask,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        ensure_project_result: object,
+    ) -> None:
+        load_test_spec(
+            "filestore/main",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        monkeypatch.setattr(
+            process_models_controller.FilestoreClientService,
+            "ensure_project",
+            MagicMock(return_value=ensure_project_result),
+        )
+        tenant_id = MagicMock(return_value="example")
+        monkeypatch.setattr(process_models_controller.FilestoreClientService, "tenant_id", tenant_id)
+
+        response = client.post(
+            "/v1.0/process-models/filestore:main/files/simple_script.bpmn/edit-in-ed",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 502
+        assert response.json()["error_code"] == "filestore_sync_failed"
+        assert "project.id" in response.json()["message"]
+        tenant_id.assert_not_called()
+
     def test_process_model_file_save_syncs_file_to_filestore(
         self,
         app: Flask,
