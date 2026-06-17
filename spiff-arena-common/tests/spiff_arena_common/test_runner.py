@@ -168,3 +168,88 @@ def test_advance_workflow_prints_unittest_break_when_fixture_task_mismatches(mon
     assert event["reason"] == "fixture_task_mismatch"
     assert event["task_id"] == "ActualTask"
     assert event["expected_task_id"] == "ExpectedTask"
+
+
+def test_service_task_connector_error_follows_matching_error_boundary_event(monkeypatch):
+    bpmn = """
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_error_boundary" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_error_boundary" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_start_service</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_start_service" sourceRef="StartEvent_1" targetRef="ServiceTask_1" />
+    <bpmn:serviceTask id="ServiceTask_1" name="Service Task">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/GetRequestV2" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="&quot;https://example.invalid&quot;" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_start_service</bpmn:incoming>
+      <bpmn:outgoing>Flow_service_normal</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_service_normal" sourceRef="ServiceTask_1" targetRef="Script_normal" />
+    <bpmn:scriptTask id="Script_normal">
+      <bpmn:incoming>Flow_service_normal</bpmn:incoming>
+      <bpmn:outgoing>Flow_normal_end</bpmn:outgoing>
+      <bpmn:script>route = "normal"</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="EndEvent_normal">
+      <bpmn:incoming>Flow_normal_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_normal_end" sourceRef="Script_normal" targetRef="EndEvent_normal" />
+    <bpmn:boundaryEvent id="Boundary_missing_schema" attachedToRef="ServiceTask_1">
+      <bpmn:outgoing>Flow_boundary_handled</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorDefinition_missing_schema" errorRef="MissingSchema" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_boundary_handled" sourceRef="Boundary_missing_schema" targetRef="Script_handled" />
+    <bpmn:scriptTask id="Script_handled">
+      <bpmn:incoming>Flow_boundary_handled</bpmn:incoming>
+      <bpmn:outgoing>Flow_handled_end</bpmn:outgoing>
+      <bpmn:script>route = "handled"</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="EndEvent_handled">
+      <bpmn:incoming>Flow_handled_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_handled_end" sourceRef="Script_handled" targetRef="EndEvent_handled" />
+  </bpmn:process>
+  <bpmn:error id="MissingSchema" name="MissingSchema" errorCode="MissingSchema" />
+</bpmn:definitions>
+"""
+
+    def connector_error(*_args, **_kwargs):
+        return json.dumps(
+            {
+                "command_response": {"body": "{}", "mimetype": "application/json"},
+                "command_response_version": 2,
+                "error": {
+                    "error_code": "MissingSchema",
+                    "message": "No schema supplied",
+                },
+            }
+        )
+
+    monkeypatch.setattr(runner.CustomScriptEngine, "call_service", connector_error)
+
+    specs, err = runner.specs_from_xml([("error_boundary.bpmn", bpmn)])
+    assert err is None
+
+    result = None
+    for _ in range(10):
+        result = json.loads(
+            runner.advance_workflow(
+                specs,
+                None,
+                None,
+                "greedy",
+                None,
+                session_id="error-boundary-test",
+            )
+        )
+        if result["completed"] or result["status"] != "ok":
+            break
+
+    assert result["status"] == "ok"
+    assert result["completed"] is True
+    assert result["result"]["route"] == "handled"

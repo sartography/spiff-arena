@@ -39,6 +39,7 @@ def spiff_json_object_hook(dct):
 
 from spiff_arena_common.data_stores import JSONFileDataStore  # noqa: E402
 
+from SpiffWorkflow.bpmn import BpmnEvent  # noqa: E402
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # noqa: E402
 from SpiffWorkflow.bpmn.serializer import DefaultRegistry  # noqa: E402
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask  # noqa: E402
@@ -48,6 +49,7 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # noq
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # noqa: E402
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # noqa: E402
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser  # noqa: E402
+from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # noqa: E402
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser  # noqa: E402
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # noqa: E402
 from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter  # noqa: E402
@@ -78,8 +80,56 @@ class CustomNoneTaskConverter(SpiffBpmnTaskConverter):
 
 class CustomServiceTask(ServiceTask):
     def _execute(self, task):
-        super()._execute(task)
+        result = task.workflow.script_engine.call_service(
+            task,
+            operation_name=self.operation_name,
+            operation_params=self.evalutate_params(task),
+        )
+        parsed_result = json.loads(result)
+
+        if self._is_connector_error(parsed_result):
+            if self._catch_connector_error(task, parsed_result):
+                return True
+
+            error = parsed_result["error"]
+            message = error.get("message") or f"Service task returned error code {error['error_code']}"
+            raise WorkflowTaskException(
+                "Error executing Service Task",
+                task=task,
+                exception=Exception(message),
+            )
+
+        task.data[self.result_variable] = parsed_result
         return None
+
+    def _is_connector_error(self, parsed_result):
+        error = parsed_result.get("error") if isinstance(parsed_result, dict) else None
+        return isinstance(error, dict) and bool(error.get("error_code"))
+
+    def _catch_connector_error(self, task, parsed_result):
+        error = parsed_result["error"]
+        payload = {
+            "error_code": error["error_code"],
+            "message": error.get("message", ""),
+            "command_response_body": parsed_result,
+            "operator_identifier": self.operation_name,
+        }
+        event_definition = ErrorEventDefinition(name=error["error_code"], code=error["error_code"])
+        bpmn_event = BpmnEvent(event_definition, payload=payload, target=task.workflow)
+        catching_tasks = task.workflow.get_tasks(
+            catches_event=bpmn_event,
+            state=TaskState.NOT_FINISHED_MASK,
+        )
+        if not catching_tasks:
+            catching_tasks = task.workflow.top_workflow.get_tasks(
+                catches_event=bpmn_event,
+                state=TaskState.NOT_FINISHED_MASK,
+            )
+        if not catching_tasks:
+            return False
+
+        task.workflow.top_workflow.catch(bpmn_event)
+        return True
 
 class CustomServiceTaskConverter(ServiceTaskConverter):
     def __init__(self, target_class, registry, typename = "ServiceTask"):
