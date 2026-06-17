@@ -62,7 +62,6 @@
     "use-debounce": "^10.0.1",
     "vite": "^8.0.12",
     "vite-plugin-svgr": "^4.3.0",
-    "vite-tsconfig-paths": "^5.1.4",
     "zod": "^4.1.12"
   },
   "overrides": {
