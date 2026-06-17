@@ -18,7 +18,6 @@ from spiffworkflow_backend.background_processing.celery_tasks.metadata_backfill_
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
@@ -29,7 +28,6 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.filestore_client_service import FilestoreClientService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
@@ -382,84 +380,6 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     return make_response(jsonify(file), 200)
 
 
-FILESTORE_FILE_TYPES = {FileType.bpmn.value, FileType.dmn.value, FileType.json.value, FileType.md.value}
-
-
-def process_model_file_edit_in_ed(modified_process_model_identifier: str, file_name: str) -> Any:
-    process_model_identifier = ProcessModelInfo.unmodify_process_identifier_from_path_param(modified_process_model_identifier)
-    process_model = _get_process_model(process_model_identifier)
-    process_group_id = _filestore_process_group_id(process_model)
-    files_path = _filestore_path(process_group_id, process_model.id, file_name)
-    if not FileSystemService.get_files(process_model, file_name):
-        raise ApiError(
-            error_code="process_model_file_not_found",
-            message=f"File {file_name} not found in workflow {process_model_identifier}.",
-            status_code=404,
-        )
-
-    result = FilestoreClientService.ensure_project(
-        {
-            "arena_process_group_id": process_group_id,
-            "name": process_group_id,
-        }
-    )
-    if not isinstance(result, dict):
-        raise ApiError(
-            error_code="filestore_sync_failed",
-            message="Could not sync process model files to Files: response did not include project.id",
-            status_code=502,
-        )
-    project = result.get("project")
-    if not isinstance(project, dict) or "id" not in project:
-        raise ApiError(
-            error_code="filestore_sync_failed",
-            message="Could not sync process model files to Files: response did not include project.id",
-            status_code=502,
-        )
-
-    return make_response(
-        jsonify(
-            {
-                "files_project_id": project["id"],
-                "files_path": files_path,
-                "files_tenant": FilestoreClientService.tenant_id(),
-            }
-        ),
-        200,
-    )
-
-
-def _filestore_process_group_id(process_model: ProcessModelInfo) -> str:
-    parts = process_model.id.rsplit("/", 1)
-    if len(parts) != 2:
-        raise ApiError(
-            error_code="process_group_id_not_found",
-            message=f"Process model {process_model.id} is not inside a process group.",
-            status_code=400,
-        )
-    return parts[0]
-
-
-def _filestore_path(process_group_id: str, process_model_id: str, file_name: str) -> str:
-    model_path = process_model_id.removeprefix(f"{process_group_id}/")
-    return f"{model_path}/{file_name}" if model_path else file_name
-
-
-def _sync_file_to_filestore(process_model: ProcessModelInfo, file: Any) -> None:
-    if not current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL"):
-        return
-    if file.type not in FILESTORE_FILE_TYPES:
-        return
-
-    process_group_id = _filestore_process_group_id(process_model)
-    FilestoreClientService.sync_file(
-        process_group_id=process_group_id,
-        project_name=process_group_id,
-        path=_filestore_path(process_group_id, process_model.id, file.name),
-        content_type=CONTENT_TYPES.get(file.type, file.content_type),
-    )
-
-
 def process_model_test_run(
     modified_process_model_identifier: str,
     test_case_file: str | None = None,
@@ -719,7 +639,6 @@ def _create_or_update_process_model_file(
     file.process_model_id = process_model.id
     file_contents_hash = sha256(file_contents).hexdigest()
     file.file_contents_hash = file_contents_hash
-    _sync_file_to_filestore(process_model, file)
     GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     if is_new_file and file.name.endswith(".bpmn"):

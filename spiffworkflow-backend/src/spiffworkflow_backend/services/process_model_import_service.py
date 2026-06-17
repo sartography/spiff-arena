@@ -4,7 +4,6 @@ import time
 from dataclasses import dataclass
 from typing import Any
 from typing import cast
-from urllib.parse import urlsplit
 
 import requests
 from flask import current_app
@@ -12,7 +11,6 @@ from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.services.filestore_client_service import FilestoreClientService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -56,44 +54,13 @@ class InvalidFilestorePackageError(ImportError):
 class ProcessModelImportService:
     @classmethod
     def import_filestore_file_update(cls, payload: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
-        path = payload.get("path")
-        file_url = payload.get("file_url")
-        if not isinstance(path, str) or not isinstance(file_url, str):
+        raw_file = payload.get("file")
+        file = raw_file if isinstance(raw_file, dict) else {}
+        path = file.get("path")
+        content = file.get("content")
+        if not isinstance(path, str) or content is None:
             raise InvalidFilestorePackageError(
-                message="Files update payload must include path and file_url",
-                error_code="invalid_filestore_package",
-            )
-        cls._validate_filestore_file_url(file_url)
-
-        try:
-            response = requests.get(file_url, headers=FilestoreClientService.headers_for_request("GET", file_url, ""), timeout=30)
-        except requests.RequestException as exception:
-            raise InvalidFilestorePackageError(
-                message=f"Could not fetch Files update: {exception}",
-                error_code="invalid_filestore_package",
-            ) from exception
-        if response.status_code != 200:
-            raise InvalidFilestorePackageError(
-                message=f"Could not fetch Files update: {response.status_code}",
-                error_code="invalid_filestore_package",
-            )
-
-        try:
-            file_payload = response.json()
-        except ValueError as exception:
-            raise InvalidFilestorePackageError(
-                message=f"Files update response was not valid JSON: {exception}",
-                error_code="invalid_filestore_package",
-            ) from exception
-        if not isinstance(file_payload, dict):
-            raise InvalidFilestorePackageError(
-                message="Files update response was not a JSON object",
-                error_code="invalid_filestore_package",
-            )
-        content = file_payload.get("content")
-        if not isinstance(content, str):
-            raise InvalidFilestorePackageError(
-                message="Files update response did not include content",
+                message="Files update payload must include file.path and file.content",
                 error_code="invalid_filestore_package",
             )
 
@@ -101,7 +68,7 @@ class ProcessModelImportService:
             {
                 "project_id": payload.get("project_id"),
                 "project_name": payload.get("project_name"),
-                "files": [{"path": path, "content": content}],
+                "files": [{"path": path, "content": str(content)}],
             },
             process_group_id,
         )
@@ -198,59 +165,6 @@ class ProcessModelImportService:
         )
 
     @classmethod
-    def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
-        process_group = ProcessModelService.get_process_group(process_group_id)
-
-        repo_info = cls._parse_github_url(url)
-        files = cls._fetch_files_from_github(repo_info)
-        model_info = cls._extract_process_model_info(files)
-        model_id = model_info.get("id") or cls._generate_id_from_url(url)
-        full_process_model_id = f"{process_group.id}/{model_id}"
-
-        if ProcessModelService.is_process_model_identifier(full_process_model_id):
-            model_id = f"{model_id}-{int(time.time())}"
-            full_process_model_id = f"{process_group.id}/{model_id}"
-
-        display_name = model_info.get("display_name", model_id.replace("-", " ").title())
-        description = model_info.get("description", f"Imported from {url}")
-        process_model = ProcessModelInfo(id=full_process_model_id, display_name=display_name, description=description)
-        ProcessModelService.add_process_model(process_model)
-
-        timestamp = int(time.time())
-        for file_name, file_content in files.items():
-            # Make BPMN process IDs unique to avoid conflicts
-            file_content_to_save = file_content
-            if file_name.endswith(".bpmn"):
-                file_content_to_save = cls._make_bpmn_process_ids_unique(file_content, timestamp)
-            SpecFileService.update_file(process_model, file_name, file_content_to_save)
-
-        if model_info.get("primary_file_name"):
-            process_model.primary_file_name = model_info.get("primary_file_name")
-
-        if model_info.get("primary_process_id"):
-            original_primary_process_id = model_info.get("primary_process_id")
-            updated_primary_process_id = f"{original_primary_process_id}_{timestamp}" if original_primary_process_id else None
-            process_model.primary_process_id = updated_primary_process_id
-
-        ProcessModelService.update_process_model(process_model, {})
-
-        return process_model
-
-    @classmethod
-    def _parse_github_url(cls, url: str) -> dict[str, str]:
-        """Parse a GitHub URL to extract repository information."""
-        # Example URL: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example
-
-        github_regex = r"https://github\.com/([^/]+)/([^/]+)/(?:tree|blob)/([^/]+)/(.+)"
-        match = re.match(github_regex, url)
-        if not match:
-            raise InvalidGitHubUrlError(message=f"Invalid GitHub URL format: {url}", error_code="invalid_github_url_error")
-
-        owner, repo, branch, path = match.groups()
-
-        return {"owner": owner, "repo": repo, "branch": branch, "path": path, "type": "tree" if "/tree/" in url else "blob"}
-
-    @classmethod
     def _filestore_files(cls, package: dict[str, Any]) -> dict[str, bytes]:
         raw_files = package.get("files")
         if not isinstance(raw_files, list):
@@ -282,23 +196,6 @@ class ProcessModelImportService:
         if path.startswith("/") or "" in parts or ".." in parts:
             raise InvalidFilestorePackageError(
                 message=f"Invalid Files package path: {path}",
-                error_code="invalid_filestore_package",
-            )
-
-    @staticmethod
-    def _validate_filestore_file_url(file_url: str) -> None:
-        base_url = current_app.config.get("SPIFFWORKFLOW_BACKEND_FILESTORE_URL")
-        if not isinstance(base_url, str) or not base_url:
-            raise InvalidFilestorePackageError(
-                message="SPIFFWORKFLOW_BACKEND_FILESTORE_URL is not configured",
-                error_code="invalid_filestore_package",
-            )
-
-        parsed_file_url = urlsplit(file_url)
-        parsed_base_url = urlsplit(base_url)
-        if parsed_file_url.scheme != parsed_base_url.scheme or parsed_file_url.netloc != parsed_base_url.netloc:
-            raise InvalidFilestorePackageError(
-                message="Files update file_url must match the configured Files URL",
                 error_code="invalid_filestore_package",
             )
 
@@ -385,6 +282,59 @@ class ProcessModelImportService:
     def _slug(text: str) -> str:
         slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", text).strip("-").lower()
         return slug or "filestore-project"
+
+    @classmethod
+    def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
+        process_group = ProcessModelService.get_process_group(process_group_id)
+
+        repo_info = cls._parse_github_url(url)
+        files = cls._fetch_files_from_github(repo_info)
+        model_info = cls._extract_process_model_info(files)
+        model_id = model_info.get("id") or cls._generate_id_from_url(url)
+        full_process_model_id = f"{process_group.id}/{model_id}"
+
+        if ProcessModelService.is_process_model_identifier(full_process_model_id):
+            model_id = f"{model_id}-{int(time.time())}"
+            full_process_model_id = f"{process_group.id}/{model_id}"
+
+        display_name = model_info.get("display_name", model_id.replace("-", " ").title())
+        description = model_info.get("description", f"Imported from {url}")
+        process_model = ProcessModelInfo(id=full_process_model_id, display_name=display_name, description=description)
+        ProcessModelService.add_process_model(process_model)
+
+        timestamp = int(time.time())
+        for file_name, file_content in files.items():
+            # Make BPMN process IDs unique to avoid conflicts
+            file_content_to_save = file_content
+            if file_name.endswith(".bpmn"):
+                file_content_to_save = cls._make_bpmn_process_ids_unique(file_content, timestamp)
+            SpecFileService.update_file(process_model, file_name, file_content_to_save)
+
+        if model_info.get("primary_file_name"):
+            process_model.primary_file_name = model_info.get("primary_file_name")
+
+        if model_info.get("primary_process_id"):
+            original_primary_process_id = model_info.get("primary_process_id")
+            updated_primary_process_id = f"{original_primary_process_id}_{timestamp}" if original_primary_process_id else None
+            process_model.primary_process_id = updated_primary_process_id
+
+        ProcessModelService.update_process_model(process_model, {})
+
+        return process_model
+
+    @classmethod
+    def _parse_github_url(cls, url: str) -> dict[str, str]:
+        """Parse a GitHub URL to extract repository information."""
+        # Example URL: https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example
+
+        github_regex = r"https://github\.com/([^/]+)/([^/]+)/(?:tree|blob)/([^/]+)/(.+)"
+        match = re.match(github_regex, url)
+        if not match:
+            raise InvalidGitHubUrlError(message=f"Invalid GitHub URL format: {url}", error_code="invalid_github_url_error")
+
+        owner, repo, branch, path = match.groups()
+
+        return {"owner": owner, "repo": repo, "branch": branch, "path": path, "type": "tree" if "/tree/" in url else "blob"}
 
     @classmethod
     def _fetch_files_from_github(cls, repo_info: dict[str, str]) -> dict[str, bytes]:
