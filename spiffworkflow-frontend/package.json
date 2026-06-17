@@ -62,7 +62,6 @@
     "use-debounce": "^10.0.1",
     "vite": "^8.0.12",
     "vite-plugin-svgr": "^4.3.0",
-    "vite-tsconfig-paths": "^5.1.4",
     "zod": "^4.1.12"
   },
   "overrides": {
@@ -114,7 +113,7 @@
     "@types/node": "^20.12.13",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.1.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -129,6 +128,6 @@
     "prettier": "^3.8.3",
     "sass-embedded": "^1.99.0",
     "typescript-eslint": "^8.59.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.9"
   }
 }
