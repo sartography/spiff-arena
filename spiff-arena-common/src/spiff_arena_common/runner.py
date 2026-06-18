@@ -86,21 +86,52 @@ class CustomServiceTask(ServiceTask):
             operation_params=self.evalutate_params(task),
         )
         parsed_result = json.loads(result)
-
-        if self._is_connector_error(parsed_result):
-            if self._catch_connector_error(task, parsed_result):
-                return True
-
-            error = parsed_result["error"]
-            message = error.get("message") or f"Service task returned error code {error['error_code']}"
-            raise WorkflowTaskException(
-                "Error executing Service Task",
-                task=task,
-                exception=Exception(message),
-            )
+        if self._handle_connector_error(task, parsed_result):
+            return True
 
         task.data[self.result_variable] = parsed_result
         return None
+
+    def handle_completed_result(self, task):
+        parsed_result = task.data.get(self.result_variable)
+        return self._handle_connector_error(task, parsed_result)
+
+    def _handle_connector_error(self, task, parsed_result):
+        self._add_http_status_error(parsed_result)
+
+        if not self._is_connector_error(parsed_result):
+            return False
+
+        if self._catch_connector_error(task, parsed_result):
+            return True
+
+        error = parsed_result["error"]
+        message = error.get("message") or f"Service task returned error code {error['error_code']}"
+        raise WorkflowTaskException(
+            "Error executing Service Task",
+            task=task,
+            exception=Exception(message),
+        )
+
+    def _add_http_status_error(self, parsed_result):
+        if not isinstance(parsed_result, dict) or parsed_result.get("error") is not None:
+            return
+
+        if parsed_result.get("command_response_version", 0) <= 1:
+            return
+
+        command_response = parsed_result.get("command_response")
+        if not isinstance(command_response, dict):
+            return
+
+        http_status = command_response.get("http_status")
+        if not isinstance(http_status, int) or http_status < 300:
+            return
+
+        parsed_result["error"] = {
+            "error_code": f"ServiceTaskHttpError{http_status}",
+            "message": f"Service task received HTTP {http_status} from upstream service.",
+        }
 
     def _is_connector_error(self, parsed_result):
         error = parsed_result.get("error") if isinstance(parsed_result, dict) else None
@@ -456,7 +487,11 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
             print_progress(iters)
 
         if task.state == TaskState.STARTED:
-            task.complete()
+            if not (
+                isinstance(task.task_spec, CustomServiceTask)
+                and task.task_spec.handle_completed_result(task)
+            ):
+                task.complete()
         else:
             task.run()
 
