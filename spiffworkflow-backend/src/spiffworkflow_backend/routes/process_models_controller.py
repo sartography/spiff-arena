@@ -181,7 +181,9 @@ def process_model_update(
     return process_model.to_dict()
 
 
-def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False, include_file_contents: bool = False) -> Any:
+def process_model_show(
+    modified_process_model_identifier: str, include_file_references: bool = False, include_file_contents: bool = False
+) -> Any:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     files = FileSystemService.get_sorted_files(process_model)
