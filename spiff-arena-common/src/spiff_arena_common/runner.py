@@ -39,6 +39,7 @@ def spiff_json_object_hook(dct):
 
 from spiff_arena_common.data_stores import JSONFileDataStore  # noqa: E402
 
+from SpiffWorkflow.bpmn import BpmnEvent  # noqa: E402
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # noqa: E402
 from SpiffWorkflow.bpmn.serializer import DefaultRegistry  # noqa: E402
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask  # noqa: E402
@@ -48,6 +49,7 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # noq
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # noqa: E402
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # noqa: E402
 from SpiffWorkflow.spiff.parser.event_parsers import SpiffReceiveTaskParser, SpiffSendTaskParser  # noqa: E402
+from SpiffWorkflow.spiff.specs.event_definitions import ErrorEventDefinition  # noqa: E402
 from SpiffWorkflow.spiff.parser.task_spec import ServiceTaskParser, SpiffTaskParser  # noqa: E402
 from SpiffWorkflow.spiff.serializer.config import SPIFF_CONFIG  # noqa: E402
 from SpiffWorkflow.spiff.serializer.task_spec import SendReceiveTaskConverter, ServiceTaskConverter, SpiffBpmnTaskConverter  # noqa: E402
@@ -78,8 +80,87 @@ class CustomNoneTaskConverter(SpiffBpmnTaskConverter):
 
 class CustomServiceTask(ServiceTask):
     def _execute(self, task):
-        super()._execute(task)
+        result = task.workflow.script_engine.call_service(
+            task,
+            operation_name=self.operation_name,
+            operation_params=self.evalutate_params(task),
+        )
+        parsed_result = json.loads(result)
+        if self._handle_connector_error(task, parsed_result):
+            return True
+
+        task.data[self.result_variable] = parsed_result
         return None
+
+    def handle_completed_result(self, task):
+        parsed_result = task.data.get(self.result_variable)
+        return self._handle_connector_error(task, parsed_result)
+
+    def _handle_connector_error(self, task, parsed_result):
+        self._add_http_status_error(parsed_result)
+
+        if not self._is_connector_error(parsed_result):
+            return False
+
+        if self._catch_connector_error(task, parsed_result):
+            return True
+
+        error = parsed_result["error"]
+        message = error.get("message") or f"Service task returned error code {error['error_code']}"
+        raise WorkflowTaskException(
+            "Error executing Service Task",
+            task=task,
+            exception=Exception(message),
+        )
+
+    def _add_http_status_error(self, parsed_result):
+        if not isinstance(parsed_result, dict) or parsed_result.get("error") is not None:
+            return
+
+        if parsed_result.get("command_response_version", 0) <= 1:
+            return
+
+        command_response = parsed_result.get("command_response")
+        if not isinstance(command_response, dict):
+            return
+
+        http_status = command_response.get("http_status")
+        if not isinstance(http_status, int) or http_status < 300:
+            return
+
+        parsed_result["error"] = {
+            "error_code": f"ServiceTaskHttpError{http_status}",
+            "message": f"Service task received HTTP {http_status} from upstream service.",
+        }
+
+    def _is_connector_error(self, parsed_result):
+        error = parsed_result.get("error") if isinstance(parsed_result, dict) else None
+        return isinstance(error, dict) and bool(error.get("error_code"))
+
+    def _catch_connector_error(self, task, parsed_result):
+        error = parsed_result["error"]
+        payload = {
+            "error_code": error["error_code"],
+            "message": error.get("message", ""),
+            "command_response_body": parsed_result,
+            "operator_identifier": self.operation_name,
+        }
+        event_definition = ErrorEventDefinition(name=error["error_code"], code=error["error_code"])
+        bpmn_event = BpmnEvent(event_definition, payload=payload, target=task.workflow)
+        catching_tasks = task.workflow.get_tasks(
+            catches_event=bpmn_event,
+            state=TaskState.NOT_FINISHED_MASK,
+        )
+        if not catching_tasks:
+            catching_tasks = task.workflow.top_workflow.get_tasks(
+                catches_event=bpmn_event,
+                state=TaskState.NOT_FINISHED_MASK,
+            )
+        if not catching_tasks:
+            return False
+
+        task.workflow.top_workflow.catch(bpmn_event)
+        return True
 
 class CustomServiceTaskConverter(ServiceTaskConverter):
     def __init__(self, target_class, registry, typename = "ServiceTask"):
@@ -406,7 +487,11 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
             print_progress(iters)
 
         if task.state == TaskState.STARTED:
-            task.complete()
+            if not (
+                isinstance(task.task_spec, CustomServiceTask)
+                and task.task_spec.handle_completed_result(task)
+            ):
+                task.complete()
         else:
             task.run()
 
