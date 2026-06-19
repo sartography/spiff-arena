@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from flask.app import Flask
+
+from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -17,8 +20,13 @@ class TestNotificationTrigger(BaseTest):
     @patch("spiffworkflow_backend.services.process_model_service.ProcessModelService.get_process_model")
     @patch("spiffworkflow_backend.models.db.db.session")
     def test_trigger_notification_process_model_with_user(
-        self, mock_session, mock_get_process_model, mock_create_and_run, mock_setup, app
-    ):
+        self,
+        mock_session: MagicMock,
+        mock_get_process_model: MagicMock,
+        mock_create_and_run: MagicMock,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
         # Setup
         process_instance = ProcessInstanceModel(id=123)
         processor = ProcessInstanceProcessor(process_instance)
@@ -26,9 +34,9 @@ class TestNotificationTrigger(BaseTest):
         human_task = HumanTaskModel(process_instance_id=123, task_id="task_guid_456")
 
         potential_owner_user = UserModel(id=789, username="testuser", email="test@example.com")
-        mock_session.get.side_effect = lambda model, id: potential_owner_user if model == UserModel and id == 789 else None
+        mock_session.query.return_value.filter_by.return_value.first.return_value = potential_owner_user
 
-        potential_owner_hash = {"potential_owners": [{"user_id": 789}]}
+        potential_owner_hash: PotentialOwnerIdList = {"potential_owners": [{"added_by": "bpmn", "user_id": 789}]}
 
         notification_pm_id = "notification_model"
         mock_notification_pm = MagicMock()
@@ -62,8 +70,13 @@ class TestNotificationTrigger(BaseTest):
     @patch("spiffworkflow_backend.services.process_model_service.ProcessModelService.get_process_model")
     @patch("spiffworkflow_backend.models.db.db.session")
     def test_trigger_notification_process_model_with_group(
-        self, mock_session, mock_get_process_model, mock_create_and_run, mock_setup, app
-    ):
+        self,
+        mock_session: MagicMock,
+        mock_get_process_model: MagicMock,
+        mock_create_and_run: MagicMock,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
         # Setup
         process_instance = ProcessInstanceModel(id=123)
         processor = ProcessInstanceProcessor(process_instance)
@@ -71,9 +84,9 @@ class TestNotificationTrigger(BaseTest):
         human_task = HumanTaskModel(process_instance_id=123, task_id="task_guid_456")
 
         potential_owner_group = GroupModel(id=999, identifier="testgroup")
-        mock_session.get.side_effect = lambda model, id: potential_owner_group if model == GroupModel and id == 999 else None
+        mock_session.query.return_value.filter_by.return_value.first.return_value = potential_owner_group
 
-        potential_owner_hash = {
+        potential_owner_hash: PotentialOwnerIdList = {
             "potential_owners": [],
             "lane_owner_group_ids": [999],
             "lane_owner_usernames_waiting": ["waiting@example.com"],
@@ -119,15 +132,15 @@ class TestNotificationTrigger(BaseTest):
     @patch("spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor._find_existing_human_task")
     def test_process_ready_or_waiting_task_triggers_notification(
         self,
-        mock_find_existing,
-        mock_extract_form,
-        mock_extract_meta,
-        mock_get_owners,
-        mock_create_human,
-        mock_trigger_notification,
-        mock_setup,
-        app,
-    ):
+        mock_find_existing: MagicMock,
+        mock_extract_form: MagicMock,
+        mock_extract_meta: MagicMock,
+        mock_get_owners: MagicMock,
+        mock_create_human: MagicMock,
+        mock_trigger_notification: MagicMock,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
         # Setup
         process_instance = ProcessInstanceModel(id=123)
         processor = ProcessInstanceProcessor(process_instance)
@@ -143,7 +156,7 @@ class TestNotificationTrigger(BaseTest):
         human_task = MagicMock()
         mock_create_human.return_value = human_task
 
-        potential_owners = {"potential_owners": []}
+        potential_owners: PotentialOwnerIdList = {"potential_owners": []}
         mock_get_owners.return_value = potential_owners
 
         # Execute

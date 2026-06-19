@@ -1068,14 +1068,14 @@ class ProcessInstanceProcessor:
         for po in potential_owner_hash["potential_owners"]:
             user_id = po.get("user_id")
             if user_id:
-                user = db.session.get(UserModel, user_id)
+                user = db.session.query(UserModel).filter_by(id=user_id).first()
                 if user:
                     potential_owners.append({"type": "user", "user": user.as_dict()})
 
         lane_owner_group_ids = potential_owner_hash.get("lane_owner_group_ids", [])
         potential_groups = []
         for group_id in lane_owner_group_ids:
-            group = db.session.get(GroupModel, group_id)
+            group = db.session.query(GroupModel).filter_by(id=group_id).first()
             if group:
                 group_dict = {"id": group.id, "identifier": group.identifier}
                 potential_groups.append(group_dict)
