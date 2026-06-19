@@ -59,7 +59,7 @@
     "react-router-dom": "^6.25.1",
     "rxjs": "^7.8.1",
     "typescript": "^5.0.0",
-    "use-debounce": "^10.0.1",
+    "use-debounce": "^10.1.1",
     "vite": "^8.0.12",
     "vite-plugin-svgr": "^4.3.0",
     "zod": "^4.1.12"
