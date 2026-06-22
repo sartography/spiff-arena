@@ -12,6 +12,7 @@ from SpiffWorkflow.util.task import TaskState  # type: ignore
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
@@ -52,6 +53,7 @@ class ServiceTaskService:
             )
 
         error = None
+        should_queue_for_celery = should_queue_process_instance(execution_mode)
         with sentry_sdk.start_span(op="task", name="complete_service_task_callback"):
             with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
                 if ProcessInstanceMigrator.run(process_instance):
@@ -77,8 +79,6 @@ class ServiceTaskService:
                             )
                         raise
 
-                    queue_process_instance_if_appropriate(process_instance, execution_mode)
-
                     result_variable = spiff_task.task_spec.result_variable
                     callback_result = cls._get_callback_body(callback_content)
                     if result_variable:
@@ -86,10 +86,13 @@ class ServiceTaskService:
 
                     processor.complete_task(spiff_task, user)
 
-                    execution_strategy_name = None
-                    if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
-                        execution_strategy_name = "greedy"
-                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                    if should_queue_for_celery:
+                        processor.save()
+                    else:
+                        execution_strategy_name = None
+                        if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
+                            execution_strategy_name = "greedy"
+                        processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
                 else:
                     error = ApiError(
                         error_code="not_waiting_for_callback",
@@ -98,6 +101,8 @@ class ServiceTaskService:
                     )
             if error:
                 raise error
+            if should_queue_for_celery:
+                queue_process_instance_if_appropriate(process_instance, execution_mode)
             return ServiceTaskCallbackResult(
                 process_instance=process_instance,
                 processor=processor,
