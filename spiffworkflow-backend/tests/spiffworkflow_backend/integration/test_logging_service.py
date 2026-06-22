@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import patch
 from uuid import UUID
 
 from flask.app import Flask
@@ -7,6 +8,8 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
+from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -18,6 +21,31 @@ class TestLoggingService(BaseTest):
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
         assert logger.handlers
         assert logger.propagate is False
+
+    def test_spiff_log_handler_skips_internal_diagnostic_records(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        record = logging.LogRecord(
+            name="spiff.event",
+            level=logging.WARNING,
+            pathname=__file__,
+            lineno=0,
+            msg="diagnostic",
+            args=(),
+            exc_info=None,
+        )
+        setattr(record, SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR, True)
+
+        assert handler.filter(record) is False
+
+    def test_socket_failure_warning_marks_record_to_skip_spiff_log_handler(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+
+        with patch.object(app.logger, "warning") as warning:
+            handler.log_socket_failure(OSError("event stream unavailable"), None)
+
+        warning.assert_called_once()
+        extra = warning.call_args.kwargs["extra"]
+        assert extra[SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR] is True
 
     def test_logging_service_detailed_logs(
         self,

@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+import time
 from datetime import datetime
 from logging.handlers import SocketHandler
 from typing import Any
@@ -10,6 +11,8 @@ from uuid import uuid4
 
 from flask import g
 from flask.app import Flask
+
+SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR = "spiff_log_handler_skip_record"
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -28,12 +31,22 @@ class InvalidLogLevelError(Exception):
 
 
 class SpiffLogHandler(SocketHandler):
-    def __init__(self, app, *args):  # type: ignore
+    def __init__(self, app: Flask, *args: Any) -> None:
         super().__init__(
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"],
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
+        self.dropped_event_count = 0
+        self.next_socket_warning_at = 0.0
+        try:
+            self.socket_warning_interval_seconds = int(
+                os.environ.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_WARNING_INTERVAL_SECONDS", "60")
+            )
+        except ValueError:
+            self.socket_warning_interval_seconds = 60
+        if self.socket_warning_interval_seconds < 1:
+            self.socket_warning_interval_seconds = 60
 
     def format(self, record: Any) -> str:
         return json.dumps(
@@ -61,6 +74,9 @@ class SpiffLogHandler(SocketHandler):
             return None, None
 
     def filter(self, record: Any) -> bool:
+        if getattr(record, SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR, False):
+            return False
+
         if (
             record.name == "spiff.task"
             and record.task_type
@@ -119,6 +135,76 @@ class SpiffLogHandler(SocketHandler):
     def makePickle(self, record: Any) -> bytes:  # noqa: N802
         # Instead of returning a pickled log record, write the json entry to the socket
         return (self.format(record) + "\n").encode("utf-8")
+
+    def createSocket(self, record: Any | None = None) -> None:  # noqa: N802
+        now = time.time()
+        if self.retryTime is None:
+            attempt = True
+        else:
+            attempt = now >= self.retryTime
+        if attempt:
+            try:
+                self.sock = self.makeSocket()
+                self.retryTime = None
+            except OSError as exception:
+                if self.retryTime is None:
+                    self.retryPeriod = self.retryStart
+                else:
+                    self.retryPeriod = self.retryPeriod * self.retryFactor
+                    if self.retryPeriod > self.retryMax:
+                        self.retryPeriod = self.retryMax
+                self.retryTime = now + self.retryPeriod
+                self.log_socket_failure(exception, record)
+        elif record is not None:
+            self.log_socket_failure(None, record)
+
+    def send(self, s: bytes, record: Any | None = None) -> None:  # type: ignore[override]
+        if self.sock is None:
+            self.createSocket(record)
+        if self.sock:
+            try:
+                self.sock.sendall(s)
+            except OSError as exception:
+                self.sock.close()
+                self.sock = None
+                self.log_socket_failure(exception, record)
+
+    def emit(self, record: Any) -> None:
+        try:
+            s = self.makePickle(record)
+            self.send(s, record)
+        except Exception:
+            self.handleError(record)
+
+    def log_socket_failure(self, exception: OSError | None, record: Any | None) -> None:
+        self.dropped_event_count += 1
+        now = time.monotonic()
+        if now < self.next_socket_warning_at:
+            return
+
+        dropped_event_count = self.dropped_event_count
+        self.dropped_event_count = 0
+        self.next_socket_warning_at = now + self.socket_warning_interval_seconds
+
+        spiff_data = getattr(record, "_spiff_data", {}) if record is not None else {}
+        self.app.logger.warning(
+            "Event stream socket logging failed; dropping Spiff event records.",
+            extra={
+                SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
+                "extras": {
+                    "event_stream_host": self.host,
+                    "event_stream_port": self.port,
+                    "dropped_event_count": dropped_event_count,
+                    "event_logger_name": getattr(record, "name", None),
+                    "event_message": getattr(record, "msg", None),
+                    "process_instance_id": spiff_data.get("process_instance_id"),
+                    "process_model_identifier": spiff_data.get("process_model_identifier"),
+                    "task_id": spiff_data.get("task_id"),
+                    "task_spec": spiff_data.get("task_spec"),
+                    "socket_error": str(exception) if exception is not None else "retry backoff active",
+                },
+            },
+        )
 
 
 # originally from https://stackoverflow.com/a/70223539/6090676
@@ -287,7 +373,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         spiff_logger = logging.getLogger("spiff")
         spiff_logger.setLevel(logging.INFO)
         spiff_logger.propagate = False
-        handler = SpiffLogHandler(app)  # type: ignore
+        handler = SpiffLogHandler(app)
         spiff_logger.addHandler(handler)
 
 
