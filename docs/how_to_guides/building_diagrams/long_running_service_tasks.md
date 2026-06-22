@@ -18,7 +18,6 @@ The process will pause at that task until the external service calls back with t
 
 To complete the task, the external service should call the `spiff__callback_url` using a **PUT** request with a JSON body containing the result data.
 The result data will be stored in the service task's configured result variable, and the process will continue.
-When Celery is enabled, the callback request records the result and completes the waiting service task, then queues the process instance so remaining ready work runs in the Celery worker.
 
 If retries are configured, transient callback failures follow the service task retry policy.
 
