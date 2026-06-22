@@ -252,6 +252,78 @@ class TestLongRunningService(BaseTest):
         assert task_model is not None
         assert task_model.state == "COMPLETED"
 
+    def test__202_success_response_with_celery_only_completes_callback_before_queueing(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
+            spiff__task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
+
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+        ):
+            response = client.put(
+                callback_url,
+                headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
+                json=content,
+            )
+
+        assert response.status_code == 200
+        response_dict = response.json()
+        assert response_dict["ok"] is True
+        assert response_dict["status"] == "completed"
+        assert response_dict["process_instance_id"] == process_instance.id
+        assert response_dict["process_model_identifier"] == process_model_id
+        assert send_task.call_count == 1
+
+        db.session.expire_all()
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "running"
+
+        task_model = TaskModel.query.filter_by(guid=spiff__task_id).first()
+        assert task_model is not None
+        assert task_model.state == "COMPLETED"
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
+            current_process.return_value.index = 0
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+        db.session.expire_all()
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
+
     def test__202_callback_url_uses_public_backend_base(
         self,
         app: Flask,
