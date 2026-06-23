@@ -48,6 +48,9 @@ from sqlalchemy import or_
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_event_notifier_if_appropriate,
 )
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_start_process_instance_if_appropriate,
+)
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
@@ -1059,17 +1062,14 @@ class ProcessInstanceProcessor:
     def _trigger_task_available_process_model(
         self, task_available_process_model_identifier: str, human_task: HumanTaskModel
     ) -> None:
-        from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-        from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
         try:
-            task_available_process_model = ProcessModelService.get_process_model(task_available_process_model_identifier)
-            ProcessInstanceService.create_and_run_process_instance(
-                task_available_process_model,
-                persistence_level="full",
-                data_to_inject={"task_guid": human_task.task_guid},
-                user=self.process_instance_model.process_initiator,
-            )
+            if not queue_start_process_instance_if_appropriate(
+                task_available_process_model_identifier, human_task.task_guid, self.process_instance_model.process_initiator.id
+            ):
+                current_app.logger.warning(
+                    f"Cannot trigger task available process model '{task_available_process_model_identifier}' "
+                    f"for task {human_task.task_id}: Celery is not enabled."
+                )
         except Exception as exception:
             current_app.logger.exception(
                 f"Failed to trigger task available process model '{task_available_process_model_identifier}' "

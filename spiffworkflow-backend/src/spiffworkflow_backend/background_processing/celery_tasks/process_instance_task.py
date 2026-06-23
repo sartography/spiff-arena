@@ -4,6 +4,7 @@ from typing import Any
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
@@ -13,7 +14,10 @@ from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
+from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -146,3 +150,39 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         db.session.add(process_instance)
         db.session.commit()
         raise SpiffCeleryWorkerError(error_message) from exception
+
+
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+def celery_task_process_instance_start_from_model(
+    self: Any,
+    process_model_identifier: str,
+    task_guid: str,
+    user_id: int,
+) -> dict:
+    celery_task_id = self.request.id
+    logger_prefix = f"celery_task_process_instance_start_from_model[{celery_task_id}]"
+    current_app.logger.info(f"{logger_prefix}: process_model_identifier: {process_model_identifier}, task_guid: {task_guid}")
+
+    try:
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        user = UserModel.query.filter_by(id=user_id).first()
+        if user is None:
+            raise SpiffCeleryWorkerError(f"Could not find user with id {user_id}")
+
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(process_model.id, user)
+        processor = ProcessInstanceProcessor(
+            process_instance,
+            script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
+        )
+        processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
+        next_task = processor.next_task()
+        DeepMerge.merge(next_task.data, {"task_guid": task_guid})
+        processor.save()
+
+        if not queue_process_instance_if_appropriate(process_instance):
+            ProcessInstanceService.run_process_instance_with_processor(process_instance, execution_strategy_name="greedy")
+
+        return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
+    except Exception as exception:
+        current_app.logger.exception(f"{logger_prefix}: Error running task available process model. {str(exception)}")
+        return {"ok": False, "process_instance_id": None, "task_guid": task_guid, "exception": str(exception)}

@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from flask import current_app
 from flask.app import Flask
 
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
@@ -15,16 +16,16 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
     @patch(
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
     )
-    @patch("spiffworkflow_backend.services.process_instance_service.ProcessInstanceService.create_and_run_process_instance")
-    @patch("spiffworkflow_backend.services.process_model_service.ProcessModelService.get_process_model")
-    def test_trigger_task_available_process_model_injects_only_task_guid(
+    @patch("spiffworkflow_backend.services.process_instance_processor.queue_enabled_for_process_model")
+    def test_trigger_task_available_process_model_sends_celery_task(
         self,
-        mock_get_process_model: MagicMock,
-        mock_create_and_run: MagicMock,
+        mock_queue_enabled: MagicMock,
         mock_setup: MagicMock,
         app: Flask,
     ) -> None:
         # Setup
+        mock_queue_enabled.return_value = True
+
         process_initiator = UserModel(id=1, username="testuser", service="test", service_id="testuser")
         process_instance = ProcessInstanceModel(id=123, process_initiator=process_initiator)
         processor = ProcessInstanceProcessor(process_instance)
@@ -33,20 +34,46 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         human_task = HumanTaskModel(process_instance_id=123, task_guid="task_guid_456", task_id="task_guid_456")
 
         task_available_pm_id = "task_available_model"
-        mock_task_available_pm = MagicMock()
-        mock_get_process_model.return_value = mock_task_available_pm
 
-        # Execute
-        processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+        with patch("celery.current_app.send_task") as mock_send_task:
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
 
-        # Verify
-        mock_get_process_model.assert_called_once_with(task_available_pm_id)
-        mock_create_and_run.assert_called_once_with(
-            mock_task_available_pm,
-            persistence_level="full",
-            data_to_inject={"task_guid": "task_guid_456"},
-            user=process_initiator,
-        )
+            from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
+
+            mock_send_task.assert_called_once_with(
+                CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
+                (task_available_pm_id, "task_guid_456", 1),
+            )
+
+    @patch(
+        "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
+    )
+    @patch("spiffworkflow_backend.services.process_instance_processor.queue_enabled_for_process_model")
+    def test_trigger_task_available_process_model_warns_if_celery_disabled(
+        self,
+        mock_queue_enabled: MagicMock,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
+        # Setup
+        mock_queue_enabled.return_value = False
+
+        process_initiator = UserModel(id=1, username="testuser", service="test", service_id="testuser")
+        process_instance = ProcessInstanceModel(id=123, process_initiator=process_initiator)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.process_instance_model = process_instance
+
+        human_task = HumanTaskModel(process_instance_id=123, task_guid="task_guid_456", task_id="task_guid_456")
+
+        task_available_pm_id = "task_available_model"
+
+        with patch.object(current_app, "logger") as mock_logger:
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+
+            mock_logger.warning.assert_called_once_with(
+                f"Cannot trigger task available process model '{task_available_pm_id}' "
+                f"for task {human_task.task_id}: Celery is not enabled."
+            )
 
     @patch(
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"

@@ -5,6 +5,7 @@ from flask import current_app
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -63,7 +64,7 @@ def queue_future_task_if_appropriate(
     return False
 
 
-# if waiting, check all waiting tasks and see if theyt are timers. if they are timers, it's not runnable.
+# if waiting, check all waiting tasks and see if they are timers. if they are timers, it's not runnable.
 def queue_process_instance_if_appropriate(
     process_instance: ProcessInstanceModel, execution_mode: str | None = None, task_guid: str | None = None
 ) -> bool:
@@ -100,5 +101,21 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
             (updated_process_instance.id, updated_process_instance.process_model_identifier, event_type),
         )
         current_app.logger.info(f"Queueing process instance ({updated_process_instance.id}) for celery ({async_result.task_id})")
+        return True
+    return False
+
+
+def queue_start_process_instance_if_appropriate(
+    process_model_identifier: str, triggering_task_guid: str, initiator_user_id: int
+) -> bool:
+    if queue_enabled_for_process_model():
+        celery.current_app.send_task(
+            CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
+            (
+                process_model_identifier,
+                triggering_task_guid,
+                initiator_user_id,
+            ),
+        )
         return True
     return False
