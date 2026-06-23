@@ -26,7 +26,7 @@ class GetGroupsAssignedToTask(Script):
             raise ValueError("Expected task_guid as first argument or keyword argument")
 
         rows = (
-            db.session.query(GroupModel)
+            db.session.query(GroupModel)  # type: ignore[no-untyped-call]
             .join(HumanTaskGroupModel, HumanTaskGroupModel.group_id == GroupModel.id)
             .join(HumanTaskModel, HumanTaskModel.id == HumanTaskGroupModel.human_task_id)
             .filter(HumanTaskModel.task_guid == task_guid)

@@ -25,7 +25,7 @@ class GetUsernamesWaitingForTask(Script):
             raise ValueError("Expected task_guid as first argument or keyword argument")
 
         rows = (
-            db.session.query(HumanTaskUserWaitingModel.username)
+            db.session.query(HumanTaskUserWaitingModel.username)  # type: ignore[no-untyped-call]
             .join(HumanTaskModel, HumanTaskModel.id == HumanTaskUserWaitingModel.human_task_id)
             .filter(HumanTaskModel.task_guid == task_guid)
             .distinct()

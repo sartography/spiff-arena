@@ -1052,7 +1052,7 @@ class ProcessInstanceProcessor:
 
     def _task_available_process_model_identifier(self, extensions: dict) -> str | None:
         task_available_process_model_identifier = extensions.get("processModelToStartOnTaskAvailable")
-        if task_available_process_model_identifier:
+        if isinstance(task_available_process_model_identifier, str) and task_available_process_model_identifier:
             return task_available_process_model_identifier
         return None
 
