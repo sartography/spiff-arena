@@ -1,8 +1,8 @@
-running a process model when a user task becomes available
+running a process model when a human task becomes available
 
 how? via per-task process model
 
-allow a configuration on each user task that indicates the process model that should be run when the user task becomes available. the extension is `spiffworkflow:processModelToStartOnTaskAvailable`, stored as a named extension element.
+allow a configuration on each user or manual task that indicates the process model that should be run when the task becomes available. the extension is `spiffworkflow:processModelToStartOnTaskAvailable`, stored as a named extension element.
 
 the task-available process instance should receive only `task_guid`. the triggered process model can derive related data with script helpers:
 

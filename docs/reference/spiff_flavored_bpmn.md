@@ -60,7 +60,7 @@ Extension elements appear under `<bpmn:extensionElements>` unless the form says 
 | `spiffworkflow:allowGuest` | Extension element with boolean text | Allows a message start or user task to be completed through Arena public routes. | Parsed extension data; Arena owns the behavior. |
 | `spiffworkflow:guestConfirmation` | Extension element with text | Markdown/Jinja confirmation shown after public completion. | Parsed extension data; Arena owns the behavior. |
 | `spiffworkflow:signalButtonLabel` | Extension element with text | Label for Arena signal event action buttons. | Parsed extension data; Arena owns the behavior. |
-| `spiffworkflow:processModelToStartOnTaskAvailable` | Extension element with text | Process model to start when an Arena user task becomes available. | Parsed extension data; Arena owns the behavior. |
+| `spiffworkflow:processModelToStartOnTaskAvailable` | Extension element with text | Process model to start when an Arena user or manual task becomes available. | Parsed extension data; Arena owns the behavior. |
 | `spiffworkflow:category` | Extension element with text on a data object | Arena data object category used for process data display and access decisions. | Arena/frontend behavior. |
 | `spiffworkflow:isMatchingCorrelation` | Extension attribute on message-capable events/tasks | Tells Arena message tooling that process-variable correlation matching is enabled. | Arena/modeler only. |
 | `spiffworkflow:isOutputSynced` | Extension attribute on a multi-instance subprocess/activity | Tells Arena/modeler whether multi-instance output data should be synchronized. | Arena/modeler only. |
