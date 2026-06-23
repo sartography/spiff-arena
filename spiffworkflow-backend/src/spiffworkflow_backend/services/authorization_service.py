@@ -844,10 +844,8 @@ class AuthorizationService:
     @classmethod
     def load_permissions_yaml(cls) -> Any:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
-            raise (
-                PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import permissions"
-                )
+            raise PermissionsFileNotSetError(
+                "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import permissions"
             )
 
         with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:

@@ -337,12 +337,10 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
         DataSetupService.refresh_single_process_model_cache(process_model_identifier)
         db.session.commit()
     except FileNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_file_cannot_be_found",
-                message=f"Process model file cannot be found: {file_name}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_model_file_cannot_be_found",
+            message=f"Process model file cannot be found: {file_name}",
+            status_code=400,
         ) from exception
 
     GitService.commit_on_save(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
@@ -627,12 +625,10 @@ def _create_or_update_process_model_file(
     try:
         file, _ = SpecFileService.update_file(process_model, request_file.filename, request_file_contents, user=g.user)
     except ProcessModelFileInvalidError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_file_invalid",
-                message=f"Invalid Process model file: {request_file.filename}. Received error: {str(exception)}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_model_file_invalid",
+            message=f"Invalid Process model file: {request_file.filename}. Received error: {str(exception)}",
+            status_code=400,
         ) from exception
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents

@@ -1522,11 +1522,9 @@ class ProcessInstanceProcessor:
         task_data_limit = 1024**3
 
         if task_data_len > task_data_limit:
-            raise (
-                ApiError(
-                    error_code="task_data_size_exceeded",
-                    message=f"Maximum task data size of {task_data_limit} exceeded.",
-                )
+            raise ApiError(
+                error_code="task_data_size_exceeded",
+                message=f"Maximum task data size of {task_data_limit} exceeded.",
             )
 
     def serialize(self, serialize_script_engine_state: bool = True) -> dict:

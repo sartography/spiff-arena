@@ -48,15 +48,13 @@ def message_form_show(
         t for t in start_tasks if t.task_spec.event_definition.name == message_triggerable_process_model.message_name
     ]
     if len(matching_start_tasks) == 0:
-        raise (
-            ApiError(
-                error_code="message_start_event_not_found",
-                message=(
-                    f"Could not find a message start event for message '{message_triggerable_process_model.message_name}' in"
-                    f" process model '{message_triggerable_process_model.process_model_identifier}'."
-                ),
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="message_start_event_not_found",
+            message=(
+                f"Could not find a message start event for message '{message_triggerable_process_model.message_name}' in"
+                f" process model '{message_triggerable_process_model.process_model_identifier}'."
+            ),
+            status_code=400,
         )
 
     process_model = ProcessModelService.get_process_model(message_triggerable_process_model.process_model_identifier)
@@ -158,12 +156,10 @@ def form_show(
         with_form_data=True,
     )
     if task_model is None or not task_model.allows_guest(task_model.process_instance_id):
-        raise (
-            ApiError(
-                error_code="task_not_found",
-                message=f"Could not find completable task for {task_guid} in process_instance {process_instance_id}.",
-                status_code=404,
-            )
+        raise ApiError(
+            error_code="task_not_found",
+            message=f"Could not find completable task for {task_guid} in process_instance {process_instance_id}.",
+            status_code=404,
         )
 
     _assign_task_if_guest(task_model)
@@ -249,15 +245,12 @@ def _assign_task_if_guest(task_model: TaskModel) -> bool:
             task_guid=task_model.guid, process_instance_id=task_model.process_instance_id
         ).first()
         if human_task is None:
-            raise (
-                ApiError(
-                    error_code="completable_task_not_found",
-                    message=(
-                        f"Could not find completable task for {task_model.guid} in process_instance"
-                        f" {task_model.process_instance_id}."
-                    ),
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="completable_task_not_found",
+                message=(
+                    f"Could not find completable task for {task_model.guid} in process_instance {task_model.process_instance_id}."
+                ),
+                status_code=400,
             )
         human_task_user = HumanTaskUserModel(user_id=g.user.id, human_task=human_task, added_by=HumanTaskUserAddedBy.guest.value)
         db.session.add(human_task_user)
