@@ -248,8 +248,7 @@ def _assign_task_if_guest(task_model: TaskModel) -> bool:
             raise ApiError(
                 error_code="completable_task_not_found",
                 message=(
-                    f"Could not find completable task for {task_model.guid} in process_instance"
-                    f" {task_model.process_instance_id}."
+                    f"Could not find completable task for {task_model.guid} in process_instance {task_model.process_instance_id}."
                 ),
                 status_code=400,
             )
