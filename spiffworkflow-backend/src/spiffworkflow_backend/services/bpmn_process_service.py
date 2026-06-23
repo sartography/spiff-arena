@@ -226,11 +226,9 @@ class BpmnProcessService:
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         process_model_info = ProcessModelService.get_process_model(process_model_identifier)
         if process_model_info is None:
-            raise (
-                ApiError(
-                    "process_model_not_found",
-                    f"The given process model was not found: {process_model_identifier}.",
-                )
+            raise ApiError(
+                "process_model_not_found",
+                f"The given process model was not found: {process_model_identifier}.",
             )
         spec_files = FileSystemService.get_files(process_model_info)
         return WorkflowSpecService.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)

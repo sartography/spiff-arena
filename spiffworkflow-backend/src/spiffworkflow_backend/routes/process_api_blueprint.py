@@ -69,12 +69,10 @@ class ReactJsonSchemaSelectOption(TypedDict):
 
 def permissions_check(body: dict[str, dict[str, list[str]]]) -> flask.wrappers.Response:
     if "requests_to_check" not in body:
-        raise (
-            ApiError(
-                error_code="could_not_requests_to_check",
-                message="The key 'requests_to_check' not found at root of request body.",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="could_not_requests_to_check",
+            message="The key 'requests_to_check' not found at root of request body.",
+            status_code=400,
         )
     response_dict: dict[str, dict[str, bool]] = {}
     requests_to_check = body["requests_to_check"]
@@ -300,12 +298,10 @@ def _get_required_parameter_or_raise(parameters: list[str], post_body: dict[str,
             return_value = post_body[parameter]
 
     if return_value is None or return_value == "":
-        raise (
-            ApiError(
-                error_code="missing_required_parameter",
-                message=f"Parameter is missing from json request body: {parameters}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="missing_required_parameter",
+            message=f"Parameter is missing from json request body: {parameters}",
+            status_code=400,
         )
 
     return return_value, parameter_name
@@ -325,12 +321,10 @@ def _find_process_instance_by_id_or_raise(
 
     process_instance = process_instance_query.first()
     if process_instance is None:
-        raise (
-            ApiError(
-                error_code="process_instance_cannot_be_found",
-                message=f"Process instance cannot be found: {process_instance_id}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_instance_cannot_be_found",
+            message=f"Process instance cannot be found: {process_instance_id}",
+            status_code=400,
         )
     return process_instance  # type: ignore
 
@@ -344,12 +338,10 @@ def _get_process_model(process_model_id: str) -> ProcessModelInfo:
 def _find_principal_or_raise() -> PrincipalModel:
     principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
     if principal is None:
-        raise (
-            ApiError(
-                error_code="principal_not_found",
-                message=f"Principal not found from user id: {g.user.id}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="principal_not_found",
+            message=f"Principal not found from user id: {g.user.id}",
+            status_code=400,
         )
     return principal  # type: ignore
 
@@ -382,12 +374,10 @@ def _find_process_instance_for_me_or_raise(
     )
 
     if process_instance is None:
-        raise (
-            ApiError(
-                error_code="process_instance_cannot_be_found",
-                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_instance_cannot_be_found",
+            message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+            status_code=400,
         )
 
     if include_actions:
@@ -466,12 +456,10 @@ def _task_submit_shared(
             spiff_task = _get_spiff_task_from_processor(task_guid, processor)
 
             if spiff_task.state != TaskState.READY:
-                raise (
-                    ApiError(
-                        error_code="invalid_state",
-                        message="You may not update a task unless it is in the READY state.",
-                        status_code=400,
-                    )
+                raise ApiError(
+                    error_code="invalid_state",
+                    message="You may not update a task unless it is in the READY state.",
+                    status_code=400,
                 )
 
             human_task = _find_human_task_or_raise(
@@ -543,12 +531,10 @@ def _find_human_task_or_raise(
 
     human_task: HumanTaskModel | None = human_task_query.first()
     if human_task is None:
-        raise (
-            ApiError(
-                error_code="no_human_task",
-                message=f"Cannot find a task to complete for task id '{task_guid}' and process instance {process_instance_id}.",
-                status_code=500,
-            )
+        raise ApiError(
+            error_code="no_human_task",
+            message=f"Cannot find a task to complete for task id '{task_guid}' and process instance {process_instance_id}.",
+            status_code=500,
         )
     return human_task
 
@@ -561,12 +547,10 @@ def _get_spiff_task_from_processor(
     spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
 
     if spiff_task is None:
-        raise (
-            ApiError(
-                error_code="empty_task",
-                message="Processor failed to obtain task.",
-                status_code=500,
-            )
+        raise ApiError(
+            error_code="empty_task",
+            message="Processor failed to obtain task.",
+            status_code=500,
         )
     return spiff_task
 
@@ -660,12 +644,10 @@ def _get_task_model_for_request(
         task_model.saved_form_data = saved_form_data
         if task_definition.typename == "UserTask":
             if not form_schema_file_name:
-                raise (
-                    ApiError(
-                        error_code="missing_form_file",
-                        message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid: {task_guid}",
-                        status_code=400,
-                    )
+                raise ApiError(
+                    error_code="missing_form_file",
+                    message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid: {task_guid}",
+                    status_code=400,
                 )
 
             form_dict = _prepare_form_data(

@@ -77,12 +77,10 @@ class UserService:
             # TODO: username may be ''.
             #  not sure what to send in error message.
             #  Don't really want to send service_id.
-            raise (
-                ApiError(
-                    error_code="user_already_exists",
-                    message=f"User already exists: {username}",
-                    status_code=409,
-                )
+            raise ApiError(
+                error_code="user_already_exists",
+                message=f"User already exists: {username}",
+                status_code=409,
             )
 
     # Returns true if the current user is logged in.
@@ -442,7 +440,7 @@ class UserService:
             .first()
         )
         if user_group_assignment is None:
-            raise (UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_id})"))
+            raise UserGroupAssignmentNotFoundError(f"User ({user.username}) is not in group ({group_id})")
         db.session.delete(user_group_assignment)
         db.session.commit()
         cls.update_human_task_assignments_for_user(user, new_group_ids=set(), old_group_ids={group_id})
