@@ -375,6 +375,11 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         spiff_logger.propagate = False
         handler = SpiffLogHandler(app)
         spiff_logger.addHandler(handler)
+    else:
+        # local development: quiet the noisy SpiffWorkflow task/workflow loggers
+        # since there is no event stream handler to consume them
+        for noisy_logger in ("spiff.task", "spiff.workflow", "spiff.data"):
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
