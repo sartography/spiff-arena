@@ -22,6 +22,67 @@ class TestLoggingService(BaseTest):
         assert logger.handlers
         assert logger.propagate is False
 
+    def test_flask_app_logger_has_handlers(self, app: Flask) -> None:
+        logger = logging.getLogger("spiffworkflow_backend")
+        assert len(logger.handlers) >= 1
+        assert logger.propagate is False
+
+    def test_flask_app_logger_can_output(self, app: Flask) -> None:
+        logger = logging.getLogger("spiffworkflow_backend")
+        with patch.object(logger.handlers[0], "handle") as mock_handle:
+            logger.info("test message")
+            mock_handle.assert_called_once()
+
+    def test_celery_worker_logger_setup(self, app: Flask) -> None:
+        import os
+
+        from spiffworkflow_backend.services.logging_service import setup_logger_for_app
+
+        os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"] = "true"
+        try:
+            logger = logging.getLogger("spiffworkflow_backend")
+
+            setup_logger_for_app(app, logging, force_run_with_celery=True)
+
+            assert len(logger.handlers) >= 1
+            assert logger.propagate is False
+        finally:
+            del os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"]
+
+    def test_spiff_task_is_quiet_in_local_dev(self, app: Flask) -> None:
+        spiff_task_logger = logging.getLogger("spiff.task")
+        assert spiff_task_logger.level in (logging.WARNING, logging.NOTSET)
+
+    def test_spiff_event_is_not_quieted(self, app: Flask) -> None:
+        spiff_event_logger = logging.getLogger("spiff.event")
+        assert spiff_event_logger.level == logging.NOTSET
+
+    def test_setup_logger_for_app_returns_early_in_celery_worker(self, app: Flask) -> None:
+        import os
+
+        from spiffworkflow_backend.services.logging_service import setup_logger_for_app
+
+        os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"] = "true"
+        try:
+            setup_logger_for_app(app, logging)
+            assert True  # no error
+        finally:
+            del os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"]
+
+    def test_force_run_with_celery_bypasses_early_return(self, app: Flask) -> None:
+        import os
+
+        from spiffworkflow_backend.services.logging_service import setup_logger_for_app
+
+        os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"] = "true"
+        try:
+            logger = logging.getLogger("spiffworkflow_backend")
+            setup_logger_for_app(app, logging, force_run_with_celery=True)
+            assert len(logger.handlers) >= 1
+            assert logger.propagate is False
+        finally:
+            del os.environ["SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER"]
+
     def test_spiff_log_handler_skips_internal_diagnostic_records(self, app: Flask) -> None:
         handler = SpiffLogHandler(app)
         record = logging.LogRecord(
