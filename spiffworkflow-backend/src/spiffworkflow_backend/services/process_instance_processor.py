@@ -1068,11 +1068,12 @@ class ProcessInstanceProcessor:
                 task_available_process_model,
                 persistence_level="full",
                 data_to_inject={"task_guid": human_task.task_guid},
+                user=self.process_instance_model.process_initiator,
             )
-        except Exception as e:
-            current_app.logger.error(
+        except Exception:
+            current_app.logger.exception(
                 f"Failed to trigger task available process model '{task_available_process_model_identifier}' "
-                f"for task {human_task.task_id}: {str(e)}"
+                f"for task {human_task.task_id}"
             )
 
     def _extract_task_metadata_from_extensions(self, ready_or_waiting_task: SpiffTask, extensions: dict) -> dict:

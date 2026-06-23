@@ -6,6 +6,7 @@ from flask.app import Flask
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -24,8 +25,10 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         app: Flask,
     ) -> None:
         # Setup
-        process_instance = ProcessInstanceModel(id=123)
+        process_initiator = UserModel(id=1, username="testuser", service="test", service_id="testuser")
+        process_instance = ProcessInstanceModel(id=123, process_initiator=process_initiator)
         processor = ProcessInstanceProcessor(process_instance)
+        processor.process_instance_model = process_instance
 
         human_task = HumanTaskModel(process_instance_id=123, task_guid="task_guid_456", task_id="task_guid_456")
 
@@ -39,7 +42,10 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         # Verify
         mock_get_process_model.assert_called_once_with(task_available_pm_id)
         mock_create_and_run.assert_called_once_with(
-            mock_task_available_pm, persistence_level="full", data_to_inject={"task_guid": "task_guid_456"}
+            mock_task_available_pm,
+            persistence_level="full",
+            data_to_inject={"task_guid": "task_guid_456"},
+            user=process_initiator,
         )
 
     @patch(
