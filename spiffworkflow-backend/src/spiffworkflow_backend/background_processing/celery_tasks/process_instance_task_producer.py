@@ -106,7 +106,9 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
 
 
 def queue_start_process_instance_if_appropriate(
-    process_model_identifier: str, triggering_task_guid: str, initiator_user_id: int
+    process_model_identifier: str,
+    triggering_task_guid: str,
+    initiator_user_id: int,
 ) -> bool:
     if queue_enabled_for_process_model():
         celery.current_app.send_task(

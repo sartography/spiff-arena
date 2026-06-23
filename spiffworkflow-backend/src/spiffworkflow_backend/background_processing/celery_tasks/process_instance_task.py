@@ -156,10 +156,6 @@ def celery_task_process_instance_start_from_model(
     task_guid: str,
     user_id: int,
 ) -> dict:
-    celery_task_id = self.request.id
-    logger_prefix = f"celery_task_process_instance_start_from_model[{celery_task_id}]"
-    current_app.logger.info(f"{logger_prefix}: process_model_identifier: {process_model_identifier}, task_guid: {task_guid}")
-
     try:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         user = UserModel.query.filter_by(id=user_id).first()
@@ -174,5 +170,7 @@ def celery_task_process_instance_start_from_model(
         ).process_instance_model
         return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
     except Exception as exception:
-        current_app.logger.exception(f"{logger_prefix}: Error running task available process model. {str(exception)}")
+        current_app.logger.exception(
+            "Error in celery_task_process_instance_start_from_model: %s", str(exception)
+        )
         return {"ok": False, "process_instance_id": None, "task_guid": task_guid, "exception": str(exception)}
