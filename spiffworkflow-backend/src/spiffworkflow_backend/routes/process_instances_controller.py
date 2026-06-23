@@ -7,6 +7,7 @@ from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMod
 
 import json
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 from flask import current_app
@@ -75,8 +76,6 @@ def process_instance_run_deprecated(
     force_run: bool = False,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    from typing import cast
-
     return cast(
         flask.wrappers.Response,
         process_instance_run(

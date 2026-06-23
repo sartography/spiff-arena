@@ -210,7 +210,6 @@ lint.ignore = [
   "PLR",  # "refactoring" category has "too many lines in method" type stuff
   "PLC1901",
   "PLE1205",  # saw this Too many arguments for `logging` format string give a false positive once
-  "PLC0415",
 ]
 
 line-length = 130
@@ -224,8 +223,8 @@ exclude = [
 
 [tool.ruff.lint.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
-"tests/**/*.py" = ["PLR2004", "S101"]  # PLR2004 is about magic vars, S101 allows assert
-"bin/**/*.py" = ["T"]  # it's ok to print things in scripts
+"tests/**/*.py" = ["PLR2004", "PLC0415", "S101"]  # PLR2004 is about magic vars, PLC0415 allows inline imports in tests, S101 allows assert
+"bin/**/*.py" = ["PL", "T"]  # it's ok to print things in scripts and to have inline imports in utility scripts
 
 [tool.ruff.lint.isort]
 force-single-line = true

@@ -75,7 +75,7 @@ def celery_backend_results(
             redis_client = redis.StrictRedis.from_url(backend_url)
             result_values = _get_redis_results(redis_client)
         elif backend_url.startswith("s3://"):
-            import boto3  # type: ignore
+            import boto3  # type: ignore  # noqa: PLC0415
 
             s3_client = boto3.client("s3")
             bucket_name = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"]
@@ -121,8 +121,8 @@ def _get_redis_results(redis_client: Any) -> Any:
 
 
 def _get_s3_results(s3_client: Any, bucket_name: Any) -> list:
-    from botocore.exceptions import BotoCoreError  # type: ignore
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError  # type: ignore  # noqa: PLC0415
+    from botocore.exceptions import ClientError  # noqa: PLC0415
 
     try:
         # This defaults to retrieving a maximum of 1000 items, if it
