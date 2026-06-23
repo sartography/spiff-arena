@@ -55,13 +55,14 @@ For example:
 ```python
 task_url = get_url_for_task(task_guid)
 public_task_url = get_url_for_task(task_guid, public=True)
-assigned_users = get_users_assigned_to_task(task_guid)
-assigned_groups = get_groups_assigned_to_task(task_guid)
-waiting_usernames = get_usernames_waiting_for_task(task_guid)
+potential_owners = get_task_potential_owners(task_guid)
+usernames = potential_owners["users"]
+groups = potential_owners["groups"]
 ```
 
 `get_url_for_task(task_guid)` returns the full Arena URL for the task.
 Use the `public=True` option only when the task is configured for public completion.
+`get_task_potential_owners(task_guid)` returns the usernames and group identifiers that can complete the task.
 
 ## Troubleshooting
 
