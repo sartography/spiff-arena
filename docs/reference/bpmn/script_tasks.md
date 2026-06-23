@@ -166,6 +166,7 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_all_permissions                    | Gets all permissions currently in the system.                                                                                                                  |
 | get_current_task_info                  | Returns information about the current task.                                                                                                                    |
 | get_current_user                       | Returns the current user.                                                                                                                                      |
+| get_users_assigned_to_task             | Returns the usernames directly assigned to a human task for a task GUID.                                                                                       |
 | get_task_potential_owners              | Returns usernames and groups that can complete a task.      |
 | get_url_for_task                       | Returns the URL to the task show page for a task_guid (optionally with the public path segment). |
 | get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
@@ -181,7 +182,6 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_task_data_value                    | Checks if a given value is in task data and returns its value. If it does not exist or is None, it returns the default value.                                  |
 | get_toplevel_process_info              | Returns information about the currently running process.                                                                                                       |
 | get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
-| get_users_assigned_to_task             | Returns the usernames directly assigned to a human task for a task GUID.                                                                                       |
 | get_user_properties                    | Gets the user properties for the current user.                                                                                                                 |
 | get_user                    | Gets the user by username.                                                                                                                 |
 | markdown_file_download_link            | Returns a markdown format string for a file download link.                                                                                                     |
