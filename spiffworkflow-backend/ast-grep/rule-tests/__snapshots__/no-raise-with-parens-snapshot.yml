@@ -10,12 +10,16 @@ snapshots:
           raise ApiError(error_code="bad", message="nope", status_code=409)
     labels:
     - source: |-
-        raise (
+        (
                 ApiError(error_code="bad", message="nope", status_code=409)
             )
       style: primary
-      start: 13
+      start: 19
       end: 94
+    - source: raise
+      style: secondary
+      start: 13
+      end: 18
   ? |
     raise (
         ApiError("bad")
@@ -24,16 +28,53 @@ snapshots:
       raise ApiError("bad")
     labels:
     - source: |-
-        raise (
+        (
             ApiError("bad")
         )
       style: primary
-      start: 0
+      start: 6
       end: 29
+    - source: raise
+      style: secondary
+      start: 0
+      end: 5
+  ? |
+    raise (
+        ApiError("bad")
+    ) from exception
+  : fixed: |
+      raise ApiError("bad") from exception
+    labels:
+    - source: |-
+        (
+            ApiError("bad")
+        )
+      style: primary
+      start: 6
+      end: 29
+    - source: raise
+      style: secondary
+      start: 0
+      end: 5
   raise (ApiError("bad")):
     fixed: raise ApiError("bad")
     labels:
-    - source: raise (ApiError("bad"))
+    - source: (ApiError("bad"))
       style: primary
-      start: 0
+      start: 6
       end: 23
+    - source: raise
+      style: secondary
+      start: 0
+      end: 5
+  raise (ApiError("bad")) from exception:
+    fixed: raise ApiError("bad") from exception
+    labels:
+    - source: (ApiError("bad"))
+      style: primary
+      start: 6
+      end: 23
+    - source: raise
+      style: secondary
+      start: 0
+      end: 5

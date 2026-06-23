@@ -5,5 +5,7 @@ language: Python
 severity: error
 message: "Use `raise Foo()` not `raise (Foo())`; parens are misleading here."
 rule:
-  pattern: raise ($ERR)
-fix: raise $ERR
+  pattern: ($ERR)
+  follows:
+    pattern: raise
+fix: $ERR

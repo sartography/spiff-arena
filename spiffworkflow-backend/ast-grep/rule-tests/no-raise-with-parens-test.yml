@@ -5,6 +5,9 @@ valid:
   - |
     def foo():
         raise ApiError(error_code="bad", message="nope", status_code=409)
+  - raise ApiError("bad") from exception
+  - |
+    raise ApiError("bad") from exception
 invalid:
   - raise (ApiError("bad"))
   - |
@@ -16,3 +19,8 @@ invalid:
         raise (
             ApiError(error_code="bad", message="nope", status_code=409)
         )
+  - raise (ApiError("bad")) from exception
+  - |
+    raise (
+        ApiError("bad")
+    ) from exception
