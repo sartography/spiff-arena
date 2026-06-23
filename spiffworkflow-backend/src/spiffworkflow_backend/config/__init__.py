@@ -208,7 +208,7 @@ def _setup_cipher(app: Flask) -> None:
         )
 
     if encryption_lib == "cryptography":
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet  # noqa: PLC0415
 
         app_secret_key = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_KEY")
         if app_secret_key is None:

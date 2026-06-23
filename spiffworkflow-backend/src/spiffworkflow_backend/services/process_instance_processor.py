@@ -1470,7 +1470,7 @@ class ProcessInstanceProcessor:
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         if save and execution_service.new_waiting_message_names:
-            from spiffworkflow_backend.services.message_service import MessageService
+            from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
 
             MessageService.correlate_ready_send_messages_for_process_instance(
                 execution_service.new_waiting_message_names,

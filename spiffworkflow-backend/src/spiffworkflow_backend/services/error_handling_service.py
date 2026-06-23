@@ -68,8 +68,8 @@ class ErrorHandlingService:
 
         # importing here to avoid circular imports since these imports are only needed here at runtime.
         # we were not able to figure out which specific import was causing the issue.
-        from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-        from spiffworkflow_backend.services.message_service import MessageService
+        from spiffworkflow_backend.models.message_instance import MessageInstanceModel  # noqa: PLC0415
+        from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
 
         message_text = (
             f"There was an exception running process model {process_instance.process_model_identifier} for instance"
