@@ -4,6 +4,8 @@ import importlib
 import importlib.util
 import os
 import pkgutil
+import re
+import sys
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any
@@ -145,8 +147,6 @@ class Script:
             # Convert class name from PascalCase to snake_case
             # This works for both normal scripts and global scripts regardless of module names
             class_name = subclass.__name__
-            import re
-
             return re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
 
         execlist = {}
@@ -169,9 +169,7 @@ class Script:
     @staticmethod
     def _get_all_subclasses(script_class: Any) -> list[type[Script]]:
         # NOTE: for some reason, putting this anywhere else doesn't work. It says the current_app variable is unbound.
-        import sys
-
-        from flask import current_app
+        from flask import current_app  # noqa: PLC0415
 
         # hackish mess to make sure we have all the modules loaded for the scripts
         pkg_dir = os.path.dirname(__file__)

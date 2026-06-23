@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import concurrent.futures
+import cProfile
 import sys
 import time
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
+from pstats import SortKey
 from threading import Lock
 from typing import Any
 from uuid import UUID
@@ -623,9 +625,6 @@ class WorkflowExecutionService:
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
         if profile:
-            import cProfile
-            from pstats import SortKey
-
             task_runnability = TaskRunnability.unknown_if_ready_tasks
             with cProfile.Profile() as pr:
                 task_runnability = self._run_and_save(
