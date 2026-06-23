@@ -5,6 +5,7 @@ from flask import current_app
 from flask.app import Flask
 
 from spiffworkflow_backend.interfaces import PotentialOwnerIdList
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -38,7 +39,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         task_available_pm_id = "task_available_model"
 
         with patch("celery.current_app.send_task") as mock_send_task:
-            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 
@@ -72,13 +73,11 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         task_available_pm_id = "task_available_model"
 
         with patch.object(current_app, "logger") as mock_logger:
-            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             mock_logger.warning.assert_called_once_with(
-                "Cannot trigger task-available process model '%s' "
-                "for task %s: Celery is not enabled.",
-                task_available_pm_id,
-                human_task.task_id,
+                f"Cannot trigger task-available process model '{task_available_pm_id}' "
+                f"for task {human_task.task_id}: Celery is not enabled."
             )
 
     @patch(
@@ -96,7 +95,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor._extract_form_properties_from_extensions"
     )
     @patch("spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor._find_existing_human_task")
-    def test_process_ready_or_waiting_task_triggers_task_available_process_model(
+    def test_process_ready_or_waiting_task_queues_task_available_process_model_trigger(
         self,
         mock_find_existing: MagicMock,
         mock_extract_form: MagicMock,
@@ -120,6 +119,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         mock_extract_meta.return_value = {}
 
         human_task = MagicMock()
+        human_task.task_guid = "task_guid_456"
         mock_create_human.return_value = human_task
 
         potential_owners: PotentialOwnerIdList = {"potential_owners": []}
@@ -129,4 +129,43 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         processor._process_ready_or_waiting_task(ready_task, [])
 
         # Verify
-        mock_trigger_task_available_process_model.assert_called_once_with("my_task_available_model", human_task)
+        mock_trigger_task_available_process_model.assert_not_called()
+        assert processor._pending_task_available_process_model_triggers == [("my_task_available_model", "task_guid_456")]
+
+    @patch(
+        "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
+    )
+    def test_save_dispatches_task_available_process_model_triggers_after_commit(
+        self,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
+        process_instance = ProcessInstanceModel(id=123)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.process_instance_model = process_instance
+        ordered_events = []
+
+        def queue_pending_trigger(metadata: dict) -> None:
+            processor._pending_task_available_process_model_triggers.append(("my_task_available_model", "task_guid_456"))
+
+        def commit() -> None:
+            ordered_events.append("commit")
+
+        def trigger(task_available_process_model_identifier: str, task_guid: str) -> None:
+            ordered_events.append("trigger")
+
+        with (
+            patch.object(processor, "_save_process_instance_state"),
+            patch.object(processor, "_initialize_process_start_time_if_needed"),
+            patch.object(processor, "extract_metadata", return_value={}),
+            patch.object(processor, "_handle_process_completion"),
+            patch.object(processor, "_process_human_tasks", side_effect=queue_pending_trigger),
+            patch.object(processor, "_trigger_task_available_process_model", side_effect=trigger) as mock_trigger,
+            patch.object(db.session, "add"),
+            patch.object(db.session, "commit", side_effect=commit),
+        ):
+            processor.save()
+
+        assert ordered_events == ["commit", "trigger"]
+        mock_trigger.assert_called_once_with("my_task_available_model", "task_guid_456")
+        assert processor._pending_task_available_process_model_triggers == []

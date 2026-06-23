@@ -70,6 +70,8 @@ Extension attributes are valid BPMN extension points, but for new Arena task set
 That path is parsed by the SpiffWorkflow library and gives the XML name its own domain meaning.
 Use an extension attribute only when the value is a small flag or identifier that naturally belongs directly on an existing BPMN element and both the modeler and runtime code explicitly support it.
 
+For task-availability hook behavior, see [Start a Process When a Human Task Becomes Available](/how_to_guides/building_diagrams/start_process_when_task_available).
+
 ### Property Names
 
 SpiffWorkflow parses `<spiffworkflow:properties>` into a generic dictionary.

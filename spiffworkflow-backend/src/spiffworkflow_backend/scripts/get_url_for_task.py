@@ -30,5 +30,5 @@ class GetUrlForTask(Script):
 
         public = args[1] if len(args) > 1 else kwargs.get("public", False)
         public_segment = "/public" if public is True else ""
-        frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"].rstrip("/")
         return f"{frontend_url}{public_segment}/tasks/{human_task.process_instance_id}/{human_task.task_guid}"

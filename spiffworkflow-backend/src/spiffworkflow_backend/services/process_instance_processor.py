@@ -438,6 +438,7 @@ class ProcessInstanceProcessor:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
+        self._pending_task_available_process_model_triggers: list[tuple[str, str]] = []
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model,
             process_id_to_run=process_id_to_run,
@@ -949,6 +950,7 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
+        self._pending_task_available_process_model_triggers = []
         self._save_process_instance_state()
         self._initialize_process_start_time_if_needed()
 
@@ -958,6 +960,7 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         self._process_human_tasks(metadata)
         db.session.commit()
+        self._dispatch_pending_task_available_process_model_triggers()
 
     def _save_process_instance_state(self) -> None:
         """Update process instance status and save BPMN process definition."""
@@ -1049,7 +1052,9 @@ class ProcessInstanceProcessor:
             )
             task_available_process_model_identifier = self._task_available_process_model_identifier(extensions)
             if task_available_process_model_identifier is not None:
-                self._trigger_task_available_process_model(task_available_process_model_identifier, human_task)
+                self._pending_task_available_process_model_triggers.append(
+                    (task_available_process_model_identifier, human_task.task_guid)
+                )
             return human_task
         return None
 
@@ -1059,41 +1064,33 @@ class ProcessInstanceProcessor:
             return task_available_process_model_identifier
         return None
 
-    def _trigger_task_available_process_model(
-        self, task_available_process_model_identifier: str, human_task: HumanTaskModel
-    ) -> None:
+    def _trigger_task_available_process_model(self, task_available_process_model_identifier: str, task_guid: str) -> None:
         try:
-            if queue_start_process_instance_if_appropriate(
+            if not queue_start_process_instance_if_appropriate(
                 task_available_process_model_identifier,
-                human_task.task_guid,
+                task_guid,
                 self.process_instance_model.process_initiator.id,
             ):
-                current_app.logger.info(
-                    "Triggered task-available process model '%s' from process instance %s, task %s",
-                    task_available_process_model_identifier,
-                    self.process_instance_model.id,
-                    human_task.task_id,
-                )
-            else:
                 current_app.logger.warning(
-                    "Cannot trigger task-available process model '%s' "
-                    "for task %s: Celery is not enabled.",
-                    task_available_process_model_identifier,
-                    human_task.task_id,
+                    f"Cannot trigger task-available process model '{task_available_process_model_identifier}' "
+                    f"for task {task_guid}: Celery is not enabled."
                 )
         except Exception as exception:
             current_app.logger.exception(
-                "Failed to trigger task-available process model '%s' "
-                "from process instance %s, task %s",
-                task_available_process_model_identifier,
-                self.process_instance_model.id,
-                human_task.task_id,
+                f"Failed to trigger task-available process model '{task_available_process_model_identifier}' "
+                f"from process instance {self.process_instance_model.id}, task {task_guid}"
             )
             ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
                 ProcessInstanceEventType.process_instance_error.value,
                 exception=exception,
             )
+
+    def _dispatch_pending_task_available_process_model_triggers(self) -> None:
+        pending_triggers = self._pending_task_available_process_model_triggers
+        self._pending_task_available_process_model_triggers = []
+        for task_available_process_model_identifier, task_guid in pending_triggers:
+            self._trigger_task_available_process_model(task_available_process_model_identifier, task_guid)
 
     def _extract_task_metadata_from_extensions(self, ready_or_waiting_task: SpiffTask, extensions: dict) -> dict:
         """Extract and evaluate task metadata from task extensions."""
@@ -1473,7 +1470,7 @@ class ProcessInstanceProcessor:
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         if save and execution_service.new_waiting_message_names:
-            from spiffworkflow_backend.services.message_service import MessageService
+            from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
 
             MessageService.correlate_ready_send_messages_for_process_instance(
                 execution_service.new_waiting_message_names,

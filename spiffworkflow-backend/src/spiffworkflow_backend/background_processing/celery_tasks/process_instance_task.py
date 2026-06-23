@@ -170,5 +170,5 @@ def celery_task_process_instance_start_from_model(
         ).process_instance_model
         return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
     except Exception as exception:
-        current_app.logger.exception("Error in celery_task_process_instance_start_from_model: %s", str(exception))
-        return {"ok": False, "process_instance_id": None, "task_guid": task_guid, "exception": str(exception)}
+        error_message = f"Error in celery_task_process_instance_start_from_model: {str(exception)}"
+        raise SpiffCeleryWorkerError(error_message) from exception
