@@ -14,7 +14,7 @@ The started process receives only one injected data value:
 
 | Variable | Description |
 | --- | --- |
-| `task_guid` | The task GUID of the human task that just became available. |
+| `task_guid` | The runtime task GUID for the newly available User Task or Manual Task. This is the identifier used in Arena task URLs and task helper scripts; it is not the BPMN task id or the human task database row id. |
 
 The started process can use script helpers to look up any other information it needs from that task GUID.
 
@@ -48,7 +48,7 @@ For the full extension naming reference, see [Spiff-Flavored BPMN](/reference/sp
 
 ## Get Task Details in the Started Process
 
-Because only `task_guid` is injected, use scripts in the started process to derive the details needed for that workflow.
+Because only the runtime task GUID is injected, use scripts in the started process to derive the details needed for that workflow.
 
 For example:
 
@@ -60,6 +60,6 @@ usernames = potential_owners["users"]
 groups = potential_owners["groups"]
 ```
 
-`get_url_for_task(task_guid)` returns the full Arena URL for the task.
+`get_url_for_task(task_guid)` returns the full Arena URL for the task, which is appropriate to include in a user notification so the user can go directly to the exact piece of work they need to complete.
 Use the `public=True` option only when the task is configured for public completion.
 `get_task_potential_owners(task_guid)` returns the usernames and group identifiers that can complete the task.
