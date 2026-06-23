@@ -8,10 +8,8 @@ from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
-from spiffworkflow_backend.scripts.get_groups_assigned_to_task import GetGroupsAssignedToTask
+from spiffworkflow_backend.scripts.get_task_potential_owners import GetTaskPotentialOwners
 from spiffworkflow_backend.scripts.get_url_for_task import GetUrlForTask
-from spiffworkflow_backend.scripts.get_usernames_waiting_for_task import GetUsernamesWaitingForTask
-from spiffworkflow_backend.scripts.get_users_assigned_to_task import GetUsersAssignedToTask
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -69,9 +67,10 @@ class TestGetUsersAssignedToTask(BaseTest):
             process_model_identifier=process_model.id,
         )
 
-        result = GetUsersAssignedToTask().run(script_attributes_context, task_guid=task_guid)
+        result = GetTaskPotentialOwners().run(script_attributes_context, task_guid=task_guid)
 
-        assert result == ["testuser1", "testuser2", "testuser3"]
+        assert result["users"] == ["testuser1", "testuser2", "testuser3"]
+        assert result["groups"] == []
         json.dumps(result)
 
     def test_task_notification_helper_scripts(
@@ -119,11 +118,10 @@ class TestGetUsersAssignedToTask(BaseTest):
         expected_task_url = f"{frontend_url}/tasks/{process_instance.id}/{task_guid}"
 
         assert GetUrlForTask().run(script_attributes_context, task_guid=task_guid) == expected_task_url
-        assert GetUsersAssignedToTask().run(script_attributes_context, task_guid=task_guid) == ["testuser1", "testuser2"]
-        assert GetGroupsAssignedToTask().run(script_attributes_context, task_guid=task_guid) == [
-            {"id": group.id, "identifier": "testgroup", "name": "Test Group"}
-        ]
-        assert GetUsernamesWaitingForTask().run(script_attributes_context, task_guid=task_guid) == ["waiting@example.com"]
+        assert GetTaskPotentialOwners().run(script_attributes_context, task_guid=task_guid) == {
+            "users": ["testuser1", "testuser2", "waiting@example.com"],
+            "groups": ["testgroup"],
+        }
 
     def test_get_users_assigned_to_task_raises_if_no_task_guid(
         self,
@@ -138,4 +136,4 @@ class TestGetUsersAssignedToTask(BaseTest):
         )
 
         with pytest.raises(ValueError, match="Expected task_guid as first argument or keyword argument"):
-            GetUsersAssignedToTask().run(script_attributes_context)
+            GetTaskPotentialOwners().run(script_attributes_context)
