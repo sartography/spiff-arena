@@ -1044,65 +1044,34 @@ class ProcessInstanceProcessor:
                 ui_form_file_name,
                 json_metadata,
             )
-            if (
-                "properties" in extensions
-                and "notificationProcessModel" in extensions["properties"]
-                and extensions["properties"]["notificationProcessModel"]
-            ):
-                self._trigger_notification_process_model(
-                    extensions["properties"]["notificationProcessModel"], human_task, potential_owner_hash
-                )
+            task_available_process_model_identifier = self._task_available_process_model_identifier(extensions)
+            if task_available_process_model_identifier is not None:
+                self._trigger_task_available_process_model(task_available_process_model_identifier, human_task)
             return human_task
         return None
 
-    def _trigger_notification_process_model(
-        self, notification_process_model_identifier: str, human_task: HumanTaskModel, potential_owner_hash: PotentialOwnerIdList
+    def _task_available_process_model_identifier(self, extensions: dict) -> str | None:
+        task_available_process_model_identifier = extensions.get("processModelToStartOnTaskAvailable")
+        if task_available_process_model_identifier:
+            return task_available_process_model_identifier
+        return None
+
+    def _trigger_task_available_process_model(
+        self, task_available_process_model_identifier: str, human_task: HumanTaskModel
     ) -> None:
-        from spiffworkflow_backend.models.db import db
-        from spiffworkflow_backend.models.group import GroupModel
-        from spiffworkflow_backend.models.user import UserModel
         from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
         from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
-        potential_owners = []
-        for po in potential_owner_hash["potential_owners"]:
-            user_id = po.get("user_id")
-            if user_id:
-                user = db.session.query(UserModel).filter_by(id=user_id).first()
-                if user:
-                    potential_owners.append({"type": "user", "user": user.as_dict()})
-
-        lane_owner_group_ids = potential_owner_hash.get("lane_owner_group_ids", [])
-        potential_groups = []
-        for group_id in lane_owner_group_ids:
-            group = db.session.query(GroupModel).filter_by(id=group_id).first()
-            if group:
-                group_dict = {"id": group.id, "identifier": group.identifier}
-                potential_groups.append(group_dict)
-
-        fe_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
-        task_url = f"{fe_url}/tasks/{human_task.process_instance_id}/{human_task.task_id}"
-        api_path = f"/tasks/{human_task.process_instance_id}/{human_task.task_id}"
-
-        data_to_inject = {
-            "task_url": task_url,
-            "process_instance_id": human_task.process_instance_id,
-            "task_guid": human_task.task_id,
-            "api_path": api_path,
-            "frontend_url": fe_url,
-            "potential_owners": potential_owners,
-            "potential_groups": potential_groups,
-            "lane_owner_usernames_waiting": potential_owner_hash.get("lane_owner_usernames_waiting", []),
-        }
-
         try:
-            notification_process_model = ProcessModelService.get_process_model(notification_process_model_identifier)
+            task_available_process_model = ProcessModelService.get_process_model(task_available_process_model_identifier)
             ProcessInstanceService.create_and_run_process_instance(
-                notification_process_model, persistence_level="full", data_to_inject=data_to_inject
+                task_available_process_model,
+                persistence_level="full",
+                data_to_inject={"task_guid": human_task.task_guid},
             )
         except Exception as e:
             current_app.logger.error(
-                f"Failed to trigger notification process model '{notification_process_model_identifier}' "
+                f"Failed to trigger task available process model '{task_available_process_model_identifier}' "
                 f"for task {human_task.task_id}: {str(e)}"
             )
 
