@@ -1,0 +1,39 @@
+id: no-raise-with-parens
+snapshots:
+  ? |
+    if True:
+        raise (
+            ApiError(error_code="bad", message="nope", status_code=409)
+        )
+  : fixed: |
+      if True:
+          raise ApiError(error_code="bad", message="nope", status_code=409)
+    labels:
+    - source: |-
+        raise (
+                ApiError(error_code="bad", message="nope", status_code=409)
+            )
+      style: primary
+      start: 13
+      end: 94
+  ? |
+    raise (
+        ApiError("bad")
+    )
+  : fixed: |
+      raise ApiError("bad")
+    labels:
+    - source: |-
+        raise (
+            ApiError("bad")
+        )
+      style: primary
+      start: 0
+      end: 29
+  raise (ApiError("bad")):
+    fixed: raise ApiError("bad")
+    labels:
+    - source: raise (ApiError("bad"))
+      style: primary
+      start: 0
+      end: 23

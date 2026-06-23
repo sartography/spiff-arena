@@ -25,15 +25,13 @@ class FormSchemaService:
                 file_name=form_file,
             )
         except GitCommandError as exception:
-            raise (
-                ApiError(
-                    error_code="git_error_loading_form",
-                    message=(
-                        f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
-                        f" '{revision}' no longer exists? Error was: {str(exception)}"
-                    ),
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="git_error_loading_form",
+                message=(
+                    f"Could not load form schema from: {form_file}. Was git history rewritten such that revision"
+                    f" '{revision}' no longer exists? Error was: {str(exception)}"
+                ),
+                status_code=400,
             ) from exception
 
         if task_model and task_model.data is not None:
@@ -49,10 +47,8 @@ class FormSchemaService:
             hot_dict: dict = json.loads(form_contents)
             return hot_dict
         except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="error_loading_form",
+                message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
+                status_code=400,
             ) from exception

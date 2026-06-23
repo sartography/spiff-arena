@@ -1,0 +1,18 @@
+id: no-raise-with-parens
+valid:
+  - raise ApiError("bad")
+  - raise ValueError("nope")
+  - |
+    def foo():
+        raise ApiError(error_code="bad", message="nope", status_code=409)
+invalid:
+  - raise (ApiError("bad"))
+  - |
+    raise (
+        ApiError("bad")
+    )
+  - |
+    if True:
+        raise (
+            ApiError(error_code="bad", message="nope", status_code=409)
+        )
