@@ -39,7 +39,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         task_available_pm_id = "task_available_model"
 
         with patch("celery.current_app.send_task") as mock_send_task:
-            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 
@@ -73,7 +73,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         task_available_pm_id = "task_available_model"
 
         with patch.object(current_app, "logger") as mock_logger:
-            processor._trigger_task_available_process_model(task_available_pm_id, human_task)
+            processor._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             mock_logger.warning.assert_called_once_with(
                 f"Cannot trigger task-available process model '{task_available_pm_id}' "
@@ -119,6 +119,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         mock_extract_meta.return_value = {}
 
         human_task = MagicMock()
+        human_task.task_guid = "task_guid_456"
         mock_create_human.return_value = human_task
 
         potential_owners: PotentialOwnerIdList = {"potential_owners": []}
@@ -129,7 +130,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
 
         # Verify
         mock_trigger_task_available_process_model.assert_not_called()
-        assert processor._pending_task_available_process_model_triggers == [("my_task_available_model", human_task)]
+        assert processor._pending_task_available_process_model_triggers == [("my_task_available_model", "task_guid_456")]
 
     @patch(
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
@@ -142,16 +143,15 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         process_instance = ProcessInstanceModel(id=123)
         processor = ProcessInstanceProcessor(process_instance)
         processor.process_instance_model = process_instance
-        human_task = HumanTaskModel(process_instance_id=123, task_guid="task_guid_456", task_id="task_guid_456")
         ordered_events = []
 
         def queue_pending_trigger(metadata: dict) -> None:
-            processor._pending_task_available_process_model_triggers.append(("my_task_available_model", human_task))
+            processor._pending_task_available_process_model_triggers.append(("my_task_available_model", "task_guid_456"))
 
         def commit() -> None:
             ordered_events.append("commit")
 
-        def trigger(task_available_process_model_identifier: str, triggered_human_task: HumanTaskModel) -> None:
+        def trigger(task_available_process_model_identifier: str, task_guid: str) -> None:
             ordered_events.append("trigger")
 
         with (
@@ -167,5 +167,5 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
             processor.save()
 
         assert ordered_events == ["commit", "trigger"]
-        mock_trigger.assert_called_once_with("my_task_available_model", human_task)
+        mock_trigger.assert_called_once_with("my_task_available_model", "task_guid_456")
         assert processor._pending_task_available_process_model_triggers == []
