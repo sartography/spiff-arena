@@ -4,7 +4,6 @@ from typing import Any
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
-from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
@@ -16,8 +15,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -169,19 +166,12 @@ def celery_task_process_instance_start_from_model(
         if user is None:
             raise SpiffCeleryWorkerError(f"Could not find user with id {user_id}")
 
-        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(process_model.id, user)
-        processor = ProcessInstanceProcessor(
-            process_instance,
-            script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
-        )
-        processor.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks")
-        next_task = processor.next_task()
-        DeepMerge.merge(next_task.data, {"task_guid": task_guid})
-        processor.save()
-
-        if not queue_process_instance_if_appropriate(process_instance):
-            ProcessInstanceService.run_process_instance_with_processor(process_instance, execution_strategy_name="greedy")
-
+        process_instance = ProcessInstanceService.create_and_run_process_instance(
+            process_model,
+            persistence_level="full",
+            data_to_inject={"task_guid": task_guid},
+            user=user,
+        ).process_instance_model
         return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
     except Exception as exception:
         current_app.logger.exception(f"{logger_prefix}: Error running task available process model. {str(exception)}")

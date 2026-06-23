@@ -16,7 +16,9 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
     @patch(
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
     )
-    @patch("spiffworkflow_backend.services.process_instance_processor.queue_enabled_for_process_model")
+    @patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.queue_enabled_for_process_model"
+    )
     def test_trigger_task_available_process_model_sends_celery_task(
         self,
         mock_queue_enabled: MagicMock,
@@ -48,7 +50,9 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
     @patch(
         "spiffworkflow_backend.services.process_instance_processor.ProcessInstanceProcessor.setup_processor_with_process_instance"
     )
-    @patch("spiffworkflow_backend.services.process_instance_processor.queue_enabled_for_process_model")
+    @patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.queue_enabled_for_process_model"
+    )
     def test_trigger_task_available_process_model_warns_if_celery_disabled(
         self,
         mock_queue_enabled: MagicMock,
