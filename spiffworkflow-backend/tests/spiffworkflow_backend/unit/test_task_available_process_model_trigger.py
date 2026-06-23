@@ -76,8 +76,9 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
             processor._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             mock_logger.warning.assert_called_once_with(
-                f"Cannot trigger task-available process model '{task_available_pm_id}' "
-                f"for task {human_task.task_id}: Celery is not enabled."
+                "Cannot trigger task-available process model '%s' for task %s: Celery is not enabled.",
+                task_available_pm_id,
+                human_task.task_guid,
             )
 
     @patch(
