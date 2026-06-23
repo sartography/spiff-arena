@@ -11,6 +11,9 @@ from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFI
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import SpiffCeleryWorkerError
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import celery_task_event_notifier_run
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    celery_task_process_instance_start_from_model,
+)
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
@@ -32,6 +35,15 @@ class SupportsCeleryEventNotifierTaskRun(Protocol):
         updated_process_instance_id: int,
         process_model_identifier: str,
         event_type: str,
+    ) -> dict[str, Any]: ...
+
+
+class SupportsCeleryStartFromModelTaskRun(Protocol):
+    def run(
+        self,
+        process_model_identifier: str,
+        task_guid: str,
+        user_id: int,
     ) -> dict[str, Any]: ...
 
 
@@ -220,6 +232,21 @@ class TestBackgroundProcessingService(BaseTest):
                     "group/process-model",
                     "human_tasks_changed",
                 )
+
+        assert isinstance(exception.value.__cause__, ProcessEntityNotFoundError)
+        assert not isinstance(exception.value.__cause__, ApiError)
+
+    def test_process_instance_start_from_model_worker_wraps_missing_process_model_without_api_error(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(SpiffCeleryWorkerError) as exception:
+            cast(SupportsCeleryStartFromModelTaskRun, celery_task_process_instance_start_from_model).run(
+                "missing/start-from-model",
+                "task-guid",
+                1,
+            )
 
         assert isinstance(exception.value.__cause__, ProcessEntityNotFoundError)
         assert not isinstance(exception.value.__cause__, ApiError)
