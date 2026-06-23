@@ -63,13 +63,3 @@ groups = potential_owners["groups"]
 `get_url_for_task(task_guid)` returns the full Arena URL for the task.
 Use the `public=True` option only when the task is configured for public completion.
 `get_task_potential_owners(task_guid)` returns the usernames and group identifiers that can complete the task.
-
-## Troubleshooting
-
-If no new process instance appears when the source process reaches the human task:
-
-1. Confirm the extension is on a User Task or Manual Task, not on another BPMN element.
-2. Confirm the value is the target process model path, not the BPMN process id or BPMN file name.
-3. Confirm the target process model can be started normally in Arena.
-4. Start a new source process instance after changing the BPMN.
-5. Check backend logs for `Failed to trigger task available process model`.
