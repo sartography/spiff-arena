@@ -1,3 +1,4 @@
+import base64
 import json
 from dataclasses import dataclass
 from typing import Any
@@ -54,8 +55,6 @@ def do(id: str, params: dict[str, Any]) -> HttpConnectorResponse:
         # Handle authentication
         if auth is not None:
             # Convert (user, pass) tuple to Authorization header for test client
-            import base64
-
             username, password = auth
             credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
             if "headers" not in kwargs:
