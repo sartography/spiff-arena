@@ -8,7 +8,7 @@ instead of hoisting the 202 status up from the connector body to the top level a
 we will still allow the connector to do fast checks and fail, but if it wants to do that, it should return an error in the body.
 then spiff-arena will check that (based on the change in this ~/spiff-arena branch).
 
-please set up an actual connector-proxy using an actual async connector that you develop with a execute_async function.
+please set up an actual connector-proxy (using ~/spiff-arena/connector-proxy-demo as a base) using an actual async connector that you develop with a execute_async function.
 
 make sure it works:
 
@@ -17,3 +17,5 @@ make sure it works:
 AND
 
 2. and with an error: arena should not park the service task, but should just mark it errored.
+
+start up arena the connector proxy using something along the lines of run-spiff-arena command but with a custom Procfile for the different connector proxy.
