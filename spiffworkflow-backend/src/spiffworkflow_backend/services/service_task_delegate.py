@@ -315,10 +315,10 @@ class ServiceTaskDelegate:
 
         if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
-        elif isinstance(upstream_status, int) and upstream_status >= 300:
+        elif error_status_code:
             base_error = {
-                "error_code": f"ServiceTaskHttpError{upstream_status}",
-                "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
+                "error_code": f"ServiceTaskHttpError{error_status_code}",
+                "message": f"Service task received HTTP {error_status_code} from upstream service. Response: {response_text}",
             }
         elif status_code >= 300:
             error_message = ""
@@ -425,9 +425,6 @@ class ServiceTaskDelegate:
                         }
                     }
 
-                if status_code == 202:
-                    raise Accepted202Exception()
-
                 if "error" not in parsed_response:
                     try:
                         parsed_response = json.loads(response_text or "{}")
@@ -452,6 +449,9 @@ class ServiceTaskDelegate:
                     response_text = json.dumps(new_response)
 
                 cls.check_for_errors(spiff_task, parsed_response, status_code, response_text, operator_identifier)
+
+                if status_code == 202:
+                    raise Accepted202Exception()
 
                 if "refreshed_token_set" not in parsed_response:
                     return response_text or "{}"
