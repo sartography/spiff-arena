@@ -315,7 +315,7 @@ class ServiceTaskDelegate:
 
         if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
-        elif error_status_code:
+        elif error_status_code >= 300:
             base_error = {
                 "error_code": f"ServiceTaskHttpError{error_status_code}",
                 "message": f"Service task received HTTP {error_status_code} from upstream service. Response: {response_text}",

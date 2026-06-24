@@ -252,6 +252,40 @@ class TestLongRunningService(BaseTest):
         assert task_model is not None
         assert task_model.state == "COMPLETED"
 
+    def test__202_success_response_with_v2_connector_envelope(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+        connector_response = {
+            "command_response": {
+                "body": {"accepted": True},
+                "mimetype": "application/json",
+                "http_status": 202,
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps(connector_response)
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
     def test__202_success_response_with_celery_only_completes_callback_before_queueing(
         self,
         app: Flask,

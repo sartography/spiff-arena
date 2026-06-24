@@ -1,4 +1,4 @@
-we recently merged https://github.com/sartography/spiffworkflow-proxy/pull/8, which was:
+we recently merged https://github.com/sartography/spiffworkflow-proxy/pull/8 (~/spiffworkflow-proxy dir), which was:
 
 Support for async connectors. If the command declares an execute_async method, this is called. The response of this method can define HTTP status code in the JSON payload that are sent back to spiff.
 
