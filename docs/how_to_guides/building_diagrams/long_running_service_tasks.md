@@ -14,7 +14,7 @@ If the called service returns a **202 (Accepted)** response, SpiffWorkflow will 
 
 The process will pause at that task until the external service calls back with the result.
 
-For connector-proxy async commands, SpiffWorkflow checks the response body before waiting. If the connector returns an error in the async response envelope, the service task is marked errored immediately instead of being parked.
+For connector-proxy async commands, SpiffWorkflow checks the response body before waiting. If the connector returns an error in the async response envelope, the service task is marked errored immediately instead of waiting for a callback.
 
 ## Completing a Waiting Service Task
 

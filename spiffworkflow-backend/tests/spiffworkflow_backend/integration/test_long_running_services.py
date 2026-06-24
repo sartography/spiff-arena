@@ -8,6 +8,7 @@ from typing import Protocol
 from typing import cast
 from unittest.mock import patch
 
+import pytest
 from flask import Flask
 from flask import g
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -23,6 +24,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -285,6 +287,113 @@ class TestLongRunningService(BaseTest):
             assert process_instance.status == "waiting"
 
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
+    def test__async_connector_proxy_success_response_waits_for_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        def call_async_connector_proxy(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            payload = kwargs.get("json", {})
+            assert "spiff__callback_url" in payload
+            connector_response = {
+                "command_response": {
+                    "body": {
+                        "accepted": True,
+                        "mode": "accepted",
+                        "message": "async connector accepted the work",
+                        "callback_scheduled": False,
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 202,
+                },
+                "command_response_version": 2,
+                "error": None,
+                "spiff__logs": ["AsyncStart mode=accepted http_status=202"],
+            }
+            return SimpleNamespace(
+                status_code=202,
+                ok=True,
+                text=json.dumps(connector_response),
+                headers={"Content-Type": "application/json"},
+            )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with (
+                patch("requests.post", side_effect=call_async_connector_proxy),
+                patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
+            ):
+                processor.do_engine_steps(save=True)
+
+            assert process_instance.status == "waiting"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
+    def test__async_connector_proxy_error_response_fails_service_task(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        def call_async_connector_proxy(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            payload = kwargs.get("json", {})
+            assert "spiff__callback_url" in payload
+            connector_response = {
+                "command_response": {
+                    "body": {
+                        "accepted": False,
+                        "mode": "error",
+                        "message": "async connector rejected the work",
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 400,
+                },
+                "command_response_version": 2,
+                "error": {
+                    "error_code": "AsyncConnectorRejected",
+                    "message": "async connector rejected the work",
+                },
+                "spiff__logs": ["AsyncStart mode=error http_status=400"],
+            }
+            return SimpleNamespace(
+                status_code=202,
+                ok=True,
+                text=json.dumps(connector_response),
+                headers={"Content-Type": "application/json"},
+            )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with (
+                patch("requests.post", side_effect=call_async_connector_proxy),
+                patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
+            ):
+                with pytest.raises(WorkflowExecutionServiceError, match="AsyncConnectorRejected"):
+                    processor.do_engine_steps(save=True)
+
+            db.session.expire_all()
+            process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+            assert process_instance.status == "error"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
 
     def test__202_success_response_with_celery_only_completes_callback_before_queueing(
         self,
