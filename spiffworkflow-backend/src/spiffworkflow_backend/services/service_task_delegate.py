@@ -303,7 +303,7 @@ class ServiceTaskDelegate:
     ) -> None:
         base_error = None
         error_status_code = status_code
-        upstream_status = None
+
         if (
             "command_response_version" in parsed_response
             and parsed_response.get("command_response_version", 0) > 1
@@ -312,15 +312,14 @@ class ServiceTaskDelegate:
             upstream_status = parsed_response["command_response"].get("http_status")
             if isinstance(upstream_status, int) and upstream_status >= 300:
                 error_status_code = upstream_status
+                base_error = {
+                    "error_code": f"ServiceTaskHttpError{error_status_code}",
+                    "message": f"Service task received HTTP {error_status_code} from upstream service. Response: {response_text}",
+                }
 
         if "error" in parsed_response and isinstance(parsed_response["error"], dict) and "error_code" in parsed_response["error"]:
             base_error = parsed_response["error"]
-        elif isinstance(upstream_status, int) and upstream_status >= 300:
-            base_error = {
-                "error_code": f"ServiceTaskHttpError{upstream_status}",
-                "message": f"Service task received HTTP {upstream_status} from upstream service. Response: {response_text}",
-            }
-        elif status_code >= 300:
+        elif not base_error and status_code >= 300:
             error_message = ""
             if "error" in parsed_response:
                 error_response = parsed_response["error"] or ""
@@ -425,9 +424,6 @@ class ServiceTaskDelegate:
                         }
                     }
 
-                if status_code == 202:
-                    raise Accepted202Exception()
-
                 if "error" not in parsed_response:
                     try:
                         parsed_response = json.loads(response_text or "{}")
@@ -452,6 +448,9 @@ class ServiceTaskDelegate:
                     response_text = json.dumps(new_response)
 
                 cls.check_for_errors(spiff_task, parsed_response, status_code, response_text, operator_identifier)
+
+                if status_code == 202:
+                    raise Accepted202Exception()
 
                 if "refreshed_token_set" not in parsed_response:
                     return response_text or "{}"
