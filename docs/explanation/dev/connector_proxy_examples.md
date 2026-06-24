@@ -239,7 +239,7 @@ When SpiffWorkflow invokes a service task, it automatically includes a `spiff__c
 
 ### Accepted Response Format
 
-The `202 Accepted` status must be the HTTP status returned by the connector proxy itself. The response body still uses the connector proxy response envelope, but a `202` value inside `command_response.http_status` is ignored when SpiffWorkflow decides whether to put the service task into the waiting state.
+The `202 Accepted` status must be the HTTP status returned by the connector proxy itself. The response body still uses the noraml connector proxy response envelope as shown in previous examples.
 
 ```text
 HTTP/1.1 202 Accepted
@@ -252,7 +252,7 @@ Content-Type: application/json
       "status": "processing"
     },
     "mimetype": "application/json",
-    "http_status": 202
+    "http_status": 200
   },
   "command_response_version": 2,
   "error": null,
