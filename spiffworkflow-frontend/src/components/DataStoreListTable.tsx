@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Box,
   Table,
   TableHead,
   TableRow,
@@ -11,6 +12,8 @@ import {
   Select,
   InputLabel,
   FormControl,
+  TextField,
+  Button,
 } from '@mui/material';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +29,9 @@ export default function DataStoreListTable() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [topLevelKeyInput, setTopLevelKeyInput] = useState(
+    searchParams.get('top_level_key') || '',
+  );
   const location = useLocation();
   const { t } = useTranslation();
 
@@ -39,6 +45,7 @@ export default function DataStoreListTable() {
   }, [location.key]); // Refresh data stores list on any navigation (including back from deletion)
 
   useEffect(() => {
+    setTopLevelKeyInput(searchParams.get('top_level_key') || '');
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       10,
@@ -48,6 +55,7 @@ export default function DataStoreListTable() {
     const dataStoreType = searchParams.get('type') || '';
     const dataStoreIdentifier = searchParams.get('identifier') || '';
     const dataStoreLocation = searchParams.get('location') || '';
+    const topLevelKey = searchParams.get('top_level_key') || '';
 
     if (dataStoreType === '' || dataStoreIdentifier === '') {
       // Clear state when no data store is selected (e.g., after deletion and navigation back to /data-stores)
@@ -67,15 +75,33 @@ export default function DataStoreListTable() {
         }
       });
     }
-    const queryParamString = `per_page=${perPage}&page=${page}&location=${dataStoreLocation}`;
+    const queryParams = new URLSearchParams({
+      per_page: perPage.toString(),
+      page: page.toString(),
+      location: dataStoreLocation,
+    });
+    if (dataStoreType === 'kkv' && topLevelKey !== '') {
+      queryParams.set('top_level_key', topLevelKey);
+    }
     HttpService.makeCallToBackend({
-      path: `/data-stores/${dataStoreType}/${dataStoreIdentifier}/items?${queryParamString}`,
+      path: `/data-stores/${dataStoreType}/${dataStoreIdentifier}/items?${queryParams.toString()}`,
       successCallback: (response: DataStoreRecords) => {
         setResults(response.results);
         setPagination(response.pagination);
       },
     });
   }, [dataStores, searchParams]);
+
+  const applyTopLevelKeyFilter = (value: string) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('datastore_page', '1');
+    if (value) {
+      newSearchParams.set('top_level_key', value);
+    } else {
+      newSearchParams.delete('top_level_key');
+    }
+    setSearchParams(newSearchParams);
+  };
 
   const getCell = (value: any) => {
     const valueToUse =
@@ -158,6 +184,9 @@ export default function DataStoreListTable() {
               searchParams.set('type', selectedDataStore.type);
               searchParams.set('identifier', selectedDataStore.id);
               searchParams.set('location', selectedDataStore.location ?? '');
+              if (selectedDataStore.type !== 'kkv') {
+                searchParams.delete('top_level_key');
+              }
               setSearchParams(searchParams);
             }
           }}
@@ -172,6 +201,38 @@ export default function DataStoreListTable() {
           ))}
         </Select>
       </FormControl>
+      {dataStore?.type === 'kkv' && (
+        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+          <TextField
+            fullWidth
+            label="Top level key"
+            value={topLevelKeyInput}
+            onChange={(event) => {
+              setTopLevelKeyInput(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                applyTopLevelKeyFilter(topLevelKeyInput);
+              }
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={() => applyTopLevelKeyFilter(topLevelKeyInput)}
+          >
+            Apply
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setTopLevelKeyInput('');
+              applyTopLevelKeyFilter('');
+            }}
+          >
+            Clear
+          </Button>
+        </Box>
+      )}
       <PaginationForTable
         page={page}
         perPage={perPage}
