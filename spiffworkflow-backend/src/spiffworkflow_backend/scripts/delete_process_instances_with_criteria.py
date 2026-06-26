@@ -5,8 +5,6 @@ from typing import Any
 from sqlalchemy import or_
 
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
-from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
@@ -56,8 +54,6 @@ class DeleteProcessInstancesWithCriteria(Script):
                 db.session.delete(deletion)
             db.session.commit()
 
-        self._write_run_log(script_attributes_context, summary, kwargs)
-
         if return_summary:
             return summary
 
@@ -96,44 +92,3 @@ class DeleteProcessInstancesWithCriteria(Script):
             criterion = criterion & ProcessInstanceModel.process_model_identifier.notlike(f"{prefix}%")  # type: ignore[attr-defined]
 
         return criterion
-
-    def _process_group_identifier(self, process_model_identifier: str | None) -> str | None:
-        if not process_model_identifier or "/" not in process_model_identifier:
-            return None
-        return process_model_identifier.rsplit("/", 1)[0]
-
-    def _write_run_log(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        summary: dict[str, Any],
-        kwargs: dict[str, Any],
-    ) -> None:
-        identifier = kwargs.get("run_log_data_store_identifier")
-        run_key = kwargs.get("run_log_key")
-        if not identifier or not run_key:
-            return
-
-        location = kwargs.get("run_log_location") or self._process_group_identifier(
-            script_attributes_context.process_model_identifier
-        )
-        store_model = db.session.query(KKVDataStoreModel).filter_by(identifier=identifier, location=location).first()
-        if store_model is None:
-            raise ValueError(f"Could not find KKV data store '{identifier}' at location '{location}'")
-
-        secondary_key = kwargs.get("run_log_secondary_key", "summary")
-        entry = (
-            db.session.query(KKVDataStoreEntryModel)
-            .filter_by(kkv_data_store_id=store_model.id, top_level_key=run_key, secondary_key=secondary_key)
-            .first()
-        )
-        if entry is None:
-            entry = KKVDataStoreEntryModel(
-                kkv_data_store_id=store_model.id,
-                top_level_key=run_key,
-                secondary_key=secondary_key,
-                value=summary,
-            )
-        else:
-            entry.value = summary
-        db.session.add(entry)
-        db.session.commit()
