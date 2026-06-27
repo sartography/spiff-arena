@@ -148,6 +148,9 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
+    def task_runnability_when_breaking_after(self) -> TaskRunnability:
+        return TaskRunnability.unknown_if_ready_tasks
+
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         pass
 
@@ -238,7 +241,11 @@ class ExecutionStrategy:
 
             if self.should_break_after(engine_steps):
                 # we could call the stuff at the top of the loop again and find out, but let's not do that unless we need to
-                task_runnability = TaskRunnability.unknown_if_ready_tasks
+                task_runnability = (
+                    TaskRunnability.no_ready_tasks
+                    if bpmn_process_instance.is_completed()
+                    else self.task_runnability_when_breaking_after()
+                )
                 break
 
         self.delegate.after_engine_steps(bpmn_process_instance)
@@ -514,6 +521,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
         super().__init__(delegate, options)
         self.tasks_that_have_been_seen: set[str] = set()
+        self.completed_task_count = 0
+        self.started_at = time.monotonic()
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
@@ -528,6 +537,15 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
             ):
                 return True
         return False
+
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
+        self.completed_task_count += len(tasks)
+        max_tasks = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"])
+        max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
+        return self.completed_task_count >= max_tasks or time.monotonic() - self.started_at >= max_seconds
+
+    def task_runnability_when_breaking_after(self) -> TaskRunnability:
+        return TaskRunnability.has_ready_tasks
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
