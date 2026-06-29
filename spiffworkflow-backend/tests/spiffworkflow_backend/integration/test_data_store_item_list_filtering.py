@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flask import Flask
@@ -77,7 +78,7 @@ class TestDataStoreItemListFiltering(BaseTest):
             url += f"&top_level_key={top_level_key}"
         if secondary_key is not None:
             url += f"&secondary_key={secondary_key}"
-        return client.get(url, headers=self.logged_in_headers(user))
+        return cast(Response, client.get(url, headers=self.logged_in_headers(user)))
 
     @pytest.mark.usefixtures("with_populated_kkv_store")
     def test_filter_by_top_level_key_only(
