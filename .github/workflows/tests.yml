@@ -375,26 +375,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Write PR number to spiffworkflow-backend/pr dir
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo "$PR_NUMBER" > ./pr/pr_number
-      - name: Upload PR number as artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        with:
-          name: pr_number
-          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
-          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
-          # from spiff-arena root rather than the default working-directory we specified, and therefore
-          # trying to explicitly add spiffworkflow-backend to path
-          path: spiffworkflow-backend/pr/
-          if-no-files-found: error
 
   tests-frontend:
     runs-on: ubuntu-latest
@@ -431,6 +411,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  dependabot_pr_number:
+    runs-on: ubuntu-latest
+    needs: tests-frontend
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: Write PR number to spiffworkflow-backend/pr dir
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./spiffworkflow-backend/pr
+          echo "$PR_NUMBER" > ./spiffworkflow-backend/pr/pr_number
+      - name: Upload PR number as artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: pr_number
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
+          if-no-files-found: error
 
   playwright-run:
     runs-on: ubuntu-latest
