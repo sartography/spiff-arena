@@ -1,106 +1,61 @@
-from types import SimpleNamespace
 from typing import Any
 
-import pytest
+from flask.app import Flask
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
-from spiffworkflow_backend.scripts import delete_process_instances_with_criteria as script_module
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.delete_process_instances_with_criteria import DeleteProcessInstancesWithCriteria
 
 
-class FakeColumn:
-    __hash__ = object.__hash__
-
-    def __init__(self) -> None:
-        self.notlike_calls: list[tuple[object, object | None]] = []
-
-    def __eq__(self, other: object) -> "FakeColumn":  # type: ignore[override]
-        return self
-
-    def __and__(self, other: object) -> "FakeColumn":
-        return self
-
-    def __lt__(self, other: object) -> "FakeColumn":
-        return self
-
-    def __invert__(self) -> "FakeColumn":
-        return self
-
-    def in_(self, other: object) -> "FakeColumn":
-        return self
-
-    def notlike(self, other: object, escape: object | None = None) -> "FakeColumn":
-        self.notlike_calls.append((other, escape))
-        return self
-
-
-class FakeQuery:
-    def __init__(self, results: list[SimpleNamespace]):
-        self.results = results
-        self.limit_value: int | None = None
-
-    def filter(self, *args: Any) -> "FakeQuery":
-        return self
-
-    def order_by(self, *args: Any) -> "FakeQuery":
-        return self
-
-    def limit(self, limit: int) -> "FakeQuery":
-        self.limit_value = limit
-        return self
-
-    def all(self) -> list[SimpleNamespace]:
-        return self.results[: self.limit_value]
-
-
-class FakeSession:
-    def __init__(self) -> None:
-        self.deleted: list[SimpleNamespace] = []
-        self.committed = False
-        self.added: list[Any] = []
-
-    def delete(self, model: SimpleNamespace) -> None:
-        self.deleted.append(model)
-
-    def add(self, model: Any) -> None:
-        self.added.append(model)
-
-    def commit(self) -> None:
-        self.committed = True
-
-
-def test_delete_process_instances_with_criteria_returns_summary_and_honors_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    results = [
-        SimpleNamespace(id=1, process_model_identifier="cleanup/model-a", status="complete"),
-        SimpleNamespace(id=2, process_model_identifier="cleanup/model-a", status="complete"),
-        SimpleNamespace(id=3, process_model_identifier="cleanup/model-a", status="error"),
-        SimpleNamespace(id=4, process_model_identifier="cleanup/model-b", status="complete"),
-        SimpleNamespace(id=5, process_model_identifier="cleanup/model-b", status="complete"),
-    ]
-    session = FakeSession()
-    fake_process_instance_model = SimpleNamespace(
-        id=FakeColumn(),
-        process_model_identifier=FakeColumn(),
-        status=FakeColumn(),
-        updated_at_in_seconds=FakeColumn(),
-        query=FakeQuery(results),
+def add_process_instance(id: int, process_model_identifier: str, status: str, user: UserModel) -> ProcessInstanceModel:
+    process_instance = ProcessInstanceModel(
+        id=id,
+        process_model_identifier=process_model_identifier,
+        process_model_display_name=process_model_identifier,
+        process_initiator_id=user.id,
+        status=status,
+        updated_at_in_seconds=1,
     )
-    monkeypatch.setattr(script_module, "ProcessInstanceModel", fake_process_instance_model)
-    monkeypatch.setattr(script_module, "db", SimpleNamespace(session=session))
-    monkeypatch.setattr(script_module, "or_", lambda *args: args)
+    db.session.add(process_instance)
+    return process_instance
 
-    criteria = [
-        {"status": ["complete", "error"], "last_updated_delta": 60, "exclude_name_prefixes": ["cleanup/reaper"]},
-        {"name": "cleanup/model-b", "status": ["complete"], "last_updated_delta": 60},
-    ]
-    script_attributes_context = ScriptAttributesContext(
-        task=None,
-        environment_identifier="unit_testing",
-        process_instance_id=1,
-        process_model_identifier="cleanup/reaper",
+
+def run_script(criteria: list[dict[str, Any]], **kwargs: Any) -> Any:
+    return DeleteProcessInstancesWithCriteria().run(
+        ScriptAttributesContext(
+            task=None,
+            environment_identifier="unit_testing",
+            process_instance_id=1,
+            process_model_identifier="cleanup/reaper",
+        ),
+        criteria,
+        **kwargs,
     )
 
-    summary = DeleteProcessInstancesWithCriteria().run(script_attributes_context, criteria, limit=4, return_summary=True)
+
+def test_delete_process_instances_with_criteria_returns_summary_and_honors_limit(
+    app: Flask,
+    with_db_and_bpmn_file_cleanup: None,
+    with_super_admin_user: UserModel,
+) -> None:
+    assert app
+    add_process_instance(1, "cleanup/model-a", "complete", with_super_admin_user)
+    add_process_instance(2, "cleanup/model-a", "complete", with_super_admin_user)
+    add_process_instance(3, "cleanup/model-a", "error", with_super_admin_user)
+    add_process_instance(4, "cleanup/model-b", "complete", with_super_admin_user)
+    add_process_instance(5, "cleanup/reaper-model", "complete", with_super_admin_user)
+    db.session.commit()
+
+    summary = run_script(
+        [
+            {"status": ["complete", "error"], "last_updated_delta": -1, "exclude_name_prefixes": ["cleanup/reaper"]},
+            {"name": "cleanup/model-b", "status": ["complete"], "last_updated_delta": -1},
+        ],
+        limit=4,
+        return_summary=True,
+    )
 
     assert summary == {
         "total_deleted": 4,
@@ -112,52 +67,47 @@ def test_delete_process_instances_with_criteria_returns_summary_and_honors_limit
             {"process_model_identifier": "cleanup/model-b", "status": "complete", "deleted": 1},
         ],
     }
-    assert session.deleted == results[:4]
-    assert session.committed is True
+    assert ProcessInstanceModel.query.filter_by(id=1).first() is None
+    assert ProcessInstanceModel.query.filter_by(id=2).first() is None
+    assert ProcessInstanceModel.query.filter_by(id=3).first() is None
+    assert ProcessInstanceModel.query.filter_by(id=4).first() is None
+    assert ProcessInstanceModel.query.filter_by(id=5).first() is not None
 
 
-def test_delete_process_instances_with_criteria_keeps_integer_return_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    results = [
-        SimpleNamespace(id=1, process_model_identifier="cleanup/model-a", status="complete"),
-        SimpleNamespace(id=2, process_model_identifier="cleanup/model-a", status="complete"),
-    ]
-    fake_process_instance_model = SimpleNamespace(
-        id=FakeColumn(),
-        process_model_identifier=FakeColumn(),
-        status=FakeColumn(),
-        updated_at_in_seconds=FakeColumn(),
-        query=FakeQuery(results),
-    )
-    monkeypatch.setattr(script_module, "ProcessInstanceModel", fake_process_instance_model)
-    monkeypatch.setattr(script_module, "db", SimpleNamespace(session=FakeSession()))
-    monkeypatch.setattr(script_module, "or_", lambda *args: args)
+def test_delete_process_instances_with_criteria_keeps_integer_return_by_default(
+    app: Flask,
+    with_db_and_bpmn_file_cleanup: None,
+    with_super_admin_user: UserModel,
+) -> None:
+    assert app
+    add_process_instance(1, "cleanup/model-a", "complete", with_super_admin_user)
+    add_process_instance(2, "cleanup/model-a", "complete", with_super_admin_user)
+    db.session.commit()
 
-    rows_affected = DeleteProcessInstancesWithCriteria().run(
-        ScriptAttributesContext(
-            task=None,
-            environment_identifier="unit_testing",
-            process_instance_id=1,
-            process_model_identifier="cleanup/reaper",
-        ),
-        [{"name": "cleanup/model-a", "status": ["complete"], "last_updated_delta": 60}],
+    rows_affected = run_script(
+        [{"name": "cleanup/model-a", "status": ["complete"], "last_updated_delta": -1}],
         limit=1,
     )
 
     assert rows_affected == 1
+    assert ProcessInstanceModel.query.count() == 1
 
 
-def test_delete_process_instances_with_criteria_escapes_excluded_name_prefixes(monkeypatch: pytest.MonkeyPatch) -> None:
-    process_model_identifier = FakeColumn()
-    fake_process_instance_model = SimpleNamespace(
-        process_model_identifier=process_model_identifier,
-        status=FakeColumn(),
-        updated_at_in_seconds=FakeColumn(),
+def test_delete_process_instances_with_criteria_escapes_excluded_name_prefixes(
+    app: Flask,
+    with_db_and_bpmn_file_cleanup: None,
+    with_super_admin_user: UserModel,
+) -> None:
+    assert app
+    add_process_instance(1, r"cleanup/%_literal/path", "complete", with_super_admin_user)
+    add_process_instance(2, "cleanup/anythingliteral/path", "complete", with_super_admin_user)
+    db.session.commit()
+
+    rows_affected = run_script(
+        [{"status": ["complete"], "last_updated_delta": -1, "exclude_name_prefixes": [r"cleanup/%_literal"]}],
+        limit=10,
     )
-    monkeypatch.setattr(script_module, "ProcessInstanceModel", fake_process_instance_model)
 
-    DeleteProcessInstancesWithCriteria()._get_criteria_for_delete(
-        {"status": ["complete"], "last_updated_delta": 60, "exclude_name_prefixes": [r"cleanup/%_literal\path"]},
-        100,
-    )
-
-    assert process_model_identifier.notlike_calls == [(r"cleanup/\%\_literal\\path%", "\\")]
+    assert rows_affected == 1
+    assert ProcessInstanceModel.query.filter_by(id=1).first() is not None
+    assert ProcessInstanceModel.query.filter_by(id=2).first() is None
