@@ -35,6 +35,9 @@ defaults:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     outputs:
       backend: ${{ steps.changed.outputs.backend }}
     steps:
