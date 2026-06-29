@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
+from typing import cast
 
 from flask.app import Flask
 
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.workflow_execution_service import EngineStepDelegate
 from spiffworkflow_backend.services.workflow_execution_service import QueueInstructionsForEndUserExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
@@ -29,6 +32,17 @@ class FakeDelegate(EngineStepDelegate):
         return None
 
 
+class FakeWorkflow:
+    def refresh_due_waiting_tasks(self) -> None:
+        pass
+
+    def get_tasks(self, **kwargs: Any) -> list[Any]:
+        return []
+
+    def is_completed(self) -> bool:
+        return False
+
+
 def test_queue_instruction_strategy_breaks_after_max_tasks(app: Flask) -> None:
     app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 3
     app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
@@ -36,7 +50,6 @@ def test_queue_instruction_strategy_breaks_after_max_tasks(app: Flask) -> None:
 
     assert strategy.should_break_after([object(), object()]) is False
     assert strategy.should_break_after([object()]) is True
-    assert strategy.task_runnability_when_breaking_after() == TaskRunnability.has_ready_tasks
 
 
 def test_queue_instruction_strategy_breaks_after_max_seconds(app: Flask, monkeypatch: Any) -> None:
@@ -47,3 +60,16 @@ def test_queue_instruction_strategy_breaks_after_max_seconds(app: Flask, monkeyp
     strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
 
     assert strategy.should_break_after([object()]) is True
+
+
+def test_queue_instruction_strategy_reports_no_ready_tasks_after_autosave(app: Flask, monkeypatch: Any) -> None:
+    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 1
+    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
+    strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
+    engine_step_batches = iter([[SimpleNamespace(task_spec=SimpleNamespace(extensions={}))], []])
+    monkeypatch.setattr(strategy, "get_ready_engine_steps", lambda bpmn_process_instance: next(engine_step_batches))
+    monkeypatch.setattr(strategy, "_run_and_did_complete", lambda spiff_task: None)
+
+    task_runnability = strategy.spiff_run(FakeWorkflow(), cast(ProcessInstanceModel, SimpleNamespace(id=1)))
+
+    assert task_runnability == TaskRunnability.no_ready_tasks

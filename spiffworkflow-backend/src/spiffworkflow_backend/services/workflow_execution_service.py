@@ -148,7 +148,7 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
-    def task_runnability_when_breaking_after(self) -> TaskRunnability:
+    def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
         return TaskRunnability.unknown_if_ready_tasks
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
@@ -240,11 +240,11 @@ class ExecutionStrategy:
                     self._run_engine_steps_without_threads(engine_steps, process_instance_model, user)
 
             if self.should_break_after(engine_steps):
-                # we could call the stuff at the top of the loop again and find out, but let's not do that unless we need to
+                # Strategies decide whether checking post-step ready tasks is worth it.
                 task_runnability = (
                     TaskRunnability.no_ready_tasks
                     if bpmn_process_instance.is_completed()
-                    else self.task_runnability_when_breaking_after()
+                    else self.task_runnability_when_breaking_after(bpmn_process_instance)
                 )
                 break
 
@@ -544,8 +544,13 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
         return self.completed_task_count >= max_tasks or time.monotonic() - self.started_at >= max_seconds
 
-    def task_runnability_when_breaking_after(self) -> TaskRunnability:
-        return TaskRunnability.has_ready_tasks
+    def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
+        bpmn_process_instance.refresh_due_waiting_tasks()
+        return (
+            TaskRunnability.has_ready_tasks
+            if self.get_ready_engine_steps(bpmn_process_instance)
+            else TaskRunnability.no_ready_tasks
+        )
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
