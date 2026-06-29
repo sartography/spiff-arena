@@ -11,6 +11,9 @@ from spiffworkflow_backend.scripts.delete_process_instances_with_criteria import
 class FakeColumn:
     __hash__ = object.__hash__
 
+    def __init__(self) -> None:
+        self.notlike_calls: list[tuple[object, object | None]] = []
+
     def __eq__(self, other: object) -> "FakeColumn":  # type: ignore[override]
         return self
 
@@ -26,7 +29,8 @@ class FakeColumn:
     def in_(self, other: object) -> "FakeColumn":
         return self
 
-    def notlike(self, other: object) -> "FakeColumn":
+    def notlike(self, other: object, escape: object | None = None) -> "FakeColumn":
+        self.notlike_calls.append((other, escape))
         return self
 
 
@@ -140,3 +144,20 @@ def test_delete_process_instances_with_criteria_keeps_integer_return_by_default(
     )
 
     assert rows_affected == 1
+
+
+def test_delete_process_instances_with_criteria_escapes_excluded_name_prefixes(monkeypatch: pytest.MonkeyPatch) -> None:
+    process_model_identifier = FakeColumn()
+    fake_process_instance_model = SimpleNamespace(
+        process_model_identifier=process_model_identifier,
+        status=FakeColumn(),
+        updated_at_in_seconds=FakeColumn(),
+    )
+    monkeypatch.setattr(script_module, "ProcessInstanceModel", fake_process_instance_model)
+
+    DeleteProcessInstancesWithCriteria()._get_criteria_for_delete(
+        {"status": ["complete"], "last_updated_delta": 60, "exclude_name_prefixes": [r"cleanup/%_literal\path"]},
+        100,
+    )
+
+    assert process_model_identifier.notlike_calls == [(r"cleanup/\%\_literal\\path%", "\\")]

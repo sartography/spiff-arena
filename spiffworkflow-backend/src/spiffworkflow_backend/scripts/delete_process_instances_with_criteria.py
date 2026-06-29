@@ -89,6 +89,9 @@ class DeleteProcessInstancesWithCriteria(Script):
             criterion = criterion & ~ProcessInstanceModel.process_model_identifier.in_(criteria["exclude_names"])  # type: ignore[attr-defined]
 
         for prefix in criteria.get("exclude_name_prefixes", []):
-            criterion = criterion & ProcessInstanceModel.process_model_identifier.notlike(f"{prefix}%")  # type: ignore[attr-defined]
+            escaped_prefix = prefix.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
+            criterion = criterion & ProcessInstanceModel.process_model_identifier.notlike(  # type: ignore[attr-defined]
+                f"{escaped_prefix}%", escape="\\"
+            )
 
         return criterion

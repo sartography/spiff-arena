@@ -205,7 +205,7 @@ export default function DataStoreListTable() {
         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
           <TextField
             fullWidth
-            label="Top level key"
+            label={t('top_level_key')}
             value={topLevelKeyInput}
             onChange={(event) => {
               setTopLevelKeyInput(event.target.value);
@@ -220,7 +220,7 @@ export default function DataStoreListTable() {
             variant="contained"
             onClick={() => applyTopLevelKeyFilter(topLevelKeyInput)}
           >
-            Apply
+            {t('apply')}
           </Button>
           <Button
             variant="outlined"
@@ -229,7 +229,7 @@ export default function DataStoreListTable() {
               applyTopLevelKeyFilter('');
             }}
           >
-            Clear
+            {t('clear')}
           </Button>
         </Box>
       )}
