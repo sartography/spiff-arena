@@ -5,10 +5,15 @@ from typing import Any
 from typing import cast
 
 from flask.app import Flask
+from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
+from SpiffWorkflow.specs.WorkflowSpec import WorkflowSpec  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.workflow_execution_service import EngineStepDelegate
 from spiffworkflow_backend.services.workflow_execution_service import QueueInstructionsForEndUserExecutionStrategy
+from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 
@@ -43,6 +48,28 @@ class FakeWorkflow:
         return False
 
 
+class TaskWorkflow:
+    def __init__(self) -> None:
+        self.tasks: dict[str, SpiffTask] = {}
+
+
+def spiff_task(name: str) -> SpiffTask:
+    return SpiffTask(TaskWorkflow(), TaskSpec(WorkflowSpec("test"), name))
+
+
+def task_model_saving_strategy() -> QueueInstructionsForEndUserExecutionStrategy:
+    process_instance = ProcessInstanceModel(
+        id=1,
+        process_model_identifier="test/process",
+        process_model_display_name="test/process",
+        process_initiator_id=1,
+        status="running",
+    )
+    return QueueInstructionsForEndUserExecutionStrategy(
+        TaskModelSavingDelegate(BpmnProcessService.serializer, process_instance, {})
+    )
+
+
 def test_queue_instruction_strategy_breaks_after_max_tasks(app: Flask) -> None:
     app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 3
     app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
@@ -73,3 +100,12 @@ def test_queue_instruction_strategy_reports_no_ready_tasks_after_autosave(app: F
     task_runnability = strategy.spiff_run(FakeWorkflow(), cast(ProcessInstanceModel, SimpleNamespace(id=1)))
 
     assert task_runnability == TaskRunnability.no_ready_tasks
+
+
+def test_queue_instruction_strategy_caps_ready_batch_at_max_tasks(app: Flask) -> None:
+    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 3
+    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
+    strategy = task_model_saving_strategy()
+    ready_tasks = [spiff_task(str(i)) for i in range(5)]
+
+    assert strategy.engine_steps_to_run(ready_tasks) == ready_tasks[:3]

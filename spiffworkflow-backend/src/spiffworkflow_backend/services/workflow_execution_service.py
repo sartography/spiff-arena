@@ -148,6 +148,12 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
+    def should_break_before_starting_tasks(self) -> bool:
+        return False
+
+    def engine_steps_to_run(self, engine_steps: list[SpiffTask]) -> list[SpiffTask]:
+        return engine_steps
+
     def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
         return TaskRunnability.unknown_if_ready_tasks
 
@@ -211,6 +217,11 @@ class ExecutionStrategy:
             if self.should_break_before(engine_steps, process_instance_model=process_instance_model):
                 task_runnability = TaskRunnability.has_ready_tasks if num_steps > 0 else TaskRunnability.no_ready_tasks
                 break
+            if self.should_break_before_starting_tasks():
+                task_runnability = self.task_runnability_when_breaking_after(bpmn_process_instance)
+                break
+            engine_steps = self.engine_steps_to_run(engine_steps)
+            num_steps = len(engine_steps)
             if num_steps == 0:
                 task_runnability = TaskRunnability.no_ready_tasks
                 break
@@ -543,6 +554,14 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         max_tasks = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"])
         max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
         return self.completed_task_count >= max_tasks or time.monotonic() - self.started_at >= max_seconds
+
+    def should_break_before_starting_tasks(self) -> bool:
+        max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
+        return time.monotonic() - self.started_at >= max_seconds
+
+    def engine_steps_to_run(self, engine_steps: list[SpiffTask]) -> list[SpiffTask]:
+        max_tasks = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"])
+        return engine_steps[: max_tasks - self.completed_task_count]
 
     def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
         bpmn_process_instance.refresh_due_waiting_tasks()
