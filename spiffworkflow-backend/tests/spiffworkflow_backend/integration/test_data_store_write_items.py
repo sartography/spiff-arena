@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from flask import Flask
@@ -50,10 +51,13 @@ class TestDataStoreWriteItems(BaseTest):
         url = f"/v1.0/data-stores/kkv/{identifier}/items"
         if location is not None:
             url += f"?location={location}"
-        return client.put(
-            url,
-            headers=self.logged_in_headers(user),
-            json=body,
+        return cast(
+            Response,
+            client.put(
+                url,
+                headers=self.logged_in_headers(user),
+                json=body,
+            ),
         )
 
     # --- Insert tests ---
@@ -333,10 +337,13 @@ class TestDataStoreFilteredGet(BaseTest):
         body: dict,
         location: str = "test_location",
     ) -> Response:
-        return client.put(
-            f"/v1.0/data-stores/kkv/{identifier}/items?location={location}",
-            headers=self.logged_in_headers(user),
-            json=body,
+        return cast(
+            Response,
+            client.put(
+                f"/v1.0/data-stores/kkv/{identifier}/items?location={location}",
+                headers=self.logged_in_headers(user),
+                json=body,
+            ),
         )
 
     def _get(
@@ -353,7 +360,7 @@ class TestDataStoreFilteredGet(BaseTest):
             url += f"&top_level_key={top_level_key}"
         if secondary_key is not None:
             url += f"&secondary_key={secondary_key}"
-        return client.get(url, headers=self.logged_in_headers(user))
+        return cast(Response, client.get(url, headers=self.logged_in_headers(user)))
 
     def _seed_data(self, client: TestClient, user: UserModel) -> None:
         self._put(
