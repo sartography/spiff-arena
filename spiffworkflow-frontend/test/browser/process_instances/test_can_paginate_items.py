@@ -1,9 +1,9 @@
 import re
-import pytest
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 
 def test_can_paginate_items(page: Page):
@@ -16,6 +16,7 @@ def test_can_paginate_items(page: Page):
 
     # 2. Navigate to the process model show page
     page.goto(f"{BASE_URL}/process-groups")
+    switch_to_card_view(page)
     page.get_by_text("Shared Resources", exact=False).first.click()
     expect(page.get_by_test_id("process-group-breadcrumb-Shared Resources")).to_be_visible()
     page.get_by_text("Acceptance Tests Group One", exact=False).first.click()

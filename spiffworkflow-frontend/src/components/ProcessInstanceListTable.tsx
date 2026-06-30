@@ -477,9 +477,6 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  /**
-   * Returns the active sort direction for a column from the primary order field.
-   */
   const getSortDirectionForAccessor = (
     accessor: string,
   ): SortDirection | null => {
@@ -493,9 +490,6 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
-  /**
-   * Builds backend order fields for the next header-click state.
-   */
   const nextSortOrderBy = (
     accessor: string,
     current: SortDirection | null,
@@ -514,9 +508,6 @@ export default function ProcessInstanceListTable({
     return [primarySort, idTiebreaker];
   };
 
-  /**
-   * Cycles a sortable column through descending, ascending, and default order.
-   */
   const handleSortClick = (accessor: string) => {
     const current = getSortDirectionForAccessor(accessor);
     setSortOrderBy(nextSortOrderBy(accessor, current));

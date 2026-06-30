@@ -4,6 +4,7 @@ import uuid
 from playwright.sync_api import expect, Page, Route
 
 from helpers.login import login, logout, BASE_URL
+from helpers.process_groups import switch_to_card_view
 
 
 def test_process_model_import(page: Page):
@@ -86,6 +87,7 @@ def test_process_model_import(page: Page):
     
     # 6. Clean up: first navigate back to the process group page
     page.goto(f"{BASE_URL}/process-groups/{group_id}")
+    switch_to_card_view(page)
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
     delete_btn = page.get_by_test_id("delete-process-group-button")
     expect(delete_btn).to_be_visible(timeout=10000)

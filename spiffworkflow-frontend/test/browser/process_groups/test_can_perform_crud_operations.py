@@ -4,6 +4,7 @@ from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 
 def test_can_perform_crud_operations(page: Page):
@@ -17,6 +18,7 @@ def test_can_perform_crud_operations(page: Page):
     # 2. Navigate to process groups list
     list_url = f"{BASE_URL}/process-groups"
     page.goto(list_url)
+    switch_to_card_view(page)
 
     # 3. Create a new process group
     unique = uuid.uuid4().hex
@@ -61,6 +63,7 @@ def test_can_perform_crud_operations(page: Page):
 
     # 4. Verify detail page loaded with correct group
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
+    switch_to_card_view(page)
     print_page_details(page)
     # Instead of get_by_text, just check the breadcrumb (matches detail page)
     bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{group_name}"]'
@@ -87,6 +90,7 @@ def test_can_perform_crud_operations(page: Page):
 
     # Confirm updated detail page
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
+    switch_to_card_view(page)
     print_page_details(page)
     # Check updated breadcrumb
     bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{updated_name}"]'

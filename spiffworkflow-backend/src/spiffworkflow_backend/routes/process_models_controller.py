@@ -20,6 +20,7 @@ from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
@@ -264,6 +265,20 @@ def process_model_publish(modified_process_model_identifier: str, branch_to_upda
     pr_url = GitService().publish(process_model_identifier, branch_to_update)
     data = {"ok": True, "pr_url": pr_url}
     return make_response(jsonify(data), 200)
+
+
+def process_model_stats() -> flask.wrappers.Response:
+    rows = (
+        db.session.query(
+            ProcessInstanceModel.process_model_identifier,
+            db.func.count(ProcessInstanceModel.id),
+            db.func.max(ProcessInstanceModel.start_in_seconds),
+        )
+        .group_by(ProcessInstanceModel.process_model_identifier)
+        .all()
+    )
+    stats = {row[0]: {"instance_count": row[1], "last_run_in_seconds": row[2]} for row in rows}
+    return make_response(jsonify(stats), 200)
 
 
 def process_model_list(

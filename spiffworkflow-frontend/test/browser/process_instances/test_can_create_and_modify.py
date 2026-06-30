@@ -2,6 +2,7 @@ import re
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
+from helpers.process_groups import switch_to_card_view
 
 
 def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
@@ -40,6 +41,7 @@ def test_can_create_and_modify(page: Page):
 
     # 2. Navigate to the process model show page
     page.goto(f"{BASE_URL}/process-groups")
+    switch_to_card_view(page)
     page.get_by_text("Shared Resources", exact=False).first.click()
     expect(
         page.get_by_test_id("process-group-breadcrumb-Shared Resources")
