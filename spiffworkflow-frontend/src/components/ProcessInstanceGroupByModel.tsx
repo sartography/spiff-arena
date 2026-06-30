@@ -86,6 +86,7 @@ export default function ProcessInstanceGroupByModel({
             pr: 2,
             borderBottom: '1px solid',
             borderColor: 'borders.primary',
+            backgroundColor: 'background.paper',
             '&:hover': { backgroundColor: 'action.hover' },
           }}
         >

@@ -1,7 +1,8 @@
 import { ReactNode, useState } from 'react';
-import { Box, Chip, Collapse, Typography } from '@mui/material';
+import { Box, Chip, Collapse, Typography, useTheme } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FolderIcon from '@mui/icons-material/Folder';
 import { ProcessGroup, ProcessModel } from '../../interfaces';
 
 export interface ModelRowContext {
@@ -35,6 +36,10 @@ export default function CollapsibleGroupTree({
   renderGroupMetadata,
   emptyText,
 }: CollapsibleGroupTreeProps) {
+  const groupRowBackgroundColor =
+    useTheme().palette.mode === 'dark'
+      ? 'background.light'
+      : 'background.mediumlight';
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(defaultExpandedGroupIds ?? []),
   );
@@ -89,7 +94,7 @@ export default function CollapsibleGroupTree({
             pr: 2,
             borderBottom: '1px solid',
             borderColor: 'borders.primary',
-            backgroundColor: 'background.paper',
+            backgroundColor: groupRowBackgroundColor,
             '&:hover': { backgroundColor: 'action.hover' },
           }}
         >
@@ -98,6 +103,7 @@ export default function CollapsibleGroupTree({
           ) : (
             <ChevronRightIcon fontSize="small" />
           )}
+          <FolderIcon fontSize="small" color="action" />
           <Typography sx={{ fontWeight: 700 }}>{group.display_name}</Typography>
           <Box sx={{ flexGrow: 1 }} />
           {renderGroupMetadata ? (

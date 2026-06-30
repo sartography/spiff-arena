@@ -864,6 +864,7 @@ export default function ProcessModelTreePage({
           pr: 2,
           borderBottom: '1px solid',
           borderColor: 'borders.primary',
+          backgroundColor: 'background.paper',
           '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
