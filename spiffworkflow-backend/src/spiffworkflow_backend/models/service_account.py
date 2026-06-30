@@ -24,7 +24,7 @@ class ServiceAccountModel(SpiffworkflowBaseDBModel):
     __allow_unmapped__ = True
     __table_args__ = (db.UniqueConstraint("name", "created_by_user_id", name="service_account_uniq"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     name: str = db.Column(db.String(255), nullable=False, unique=False, index=True)
     user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)
     created_by_user_id: int = db.Column(ForeignKey("user.id"), nullable=False, index=True)

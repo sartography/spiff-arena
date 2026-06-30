@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.db import db
 class TypeaheadModel(SpiffworkflowBaseDBModel):
     __tablename__ = "typeahead"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     category: str = db.Column(db.String(255), index=True)
     search_term: str = db.Column(db.String(255), index=True)
     result: dict = db.Column(db.JSON)

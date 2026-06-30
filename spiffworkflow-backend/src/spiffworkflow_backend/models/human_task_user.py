@@ -34,7 +34,7 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     added_by: str = db.Column(db.String(20), index=True)

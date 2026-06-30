@@ -27,7 +27,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
 
     # this is a sha256 hash of spec and serializer_version
     # note that a call activity is its own row in this table, with its own hash,

@@ -13,7 +13,7 @@ from spiffworkflow_backend.models.db import db
 class FeatureFlagModel(SpiffworkflowBaseDBModel):
     __tablename__ = "feature_flag"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     generation_id: int = db.Column(ForeignKey(CacheGenerationModel.id), nullable=False, unique=True, index=True)  # type: ignore
     value: dict = db.Column(db.JSON, nullable=False)
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)

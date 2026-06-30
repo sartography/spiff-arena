@@ -22,7 +22,7 @@ class KKVDataStoreEntryModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     kkv_data_store_id: int = db.Column(ForeignKey(KKVDataStoreModel.id), nullable=False, index=True)  # type: ignore
     top_level_key: str = db.Column(db.String(255), nullable=False, index=True)
     secondary_key: str = db.Column(db.String(255), nullable=False, index=True)

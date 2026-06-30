@@ -38,7 +38,7 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
             name="permission_assignment_uniq",
         ),
     )
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     principal_id = db.Column(ForeignKey(PrincipalModel.id), nullable=False, index=True)
     permission_target_id = db.Column(ForeignKey(PermissionTargetModel.id), nullable=False, index=True)  # type: ignore
     permission_target = db.relationship(PermissionTargetModel, backref="permission_assignments")

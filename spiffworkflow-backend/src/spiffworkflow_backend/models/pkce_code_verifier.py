@@ -15,7 +15,7 @@ class PkceCodeVerifierModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "pkce_code_verifier"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     pkce_id: str = db.Column(db.String(512), nullable=False, unique=True)  # Unique per-login PKCE lookup key
     code_verifier: str = db.Column(db.String(512), nullable=False)
 

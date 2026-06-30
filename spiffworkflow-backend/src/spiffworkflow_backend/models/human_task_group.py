@@ -30,7 +30,7 @@ class HumanTaskGroupModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
 

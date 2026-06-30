@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class HumanTaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "human_task"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
     lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id), index=True)
     completed_by_user_id: int | None = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore

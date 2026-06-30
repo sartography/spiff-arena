@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.db import db
 class ConfigurationModel(SpiffworkflowBaseDBModel):
     __tablename__ = "configuration"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     category: str = db.Column(db.String(255), index=True)
     value: dict = db.Column(db.JSON)
     updated_at_in_seconds: int = db.Column(db.Integer)

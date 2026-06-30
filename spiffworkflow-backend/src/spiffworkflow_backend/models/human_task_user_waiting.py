@@ -29,7 +29,7 @@ class HumanTaskUserWaitingModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     username = db.Column(db.String(255), nullable=False, index=True)
 

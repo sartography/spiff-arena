@@ -15,7 +15,7 @@ class MessageModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message"
     __table_args__ = (UniqueConstraint("identifier", "location", name="message_identifier_location_unique"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
     location: str = db.Column(db.String(255), index=True, nullable=False)
     schema: dict = db.Column(db.JSON, nullable=False)
@@ -31,7 +31,7 @@ class MessageCorrelationPropertyModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_correlation_property"
     __table_args__ = (UniqueConstraint("message_id", "identifier", name="message_correlation_property_unique"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     message_id: int = db.Column(
         ForeignKey(MessageModel.id, name="message_correlation_property_message_id_fk"),  # type: ignore
         nullable=False,

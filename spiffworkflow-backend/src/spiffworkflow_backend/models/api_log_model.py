@@ -10,7 +10,7 @@ from spiffworkflow_backend.models.db import db
 class APILogModel(SpiffworkflowBaseDBModel):
     __tablename__ = "api_log"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     created_at: datetime = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     endpoint: str = db.Column(db.String(255), index=True)
     method: str = db.Column(db.String(10), index=True)

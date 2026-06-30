@@ -27,7 +27,7 @@ class MessageInstanceCorrelationRuleModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     message_instance_id = db.Column(ForeignKey(MessageInstanceModel.id), nullable=False, index=True)  # type: ignore
 
     name: str = db.Column(db.String(50), nullable=False, index=True)

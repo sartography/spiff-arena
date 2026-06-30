@@ -15,7 +15,7 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     __tablename__ = "user_group_assignment_waiting"
     __table_args__ = (db.UniqueConstraint("username", "group_id", name="user_group_assignment_staged_unique"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     username: str = db.Column(db.String(255), nullable=False)
     group_id: int = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
 

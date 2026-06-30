@@ -18,7 +18,7 @@ class ProcessInstanceMigrationDetailDict(TypedDict):
 @dataclass
 class ProcessInstanceMigrationDetailModel(SpiffworkflowBaseDBModel):
     __tablename__ = "process_instance_migration_detail"
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
 
     process_instance_event_id: int = db.Column(ForeignKey("process_instance_event.id"), nullable=False, index=True)
     process_instance_event = relationship("ProcessInstanceEventModel")  # type: ignore

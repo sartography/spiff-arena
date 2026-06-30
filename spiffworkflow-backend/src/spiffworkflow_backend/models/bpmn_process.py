@@ -23,7 +23,7 @@ class BpmnProcessNotFoundError(Exception):
 @dataclass
 class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     guid: str | None = db.Column(db.String(36), nullable=True, unique=True)
 
     bpmn_process_definition_id: int = db.Column(

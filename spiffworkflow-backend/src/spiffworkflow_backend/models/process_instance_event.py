@@ -37,7 +37,7 @@ class ProcessInstanceEventType(SpiffEnum):
 @dataclass
 class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     __tablename__ = "process_instance_event"
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
 
     # use task guid so we can bulk insert without worrying about whether or not the task has an id yet
     # we considered putting a foreign key constraint on this in july 2024, and decided not to mostly

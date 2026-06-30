@@ -17,7 +17,7 @@ class CacheGenerationTable(SpiffEnum):
 class CacheGenerationModel(SpiffworkflowBaseDBModel):
     __tablename__ = "cache_generation"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     cache_table: str = db.Column(db.String(255), index=True, nullable=False)
 
     updated_at_in_seconds: int = db.Column(db.Integer)

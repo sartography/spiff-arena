@@ -16,7 +16,7 @@ class KKVDataStoreModel(SpiffworkflowBaseDBModel):
     __tablename__ = "kkv_data_store"
     __table_args__ = (UniqueConstraint("identifier", "location", name="_kkv_identifier_location_unique"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     name: str = db.Column(db.String(255), index=True, nullable=False)
     identifier: str = db.Column(db.String(255), index=True, nullable=False)
     location: str = db.Column(db.String(255), nullable=False)

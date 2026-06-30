@@ -17,7 +17,7 @@ class PermissionTargetModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "permission_target"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     uri: str = db.Column(db.String(255), unique=True, nullable=False)
 
     def __init__(self, uri: str, id: int | None = None):

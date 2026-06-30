@@ -24,7 +24,7 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     bpmn_process_definition_id: int = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id),  # type: ignore
         nullable=False,

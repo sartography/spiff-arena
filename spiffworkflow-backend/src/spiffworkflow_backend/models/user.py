@@ -33,7 +33,7 @@ class UserModel(SpiffworkflowBaseDBModel):
     __tablename__ = "user"
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     username: str = db.Column(db.String(255), nullable=False, unique=True)
     email: str | None = db.Column(db.String(255), index=True)
 

@@ -81,7 +81,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     identifier: str = db.Column(db.String(50), nullable=False, index=True)
     report_metadata: ReportMetadata = db.Column(db.JSON)
     created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore

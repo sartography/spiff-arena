@@ -11,7 +11,7 @@ from spiffworkflow_backend.models.user import UserModel
 @dataclass
 class SecretModel(SpiffworkflowBaseDBModel):
     __tablename__ = "secret"
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     key: str = db.Column(db.String(50), unique=True, nullable=False)
     value: str = db.Column(db.Text(), nullable=False)
     user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore

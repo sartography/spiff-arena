@@ -42,7 +42,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "message_instance"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=True, index=True)  # type: ignore
     name: str = db.Column(db.String(255))
     message_type: str = db.Column(db.String(20), nullable=False)

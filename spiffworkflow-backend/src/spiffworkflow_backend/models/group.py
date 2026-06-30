@@ -28,7 +28,7 @@ class GroupModel(SpiffworkflowBaseDBModel):
     __tablename__ = "group"
     __table_args__ = {"extend_existing": True}
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     name: str = db.Column(db.String(255), index=True)
     identifier: str = db.Column(db.String(255), index=True)
     source_is_open_id: bool = db.Column(db.Boolean, default=False, server_default=false(), nullable=False, index=True)

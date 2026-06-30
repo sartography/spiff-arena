@@ -14,7 +14,7 @@ from spiffworkflow_backend.models.db import db
 class RefreshTokenModel(SpiffworkflowBaseDBModel):
     __tablename__ = "refresh_token"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     user_id: int = db.Column(ForeignKey("user.id"), nullable=False, unique=True)
     token: str = db.Column(db.String(4096), nullable=False)
     # user = relationship("UserModel", back_populates="refresh_token")

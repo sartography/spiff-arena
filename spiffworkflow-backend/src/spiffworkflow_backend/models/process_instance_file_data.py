@@ -17,7 +17,7 @@ PROCESS_INSTANCE_DATA_FILE_ON_FILE_SYSTEM_DIR_COUNT = 2
 class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     __tablename__ = "process_instance_file_data"
 
-    id: int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
     mimetype: str = db.Column(db.String(255), nullable=False)
     filename: str = db.Column(db.String(255), nullable=False)
