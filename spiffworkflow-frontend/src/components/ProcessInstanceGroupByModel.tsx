@@ -125,13 +125,13 @@ export default function ProcessInstanceGroupByModel({
 
   return (
     <CollapsibleGroupTree
-      groups={processGroups as ProcessGroup[]}
+      processGroups={processGroups as ProcessGroup[]}
       renderModelRow={renderModelRow}
-      groupInstanceCount={groupInstanceCount}
-      modelInstanceCount={modelInstanceCount}
-      showEmpty={false}
+      getGroupInstanceCount={groupInstanceCount}
+      getModelInstanceCount={modelInstanceCount}
+      showEmptyGroupsAndModels={false}
       emptyText={t('no_results')}
-      renderGroupMeta={(_group, count) => (
+      renderGroupMetadata={(_group, count) => (
         <Chip size="small" label={t('n_runs', { count })} />
       )}
     />

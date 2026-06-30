@@ -664,15 +664,15 @@ export default function ProcessModelTreePage({
       <CardContent sx={{ p: 0 }}>
         <CollapsibleGroupTree
           key={`tree-${searchText}`}
-          groups={treeGroupsToDisplay}
+          processGroups={treeGroupsToDisplay}
           renderModelRow={renderCatalogModelRow}
-          groupInstanceCount={(id) => groupInstanceCountMap[id] ?? 0}
-          modelInstanceCount={(id) => modelStats[id]?.instance_count ?? 0}
-          sortModels={sortAndFilterModels}
-          showEmpty={!showOnlyRun}
-          defaultExpandedIds={treeExpandedIds}
+          getGroupInstanceCount={(id) => groupInstanceCountMap[id] ?? 0}
+          getModelInstanceCount={(id) => modelStats[id]?.instance_count ?? 0}
+          sortProcessModels={sortAndFilterModels}
+          showEmptyGroupsAndModels={!showOnlyRun}
+          defaultExpandedGroupIds={treeExpandedIds}
           emptyText={t('no_results')}
-          renderGroupMeta={(group, count) => (
+          renderGroupMetadata={(group, count) => (
             <Stack direction="row" gap={1} alignItems="center">
               <Chip
                 size="small"

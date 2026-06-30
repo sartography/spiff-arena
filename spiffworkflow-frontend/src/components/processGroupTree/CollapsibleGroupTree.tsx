@@ -11,39 +11,32 @@ export interface ModelRowContext {
 }
 
 interface CollapsibleGroupTreeProps {
-  groups: ProcessGroup[];
-  /** Renders the row for a single process model (leaf). */
+  processGroups: ProcessGroup[];
   renderModelRow: (model: ProcessModel, ctx: ModelRowContext) => ReactNode;
-  /** Aggregate instance count for a group; also drives hide-empty. */
-  groupInstanceCount?: (groupId: string) => number;
-  /** Per-model instance count; used to hide empty models when showEmpty=false. */
-  modelInstanceCount?: (modelId: string) => number;
-  /** Sort/filter the models within a single group before rendering. */
-  sortModels?: (models: ProcessModel[]) => ProcessModel[];
-  /** When false, groups/models with a zero instance count are hidden. */
-  showEmpty?: boolean;
-  /** Group ids expanded on first render. */
-  defaultExpandedIds?: string[];
-  /** Optional custom right-aligned meta for a group header. */
-  renderGroupMeta?: (group: ProcessGroup, count: number) => ReactNode;
+  getGroupInstanceCount?: (groupId: string) => number;
+  getModelInstanceCount?: (modelId: string) => number;
+  sortProcessModels?: (models: ProcessModel[]) => ProcessModel[];
+  showEmptyGroupsAndModels?: boolean;
+  defaultExpandedGroupIds?: string[];
+  renderGroupMetadata?: (group: ProcessGroup, count: number) => ReactNode;
   emptyText?: string;
 }
 
 const INDENT_PER_LEVEL = 2.5;
 
 export default function CollapsibleGroupTree({
-  groups,
+  processGroups,
   renderModelRow,
-  groupInstanceCount,
-  modelInstanceCount,
-  sortModels,
-  showEmpty = true,
-  defaultExpandedIds,
-  renderGroupMeta,
+  getGroupInstanceCount,
+  getModelInstanceCount,
+  sortProcessModels,
+  showEmptyGroupsAndModels = true,
+  defaultExpandedGroupIds,
+  renderGroupMetadata,
   emptyText,
 }: CollapsibleGroupTreeProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(defaultExpandedIds ?? []),
+    () => new Set(defaultExpandedGroupIds ?? []),
   );
 
   const toggle = (id: string) => {
@@ -59,18 +52,18 @@ export default function CollapsibleGroupTree({
   };
 
   const renderGroup = (group: ProcessGroup, depth: number): ReactNode => {
-    const count = groupInstanceCount ? groupInstanceCount(group.id) : 0;
-    if (!showEmpty && groupInstanceCount && count === 0) {
+    const count = getGroupInstanceCount ? getGroupInstanceCount(group.id) : 0;
+    if (!showEmptyGroupsAndModels && getGroupInstanceCount && count === 0) {
       return null;
     }
     const expanded = expandedIds.has(group.id);
     const childGroups = group.process_groups ?? [];
     let childModels = group.process_models ?? [];
-    if (sortModels) {
-      childModels = sortModels(childModels);
+    if (sortProcessModels) {
+      childModels = sortProcessModels(childModels);
     }
-    if (!showEmpty && modelInstanceCount) {
-      childModels = childModels.filter((m) => modelInstanceCount(m.id) > 0);
+    if (!showEmptyGroupsAndModels && getModelInstanceCount) {
+      childModels = childModels.filter((m) => getModelInstanceCount(m.id) > 0);
     }
 
     return (
@@ -107,9 +100,9 @@ export default function CollapsibleGroupTree({
           )}
           <Typography sx={{ fontWeight: 700 }}>{group.display_name}</Typography>
           <Box sx={{ flexGrow: 1 }} />
-          {renderGroupMeta ? (
-            renderGroupMeta(group, count)
-          ) : groupInstanceCount ? (
+          {renderGroupMetadata ? (
+            renderGroupMetadata(group, count)
+          ) : getGroupInstanceCount ? (
             <Chip size="small" label={count} />
           ) : null}
         </Box>
@@ -127,7 +120,7 @@ export default function CollapsibleGroupTree({
     );
   };
 
-  const rendered = groups
+  const rendered = processGroups
     .map((group) => renderGroup(group, 0))
     .filter((node) => node !== null);
 
