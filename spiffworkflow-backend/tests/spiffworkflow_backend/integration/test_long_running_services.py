@@ -458,6 +458,7 @@ class TestLongRunningService(BaseTest):
             patch(
                 "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
             ) as current_process,
+            patch("celery.current_app.send_task"),
         ):
             current_process.return_value.index = 0
             worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
