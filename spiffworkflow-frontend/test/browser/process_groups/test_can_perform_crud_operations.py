@@ -63,6 +63,7 @@ def test_can_perform_crud_operations(page: Page):
 
     # 4. Verify detail page loaded with correct group
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
+    switch_to_card_view(page)
     print_page_details(page)
     # Instead of get_by_text, just check the breadcrumb (matches detail page)
     bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{group_name}"]'
@@ -89,6 +90,7 @@ def test_can_perform_crud_operations(page: Page):
 
     # Confirm updated detail page
     expect(page).to_have_url(re.compile(fr"/process-groups/{group_id}$"), timeout=10000)
+    switch_to_card_view(page)
     print_page_details(page)
     # Check updated breadcrumb
     bread_crumb_selector = f'[data-testid="process-group-breadcrumb-{updated_name}"]'
