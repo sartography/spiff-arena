@@ -12,7 +12,7 @@ SpiffArena is a BPMN workflow execution platform with Python/Flask backend and R
 
 ## Critical Constraints
 
-- **Python**: Use `uv` (not pip or poetry). Backend requires 3.10+; root workspace requires 3.11 or 3.12 (not 3.13)
+- **Python**: Use `uv` (not pip or poetry). Backend requires 3.10+; root workspace requires 3.11+
 - **JavaScript**: Use `npm` (not yarn or pnpm)
 - **Testing**: Run `./bin/run_pyl` for all tests and linters before committing
 - **Databases**: MySQL/PostgreSQL for dev, SQLite for tests
