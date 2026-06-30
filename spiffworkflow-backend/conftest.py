@@ -31,6 +31,7 @@ from spiffworkflow_backend import create_app  # noqa: E402
 def _set_unit_testing_env_variables() -> None:
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
     os.environ["FLASK_SESSION_SECRET_KEY"] = "e7711a3ba96c46c68e084a86952de16f"  # noqa: S105, do not care about security when running unit tests
+    os.environ["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"] = "false"
 
 
 @pytest.fixture(scope="session")

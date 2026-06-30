@@ -1,6 +1,7 @@
-import uuid
+import json
 import re
-from playwright.sync_api import expect, Page
+import uuid
+from playwright.sync_api import expect, Page, Route
 
 from helpers.login import login, logout, BASE_URL
 
@@ -15,6 +16,29 @@ def test_process_model_import(page: Page):
     unique = uuid.uuid4().hex
     group_id = f"test-import-group-{unique}"
     group_name = f"Test Import Group {unique}"
+    imported_process_model_id = f"{group_id}/0-1-minimal-example"
+    github_url = "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
+
+    def mock_import(route: Route):
+        request = route.request
+        assert request.post_data_json == {"repository_url": github_url}
+        route.fulfill(
+            status=201,
+            headers={"Content-Type": "application/json"},
+            body=json.dumps({
+                "process_model": {
+                    "id": imported_process_model_id,
+                    "display_name": "Minimal Example",
+                    "description": f"Imported from {github_url}",
+                    "primary_file_name": "minimal-example.bpmn",
+                    "primary_process_id": "minimal_example",
+                    "files": [],
+                },
+                "import_source": github_url,
+            }),
+        )
+
+    page.route(re.compile(fr"/process-model-import/{group_id}$"), mock_import)
 
     page.goto(f"{BASE_URL}/process-groups/new")
     expect(page).to_have_url(re.compile(r"/process-groups/new$"), timeout=10000)
@@ -44,9 +68,7 @@ def test_process_model_import(page: Page):
     # Find the input field and enter the GitHub URL
     input_field = dialog.locator("input[placeholder*='github.com']").first
     expect(input_field).to_be_visible(timeout=10000)
-    input_field.fill(
-        "https://github.com/sartography/example-process-models/tree/main/examples/0-1-minimal-example"
-    )
+    input_field.fill(github_url)
 
     # Click the import button in the dialog
     dialog_import_button = dialog.get_by_test_id("import-button").first
