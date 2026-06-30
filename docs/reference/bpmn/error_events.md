@@ -69,7 +69,7 @@ This event marks the termination of a process path due to an error, signaling th
 In a retail inventory management workflow, an End Error Event within a stock replenishment sub-process indicates the detection of an "Out of Stock" condition for a critical product that cannot be immediately resolved.
 This error propagates to the main inventory management process, prompting a temporary pause in sales operations for the affected product.
 
-## Example 1: Error Boundary Events in SpiffArena
+## Example 1: Error Boundary Events in Spiff Arena
 
 In this example, we're modeling a process in BPMN that involves fetching employee data from an external HR system (BambooHR) and handling potential errors using an Error Boundary Event.
 This process begins with a simple task and moves through a service task designed to interact with the BambooHR API, with specific error handling in place.

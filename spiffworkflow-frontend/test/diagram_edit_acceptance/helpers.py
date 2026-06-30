@@ -271,17 +271,11 @@ def open_message_editor(page: Page) -> Locator | None:
     button = _locator(group, CONFIG["selectors"]["message_open"])
     expect(button, "Open message editor button visible").to_be_visible(timeout=10000)
     expect(button, "Open message editor button enabled").to_be_enabled(timeout=10000)
+    button.click()
 
     if not CONFIG.get("message_editor", {}).get("opens", True):
         return None
 
-    group.evaluate(
-        """(groupEl) => {
-        const button = Array.from(groupEl.querySelectorAll('button'))
-          .find((btn) => /open/i.test(btn.textContent || ''));
-        button?.click();
-        }"""
-    )
     dialog = page.get_by_role("dialog")
     expect(
         dialog.get_by_role(

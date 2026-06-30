@@ -701,25 +701,21 @@ class MessageService:
                 actual_matches.append(potential_match)
 
         if len(actual_matches) == 0:
-            raise (
-                ApiError(
-                    error_code="message_triggerable_process_model_not_found",
-                    message=(
-                        f"Could not find a message triggerable process model for {modified_message_name} in the scope of group"
-                        f" {process_group_identifier}"
-                    ),
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="message_triggerable_process_model_not_found",
+                message=(
+                    f"Could not find a message triggerable process model for {modified_message_name} in the scope of group"
+                    f" {process_group_identifier}"
+                ),
+                status_code=400,
             )
 
         if len(actual_matches) > 1:
             message_names = [f"{m.process_model_identifier} - {m.message_name}" for m in actual_matches]
-            raise (
-                ApiError(
-                    error_code="multiple_message_triggerable_process_models_found",
-                    message=f"Found {len(actual_matches)}. Expected 1. Found entries: {message_names}",
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="multiple_message_triggerable_process_models_found",
+                message=f"Found {len(actual_matches)}. Expected 1. Found entries: {message_names}",
+                status_code=400,
             )
         mtp: MessageTriggerableProcessModel = actual_matches[0]
         return mtp

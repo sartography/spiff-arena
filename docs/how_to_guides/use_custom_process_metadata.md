@@ -6,7 +6,7 @@ This guide will walk you through the steps to create a process model that genera
 
 **Create a New Process Model**:
 
-- Navigate to the "Processes" section in SpiffArena.
+- Navigate to the "Processes" section in Spiff Arena.
 - Click on "Add a process model" and fill in the required fields as described elsewhere.
 - In the process model form, specify the metadata extraction path.
   - This path is used to extract data from your process instances for quick access in searches and perspectives.

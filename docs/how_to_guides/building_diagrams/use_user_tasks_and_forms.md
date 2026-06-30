@@ -57,14 +57,15 @@ Click on the user task in the BPMN editor to display the **Properties Panel** on
 
 Forms in SpiffWorkflow enable you to create intuitive user interfaces for collecting data during User Tasks. They are configured using JSON Schema and can be customized with dynamic elements, validations, and UI enhancements.
 
-Let's dive in and explore the possibilities of creating forms in SpiffArena.
+Let's dive in and explore the possibilities of creating forms in Spiff Arena and Ed.
 
 ### Creating Forms
+
 Here are the ways to create forms:
 
 1. **Using JSON Schema**
 
-JSON Schema is a standard for describing the structure of data in a JSON file. JSON Schema forms the foundation for building forms in SpiffArena.
+JSON Schema is a standard for describing the structure of data in a JSON file. JSON Schema forms the foundation for building forms in Spiff Arena.
 
 To simplify the form creation process, we use the React JSON Schema Form (RJSF) library. RJSF is a powerful tool that uses JSON Schema as its basis.
 It enables you to create dynamic and interactive forms with ease.
@@ -100,9 +101,10 @@ Upon creating a new BPMN file, open it to access the editor.
 
 ![Form Editor](/images/Form_editor3.png)
 
-### SpiffArena react-jsonschema-form enhancements
+### Spiff Arena react-jsonschema-form enhancements
 
-SpiffArena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
+Spiff Arena has enhanced the capabilities of react-jsonschema-form to provide users with more dynamic and flexible form-building options.
+Ed-authored forms use the same JSON Schema and UI Schema patterns, so these enhancements should be considered the shared form-authoring reference for both products.
 
 #### Dynamic Form Content with Jinja
 

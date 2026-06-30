@@ -1,6 +1,6 @@
 # Extensions
 
-Extensions in SpiffArena provide a mechanism to augment the software with custom features and functionalities.
+Extensions in Spiff Arena provide a mechanism to augment the software with custom features and functionalities.
 By leveraging extensions, users can implement functions or features not present in the standard offering.
 This powerful feature ensures adaptability to various business needs, from custom reports to specific user tools.
 
@@ -21,11 +21,11 @@ This variable activates the extensions feature in the SpiffWorkflow backend:
 
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED=true
 
-By default, SpiffArena will look for extensions in `[SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR]/extensions`, but that can be configured using `SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX`.
+By default, Spiff Arena will look for extensions in `[SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR]/extensions`, but that can be configured using `SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX`.
 
 ### Creating an Extension
 
-After enabling extensions from the backend, you can create extensions in the SpiffArena frontend.
+After enabling extensions from the backend, you can create extensions in the Spiff Arena frontend.
 To create your own custom extension, follow these steps:
 
 - Navigate to the process group repository where extensions are to be implemented.
@@ -92,7 +92,7 @@ Be aware that site structure and style may change over time, so try to minimize 
 
 ## Use Cases
 
-If your organization has specific needs not catered to by the standard SpiffArena features, you can use extensions to add those features.
+If your organization has specific needs not catered to by the standard Spiff Arena features, you can use extensions to add those features.
 
 Here are some of the use cases already implemented by our users:
 
@@ -103,9 +103,9 @@ Here are some of the use cases already implemented by our users:
 - Rendering the output of these APIs using Jinja templates and markdown
 - Adding custom styling with CSS files
 
-Extensions in SpiffArena offer a robust mechanism to tailor the software to unique business requirements.
+Extensions in Spiff Arena offer a robust mechanism to tailor the software to unique business requirements.
 When considering an extension, also consider whether the code would be more properly included in the core source code or as a [connector](how_to_build_a_connector) for external system integrations.
 
-Extensions work well with other SpiffArena extensibility features like [Global Scripts](global_scripts), which provide reusable backend logic that can be called from process models. Extensions can leverage global scripts to perform backend operations while providing custom frontend interfaces.
+Extensions work well with other Spiff Arena extensibility features like [Global Scripts](global_scripts), which provide reusable backend logic that can be called from process models. Extensions can leverage global scripts to perform backend operations while providing custom frontend interfaces.
 
 In cases where an extension is appropriate, by following the instructions in this guide, organizations can expand the system's functionality to meet their unique needs.

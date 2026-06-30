@@ -79,6 +79,10 @@ be-db-migrate:
 be-logs:
 	docker logs -f $(BACKEND_CONTAINER)
 
+be-ast-grep:
+	$(IN_BACKEND) uv run ast-grep scan --report-style=short
+	$(IN_BACKEND) uv run ast-grep test
+
 be-mypy:
 	$(IN_BACKEND) uv run mypy src tests
 
@@ -184,7 +188,7 @@ take-ownership:
 
 .PHONY: build-images dev-env \
 	start-dev stop-dev \
-	be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
+	be-ast-grep be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	co-tests co-wheel \
 	cp-logs cp-poetry-i cp-poetry-lock cp-sh \

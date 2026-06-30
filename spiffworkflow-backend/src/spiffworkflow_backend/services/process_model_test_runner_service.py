@@ -120,9 +120,10 @@ class TestCaseResult:
     test_case_error_details: TestCaseErrorDetails | None = None
 
 
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> Any:
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
+    return glbls[name]
 
 
 class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore

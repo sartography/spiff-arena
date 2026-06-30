@@ -34,9 +34,9 @@ It emphasizes the importance of maintaining correlation consistency and highligh
 
 ----
 
-**[#5 - Getting Started with SpiffArena](https://medium.com/@danfunk/getting-started-8ec59afe3a48)**
+**[#5 - Getting Started with Spiff Arena](https://medium.com/@danfunk/getting-started-8ec59afe3a48)**
 
-The article offers a tutorial on using SpiffArena to create and run executable SpiffWorkflow diagrams.
+The article offers a tutorial on using Spiff Arena to create and run executable SpiffWorkflow diagrams.
 It covers installation, building a simple workflow process using BPMN diagrams and tasks, and concludes with shutting down the application.
 The tutorial highlights the potential of SpiffWorkflow in enhancing transparency and collaboration in complex business processes.
 
@@ -45,15 +45,15 @@ The tutorial highlights the potential of SpiffWorkflow in enhancing transparency
 **[#6 - The Low Code Wall](https://medium.com/@danfunk/the-low-code-wall-fa2e3476cc10)**
 
 The article discusses low-code and no-code tools for software development, emphasizing the challenges and pitfalls that may arise.
-It suggests considering open standards, collaboration with IT departments, and introduces SpiffArena as an open-source alternative that encourages collaboration and utilizes visual tools and familiar interfaces.
+It suggests considering open standards, collaboration with IT departments, and introduces Spiff Arena as an open-source alternative that encourages collaboration and utilizes visual tools and familiar interfaces.
 
 ----
 
-**[#7 - SpiffArena, the low-code visual workflow builder, awaits you like a clean canvas…](https://medium.com/@danfunk/spiffarena-the-low-code-visual-workflow-builder-awaits-you-like-a-clean-canvas-e7b9bd20ae71)**
+**[#7 - Spiff Arena, the low-code visual workflow builder, awaits you like a clean canvas…](https://medium.com/@danfunk/spiffarena-the-low-code-visual-workflow-builder-awaits-you-like-a-clean-canvas-e7b9bd20ae71)**
 
-SpiffArena is a browser-based tool that allows you to create flow-chart-like diagrams for automating business workflows.
+Spiff Arena is a browser-based tool that allows you to create flow-chart-like diagrams for automating business workflows.
 It offers features such as form builders, application connections, timers, custom APIs, and robust permissions.
-SpiffArena combines BPMN and Python to provide a powerful and configurable solution.
+Spiff Arena combines BPMN and Python to provide a powerful and configurable solution.
 
 ----
 

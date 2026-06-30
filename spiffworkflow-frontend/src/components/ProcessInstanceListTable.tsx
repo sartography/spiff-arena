@@ -65,6 +65,16 @@ type OwnProps = {
   variant?: string;
 };
 
+const SORTABLE_ACCESSORS = new Set([
+  'end_in_seconds',
+  'id',
+  'last_milestone_bpmn_name',
+  'process_initiator_username',
+  'process_model_display_name',
+  'start_in_seconds',
+  'status',
+]);
+
 export default function ProcessInstanceListTable({
   additionalReportFilters,
   autoReload = false,
@@ -84,6 +94,8 @@ export default function ProcessInstanceListTable({
   textToShowIfEmpty,
   variant = 'for-me',
 }: OwnProps) {
+  type SortDirection = 'asc' | 'desc';
+
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -465,32 +477,40 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  const SORTABLE_ACCESSORS = new Set([
-    'id',
-    'process_model_display_name',
-    'start_in_seconds',
-    'end_in_seconds',
-    'last_milestone_bpmn_name',
-    'status',
-  ]);
-
   const getSortDirectionForAccessor = (
     accessor: string,
-  ): 'asc' | 'desc' | null => {
-    if (sortOrderBy.includes(accessor)) return 'asc';
-    if (sortOrderBy.includes(`-${accessor}`)) return 'desc';
+  ): SortDirection | null => {
+    const [primarySort] = sortOrderBy;
+    if (primarySort === accessor) {
+      return 'asc';
+    }
+    if (primarySort === `-${accessor}`) {
+      return 'desc';
+    }
     return null;
+  };
+
+  const nextSortOrderBy = (
+    accessor: string,
+    current: SortDirection | null,
+  ): string[] => {
+    if (current === 'asc') {
+      return [];
+    }
+
+    const directionPrefix = current === null ? '-' : '';
+    const primarySort = `${directionPrefix}${accessor}`;
+    if (accessor === 'id') {
+      return [primarySort];
+    }
+
+    const idTiebreaker = `${directionPrefix}id`;
+    return [primarySort, idTiebreaker];
   };
 
   const handleSortClick = (accessor: string) => {
     const current = getSortDirectionForAccessor(accessor);
-    if (current === null) {
-      setSortOrderBy([`-${accessor}`]);
-    } else if (current === 'desc') {
-      setSortOrderBy([accessor]);
-    } else {
-      setSortOrderBy([]);
-    }
+    setSortOrderBy(nextSortOrderBy(accessor, current));
   };
 
   const buildTable = () => {
@@ -603,7 +623,7 @@ export default function ProcessInstanceListTable({
                   : null;
                 return (
                   <TableCell
-                    key={col.label}
+                    key={col.accessor ?? 'action-column'}
                     title={
                       col.label === 'Id' ? t('process_id_tooltip') : undefined
                     }

@@ -176,6 +176,27 @@ class TestServiceTaskRetries(BaseTest):
         assert future_task is not None
         assert future_task.completed is False
 
+    def test_builtin_http_connector_retries_downstream_debug_endpoint_500(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        processor, process_instance = self.load_retry_processor("builtin_http_debug_error.bpmn")
+
+        custom_service_task_time, workflow_execution_service_time = self.patch_retry_time()
+        with custom_service_task_time, workflow_execution_service_time:
+            with patch("celery.current_app.send_task"):
+                with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
+                    processor.do_engine_steps(save=True)
+
+        service_task = self.get_service_task(processor)
+        assert service_task.state == TaskState.STARTED
+        assert service_task.internal_data.get("spiff__retries_attempted") == 0
+        assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
+
+        future_task = FutureTaskModel.query.filter_by(guid=str(service_task.id)).first()
+        assert future_task is not None
+        assert future_task.completed is False
+        assert process_instance.spiffworkflow_fully_initialized()
+
     def test_service_task_retries_when_retry_at_is_due(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         processor, process_instance = self.load_retry_processor()
 

@@ -7,6 +7,82 @@ SpiffWorkflow uses the BPMN 2.0 specification to implement extensions that provi
 SpiffWorkflow extensions use the `spiffworkflow` namespace. Ensure this namespace is defined in your BPMN XML:
 `xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"`
 
+## XML Extension Name Reference
+
+This section lists the `spiffworkflow` XML names that Spiff Arena uses.
+It is meant as a quick naming reference, not a full behavior guide.
+
+The usual pattern is lower camel case for XML element and attribute names.
+For example, the modeler moddle type `PreScript` serializes as `<spiffworkflow:preScript>`.
+Generic Arena task configuration is usually stored as lower-camel-case `name` values inside `<spiffworkflow:property>`.
+
+SpiffWorkflow parses direct `spiffworkflow:*` elements inside `<bpmn:extensionElements>` into `task_spec.extensions`.
+Some names are interpreted by SpiffWorkflow itself; others are Arena conventions that SpiffWorkflow only carries as extension data.
+
+In the tables below:
+
+- "Extension element with text" means an element whose value is the text between the opening and closing XML tags, such as `<spiffworkflow:preScript>...</spiffworkflow:preScript>`.
+- "Nested under ..." means the element is only used inside another `spiffworkflow` element, not directly under `<bpmn:extensionElements>`.
+- "Extension attribute" means a `spiffworkflow:*` attribute on a BPMN element. Those rows are the only attribute rows.
+- "Engine behavior" means the SpiffWorkflow library has parser or runtime code that interprets the value. "Parsed extension data" means the library exposes the value in `task_spec.extensions`, but Arena owns the behavior. "Arena/modeler only" means the name is used by Arena or `bpmn-js-spiffworkflow`, not by SpiffWorkflow engine code.
+
+### Elements and Attributes
+
+These names are `spiffworkflow` XML elements or namespace attributes used by Arena.
+Extension elements appear under `<bpmn:extensionElements>` unless the form says they are nested under another element.
+
+| XML name | Form | Arena use | SpiffWorkflow library support |
+| --- | --- | --- | --- |
+| `spiffworkflow:preScript` | Extension element with text | Python to run before an activity or event task. | Engine behavior. |
+| `spiffworkflow:postScript` | Extension element with text | Python to run after an activity or event task. | Engine behavior. |
+| `spiffworkflow:calledDecisionId` | Extension element with text | DMN decision id for a business rule task. | Engine behavior. |
+| `spiffworkflow:instructionsForEndUser` | Extension element with text | Markdown/Jinja instructions rendered by Arena for human-facing tasks. | Parsed extension data. Defined by the SpiffWorkflow library schema, but rendered by Arena. |
+| `spiffworkflow:messagePayload` | Extension element with text | Python expression for message payload data. | Engine behavior. |
+| `spiffworkflow:messageVariable` | Extension element with text | Process variable name for received message payload data. | Engine behavior. |
+| `spiffworkflow:payloadExpression` | Extension element with text | Payload expression on signal, error, and escalation definitions. | Engine behavior. |
+| `spiffworkflow:variableName` | Extension element with text | Variable name for user task form output or event payload output. | Engine behavior. |
+| `spiffworkflow:processVariableCorrelation` | Extension element containing `propertyId` and `expression` | Message correlation against process data. | Engine behavior. |
+| `spiffworkflow:propertyId` | Nested under `spiffworkflow:processVariableCorrelation`; text value | Correlation property id. | Engine behavior. |
+| `spiffworkflow:expression` | Nested under `spiffworkflow:processVariableCorrelation`; text value | Correlation expression. | Engine behavior. |
+| `spiffworkflow:properties` | Extension element containing `property` rows | Generic name/value task configuration container. | Parsed extension data. |
+| `spiffworkflow:property` | Nested under `spiffworkflow:properties`; has `name` and `value` attributes | One generic task configuration value. | Parsed extension data; property names are application conventions. |
+| `spiffworkflow:serviceTaskOperator` | Extension element with `id`, `resultVariable`, `parameters`, and optional `retry` | Connector/operator configuration for service tasks. | Engine behavior. |
+| `spiffworkflow:parameters` | Nested under `spiffworkflow:serviceTaskOperator` | Parameter container. | Engine behavior. |
+| `spiffworkflow:parameter` | Nested under `spiffworkflow:parameters`; has `id`, `type`, and optional `value` attributes | One connector/operator parameter. | Engine behavior. |
+| `spiffworkflow:retry` | Nested under `spiffworkflow:serviceTaskOperator`; has `retries` and `backoff_base` attributes | Retry settings for the service task operator. | Engine behavior. |
+| `spiffworkflow:unitTests` | Extension element containing `unitTest` rows | Script task unit test container. | Parsed extension data. |
+| `spiffworkflow:unitTest` | Nested under `spiffworkflow:unitTests`; has `id` attribute | One script task unit test. | Parsed extension data. |
+| `spiffworkflow:inputJson` | Nested under `spiffworkflow:unitTest`; text value | Unit test input JSON. | Parsed extension data. |
+| `spiffworkflow:expectedOutputJson` | Nested under `spiffworkflow:unitTest`; text value | Unit test expected output JSON. | Parsed extension data. |
+| `spiffworkflow:taskMetadataValues` | Extension element containing `taskMetadataValue` rows | Human task metadata container. | Parsed extension data. |
+| `spiffworkflow:taskMetadataValue` | Nested under `spiffworkflow:taskMetadataValues`; has `name` and `value` attributes | One evaluated human task metadata expression. | Parsed extension data. |
+| `spiffworkflow:scriptsOnInstances` | Extension attribute on `bpmn:multiInstanceLoopCharacteristics` or `bpmn:standardLoopCharacteristics` | Run pre/post scripts on each loop instance instead of only the outer loop task. | Engine behavior. |
+| `spiffworkflow:allowGuest` | Extension element with boolean text | Allows a message start or user task to be completed through Arena public routes. | Parsed extension data; Arena owns the behavior. |
+| `spiffworkflow:guestConfirmation` | Extension element with text | Markdown/Jinja confirmation shown after public completion. | Parsed extension data; Arena owns the behavior. |
+| `spiffworkflow:signalButtonLabel` | Extension element with text | Label for Arena signal event action buttons. | Parsed extension data; Arena owns the behavior. |
+| `spiffworkflow:processModelToStartOnTaskAvailable` | Extension element with text | Process model to start when an Arena user or manual task becomes available. | Parsed extension data; Arena owns the behavior. |
+| `spiffworkflow:category` | Extension element with text on a data object | Arena data object category used for process data display and access decisions. | Arena/frontend behavior. |
+| `spiffworkflow:isMatchingCorrelation` | Extension attribute on message-capable events/tasks | Tells Arena message tooling that process-variable correlation matching is enabled. | Arena/modeler only. |
+| `spiffworkflow:isOutputSynced` | Extension attribute on a multi-instance subprocess/activity | Tells Arena/modeler whether multi-instance output data should be synchronized. | Arena/modeler only. |
+| `spiffworkflow:jsonSchemaId` | Extension attribute on `bpmn:message` | Links a BPMN message to an Arena message JSON schema. | Arena/modeler only. |
+
+Extension attributes are valid BPMN extension points, but for new Arena task settings the safer default is usually a named element inside `<bpmn:extensionElements>`.
+That path is parsed by the SpiffWorkflow library and gives the XML name its own domain meaning.
+Use an extension attribute only when the value is a small flag or identifier that naturally belongs directly on an existing BPMN element and both the modeler and runtime code explicitly support it.
+
+For task-availability hook behavior, see [Start a Process When a Human Task Becomes Available](/how_to_guides/building_diagrams/start_process_when_task_available).
+
+### Property Names
+
+SpiffWorkflow parses `<spiffworkflow:properties>` into a generic dictionary.
+Arena uses that generic SpiffWorkflow extension point for Arena-specific configuration values.
+These are not separate XML elements; they are `name` attributes on `<spiffworkflow:property>`.
+
+| Property name | Example XML | Arena use | SpiffWorkflow library support |
+| --- | --- | --- | --- |
+| `formJsonSchemaFilename` | `<spiffworkflow:property name="formJsonSchemaFilename" value="request-schema.json" />` | JSON Schema file for a user task form. | SpiffWorkflow parses the generic property; Arena owns this property name and behavior. |
+| `formUiSchemaFilename` | `<spiffworkflow:property name="formUiSchemaFilename" value="request-uischema.json" />` | UI Schema file for a user task form. | SpiffWorkflow parses the generic property; Arena owns this property name and behavior. |
+
 ## Common Extensions
 
 ### `spiffworkflow:preScript` and `spiffworkflow:postScript`
@@ -106,7 +182,7 @@ Service Tasks in SpiffWorkflow are extended to allow for specific operations, mo
 
 This element defines the service operation.
 
-- **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequestV2`. Other operators may exist for different HTTP methods or service types.
+- **`id`**: (Required) Identifies the operator. For HTTP POST requests, this is `http/PostRequest`. Other operators may exist for different HTTP methods or service types.
 - **`resultVariable`**: (Optional) The name of the process variable where the response from the service call will be stored. If not provided, the response isn't stored in a specific variable. The response stored in `resultVariable` is a dict that contains the following:
   - `body`: The response body. Often a Python dictionary/list for JSON responses, otherwise a string.
   - `status_code`: Integer HTTP status code (e.g., `200`, `404`).
@@ -125,7 +201,7 @@ This container holds all input parameters for the service operator.
     - **As a string literal**: Enclose in double quotes within the XML attribute (e.g., `value="&#34;https://api.example.com&#34;"`).
     - **As a JSON string literal (for `type="any"`)**: Provide a JSON formatted string (e.g., `value="{&#34;Content-Type&#34;: &#34;application/json&#34;}"`).
 
-**Common Parameters for `http/PostRequestV2`:**
+**Common Parameters for `http/PostRequest`:**
 
 1. **`url`** (`type="str"`): (Required) The target URL for the HTTP POST request.
 
@@ -162,7 +238,7 @@ This container holds all input parameters for the service operator.
 ```xml
 <bpmn:serviceTask id="MyHttpPostTask" name="Send POST Request">
   <bpmn:extensionElements>
-    <spiffworkflow:serviceTaskOperator id="http/PostRequestV2" resultVariable="post_response">
+    <spiffworkflow:serviceTaskOperator id="http/PostRequest" resultVariable="post_response">
       <spiffworkflow:parameters>
         <spiffworkflow:parameter id="url" type="str" value="&#34;https://api.example.com/submit&#34;" />
         <spiffworkflow:parameter id="headers" type="any" value="my_headers_variable" /> <!-- my_headers_variable is a dict process variable -->

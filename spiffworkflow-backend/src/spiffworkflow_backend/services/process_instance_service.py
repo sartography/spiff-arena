@@ -65,6 +65,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
@@ -774,11 +775,8 @@ class ProcessInstanceService:
             if task_model is not None:
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
-                # Try to get the task's form schema
-                from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_data
-
                 process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
-                form_schema = _prepare_form_data(
+                form_schema = FormSchemaService.prepare_form_data(
                     form_file=form_schema_file_name,
                     process_model=process_model,
                     task_model=task_model,

@@ -120,7 +120,7 @@ jobs:
           STEPS_DATE_OUTPUTS_DATE: ${{ steps.date.outputs.date }}
           STEPS_COMMIT_SHA_OUTPUTS_SHA_SHORT: ${{ steps.commit_sha.outputs.sha_short }}
       - name: Build Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ matrix.context }}
           push: false # Don't push yet
@@ -161,14 +161,14 @@ jobs:
             echo "UPLOAD_TRIVY_RESULTS=false" >> "$GITHUB_ENV"
           fi
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4.33.0
+        uses: github/codeql-action/upload-sarif@v4.35.2
         if: always() && env.UPLOAD_TRIVY_RESULTS == 'true'
         with:
           sarif_file: "trivy-results.sarif"
           category: "${{ matrix.context }}"
 
       - name: Push Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ matrix.context }}
           push: true

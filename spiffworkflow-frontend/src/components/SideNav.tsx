@@ -131,7 +131,7 @@ function SideNav({
   }
   const userEmail = UserService.getUserEmail();
   const username = UserService.getPreferredUsername();
-  let externalDocumentationUrl = 'https://spiff-arena.readthedocs.io';
+  let externalDocumentationUrl = 'https://spiff.works/docs/spiff-arena/';
   if (DOCUMENTATION_URL) {
     externalDocumentationUrl = DOCUMENTATION_URL;
   }

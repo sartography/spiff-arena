@@ -1,5 +1,7 @@
 import {
+  buildUniqueMilestoneNamesPath,
   isANumber,
+  mergeSelectedStringOption,
   slugifyString,
   underscorizeString,
   recursivelyChangeNullAndUndefined,
@@ -116,4 +118,57 @@ test('it can identify urls', () => {
     const result = isURL(url);
     expect(result).toBe(false);
   });
+});
+
+test('it builds milestone names path for scoped process instance views', () => {
+  expect(
+    buildUniqueMilestoneNamesPath({
+      variant: 'for-me',
+      withRelationToMe: false,
+      processModelIdentifier: null,
+    }),
+  ).toEqual(
+    '/process-instances/unique-milestone-names?with_relation_to_me=true',
+  );
+
+  expect(
+    buildUniqueMilestoneNamesPath({
+      variant: 'all',
+      withRelationToMe: true,
+      processModelIdentifier: 'group/sample',
+    }),
+  ).toEqual(
+    '/process-instances/unique-milestone-names?with_relation_to_me=true&process_model_identifier=group%2Fsample',
+  );
+
+  expect(
+    buildUniqueMilestoneNamesPath({
+      variant: 'all',
+      withRelationToMe: false,
+      processModelIdentifier: 'group/sample',
+    }),
+  ).toEqual(
+    '/process-instances/unique-milestone-names?process_model_identifier=group%2Fsample',
+  );
+});
+
+test('it preserves the selected milestone in the available options', () => {
+  const milestoneA = 'Milestone A';
+  const milestoneB = 'Milestone B';
+  const milestoneC = 'Milestone C';
+  const availableMilestones = [milestoneA, milestoneB];
+
+  expect(mergeSelectedStringOption(availableMilestones, null)).toEqual(
+    availableMilestones,
+  );
+
+  expect(mergeSelectedStringOption(availableMilestones, milestoneB)).toEqual(
+    availableMilestones,
+  );
+
+  expect(mergeSelectedStringOption(availableMilestones, milestoneC)).toEqual([
+    milestoneC,
+    milestoneA,
+    milestoneB,
+  ]);
 });

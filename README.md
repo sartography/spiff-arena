@@ -10,7 +10,7 @@ There are also additional articles, videos, and tutorials about SpiffArena and i
 ## Backend Setup, local
 
 Remember, if you don't need a full-on native dev experience, you can run with docker (see below), which saves you from all the native setup.
-If you have issues with the local dev setup, please consult [the troubleshooting guide](https://spiff-arena.readthedocs.io/en/latest/Support/Running_Server_Locally.html).
+If you have issues with the local dev setup, please consult [the troubleshooting guide](https://spiff.works/docs/spiff-arena/how_to_guides/troubleshoot_locally).
 
 There are three prerequisites for non-docker local development:
 

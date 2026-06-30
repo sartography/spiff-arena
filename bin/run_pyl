@@ -54,11 +54,14 @@ function clear_log_file() {
 
 for python_project in "${python_projects[@]}"; do
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
-    pushd "$python_project"
-    uv sync
-    uv run mypy $(get_python_dirs)
-    clear_log_file
-    ./bin/tests-par
-    popd
+    (
+      unset VIRTUAL_ENV
+      pushd "$python_project"
+      uv sync
+      uv run mypy $(get_python_dirs)
+      clear_log_file
+      ./bin/tests-par
+      popd
+    )
   fi
 done

@@ -1,11 +1,23 @@
 from typing import Any
 
 from flask import current_app
+from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_model import MessageModel
+from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
+
+
+class MessageDefinitionConflictError(ValueError):
+    pass
+
+
+PROCESS_MODEL_IDENTIFIERS_METADATA_KEY = "_process_model_identifiers"
+PROCESS_MODEL_IDENTIFIERS_TO_DISPLAY_IN_MOVE_ERROR = 2
 
 
 class MessageDefinitionService:
@@ -14,8 +26,33 @@ class MessageDefinitionService:
         cls, identifier: str, message_definition: dict[str, Any], process_group: ProcessGroup
     ) -> MessageModel | None:
         schema = message_definition.get("schema", "{}")
+        message_location = message_definition.get("location", process_group.id)
+        message_id = message_definition.get("id")
+        if isinstance(message_id, str) and message_id.isdigit():
+            message_id = int(message_id)
+        elif message_id is not None and not isinstance(message_id, int):
+            raise ValueError(
+                f"Invalid message id '{message_id}' for message '{identifier}'. Must be None, an integer, or a numeric string."
+            )
 
-        return MessageModel(identifier=identifier, location=process_group.id, schema=schema)
+        existing_model = MessageModel.query.filter_by(identifier=identifier, location=message_location).first()
+        existing_message_id = existing_model.id if existing_model else None
+
+        resolved_message_id: int | None = None
+        if message_id is not None:
+            resolved_message_id = message_id
+        else:
+            resolved_message_id = existing_message_id
+
+        message_model = MessageModel(identifier=identifier, location=message_location, schema=schema)
+        if resolved_message_id is not None:
+            message_model.id = resolved_message_id
+        if existing_model is not None:
+            message_model.process_model_identifiers = list(existing_model.process_model_identifiers or [])
+        elif isinstance(message_definition.get(PROCESS_MODEL_IDENTIFIERS_METADATA_KEY), list):
+            message_model.process_model_identifiers = sorted(message_definition[PROCESS_MODEL_IDENTIFIERS_METADATA_KEY])
+
+        return message_model
 
     @classmethod
     def _correlation_property_models_from_message_definition(
@@ -33,6 +70,17 @@ class MessageDefinitionService:
             models.append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
 
         return models
+
+    @classmethod
+    def _build_process_group_with_messages(cls, process_group: ProcessGroup, messages: dict[str, Any]) -> ProcessGroup:
+        """Helper to build a ProcessGroup with updated messages."""
+        return ProcessGroup.from_dict(
+            {
+                **cls.serialize_process_group_for_disk(process_group),
+                "id": process_group.id,
+                "messages": messages,
+            }
+        )
 
     @classmethod
     def collect_message_models(
@@ -65,9 +113,264 @@ class MessageDefinitionService:
             db.session.delete(message)
 
     @classmethod
-    def save_all_message_models(cls, all_message_models: dict[tuple[str, str], MessageModel]) -> None:
+    def save_all_message_models(
+        cls,
+        all_message_models: dict[tuple[str, str], MessageModel],
+        usage_map: dict[tuple[str, str], list[str]] | None = None,
+    ) -> None:
         for message_model in all_message_models.values():
-            db.session.add(message_model)
+            correlation_property_models = list(message_model.correlation_properties)
+            process_model_identifiers = (
+                sorted(usage_map.get((message_model.identifier, message_model.location), []))
+                if usage_map
+                else list(message_model.process_model_identifiers or [])
+            )
+            message_model_to_save = MessageModel(
+                identifier=message_model.identifier,
+                location=message_model.location,
+                schema=message_model.schema,
+                process_model_identifiers=process_model_identifiers,
+            )
+            message_id: int | None = getattr(message_model, "id", None)
+            if message_id is not None:
+                locked_message_model = MessageModel.query.filter_by(id=message_id).with_for_update().first()
+                if locked_message_model is not None:
+                    if (
+                        locked_message_model.identifier != message_model.identifier
+                        or locked_message_model.location != message_model.location
+                    ):
+                        raise ValueError(
+                            f"Supplied message_id {message_id} belongs to a different message"
+                            f" ('{locked_message_model.identifier}' at '{locked_message_model.location}')."
+                            f" Cannot reuse this id for '{message_model.identifier}' at '{message_model.location}'."
+                        )
+                    merged_message_model = locked_message_model
+                    merged_message_model.schema = message_model.schema
+                    merged_message_model.process_model_identifiers = process_model_identifiers
+                else:
+                    message_model_to_save.id = message_id
+                    db.session.add(message_model_to_save)
+                    try:
+                        db.session.flush()
+                    except IntegrityError as exception:
+                        raise MessageDefinitionConflictError(
+                            f"Message id {message_id} was created concurrently. Please reload and try again."
+                        ) from exception
+                    merged_message_model = message_model_to_save
+            else:
+                locked_message_model = (
+                    MessageModel.query.filter_by(
+                        identifier=message_model.identifier,
+                        location=message_model.location,
+                    )
+                    .with_for_update()
+                    .first()
+                )
+                if locked_message_model is not None:
+                    merged_message_model = locked_message_model
+                    merged_message_model.schema = message_model.schema
+                    merged_message_model.process_model_identifiers = process_model_identifiers
+                else:
+                    db.session.add(message_model_to_save)
+                    try:
+                        db.session.flush()
+                    except IntegrityError as exception:
+                        raise MessageDefinitionConflictError(
+                            "Message definition was created concurrently. Please reload and try again."
+                        ) from exception
+                    merged_message_model = message_model_to_save
 
-            for correlation_property_model in message_model.correlation_properties:
+            db.session.flush()
+
+            MessageCorrelationPropertyModel.query.filter_by(message_id=merged_message_model.id).delete()
+            for correlation_property_model in correlation_property_models:
+                correlation_property_model.message_id = merged_message_model.id
                 db.session.add(correlation_property_model)
+
+    @classmethod
+    def remove_process_model_from_usage(cls, process_model_id: str) -> None:
+        """Remove a process model ID from process_model_identifiers on all MessageModels that reference it."""
+        messages = MessageModel.query.filter(
+            MessageModel.process_model_identifiers.isnot(None)  # type: ignore
+        ).all()
+        for message in messages:
+            ids = list(message.process_model_identifiers or [])
+            if process_model_id in ids:
+                ids.remove(process_model_id)
+                message.process_model_identifiers = ids
+                db.session.add(message)
+
+    @classmethod
+    def remove_process_group_from_usage(cls, process_group_id: str) -> None:
+        """Remove all process model IDs under a process group from process_model_identifiers."""
+        prefix = process_group_id + "/"
+        messages = MessageModel.query.filter(
+            MessageModel.process_model_identifiers.isnot(None)  # type: ignore
+        ).all()
+        for message in messages:
+            ids = list(message.process_model_identifiers or [])
+            new_ids = [pm_id for pm_id in ids if pm_id != process_group_id and not pm_id.startswith(prefix)]
+            if len(new_ids) != len(ids):
+                message.process_model_identifiers = new_ids
+                db.session.add(message)
+
+    @classmethod
+    def strip_metadata(cls, messages: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Remove internal metadata (id, location) from message definitions."""
+        if messages is None:
+            return None
+
+        sanitized_messages: dict[str, Any] = {}
+        for identifier, message_definition in messages.items():
+            if not isinstance(message_definition, dict):
+                sanitized_messages[identifier] = message_definition
+                continue
+
+            sanitized_messages[identifier] = {
+                k: v for k, v in message_definition.items() if k not in {"id", "location", PROCESS_MODEL_IDENTIFIERS_METADATA_KEY}
+            }
+
+        return sanitized_messages
+
+    @classmethod
+    def serialize_process_group_for_disk(cls, process_group: ProcessGroup) -> dict[str, Any]:
+        """Serialize a process group with only the keys supported for disk serialization."""
+        serialized_process_group = process_group.serialized()
+        return {
+            key: value
+            for key, value in serialized_process_group.items()
+            if key in PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
+        }
+
+    @classmethod
+    def collect_for_multiple_process_groups(
+        cls, process_groups_with_message_metadata: dict[str, ProcessGroup]
+    ) -> dict[tuple[str, str], MessageModel]:
+        """Collect all message models from multiple process groups."""
+        all_message_models: dict[tuple[str, str], MessageModel] = {}
+        for process_group_id, process_group in process_groups_with_message_metadata.items():
+            cls.collect_message_models(process_group, process_group_id, all_message_models)
+        return all_message_models
+
+    @classmethod
+    def persist_process_groups_with_messages(
+        cls,
+        updated_process_groups: dict[str, ProcessGroup],
+        process_groups_with_message_metadata: dict[str, ProcessGroup],
+    ) -> None:
+        """Persist process groups and their message models in a single transaction with rollback support."""
+        all_message_models = cls.collect_for_multiple_process_groups(process_groups_with_message_metadata)
+        file_backups = {
+            process_group_id: ProcessModelService.read_process_group_json(process_group_id)
+            for process_group_id in updated_process_groups
+        }
+
+        try:
+            for process_group in updated_process_groups.values():
+                ProcessModelService.update_process_group(process_group)
+
+            for process_group_id in updated_process_groups:
+                cls.delete_message_models_at_location(process_group_id)
+            db.session.flush()
+            cls.save_all_message_models(all_message_models)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            for process_group_id, original_contents in file_backups.items():
+                ProcessModelService.restore_process_group_json(process_group_id, original_contents)
+            raise
+
+    @classmethod
+    def _is_descendant_location(cls, source_process_group_id: str, target_process_group_id: str) -> bool:
+        return target_process_group_id.startswith(f"{source_process_group_id}/")
+
+    @classmethod
+    def _out_of_scope_process_model_identifiers(
+        cls,
+        process_model_identifiers: list[str],
+        target_process_group_id: str,
+    ) -> list[str]:
+        return sorted(
+            process_model_id
+            for process_model_id in process_model_identifiers
+            if target_process_group_id not in UpsearchService.upsearch_locations(process_model_id)
+        )
+
+    @classmethod
+    def _format_process_model_identifiers_for_move_error(cls, process_model_identifiers: list[str]) -> str:
+        displayed_process_model_identifiers = process_model_identifiers[:PROCESS_MODEL_IDENTIFIERS_TO_DISPLAY_IN_MOVE_ERROR]
+        remaining_count = len(process_model_identifiers) - len(displayed_process_model_identifiers)
+        message = ", ".join(displayed_process_model_identifiers)
+        if remaining_count > 0:
+            message += f", and {remaining_count} more"
+        return message
+
+    @classmethod
+    def move_message_between_groups(
+        cls,
+        source_process_group: ProcessGroup,
+        target_process_group: ProcessGroup,
+        source_message_identifier: str,
+        target_message_identifier: str,
+        message_definition: dict[str, Any],
+    ) -> ProcessGroup:
+        """Move a message definition from source to target process group, optionally renaming it.
+
+        Returns: updated_target_process_group
+        Raises: ValueError if source message not found or invalid message definition
+        """
+        # Validate and manipulate messages
+        source_messages = dict(source_process_group.messages or {})
+        if source_message_identifier not in source_messages:
+            raise ValueError(f"Message '{source_message_identifier}' was not found at '{source_process_group.id}'")
+
+        target_messages = dict(target_process_group.messages or {})
+        source_messages.pop(source_message_identifier, None)
+        if source_process_group.id == target_process_group.id and source_message_identifier != target_message_identifier:
+            target_messages.pop(source_message_identifier, None)
+
+        source_message_model = MessageModel.query.filter_by(
+            identifier=source_message_identifier,
+            location=source_process_group.id,
+        ).first()
+        if source_message_model is not None:
+            process_model_identifiers = list(source_message_model.process_model_identifiers or [])
+            out_of_scope_process_model_identifiers = cls._out_of_scope_process_model_identifiers(
+                process_model_identifiers, target_process_group.id
+            )
+            if out_of_scope_process_model_identifiers:
+                formatted_process_model_identifiers = cls._format_process_model_identifiers_for_move_error(
+                    out_of_scope_process_model_identifiers
+                )
+                raise ValueError(
+                    f"Cannot move message '{source_message_identifier}' from '{source_process_group.id}' "
+                    f"to target location '{target_process_group.id}' because these process models would no "
+                    f"longer be in scope: {formatted_process_model_identifiers}. Create a duplicate "
+                    "message at the more specific location instead."
+                )
+            message_definition = {
+                **message_definition,
+                PROCESS_MODEL_IDENTIFIERS_METADATA_KEY: process_model_identifiers,
+            }
+
+        sanitized = cls.strip_metadata({target_message_identifier: message_definition}) or {}
+        target_messages[target_message_identifier] = sanitized[target_message_identifier]
+
+        # Build groups for persistence
+        target_messages_with_metadata = dict(target_messages)
+        target_messages_with_metadata[target_message_identifier] = message_definition
+
+        cls.persist_process_groups_with_messages(
+            updated_process_groups={
+                source_process_group.id: cls._build_process_group_with_messages(source_process_group, source_messages),
+                target_process_group.id: cls._build_process_group_with_messages(target_process_group, target_messages),
+            },
+            process_groups_with_message_metadata={
+                source_process_group.id: cls._build_process_group_with_messages(source_process_group, source_messages),
+                target_process_group.id: cls._build_process_group_with_messages(
+                    target_process_group, target_messages_with_metadata
+                ),
+            },
+        )
+
+        return cls._build_process_group_with_messages(target_process_group, target_messages)

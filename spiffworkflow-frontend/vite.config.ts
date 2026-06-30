@@ -1,6 +1,5 @@
 import preact from '@preact/preset-vite';
 import { defineConfig } from 'vite';
-import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgr from 'vite-plugin-svgr';
 
 const host = process.env.HOST ?? 'localhost';
@@ -16,7 +15,6 @@ export default defineConfig({
     // prefresh(),
     // we need preact for bpmn-js-spiffworkflow. see https://forum.bpmn.io/t/custom-prop-for-service-tasks-typeerror-cannot-add-property-object-is-not-extensible/8487
     preact({ devToolsEnabled: false }),
-    viteTsconfigPaths(),
     svgr({
       // svgr options: https://react-svgr.com/docs/options/
       svgrOptions: {
@@ -53,6 +51,7 @@ export default defineConfig({
     // bpmn-js-spiffworkflow use the same instance (and thus the same bundled preact).
     dedupe: ['@bpmn-io/properties-panel', 'bpmn-js-properties-panel'],
     preserveSymlinks: true,
+    tsconfigPaths: true,
   },
   css: {
     preprocessorOptions: {

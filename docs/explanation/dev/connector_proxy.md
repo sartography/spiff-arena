@@ -135,9 +135,13 @@ These are the schema definitions returned by async-http and should be treated as
 - `params` *(optional, any/object)* — Query string parameters
 
 ### DELETE / PATCH / POST / PUT commands
-- `data` *(optional, any/object)* — JSON request body
+- `data` *(optional, any/object)* — request body.
+- `body_format` *(optional, string)* — how to send `data`; defaults to `json`. Supported values are `json`, `form`, `raw`, and `none`.
+- `include_response_headers` *(optional, boolean)* — when true, include upstream response headers in `command_response.headers`.
 
 > **Note:** In this example, `DeleteRequest` is advertised with `data` (not `params`) in the command schema.
+
+The embedded Arena HTTP connector also supports `body_format` and `include_response_headers` on its standard write commands.
 
 ---
 
@@ -169,6 +173,6 @@ For production use, implement:
 
 ## API Key Authentication
 
-If SpiffArena is configured with a `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY`, it will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the connector proxy.
-Your connector proxy implementation can validate this header to restrict access to authorized SpiffArena instances only.
+If Spiff Arena is configured with a `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY`, it will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the connector proxy.
+Your connector proxy implementation can validate this header to restrict access to authorized Spiff Arena instances only.
 See [Configure a Connector Proxy](../../how_to_guides/deployment/configure_a_connector_proxy) for how to set the key.

@@ -13,6 +13,7 @@ use_human_task_metadata
 use_process_metadata_backfill
 troubleshoot_locally
 deployment/index
-ed_editor
 extend_the_system/index
 ```
+
+For browser-based BPMN authoring in Ed, see the [Ed documentation](https://spiff.works/docs/ed/).

@@ -14,10 +14,34 @@ If the called service returns a **202 (Accepted)** response, SpiffWorkflow will 
 
 The process will pause at that task until the external service calls back with the result.
 
+For connector-proxy async commands, SpiffWorkflow checks the response body before waiting. If the connector returns an error in the async response envelope, the service task is marked errored immediately instead of waiting for a callback.
+
 ## Completing a Waiting Service Task
 
 To complete the task, the external service should call the `spiff__callback_url` using a **PUT** request with a JSON body containing the result data.
 The result data will be stored in the service task's configured result variable, and the process will continue.
+
+If retries are configured, transient callback failures follow the service task retry policy.
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant Spiff as Spiff Engine<br/>owns retry policy
+    participant Proxy as Connector Proxy<br/>returns 202 for async work
+
+    Spiff->>Proxy: Start service task<br/>retries=3
+    Proxy-->>Spiff: 202 Accepted
+
+    Proxy-->>Spiff: Callback: failure
+
+    Note over Spiff: Since this is still the same service task attempt,<br/>Spiff should apply configured retries
+
+    Spiff->>Proxy: Retry by dispatching task again
+    Proxy-->>Spiff: 202 Accepted
+
+    Proxy-->>Spiff: Callback: success
+    Spiff->>Spiff: Complete task
+```
 
 ### Callback Request Structure
 

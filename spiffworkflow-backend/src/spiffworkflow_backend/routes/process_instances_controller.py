@@ -7,6 +7,7 @@ from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMod
 
 import json
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 from flask import current_app
@@ -32,6 +33,7 @@ from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeDeletedError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
+from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -74,8 +76,6 @@ def process_instance_run_deprecated(
     force_run: bool = False,
     execution_mode: str | None = None,
 ) -> flask.wrappers.Response:
-    from typing import cast
-
     return cast(
         flask.wrappers.Response,
         process_instance_run(
@@ -651,9 +651,38 @@ def send_bpmn_event(
         )
 
 
-def unique_milestone_name_list() -> Response:
-    results = ProcessInstanceModel.query.with_entities(ProcessInstanceModel.last_milestone_bpmn_name).distinct().all()
-    values = [row[0] for row in results if row[0] is not None and row[0] != ""]
+def unique_milestone_name_list(
+    with_relation_to_me: bool = False,
+    process_model_identifier: str | None = None,
+) -> Response:
+    filters: list[FilterValue] = []
+    if process_model_identifier:
+        filters.append({"field_name": "process_model_identifier", "field_value": process_model_identifier})
+
+    has_process_instance_read_permission = False
+    if process_model_identifier:
+        modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(process_model_identifier)
+        has_process_instance_read_permission = AuthorizationService.user_has_permission(
+            user=g.user,
+            permission="read",
+            target_uri=f"/process-instances/{modified_process_model_identifier}/*",
+        )
+
+    if not has_process_instance_read_permission:
+        has_process_instance_read_permission = AuthorizationService.user_has_permission(
+            user=g.user,
+            permission="read",
+            target_uri="/process-instances",
+        )
+
+    should_scope_to_requesting_user = with_relation_to_me or not has_process_instance_read_permission
+    if should_scope_to_requesting_user:
+        filters.append({"field_name": "with_relation_to_me", "field_value": True})
+
+    values = ProcessInstanceReportService.unique_milestone_names(
+        filters=filters,
+        user=g.user if should_scope_to_requesting_user else None,
+    )
     return make_response(jsonify(values), 200)
 
 

@@ -25,7 +25,6 @@ from spiffworkflow_backend.models.process_model import PROCESS_MODEL_SUPPORTED_K
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -273,6 +272,17 @@ class ProcessModelService(FileSystemService):
         if cls.is_process_model(model_path):
             return cls.get_process_model_from_relative_path(process_model_id)
         raise ProcessEntityNotFoundError("process_model_not_found")
+
+    @classmethod
+    def get_process_model_or_raise_api_error(cls, process_model_id: str) -> ProcessModelInfo:
+        try:
+            return cls.get_process_model(process_model_id)
+        except ProcessEntityNotFoundError as exception:
+            raise ApiError(
+                error_code="process_model_cannot_be_found",
+                message=f"Process model cannot be found: {process_model_id}",
+                status_code=400,
+            ) from exception
 
     @classmethod
     def get_process_model_files(cls, process_model: ProcessModelInfo) -> list[File]:
@@ -726,6 +736,23 @@ class ProcessModelService(FileSystemService):
                 del serialized_process_group[key]
         cls.write_json_file(json_path, serialized_process_group)
         return process_group
+
+    @classmethod
+    def process_group_json_path(cls, process_group_id: str) -> str:
+        """Get the path to a process group's JSON file."""
+        return os.path.join(cls.full_path_from_id(process_group_id), cls.PROCESS_GROUP_JSON_FILE)
+
+    @classmethod
+    def read_process_group_json(cls, process_group_id: str) -> str:
+        """Read the contents of a process group's JSON file."""
+        with open(cls.process_group_json_path(process_group_id)) as process_group_file:
+            return process_group_file.read()
+
+    @classmethod
+    def restore_process_group_json(cls, process_group_id: str, contents: str) -> None:
+        """Restore a process group's JSON file from backup contents."""
+        with open(cls.process_group_json_path(process_group_id), "w") as process_group_file:
+            process_group_file.write(contents)
 
     @classmethod
     def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:

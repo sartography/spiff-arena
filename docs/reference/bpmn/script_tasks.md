@@ -2,7 +2,7 @@
 
 Writing scripts refers to the process of creating custom code or scripts to enhance the functionality and automation of a software application or system.
 
-In SpiffArena, the scripting language used for writing scripts is Python, a widely used programming language.
+In Spiff Arena, the scripting language used for writing scripts is Python, a widely used programming language.
 
 Python offers a rich array of libraries, frameworks, and tools that facilitate script development, making it a popular choice for implementing custom logic and automation.
 
@@ -152,8 +152,8 @@ These are great for user forms where you want to modify and clean up the form re
 ## What can you do and not do in Script Tasks?
 
 - Keywords and operands can be used without restrictions
-- SpiffArena uses RestrictedPython under the hood, which allows certain ['safe names' from the collection of builtins](https://github.com/zopefoundation/RestrictedPython/blob/master/src/RestrictedPython/Guards.py#L27-L28)
-- SpiffArena extends this list with [additional 'global names' (builtins and modules)](https://github.com/search?q=repo%3Asartography%2Fspiff-arena+symbol%3ACustomBpmnScriptEngine&type=code)
+- Spiff Arena uses RestrictedPython under the hood, which allows certain ['safe names' from the collection of builtins](https://github.com/zopefoundation/RestrictedPython/blob/master/src/RestrictedPython/Guards.py)
+- Spiff Arena extends this list with [additional 'global names' (builtins and modules)](https://github.com/search?q=repo%3Asartography%2Fspiff-arena+symbol%3ACustomBpmnScriptEngine&type=code)
 - When you store variables in script tasks, be aware that these will be added to the process context. As such, they must be JSON serializable. This means that you can't store sets, for example. If you run into another example that is worth documenting, please submit a documentation pull request.
 
 ## Custom functions available to script tasks
@@ -166,7 +166,10 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_all_permissions                    | Gets all permissions currently in the system.                                                                                                                  |
 | get_current_task_info                  | Returns information about the current task.                                                                                                                    |
 | get_current_user                       | Returns the current user.                                                                                                                                      |
-| get_users_assigned_to_task             | Returns all users assigned to the task.                     |
+| get_users_assigned_to_task             | Returns the usernames directly assigned to a human task for a task GUID.                                                                                       |
+| get_task_potential_owners              | Returns usernames and groups that can complete a task.      |
+| get_url_for_task                       | Returns the URL to the task show page for a task_guid (optionally with the public path segment). |
+| get_url_for_task_with_bpmn_identifier  | Returns the URL to the task show page for a task with the given BPMN identifier. The script task calling this MUST be in the same process as the desired task. |
 | get_data_sizes                         | Returns information about the size of task data.                                                                                                               |
 | get_encoded_file_data                  | Returns the encoded file data. This is a very expensive call.                                                                                                  |
 | get_env                                | Returns the current environment (e.g., testing, staging, production).                                                                                          |

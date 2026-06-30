@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_Builtin_Http_Debug_Error" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_Builtin_Http_Debug_Error" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="ServiceTask_1" />
+    <bpmn:serviceTask id="ServiceTask_1" name="Call Debug Error Endpoint">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/PostRequest" resultVariable="result">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="url" type="str" value="'http://local/v1.0/debug/test-raise-error'" />
+          </spiffworkflow:parameters>
+          <spiffworkflow:retry retries="3" />
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="ServiceTask_1" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1" />
+  </bpmn:process>
+</bpmn:definitions>

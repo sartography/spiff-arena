@@ -1,14 +1,18 @@
-# Welcome to SpiffWorkflow's Documentation
+# Spiff Arena Documentation
 
-SpiffWorkflow is an open source platform for modeling, executing, and monitoring business processes, with support for both human-driven and automated workflows across a wide range of use cases.
+Spiff Arena is the web application for creating, editing, running, and administering BPMN processes powered by the SpiffWorkflow engine.
+Use these docs when you are working with the Spiff Arena frontend, process model repository structure, user tasks, connector proxies, permissions, deployment, or operational behavior.
+
+For engine-level examples and BPMN library guidance, see the [SpiffWorkflow Library documentation](https://spiff.works/docs/spiffworkflow/).
 
 ---
 
-## In This Documentation
+## In This Spiff Arena Documentation
 
 ```{toctree}
 :maxdepth: 2
 :hidden:
+:caption: Spiff Arena
 
 tutorials/index
 how_to_guides/index
@@ -18,15 +22,15 @@ reference/index
 
 ## [Tutorials](tutorials/index)
 
-**Start here**: A hands-on introduction to SpiffWorkflow for new users.
+**Start here**: A hands-on introduction to Spiff Arena for new users.
 
 ## [How-to guides](how_to_guides/index)
 
-**Step-by-step guides**: Covering key operations and common tasks.
+**Step-by-step guides**: Covering key Spiff Arena operations and common tasks.
 
 ## [Reference](reference/index)
 
-**Technical information**: Specifications, APIs, architecture.
+**Technical information**: Spiff Arena specifications, APIs, configuration, and architecture.
 
 ## [Explanation](explanation/index)
 
@@ -54,9 +58,23 @@ reference/index
 
 ## Project and Community
 
-SpiffWorkflow is an open-source project that welcomes community contributions, suggestions, and feedback.
+Spiff Arena is part of the open-source SpiffWorkflow ecosystem, and the project welcomes community contributions, suggestions, and feedback.
 
 - [Join our online chat](https://discord.gg/F6Kb7HNK7B)
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
-- Thinking about using SpiffWorkflow for your next project? [Get in touch!](https://www.spiffworkflow.org/)
+- Thinking about using Spiff Arena for your next project? [Get in touch!](https://www.spiffworkflow.org/)
+
+## Additional Documentation
+
+```{toctree}
+:maxdepth: 1
+:hidden:
+:caption: Additional Documentation
+
+SpiffWorks Learn <https://spiff.works/learn/>
+```
+
+## [SpiffWorks Learn](https://spiff.works/learn/)
+
+Central entry point for Spiff Arena, Ed, Analytics, and SpiffWorkflow documentation.

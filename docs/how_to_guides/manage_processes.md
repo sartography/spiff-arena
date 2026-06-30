@@ -64,6 +64,34 @@ Resuming a process is essential for ensuring that the process can continue its e
 | Confirm that the status has changed from ‘suspended’ to an active status. |
 |                      ![waiting](/images/waiting.png)                      |
 
+## Manually Execute or Skip an Active Task
+
+Administrators can manually move a suspended process instance past an active task when normal task completion is not possible.
+Use this only after confirming the task is the active task shown for the suspended process instance.
+
+> **Step 1: Suspend the Process Instance**
+
+Follow the suspend steps above and confirm that the process instance status is `suspended`.
+
+> **Step 2: Open the Active Task**
+
+On the process instance detail page, select the currently active task.
+Active tasks are shown in yellow.
+
+> **Step 3: Choose the Recovery Action**
+
+Select **Execute Task** to run the task through the workflow engine, or select **Skip Task** to mark the task complete without running its normal behavior.
+For human tasks, both actions move the workflow past the task; for automated tasks, **Execute Task** runs the task behavior and **Skip Task** bypasses it.
+
+> **Step 4: Review and Resume**
+
+After the action completes, review the process instance state and events.
+The process instance remains suspended until you resume it.
+
+```{admonition} Note
+Manual execution changes process history and can affect downstream data.
+```
+
 ## Terminate a Process Instance
 
 Terminating refers to ending the execution of a specific occurrence of a process before it reaches its natural completion or final outcome.

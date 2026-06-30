@@ -1,5 +1,7 @@
 from typing import Any
 
+from flask import current_app
+
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -32,8 +34,6 @@ class RefreshPermissions(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        from flask import current_app
-
         group_info = args[0]
         current_app.logger.debug(f"SET PERMISSIONS - START: RefreshPermissions script executing with {len(group_info)} group(s)")
 

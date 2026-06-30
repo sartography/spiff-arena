@@ -1,0 +1,110 @@
+{%- extends "basic/layout.html" %}
+
+{%- block extrahead %}
+{{ super() }}
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400;1,8..60,600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+{%- endblock %}
+
+{%- block header %}
+<nav class="sw-nav">
+  <a href="https://spiff.works" class="sw-logo">
+    <img src="/images/logo/logo.svg" alt="SpiffWorks" height="28" onerror="this.style.display='none'"/>
+    <span class="sw-logo-name">Spiff<span>Works</span></span>
+  </a>
+  <a href="https://spiff.works" class="sw-learn-more">Learn More →</a>
+</nav>
+{%- endblock %}
+
+{%- block relbar2 %}{% endblock %}
+
+{%- block content %}
+<div class="docs-wrapper">
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="docs-sidebar-inner">
+      {%- include "globaltoc.html" %}
+      <div class="docs-search">
+        {%- include "searchbox.html" %}
+      </div>
+    </div>
+  </aside>
+
+  <div class="docs-sidebar-backdrop" id="docs-sidebar-backdrop" aria-hidden="true"></div>
+
+  <main class="docs-main" role="main">
+    <div class="docs-content">
+      <button class="docs-sidebar-toggle" id="docs-sidebar-toggle"
+              aria-controls="docs-sidebar" aria-expanded="false"
+              aria-label="Open navigation">
+        &#9776; Menu
+      </button>
+      {%- block body %}{% endblock %}
+    </div>
+    {%- if prev or next %}
+    <nav class="docs-pagination" aria-label="Page navigation">
+      {%- if prev %}<a class="docs-prev" href="{{ prev.link|e }}">← {{ prev.title }}</a>{%- endif %}
+      {%- if next %}<a class="docs-next" href="{{ next.link|e }}">{{ next.title }} →</a>{%- endif %}
+    </nav>
+    {%- endif %}
+  </main>
+</div>
+{%- endblock %}
+
+{%- block scripts %}
+{{ super() }}
+<script>if (typeof mermaid !== 'undefined') { mermaid.initialize({ startOnLoad: true, theme: 'default' }); }</script>
+<script>
+(function () {
+  var toggle = document.getElementById('docs-sidebar-toggle');
+  var sidebar = document.getElementById('docs-sidebar');
+  var backdrop = document.getElementById('docs-sidebar-backdrop');
+  if (!toggle || !sidebar) return;
+
+  var mql = window.matchMedia('(max-width: 700px)');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sidebar.setAttribute('aria-hidden', 'false');
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-label', 'Close navigation');
+    if (backdrop) backdrop.classList.add('open');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebar.setAttribute('aria-hidden', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Open navigation');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  function onBreakpointChange(e) {
+    if (e.matches) {
+      // entered mobile: sidebar is off-canvas unless already open
+      if (!sidebar.classList.contains('open')) {
+        sidebar.setAttribute('aria-hidden', 'true');
+      }
+    } else {
+      // entered desktop: sidebar is always visible, reset mobile state
+      sidebar.classList.remove('open');
+      sidebar.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open navigation');
+      if (backdrop) backdrop.classList.remove('open');
+    }
+  }
+
+  mql.addEventListener('change', onBreakpointChange);
+  onBreakpointChange(mql); // set correct initial state
+
+  toggle.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+  });
+}());
+</script>
+{%- endblock %}

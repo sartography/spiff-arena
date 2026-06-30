@@ -52,6 +52,15 @@ installed.
 
    $ ./bin/run_server_locally
 
+* Run ast-grep rules:
+
+.. code:: console
+
+   $ uv run ast-grep scan --report-style=short
+   $ uv run ast-grep test
+
+Rules live in ``ast-grep/rules`` with tests in ``ast-grep/rule-tests``.
+
 
 Requirements
 ------------
