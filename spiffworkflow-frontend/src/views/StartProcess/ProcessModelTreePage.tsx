@@ -869,7 +869,7 @@ export default function ProcessModelTreePage({
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+          <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
             {model.display_name}
           </Typography>
           {model.description ? (

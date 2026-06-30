@@ -104,7 +104,7 @@ export default function CollapsibleGroupTree({
             <ChevronRightIcon fontSize="small" />
           )}
           <FolderIcon fontSize="small" color="action" />
-          <Typography sx={{ fontWeight: 700 }}>{group.display_name}</Typography>
+          <Typography sx={{ fontWeight: 600 }}>{group.display_name}</Typography>
           <Box sx={{ flexGrow: 1 }} />
           {renderGroupMetadata ? (
             renderGroupMetadata(group, count)

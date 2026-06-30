@@ -95,7 +95,7 @@ export default function ProcessInstanceGroupByModel({
           ) : (
             <ChevronRightIcon fontSize="small" />
           )}
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {model.display_name}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
