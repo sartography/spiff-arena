@@ -1,24 +1,19 @@
 [project]
 name = "spiff-arena-common"
-version = "0.1.38"
+version = "0.1.39"
 description = "Shared Python utilities for Spiff Arena frontend and backend components"
 readme = "README.md"
 requires-python = ">=3.10"
 
-# Dependencies are intentionally commented out.
-# Specifying them causes issues when this package is loaded via micropip in Pyodide.
-#dependencies = [
-#	"Jinja2",
-#	"jsonschema",
-#	"SpiffWorkflow"
-#]
+dependencies = [
+    "Jinja2==3.1.6",
+    "jsonschema==4.26.0",
+    "SpiffWorkflow==3.1.3a1781208805",
+]
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "Jinja2",
-    "jsonschema",
-    "SpiffWorkflow",
 ]
 
 [tool.pytest.ini_options]
