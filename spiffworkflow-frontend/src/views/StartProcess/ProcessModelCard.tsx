@@ -12,6 +12,7 @@ import { PointerEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
+import { TimeAgo } from '../../helpers/timeago';
 import { getStorageValue } from '../../services/LocalStorageService';
 import { ProcessModel, ProcessModelStats } from '../../interfaces';
 
@@ -28,34 +29,6 @@ const defaultStyle = {
   borderColor: 'borders.primary',
   borderRadius: 2,
 };
-
-/**
- * Displays the Process Model info.
- * Note that Models and Groups may seem similar, but
- * some of the event handling and stream info is different.
- * Eventually might refactor to a common component, but at this time
- * it's useful to keep them separate.
- */
-function formatTimeAgo(epochSeconds: number | null | undefined): string {
-  if (!epochSeconds) {
-    return '';
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const diff = now - epochSeconds;
-  if (diff < 60) {
-    return 'just now';
-  }
-  if (diff < 3600) {
-    return `${Math.floor(diff / 60)}m ago`;
-  }
-  if (diff < 86400) {
-    return `${Math.floor(diff / 3600)}h ago`;
-  }
-  if (diff < 2592000) {
-    return `${Math.floor(diff / 86400)}d ago`;
-  }
-  return `${Math.floor(diff / 2592000)}mo ago`;
-}
 
 export default function ProcessModelCard({
   model,
@@ -204,10 +177,11 @@ export default function ProcessModelCard({
                 variant="caption"
                 sx={{ color: 'text.disabled', mt: 0.5 }}
               >
-                {stats.instance_count} run
-                {stats.instance_count !== 1 ? 's' : ''}
+                {t('n_runs', { count: stats.instance_count })}
                 {stats.last_run_in_seconds
-                  ? ` · last ${formatTimeAgo(stats.last_run_in_seconds)}`
+                  ? ` · ${t('last_updated')} ${TimeAgo.inWords(
+                      stats.last_run_in_seconds,
+                    )}`
                   : ''}
               </Typography>
             )}

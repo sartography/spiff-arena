@@ -91,7 +91,8 @@ const isPresetActive = (
     filterBy.some(
       (f) =>
         f.field_name === presetFilter.field_name &&
-        String(f.field_value) === String(presetFilter.field_value),
+        String(f.field_value) === String(presetFilter.field_value) &&
+        f.operator === presetFilter.operator,
     ),
   );
 };
