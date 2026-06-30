@@ -37,13 +37,23 @@ const defaultStyle = {
  * it's useful to keep them separate.
  */
 function formatTimeAgo(epochSeconds: number | null | undefined): string {
-  if (!epochSeconds) return '';
+  if (!epochSeconds) {
+    return '';
+  }
   const now = Math.floor(Date.now() / 1000);
   const diff = now - epochSeconds;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) {
+    return 'just now';
+  }
+  if (diff < 3600) {
+    return `${Math.floor(diff / 60)}m ago`;
+  }
+  if (diff < 86400) {
+    return `${Math.floor(diff / 3600)}h ago`;
+  }
+  if (diff < 2592000) {
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
   return `${Math.floor(diff / 2592000)}mo ago`;
 }
 
@@ -194,7 +204,8 @@ export default function ProcessModelCard({
                 variant="caption"
                 sx={{ color: 'text.disabled', mt: 0.5 }}
               >
-                {stats.instance_count} run{stats.instance_count !== 1 ? 's' : ''}
+                {stats.instance_count} run
+                {stats.instance_count !== 1 ? 's' : ''}
                 {stats.last_run_in_seconds
                   ? ` · last ${formatTimeAgo(stats.last_run_in_seconds)}`
                   : ''}

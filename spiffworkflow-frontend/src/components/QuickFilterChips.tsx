@@ -26,7 +26,11 @@ const buildPresets = (t: (k: string) => string): QuickFilterPreset[] => [
     label: t('quick_filter_errors'),
     ownedFields: ['process_status'],
     filters: [
-      { field_name: 'process_status', field_value: 'error', operator: 'equals' },
+      {
+        field_name: 'process_status',
+        field_value: 'error',
+        operator: 'equals',
+      },
     ],
   },
   {
@@ -46,7 +50,11 @@ const buildPresets = (t: (k: string) => string): QuickFilterPreset[] => [
     label: t('quick_filter_completed'),
     ownedFields: ['process_status'],
     filters: [
-      { field_name: 'process_status', field_value: 'complete', operator: 'equals' },
+      {
+        field_name: 'process_status',
+        field_value: 'complete',
+        operator: 'equals',
+      },
     ],
   },
   {

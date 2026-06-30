@@ -345,7 +345,10 @@ export interface ProcessModelStats {
 
 export type ProcessModelStatsMap = Record<string, ProcessModelStats>;
 
-export type ProcessModelSortOption = 'alphabetical' | 'recently_ran' | 'most_used';
+export type ProcessModelSortOption =
+  | 'alphabetical'
+  | 'recently_ran'
+  | 'most_used';
 
 export interface ProcessModel {
   id: string;

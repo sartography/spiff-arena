@@ -100,9 +100,7 @@ export default function SearchBar({
         size="small"
         label={t('sort_by')}
         value={sortBy}
-        onChange={(e) =>
-          onSortChange(e.target.value as ProcessModelSortOption)
-        }
+        onChange={(e) => onSortChange(e.target.value as ProcessModelSortOption)}
         sx={{ minWidth: 160, backgroundColor: bgPaper }}
       >
         <MenuItem value="alphabetical">{t('alphabetical')}</MenuItem>
