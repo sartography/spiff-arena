@@ -1060,7 +1060,10 @@ export default function ProcessModelTreePage({
                         <Box sx={gridProps}>
                           {dataStoresForProcessGroup?.map(
                             (dataStore: DataStore) => (
-                              <DataStoreCard dataStore={dataStore} />
+                              <DataStoreCard
+                                key={dataStore.id}
+                                dataStore={dataStore}
+                              />
                             ),
                           )}
                         </Box>
