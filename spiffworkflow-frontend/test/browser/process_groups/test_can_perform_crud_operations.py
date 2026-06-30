@@ -4,6 +4,7 @@ from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 
 def test_can_perform_crud_operations(page: Page):
@@ -17,6 +18,7 @@ def test_can_perform_crud_operations(page: Page):
     # 2. Navigate to process groups list
     list_url = f"{BASE_URL}/process-groups"
     page.goto(list_url)
+    switch_to_card_view(page)
 
     # 3. Create a new process group
     unique = uuid.uuid4().hex

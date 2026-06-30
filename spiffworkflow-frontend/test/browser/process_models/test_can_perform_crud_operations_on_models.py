@@ -4,6 +4,7 @@ from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
 from helpers.process_model import delete_process_model_and_verify_removal
+from helpers.process_groups import switch_to_card_view
 
 
 def test_can_perform_crud_operations_on_models(page: Page):
@@ -18,6 +19,7 @@ def test_can_perform_crud_operations_on_models(page: Page):
     group_id = "misc/acceptance-tests-group-one"
     group_path = group_id.replace("/", ":")  # URL uses ':' to separate namespace
     page.goto(f"{BASE_URL}/process-groups/{group_path}")
+    switch_to_card_view(page)
 
     # Confirm on group page via breadcrumbs
     expect(

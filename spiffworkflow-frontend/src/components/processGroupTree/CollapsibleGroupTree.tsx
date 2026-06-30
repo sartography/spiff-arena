@@ -89,8 +89,8 @@ export default function CollapsibleGroupTree({
             pr: 2,
             borderBottom: '1px solid',
             borderColor: 'borders.primary',
-            backgroundColor: 'background.bluegreymedium',
-            '&:hover': { backgroundColor: 'background.bluegreylight' },
+            backgroundColor: 'background.paper',
+            '&:hover': { backgroundColor: 'action.hover' },
           }}
         >
           {expanded ? (

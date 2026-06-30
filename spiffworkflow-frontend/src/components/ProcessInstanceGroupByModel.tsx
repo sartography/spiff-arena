@@ -86,7 +86,7 @@ export default function ProcessInstanceGroupByModel({
             pr: 2,
             borderBottom: '1px solid',
             borderColor: 'borders.primary',
-            '&:hover': { backgroundColor: 'background.bluegreylight' },
+            '&:hover': { backgroundColor: 'action.hover' },
           }}
         >
           {ctx.expanded ? (

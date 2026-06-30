@@ -864,7 +864,7 @@ export default function ProcessModelTreePage({
           pr: 2,
           borderBottom: '1px solid',
           borderColor: 'borders.primary',
-          '&:hover': { backgroundColor: 'background.bluegreylight' },
+          '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
         <Box sx={{ minWidth: 0 }}>
@@ -912,6 +912,9 @@ export default function ProcessModelTreePage({
           emptyText={t('no_results')}
           renderGroupMetadata={(group, count) => (
             <Stack direction="row" gap={1} alignItems="center">
+              {count > 0 ? (
+                <Chip size="small" label={t('n_runs', { count })} />
+              ) : null}
               <Chip
                 size="small"
                 variant="outlined"
@@ -919,9 +922,6 @@ export default function ProcessModelTreePage({
                   count: groupModelCountMap[group.id] ?? 0,
                 })}
               />
-              {count > 0 ? (
-                <Chip size="small" label={t('n_runs', { count })} />
-              ) : null}
             </Stack>
           )}
         />
