@@ -10,14 +10,14 @@ charset-normalizer==3.4.7
 click==8.1.7
 colorama==0.4.6
 esbonio==0.16.4
-furo==2025.7.19
+furo==2025.12.19
 idna==3.10
 imagesize==1.4.1
 Jinja2==3.1.6
 lazy-object-proxy==1.12.0
 livereload==2.7.0
 lsprotocol==2025.0.0
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
 MarkupSafe==3.0.3
 mdit-py-plugins==0.5.0
 mdurl==0.1.2

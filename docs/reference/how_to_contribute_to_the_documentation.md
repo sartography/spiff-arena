@@ -119,7 +119,7 @@ You can do that by following these steps:
 
 1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command.
 2. Select **Venv**
-3. Select Python 3.11 from the list of options if there is more than one thing to select.
+3. Select Python 3.13 from the list of options if there is more than one thing to select.
 4. Be sure the checkbox next to "requirements.txt" is selected.
 5. Click OK.
 

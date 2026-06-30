@@ -12,8 +12,9 @@ import { PointerEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
+import { TimeAgo } from '../../helpers/timeago';
 import { getStorageValue } from '../../services/LocalStorageService';
-import { ProcessModel } from '../../interfaces';
+import { ProcessModel, ProcessModelStats } from '../../interfaces';
 
 const defaultStyle = {
   ':hover': {
@@ -29,25 +30,20 @@ const defaultStyle = {
   borderRadius: 2,
 };
 
-/**
- * Displays the Process Model info.
- * Note that Models and Groups may seem similar, but
- * some of the event handling and stream info is different.
- * Eventually might refactor to a common component, but at this time
- * it's useful to keep them separate.
- */
 export default function ProcessModelCard({
   model,
   stream,
   lastSelected,
   onStartProcess,
   onViewProcess,
+  stats,
 }: {
   model: ProcessModel;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
   onViewProcess?: () => void;
+  stats?: ProcessModelStats;
 }) {
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] =
@@ -176,6 +172,19 @@ export default function ProcessModelCard({
             >
               {model.description || '--'}
             </Typography>
+            {stats && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', mt: 0.5 }}
+              >
+                {t('n_runs', { count: stats.instance_count })}
+                {stats.last_run_in_seconds
+                  ? ` · ${t('last_updated')} ${TimeAgo.inWords(
+                      stats.last_run_in_seconds,
+                    )}`
+                  : ''}
+              </Typography>
+            )}
           </Stack>
         </CardContent>
       </CardActionArea>

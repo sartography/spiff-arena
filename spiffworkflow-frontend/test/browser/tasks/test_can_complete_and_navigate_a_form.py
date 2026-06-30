@@ -2,7 +2,7 @@ import re
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
-from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 
 def submit_input_into_form_field(
@@ -55,6 +55,7 @@ def test_can_complete_and_navigate_a_form(page: Page):
 
     # 2-5. Navigate to the process model and start instance
     page.goto(f"{BASE_URL}/process-groups")
+    switch_to_card_view(page)
     page.get_by_text(parent_group, exact=False).first.click()
     expect(
         page.get_by_test_id(f"process-group-breadcrumb-{parent_group}")

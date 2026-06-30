@@ -278,12 +278,10 @@ class ProcessModelService(FileSystemService):
         try:
             return cls.get_process_model(process_model_id)
         except ProcessEntityNotFoundError as exception:
-            raise (
-                ApiError(
-                    error_code="process_model_cannot_be_found",
-                    message=f"Process model cannot be found: {process_model_id}",
-                    status_code=400,
-                )
+            raise ApiError(
+                error_code="process_model_cannot_be_found",
+                message=f"Process model cannot be found: {process_model_id}",
+                status_code=400,
             ) from exception
 
     @classmethod

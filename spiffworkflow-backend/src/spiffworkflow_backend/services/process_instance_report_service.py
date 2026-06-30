@@ -645,12 +645,10 @@ class ProcessInstanceReportService:
 
         # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
         if ProcessInstanceModel.start_in_seconds is None or ProcessInstanceModel.end_in_seconds is None:
-            raise (
-                ApiError(
-                    error_code="unexpected_condition",
-                    message="Something went very wrong",
-                    status_code=500,
-                )
+            raise ApiError(
+                error_code="unexpected_condition",
+                message="Something went very wrong",
+                status_code=500,
             )
 
         for value in cls.check_filter_value(filters, "start_from"):

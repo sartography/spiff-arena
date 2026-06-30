@@ -20,6 +20,7 @@ from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
@@ -271,6 +272,20 @@ def process_model_publish(modified_process_model_identifier: str, branch_to_upda
     return make_response(jsonify(data), 200)
 
 
+def process_model_stats() -> flask.wrappers.Response:
+    rows = (
+        db.session.query(
+            ProcessInstanceModel.process_model_identifier,
+            db.func.count(ProcessInstanceModel.id),
+            db.func.max(ProcessInstanceModel.start_in_seconds),
+        )
+        .group_by(ProcessInstanceModel.process_model_identifier)
+        .all()
+    )
+    stats = {row[0]: {"instance_count": row[1], "last_run_in_seconds": row[2]} for row in rows}
+    return make_response(jsonify(stats), 200)
+
+
 def process_model_list(
     process_group_identifier: str | None = None,
     recursive: bool | None = False,
@@ -342,12 +357,10 @@ def process_model_file_delete(modified_process_model_identifier: str, file_name:
         DataSetupService.refresh_single_process_model_cache(process_model_identifier)
         db.session.commit()
     except FileNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_file_cannot_be_found",
-                message=f"Process model file cannot be found: {file_name}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_model_file_cannot_be_found",
+            message=f"Process model file cannot be found: {file_name}",
+            status_code=400,
         ) from exception
 
     GitService.commit_on_save(f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}")
@@ -632,12 +645,10 @@ def _create_or_update_process_model_file(
     try:
         file, _ = SpecFileService.update_file(process_model, request_file.filename, request_file_contents, user=g.user)
     except ProcessModelFileInvalidError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_file_invalid",
-                message=f"Invalid Process model file: {request_file.filename}. Received error: {str(exception)}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_model_file_invalid",
+            message=f"Invalid Process model file: {request_file.filename}. Received error: {str(exception)}",
+            status_code=400,
         ) from exception
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents

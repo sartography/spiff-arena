@@ -157,12 +157,10 @@ def process_group_show(
         else:
             raise ProcessEntityNotFoundError("viewing this process group is not authorized")
     except ProcessEntityNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_group_cannot_be_found",
-                message=f"Process group cannot be found: {process_group_id}",
-                status_code=400,
-            )
+        raise ApiError(
+            error_code="process_group_cannot_be_found",
+            message=f"Process group cannot be found: {process_group_id}",
+            status_code=400,
         ) from exception
 
     process_group.parent_groups = ProcessModelService.get_parent_group_array(process_group.id)

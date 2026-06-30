@@ -12,18 +12,15 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 
 [dependency-groups]
 dev = [
-    "Jinja2",
-    "jsonschema >= 4.23.0",
     "pre-commit",
     "pre-commit-hooks",
     "pytest",
     "ruff",
     "spiff_arena_common",
-    "SpiffWorkflow==3.1.2",
 ]
 
 [tool.uv.workspace]

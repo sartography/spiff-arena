@@ -1,10 +1,10 @@
 import re
-import pytest
 from datetime import datetime, timedelta
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 
 def titleize(status: str) -> str:
@@ -22,6 +22,7 @@ def test_can_filter(page: Page):
 
     # 2. Create a fresh process instance to ensure a recent date entry
     page.goto(f"{BASE_URL}/process-groups")
+    switch_to_card_view(page)
     page.get_by_text("Shared Resources", exact=False).first.click()
     expect(page.get_by_test_id("process-group-breadcrumb-Shared Resources")).to_be_visible()
     page.get_by_text("Acceptance Tests Group One", exact=False).first.click()

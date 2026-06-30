@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import concurrent.futures
+import cProfile
 import sys
 import time
 from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
+from pstats import SortKey
 from threading import Lock
 from typing import Any
 from uuid import UUID
@@ -146,6 +148,15 @@ class ExecutionStrategy:
     def should_break_after(self, tasks: list[SpiffTask]) -> bool:
         return False
 
+    def should_break_before_starting_tasks(self) -> bool:
+        return False
+
+    def engine_steps_to_run(self, engine_steps: list[SpiffTask]) -> list[SpiffTask]:
+        return engine_steps
+
+    def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
+        return TaskRunnability.unknown_if_ready_tasks
+
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         pass
 
@@ -206,6 +217,11 @@ class ExecutionStrategy:
             if self.should_break_before(engine_steps, process_instance_model=process_instance_model):
                 task_runnability = TaskRunnability.has_ready_tasks if num_steps > 0 else TaskRunnability.no_ready_tasks
                 break
+            if self.should_break_before_starting_tasks():
+                task_runnability = self.task_runnability_when_breaking_after(bpmn_process_instance)
+                break
+            engine_steps = self.engine_steps_to_run(engine_steps)
+            num_steps = len(engine_steps)
             if num_steps == 0:
                 task_runnability = TaskRunnability.no_ready_tasks
                 break
@@ -235,8 +251,12 @@ class ExecutionStrategy:
                     self._run_engine_steps_without_threads(engine_steps, process_instance_model, user)
 
             if self.should_break_after(engine_steps):
-                # we could call the stuff at the top of the loop again and find out, but let's not do that unless we need to
-                task_runnability = TaskRunnability.unknown_if_ready_tasks
+                # Strategies decide whether checking post-step ready tasks is worth it.
+                task_runnability = (
+                    TaskRunnability.no_ready_tasks
+                    if bpmn_process_instance.is_completed()
+                    else self.task_runnability_when_breaking_after(bpmn_process_instance)
+                )
                 break
 
         self.delegate.after_engine_steps(bpmn_process_instance)
@@ -512,6 +532,8 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
     def __init__(self, delegate: EngineStepDelegate, options: dict | None = None):
         super().__init__(delegate, options)
         self.tasks_that_have_been_seen: set[str] = set()
+        self.completed_task_count = 0
+        self.started_at = time.monotonic()
 
     def should_do_before(self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel) -> None:
         tasks = bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
@@ -526,6 +548,28 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
             ):
                 return True
         return False
+
+    def should_break_after(self, tasks: list[SpiffTask]) -> bool:
+        self.completed_task_count += len(tasks)
+        max_tasks = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"])
+        max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
+        return self.completed_task_count >= max_tasks or time.monotonic() - self.started_at >= max_seconds
+
+    def should_break_before_starting_tasks(self) -> bool:
+        max_seconds = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"])
+        return time.monotonic() - self.started_at >= max_seconds
+
+    def engine_steps_to_run(self, engine_steps: list[SpiffTask]) -> list[SpiffTask]:
+        max_tasks = int(current_app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"])
+        return engine_steps[: max_tasks - self.completed_task_count]
+
+    def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
+        bpmn_process_instance.refresh_due_waiting_tasks()
+        return (
+            TaskRunnability.has_ready_tasks
+            if self.get_ready_engine_steps(bpmn_process_instance)
+            else TaskRunnability.no_ready_tasks
+        )
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
@@ -623,9 +667,6 @@ class WorkflowExecutionService:
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
         if profile:
-            import cProfile
-            from pstats import SortKey
-
             task_runnability = TaskRunnability.unknown_if_ready_tasks
             with cProfile.Profile() as pr:
                 task_runnability = self._run_and_save(

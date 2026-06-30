@@ -33,7 +33,39 @@ defaults:
     working-directory: spiffworkflow-backend
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    outputs:
+      backend: ${{ steps.changed.outputs.backend }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check changed paths
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            base="$(git hash-object -t tree /dev/null)"
+          else
+            base="${{ github.event.before }}"
+          fi
+
+          if git diff --quiet "$base" "$GITHUB_SHA" -- spiffworkflow-backend .github/workflows/tests.yml .github/workflows/constraints.txt; then
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          fi
+
   tests-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -59,7 +91,7 @@ jobs:
               upload_coverage: true,
             }
           - {
-              python: "3.13.7",
+              python: "3.13",
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
@@ -255,6 +287,8 @@ jobs:
         run: ./bin/run_pre_commit_in_ci
 
   check_docker_start_script:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
@@ -281,7 +315,9 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    needs:
+      [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
+    if: needs.changes.outputs.backend == 'true'
     steps:
       - name: Check out the repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -340,30 +376,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-      - name: Write PR number to spiffworkflow-backend/pr dir
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo "$PR_NUMBER" > ./pr/pr_number
-      - name: Upload PR number as artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
-        with:
-          name: pr_number
-          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
-          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
-          # from spiff-arena root rather than the default working-directory we specified, and therefore
-          # trying to explicitly add spiffworkflow-backend to path
-          path: spiffworkflow-backend/pr/
-          if-no-files-found: error
 
   tests-frontend:
     runs-on: ubuntu-latest
-    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    needs:
+      [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
+    if: always() && !cancelled() && needs.changes.result == 'success' && (needs.tests-backend.result == 'success' || needs.tests-backend.result == 'skipped') && needs.run_pre_commit_checks.result == 'success' && (needs.check_docker_start_script.result == 'success' || needs.check_docker_start_script.result == 'skipped')
     defaults:
       run:
         working-directory: spiffworkflow-frontend
@@ -396,9 +414,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  dependabot_pr_number:
+    runs-on: ubuntu-latest
+    needs: tests-frontend
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: Write PR number to spiffworkflow-backend/pr dir
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./spiffworkflow-backend/pr
+          echo "$PR_NUMBER" > ./spiffworkflow-backend/pr/pr_number
+      - name: Upload PR number as artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: pr_number
+          # at https://github.com/sartography/spiff-arena/actions/runs/7757308061/job/21156982087, for example,
+          # it said: "Warning: No files were found with the provided path: pr", so assuming this is running
+          # from spiff-arena root rather than the default working-directory we specified, and therefore
+          # trying to explicitly add spiffworkflow-backend to path
+          path: spiffworkflow-backend/pr/
+          if-no-files-found: error
+
   playwright-run:
     runs-on: ubuntu-latest
-    needs: [tests-backend, run_pre_commit_checks, check_docker_start_script]
+    needs:
+      [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
+    if: always() && !cancelled() && needs.changes.result == 'success' && (needs.tests-backend.result == 'success' || needs.tests-backend.result == 'skipped') && needs.run_pre_commit_checks.result == 'success' && (needs.check_docker_start_script.result == 'success' || needs.check_docker_start_script.result == 'skipped')
     timeout-minutes: 60
     defaults:
       run:

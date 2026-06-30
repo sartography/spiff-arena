@@ -8,6 +8,7 @@ from typing import Protocol
 from typing import cast
 from unittest.mock import patch
 
+import pytest
 from flask import Flask
 from flask import g
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -23,6 +24,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -251,6 +253,220 @@ class TestLongRunningService(BaseTest):
         task_model = TaskModel.query.filter_by(guid=spiff__task_id).first()
         assert task_model is not None
         assert task_model.state == "COMPLETED"
+
+    def test__202_success_response_with_v2_connector_envelope(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+        connector_response = {
+            "command_response": {
+                "body": {"accepted": True},
+                "mimetype": "application/json",
+                "http_status": 202,
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps(connector_response)
+                processor.do_engine_steps(save=True)
+            assert process_instance.status == "waiting"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
+    def test__async_connector_proxy_success_response_waits_for_callback(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        def call_async_connector_proxy(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            payload = kwargs.get("json", {})
+            assert "spiff__callback_url" in payload
+            connector_response = {
+                "command_response": {
+                    "body": {
+                        "accepted": True,
+                        "mode": "accepted",
+                        "message": "async connector accepted the work",
+                        "callback_scheduled": False,
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 202,
+                },
+                "command_response_version": 2,
+                "error": None,
+                "spiff__logs": ["AsyncStart mode=accepted http_status=202"],
+            }
+            return SimpleNamespace(
+                status_code=202,
+                ok=True,
+                text=json.dumps(connector_response),
+                headers={"Content-Type": "application/json"},
+            )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with (
+                patch("requests.post", side_effect=call_async_connector_proxy),
+                patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
+            ):
+                processor.do_engine_steps(save=True)
+
+            assert process_instance.status == "waiting"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
+
+    def test__async_connector_proxy_error_response_fails_service_task(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        def call_async_connector_proxy(*_args: object, **kwargs: Any) -> SimpleNamespace:
+            payload = kwargs.get("json", {})
+            assert "spiff__callback_url" in payload
+            connector_response = {
+                "command_response": {
+                    "body": {
+                        "accepted": False,
+                        "mode": "error",
+                        "message": "async connector rejected the work",
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 400,
+                },
+                "command_response_version": 2,
+                "error": {
+                    "error_code": "AsyncConnectorRejected",
+                    "message": "async connector rejected the work",
+                },
+                "spiff__logs": ["AsyncStart mode=error http_status=400"],
+            }
+            return SimpleNamespace(
+                status_code=202,
+                ok=True,
+                text=json.dumps(connector_response),
+                headers={"Content-Type": "application/json"},
+            )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with (
+                patch("requests.post", side_effect=call_async_connector_proxy),
+                patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
+            ):
+                with pytest.raises(WorkflowExecutionServiceError, match="AsyncConnectorRejected"):
+                    processor.do_engine_steps(save=True)
+
+            db.session.expire_all()
+            process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+            assert process_instance.status == "error"
+
+        self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 0)
+
+    def test__202_success_response_with_celery_only_completes_callback_before_queueing(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_id = "test_group/service_task"
+        process_model = load_test_spec(
+            process_model_id=process_model_id,
+            process_model_source_directory="service_task",
+        )
+
+        with app.test_request_context():
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            processor = ProcessInstanceProcessor(process_instance)
+            with patch("requests.post") as mock_post:
+                mock_post.return_value.status_code = 202
+                mock_post.return_value.ok = True
+                mock_post.return_value.text = json.dumps({})
+                processor.do_engine_steps(save=True)
+            callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
+            spiff__task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
+
+        content = {
+            "command_response": {
+                "body": {"do_not_fail": True},
+                "mimetype": "application/json",
+            },
+            "command_response_version": 2,
+            "error": None,
+        }
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+        ):
+            response = client.put(
+                callback_url,
+                headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
+                json=content,
+            )
+
+        assert response.status_code == 200
+        response_dict = response.json()
+        assert response_dict["ok"] is True
+        assert response_dict["status"] == "completed"
+        assert response_dict["process_instance_id"] == process_instance.id
+        assert response_dict["process_model_identifier"] == process_model_id
+        assert send_task.call_count == 1
+
+        db.session.expire_all()
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "running"
+
+        task_model = TaskModel.query.filter_by(guid=spiff__task_id).first()
+        assert task_model is not None
+        assert task_model.state == "COMPLETED"
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+            patch("celery.current_app.send_task"),
+        ):
+            current_process.return_value.index = 0
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+        db.session.expire_all()
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
 
     def test__202_callback_url_uses_public_backend_base(
         self,

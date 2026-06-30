@@ -1101,7 +1101,7 @@ export default function ProcessModelEditDiagram() {
       buildProcessFilePath,
       buildDmnListPath: (processModelId) =>
         generatePath('/process-models/:process_model_id/files', {
-          process_model_id: processModelId || null,
+          process_model_id: processModelId || '',
         }) + '?file_type=dmn',
     });
 

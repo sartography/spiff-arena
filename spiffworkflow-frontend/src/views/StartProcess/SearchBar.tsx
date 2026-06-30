@@ -1,8 +1,17 @@
-import { Box, InputAdornment, Paper, TextField } from '@mui/material';
+import {
+  Box,
+  FormControlLabel,
+  InputAdornment,
+  MenuItem,
+  Paper,
+  Switch,
+  TextField,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import { Subject, Subscription } from 'rxjs';
+import { ProcessModelSortOption } from '../../interfaces';
 
 /**
  * Basic container for the search features in this view.
@@ -10,9 +19,17 @@ import { Subject, Subscription } from 'rxjs';
 export default function SearchBar({
   callback,
   stream,
+  sortBy,
+  onSortChange,
+  showOnlyRun,
+  onShowOnlyRunChange,
 }: {
   callback: (search: string) => void;
   stream?: Subject<Record<string, any>>;
+  sortBy: ProcessModelSortOption;
+  onSortChange: (sort: ProcessModelSortOption) => void;
+  showOnlyRun: boolean;
+  onShowOnlyRunChange: (checked: boolean) => void;
 }) {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
@@ -24,11 +41,6 @@ export default function SearchBar({
   };
 
   const handleClickStream = () => {
-    /**
-     * Bespoke behavior:
-     * If a card or tree node is clicked, that takes over the display.
-     * Wipe the search value.
-     */
     setSearchText('');
   };
 
@@ -57,6 +69,7 @@ export default function SearchBar({
         borderColor: `borders.primary`,
         borderWidth: 1,
         borderStyle: 'solid',
+        alignItems: 'center',
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
@@ -82,6 +95,29 @@ export default function SearchBar({
           }}
         />
       </Box>
+      <TextField
+        select
+        size="small"
+        label={t('sort_by')}
+        value={sortBy}
+        onChange={(e) => onSortChange(e.target.value as ProcessModelSortOption)}
+        sx={{ minWidth: 160, backgroundColor: bgPaper }}
+      >
+        <MenuItem value="alphabetical">{t('alphabetical')}</MenuItem>
+        <MenuItem value="recently_ran">{t('recently_ran')}</MenuItem>
+        <MenuItem value="most_used">{t('most_used')}</MenuItem>
+      </TextField>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={showOnlyRun}
+            onChange={(e) => onShowOnlyRunChange(e.target.checked)}
+            size="small"
+          />
+        }
+        label={t('has_been_run')}
+        sx={{ whiteSpace: 'nowrap' }}
+      />
     </Paper>
   );
 }

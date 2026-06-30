@@ -84,6 +84,8 @@ import { Can } from '../contexts/Can';
 import Filters from './Filters';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
+import ProcessInstanceGroupByModel from './ProcessInstanceGroupByModel';
+import QuickFilterChips from './QuickFilterChips';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -146,6 +148,7 @@ export default function ProcessInstanceListTableWithFilters({
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
     null,
   );
+  const [groupBy, setGroupBy] = useState<'none' | 'process_group'>('none');
 
   const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
 
@@ -602,6 +605,51 @@ export default function ProcessInstanceListTableWithFilters({
     setReportMetadata(reportMetadataCopy);
   };
 
+  const syncWidgetStateForField = (fieldName: string, fieldValue: any) => {
+    if (fieldName === 'process_status') {
+      setProcessStatusSelection(
+        fieldValue ? String(fieldValue).split(',') : [],
+      );
+    } else if (dateParametersToAlwaysFilterBy[fieldName]) {
+      const [setDate, setTime] = dateParametersToAlwaysFilterBy[fieldName];
+      if (fieldValue) {
+        setDate(
+          DateAndTimeService.convertSecondsToFormattedDateString(fieldValue),
+        );
+        setTime(
+          DateAndTimeService.convertSecondsToFormattedTimeHoursMinutes(
+            fieldValue,
+          ),
+        );
+      } else {
+        setDate('');
+        setTime('');
+      }
+    }
+  };
+
+  const applyQuickFilter = (
+    addFilters: ReportFilter[],
+    clearFieldNames: string[],
+  ) => {
+    if (!reportMetadata) {
+      return;
+    }
+    const next = { ...reportMetadata };
+    next.filter_by = reportMetadata.filter_by.filter(
+      (f: ReportFilter) => !clearFieldNames.includes(f.field_name),
+    );
+    clearFieldNames.forEach((fieldName) =>
+      syncWidgetStateForField(fieldName, null),
+    );
+    addFilters.forEach((f) => {
+      next.filter_by.push({ ...f });
+      syncWidgetStateForField(f.field_name, f.field_value);
+    });
+    validateStartAndEndSeconds(next.filter_by);
+    setReportMetadata(next);
+  };
+
   const handleProcessInstanceInitiatorSearchResult = (
     result: any,
     inputText: string,
@@ -690,26 +738,35 @@ export default function ProcessInstanceListTableWithFilters({
   // re-rendered while the user is still typing. NOTE that we also prevented rerendering
   // with the use of the setErrorMessageSafely function. we are not sure why the context not
   // changing still causes things to rerender when we call its setter without our extra check.
-  const validateStartAndEndSeconds = () => {
-    const startFromSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        startFromDate,
-        startFromTime || '00:00:00',
-      );
-    const startToSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        startToDate,
-        startToTime || '00:00:00',
-      );
-    const endFromSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        endFromDate,
-        endFromTime || '00:00:00',
-      );
-    const endToSeconds = DateAndTimeService.convertDateAndTimeStringsToSeconds(
-      endToDate,
-      endToTime || '00:00:00',
-    );
+  const filterValue = (filterBy: ReportFilter[], fieldName: string) => {
+    return filterBy.find((f) => f.field_name === fieldName)?.field_value;
+  };
+
+  const validateStartAndEndSeconds = (filterBy?: ReportFilter[]) => {
+    const startFromSeconds = filterBy
+      ? filterValue(filterBy, 'start_from')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          startFromDate,
+          startFromTime || '00:00:00',
+        );
+    const startToSeconds = filterBy
+      ? filterValue(filterBy, 'start_to')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          startToDate,
+          startToTime || '00:00:00',
+        );
+    const endFromSeconds = filterBy
+      ? filterValue(filterBy, 'end_from')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          endFromDate,
+          endFromTime || '00:00:00',
+        );
+    const endToSeconds = filterBy
+      ? filterValue(filterBy, 'end_to')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          endToDate,
+          endToTime || '00:00:00',
+        );
 
     let message = '';
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
@@ -1811,29 +1868,60 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
+  const groupByControl = (
+    <FormControl size="small" sx={{ minWidth: 180, my: 1 }}>
+      <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
+      <Select
+        labelId="group-by-label"
+        label={t('group_by')}
+        value={groupBy}
+        data-testid="process-instance-group-by"
+        onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
+      >
+        <MenuItem value="none">{t('group_by_none')}</MenuItem>
+        <MenuItem value="process_group">{t('group_by_process_group')}</MenuItem>
+      </Select>
+    </FormControl>
+  );
+
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
     resultsTable = (
       <>
         {refilterTextComponent}
-        <ProcessInstanceListTable
-          autoReload={autoReloadEnabled}
-          canCompleteAllTasks={canCompleteAllTasks}
-          filterComponent={filterComponent}
-          header={header}
-          onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
-          paginationClassName={paginationClassName}
-          paginationQueryParamPrefix={paginationQueryParamPrefix}
-          perPageOptions={perPageOptions}
+        <QuickFilterChips
           reportMetadata={reportMetadata}
-          showActionsColumn={showActionsColumn}
-          showLinkToReport={showLinkToReport}
-          showRefreshButton
-          tableHtmlId={tableHtmlId}
-          textToShowIfEmpty={textToShowIfEmpty}
-          variant={variant}
+          onApplyPreset={applyQuickFilter}
         />
+        {groupByControl}
+        {groupBy === 'process_group' ? (
+          <>
+            {filterComponent()}
+            <ProcessInstanceGroupByModel
+              reportMetadata={reportMetadata}
+              variant={variant}
+            />
+          </>
+        ) : (
+          <ProcessInstanceListTable
+            autoReload={autoReloadEnabled}
+            canCompleteAllTasks={canCompleteAllTasks}
+            filterComponent={filterComponent}
+            header={header}
+            onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
+            paginationClassName={paginationClassName}
+            paginationQueryParamPrefix={paginationQueryParamPrefix}
+            perPageOptions={perPageOptions}
+            reportMetadata={reportMetadata}
+            showActionsColumn={showActionsColumn}
+            showLinkToReport={showLinkToReport}
+            showRefreshButton
+            tableHtmlId={tableHtmlId}
+            textToShowIfEmpty={textToShowIfEmpty}
+            variant={variant}
+          />
+        )}
       </>
     );
   }
