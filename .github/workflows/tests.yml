@@ -14,14 +14,14 @@ on:
       - .github/workflows/tests.yml
       - .github/workflows/constraints.txt
 
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - spiffworkflow-backend/**
-  #     - spiffworkflow-frontend/**
-  #     - .github/workflows/tests.yml
-  #     - .github/workflows/constraints.txt
+  pull_request:
+    branches:
+      - main
+    paths:
+      - spiffworkflow-backend/**
+      - spiffworkflow-frontend/**
+      - .github/workflows/tests.yml
+      - .github/workflows/constraints.txt
 
 # Security: restrict GITHUB_TOKEN to least privilege.
 # See: https://www.upwind.io/feed/hackerbot-claw-github-actions-pull-request-rce
