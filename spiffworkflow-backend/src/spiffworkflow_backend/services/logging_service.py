@@ -30,6 +30,10 @@ class InvalidLogLevelError(Exception):
     pass
 
 
+def skip_apscheduler_running_job_record(record: logging.LogRecord) -> bool:
+    return not record.getMessage().startswith("Running job ")
+
+
 class SpiffLogHandler(SocketHandler):
     def __init__(self, app: Flask, *args: Any) -> None:
         super().__init__(
@@ -380,6 +384,12 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         # since there is no event stream handler to consume them
         for noisy_logger in ("spiff.task", "spiff.workflow", "spiff.data"):
             logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+
+    # APScheduler owns these repetitive lifecycle lines. Keep warnings/errors and one successful-run heartbeat.
+    logging.getLogger("apscheduler.scheduler").setLevel(logging.INFO)
+    apscheduler_executor_logger = logging.getLogger("apscheduler.executors.default")
+    apscheduler_executor_logger.setLevel(logging.INFO)
+    apscheduler_executor_logger.addFilter(skip_apscheduler_running_job_record)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
