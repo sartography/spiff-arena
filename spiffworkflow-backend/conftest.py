@@ -60,6 +60,7 @@ def client(connexion_app: FlaskApp) -> starlette.testclient.TestClient:  # noqa
 @pytest.fixture()
 def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     """Do it cleanly!"""
+    db.session.remove()
     meta = db.metadata
     db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
     db.session.execute(db.update(BpmnProcessModel).values(direct_parent_process_id=None))
@@ -78,7 +79,7 @@ def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     finally:
         if os.path.exists(ProcessModelService.root_path()):
             shutil.rmtree(ProcessModelService.root_path())
-        db.session.close()
+        db.session.remove()
 
 
 @pytest.fixture()
