@@ -1,39 +1,22 @@
-# TODO: clean up this service for a clear distinction between it and the process_instance_service
-#   where this points to the pi service
-import _strptime  # type: ignore
-import calendar
 import copy
-import decimal
 import json
 import logging
-import os
-import random
 import re
 import time
-import uuid
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
-from datetime import timedelta
 from typing import Any
 from typing import NewType
 from uuid import UUID
 from uuid import uuid4
 
-import dateparser
-import pytz
 from flask import current_app
-from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
-from SpiffWorkflow.bpmn.script_engine import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
-from SpiffWorkflow.bpmn.script_engine import TaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
@@ -74,18 +57,15 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
-from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
@@ -98,16 +78,8 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 
-# Sorry about all this crap.  I wanted to move this thing to another file, but
-# importing a bunch of types causes circular imports.
-
 WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
-
-
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> Any:
-    if name not in glbls:
-        raise ImportError(f"Import not allowed: {name}", name=name)
-    return glbls[name]
+SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
 # This number is a little arbitrary but seems like a good number.
@@ -137,285 +109,6 @@ class PotentialOwnerUserNotFoundError(Exception):
 
 class MissingProcessInfoError(Exception):
     pass
-
-
-class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        return {}
-
-    def last_result(self) -> dict[str, Any]:
-        return dict(self._last_result.items())
-
-    def clear_state(self) -> None:
-        pass
-
-    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
-        return {}
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        pass
-
-
-class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
-    def __init__(self, environment_globals: dict[str, Any]):
-        self._last_result: dict[str, Any] = {}
-        self._non_user_defined_keys = {"__annotations__"}
-        super().__init__(environment_globals)
-
-    def execute(
-        self,
-        script: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> bool:
-        super().execute(script, context, external_context)
-        for key in self._non_user_defined_keys:
-            if key in context:
-                context.pop(key)
-        self._last_result = context
-        return True
-
-
-class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):
-    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
-
-    def __init__(self, environment_globals: dict[str, Any]):
-        self.state: dict[str, Any] = {}
-        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
-        super().__init__(environment_globals)
-
-    def evaluate(
-        self,
-        expression: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> Any:
-        state = {}
-        state.update(self.globals)
-        state.update(external_context or {})
-        state.update(self.state)
-        state.update(context)
-        return eval(expression, state)  # noqa
-
-    def execute(
-        self,
-        script: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> bool:
-        self.state.update(self.globals)
-        self.state.update(external_context or {})
-        self.state.update(context)
-        try:
-            exec(script, self.state)  # noqa
-            return True
-        finally:
-            # since the task data is not directly mutated when the script executes, need to determine which keys
-            # have been deleted from the environment and remove them from task data if present.
-            context_keys_to_drop = context.keys() - self.state.keys()
-
-            for key_to_drop in context_keys_to_drop:
-                context.pop(key_to_drop)
-
-            self.state = self.user_defined_state(external_context)
-
-            # the task data needs to be updated with the current state so data references can be resolved properly.
-            # the state will be removed later once the task is completed.
-            context.update(self.state)
-
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        keys_to_filter = self.non_user_defined_keys
-        if external_context is not None:
-            keys_to_filter |= set(external_context.keys())
-
-        return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
-
-    def last_result(self) -> dict[str, Any]:
-        return dict(self.state.items())
-
-    def clear_state(self) -> None:
-        self.state = {}
-
-    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        return data.pop(key, {})  # type: ignore
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        state = self.user_defined_state()
-        bpmn_process_instance.data[key] = state
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        self.state = bpmn_process_instance.data.get(key, {})
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        bpmn_process_instance.data.update(self.user_defined_state())
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        state_keys = set(self.state.keys())
-        task_data_keys = set(task.data.keys())
-        state_keys_to_remove = state_keys - task_data_keys
-        task_data_keys_to_keep = task_data_keys - state_keys
-
-        self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
-        task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
-
-        if hasattr(task.task_spec, "_result_variable"):
-            result_variable = task.task_spec._result_variable(task)
-            if result_variable in task.data:
-                self.state[result_variable] = task.data.pop(result_variable)
-
-
-class CustomScriptEngineEnvironment:
-    @staticmethod
-    def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
-            return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
-
-        return TaskDataBasedScriptEngineEnvironment(environment_globals)
-
-
-class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
-    """This is a custom script processor that can be easily injected into Spiff Workflow.
-
-    It will execute python code read in from the bpmn.  It will also make any scripts in the
-    scripts directory available for execution.
-    """
-
-    def __init__(self, use_restricted_script_engine: bool = True) -> None:
-        default_globals = {
-            "_strptime": _strptime,
-            "all": all,
-            "any": any,
-            "calendar": calendar,
-            "dateparser": dateparser,
-            "datetime": datetime,
-            "decimal": decimal,
-            "dict": dict,
-            "enumerate": enumerate,
-            "filter": filter,
-            "format": format,
-            "json": json,
-            "list": list,
-            "map": map,
-            "max": max,
-            "min": min,
-            "pytz": pytz,
-            "random": random,
-            "re": re,
-            "set": set,
-            "sum": sum,
-            "time": time,
-            "timedelta": timedelta,
-            "uuid": uuid,
-            **JinjaHelpers.get_helper_mapping(),
-        }
-
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE") == "false":
-            use_restricted_script_engine = False
-
-        if use_restricted_script_engine:
-            # This will overwrite the standard builtins
-            default_globals.update(safe_globals)
-            default_globals["__builtins__"]["__import__"] = _import
-
-        environment = CustomScriptEngineEnvironment.create(default_globals)
-        super().__init__(environment=environment)
-
-    def __get_process_instance_id(self) -> Any | None:
-        tld = current_app.config.get("THREAD_LOCAL_DATA")
-        process_instance_id = None
-        if tld:
-            if hasattr(tld, "process_instance_id"):
-                process_instance_id = tld.process_instance_id
-        return process_instance_id
-
-    def __get_process_model_identifier(self) -> Any | None:
-        tld = current_app.config.get("THREAD_LOCAL_DATA")
-        process_model_identifier = None
-        if tld:
-            if hasattr(tld, "process_model_identifier"):
-                process_model_identifier = tld.process_model_identifier
-        return process_model_identifier
-
-    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
-        script_attributes_context = ScriptAttributesContext(
-            task=task,
-            environment_identifier=current_app.config["ENV_IDENTIFIER"],
-            process_instance_id=self.__get_process_instance_id(),
-            process_model_identifier=self.__get_process_model_identifier(),
-        )
-        return Script.generate_augmented_list(script_attributes_context)
-
-    def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
-        """Evaluate the given expression, within the context of the given task and return the result."""
-        methods = self.__get_augment_methods(task)
-        if external_context:
-            methods.update(external_context)
-
-        try:
-            return super().evaluate(task, expression, external_context=methods)
-        except Exception as exception:
-            if task is None:
-                raise WorkflowException(
-                    f"Error evaluating expression: '{expression}', {str(exception)}",
-                ) from exception
-            else:
-                raise WorkflowTaskException(
-                    f"Error evaluating expression '{expression}', {str(exception)}",
-                    task=task,
-                    exception=exception,
-                ) from exception
-
-    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
-        try:
-            # reset failing task just in case
-            methods = self.__get_augment_methods(task)
-            if external_context:
-                methods.update(external_context)
-
-            # Debug logs for script execution
-            task_name = task.task_spec.bpmn_name if hasattr(task.task_spec, "bpmn_name") else task.task_spec.name
-            task_id = str(task.id)
-            current_app.logger.debug(f"SCRIPT TASK EXECUTION - START: {task_name} (ID: {task_id})")
-
-            # do not run script if it is blank
-            if script:
-                current_app.logger.debug(f"SCRIPT TASK EXECUTION - Running script for: {task_name} (ID: {task_id})")
-                super().execute(task, script, methods)
-                current_app.logger.debug(f"SCRIPT TASK EXECUTION - COMPLETED: {task_name} (ID: {task_id})")
-            return True
-        except WorkflowException:
-            raise
-        except Exception as e:
-            raise self.create_task_exec_exception(task, script, e) from e
-
-    def call_service(
-        self,
-        operation_name: str,
-        operation_params: dict[str, Any],
-        spiff_task: SpiffTask,
-    ) -> str:
-        return ServiceTaskDelegate.call_connector(
-            operation_name,
-            operation_params,
-            spiff_task,
-            self.__get_process_instance_id(),
-            self.__get_process_model_identifier(),
-        )
-
-
-SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
 class ProcessInstanceProcessor:
@@ -1080,7 +773,7 @@ class ProcessInstanceProcessor:
                 f"Failed to trigger task-available process model '{task_available_process_model_identifier}' "
                 f"from process instance {self.process_instance_model.id}, task {task_guid}"
             )
-            ProcessInstanceTmpService.add_event_to_process_instance(
+            ProcessInstanceEventService.add_event_to_process_instance(
                 self.process_instance_model,
                 ProcessInstanceEventType.process_instance_error.value,
                 exception=exception,
@@ -1269,7 +962,7 @@ class ProcessInstanceProcessor:
             task_model_mapping=self.task_model_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
-        ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+        ProcessInstanceEventService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
 
         self.save()
         # Saving the workflow seems to reset the status
@@ -1281,7 +974,7 @@ class ProcessInstanceProcessor:
         start_time = time.time()
 
         # Log the event that we are moving back to a previous task.
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
         processor = ProcessInstanceProcessor(
@@ -1685,7 +1378,7 @@ class ProcessInstanceProcessor:
         task_service.update_task_model(task_model, spiff_task)
         JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
 
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model,
             task_event,
             task_guid=task_model.guid,
@@ -1834,7 +1527,7 @@ class ProcessInstanceProcessor:
             self.remove_spiff_tasks_for_termination()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
@@ -1842,7 +1535,7 @@ class ProcessInstanceProcessor:
     def suspend(self) -> None:
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
@@ -1861,7 +1554,7 @@ class ProcessInstanceProcessor:
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
         self.bring_archived_future_tasks_back_to_life()
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
