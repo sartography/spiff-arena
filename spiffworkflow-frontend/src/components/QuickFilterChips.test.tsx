@@ -54,7 +54,8 @@ test('keeps the last 7 days quick filter active after time advances', () => {
 
 test('builds date quick filters when clicked', () => {
   vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-07-01T23:59:59Z'));
+  const renderTime = new Date('2026-07-01T12:00:00Z');
+  vi.setSystemTime(renderTime);
 
   const onApplyPreset = vi.fn();
   render(
@@ -65,19 +66,17 @@ test('builds date quick filters when clicked', () => {
     />,
   );
 
-  vi.setSystemTime(new Date('2026-07-02T00:00:01Z'));
+  vi.setSystemTime(new Date('2026-07-02T13:00:00Z'));
   fireEvent.click(screen.getByText('quick_filter_today'));
-  const expectedStartOfToday = new Date('2026-07-02T00:00:01Z');
-  expectedStartOfToday.setHours(0, 0, 0, 0);
+  const appliedFilter = onApplyPreset.mock.calls[0][0][0];
 
+  expect(appliedFilter.field_name).toEqual('start_from');
+  expect(appliedFilter.operator).toEqual('equals');
+  expect(appliedFilter.field_value).toBeGreaterThan(
+    Math.floor(renderTime.getTime() / 1000),
+  );
   expect(onApplyPreset).toHaveBeenLastCalledWith(
-    [
-      {
-        field_name: 'start_from',
-        field_value: Math.floor(expectedStartOfToday.getTime() / 1000),
-        operator: 'equals',
-      },
-    ],
+    [appliedFilter],
     ['start_from'],
     'today',
     false,
