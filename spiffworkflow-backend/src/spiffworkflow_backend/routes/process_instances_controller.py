@@ -55,7 +55,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
@@ -761,10 +761,10 @@ def _process_instance_run(
     processor = None
     try:
         if force_run is True:
-            ProcessInstanceTmpService.add_event_to_process_instance(process_instance, "process_instance_force_run")
+            ProcessInstanceEventService.add_event_to_process_instance(process_instance, "process_instance_force_run")
         if not queue_process_instance_if_appropriate(
             process_instance, execution_mode=execution_mode
-        ) and not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+        ) and not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                 execution_strategy_name = "greedy"

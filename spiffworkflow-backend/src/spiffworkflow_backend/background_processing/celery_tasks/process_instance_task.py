@@ -18,7 +18,6 @@ from spiffworkflow_backend.services.process_instance_lock_service import Process
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -86,7 +85,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
     skipped_mesage = None
     if process_instance is None:
         skipped_mesage = "Skipped because the process instance no longer exists in the database. It could have been deleted."
-    elif task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+    elif task_guid is None and ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
         skipped_mesage = "Skipped because the process instance is set to run in the future."
     if skipped_mesage is not None:
         return {

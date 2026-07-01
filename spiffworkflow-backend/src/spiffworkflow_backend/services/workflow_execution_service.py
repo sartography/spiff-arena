@@ -59,8 +59,8 @@ from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.services.custom_service_task import RetryScheduledError
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
@@ -707,7 +707,7 @@ class WorkflowExecutionService:
             self.new_waiting_message_names = self.queue_waiting_receive_messages()
             return task_runnability
         except WorkflowTaskException as wte:
-            ProcessInstanceTmpService.add_event_to_process_instance(
+            ProcessInstanceEventService.add_event_to_process_instance(
                 self.process_instance_model,
                 ProcessInstanceEventType.task_failed.value,
                 exception=wte,

@@ -63,11 +63,11 @@ from spiffworkflow_backend.routes.process_api_blueprint import _update_form_sche
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -285,7 +285,7 @@ def task_data_update(
             )
             if json_data_dict is not None:
                 JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
-                ProcessInstanceTmpService.add_event_to_process_instance(
+                ProcessInstanceEventService.add_event_to_process_instance(
                     process_instance,
                     ProcessInstanceEventType.task_data_edited.value,
                     task_guid=task_guid,
@@ -536,7 +536,7 @@ def process_instance_progress(
     if next_human_task_assigned_to_me:
         response["task"] = HumanTaskModel.to_task(next_human_task_assigned_to_me)
     # this may not catch all times we should redirect to instance show page
-    elif not process_instance.is_immediately_runnable() or ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(
+    elif not process_instance.is_immediately_runnable() or ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(
         process_instance
     ):
         # any time we assign this process_instance, the frontend progress page will redirect to process instance show
@@ -734,7 +734,7 @@ def _dequeued_interstitial_stream(
         # need something better to show?
         if execute_tasks:
             try:
-                if not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+                if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
                     with ProcessInstanceQueueService.dequeued(process_instance):
                         ProcessInstanceMigrator.run(process_instance)
                         yield from _interstitial_stream(process_instance, execute_tasks=execute_tasks)

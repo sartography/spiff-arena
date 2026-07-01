@@ -8,9 +8,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_lock_service import ExpectedLockNotFoundError
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
@@ -23,6 +23,19 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 
 
 class ProcessInstanceQueueService:
+    @staticmethod
+    def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
+        queue_entry = (
+            db.session.query(ProcessInstanceQueueModel)
+            .filter(ProcessInstanceQueueModel.process_instance_id == process_instance.id)
+            .first()
+        )
+
+        if queue_entry is None:
+            return False
+
+        return queue_entry.run_at_in_seconds > round(time.time())
+
     @classmethod
     def _configure_and_save_queue_entry(
         cls, process_instance: ProcessInstanceModel, queue_entry: ProcessInstanceQueueModel
@@ -137,7 +150,7 @@ class ProcessInstanceQueueService:
                 # these events are handled in the WorkflowExecutionService.
                 # that is, we don't need to add error_detail records here, etc.
                 if not isinstance(ex, WorkflowExecutionServiceError):
-                    ProcessInstanceTmpService.add_event_to_process_instance(
+                    ProcessInstanceEventService.add_event_to_process_instance(
                         process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                     )
 

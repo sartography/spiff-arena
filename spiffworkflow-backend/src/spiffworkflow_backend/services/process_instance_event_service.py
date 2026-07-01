@@ -11,18 +11,11 @@ from spiffworkflow_backend.models.process_instance_error_detail import ProcessIn
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailDict
 from spiffworkflow_backend.models.process_instance_migration_detail import ProcessInstanceMigrationDetailModel
-from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import LoggingService
 
 
-class ProcessInstanceTmpService:
-    """Temporary service to hold methods that should eventually be moved to ProcessInstanceService.
-
-    These methods cannot live there due to circular import issues with the ProcessInstanceProcessor.
-    """
-
-    # TODO: move to process_instance_service once we clean it and the processor up
+class ProcessInstanceEventService:
     @classmethod
     def add_event_to_process_instance(
         cls,
@@ -56,12 +49,8 @@ class ProcessInstanceTmpService:
 
         process_instance_error_detail = None
         if exception is not None:
-            # NOTE: I tried to move this to its own method but
-            # est_unlocks_if_an_exception_is_thrown_with_a__dequeued_process_instance
-            # gave sqlalchemy rollback errors. I could not figure out why so went back to this.
-            #
-            # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             stacktrace = traceback.format_exc().split("\n")
+            # Truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             message = str(exception)[0:1023]
 
             task_line_number = None
@@ -69,7 +58,7 @@ class ProcessInstanceTmpService:
             task_trace = None
             task_offset = None
 
-            # check for the class name string for ApiError to avoid circular imports
+            # Avoid importing ApiError here: ApiError imports TaskService, which imports this service.
             if isinstance(exception, WorkflowTaskException) or (
                 exception.__class__.__name__ == "ApiError" and exception.error_code == "task_error"  # type: ignore
             ):
@@ -100,7 +89,6 @@ class ProcessInstanceTmpService:
                 db.session.add(process_instance_error_detail)
 
         if log_event:
-            # Some events need to be logged elsewhere so that all required info can be included
             LoggingService.log_event(event_type, log_extras)
 
         if migration_details is not None:
@@ -114,25 +102,10 @@ class ProcessInstanceTmpService:
     def add_process_instance_migration_detail(
         cls, process_instance_event: ProcessInstanceEventModel, migration_details: ProcessInstanceMigrationDetailDict
     ) -> ProcessInstanceMigrationDetailModel:
-        pi_detail = ProcessInstanceMigrationDetailModel(
+        return ProcessInstanceMigrationDetailModel(
             process_instance_event=process_instance_event,
             initial_git_revision=migration_details["initial_git_revision"],
             target_git_revision=migration_details["target_git_revision"],
             initial_bpmn_process_hash=migration_details["initial_bpmn_process_hash"],
             target_bpmn_process_hash=migration_details["target_bpmn_process_hash"],
         )
-        return pi_detail
-
-    @staticmethod
-    def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
-        queue_entry = (
-            db.session.query(ProcessInstanceQueueModel)
-            .filter(ProcessInstanceQueueModel.process_instance_id == process_instance.id)
-            .first()
-        )
-
-        if queue_entry is None:
-            return False
-
-        current_time = round(time.time())
-        return queue_entry.run_at_in_seconds > current_time

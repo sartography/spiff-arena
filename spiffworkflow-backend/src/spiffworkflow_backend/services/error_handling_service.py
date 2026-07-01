@@ -6,7 +6,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -100,6 +100,6 @@ class ErrorHandlingService:
         process_instance.status = status
         db.session.add(process_instance)
         if status == ProcessInstanceStatus.suspended.value:
-            ProcessInstanceTmpService.add_event_to_process_instance(
+            ProcessInstanceEventService.add_event_to_process_instance(
                 process_instance, ProcessInstanceEventType.process_instance_suspended_for_error.value, add_to_db_session=True
             )
