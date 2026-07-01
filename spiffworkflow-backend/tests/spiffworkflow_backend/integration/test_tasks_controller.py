@@ -14,7 +14,7 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -244,9 +244,9 @@ class TestTasksController(BaseTest):
 
         # Suspending the task should still report that the user can not complete the task.
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.suspend()
-        processor.save()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.suspend()
+        runtime.save()
 
         results = list(_dequeued_interstitial_stream(process_instance_id))
         json_results = [json.loads(x[5:]) for x in results]  # type: ignore
@@ -453,17 +453,17 @@ class TestTasksController(BaseTest):
             process_model_source_directory="loopback_to_manual_task",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(
-            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+            runtime, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(
-            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+            runtime, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
         assert process_instance.status == ProcessInstanceStatus.user_input_required.value
 
@@ -535,17 +535,17 @@ class TestTasksController(BaseTest):
             process_model_source_directory="loopback_to_subprocess",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(
-            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+            runtime, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(
-            processor, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
+            runtime, spiff_manual_task, {}, process_instance.process_initiator, human_task_one
         )
         assert process_instance.status == ProcessInstanceStatus.user_input_required.value
 

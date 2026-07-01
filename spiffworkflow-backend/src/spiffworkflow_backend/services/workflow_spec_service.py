@@ -79,16 +79,16 @@ class WorkflowSpecService:
     ) -> None:
         if processed_identifiers is None:
             processed_identifiers = set()
-        processor_dependencies = parser.get_process_dependencies()
+        runtime_dependencies = parser.get_process_dependencies()
 
         # since get_process_dependencies() returns a set with None sometimes, we need to remove it
-        processor_dependencies = processor_dependencies - {None}
+        runtime_dependencies = runtime_dependencies - {None}
 
-        processor_dependencies_new = processor_dependencies - processed_identifiers
+        runtime_dependencies_new = runtime_dependencies - processed_identifiers
         bpmn_process_identifiers_in_parser = parser.get_process_ids()
 
         new_bpmn_files = set()
-        for bpmn_process_identifier in processor_dependencies_new:
+        for bpmn_process_identifier in runtime_dependencies_new:
             # ignore identifiers that spiff already knows about
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
                 continue

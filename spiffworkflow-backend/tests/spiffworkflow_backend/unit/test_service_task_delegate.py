@@ -16,7 +16,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
@@ -63,9 +63,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 404
@@ -88,9 +88,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         with patch("requests.post", side_effect=Exception("mocked error")):
             with pytest.raises(UncaughtServiceTaskError) as connector_proxy_error:
@@ -104,9 +104,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
         return_text = "NOT JSON"
 
         with patch("requests.post") as mock_post:
@@ -126,9 +126,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         command_response: CommandResponseDict = {
             "body": "{}",
@@ -158,9 +158,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         command_response: CommandResponseDict = {
             "body": json.dumps({"we_did_it": True}),
@@ -190,9 +190,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         command_response: CommandResponseDict = {
             "body": json.dumps({"we_did_it": True}),
@@ -229,9 +229,9 @@ class TestServiceTaskDelegate(BaseTest):
                 process_model_source_directory="model_with_lanes",
             )
             process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.do_engine_steps(save=True)
-            spiff_task = processor.next_task()
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.do_engine_steps(save=True)
+            spiff_task = runtime.next_task()
 
             command_response: CommandResponseDict = {
                 "body": json.dumps({"we_did_it": True}),
@@ -298,9 +298,9 @@ class TestServiceTaskDelegate(BaseTest):
                 process_model_source_directory="model_with_lanes",
             )
             process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.do_engine_steps(save=True)
-            spiff_task = processor.next_task()
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.do_engine_steps(save=True)
+            spiff_task = runtime.next_task()
 
             with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_LOG_CONNECTOR_PROXY_HTTP", True):
                 with patch("requests.post", side_effect=Exception("mocked error")):
@@ -332,7 +332,7 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="multiinstance_with_inner_error_boundary_event",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
 
         successful_command_response: CommandResponseDict = {
             "body": json.dumps({"we_did_it": True}),
@@ -366,7 +366,7 @@ class TestServiceTaskDelegate(BaseTest):
 
         with patch("requests.post") as mock_post:
             mock_post.side_effect = [successful_object, successful_object, failing_object, successful_object]
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
         assert process_instance.status == "complete"
         relevant_tasks = (
             TaskModel.query.join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
@@ -431,9 +431,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         command_response: CommandResponseDict = {
             "body": json.dumps({"we_did_it": True}),
@@ -463,9 +463,9 @@ class TestServiceTaskDelegate(BaseTest):
             process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        spiff_task = processor.next_task()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        spiff_task = runtime.next_task()
 
         command_response: CommandResponseDict = {
             "body": json.dumps({"we_did_it": True}),
@@ -592,13 +592,13 @@ class TestServiceTaskDelegate(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
 
         with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 202
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps({})
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
 
         assert process_instance.status == "waiting"
         call_kwargs = mock_post.call_args.kwargs

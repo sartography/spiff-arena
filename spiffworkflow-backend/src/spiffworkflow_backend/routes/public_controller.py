@@ -22,7 +22,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shar
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -42,8 +42,8 @@ def message_form_show(
         process_model_identifier=message_triggerable_process_model.process_model_identifier,
         persistence_level="none",
     )
-    processor = ProcessInstanceProcessor(process_instance)
-    start_tasks = processor.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
+    runtime = ProcessInstanceRuntime(process_instance)
+    start_tasks = runtime.bpmn_process_instance.get_tasks(spec_class=StartEventMixin)
     matching_start_tasks = [
         t for t in start_tasks if t.task_spec.event_definition.name == message_triggerable_process_model.message_name
     ]
@@ -89,8 +89,8 @@ def message_form_submit(
             process_model=process_model, task_guid=next_human_task_assigned_to_me.task_guid, process_instance=process_instance
         )
     else:
-        processor = ProcessInstanceProcessor(process_instance)
-        start_tasks = processor.bpmn_process_instance.get_tasks(spec_class=StartEventMixin, state=TaskState.COMPLETED)
+        runtime = ProcessInstanceRuntime(process_instance)
+        start_tasks = runtime.bpmn_process_instance.get_tasks(spec_class=StartEventMixin, state=TaskState.COMPLETED)
         matching_start_tasks = [t for t in start_tasks if t.task_spec.event_definition.name == receiver_message.name]
         if len(matching_start_tasks) > 0:
             spiff_task = matching_start_tasks[0]

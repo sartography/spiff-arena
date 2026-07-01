@@ -2,7 +2,7 @@ from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 
 
 class TaskNotGivenToScriptError(Exception):
@@ -26,11 +26,11 @@ class GetDataSizes(Script):
                 "This script needs to be run from within the context of a task."
             )
         workflow = script_attributes_context.task.workflow
-        task_data_size = ProcessInstanceProcessor.get_task_data_size(workflow)
+        task_data_size = ProcessInstanceRuntime.get_task_data_size(workflow)
         task_data_keys_by_task = {
-            t.task_spec.name: sorted(t.data.keys()) for t in ProcessInstanceProcessor.get_tasks_with_data(workflow)
+            t.task_spec.name: sorted(t.data.keys()) for t in ProcessInstanceRuntime.get_tasks_with_data(workflow)
         }
-        python_env_size = ProcessInstanceProcessor.get_python_env_size(workflow)
+        python_env_size = ProcessInstanceRuntime.get_python_env_size(workflow)
         python_env_keys = workflow.script_engine.environment.user_defined_state().keys()
         return {
             "python_env_size": python_env_size,

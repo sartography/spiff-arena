@@ -654,7 +654,7 @@ class WorkflowExecutionService:
         self.new_waiting_message_names: set[str] = set()
 
     # names of methods that do spiff stuff:
-    # processor.do_engine_steps calls:
+    # runtime.do_engine_steps calls:
     #   run
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]

@@ -2,7 +2,7 @@ from flask.app import Flask
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -34,12 +34,12 @@ class TestGetGroupMembers(BaseTest):
             process_model_source_directory="get_group_members",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
-        assert processor.bpmn_process_instance.data
-        assert processor.bpmn_process_instance.data["members_a"] == [
+        assert runtime.bpmn_process_instance.data
+        assert runtime.bpmn_process_instance.data["members_a"] == [
             "testuser1",
             "testuser2",
         ]
-        assert processor.bpmn_process_instance.data["members_b"] == ["testuser3"]
+        assert runtime.bpmn_process_instance.data["members_b"] == ["testuser3"]

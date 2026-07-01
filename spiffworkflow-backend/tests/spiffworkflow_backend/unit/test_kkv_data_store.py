@@ -11,7 +11,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.kkv_data_store import KKVDataStoreModel
 from spiffworkflow_backend.models.kkv_data_store_entry import KKVDataStoreEntryModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -180,8 +180,8 @@ class TestKkvDataStore(BaseTest):
             process_model_source_directory=bpmn_file_location,
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
     def test_can_retrieve_data_store_from_script_task_with_instructions(
@@ -200,12 +200,12 @@ class TestKkvDataStore(BaseTest):
             process_model_source_directory=bpmn_file_location,
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="run_until_user_message")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="run_until_user_message")
         assert process_instance.status == "running"
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert process_instance is not None
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"

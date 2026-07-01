@@ -22,7 +22,7 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -96,7 +96,7 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with (
                 patch("requests.post") as mock_post,
                 patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
@@ -104,7 +104,7 @@ class TestLongRunningService(BaseTest):
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
                 json_data = mock_post.call_args.kwargs["json"]
 
         return process_instance, json_data["spiff__callback_url"], json_data["spiff__task_id"]
@@ -152,13 +152,13 @@ class TestLongRunningService(BaseTest):
         )
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             connector_response = {"do_not_fail": True}
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 200
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps(connector_response)
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
 
             # Verify that the POST request includes required metadata
             assert mock_post.called, "mock_post should have been called"
@@ -193,18 +193,18 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
             callback_url = json_data["spiff__callback_url"]
             spiff__task_id = json_data["spiff__task_id"]
-            processor.save()
+            runtime.save()
 
         # One task should be awaiting callback
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
@@ -278,12 +278,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps(connector_response)
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
 
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
@@ -328,12 +328,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with (
                 patch("requests.post", side_effect=call_async_connector_proxy),
                 patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
             ):
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
 
             assert process_instance.status == "waiting"
 
@@ -381,13 +381,13 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with (
                 patch("requests.post", side_effect=call_async_connector_proxy),
                 patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
             ):
                 with pytest.raises(WorkflowExecutionServiceError, match="AsyncConnectorRejected"):
-                    processor.do_engine_steps(save=True)
+                    runtime.do_engine_steps(save=True)
 
             db.session.expire_all()
             process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
@@ -410,12 +410,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
             spiff__task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
 
@@ -487,12 +487,12 @@ class TestLongRunningService(BaseTest):
         ):
             with app.test_request_context():
                 process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-                processor = ProcessInstanceProcessor(process_instance)
+                runtime = ProcessInstanceRuntime(process_instance)
                 with patch("requests.post") as mock_post:
                     mock_post.return_value.status_code = 202
                     mock_post.return_value.ok = True
                     mock_post.return_value.text = json.dumps({})
-                    processor.do_engine_steps(save=True)
+                    runtime.do_engine_steps(save=True)
                 callback_url = mock_post.call_args.kwargs["json"]["spiff__callback_url"]
                 spiff_task_id = mock_post.call_args.kwargs["json"]["spiff__task_id"]
 
@@ -535,8 +535,8 @@ class TestLongRunningService(BaseTest):
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "waiting"
 
-        processor = ProcessInstanceProcessor(process_instance)
-        service_task = processor.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
+        runtime = ProcessInstanceRuntime(process_instance)
+        service_task = runtime.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
         assert service_task is not None
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data["spiff__retries_attempted"] == 0
@@ -589,8 +589,8 @@ class TestLongRunningService(BaseTest):
         db.session.expire_all()
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "error"
-        processor = ProcessInstanceProcessor(process_instance)
-        service_task = processor.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
+        runtime = ProcessInstanceRuntime(process_instance)
+        service_task = runtime.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
         assert service_task is not None
         assert service_task.state == TaskState.ERROR
         assert service_task.internal_data["spiff__retries_attempted"] == 3
@@ -814,9 +814,9 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", False):
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post", side_effect=mock_connector_post):
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
 
         assert callback_thread is not None
         callback_thread.join(timeout=5)
@@ -849,12 +849,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
@@ -903,12 +903,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
@@ -955,12 +955,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})
@@ -969,7 +969,7 @@ class TestLongRunningService(BaseTest):
         # One task should be awaiting callback
         self.assert_tasks_awaiting_callback(app, client, with_super_admin_user, 1)
 
-        processor.send_bpmn_event(
+        runtime.send_bpmn_event(
             {"name": "CANCEL", "typename": "SignalEventDefinition", "variable": None, "expression": None, "description": None}
         )
         assert process_instance.status == "complete"  # sending the cancel event will move the process to a completed state.
@@ -1011,12 +1011,12 @@ class TestLongRunningService(BaseTest):
 
         with app.test_request_context():
             process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             with patch("requests.post") as mock_post:
                 mock_post.return_value.status_code = 202
                 mock_post.return_value.ok = True
                 mock_post.return_value.text = json.dumps({})
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
             assert process_instance.status == "waiting"
             call_kwargs = mock_post.call_args.kwargs
             json_data = call_kwargs.get("json", {})

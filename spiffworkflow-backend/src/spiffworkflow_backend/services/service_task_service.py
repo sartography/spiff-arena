@@ -19,8 +19,8 @@ from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMod
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
 from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegateService
@@ -29,7 +29,7 @@ from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDele
 @dataclass
 class ServiceTaskCallbackResult:
     process_instance: Any
-    processor: Any
+    runtime: Any
     next_task: SpiffTask | None
     callback_outcome: dict[str, Any] | None = None
 
@@ -59,21 +59,21 @@ class ServiceTaskService:
                 if ProcessInstanceMigrator.run(process_instance):
                     db.session.refresh(process_instance)
 
-                processor = ProcessInstanceProcessor(
+                runtime = ProcessInstanceRuntime(
                     process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
                 )
-                spiff_task = cls._get_spiff_task_from_processor(task_guid, processor)
+                spiff_task = cls._get_spiff_task_from_runtime(task_guid, runtime)
 
                 if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
                     callback_content = content or {}
                     try:
                         cls._check_for_callback_errors(spiff_task, callback_content)
                     except WorkflowTaskException as exception:
-                        callback_outcome = cls._schedule_retry_for_callback_error(processor, spiff_task, exception)
+                        callback_outcome = cls._schedule_retry_for_callback_error(runtime, spiff_task, exception)
                         if callback_outcome is not None:
                             return ServiceTaskCallbackResult(
                                 process_instance=process_instance,
-                                processor=processor,
+                                runtime=runtime,
                                 next_task=None,
                                 callback_outcome=callback_outcome,
                             )
@@ -84,15 +84,15 @@ class ServiceTaskService:
                     if result_variable:
                         spiff_task.data[result_variable] = callback_result
 
-                    processor.complete_task(spiff_task, user)
+                    runtime.complete_task(spiff_task, user)
 
                     if should_queue_for_celery:
-                        processor.save()
+                        runtime.save()
                     else:
                         execution_strategy_name = None
                         if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                             execution_strategy_name = "greedy"
-                        processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                        runtime.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
                 else:
                     error = ApiError(
                         error_code="not_waiting_for_callback",
@@ -105,14 +105,14 @@ class ServiceTaskService:
                 queue_process_instance_if_appropriate(process_instance, execution_mode)
             return ServiceTaskCallbackResult(
                 process_instance=process_instance,
-                processor=processor,
-                next_task=processor.next_task(),
+                runtime=runtime,
+                next_task=runtime.next_task(),
             )
 
     @classmethod
     def _schedule_retry_for_callback_error(
         cls,
-        processor: ProcessInstanceProcessor,
+        runtime: ProcessInstanceRuntime,
         spiff_task: SpiffTask,
         exception: WorkflowTaskException,
     ) -> dict[str, Any] | None:
@@ -122,12 +122,12 @@ class ServiceTaskService:
             if spiff_task.task_spec.retries is not None:
                 spiff_task.task_spec.log_terminal_failure(spiff_task, exception)
                 spiff_task._set_state(TaskState.ERROR)
-                processor.do_engine_steps(save=True, needs_dequeue=False)
+                runtime.do_engine_steps(save=True, needs_dequeue=False)
             return None
 
         spiff_task.task_spec.schedule_retry(spiff_task)
         callback_outcome = cls._retry_scheduled_callback_outcome(spiff_task)
-        processor.do_engine_steps(save=True, needs_dequeue=False)
+        runtime.do_engine_steps(save=True, needs_dequeue=False)
         return callback_outcome
 
     @staticmethod
@@ -182,9 +182,9 @@ class ServiceTaskService:
         return body
 
     @staticmethod
-    def _get_spiff_task_from_processor(task_guid: str, processor: Any) -> SpiffTask:
+    def _get_spiff_task_from_runtime(task_guid: str, runtime: Any) -> SpiffTask:
         task_uuid = uuid.UUID(task_guid)
-        spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
+        spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
 
         if spiff_task is None:
             raise ApiError(

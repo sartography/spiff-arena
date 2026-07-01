@@ -10,7 +10,7 @@ from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWa
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_task_potential_owners import GetTaskPotentialOwners
 from spiffworkflow_backend.scripts.get_url_for_task import GetUrlForTask
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -35,8 +35,8 @@ class TestGetUsersAssignedToTask(BaseTest):
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=user1)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
@@ -92,8 +92,8 @@ class TestGetUsersAssignedToTask(BaseTest):
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=user1)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         human_task = process_instance.active_human_tasks[0]
         db.session.add_all(

@@ -2,7 +2,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -29,11 +29,11 @@ class TestDotNotation(BaseTest):
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         human_task = process_instance.human_tasks[0]
 
-        user_task = processor.get_all_ready_or_waiting_tasks()[0]
+        user_task = runtime.get_all_ready_or_waiting_tasks()[0]
         form_data = {
             "invoice.contibutorName": "Elizabeth",
             "invoice.contributorId": 100,
@@ -41,7 +41,7 @@ class TestDotNotation(BaseTest):
             "invoice.invoiceAmount": "1000.00",
             "invoice.dueDate": "09/30/2022",
         }
-        ProcessInstanceService.complete_form_task(processor, user_task, form_data, process_instance.process_initiator, human_task)
+        ProcessInstanceService.complete_form_task(runtime, user_task, form_data, process_instance.process_initiator, human_task)
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
         expected = {
@@ -51,5 +51,5 @@ class TestDotNotation(BaseTest):
             "invoice.invoiceAmount": "1000.00",
             "invoice.dueDate": "09/30/2022",
         }
-        actual_data = processor.get_data()
+        actual_data = runtime.get_data()
         assert actual_data == expected

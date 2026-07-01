@@ -49,7 +49,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -97,7 +97,7 @@ def process_instance_run(
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     _process_instance_run(process_instance, force_run=force_run, execution_mode=execution_mode)
 
-    process_instance_api = ProcessInstanceService.processor_to_process_instance_api(process_instance)
+    process_instance_api = ProcessInstanceService.runtime_to_process_instance_api(process_instance)
     process_instance_api_dict = process_instance_api.to_dict()
     process_instance_api_dict["process_model_uses_queued_execution"] = queue_enabled_for_process_model()
     return make_response(jsonify(process_instance_api_dict), 200)
@@ -112,8 +112,8 @@ def process_instance_terminate(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.terminate()
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.terminate()
     except (
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
@@ -129,11 +129,11 @@ def process_instance_suspend(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
+    runtime = ProcessInstanceRuntime(process_instance)
 
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
-            processor.suspend()
+            runtime.suspend()
     except (
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
@@ -149,11 +149,11 @@ def process_instance_resume(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
+    runtime = ProcessInstanceRuntime(process_instance)
 
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
-            processor.resume()
+            runtime.resume()
         # the process instance will be in waiting since we just successfully resumed it.
         # tell the celery worker to get busy.
         queue_process_instance_if_appropriate(process_instance)
@@ -558,7 +558,7 @@ def process_instance_reset(
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
+    ProcessInstanceRuntime.reset_process(process_instance, to_task_guid)
     return make_response(jsonify({"ok": True}), 200)
 
 
@@ -690,8 +690,8 @@ def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Resp
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.send_bpmn_event(body)
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.send_bpmn_event(body)
     except (
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
@@ -699,7 +699,7 @@ def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Resp
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
-    task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    task = ProcessInstanceService.spiff_task_to_api_task(runtime, runtime.next_task())
     return make_response(jsonify(task), 200)
 
 
@@ -758,7 +758,7 @@ def _process_instance_run(
             status_code=400,
         )
 
-    processor = None
+    runtime = None
     try:
         if force_run is True:
             ProcessInstanceEventService.add_event_to_process_instance(process_instance, "process_instance_force_run")
@@ -768,7 +768,7 @@ def _process_instance_run(
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                 execution_strategy_name = "greedy"
-            processor, _ = ProcessInstanceService.run_process_instance_with_processor(
+            runtime, _ = ProcessInstanceService.run_process_instance_with_runtime(
                 process_instance, execution_strategy_name=execution_strategy_name
             )
     except (
@@ -782,8 +782,8 @@ def _process_instance_run(
         ErrorHandlingService.handle_error(process_instance, e)
         # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
         # we need to recurse through all last tasks if the last task is a call activity or subprocess.
-        if processor is not None:
-            task = processor.bpmn_process_instance.last_task
+        if runtime is not None:
+            task = runtime.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",
                 message=f"An unknown error occurred. Original error: {e}",

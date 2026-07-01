@@ -16,7 +16,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -177,8 +177,8 @@ class TestProcessInstanceService(BaseTest):
             process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
         )
         assert process_instance.bpmn_version_control_identifier == "rev1"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         assert initial_bpmn_process_hash is not None
 
@@ -187,8 +187,8 @@ class TestProcessInstanceService(BaseTest):
         assert human_task_one.task_title == "Manual Task 1"
         assert human_task_one.task_name == "manual_task_one"
 
-        initial_tasks = processor.bpmn_process_instance.get_tasks()
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        initial_tasks = runtime.bpmn_process_instance.get_tasks()
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is None
 
         new_file_path = os.path.join(
@@ -220,21 +220,21 @@ class TestProcessInstanceService(BaseTest):
         assert len(process_instance_events) == 4
 
         for initial_task in initial_tasks:
-            new_task = processor.bpmn_process_instance.get_task_from_id(initial_task.id)
+            new_task = runtime.bpmn_process_instance.get_task_from_id(initial_task.id)
             assert new_task is not None
             assert new_task.last_state_change == initial_task.last_state_change
 
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
         assert human_task_one.task_title == "Manual Task One"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_two"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
@@ -274,12 +274,12 @@ class TestProcessInstanceService(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         assert initial_bpmn_process_hash is not None
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is None
 
         new_file_path = os.path.join(
@@ -307,20 +307,20 @@ class TestProcessInstanceService(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert process_instance.bpmn_version_control_identifier == "rev2"
         target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is not None
 
         ProcessInstanceService.migrate_process_instance(
             process_instance, user=initiator_user, target_bpmn_process_hash=initial_bpmn_process_hash
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is None
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
         pi_events = (
@@ -367,12 +367,12 @@ class TestProcessInstanceService(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         assert initial_bpmn_process_hash is not None
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is None
 
         new_file_path = os.path.join(
@@ -399,11 +399,11 @@ class TestProcessInstanceService(BaseTest):
         ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert process_instance.bpmn_version_control_identifier == "rev2"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         target_bpmn_process_hash_one = process_instance.bpmn_process_definition.full_process_model_hash
         assert target_bpmn_process_hash_one is not None
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is not None
 
         new_file_path = os.path.join(
@@ -430,22 +430,22 @@ class TestProcessInstanceService(BaseTest):
         ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert process_instance.bpmn_version_control_identifier == "rev3"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         target_bpmn_process_hash_two = process_instance.bpmn_process_definition.full_process_model_hash
         assert target_bpmn_process_hash_two is not None
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_three", processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_three", runtime.bpmn_process_instance)
         assert spiff_task is not None
 
         ProcessInstanceService.migrate_process_instance(
             process_instance, user=initiator_user, target_bpmn_process_hash=initial_bpmn_process_hash
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("manual_task_two", processor.bpmn_process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("manual_task_two", runtime.bpmn_process_instance)
         assert spiff_task is None
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -463,8 +463,8 @@ class TestProcessInstanceService(BaseTest):
             bpmn_file_name="migration-initial.bpmn",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         new_file_path = os.path.join(
             app.instance_path,
@@ -500,11 +500,11 @@ class TestProcessInstanceService(BaseTest):
             bpmn_file_name="migration-initial.bpmn",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
         new_file_path = os.path.join(
@@ -550,12 +550,12 @@ class TestProcessInstanceService(BaseTest):
             process_model=process_model, user=initiator_user, bpmn_version_control_identifier="rev1"
         )
         assert process_instance.bpmn_version_control_identifier == "rev1"
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         assert initial_bpmn_process_hash is not None
 
-        ready_tasks = processor.get_all_ready_or_waiting_tasks()
+        ready_tasks = runtime.get_all_ready_or_waiting_tasks()
         assert len(ready_tasks) == 1
         assert ready_tasks[0].task_spec.name == "TimerEvent1"
         task = TaskModel.query.filter_by(guid=str(ready_tasks[0].id)).first()
@@ -563,9 +563,9 @@ class TestProcessInstanceService(BaseTest):
         self.set_timer_event_to_new_time(task, {"seconds": 50})
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        ready_tasks = processor.get_all_ready_or_waiting_tasks()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
+        ready_tasks = runtime.get_all_ready_or_waiting_tasks()
         assert len(ready_tasks) == 2
         ready_task_names = [t.task_spec.name for t in ready_tasks]
         assert sorted(ready_task_names) == ["Test_Timer_intermediate_catch.EndJoin", "TimerEvent1"]
@@ -607,5 +607,5 @@ class TestProcessInstanceService(BaseTest):
         assert timer_event_task_model.properties_json["internal_data"]["event_value"]["cycles"] == 2
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
