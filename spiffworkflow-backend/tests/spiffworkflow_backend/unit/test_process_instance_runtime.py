@@ -1285,8 +1285,8 @@ class TestProcessInstanceRuntime(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_model = load_test_spec(
-            process_model_id="group/call_activity_with_manual_task",
-            process_model_source_directory="call_activity_with_manual_task",
+            process_model_id="test_group/subprocess_with_manual_task",
+            process_model_source_directory="subprocess_with_manual_task",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         runtime = ProcessInstanceRuntime(process_instance)
@@ -1432,6 +1432,67 @@ class TestProcessInstanceRuntime(BaseTest):
         final_completed_task_model = TaskModel.query.filter_by(guid=str(initial_completed_spiff_task.id)).first()
         assert final_completed_task_model.start_in_seconds is not None
         assert final_completed_task_model.end_in_seconds is not None
+
+    def test_get_db_mappings_from_bpmn_process_dict_includes_subprocess_tasks(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/subprocess_with_manual_task",
+            process_model_source_directory="subprocess_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(
+            process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
+        )
+        runtime.do_engine_steps(save=True)
+        bpmn_process_dict = runtime.serialize()
+
+        subprocess_task_guids = {
+            task_guid for subprocess in bpmn_process_dict["subprocesses"].values() for task_guid in subprocess["tasks"]
+        }
+        assert subprocess_task_guids
+
+        task_model_mapping, _ = ProcessInstancePersistenceService.get_db_mappings_from_bpmn_process_dict(bpmn_process_dict)
+
+        assert subprocess_task_guids <= set(task_model_mapping)
+
+    def test_get_tasks_dict_skips_completed_multi_instance_child_data_when_parent_is_completed(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        parent_task = TaskModel(
+            guid="parent-task-guid",
+            bpmn_process_id=1,
+            process_instance_id=1,
+            task_definition_id=1,
+            state="COMPLETED",
+            properties_json={"parent": None},
+            json_data_hash=JsonDataModel.create_and_insert_json_data_from_dict({"parent": "data"}),
+            python_env_data_hash="",
+            runtime_info={"instance_map": {"item": "child-task-guid"}},
+        )
+        child_task = TaskModel(
+            guid="child-task-guid",
+            bpmn_process_id=1,
+            process_instance_id=1,
+            task_definition_id=1,
+            state="COMPLETED",
+            properties_json={"parent": parent_task.guid},
+            json_data_hash=JsonDataModel.create_and_insert_json_data_from_dict({"child": "data"}),
+            python_env_data_hash="",
+        )
+
+        bpmn_process_dict = {"tasks": {}}
+        ProcessInstancePersistenceService.get_tasks_dict(
+            [parent_task, child_task],
+            bpmn_process_dict,
+            task_model_mapping={},
+        )
+
+        assert bpmn_process_dict["tasks"][child_task.guid]["data"] == {}
 
     def test_returns_error_if_spiff_task_and_human_task_are_different(
         self,

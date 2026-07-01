@@ -87,8 +87,7 @@ class ProcessInstancePersistenceService:
         task_guids = set(bpmn_process_dict["tasks"].keys())
         bpmn_process_guids = set()
         for subproc_guid, subproc_dict in bpmn_process_dict["subprocesses"].items():
-            new_set = set(subproc_dict["tasks"].keys())
-            task_guids.union(new_set)
+            task_guids.update(subproc_dict["tasks"].keys())
             bpmn_process_guids.add(subproc_guid)
         task_models = TaskModel.query.filter(TaskModel.guid.in_(task_guids)).all()  # type: ignore
         bpmn_process_models = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(bpmn_process_guids)).all()  # type: ignore
@@ -166,7 +165,7 @@ class ProcessInstancePersistenceService:
             elif (
                 parent_guid in task_list_by_hash
                 and "instance_map" in (task_list_by_hash[parent_guid].runtime_info or {})
-                and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
+                and task_list_by_hash[parent_guid].state not in states_to_exclude_from_rehydration
             ):
                 # make sure we add task data for multi-instance tasks as well
                 json_data_hashes.add(task.json_data_hash)
