@@ -6,7 +6,7 @@ import { ReportFilter, ReportMetadata } from '../interfaces';
 type QuickFilterPreset = {
   id: string;
   label: string;
-  filters: ReportFilter[];
+  buildFilters: () => ReportFilter[];
   // Whose filters this preset "owns" — used to detect active state and to clear.
   ownedFields: string[];
 };
@@ -21,85 +21,49 @@ const daysAgoSeconds = (days: number): number => {
   return Math.floor(Date.now() / 1000) - days * 86400;
 };
 
+const equalsFilter = (fieldName: string, fieldValue: any): ReportFilter => ({
+  field_name: fieldName,
+  field_value: fieldValue,
+  operator: 'equals',
+});
+
 const buildPresets = (t: (k: string) => string): QuickFilterPreset[] => [
   {
     id: 'errors',
     label: t('quick_filter_errors'),
     ownedFields: ['process_status'],
-    filters: [
-      {
-        field_name: 'process_status',
-        field_value: 'error',
-        operator: 'equals',
-      },
-    ],
+    buildFilters: () => [equalsFilter('process_status', 'error')],
   },
   {
     id: 'active',
     label: t('quick_filter_active'),
     ownedFields: ['process_status'],
-    filters: [
-      {
-        field_name: 'process_status',
-        field_value: 'running,waiting,user_input_required',
-        operator: 'equals',
-      },
+    buildFilters: () => [
+      equalsFilter('process_status', 'running,waiting,user_input_required'),
     ],
   },
   {
     id: 'completed',
     label: t('quick_filter_completed'),
     ownedFields: ['process_status'],
-    filters: [
-      {
-        field_name: 'process_status',
-        field_value: 'complete',
-        operator: 'equals',
-      },
-    ],
+    buildFilters: () => [equalsFilter('process_status', 'complete')],
   },
   {
     id: 'today',
     label: t('quick_filter_today'),
     ownedFields: ['start_from'],
-    filters: [
-      {
-        field_name: 'start_from',
-        field_value: startOfTodaySeconds(),
-        operator: 'equals',
-      },
-    ],
+    buildFilters: () => [equalsFilter('start_from', startOfTodaySeconds())],
   },
   {
     id: 'last_7_days',
     label: t('quick_filter_last_7_days'),
     ownedFields: ['start_from'],
-    filters: [
-      {
-        field_name: 'start_from',
-        field_value: daysAgoSeconds(7),
-        operator: 'equals',
-      },
-    ],
+    buildFilters: () => [equalsFilter('start_from', daysAgoSeconds(7))],
   },
 ];
 
-const isPresetActive = (
-  preset: QuickFilterPreset,
-  filterBy: ReportFilter[],
-): boolean => {
-  return preset.filters.every((presetFilter) =>
-    filterBy.some(
-      (f) =>
-        f.field_name === presetFilter.field_name &&
-        String(f.field_value) === String(presetFilter.field_value) &&
-        f.operator === presetFilter.operator,
-    ),
-  );
-};
-
 type Props = {
-  activePresetIds?: string[];
+  activePresetIds: string[];
   reportMetadata: ReportMetadata | null;
   onApplyPreset: (
     addFilters: ReportFilter[],
@@ -120,16 +84,17 @@ export default function QuickFilterChips({
     return null;
   }
 
-  const filterBy = reportMetadata.filter_by;
-
   const handleClick = (preset: QuickFilterPreset) => {
-    const active = activePresetIds
-      ? activePresetIds.includes(preset.id)
-      : isPresetActive(preset, filterBy);
+    const active = activePresetIds.includes(preset.id);
     if (active) {
       onApplyPreset([], preset.ownedFields, preset.id, active);
     } else {
-      onApplyPreset(preset.filters, preset.ownedFields, preset.id, active);
+      onApplyPreset(
+        preset.buildFilters(),
+        preset.ownedFields,
+        preset.id,
+        active,
+      );
     }
   };
 
@@ -140,9 +105,7 @@ export default function QuickFilterChips({
       sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}
     >
       {presets.map((preset) => {
-        const active = activePresetIds
-          ? activePresetIds.includes(preset.id)
-          : isPresetActive(preset, filterBy);
+        const active = activePresetIds.includes(preset.id);
         return (
           <Chip
             key={preset.id}

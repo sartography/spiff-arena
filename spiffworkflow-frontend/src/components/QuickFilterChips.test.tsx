@@ -26,18 +26,19 @@ test('keeps the last 7 days quick filter active after time advances', () => {
   const onApplyPreset = vi.fn();
   const { rerender } = render(
     <QuickFilterChips
+      activePresetIds={[]}
       reportMetadata={metadataWithFilters([])}
       onApplyPreset={onApplyPreset}
     />,
   );
 
   fireEvent.click(screen.getByText('quick_filter_last_7_days'));
-  const selectedFilters = onApplyPreset.mock.calls[0][0];
 
   vi.setSystemTime(new Date('2026-07-01T12:00:05Z'));
   rerender(
     <QuickFilterChips
-      reportMetadata={metadataWithFilters(selectedFilters)}
+      activePresetIds={['last_7_days']}
+      reportMetadata={metadataWithFilters(onApplyPreset.mock.calls[0][0])}
       onApplyPreset={onApplyPreset}
     />,
   );
@@ -48,6 +49,38 @@ test('keeps the last 7 days quick filter active after time advances', () => {
     ['start_from'],
     'last_7_days',
     true,
+  );
+});
+
+test('builds date quick filters when clicked', () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-01T23:59:59Z'));
+
+  const onApplyPreset = vi.fn();
+  render(
+    <QuickFilterChips
+      activePresetIds={[]}
+      reportMetadata={metadataWithFilters([])}
+      onApplyPreset={onApplyPreset}
+    />,
+  );
+
+  vi.setSystemTime(new Date('2026-07-02T00:00:01Z'));
+  fireEvent.click(screen.getByText('quick_filter_today'));
+  const expectedStartOfToday = new Date('2026-07-02T00:00:01Z');
+  expectedStartOfToday.setHours(0, 0, 0, 0);
+
+  expect(onApplyPreset).toHaveBeenLastCalledWith(
+    [
+      {
+        field_name: 'start_from',
+        field_value: Math.floor(expectedStartOfToday.getTime() / 1000),
+        operator: 'equals',
+      },
+    ],
+    ['start_from'],
+    'today',
+    false,
   );
 });
 
