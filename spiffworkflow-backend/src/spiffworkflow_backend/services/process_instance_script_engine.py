@@ -125,7 +125,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment)
             context.update(self.state)
 
     def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        keys_to_filter = self.non_user_defined_keys
+        keys_to_filter = set(self.non_user_defined_keys)
         if external_context is not None:
             keys_to_filter |= set(external_context.keys())
 
