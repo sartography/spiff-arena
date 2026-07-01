@@ -6,7 +6,7 @@ from pytest_mock.plugin import MockerFixture
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -25,9 +25,9 @@ class TestFutureTask(BaseTest):
                 bpmn_file_name="user_task_with_timer.bpmn",
             )
             process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
             mock = mocker.patch("celery.current_app.send_task")
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
 
             # this one is not happening soon. it will get picked up by the "every five minutes" job
             assert mock.call_count == 0

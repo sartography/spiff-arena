@@ -7,7 +7,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -71,8 +71,8 @@ class TestProcessInstancesController(BaseTest):
         )
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance is not None
-        processor = ProcessInstanceProcessor(process_instance)
-        assert "manual_task_two" not in processor.bpmn_process_instance.spec.task_specs
+        runtime = ProcessInstanceRuntime(process_instance)
+        assert "manual_task_two" not in runtime.bpmn_process_instance.spec.task_specs
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
@@ -96,7 +96,7 @@ class TestProcessInstancesController(BaseTest):
             update_process_cache_only=True,
         )
 
-        processor.suspend()
+        runtime.suspend()
         response = client.post(
             f"/v1.0/process-instance-migrate/{self.modify_process_identifier_for_path_param(process_instance.process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -104,14 +104,14 @@ class TestProcessInstancesController(BaseTest):
         assert response.status_code == 200
         assert response.json() is not None
 
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_two"
-        self.complete_next_manual_task(processor)
+        self.complete_next_manual_task(runtime)
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
@@ -130,8 +130,8 @@ class TestProcessInstancesController(BaseTest):
         )
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance is not None
-        processor = ProcessInstanceProcessor(process_instance)
-        assert "manual_task_two" not in processor.bpmn_process_instance.spec.task_specs
+        runtime = ProcessInstanceRuntime(process_instance)
+        assert "manual_task_two" not in runtime.bpmn_process_instance.spec.task_specs
 
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_model.task_definition.bpmn_identifier == "manual_task_one"

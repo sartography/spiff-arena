@@ -33,9 +33,9 @@ from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportNotFoundError
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.process_model_test_generator_service import ProcessModelTestGeneratorService
@@ -435,10 +435,10 @@ def process_model_test_generate(modified_process_model_identifier: str, body: di
 
     test_case_identifier = body.get("test_case_identifier", f"test_case_for_process_instance_{process_instance_id}")
     process_instance = _find_process_instance_by_id_or_raise(int(process_instance_id))
-    processor = ProcessInstanceProcessor(
+    runtime = ProcessInstanceRuntime(
         process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
     )
-    process_instance_dict = processor.serialize()
+    process_instance_dict = runtime.serialize()
     test_case_dict = ProcessModelTestGeneratorService.generate_test_from_process_instance_dict(
         process_instance_dict, test_case_identifier=str(test_case_identifier)
     )

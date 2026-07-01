@@ -2,7 +2,7 @@ from flask import Flask
 
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -18,8 +18,8 @@ class TestJinjaService(BaseTest):
             process_model_source_directory="manual-task-with-sanitized-markdown",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
@@ -49,10 +49,10 @@ class TestJinjaService(BaseTest):
             process_model_source_directory="manual-task-with-sanitized-markdown",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
-        JinjaService.render_instructions_for_end_user(processor.get_all_ready_or_waiting_tasks()[0])
+        JinjaService.render_instructions_for_end_user(runtime.get_all_ready_or_waiting_tasks()[0])
         "\n".join(
             [
                 r"* From Filter: Sanitized \| from \| filter",

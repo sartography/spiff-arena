@@ -6,7 +6,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -19,16 +19,16 @@ class Version2(DataMigrationBase):
     def run(cls, process_instance: ProcessInstanceModel) -> None:
         initial_time = time.time()
         try:
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.bpmn_process_instance._predict()
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.bpmn_process_instance._predict()
 
-            spiff_tasks = processor.bpmn_process_instance.get_tasks(updated_ts=initial_time)
+            spiff_tasks = runtime.bpmn_process_instance.get_tasks(updated_ts=initial_time)
             task_service = TaskService(
                 process_instance,
                 BpmnProcessService.serializer,
-                processor.bpmn_definition_to_task_definitions_mappings,
-                task_model_mapping=processor.task_model_mapping,
-                bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
+                runtime.bpmn_definition_to_task_definitions_mappings,
+                task_model_mapping=runtime.task_model_mapping,
+                bpmn_subprocess_mapping=runtime.bpmn_subprocess_mapping,
             )
 
             # implicit begin db transaction

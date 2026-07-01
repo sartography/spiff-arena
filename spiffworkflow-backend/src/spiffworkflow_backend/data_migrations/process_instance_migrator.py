@@ -44,7 +44,7 @@ class ProcessInstanceMigrator:
         """This updates the serialization of an instance to the current expected state.
 
         We do not run the migrator in cases where we do not expect to update the spiff internal state,
-        such as the process instance show page (where we do instantiate a processor).
+        such as the process instance show page (where we do instantiate a runtime).
         Someday, we might need to run the migrator in more places, if using spiff to read depends on
         an updated serialization.
         """

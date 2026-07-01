@@ -1,6 +1,6 @@
 from flask.app import Flask
 
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -18,8 +18,8 @@ class TestGetCurrentTaskData(BaseTest):
             process_model_source_directory="get_current_task_data",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
-        data = ProcessInstanceProcessor._default_script_engine.environment.last_result()
+        data = ProcessInstanceRuntime._default_script_engine.environment.last_result()
         assert data["a"] == {"c": 3}

@@ -5,7 +5,7 @@ from flask.app import Flask
 
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -47,14 +47,14 @@ class TestGetLocaltime(BaseTest):
             process_model_source_directory="get_localtime",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
 
-        processor.do_engine_steps(save=True)
+        runtime.do_engine_steps(save=True)
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier(human_task.task_name, runtime.bpmn_process_instance)
 
         ProcessInstanceService.complete_form_task(
-            processor,
+            runtime,
             spiff_task,
             {"timezone": "US/Pacific"},
             initiator_user,
@@ -62,11 +62,11 @@ class TestGetLocaltime(BaseTest):
         )
 
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier(human_task.task_name, runtime.bpmn_process_instance)
 
         assert spiff_task
 
-        data = ProcessInstanceProcessor._default_script_engine.environment.last_result()
+        data = ProcessInstanceRuntime._default_script_engine.environment.last_result()
         some_time = data["some_time"]
         localtime = data["localtime"]
         timezone = data["timezone"]

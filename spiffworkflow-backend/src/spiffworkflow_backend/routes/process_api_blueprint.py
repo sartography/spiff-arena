@@ -44,8 +44,8 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
@@ -450,10 +450,10 @@ def _task_submit_shared(
                 # Refresh the process instance to get any updates from migration
                 db.session.refresh(process_instance)
 
-            processor = ProcessInstanceProcessor(
+            runtime = ProcessInstanceRuntime(
                 process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
             )
-            spiff_task = _get_spiff_task_from_processor(task_guid, processor)
+            spiff_task = _get_spiff_task_from_runtime(task_guid, runtime)
 
             if spiff_task.state != TaskState.READY:
                 raise ApiError(
@@ -469,7 +469,7 @@ def _task_submit_shared(
             )
 
             ProcessInstanceService.complete_form_task(
-                processor=processor,
+                runtime=runtime,
                 spiff_task=spiff_task,
                 data=body,
                 user=g.user,
@@ -502,8 +502,8 @@ def _task_submit_shared(
         guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
         return {"guest_confirmation": guest_confirmation}
 
-    if processor.next_task():
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    if runtime.next_task():
+        task = ProcessInstanceService.spiff_task_to_api_task(runtime, runtime.next_task())
         task.process_model_uses_queued_execution = queue_enabled_for_process_model()
         return {"next_task": task}
 
@@ -539,17 +539,17 @@ def _find_human_task_or_raise(
     return human_task
 
 
-def _get_spiff_task_from_processor(
+def _get_spiff_task_from_runtime(
     task_guid: str,
-    processor: ProcessInstanceProcessor,
+    runtime: ProcessInstanceRuntime,
 ) -> SpiffTask:
     task_uuid = uuid.UUID(task_guid)
-    spiff_task = processor.bpmn_process_instance.get_task_from_id(task_uuid)
+    spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
 
     if spiff_task is None:
         raise ApiError(
             error_code="empty_task",
-            message="Processor failed to obtain task.",
+            message="Runtime failed to obtain task.",
             status_code=500,
         )
     return spiff_task
