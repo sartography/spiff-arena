@@ -50,6 +50,7 @@ class ProcessInstanceEventService:
         process_instance_error_detail = None
         if exception is not None:
             stacktrace = traceback.format_exc().split("\n")
+            # Truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             message = str(exception)[0:1023]
 
             task_line_number = None
@@ -57,6 +58,7 @@ class ProcessInstanceEventService:
             task_trace = None
             task_offset = None
 
+            # Avoid importing ApiError here: ApiError imports TaskService, which imports this service.
             if isinstance(exception, WorkflowTaskException) or (
                 exception.__class__.__name__ == "ApiError" and exception.error_code == "task_error"  # type: ignore
             ):
