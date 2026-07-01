@@ -851,7 +851,7 @@ class TestProcessInstanceRuntime(BaseTest):
         runtime = ProcessInstanceRuntime(process_instance)
         with pytest.raises(WorkflowExecutionServiceError) as exc:
             runtime.do_engine_steps(save=True)
-            assert exc.value.task.task_spec.name == "script_with_error"
+        assert exc.value.task.task_spec.name == "script_with_error"
 
         task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_error", runtime.bpmn_process_instance)
         runtime.suspend()

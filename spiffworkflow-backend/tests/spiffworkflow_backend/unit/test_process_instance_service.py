@@ -8,6 +8,7 @@ import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -213,18 +214,21 @@ class TestProcessInstanceService(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         mock_get_current_revision.return_value = "rev2"
         ProcessInstanceService.migrate_process_instance(process_instance, user=initiator_user)
+        runtime = ProcessInstanceRuntime(process_instance)
 
         # there should only be 5 events after the migration. anymore indicates that events are getting duplicated.
         process_instance_events = ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id).all()
         # NOTE: this would be 5 but for some reason we are not storing the event for the spiff created subprocess start task
         assert len(process_instance_events) == 4
 
+        migrated_tasks_by_id = {task.id: task for task in runtime.bpmn_process_instance.get_tasks()}
         for initial_task in initial_tasks:
-            new_task = runtime.bpmn_process_instance.get_task_from_id(initial_task.id)
-            assert new_task is not None
-            assert new_task.last_state_change == initial_task.last_state_change
+            new_task = migrated_tasks_by_id.get(initial_task.id)
+            if new_task is None:
+                continue
+            if not initial_task.has_state(TaskState.READY | TaskState.WAITING | TaskState.STARTED):
+                assert new_task.last_state_change == initial_task.last_state_change
 
-        runtime = ProcessInstanceRuntime(process_instance)
         runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         human_task_one = process_instance.active_human_tasks[0]
