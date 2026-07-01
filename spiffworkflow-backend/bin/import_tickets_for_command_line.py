@@ -6,7 +6,7 @@ from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 
 
@@ -60,27 +60,27 @@ def main():
                     user,
                     process_group_identifier="sartography-admin",
                 )
-                processor = ProcessInstanceProcessor(process_instance)
+                runtime = ProcessInstanceRuntime(process_instance)
 
-                processor.do_engine_steps()
-                # processor.save()
+                runtime.do_engine_steps()
+                # runtime.save()
 
                 for (
                     column_name,
                     desired_data_key,
                 ) in columns_to_data_key_mappings.items():
                     appropriate_index = columns_to_header_index_mappings[column_name]
-                    processor.bpmn_process_instance.data[desired_data_key] = row[appropriate_index]
+                    runtime.bpmn_process_instance.data[desired_data_key] = row[appropriate_index]
 
-                print(f"datas: {processor.bpmn_process_instance.data}")
-                if processor.bpmn_process_instance.data["month"] == "":
+                print(f"datas: {runtime.bpmn_process_instance.data}")
+                if runtime.bpmn_process_instance.data["month"] == "":
                     continue
 
                 # you at least need a month, or else this row in the csv is considered garbage
-                # if processor.bpmn_process_instance.data["month"] is None:
+                # if runtime.bpmn_process_instance.data["month"] is None:
                 #     continue
 
-                processor.save()
+                runtime.save()
 
 
 # if __name__ == "__main__":
