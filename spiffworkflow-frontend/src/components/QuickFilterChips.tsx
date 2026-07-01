@@ -1,4 +1,5 @@
 import { Chip, Stack } from '@mui/material';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReportFilter, ReportMetadata } from '../interfaces';
 
@@ -110,11 +111,11 @@ export default function QuickFilterChips({
   onApplyPreset,
 }: Props) {
   const { t } = useTranslation();
+  const presets = useMemo(() => buildPresets(t), [t]);
   if (!reportMetadata) {
     return null;
   }
 
-  const presets = buildPresets(t);
   const filterBy = reportMetadata.filter_by;
 
   const handleClick = (preset: QuickFilterPreset) => {
