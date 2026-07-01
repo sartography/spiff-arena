@@ -4,7 +4,7 @@ import {
 } from '@mui/icons-material';
 import Grid from '@mui/material/Grid';
 import { IconButton, Snackbar } from '@mui/material';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SpiffTooltip from './SpiffTooltip';
 
@@ -15,6 +15,8 @@ type OwnProps = {
   filtersEnabled?: boolean;
   reportSearchComponent?: Function | null;
   reportHash?: string | null;
+  controlsStart?: ReactNode;
+  controlsBeforeFilterButton?: ReactNode;
 };
 
 export default function Filters({
@@ -24,6 +26,8 @@ export default function Filters({
   reportSearchComponent = null,
   filtersEnabled = true,
   reportHash,
+  controlsStart,
+  controlsBeforeFilterButton,
 }: OwnProps) {
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
@@ -56,6 +60,9 @@ export default function Filters({
         </SpiffTooltip>,
       );
     }
+    if (controlsBeforeFilterButton) {
+      elements.push(controlsBeforeFilterButton);
+    }
     elements.push(
       <SpiffTooltip title={t('filter_options')}>
         <IconButton
@@ -85,7 +92,15 @@ export default function Filters({
     let reportSearchSection = null;
     if (reportSearchComponent) {
       reportSearchSection = (
-        <Grid size={{ xs: 12, sm: 6, md: 8 }}>{reportSearchComponent()}</Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: controlsBeforeFilterButton ? 12 : 6,
+            md: controlsStart ? 4 : 8,
+          }}
+        >
+          {reportSearchComponent()}
+        </Grid>
       );
     }
     return (
@@ -96,9 +111,29 @@ export default function Filters({
           style={{ paddingBottom: '1rem' }}
           justifyContent="flex-end"
         >
+          {controlsStart ? (
+            <Grid size={{ xs: 12, md: 4 }}>{controlsStart}</Grid>
+          ) : null}
           {reportSearchSection}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} className="filter-icon">
-            {buttonElements()}
+          <Grid
+            size={{
+              xs: 12,
+              sm: controlsBeforeFilterButton ? 12 : 6,
+              md: 4,
+            }}
+            className="filter-icon"
+          >
+            <div
+              style={{
+                alignItems: 'center',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                justifyContent: 'flex-end',
+              }}
+            >
+              {buttonElements()}
+            </div>
           </Grid>
         </Grid>
         {filterOptions()}
