@@ -129,7 +129,7 @@ export default function QuickFilterChips({
     <Stack
       direction="row"
       spacing={1}
-      sx={{ flexWrap: 'wrap', rowGap: 1, mb: 2 }}
+      sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}
     >
       {presets.map((preset) => {
         const active = isPresetActive(preset, filterBy);

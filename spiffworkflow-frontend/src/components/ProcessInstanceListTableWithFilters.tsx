@@ -1605,13 +1605,14 @@ export default function ProcessInstanceListTableWithFilters({
   };
 
   const groupByControl = (
-    <FormControl fullWidth size="small">
+    <FormControl size="small" sx={{ minWidth: 180 }}>
       <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
       <Select
         labelId="group-by-label"
         label={t('group_by')}
         value={groupBy}
         data-testid="process-instance-group-by"
+        sx={{ textAlign: 'left', '.MuiSelect-select': { textAlign: 'left' } }}
         onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
       >
         <MenuItem value="none">{t('group_by_none')}</MenuItem>
@@ -1643,17 +1644,6 @@ export default function ProcessInstanceListTableWithFilters({
 
     return (
       <>
-        <Grid fullWidth className="with-bottom-margin">
-          <Column sm={4} md={6} lg={12}>
-            <QuickFilterChips
-              reportMetadata={reportMetadata}
-              onApplyPreset={applyQuickFilter}
-            />
-          </Column>
-          <Column sm={4} md={2} lg={4}>
-            {groupByControl}
-          </Column>
-        </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8} lg={16} sm={4}>
             <FormLabel>{t('columns_label')}</FormLabel>
@@ -1844,6 +1834,18 @@ export default function ProcessInstanceListTableWithFilters({
     return null;
   };
 
+  const quickFilterChips = () => {
+    if (!filtersEnabled || !reportMetadata) {
+      return null;
+    }
+    return (
+      <QuickFilterChips
+        reportMetadata={reportMetadata}
+        onApplyPreset={applyQuickFilter}
+      />
+    );
+  };
+
   const onProcessInstanceTableListUpdate = useCallback(
     (result: any) => {
       // mostly for pagination so we do not set the page to 1 if the report did not change
@@ -1889,6 +1891,8 @@ export default function ProcessInstanceListTableWithFilters({
             reportSearchComponent={reportSearchComponent}
             filtersEnabled={filtersEnabled}
             reportHash={reportHash}
+            controlsStart={quickFilterChips()}
+            controlsBeforeFilterButton={filtersEnabled ? groupByControl : null}
           />
         </Column>
       </Grid>
