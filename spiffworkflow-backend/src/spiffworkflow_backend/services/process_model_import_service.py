@@ -68,6 +68,7 @@ class ProcessModelImportService:
             {
                 "project_id": payload.get("project_id"),
                 "project_name": payload.get("project_name"),
+                "process_model_id": payload.get("process_model_id"),
                 "files": [{"path": path, "content": str(content)}],
             },
             process_group_id,
@@ -76,7 +77,7 @@ class ProcessModelImportService:
     @classmethod
     def import_from_filestore_package(cls, package: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
         process_group = cls._ensure_process_group(process_group_id)
-        files = cls._filestore_files(package)
+        files = cls._filestore_files_relative_to_explicit_model(cls._filestore_files(package), package)
         model_dirs = cls._filestore_model_dirs(files)
         process_models = []
 
@@ -190,6 +191,22 @@ class ProcessModelImportService:
 
         return files
 
+    @classmethod
+    def _filestore_files_relative_to_explicit_model(
+        cls,
+        files: dict[str, bytes],
+        package: dict[str, Any],
+    ) -> dict[str, bytes]:
+        model_id = cls._explicit_filestore_model_id(package)
+        if not model_id:
+            return files
+
+        prefix = f"{model_id}/"
+        if not all(path.startswith(prefix) for path in files):
+            return files
+
+        return {path.removeprefix(prefix): content for path, content in files.items()}
+
     @staticmethod
     def _validate_filestore_path(path: str) -> None:
         parts = path.split("/")
@@ -254,27 +271,31 @@ class ProcessModelImportService:
     def _filestore_model_id(cls, package: dict[str, Any], model_dir: str) -> str:
         if model_dir:
             return "/".join(cls._slug(segment) for segment in model_dir.split("/"))
+        process_model_id = cls._explicit_filestore_model_id(package)
+        if process_model_id:
+            return process_model_id
         return cls._filestore_root_model_id(package)
 
     @classmethod
+    def _explicit_filestore_model_id(cls, package: dict[str, Any]) -> str:
+        process_model_id = package.get("process_model_id")
+        if not isinstance(process_model_id, str) or not process_model_id.strip():
+            return ""
+        return "/".join(cls._slug(segment) for segment in process_model_id.split("/"))
+
+    @classmethod
     def _filestore_root_model_id(cls, package: dict[str, Any]) -> str:
-        project_id = cls._slug(str(package.get("project_id") or package.get("label") or "filestore-project"))
         project_name = package.get("project_name")
         if not isinstance(project_name, str) or not project_name.strip():
-            return project_id
+            return cls._slug(str(package.get("label") or "filestore-project"))
 
-        project_name = cls._slug(project_name)
-        return project_id if project_id.startswith(f"{project_name}-") else f"{project_name}-{project_id}"
+        return "/".join(cls._slug(segment) for segment in project_name.split("/"))
 
     @classmethod
     def _filestore_display_name(cls, package: dict[str, Any], model_id: str, model_dir: str) -> str:
         project_name = package.get("project_name")
-        project_id = package.get("project_id")
         if not model_dir and isinstance(project_name, str) and project_name.strip():
-            display_name = project_name.strip()
-            if isinstance(project_id, str) and project_id.strip() and project_id.strip() not in display_name:
-                display_name = f"{display_name} {project_id.strip()}"
-            return display_name
+            return project_name.strip().rsplit("/", maxsplit=1)[-1]
 
         return model_id.rsplit("/", maxsplit=1)[-1].replace("-", " ").title()
 

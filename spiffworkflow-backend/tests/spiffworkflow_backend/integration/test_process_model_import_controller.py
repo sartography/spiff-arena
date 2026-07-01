@@ -51,9 +51,8 @@ class TestProcessModelImportController(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
-        project_id = "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A"
         package = {
-            "project_id": project_id,
+            "project_id": "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A",
             "project_name": "Test4",
             "snapshot_id": "snapshot-1",
             "files": [
@@ -64,9 +63,31 @@ class TestProcessModelImportController(BaseTest):
         process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
 
         assert len(process_models) == 1
-        assert process_models[0].id == f"filestore/test4-{project_id.lower()}"
-        assert process_models[0].display_name == f"Test4 {project_id}"
+        assert process_models[0].id == "filestore/test4"
+        assert process_models[0].display_name == "Test4"
         assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
+
+    def test_process_model_import_from_filestore_package_can_use_explicit_root_model_id(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "files-project",
+            "project_name": "so/hot",
+            "process_model_id": "hot",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "hot/bam.bpmn", "content": bpmn},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "so")
+
+        assert [process_model.id for process_model in process_models] == ["so/hot"]
+        assert process_models[0].display_name == "hot"
+        assert FileSystemService.get_data(process_models[0], "bam.bpmn").decode().find("Process_SimpleScript") > -1
 
     def test_process_model_import_from_filestore_file_update_names_root_model(
         self,
@@ -84,7 +105,7 @@ class TestProcessModelImportController(BaseTest):
             "filestore",
         )
 
-        assert [process_model.id for process_model in process_models] == ["filestore/test4-7638d555-2e7f-48f0-8036-0c7cb58b9c5a"]
+        assert [process_model.id for process_model in process_models] == ["filestore/test4"]
         assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
 
     def test_process_model_import_from_filestore_file_update_only_updates_that_file(
