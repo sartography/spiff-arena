@@ -649,8 +649,8 @@ def _interstitial_stream(
                 try:
                     # run_until_user_message does not run tasks with instructions so run readys first
                     # to force it to run the task.
-                    runtime.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
-                    runtime.do_engine_steps(execution_strategy_name="run_until_user_message")
+                    runtime.do_engine_steps(execution_strategy_name="run_current_ready_tasks", needs_dequeue=False)
+                    runtime.do_engine_steps(execution_strategy_name="run_until_user_message", needs_dequeue=False)
                     runtime.save()  # Fixme - maybe find a way not to do this on every loop?
 
                 except WorkflowTaskException as wfe:
