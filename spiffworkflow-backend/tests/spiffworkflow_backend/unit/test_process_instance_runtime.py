@@ -498,9 +498,7 @@ class TestProcessInstanceRuntime(BaseTest):
         runtime.do_engine_steps(save=True)
 
         finance_task = process_instance.active_human_tasks[0]
-        finance_spiff_task = runtime.__class__.get_task_by_bpmn_identifier(
-            finance_task.task_name, runtime.bpmn_process_instance
-        )
+        finance_spiff_task = runtime.__class__.get_task_by_bpmn_identifier(finance_task.task_name, runtime.bpmn_process_instance)
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
                 runtime,
@@ -656,9 +654,7 @@ class TestProcessInstanceRuntime(BaseTest):
 
         runtime = ProcessInstanceRuntime(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = runtime.__class__.get_task_by_bpmn_identifier(
-            human_task_one.task_name, runtime.bpmn_process_instance
-        )
+        spiff_manual_task = runtime.__class__.get_task_by_bpmn_identifier(human_task_one.task_name, runtime.bpmn_process_instance)
         assert spiff_manual_task is not None
         ProcessInstanceService.complete_form_task(runtime, spiff_manual_task, {}, initiator_user, human_task_one)
 
@@ -957,9 +953,7 @@ class TestProcessInstanceRuntime(BaseTest):
 
         runtime = ProcessInstanceRuntime(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = runtime.__class__.get_task_by_bpmn_identifier(
-            human_task_one.task_name, runtime.bpmn_process_instance
-        )
+        spiff_manual_task = runtime.__class__.get_task_by_bpmn_identifier(human_task_one.task_name, runtime.bpmn_process_instance)
         ProcessInstanceService.complete_form_task(runtime, spiff_manual_task, {}, initiator_user, human_task_one)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()

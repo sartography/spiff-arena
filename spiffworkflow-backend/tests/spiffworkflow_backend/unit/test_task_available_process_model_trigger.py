@@ -14,9 +14,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestTaskAvailableProcessModelTrigger(BaseTest):
-    @patch(
-        "spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance"
-    )
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     @patch(
         "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.queue_enabled_for_process_model"
     )
@@ -48,9 +46,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
                 (task_available_pm_id, "task_guid_456", 1),
             )
 
-    @patch(
-        "spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance"
-    )
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     @patch(
         "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.queue_enabled_for_process_model"
     )
@@ -80,12 +76,8 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
                 f"for task {human_task.task_id}: Celery is not enabled."
             )
 
-    @patch(
-        "spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance"
-    )
-    @patch(
-        "spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime._trigger_task_available_process_model"
-    )
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime._trigger_task_available_process_model")
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime._create_new_human_task")
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.get_potential_owners_from_task")
     @patch(
@@ -132,9 +124,7 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
         mock_trigger_task_available_process_model.assert_not_called()
         assert runtime._pending_task_available_process_model_triggers == [("my_task_available_model", "task_guid_456")]
 
-    @patch(
-        "spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance"
-    )
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     def test_save_dispatches_task_available_process_model_triggers_after_commit(
         self,
         mock_setup: MagicMock,
