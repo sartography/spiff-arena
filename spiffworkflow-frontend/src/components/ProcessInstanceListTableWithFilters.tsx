@@ -1604,6 +1604,22 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
+  const groupByControl = (
+    <FormControl fullWidth size="small">
+      <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
+      <Select
+        labelId="group-by-label"
+        label={t('group_by')}
+        value={groupBy}
+        data-testid="process-instance-group-by"
+        onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
+      >
+        <MenuItem value="none">{t('group_by_none')}</MenuItem>
+        <MenuItem value="process_group">{t('group_by_process_group')}</MenuItem>
+      </Select>
+    </FormControl>
+  );
+
   const filterOptions = () => {
     if (!showFilterOptions || !reportMetadata) {
       return null;
@@ -1627,6 +1643,17 @@ export default function ProcessInstanceListTableWithFilters({
 
     return (
       <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column sm={4} md={6} lg={12}>
+            <QuickFilterChips
+              reportMetadata={reportMetadata}
+              onApplyPreset={applyQuickFilter}
+            />
+          </Column>
+          <Column sm={4} md={2} lg={4}>
+            {groupByControl}
+          </Column>
+        </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8} lg={16} sm={4}>
             <FormLabel>{t('columns_label')}</FormLabel>
@@ -1868,33 +1895,12 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
-  const groupByControl = (
-    <FormControl size="small" sx={{ minWidth: 180, my: 1 }}>
-      <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
-      <Select
-        labelId="group-by-label"
-        label={t('group_by')}
-        value={groupBy}
-        data-testid="process-instance-group-by"
-        onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
-      >
-        <MenuItem value="none">{t('group_by_none')}</MenuItem>
-        <MenuItem value="process_group">{t('group_by_process_group')}</MenuItem>
-      </Select>
-    </FormControl>
-  );
-
   let resultsTable = null;
   if (reportMetadata) {
     const refilterTextComponent = null;
     resultsTable = (
       <>
         {refilterTextComponent}
-        <QuickFilterChips
-          reportMetadata={reportMetadata}
-          onApplyPreset={applyQuickFilter}
-        />
-        {groupByControl}
         {groupBy === 'process_group' ? (
           <>
             {filterComponent()}
