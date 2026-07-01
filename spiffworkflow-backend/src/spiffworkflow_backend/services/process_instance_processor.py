@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from flask import current_app
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
-from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
