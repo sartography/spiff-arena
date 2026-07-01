@@ -64,9 +64,9 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.task_service import TaskService
@@ -357,8 +357,8 @@ def manual_complete_task(
     if process_instance:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.manual_complete_task(task_guid, execute, g.user)
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.manual_complete_task(task_guid, execute, g.user)
     else:
         raise ApiError(
             error_code="complete_task",
@@ -578,11 +578,11 @@ def process_instance_progress(
 
 def task_with_instruction(process_instance_id: int) -> Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
-    spiff_task = processor.next_task()
+    runtime = ProcessInstanceRuntime(process_instance, include_task_data_for_completed_tasks=True)
+    spiff_task = runtime.next_task()
     task = None
     if spiff_task is not None:
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        task = ProcessInstanceService.spiff_task_to_api_task(runtime, spiff_task)
         try:
             instructions = _render_instructions(spiff_task)
         except Exception as exception:
@@ -604,8 +604,8 @@ def _interstitial_stream(
     execute_tasks: bool = True,
     is_locked: bool = False,
 ) -> Generator[str, str | None, None]:
-    def get_reportable_tasks(processor: ProcessInstanceProcessor) -> Any:
-        return processor.bpmn_process_instance.get_tasks(
+    def get_reportable_tasks(runtime: ProcessInstanceRuntime) -> Any:
+        return runtime.bpmn_process_instance.get_tasks(
             state=TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
 
@@ -614,9 +614,9 @@ def _interstitial_stream(
         yield _render_data("unrunnable_instance", process_instance)
         return
 
-    processor = ProcessInstanceProcessor(process_instance)
+    runtime = ProcessInstanceRuntime(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
-    tasks = get_reportable_tasks(processor)
+    tasks = get_reportable_tasks(runtime)
     while True:
         has_ready_tasks = False
         for spiff_task in tasks:
@@ -633,7 +633,7 @@ def _interstitial_stream(
                     yield _render_data("error", api_error)
                     raise e
                 if instructions and spiff_task.id not in reported_ids:
-                    task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+                    task = ProcessInstanceService.spiff_task_to_api_task(runtime, spiff_task)
                     task.properties = {"instructionsForEndUser": instructions}
                     yield _render_data("task", task)
                     reported_ids.append(spiff_task.id)
@@ -649,9 +649,9 @@ def _interstitial_stream(
                 try:
                     # run_until_user_message does not run tasks with instructions so run readys first
                     # to force it to run the task.
-                    processor.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
-                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                    runtime.do_engine_steps(execution_strategy_name="run_current_ready_tasks", needs_dequeue=False)
+                    runtime.do_engine_steps(execution_strategy_name="run_until_user_message", needs_dequeue=False)
+                    runtime.save()  # Fixme - maybe find a way not to do this on every loop?
 
                 except WorkflowTaskException as wfe:
                     api_error = ApiError.from_workflow_exception(
@@ -665,8 +665,8 @@ def _interstitial_stream(
                 yield _render_data("unrunnable_instance", process_instance)
                 return
 
-        # path used by the interstitial page while executing tasks - ie the background processor is not executing them
-        ready_engine_task_count = _get_ready_engine_step_count(processor.bpmn_process_instance)
+        # path used by the interstitial page while executing tasks - ie the background runtime is not executing them
+        ready_engine_task_count = _get_ready_engine_step_count(runtime.bpmn_process_instance)
         if execute_tasks and ready_engine_task_count == 0:
             break
 
@@ -683,7 +683,7 @@ def _interstitial_stream(
             # our session has stale results without the rollback.
             db.session.rollback()
             db.session.refresh(process_instance)
-            processor = ProcessInstanceProcessor(process_instance)
+            runtime = ProcessInstanceRuntime(process_instance)
 
             # if process instance is done or blocked by a human task, then break out
             if is_locked and process_instance.status not in [
@@ -692,9 +692,9 @@ def _interstitial_stream(
             ]:
                 break
 
-        tasks = get_reportable_tasks(processor)
+        tasks = get_reportable_tasks(runtime)
 
-    spiff_task = processor.next_task()
+    spiff_task = runtime.next_task()
     if spiff_task is not None and spiff_task.id not in reported_ids:
         task_data = spiff_task.data
         if task_data is None or task_data == {}:
@@ -705,7 +705,7 @@ def _interstitial_stream(
             )
             if json_data is not None:
                 task_data = json_data.data
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        task = ProcessInstanceService.spiff_task_to_api_task(runtime, spiff_task)
         try:
             instructions = _render_instructions(spiff_task, task_data=task_data)
         except Exception as e:

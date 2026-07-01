@@ -438,7 +438,7 @@ class BpmnProcessService:
                     )
         elif store_bpmn_definition_mappings:
             # this should only ever happen when new process instances use a pre-existing bpmn process definitions
-            # otherwise this should get populated on processor initialization
+            # otherwise this should get populated on runtime initialization
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 process_bpmn_identifier,

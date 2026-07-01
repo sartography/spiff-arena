@@ -33,7 +33,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
@@ -1181,8 +1181,8 @@ class TestProcessApi(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
+        runtime = ProcessInstanceRuntime(process_instance)
+        process_instance_data = runtime.get_data()
         assert process_instance_data
         assert process_instance_data["invoice"] == payload
 
@@ -1229,19 +1229,19 @@ class TestProcessApi(BaseTest):
         assert response.json() is not None
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        task = runtime.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
 
         ProcessInstanceService.complete_form_task(
-            processor,
+            runtime,
             task,
             payload,
             with_super_admin_user,
             human_task,
         )
-        processor.save()
+        runtime.save()
 
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1257,8 +1257,8 @@ class TestProcessApi(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
 
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
+        runtime = ProcessInstanceRuntime(process_instance)
+        process_instance_data = runtime.get_data()
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
 
@@ -1452,9 +1452,9 @@ class TestProcessApi(BaseTest):
         assert response.json() is not None
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        task = runtime.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
 
         invoice_payload = {
@@ -1464,14 +1464,14 @@ class TestProcessApi(BaseTest):
             "description": "But seriously.",
         }
         ProcessInstanceService.complete_form_task(
-            processor,
+            runtime,
             task,
             invoice_payload,
             with_super_admin_user,
             human_task,
             execution_mode=ProcessInstanceExecutionMode.synchronous.value,
         )
-        processor.save()
+        runtime.save()
 
         db.session.refresh(process_instance)
         assert process_instance.status == "complete"
@@ -1518,21 +1518,21 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json()["id"]
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        task = runtime.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
 
         ProcessInstanceService.complete_form_task(
-            processor,
+            runtime,
             task,
             payload,
             with_super_admin_user,
             human_task,
         )
-        processor.save()
+        runtime.save()
 
-        processor.suspend()
+        runtime.suspend()
         payload["description"] = "Message To Suspended"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1543,7 +1543,7 @@ class TestProcessApi(BaseTest):
         assert response.json()
         assert response.json()["error_code"] == "message_not_accepted"
 
-        processor.resume()
+        runtime.resume()
         payload["description"] = "Message To Resumed"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1557,12 +1557,12 @@ class TestProcessApi(BaseTest):
         process_instance_id = json_data["process_instance"]["id"]
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
-        processor = ProcessInstanceProcessor(process_instance)
-        process_instance_data = processor.get_data()
+        runtime = ProcessInstanceRuntime(process_instance)
+        process_instance_data = runtime.get_data()
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
 
-        processor.terminate()
+        runtime.terminate()
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
@@ -1624,19 +1624,19 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json()["id"]
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
-        task = processor.get_all_user_tasks()[0]
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        task = runtime.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
 
         ProcessInstanceService.complete_form_task(
-            processor,
+            runtime,
             task,
             payload,
             with_super_admin_user,
             human_task,
         )
-        processor.save()
+        runtime.save()
 
         for expected_content, digest in zip(file_contents, digests, strict=True):
             response = client.get(
@@ -1702,19 +1702,19 @@ class TestProcessApi(BaseTest):
             process_instance_id = response.json()["id"]
 
             process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.do_engine_steps(save=True)
-            task = processor.get_all_user_tasks()[0]
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.do_engine_steps(save=True)
+            task = runtime.get_all_user_tasks()[0]
             human_task = process_instance.active_human_tasks[0]
 
             ProcessInstanceService.complete_form_task(
-                processor,
+                runtime,
                 task,
                 payload,
                 with_super_admin_user,
                 human_task,
             )
-            processor.save()
+            runtime.save()
 
             for expected_content, digest in zip(file_contents, digests, strict=True):
                 response = client.get(
@@ -2206,8 +2206,8 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert process_instance.status == "error"
-        processor = ProcessInstanceProcessor(process_instance, include_task_data_for_completed_tasks=True)
-        spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
+        runtime = ProcessInstanceRuntime(process_instance, include_task_data_for_completed_tasks=True)
+        spiff_task = runtime.get_task_by_bpmn_identifier("script_task_two", runtime.bpmn_process_instance)
         assert spiff_task is not None
 
         assert spiff_task.state == TaskState.ERROR
@@ -2856,8 +2856,8 @@ class TestProcessApi(BaseTest):
             process_model=process_model, user=with_super_admin_user
         )
 
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 3
 
@@ -3176,8 +3176,8 @@ class TestProcessApi(BaseTest):
             process_model=process_model, user=with_super_admin_user
         )
 
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 2
 
@@ -3200,8 +3200,8 @@ class TestProcessApi(BaseTest):
             process_model=process_model, user=with_super_admin_user
         )
 
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_metadata) == 3
 
@@ -3283,12 +3283,12 @@ class TestProcessApi(BaseTest):
         )
 
         process_instance_one = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance_one)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance_one)
+        runtime.do_engine_steps(save=True)
         assert process_instance_one.status == "complete"
         process_instance_two = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance_two)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance_two)
+        runtime.do_engine_steps(save=True)
         assert process_instance_two.status == "complete"
 
         report_metadata: ReportMetadata = {
@@ -3345,8 +3345,8 @@ class TestProcessApi(BaseTest):
             process_model_source_directory="data_object_test",
         )
         process_instance_one = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance_one)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance_one)
+        runtime.do_engine_steps(save=True)
         assert process_instance_one.status == "user_input_required"
 
         response = client.get(
@@ -3370,7 +3370,7 @@ class TestProcessApi(BaseTest):
             process_model_source_directory="with-service-task-call-activity-sub-process",
         )
         process_instance_one = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance_one)
+        runtime = ProcessInstanceRuntime(process_instance_one)
         connector_response = {
             "body": '{"ok": true}',
             "mimetype": "application/json",
@@ -3381,9 +3381,9 @@ class TestProcessApi(BaseTest):
             mock_post.return_value.status_code = 200
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
-            processor.do_engine_steps(save=True)
-        self.complete_next_manual_task(processor, execution_mode="synchronous")
-        self.complete_next_manual_task(processor, execution_mode="synchronous", data={"firstName": "Chuck"})
+            runtime.do_engine_steps(save=True)
+        self.complete_next_manual_task(runtime, execution_mode="synchronous")
+        self.complete_next_manual_task(runtime, execution_mode="synchronous", data={"firstName": "Chuck"})
         assert process_instance_one.status == "complete"
 
         process_identifier = "call_activity_sub_process"
@@ -3419,8 +3419,8 @@ class TestProcessApi(BaseTest):
             process_model_source_directory="data-object-in-subprocess",
         )
         process_instance_one = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance_one)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance_one)
+        runtime.do_engine_steps(save=True)
         assert process_instance_one.status == "complete"
 
         process_identifier = "subprocess2"

@@ -4,7 +4,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -24,12 +24,12 @@ class TestThreadedExecution(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         self.assert_same_start_times(process_instance, "ThreadTask", 4)
-        assert processor.bpmn_process_instance.is_completed()
-        assert processor.bpmn_process_instance.last_task.data == {"a": 1, "b": 1, "c": 1, "d": 1}
+        assert runtime.bpmn_process_instance.is_completed()
+        assert runtime.bpmn_process_instance.last_task.data == {"a": 1, "b": 1, "c": 1, "d": 1}
 
     def test_multi_instance_can_run_in_parallel(
         self,
@@ -46,11 +46,11 @@ class TestThreadedExecution(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         self.assert_same_start_times(process_instance, "multi", 26)
-        assert processor.bpmn_process_instance.is_completed()
-        upper_letters = processor.bpmn_process_instance.last_task.data["upper_letters"]
+        assert runtime.bpmn_process_instance.is_completed()
+        upper_letters = runtime.bpmn_process_instance.last_task.data["upper_letters"]
         # Note that Sort is required here, because the threaded execution will complete the list out of order.
         upper_letters.sort()
         assert upper_letters == [

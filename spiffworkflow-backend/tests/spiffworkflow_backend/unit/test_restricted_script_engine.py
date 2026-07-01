@@ -2,7 +2,7 @@ import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -22,10 +22,10 @@ class TestRestrictedScriptEngine(BaseTest):
             process_model_source_directory="dangerous-scripts",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
 
         with pytest.raises(WorkflowExecutionServiceError) as exception:
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
         assert "name 'open' is not defined" in str(exception.value)
 
     def test_dot_notation_with_import_module(
@@ -40,10 +40,10 @@ class TestRestrictedScriptEngine(BaseTest):
             process_model_source_directory="dangerous-scripts",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
 
         with pytest.raises(WorkflowExecutionServiceError) as exception:
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
         assert "Import not allowed: os" in str(exception.value)
 
     def test_can_import_preloaded_re_module(self) -> None:

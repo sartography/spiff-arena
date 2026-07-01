@@ -101,17 +101,17 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         with ProcessInstanceQueueService.dequeued(process_instance):
             # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
             # has a should_break_before that will exit if there are instructions.
-            ProcessInstanceService.run_process_instance_with_processor(
+            ProcessInstanceService.run_process_instance_with_runtime(
                 process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
             )
             # we need to save instructions to the db so the frontend progress page can view them,
             # and this is the only way to do it
-            _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
+            _runtime, task_runnability = ProcessInstanceService.run_process_instance_with_runtime(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
             )
             # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
-            # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
+            # there is an assumption that it was successfully processed by run_process_instance_with_runtime above.
             # we might want to check that assumption.
             if task_guid is not None:
                 completed_task_model = (

@@ -9,7 +9,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -120,7 +120,7 @@ class TestProcessModelsController(BaseTest):
         )
         process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
         process_instance_id = process_instance.id
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
         connector_response = {
             "body": '{"ok": true}',
             "mimetype": "application/json",
@@ -131,10 +131,10 @@ class TestProcessModelsController(BaseTest):
             mock_post.return_value.status_code = 200
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
-            processor.do_engine_steps(save=True)
+            runtime.do_engine_steps(save=True)
 
-        self.complete_next_manual_task(processor, execution_mode="synchronous")
-        self.complete_next_manual_task(processor, execution_mode="synchronous", data={"firstName": "Chuck"})
+        self.complete_next_manual_task(runtime, execution_mode="synchronous")
+        self.complete_next_manual_task(runtime, execution_mode="synchronous", data={"firstName": "Chuck"})
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance.status == ProcessInstanceStatus.complete.value
 

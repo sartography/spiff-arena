@@ -102,7 +102,7 @@ def _run_extension(
     if body and "extension_input" in body:
         data_to_inject = body["extension_input"]
 
-    processor = ProcessInstanceService.create_and_run_process_instance(
+    runtime = ProcessInstanceService.create_and_run_process_instance(
         process_model=process_model,
         persistence_level=persistence_level,
         data_to_inject=data_to_inject,
@@ -111,8 +111,8 @@ def _run_extension(
     )
 
     task_data = {}
-    if processor is not None:
-        task_data = processor.get_data()
+    if runtime is not None:
+        task_data = runtime.get_data()
     result: dict[str, Any] = {"task_data": task_data}
 
     if ui_schema_action:

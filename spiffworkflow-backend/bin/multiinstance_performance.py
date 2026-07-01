@@ -22,8 +22,8 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
@@ -262,9 +262,9 @@ def run_single_test(instrumenter: BottleneckInstrumenter, loop_count: int):
 
         instrumenter.reset()
 
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
         start_time = time.time()
-        processor.do_engine_steps(save=False, execution_strategy_name="greedy")
+        runtime.do_engine_steps(save=False, execution_strategy_name="greedy")
         total_time = time.time() - start_time
 
         instrumenter.record(loop_count, total_time)

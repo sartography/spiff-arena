@@ -34,8 +34,8 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
@@ -483,19 +483,19 @@ class BaseTest:
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor_send_receive = ProcessInstanceProcessor(process_instance)
-        processor_send_receive.do_engine_steps(save=True)
-        task = processor_send_receive.get_all_user_tasks()[0]
+        runtime_send_receive = ProcessInstanceRuntime(process_instance)
+        runtime_send_receive.do_engine_steps(save=True)
+        task = runtime_send_receive.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
 
         ProcessInstanceService.complete_form_task(
-            processor_send_receive,
+            runtime_send_receive,
             task,
             payload,
             process_instance.process_initiator,
             human_task,
         )
-        processor_send_receive.save()
+        runtime_send_receive.save()
         return process_instance
 
     def assure_a_message_was_sent(self, process_instance: ProcessInstanceModel, payload: dict) -> None:
@@ -536,8 +536,8 @@ class BaseTest:
         self, process_model: ProcessModelInfo, process_instance_metadata_dict: dict
     ) -> ProcessInstanceModel:
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
         for key, value in process_instance_metadata_dict.items():
             process_instance_metadata = ProcessInstanceMetadataModel(
                 process_instance_id=process_instance.id,
@@ -595,17 +595,17 @@ class BaseTest:
 
     def complete_next_manual_task(
         self,
-        processor: ProcessInstanceProcessor,
+        runtime: ProcessInstanceRuntime,
         execution_mode: str | None = None,
         data: dict | None = None,
         user: UserModel | None = None,
     ) -> None:
-        user_task = processor.get_ready_user_tasks()[0]
+        user_task = runtime.get_ready_user_tasks()[0]
         human_task = HumanTaskModel.query.filter_by(task_guid=str(user_task.id)).first()
         if user is None:
-            user = processor.process_instance_model.process_initiator
+            user = runtime.process_instance_model.process_initiator
         ProcessInstanceService.complete_form_task(
-            processor=processor,
+            runtime=runtime,
             spiff_task=user_task,
             data=data or {},
             user=user,

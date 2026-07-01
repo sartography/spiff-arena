@@ -2,7 +2,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -20,12 +20,12 @@ class TestJsonFileDataStore(BaseTest):
             process_model_source_directory="json_file_data_store",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps()
 
-        assert "x" in processor.bpmn_process_instance.data
+        assert "x" in runtime.bpmn_process_instance.data
 
-        result = processor.bpmn_process_instance.data["x"]
+        result = runtime.bpmn_process_instance.data["x"]
 
         assert result == {
             "company": "Some Job",
