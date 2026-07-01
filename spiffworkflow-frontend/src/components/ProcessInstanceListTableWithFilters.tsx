@@ -825,6 +825,10 @@ export default function ProcessInstanceListTableWithFilters({
             autocomplete="off"
             allowInput={false}
             onChange={(dateChangeEvent: any) => {
+              const newDateValue = dateChangeEvent.srcElement.value;
+              if (!newDateValue && initialDate) {
+                return;
+              }
               if (!initialDate && !initialTime) {
                 onChangeTimeFunction(
                   DateAndTimeService.convertDateObjectToFormattedHoursMinutes(
@@ -834,7 +838,7 @@ export default function ProcessInstanceListTableWithFilters({
               }
               const newValue =
                 DateAndTimeService.convertDateAndTimeStringsToSeconds(
-                  dateChangeEvent.srcElement.value,
+                  newDateValue,
                   initialTime || '00:00:00',
                 );
               insertOrUpdateFieldInReportMetadata(
@@ -842,7 +846,7 @@ export default function ProcessInstanceListTableWithFilters({
                 propNameUnderscored,
                 newValue,
               );
-              onChangeDateFunction(dateChangeEvent.srcElement.value);
+              onChangeDateFunction(newDateValue);
               validateStartAndEndSeconds();
             }}
             value={initialDate}
@@ -855,6 +859,10 @@ export default function ProcessInstanceListTableWithFilters({
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
           onChange={(event: any) => {
+            const newTimeValue = event.srcElement.value;
+            if (!newTimeValue && initialTime) {
+              return;
+            }
             if (event.srcElement.validity.valid) {
               setTimeInvalid(false);
             } else {
@@ -863,14 +871,14 @@ export default function ProcessInstanceListTableWithFilters({
             const newValue =
               DateAndTimeService.convertDateAndTimeStringsToSeconds(
                 initialDate,
-                event.srcElement.value,
+                newTimeValue,
               );
             insertOrUpdateFieldInReportMetadata(
               reportMetadata,
               propNameUnderscored,
               newValue,
             );
-            onChangeTimeFunction(event.srcElement.value);
+            onChangeTimeFunction(newTimeValue);
             validateStartAndEndSeconds();
           }}
         />
