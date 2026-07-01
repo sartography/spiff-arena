@@ -149,6 +149,9 @@ export default function ProcessInstanceListTableWithFilters({
     null,
   );
   const [groupBy, setGroupBy] = useState<'none' | 'process_group'>('none');
+  const [activeQuickFilterByField, setActiveQuickFilterByField] = useState<
+    Record<string, string>
+  >({});
 
   const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
 
@@ -296,6 +299,7 @@ export default function ProcessInstanceListTableWithFilters({
   const processModelSelectionItemsForUseEffect = useRef<ProcessModel[]>([]);
 
   const clearFilters = useCallback(() => {
+    setActiveQuickFilterByField({});
     setEndFromDate('');
     setEndFromTime('');
     setEndToDate('');
@@ -631,10 +635,22 @@ export default function ProcessInstanceListTableWithFilters({
   const applyQuickFilter = (
     addFilters: ReportFilter[],
     clearFieldNames: string[],
+    presetId: string,
+    isActive: boolean,
   ) => {
     if (!reportMetadata) {
       return;
     }
+    setActiveQuickFilterByField((current) => {
+      const next = { ...current };
+      clearFieldNames.forEach((fieldName) => {
+        delete next[fieldName];
+        if (!isActive) {
+          next[fieldName] = presetId;
+        }
+      });
+      return next;
+    });
     const next = { ...reportMetadata };
     next.filter_by = reportMetadata.filter_by.filter(
       (f: ReportFilter) => !clearFieldNames.includes(f.field_name),
@@ -902,6 +918,11 @@ export default function ProcessInstanceListTableWithFilters({
         titleText={t('status')}
         items={processStatusAllOptions}
         onChange={(selection: any) => {
+          setActiveQuickFilterByField((current) => {
+            const next = { ...current };
+            delete next.process_status;
+            return next;
+          });
           insertOrUpdateFieldInReportMetadata(
             reportMetadata,
             'process_status',
@@ -1848,6 +1869,7 @@ export default function ProcessInstanceListTableWithFilters({
     }
     return (
       <QuickFilterChips
+        activePresetIds={Object.values(activeQuickFilterByField)}
         reportMetadata={reportMetadata}
         onApplyPreset={applyQuickFilter}
       />

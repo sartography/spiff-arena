@@ -99,14 +99,18 @@ const isPresetActive = (
 };
 
 type Props = {
+  activePresetIds?: string[];
   reportMetadata: ReportMetadata | null;
   onApplyPreset: (
     addFilters: ReportFilter[],
     clearFieldNames: string[],
+    presetId: string,
+    isActive: boolean,
   ) => void;
 };
 
 export default function QuickFilterChips({
+  activePresetIds,
   reportMetadata,
   onApplyPreset,
 }: Props) {
@@ -119,10 +123,13 @@ export default function QuickFilterChips({
   const filterBy = reportMetadata.filter_by;
 
   const handleClick = (preset: QuickFilterPreset) => {
-    if (isPresetActive(preset, filterBy)) {
-      onApplyPreset([], preset.ownedFields);
+    const active = activePresetIds
+      ? activePresetIds.includes(preset.id)
+      : isPresetActive(preset, filterBy);
+    if (active) {
+      onApplyPreset([], preset.ownedFields, preset.id, active);
     } else {
-      onApplyPreset(preset.filters, preset.ownedFields);
+      onApplyPreset(preset.filters, preset.ownedFields, preset.id, active);
     }
   };
 
@@ -133,7 +140,9 @@ export default function QuickFilterChips({
       sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}
     >
       {presets.map((preset) => {
-        const active = isPresetActive(preset, filterBy);
+        const active = activePresetIds
+          ? activePresetIds.includes(preset.id)
+          : isPresetActive(preset, filterBy);
         return (
           <Chip
             key={preset.id}

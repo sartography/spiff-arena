@@ -43,5 +43,42 @@ test('keeps the last 7 days quick filter active after time advances', () => {
   );
   fireEvent.click(screen.getByText('quick_filter_last_7_days'));
 
-  expect(onApplyPreset).toHaveBeenLastCalledWith([], ['start_from']);
+  expect(onApplyPreset).toHaveBeenLastCalledWith(
+    [],
+    ['start_from'],
+    'last_7_days',
+    true,
+  );
+});
+
+test('does not infer completed quick filter active from manual status filter', () => {
+  const onApplyPreset = vi.fn();
+  render(
+    <QuickFilterChips
+      activePresetIds={[]}
+      reportMetadata={metadataWithFilters([
+        {
+          field_name: 'process_status',
+          field_value: 'complete',
+          operator: 'equals',
+        },
+      ])}
+      onApplyPreset={onApplyPreset}
+    />,
+  );
+
+  fireEvent.click(screen.getByText('quick_filter_completed'));
+
+  expect(onApplyPreset).toHaveBeenLastCalledWith(
+    [
+      {
+        field_name: 'process_status',
+        field_value: 'complete',
+        operator: 'equals',
+      },
+    ],
+    ['process_status'],
+    'completed',
+    false,
+  );
 });
