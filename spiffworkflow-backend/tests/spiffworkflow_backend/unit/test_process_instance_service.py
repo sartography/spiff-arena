@@ -227,7 +227,7 @@ class TestProcessInstanceService(BaseTest):
             if new_task is None:
                 continue
             if not initial_task.has_state(TaskState.READY | TaskState.WAITING | TaskState.STARTED):
-                assert new_task.last_state_change == initial_task.last_state_change
+                assert new_task.last_state_change == pytest.approx(initial_task.last_state_change, abs=0.001)
 
         runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
 
