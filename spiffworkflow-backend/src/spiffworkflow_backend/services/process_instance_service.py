@@ -71,18 +71,18 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
-from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_instance_processor import IdToBpmnProcessSpecMapping
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_processor import SubprocessUuidToWorkflowDiffMapping
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from spiffworkflow_backend.services.workflow_service import WorkflowService
+from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 FileDataGenerator = Generator[tuple[dict | list, str | int, str], None, None]
@@ -330,7 +330,7 @@ class ProcessInstanceService:
         target_git_revision = process_instance.bpmn_version_control_identifier
         if target_bpmn_process_hash is None:
             target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             process_instance,
             ProcessInstanceEventType.process_instance_migrated.value,
             migration_details={
@@ -841,7 +841,7 @@ class ProcessInstanceService:
         if should_queue_process_instance(execution_mode):
             tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
             JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
-        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
             with sentry_sdk.start_span(op="task", name="backend_do_engine_steps"):
                 execution_strategy_name = None
                 if execution_mode == ProcessInstanceExecutionMode.synchronous.value:

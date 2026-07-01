@@ -4,7 +4,7 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
@@ -27,7 +27,7 @@ class TestProcessInstanceEventsController(BaseTest):
 
         number_of_events = 3
         for ii in range(number_of_events):
-            ProcessInstanceTmpService.add_event_to_process_instance(
+            ProcessInstanceEventService.add_event_to_process_instance(
                 process_instance,
                 ProcessInstanceEventType.process_instance_migrated.value,
                 migration_details={
@@ -38,7 +38,7 @@ class TestProcessInstanceEventsController(BaseTest):
                 },
             )
         # add random event to ensure it does not come back from api
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             process_instance,
             ProcessInstanceEventType.process_instance_resumed.value,
         )

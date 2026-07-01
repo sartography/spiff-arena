@@ -31,12 +31,11 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
-from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -673,7 +672,7 @@ class MessageService:
                 processor_receive_to_use.do_engine_steps(
                     save=save_engine_steps, execution_strategy_name="run_current_ready_tasks", needs_dequeue=save_engine_steps
                 )
-        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(receiving_process_instance):
+        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(receiving_process_instance):
             execution_strategy_name = None
             if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
                 execution_strategy_name = "greedy"

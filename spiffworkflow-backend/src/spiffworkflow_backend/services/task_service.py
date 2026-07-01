@@ -32,7 +32,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 
 
 class StartAndEndTimes(TypedDict):
@@ -285,7 +285,7 @@ class TaskService:
             (
                 process_instance_event,
                 _process_instance_error_detail,
-            ) = ProcessInstanceTmpService.add_event_to_process_instance(
+            ) = ProcessInstanceEventService.add_event_to_process_instance(
                 self.process_instance,
                 event_type,
                 task_guid=task_model.guid,
