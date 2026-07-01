@@ -30,7 +30,7 @@ class TestRefreshPermissions(BaseTest):
 
         with pytest.raises(WorkflowExecutionServiceError) as exception:
             runtime.do_engine_steps(save=True)
-            assert "ScriptUnauthorizedForUserError" in str(exception)
+        assert "ScriptUnauthorizedForUserError" in str(exception.value)
 
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=privileged_user)
         runtime = ProcessInstanceRuntime(process_instance)

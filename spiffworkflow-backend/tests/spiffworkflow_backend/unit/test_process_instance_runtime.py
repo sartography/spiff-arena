@@ -1485,7 +1485,7 @@ class TestProcessInstanceRuntime(BaseTest):
             python_env_data_hash="",
         )
 
-        bpmn_process_dict = {"tasks": {}}
+        bpmn_process_dict: dict = {"tasks": {}}
         ProcessInstancePersistenceService.get_tasks_dict(
             [parent_task, child_task],
             bpmn_process_dict,
