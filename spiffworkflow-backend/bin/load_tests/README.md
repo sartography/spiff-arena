@@ -70,3 +70,13 @@ Useful options:
 ```sh
 uv run python bin/load_tests/process_definition_relationship_race.py --help
 ```
+
+## Task Submission
+
+Use this k6-based harness for parallel manual-task submission against a running backend:
+
+```sh
+SPIFF_API_KEY="..." NUM_TASKS=10 ./bin/load_tests/task_submission/run_parallel_tasks_test.sh
+```
+
+See `bin/load_tests/task_submission/README.md` for setup details.
