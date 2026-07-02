@@ -8,6 +8,7 @@ from sqlalchemy import UniqueConstraint
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.utils.db_utils import insert_or_ignore_duplicate
 
 
 @dataclass
@@ -32,3 +33,17 @@ class BpmnProcessDefinitionRelationshipModel(SpiffworkflowBaseDBModel):
         nullable=False,
         index=True,
     )
+
+    @classmethod
+    def insert_or_update_record(cls, parent_id: int, child_id: int) -> None:
+        insert_or_ignore_duplicate(
+            model_class=BpmnProcessDefinitionRelationshipModel,
+            values={
+                "bpmn_process_definition_parent_id": parent_id,
+                "bpmn_process_definition_child_id": child_id,
+            },
+            postgres_conflict_index_elements=[
+                "bpmn_process_definition_parent_id",
+                "bpmn_process_definition_child_id",
+            ],
+        )

@@ -54,3 +54,19 @@ Useful options:
 ```sh
 uv run python bin/load_tests/message_start_double_delivery_race.py --help
 ```
+
+## BPMN Process Definition Relationship Race
+
+Use this for the cold process-definition persistence race where concurrent requests can try to create the same
+`bpmn_process_definition_relationship` row. The script creates one parent/child definition pair, runs the old
+check-then-insert pattern with a barrier to reproduce the duplicate-key failure, then runs the fixed insert-ignore path.
+
+```sh
+uv run python bin/load_tests/process_definition_relationship_race.py --mode both
+```
+
+Useful options:
+
+```sh
+uv run python bin/load_tests/process_definition_relationship_race.py --help
+```
