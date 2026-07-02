@@ -894,6 +894,12 @@ paths:
         description: include all file references in the return
         schema:
           type: boolean
+      - name: include_file_contents
+        in: query
+        required: false
+        description: include file contents inline
+        schema:
+          type: boolean
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_show
       summary: Returns a single process model
