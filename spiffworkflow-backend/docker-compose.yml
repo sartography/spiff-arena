@@ -12,7 +12,7 @@
 services:
   db:
     container_name: db
-    image: mysql:8.0.29
+    image: mysql:8.4.10@sha256:d36d39a64cd12a5c1cc9e6aa2bfb5f8d4c81a2f6586e0a04a9ae13939db02209
     platform: linux/amd64
     cap_add:
       - SYS_NICE
