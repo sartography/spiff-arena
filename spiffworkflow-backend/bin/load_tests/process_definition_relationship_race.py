@@ -25,7 +25,7 @@ from typing import Any
 
 import requests
 
-DEFAULT_BACKEND_BASE_URL = "http://localhost:8000"
+DEFAULT_BACKEND_BASE_URL = "http://localhost:7000"
 DEFAULT_USERNAME = "admin"
 DEFAULT_PASSWORD = "admin"  # noqa: S105 - local development default
 DEFAULT_CLIENT_ID = "spiffworkflow-backend"
