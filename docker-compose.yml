@@ -3,7 +3,7 @@
 services:
   spiffworkflow-frontend:
     container_name: spiffworkflow-frontend
-    image: ghcr.io/sartography/spiffworkflow-frontend:latest
+    image: ghcr.io/sartography/spiffworkflow-frontend:latest@sha256:eb7f22e6a8cd864b2b0ec46c4d9f1846acfd3892cddf5560a5b07fe60c0a7b48
     depends_on:
       spiffworkflow-backend:
         condition: service_started
@@ -16,7 +16,7 @@ services:
   # Ensure that the RUN_AS user is able to write to the named volume where the sqlite DB will be
   # Solution via https://stackoverflow.com/a/73255981
   match-volume-ownership:
-    image: alpine
+    image: alpine@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
     restart: "no"
     # Use RUN_AS if set, otherwise default to root (0:0)
     entrypoint: |
@@ -26,7 +26,7 @@ services:
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
-    image: ghcr.io/sartography/spiffworkflow-backend:latest
+    image: ghcr.io/sartography/spiffworkflow-backend:latest@sha256:cf17a7916edb021b58b79579e3a1219e75164feabad75187fb9321c3b93928e9
     # Enable setting the ownership of created files to match the local user:group. For example:
     #     RUN_AS="$(id -u):$(id -g)" docker compose up -d
     user: ${RUN_AS:-0:0}
@@ -68,7 +68,7 @@ services:
 
   spiffworkflow-connector:
     container_name: spiffworkflow-connector
-    image: ghcr.io/sartography/connector-proxy-async-http:main-latest
+    image: ghcr.io/sartography/connector-proxy-async-http:main-latest@sha256:8fac9cfa9288904e4a3db694a397520210d40524f29db5c2e228932a643efba7
     environment:
       CONNECTOR_PROXY_ASYNC_HTTP_PORT: "${SPIFFWORKFLOW_CONNECTOR_PROXY_PORT:-8004}"
     ports:
