@@ -15,8 +15,6 @@ BACKEND_BASE_URL=${BACKEND_BASE_URL%/}
 PROCESS_GROUP_ID=${PROCESS_GROUP_ID:-load_test/task_submission_$(date +%s)_$$}
 PROCESS_MODEL_ID=${PROCESS_MODEL_ID:-${PROCESS_GROUP_ID}/parallel-task}
 PRIMARY_FILE_NAME=${PRIMARY_FILE_NAME:-parallel-task.bpmn}
-PRIMARY_PROCESS_ID=${PRIMARY_PROCESS_ID:-Process_parallel_task_eyeplo6}
-MESSAGE_NAME=${MESSAGE_NAME:-start-parallel-task-process}
 SKIP_DB_CHECKS=${SKIP_DB_CHECKS:-false}
 DB_CHECKS=${DB_CHECKS:-auto}
 MYSQL_DATABASE=${MYSQL_DATABASE:-spiffworkflow_backend_local_development}
@@ -32,6 +30,19 @@ AUTHENTICATION_IDENTIFIER=${AUTHENTICATION_IDENTIFIER:-default}
 ACCESS_TOKEN=${ACCESS_TOKEN:-}
 AUTH_HEADER_NAME=""
 AUTH_HEADER_VALUE=""
+safe_process_id_suffix=$(printf "%s" "$PROCESS_MODEL_ID" | tr -c '[:alnum:]_' '_')
+PRIMARY_PROCESS_ID=${PRIMARY_PROCESS_ID:-Process_parallel_task_${safe_process_id_suffix}}
+MESSAGE_NAME=${MESSAGE_NAME:-start_parallel_task_process_${safe_process_id_suffix}}
+template_primary_process_id="Process_parallel_task_eyeplo6"
+template_message_name="start-parallel-task-process"
+tmp_bpmn_file=""
+
+function cleanup() {
+  if [[ -n "$tmp_bpmn_file" && -f "$tmp_bpmn_file" ]]; then
+    rm -f "$tmp_bpmn_file"
+  fi
+}
+trap cleanup EXIT
 
 mysql_args=(-u"$MYSQL_USER")
 if [[ -n "$MYSQL_HOST" ]]; then
@@ -178,7 +189,13 @@ function ensure_process_model() {
     exit 1
   fi
 
-  result=$(curl_with_status PUT "${BACKEND_BASE_URL}/v1.0/process-models/${modified_process_model_id}/files/${PRIMARY_FILE_NAME}" -F "file=@${script_dir}/${PRIMARY_FILE_NAME};filename=${PRIMARY_FILE_NAME};type=text/xml")
+  tmp_bpmn_file=$(mktemp)
+  sed \
+    -e "s/${template_primary_process_id}/$(sed_replacement_value "$PRIMARY_PROCESS_ID")/g" \
+    -e "s/${template_message_name}/$(sed_replacement_value "$MESSAGE_NAME")/g" \
+    "${script_dir}/${PRIMARY_FILE_NAME}" >"$tmp_bpmn_file"
+
+  result=$(curl_with_status PUT "${BACKEND_BASE_URL}/v1.0/process-models/${modified_process_model_id}/files/${PRIMARY_FILE_NAME}" -F "file=@${tmp_bpmn_file};filename=${PRIMARY_FILE_NAME};type=text/xml")
   status=$(response_status "$result")
   body=$(response_body "$result")
   if [[ "$status" != "200" ]]; then
@@ -204,6 +221,10 @@ function mysql_scalar_query() {
   mysql "${mysql_args[@]}" --batch --skip-column-names -e "$1"
 }
 
+function sed_replacement_value() {
+  sed -e 's/[\/&]/\\&/g' <<<"$1"
+}
+
 process_group_id="${PROCESS_MODEL_ID%/*}"
 if [[ "$process_group_id" == "$PROCESS_MODEL_ID" ]]; then
   echo "Error: PROCESS_MODEL_ID must include a process group, for example load_test/task_submission/parallel-task"
@@ -221,6 +242,7 @@ echo "API Host: ${API_HOST}"
 echo "Backend Base URL: ${BACKEND_BASE_URL}"
 echo "Auth Method: ${AUTH_METHOD}"
 echo "Process Model: ${PROCESS_MODEL_ID}"
+echo "Primary Process ID: ${PRIMARY_PROCESS_ID}"
 echo "Message: ${modified_message_name}"
 echo "Starting test..."
 echo ""

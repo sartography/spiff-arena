@@ -17,12 +17,19 @@ export const options = {
   vus: NUM_TASKS,
   iterations: NUM_TASKS,
   // No duration limit - just run the iterations
+  thresholds: {
+    checks: ["rate==1"],
+  },
 };
 
 const headers = {
   [AUTH_HEADER_NAME]: AUTH_HEADER_VALUE,
   "Content-Type": "application/json",
 };
+
+function taskGuidFor(task) {
+  return task.id || task.guid || task.task_id;
+}
 
 // Setup runs once before all VUs start
 export function setup() {
@@ -142,15 +149,29 @@ export function setup() {
   }
 
   const tasksToUse = manualTasks.length >= NUM_TASKS ? manualTasks : tasksList;
+  const selectedTasks = tasksToUse.slice(0, NUM_TASKS);
+  const selectedTaskGuids = selectedTasks.map(taskGuidFor);
+  const missingTaskGuidCount = selectedTaskGuids.filter((taskGuid) => !taskGuid).length;
+  const uniqueTaskGuidCount = new Set(selectedTaskGuids).size;
+
+  if (missingTaskGuidCount > 0) {
+    console.error(`Selected ${missingTaskGuidCount} task(s) without a task GUID: ${JSON.stringify(selectedTasks)}`);
+    exec.test.abort("Selected task list included tasks without task GUIDs");
+  }
+
+  if (uniqueTaskGuidCount !== selectedTaskGuids.length) {
+    console.error(`Selected task GUIDs are not unique: ${JSON.stringify(selectedTaskGuids)}`);
+    exec.test.abort("Selected task list included duplicate task GUIDs");
+  }
 
   console.log(
-    `Prepared ${tasksToUse.length} tasks for parallel submission. Starting ${NUM_TASKS} concurrent requests...`,
+    `Prepared ${selectedTasks.length} unique tasks for parallel submission. Starting ${NUM_TASKS} concurrent requests...`,
   );
 
   // Return the process instance ID and tasks so all VUs can use them
   return {
     processInstanceId: processInstanceId,
-    tasks: tasksToUse.slice(0, NUM_TASKS), // Take only the number we need
+    tasks: selectedTasks,
   };
 }
 
@@ -166,7 +187,7 @@ export default function (data) {
   }
 
   const task = data.tasks[vuIndex];
-  const taskGuid = task.id || task.guid || task.task_id;
+  const taskGuid = taskGuidFor(task);
 
   console.log(
     `VU ${__VU}: Submitting task ${taskGuid} for process instance ${data.processInstanceId}`,
@@ -183,16 +204,24 @@ export default function (data) {
     "task submission status is 200": (r) => r.status === 200,
   });
 
-  // Always log detailed response information
-  console.log(`VU ${__VU}: Task submission response for ${taskGuid}:`);
+  let responseTaskGuid = null;
+  try {
+    const responseData = submitResponse.json();
+    responseTaskGuid = responseData.id || responseData.guid || responseData.task_id || null;
+  } catch (e) {
+    responseTaskGuid = null;
+  }
+
+  console.log(`VU ${__VU}: Task submission response for requested task ${taskGuid}:`);
   console.log(`  Status: ${submitResponse.status}`);
   console.log(`  Headers: ${JSON.stringify(submitResponse.headers)}`);
+  console.log(`  Response task GUID (diagnostic only): ${responseTaskGuid || "none"}`);
   console.log(`  Body: ${submitResponse.body}`);
 
   if (success) {
-    console.log(`SUCCESS: VU ${__VU}: Successfully submitted task ${taskGuid}`);
+    console.log(`SUCCESS: VU ${__VU}: Successfully submitted requested task ${taskGuid}`);
   } else {
-    console.error(`FAILED: VU ${__VU}: FAILED to submit task ${taskGuid}`);
+    console.error(`FAILED: VU ${__VU}: FAILED to submit requested task ${taskGuid}`);
     console.error(`  Status Code: ${submitResponse.status}`);
     console.error(`  Response Body: ${submitResponse.body}`);
     console.error(

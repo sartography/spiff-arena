@@ -15,6 +15,8 @@ Useful environment variables:
 - `API_HOST`: backend host used from inside the k6 Docker container. Defaults to `host.docker.internal:7000`.
 - `PROCESS_GROUP_ID`: process group to create. Defaults to a unique `load_test/task_submission_*` group.
 - `PROCESS_MODEL_ID`: process model to create. Defaults to `${PROCESS_GROUP_ID}/parallel-task`.
+- `PRIMARY_PROCESS_ID`: process id to write into the uploaded BPMN. Defaults to a unique id based on `PROCESS_MODEL_ID`.
+- `MESSAGE_NAME`: message start name to write into the uploaded BPMN. Defaults to a unique name based on `PROCESS_MODEL_ID`.
 - `DB_CHECKS`: `auto`, `always`, or `never`. Defaults to `auto`, which runs direct MySQL diagnostics only when the
   process instance exists in the configured MySQL database.
 - `MYSQL_DATABASE`: MySQL database for optional diagnostics. Defaults to `spiffworkflow_backend_local_development`.
