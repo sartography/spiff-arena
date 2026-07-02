@@ -128,6 +128,21 @@ class CreateResult:
         return self.status_code == 201 and self.process_instance_id is not None and self.error_code is None
 
 
+def classify_failure(result: CreateResult) -> str:
+    body = result.response_text.lower()
+    if "bpmn_process_definition_relationship_unique" in body or "bpmn_process_definition_relationship" in body:
+        return "relationship_duplicate"
+    if "task_definition_unique" in body or "task_definition" in body:
+        return "task_definition_duplicate"
+    if "process_hash_unique" in body or "bpmn_process_definition" in body:
+        return "process_definition_duplicate"
+    if "deadlock" in body or "1213" in body:
+        return "mysql_deadlock"
+    if result.error_code:
+        return result.error_code
+    return f"http_{result.status_code}"
+
+
 def modified_identifier(identifier: str) -> str:
     return identifier.replace("/", ":")
 
@@ -364,9 +379,22 @@ def print_summary(results: list[CreateResult]) -> None:
         )
 
     if failures:
+        failure_counts: dict[str, int] = {}
+        for result in failures:
+            classification = classify_failure(result)
+            failure_counts[classification] = failure_counts.get(classification, 0) + 1
+
+        print("\nFailure classes:")
+        for classification, count in sorted(failure_counts.items()):
+            print(f"- {classification}: {count}")
+
         print("\nFailures:")
         for result in sorted(failures, key=lambda item: item.index)[:20]:
-            print(f"- request={result.index} http={result.status_code} error={result.error_code} body={result.response_text}")
+            classification = classify_failure(result)
+            print(
+                f"- request={result.index} class={classification} http={result.status_code} "
+                f"error={result.error_code} body={result.response_text}"
+            )
 
 
 def parse_args() -> argparse.Namespace:
