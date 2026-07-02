@@ -38,3 +38,8 @@ Absolute date picker behavior:
 * **Apply** confirms the selected absolute date/time range.
 
 The resulting filter should produce a start timestamp and end timestamp. For relative presets, compute them as `now - duration` through `now`. For absolute date, use the selected start/end dates and times, respecting the UTC setting.
+
+See screenshots dir.
+i think some of the code that implements this is in https://github.com/getsentry/sentry/blob/5ab44418c58d84826eeca49b310d596abc289c2d/static/app/utils/useDatePageFilterProps.tsx#L23
+same code might be at ~/sentry
+and i believe the sentry folks' license (https://raw.githubusercontent.com/getsentry/sentry/5ab44418c58d84826eeca49b310d596abc289c2d/LICENSE.md) allows for using this code, since we are not competitors (in fact, we are customers), if it's helpful.
