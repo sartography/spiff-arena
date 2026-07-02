@@ -1,214 +1,409 @@
 #!/usr/bin/env python3
-"""Reproduce the BPMN process-definition relationship insert race.
+"""Stress the BPMN process-definition relationship race against a live backend.
 
-Run from spiffworkflow-backend against a configured local database:
+Start Spiff first, then run from spiffworkflow-backend:
 
-    uv run python bin/load_tests/process_definition_relationship_race.py --mode both
+    uv run python bin/load_tests/process_definition_relationship_race.py
 
-`--mode old` intentionally uses the former check-then-add pattern with a barrier
-between the read and insert. It should reproduce a duplicate-key failure.
-
-`--mode fixed` uses BpmnProcessDefinitionRelationshipModel.insert_or_update_record.
-It should complete without errors and leave exactly one relationship row.
+The script creates a temporary process model containing a call activity, then
+fires concurrent cold process-instance creates at the existing backend. Vulnerable
+code can return failures from duplicate `bpmn_process_definition_relationship`
+inserts. Fixed code should create every process instance successfully.
 """
-
-# ruff: noqa: E402,I001
 
 from __future__ import annotations
 
 import argparse
+import base64
 import concurrent.futures
-import os
-import threading
+import json
+import statistics
+import time
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
+from typing import Any
 
-os.environ.setdefault("SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP", "false")
-os.environ.setdefault("SPIFFWORKFLOW_BACKEND_ENV", "local_development")
-os.environ.setdefault("FLASK_SESSION_SECRET_KEY", "relationship-race-local-dev")
-os.environ.setdefault("SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS", "false")
+import requests
 
-BACKEND_DIR = Path(__file__).resolve().parents[2]
-ARENA_DIR = BACKEND_DIR.parent
-SAMPLE_PROCESS_MODELS_DIR = ARENA_DIR / "sample-process-models"
-if not SAMPLE_PROCESS_MODELS_DIR.is_dir():
-    SAMPLE_PROCESS_MODELS_DIR = ARENA_DIR.parent / "sample-process-models"
-os.environ.setdefault("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR", str(SAMPLE_PROCESS_MODELS_DIR))
+DEFAULT_BACKEND_BASE_URL = "http://localhost:7000"
+DEFAULT_USERNAME = "admin"
+DEFAULT_PASSWORD = "admin"  # noqa: S105 - local development default
+DEFAULT_CLIENT_ID = "spiffworkflow-backend"
+DEFAULT_CLIENT_SECRET = "JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 
-from flask import Flask  # noqa: E402
 
-from spiffworkflow_backend import create_app  # noqa: E402
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel  # noqa: E402
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import (  # noqa: E402
-    BpmnProcessDefinitionRelationshipModel,
-)
-from spiffworkflow_backend.models.db import db  # noqa: E402
+PARENT_BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_{parent_process_id}"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="{parent_process_id}" name="Relationship Race Parent" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_parent">
+      <bpmn:outgoing>Flow_start_to_call</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_start_to_call" sourceRef="StartEvent_parent" targetRef="Activity_call_child" />
+    <bpmn:callActivity id="Activity_call_child" name="Call child" calledElement="{child_process_id}">
+      <bpmn:incoming>Flow_start_to_call</bpmn:incoming>
+      <bpmn:outgoing>Flow_call_to_end</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="EndEvent_parent">
+      <bpmn:incoming>Flow_call_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_call_to_end" sourceRef="Activity_call_child" targetRef="EndEvent_parent" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_parent">
+    <bpmndi:BPMNPlane id="BPMNPlane_parent" bpmnElement="{parent_process_id}">
+      <bpmndi:BPMNShape id="StartEvent_parent_di" bpmnElement="StartEvent_parent">
+        <dc:Bounds x="180" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_call_child_di" bpmnElement="Activity_call_child">
+        <dc:Bounds x="270" y="138" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_parent_di" bpmnElement="EndEvent_parent">
+        <dc:Bounds x="450" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_start_to_call_di" bpmnElement="Flow_start_to_call">
+        <di:waypoint x="216" y="178" />
+        <di:waypoint x="270" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_call_to_end_di" bpmnElement="Flow_call_to_end">
+        <di:waypoint x="390" y="178" />
+        <di:waypoint x="450" y="178" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+"""
+
+
+CHILD_BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_{child_process_id}"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="{child_process_id}" name="Relationship Race Child" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_child">
+      <bpmn:outgoing>Flow_child_start_to_end</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_child">
+      <bpmn:incoming>Flow_child_start_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_child_start_to_end" sourceRef="StartEvent_child" targetRef="EndEvent_child" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_child">
+    <bpmndi:BPMNPlane id="BPMNPlane_child" bpmnElement="{child_process_id}">
+      <bpmndi:BPMNShape id="StartEvent_child_di" bpmnElement="StartEvent_child">
+        <dc:Bounds x="180" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_child_di" bpmnElement="EndEvent_child">
+        <dc:Bounds x="360" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_child_start_to_end_di" bpmnElement="Flow_child_start_to_end">
+        <di:waypoint x="216" y="178" />
+        <di:waypoint x="360" y="178" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+"""
 
 
 @dataclass
-class WorkerResult:
-    worker_index: int
-    ok: bool
-    error: str | None = None
+class CreateResult:
+    index: int
+    status_code: int
+    elapsed_seconds: float
+    process_instance_id: int | None
+    error_code: str | None
+    response_text: str
+
+    @property
+    def ok(self) -> bool:
+        return self.status_code == 201 and self.process_instance_id is not None and self.error_code is None
 
 
-@dataclass
-class RaceRows:
-    parent_id: int
-    child_id: int
+def modified_identifier(identifier: str) -> str:
+    return identifier.replace("/", ":")
 
 
-def create_race_rows(run_id: str) -> RaceRows:
-    parent_definition = BpmnProcessDefinitionModel(
-        single_process_hash=f"{run_id}-parent-single",
-        full_process_model_hash=f"{run_id}-parent-full",
-        bpmn_identifier=f"{run_id}_parent",
-        bpmn_name="Relationship Race Parent",
-        properties_json={},
-        bpmn_version_control_type="race",
-        bpmn_version_control_identifier=run_id,
+def check_response(response: requests.Response, context: str, expected_statuses: set[int]) -> dict[str, Any]:
+    try:
+        data = response.json()
+    except ValueError:
+        data = {"raw_response": response.text}
+
+    if response.status_code not in expected_statuses:
+        raise RuntimeError(f"{context} failed with HTTP {response.status_code}: {json.dumps(data, indent=2)}")
+    if isinstance(data, dict) and data.get("error_code"):
+        raise RuntimeError(f"{context} failed: {json.dumps(data, indent=2)}")
+    return data if isinstance(data, dict) else {"response": data}
+
+
+def get_access_token(args: argparse.Namespace) -> str:
+    if args.access_token:
+        if not isinstance(args.access_token, str):
+            raise RuntimeError("--access-token must be a string")
+        return args.access_token
+
+    token_url = args.openid_token_url or f"{args.backend_base_url}/openid/token"
+    basic_auth = base64.b64encode(f"{args.client_id}:{args.client_secret}".encode("ascii")).decode("utf-8")
+    response = requests.post(
+        token_url,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {basic_auth}",
+        },
+        data={
+            "grant_type": "password",
+            "code": f"{args.username}:this_is_not_secure_do_not_use_in_production",
+            "username": args.username,
+            "password": args.password,
+            "client_id": args.client_id,
+        },
+        timeout=args.timeout,
     )
-    child_definition = BpmnProcessDefinitionModel(
-        single_process_hash=f"{run_id}-child-single",
-        full_process_model_hash=None,
-        bpmn_identifier=f"{run_id}_child",
-        bpmn_name="Relationship Race Child",
-        properties_json={},
-        bpmn_version_control_type="race",
-        bpmn_version_control_identifier=run_id,
+    data = check_response(response, "token request", {200})
+    token = data.get("access_token")
+    if not isinstance(token, str) or not token:
+        raise RuntimeError(f"token response did not include access_token: {json.dumps(data, indent=2)}")
+    return token
+
+
+def request_headers(args: argparse.Namespace, access_token: str | None = None) -> dict[str, str]:
+    headers = {"Content-Type": "application/json"}
+    if args.api_key:
+        headers["Spiffworkflow-Api-Key"] = args.api_key
+    elif access_token:
+        headers["Authorization"] = f"Bearer {access_token}"
+    return headers
+
+
+def login_with_access_token(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> None:
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/login_with_access_token",
+        headers=headers,
+        params={"authentication_identifier": args.authentication_identifier},
+        timeout=args.timeout,
     )
-    db.session.add_all([parent_definition, child_definition])
-    db.session.commit()
-    return RaceRows(parent_id=parent_definition.id, child_id=child_definition.id)
+    check_response(response, "login_with_access_token", {200, 204, 302})
 
 
-def relationship_count(parent_id: int, child_id: int) -> int:
-    return BpmnProcessDefinitionRelationshipModel.query.filter_by(
-        bpmn_process_definition_parent_id=parent_id,
-        bpmn_process_definition_child_id=child_id,
-    ).count()
+def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
+    payload = {
+        "id": group_id,
+        "display_name": group_id,
+        "description": "Temporary group for BPMN relationship race load testing",
+        "display_order": 0,
+        "admin": False,
+    }
+    response = session.post(f"{args.backend_base_url}/v1.0/process-groups", headers=headers, json=payload, timeout=args.timeout)
+    if response.status_code == 400 and "already_exists" in response.text:
+        return
+    check_response(response, "create process group", {201})
 
 
-def delete_relationship(parent_id: int, child_id: int) -> None:
-    BpmnProcessDefinitionRelationshipModel.query.filter_by(
-        bpmn_process_definition_parent_id=parent_id,
-        bpmn_process_definition_child_id=child_id,
-    ).delete()
-    db.session.commit()
-
-
-def delete_race_rows(rows: RaceRows) -> None:
-    delete_relationship(rows.parent_id, rows.child_id)
-    BpmnProcessDefinitionModel.query.filter(BpmnProcessDefinitionModel.id.in_([rows.parent_id, rows.child_id])).delete(
-        synchronize_session=False
+def create_process_model(
+    session: requests.Session,
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    group_id: str,
+    process_model_id: str,
+) -> None:
+    payload = {
+        "id": process_model_id,
+        "display_name": process_model_id,
+        "description": "Temporary model for BPMN relationship race load testing",
+        "fault_or_suspend_on_exception": "fault",
+        "exception_notification_addresses": [],
+    }
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(group_id)}",
+        headers=headers,
+        json=payload,
+        timeout=args.timeout,
     )
-    db.session.commit()
+    if response.status_code == 400 and "already_exists" in response.text:
+        return
+    check_response(response, "create process model", {201})
 
 
-def old_check_then_insert_worker(app: Flask, rows: RaceRows, barrier: threading.Barrier, worker_index: int) -> WorkerResult:
-    with app.app_context():
+def upload_bpmn(
+    session: requests.Session,
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    process_model_id: str,
+    file_name: str,
+    bpmn: str,
+) -> None:
+    upload_headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(process_model_id)}/files",
+        headers=upload_headers,
+        files={"file": (file_name, bpmn.encode("utf-8"), "text/xml")},
+        timeout=args.timeout,
+    )
+    check_response(response, f"upload {file_name}", {201})
+
+
+def set_primary_bpmn(
+    session: requests.Session,
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    process_model_id: str,
+    file_name: str,
+    process_id: str,
+) -> None:
+    response = session.put(
+        f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(process_model_id)}",
+        headers=headers,
+        json={
+            "primary_file_name": file_name,
+            "primary_process_id": process_id,
+            "display_name": process_model_id,
+            "description": "Temporary model for BPMN relationship race load testing",
+            "fault_or_suspend_on_exception": "fault",
+            "exception_notification_addresses": [],
+        },
+        timeout=args.timeout,
+    )
+    check_response(response, "set primary BPMN", {200})
+
+
+def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> str:
+    suffix = args.suffix or uuid.uuid4().hex
+    group_id = args.group_id or f"load_test/process_definition_relationship_race_{suffix}"
+    process_model_id = f"{group_id}/call_activity_parent"
+    parent_process_id = f"Process_parent_{suffix}"
+    child_process_id = f"Process_child_{suffix}"
+
+    create_process_group(session, args, headers, "load_test")
+    create_process_group(session, args, headers, group_id)
+    create_process_model(session, args, headers, group_id, process_model_id)
+    upload_bpmn(
+        session,
+        args,
+        headers,
+        process_model_id,
+        "callable_child.bpmn",
+        CHILD_BPMN_TEMPLATE.format(child_process_id=child_process_id),
+    )
+    upload_bpmn(
+        session,
+        args,
+        headers,
+        process_model_id,
+        "call_activity_parent.bpmn",
+        PARENT_BPMN_TEMPLATE.format(parent_process_id=parent_process_id, child_process_id=child_process_id),
+    )
+    set_primary_bpmn(session, args, headers, process_model_id, "call_activity_parent.bpmn", parent_process_id)
+    return process_model_id
+
+
+def create_process_instance(args: argparse.Namespace, headers: dict[str, str], process_model_id: str, index: int) -> CreateResult:
+    start = time.perf_counter()
+    try:
+        response = requests.post(
+            f"{args.backend_base_url}/v1.0/process-instances/{modified_identifier(process_model_id)}",
+            headers=headers,
+            timeout=args.timeout,
+        )
+        elapsed = time.perf_counter() - start
         try:
-            existing_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                bpmn_process_definition_parent_id=rows.parent_id,
-                bpmn_process_definition_child_id=rows.child_id,
-            ).first()
-            barrier.wait()
-            if existing_relationship is None:
-                db.session.add(
-                    BpmnProcessDefinitionRelationshipModel(
-                        bpmn_process_definition_parent_id=rows.parent_id,
-                        bpmn_process_definition_child_id=rows.child_id,
-                    )
-                )
-            db.session.commit()
-            return WorkerResult(worker_index=worker_index, ok=True)
-        except Exception as exception:
-            db.session.rollback()
-            return WorkerResult(worker_index=worker_index, ok=False, error=repr(exception))
-        finally:
-            db.session.remove()
+            data = response.json()
+        except ValueError:
+            data = {}
+        return CreateResult(
+            index=index,
+            status_code=response.status_code,
+            elapsed_seconds=elapsed,
+            process_instance_id=data.get("id") if isinstance(data, dict) else None,
+            error_code=data.get("error_code") if isinstance(data, dict) else None,
+            response_text=response.text[:2000],
+        )
+    except Exception as exception:
+        elapsed = time.perf_counter() - start
+        return CreateResult(
+            index=index,
+            status_code=0,
+            elapsed_seconds=elapsed,
+            process_instance_id=None,
+            error_code=exception.__class__.__name__,
+            response_text=str(exception),
+        )
 
 
-def fixed_insert_worker(app: Flask, rows: RaceRows, barrier: threading.Barrier, worker_index: int) -> WorkerResult:
-    with app.app_context():
-        try:
-            barrier.wait()
-            BpmnProcessDefinitionRelationshipModel.insert_or_update_record(rows.parent_id, rows.child_id)
-            db.session.commit()
-            return WorkerResult(worker_index=worker_index, ok=True)
-        except Exception as exception:
-            db.session.rollback()
-            return WorkerResult(worker_index=worker_index, ok=False, error=repr(exception))
-        finally:
-            db.session.remove()
-
-
-def run_workers(app: Flask, rows: RaceRows, workers: int, mode: str) -> list[WorkerResult]:
-    barrier = threading.Barrier(workers)
-    worker = old_check_then_insert_worker if mode == "old" else fixed_insert_worker
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = [executor.submit(worker, app, rows, barrier, index) for index in range(workers)]
+def run_load(args: argparse.Namespace, headers: dict[str, str], process_model_id: str) -> list[CreateResult]:
+    print(
+        f"Creating {args.requests} process instances with {args.workers} workers against "
+        f"{args.backend_base_url}/v1.0/process-instances/{modified_identifier(process_model_id)}"
+    )
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+        futures = [executor.submit(create_process_instance, args, headers, process_model_id, i) for i in range(args.requests)]
         return [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def run_mode(app: Flask, rows: RaceRows, workers: int, mode: str) -> bool:
-    with app.app_context():
-        delete_relationship(rows.parent_id, rows.child_id)
-
-    results = run_workers(app, rows, workers, mode)
-
-    with app.app_context():
-        count = relationship_count(rows.parent_id, rows.child_id)
-
+def print_summary(results: list[CreateResult]) -> None:
+    successes = [result for result in results if result.ok]
     failures = [result for result in results if not result.ok]
-    print(f"{mode}: {len(results) - len(failures)}/{len(results)} workers succeeded; relationship_count={count}")
-    for failure in failures:
-        print(f"{mode}: worker {failure.worker_index} failed: {failure.error}")
+    elapsed_values = [result.elapsed_seconds for result in results]
 
-    if mode == "old":
-        reproduced = len(failures) > 0 and count == 1
-        print(f"old: {'reproduced duplicate-key race' if reproduced else 'did not reproduce duplicate-key race'}")
-        return reproduced
+    print("\nBPMN Process Definition Relationship Race Summary")
+    print(f"Total: {len(results)}")
+    print(f"Successes: {len(successes)}")
+    print(f"Failures: {len(failures)}")
+    if elapsed_values:
+        print(
+            "Latency min/median/max: "
+            f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / {max(elapsed_values):.3f}s"
+        )
 
-    passed = not failures and count == 1
-    print(f"fixed: {'passed' if passed else 'failed'}")
-    return passed
+    if failures:
+        print("\nFailures:")
+        for result in sorted(failures, key=lambda item: item.index)[:20]:
+            print(
+                f"- request={result.index} http={result.status_code} error={result.error_code} "
+                f"body={result.response_text}"
+            )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=["old", "fixed", "both"], default="both")
-    parser.add_argument("--workers", type=int, default=2, help="Number of concurrent workers. Use at least 2.")
-    parser.add_argument("--keep-rows", action="store_true", help="Leave generated definition rows in the database.")
+    parser.add_argument("--backend-base-url", default=DEFAULT_BACKEND_BASE_URL)
+    parser.add_argument("--requests", type=int, default=20)
+    parser.add_argument("--workers", type=int, default=20)
+    parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--username", default=DEFAULT_USERNAME)
+    parser.add_argument("--password", default=DEFAULT_PASSWORD)
+    parser.add_argument("--client-id", default=DEFAULT_CLIENT_ID)
+    parser.add_argument("--client-secret", default=DEFAULT_CLIENT_SECRET)
+    parser.add_argument("--openid-token-url")
+    parser.add_argument("--authentication-identifier", default="default")
+    parser.add_argument("--access-token")
+    parser.add_argument("--api-key")
+    parser.add_argument("--group-id", help="Use an existing or deterministic process group path")
+    parser.add_argument("--suffix", help="Suffix for generated group/model/process identifiers")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if args.workers < 2:
-        raise RuntimeError("--workers must be at least 2")
+    session = requests.Session()
+    access_token = None if args.api_key else get_access_token(args)
+    headers = request_headers(args, access_token)
 
-    connexion_app = create_app()
-    app = connexion_app.app
-    run_id = f"relationship_race_{uuid.uuid4().hex}"
+    if access_token:
+        login_with_access_token(session, args, headers)
 
-    with app.app_context():
-        rows = create_race_rows(run_id)
-        print(f"created race rows: parent_id={rows.parent_id}, child_id={rows.child_id}")
-
-    try:
-        if args.mode == "both":
-            old_reproduced = run_mode(app, rows, args.workers, "old")
-            fixed_passed = run_mode(app, rows, args.workers, "fixed")
-            return 0 if old_reproduced and fixed_passed else 1
-
-        passed = run_mode(app, rows, args.workers, args.mode)
-        return 0 if passed else 1
-    finally:
-        if not args.keep_rows:
-            with app.app_context():
-                delete_race_rows(rows)
+    process_model_id = ensure_process_model(session, args, headers)
+    results = run_load(args, headers, process_model_id)
+    print_summary(results)
+    return 0 if all(result.ok for result in results) else 1
 
 
 if __name__ == "__main__":
