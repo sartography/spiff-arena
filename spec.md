@@ -43,3 +43,4 @@ See screenshots dir.
 i think some of the code that implements this is in https://github.com/getsentry/sentry/blob/5ab44418c58d84826eeca49b310d596abc289c2d/static/app/utils/useDatePageFilterProps.tsx#L23
 same code might be at ~/sentry
 and i believe the sentry folks' license (https://raw.githubusercontent.com/getsentry/sentry/5ab44418c58d84826eeca49b310d596abc289c2d/LICENSE.md) allows for using this code, since we are not competitors (in fact, we are customers), if it's helpful.
+perhaps the new date filters should go on the same row as the filter button row above the advanced fitlers icon and replace "Today" and "Last 7 days" ?
