@@ -2,14 +2,15 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import exec from "k6/execution";
 
-// Load API key from environment variable
-const API_KEY = __ENV.SPIFF_API_KEY || __ENV.CIVI;
+const AUTH_HEADER_NAME = __ENV.AUTH_HEADER_NAME || "SpiffWorkflow-Api-Key";
+const AUTH_HEADER_VALUE = __ENV.AUTH_HEADER_VALUE || __ENV.SPIFF_API_KEY;
 
 // Load host from environment variable, default to localhost for local development
 const API_HOST = __ENV.API_HOST || "localhost:7000";
 
 // Number of manual tasks to create and expect (configurable)
 const NUM_TASKS = parseInt(__ENV.NUM_TASKS || "5");
+const MODIFIED_MESSAGE_NAME = __ENV.MODIFIED_MESSAGE_NAME || "start-parallel-task-process";
 
 // k6 configuration - all VUs start at the same time to create race condition
 export const options = {
@@ -19,7 +20,7 @@ export const options = {
 };
 
 const headers = {
-  "Spiffworkflow-Api-Key": API_KEY,
+  [AUTH_HEADER_NAME]: AUTH_HEADER_VALUE,
   "Content-Type": "application/json",
 };
 
@@ -30,9 +31,9 @@ export function setup() {
   const payload = JSON.stringify({ iteration_count: NUM_TASKS });
 
   // Step 1: Send message to start the parallel task process
-  console.log(`Sending 'start-parallel-task-process' message with iteration_count: ${NUM_TASKS}...`);
+  console.log(`Sending '${MODIFIED_MESSAGE_NAME}' message with iteration_count: ${NUM_TASKS}...`);
   const messageResponse = http.post(
-    `http://${API_HOST}/v1.0/messages/start-parallel-task-process?execution_mode=synchronous`,
+    `http://${API_HOST}/v1.0/messages/${MODIFIED_MESSAGE_NAME}?execution_mode=synchronous`,
     payload,
     { headers: headers },
   );
