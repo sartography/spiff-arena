@@ -25,7 +25,7 @@ from typing import Any
 
 import requests
 
-DEFAULT_BACKEND_BASE_URL = "http://localhost:7000"
+DEFAULT_BACKEND_BASE_URL = "http://localhost:8000"
 DEFAULT_USERNAME = "admin"
 DEFAULT_PASSWORD = "admin"  # noqa: S105 - local development default
 DEFAULT_CLIENT_ID = "spiffworkflow-backend"
@@ -366,10 +366,7 @@ def print_summary(results: list[CreateResult]) -> None:
     if failures:
         print("\nFailures:")
         for result in sorted(failures, key=lambda item: item.index)[:20]:
-            print(
-                f"- request={result.index} http={result.status_code} error={result.error_code} "
-                f"body={result.response_text}"
-            )
+            print(f"- request={result.index} http={result.status_code} error={result.error_code} body={result.response_text}")
 
 
 def parse_args() -> argparse.Namespace:
