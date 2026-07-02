@@ -7,6 +7,8 @@ import pytest
 from flask import Flask
 from sqlalchemy.exc import OperationalError
 
+import spiffworkflow_backend.models.bpmn_process_definition as bpmn_process_definition_module
+import spiffworkflow_backend.utils.db_utils as db_utils
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
@@ -118,6 +120,71 @@ class TestBpmnProcessDefinitionPersistence(BaseTest):
         )
 
         assert relationship_inserts == [(10, 20)]
+
+    def test_bpmn_process_definition_insert_ignores_any_postgres_unique_conflict(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured_kwargs = {}
+
+        def insert_or_ignore_duplicate(**kwargs: object) -> None:
+            captured_kwargs.update(kwargs)
+
+        monkeypatch.setattr(bpmn_process_definition_module, "insert_or_ignore_duplicate", insert_or_ignore_duplicate)
+
+        BpmnProcessDefinitionModel.insert_or_update_record(
+            {
+                "single_process_hash": "single-hash",
+                "full_process_model_hash": "full-hash",
+                "bpmn_identifier": "demo_process",
+                "bpmn_name": "Demo Process",
+                "properties_json": {},
+            }
+        )
+
+        assert captured_kwargs["model_class"] == BpmnProcessDefinitionModel
+        assert "postgres_conflict_index_elements" not in captured_kwargs
+
+    def test_insert_or_ignore_duplicate_can_ignore_any_postgres_unique_conflict(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured_conflict_kwargs = {}
+        executed_statements = []
+
+        class InsertStatementStub:
+            def values(self, values: object) -> "InsertStatementStub":
+                return self
+
+            def on_conflict_do_nothing(self, **kwargs: object) -> "InsertStatementStub":
+                captured_conflict_kwargs.update(kwargs)
+                return self
+
+        def postgres_insert(model_class: type) -> InsertStatementStub:
+            return InsertStatementStub()
+
+        def execute(statement: InsertStatementStub) -> None:
+            executed_statements.append(statement)
+
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", "postgres")
+        monkeypatch.setattr(db_utils, "postgres_insert", postgres_insert)
+        monkeypatch.setattr(db_utils.db.session, "execute", execute)
+
+        db_utils.insert_or_ignore_duplicate(
+            model_class=BpmnProcessDefinitionModel,
+            values={
+                "single_process_hash": "single-hash",
+                "full_process_model_hash": "full-hash",
+                "bpmn_identifier": "demo_process",
+                "bpmn_name": "Demo Process",
+                "properties_json": {},
+            },
+        )
+
+        assert captured_conflict_kwargs == {}
+        assert len(executed_statements) == 1
 
     def test_persist_bpmn_process_definition_rolls_back_parent_row_when_task_definition_insert_fails(
         self,

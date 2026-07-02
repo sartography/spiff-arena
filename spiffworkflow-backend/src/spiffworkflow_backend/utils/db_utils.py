@@ -40,7 +40,7 @@ def is_mysql_deadlock_error(exception: Exception) -> bool:
 def insert_or_ignore_duplicate(
     model_class: type,
     values: Mapping[str, Any] | Sequence[Mapping[str, Any]],
-    postgres_conflict_index_elements: list[str],
+    postgres_conflict_index_elements: list[str] | None = None,
 ) -> Any:
     """Insert records, ignoring duplicates to avoid MySQL deadlocks.
 
@@ -56,7 +56,8 @@ def insert_or_ignore_duplicate(
         model_class: The SQLAlchemy model class to insert into
         values: Single dict-like object or sequence of dict-like objects to insert
         postgres_conflict_index_elements: Index column names for PostgreSQL's
-            on_conflict clause (e.g., ["hash"] or ["id", "name"])
+            on_conflict clause (e.g., ["hash"] or ["id", "name"]). If omitted,
+            PostgreSQL ignores conflicts on any unique constraint.
 
     Returns:
         For single record MySQL insert: Result object or None if duplicate exists
@@ -99,5 +100,8 @@ def insert_or_ignore_duplicate(
             insert_stmt = sqlite_insert(model_class).values(values)
         else:
             insert_stmt = postgres_insert(model_class).values(values)
-        on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=postgres_conflict_index_elements)
+        if postgres_conflict_index_elements is None:
+            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing()
+        else:
+            on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=postgres_conflict_index_elements)
         return db.session.execute(on_duplicate_key_stmt)
