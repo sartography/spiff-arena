@@ -104,11 +104,6 @@ const TASK_METADATA = taskMetadata;
 
 const BACKEND_BASE_URL = backendBaseUrl;
 const DOCUMENTATION_URL = documentationUrl;
-const ED_BASE_URL =
-  getConfigValue('ED_BASE_URL') ||
-  (/^\d+\./.test(hostname) || hostname === 'localhost'
-    ? `http://${hostname}:7005`
-    : null);
 
 const PROCESS_STATUSES = [
   'complete',
@@ -185,7 +180,6 @@ export {
   DATE_RANGE_DELIMITER,
   DATE_TIME_FORMAT,
   DOCUMENTATION_URL,
-  ED_BASE_URL,
   MESSAGE_STATUSES,
   MESSAGE_TYPES,
   PROCESS_STATUSES,
