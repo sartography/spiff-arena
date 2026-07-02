@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from hashlib import sha256
+from typing import Any
 from typing import TypedDict
 
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -78,8 +79,25 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
         return json_data_dict["hash"]
 
     @classmethod
+    def _json_object_key_to_string(cls, key: object) -> str:
+        if isinstance(key, str):
+            return key
+        if key is None or isinstance(key, bool | int | float):
+            return json.dumps(key)
+        raise TypeError(f"keys must be str, int, float, bool or None, not {key.__class__.__name__}")
+
+    @classmethod
+    def _normalize_json_object_keys(cls, data: object) -> Any:
+        if isinstance(data, dict):
+            return {cls._json_object_key_to_string(key): cls._normalize_json_object_keys(value) for key, value in data.items()}
+        if isinstance(data, list):
+            return [cls._normalize_json_object_keys(value) for value in data]
+        return data
+
+    @classmethod
     def json_data_dict_from_dict(cls, data: dict) -> JsonDataDict:
-        task_data_json = json.dumps(data, sort_keys=True)
+        normalized_data = cls._normalize_json_object_keys(data)
+        task_data_json = json.dumps(normalized_data, sort_keys=True)
         task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict = {"hash": task_data_hash, "data": data}
+        json_data_dict: JsonDataDict = {"hash": task_data_hash, "data": normalized_data}
         return json_data_dict

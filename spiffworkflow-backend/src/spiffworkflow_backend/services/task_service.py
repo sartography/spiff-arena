@@ -1,7 +1,5 @@
 import copy
-import json
 import time
-from hashlib import sha256
 from typing import TypedDict
 from uuid import UUID
 
@@ -649,9 +647,8 @@ class TaskService:
             data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
         if data_dict_to_use is None:
             data_dict_to_use = {}
-        bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
-        bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
+        json_data_dict = JsonDataModel.json_data_dict_from_dict(data_dict_to_use)
+        bpmn_process_data_hash = json_data_dict["hash"]
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
             bpmn_process.json_data_hash = bpmn_process_data_hash
             self.json_data_dicts[bpmn_process_data_hash] = json_data_dict
