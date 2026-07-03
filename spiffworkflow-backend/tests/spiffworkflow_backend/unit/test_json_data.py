@@ -1,6 +1,8 @@
 import json
 from hashlib import sha256
 
+import pytest
+
 from spiffworkflow_backend.models.json_data import JsonDataModel
 
 
@@ -42,3 +44,8 @@ def test_json_data_hash_treats_integer_keys_like_json_object_keys() -> None:
     string_key_data = {"1": "one"}
 
     assert JsonDataModel.json_data_dict_from_dict(int_key_data) == JsonDataModel.json_data_dict_from_dict(string_key_data)
+
+
+def test_json_data_dict_from_dict_rejects_normalized_key_collisions() -> None:
+    with pytest.raises(ValueError, match="JSON object key collision after normalization"):
+        JsonDataModel.json_data_dict_from_dict({1: "integer", "1": "string"})

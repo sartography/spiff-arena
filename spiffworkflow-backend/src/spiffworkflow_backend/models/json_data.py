@@ -89,7 +89,19 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     @classmethod
     def _normalize_json_object_keys(cls, data: object) -> Any:
         if isinstance(data, dict):
-            return {cls._json_object_key_to_string(key): cls._normalize_json_object_keys(value) for key, value in data.items()}
+            normalized_data: dict[str, Any] = {}
+            normalized_key_to_original_key: dict[str, object] = {}
+            for key, value in data.items():
+                normalized_key = cls._json_object_key_to_string(key)
+                if normalized_key in normalized_data:
+                    original_key = normalized_key_to_original_key[normalized_key]
+                    raise ValueError(
+                        f"JSON object key collision after normalization: {original_key!r} and {key!r} "
+                        f"both normalize to {normalized_key!r}"
+                    )
+                normalized_key_to_original_key[normalized_key] = key
+                normalized_data[normalized_key] = cls._normalize_json_object_keys(value)
+            return normalized_data
         if isinstance(data, list):
             return [cls._normalize_json_object_keys(value) for value in data]
         return data
