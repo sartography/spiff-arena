@@ -53,21 +53,22 @@ export default function DiagramActionBar({
   processInstanceRun,
   activeUserElement,
 }: DiagramActionBarProps) {
-  const shouldShowSaveAttention = saveRequiresAttention && !saveDisabled;
+  const canRenderSaveButton = Boolean(canSave && onSave);
+  const shouldShowSaveAttention =
+    canRenderSaveButton && saveRequiresAttention && !saveDisabled;
 
-  const saveButton =
-    canSave && onSave ? (
-      <Button
-        onClick={onSave}
-        variant="contained"
-        size="small"
-        color="primary"
-        disabled={saveDisabled}
-        data-testid="process-model-file-save-button"
-      >
-        {saveLabel}
-      </Button>
-    ) : null;
+  const saveButton = canRenderSaveButton ? (
+    <Button
+      onClick={onSave}
+      variant="contained"
+      size="small"
+      color="primary"
+      disabled={saveDisabled}
+      data-testid="process-model-file-save-button"
+    >
+      {saveLabel}
+    </Button>
+  ) : null;
 
   const saveAttentionMessage =
     shouldShowSaveAttention && saveTooltip ? (
