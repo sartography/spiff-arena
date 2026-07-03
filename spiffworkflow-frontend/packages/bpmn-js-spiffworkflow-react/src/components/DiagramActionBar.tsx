@@ -55,24 +55,25 @@ export default function DiagramActionBar({
 }: DiagramActionBarProps) {
   const shouldShowSaveAttention = saveRequiresAttention && !saveDisabled;
 
-  const saveButton = canSave && onSave ? (
-    <Button
-      onClick={onSave}
-      variant="contained"
-      size="small"
-      color="primary"
-      disabled={saveDisabled}
-      data-testid="process-model-file-save-button"
-    >
-      {saveLabel}
-    </Button>
-  ) : null;
+  const saveButton =
+    canSave && onSave ? (
+      <Button
+        onClick={onSave}
+        variant="contained"
+        size="small"
+        color="primary"
+        disabled={saveDisabled}
+        data-testid="process-model-file-save-button"
+      >
+        {saveLabel}
+      </Button>
+    ) : null;
 
   const saveAttentionMessage =
     shouldShowSaveAttention && saveTooltip ? (
       <Stack
         direction="row"
-        spacing={0.5}
+        spacing={0.25}
         alignItems="center"
         role="status"
         aria-live="polite"
@@ -80,14 +81,14 @@ export default function DiagramActionBar({
         sx={{
           color: 'warning.dark',
           minHeight: 30,
-          maxWidth: { xs: '100%', md: 380 },
+          maxWidth: { xs: '100%', md: 420 },
         }}
       >
         <WarningAmber fontSize="small" />
         <Typography
           component="span"
           variant="body2"
-          sx={{ fontWeight: 700, lineHeight: 1.25 }}
+          sx={{ fontWeight: 700, lineHeight: 1.2 }}
         >
           {saveTooltip}
         </Typography>
