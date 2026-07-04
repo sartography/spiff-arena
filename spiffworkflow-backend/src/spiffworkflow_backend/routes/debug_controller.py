@@ -11,9 +11,12 @@ from sqlalchemy import func
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.monitoring_service import get_version_info_data
+
+RECENT_PROCESS_INSTANCE_ID_WINDOW = 10_000
 
 
 def test_raise_error() -> Response:
@@ -42,8 +45,16 @@ def url_info() -> Response:
 
 
 def process_instance_with_most_tasks() -> Response:
+    raw_min_process_instance_id = db.session.query(
+        func.coalesce(func.max(ProcessInstanceModel.id), 0) - RECENT_PROCESS_INSTANCE_ID_WINDOW
+    ).scalar()
+    min_process_instance_id = max(
+        raw_min_process_instance_id or 0,
+        0,
+    )
     result = (
         db.session.query(TaskModel.process_instance_id, func.count(TaskModel.guid).label("task_count"))
+        .filter(TaskModel.process_instance_id >= min_process_instance_id)
         .group_by(TaskModel.process_instance_id)
         .order_by(func.count(TaskModel.guid).desc(), TaskModel.process_instance_id.desc())  # type: ignore
         .first()
@@ -56,12 +67,29 @@ def process_instance_with_most_tasks() -> Response:
                 {
                     "process_instance_id": process_instance_id,
                     "task_count": task_count,
+                    "scope": {
+                        "global": False,
+                        "process_instance_id_window": RECENT_PROCESS_INSTANCE_ID_WINDOW,
+                        "min_process_instance_id": min_process_instance_id,
+                    },
                 }
             ),
             200,
         )
     else:
-        return make_response(jsonify({"message": "No process instances with tasks found"}), 404)
+        return make_response(
+            jsonify(
+                {
+                    "message": "No recent process instances with tasks found",
+                    "scope": {
+                        "global": False,
+                        "process_instance_id_window": RECENT_PROCESS_INSTANCE_ID_WINDOW,
+                        "min_process_instance_id": min_process_instance_id,
+                    },
+                }
+            ),
+            404,
+        )
 
 
 def celery_backend_results(

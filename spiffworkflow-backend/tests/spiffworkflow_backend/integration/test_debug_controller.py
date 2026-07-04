@@ -47,9 +47,10 @@ class TestDebugController(BaseTest):
         task_count = TaskModel.query.filter_by(process_instance_id=process_instance2.id).count()
 
         # Create a few more instances with fewer tasks to make sure our endpoint works correctly
+        latest_process_instance = process_instance2
         for _ in range(2):
-            process_instance = self.create_process_instance_from_process_model(process_model1)
-            runtime = ProcessInstanceRuntime(process_instance)
+            latest_process_instance = self.create_process_instance_from_process_model(process_model1)
+            runtime = ProcessInstanceRuntime(latest_process_instance)
             runtime.do_engine_steps(save=True)
 
         # Call the endpoint and check the response
@@ -61,7 +62,12 @@ class TestDebugController(BaseTest):
 
         assert "process_instance_id" in response.json()
         assert "task_count" in response.json()
+        assert response.json()["scope"] == {
+            "global": False,
+            "process_instance_id_window": 10000,
+            "min_process_instance_id": max(latest_process_instance.id - 10000, 0),
+        }
 
-        # Verify that the endpoint returns the process instance with the most tasks
+        # Verify that the endpoint returns the recent process instance with the most tasks.
         assert response.json()["process_instance_id"] == process_instance2.id
         assert response.json()["task_count"] == task_count
