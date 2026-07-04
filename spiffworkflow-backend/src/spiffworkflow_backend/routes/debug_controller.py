@@ -47,7 +47,7 @@ def url_info() -> Response:
 def process_instance_with_most_tasks() -> Response:
     raw_min_process_instance_id = db.session.query(
         func.coalesce(func.max(ProcessInstanceModel.id), 0) - RECENT_PROCESS_INSTANCE_ID_WINDOW
-    ).scalar()
+    ).scalar()  # type: ignore[no-untyped-call]
     min_process_instance_id = max(
         raw_min_process_instance_id or 0,
         0,
