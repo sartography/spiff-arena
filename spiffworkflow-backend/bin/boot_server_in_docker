@@ -130,4 +130,4 @@ exec uv run gunicorn ${additional_args} \
   --capture-output \
   --access-logfile '-' \
   --worker-class uvicorn_worker.UvicornWorker \
-  --log-level "$GUNICORN_LOG_LEVEL" spiff_web_server:connexion_app
+  --log-level "$GUNICORN_LOG_LEVEL" spiff_web_server:asgi_app
