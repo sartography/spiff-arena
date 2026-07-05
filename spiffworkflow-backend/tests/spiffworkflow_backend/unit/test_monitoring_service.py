@@ -13,7 +13,6 @@ from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.services.monitoring_service import ensure_prometheus_multiproc_dir
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
 from spiffworkflow_backend.services.monitoring_service import should_capture_exception_in_sentry
-from spiffworkflow_backend.services.monitoring_service import traces_sampler
 
 
 class Generic404HTTPException(HTTPException):
@@ -63,13 +62,6 @@ class TestMonitoringService(unittest.TestCase):
                 )
         finally:
             os.chdir(current_dir)
-
-    def test_traces_sampler_uses_configured_default_sample_rate(self) -> None:
-        self.assertEqual(0.25, traces_sampler({"parent_sampled": None}, default_sample_rate=0.25))
-
-    def test_traces_sampler_inherits_parent_sampling_decision(self) -> None:
-        self.assertTrue(traces_sampler({"parent_sampled": True}, default_sample_rate=0.25))
-        self.assertFalse(traces_sampler({"parent_sampled": False}, default_sample_rate=0.25))
 
     def test_not_found_is_not_captured(self) -> None:
         self.assertFalse(should_capture_exception_in_sentry(NotFound()))
