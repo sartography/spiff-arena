@@ -497,7 +497,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const showingActiveTask = () => {
     return !taskToTimeTravelTo;
   };
-
   const completionViewLink = (label: any, taskGuid: string) => {
     return (
       <Link
@@ -509,19 +508,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       </Link>
     );
   };
-
   const returnToProcessInstance = () => {
     window.location.href = `${processInstanceShowPageBaseUrl}${queryParams()}`;
   };
-
-  const resetProcessInstance = () => {
+  const resetProcessInstance = (taskGuid = currentToTaskGuid()) => {
+    if (!taskGuid) {
+      return;
+    }
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceResetPath}/${currentToTaskGuid()}`,
+      path: `${targetUris.processInstanceResetPath}/${taskGuid}`,
       successCallback: returnToProcessInstance,
       httpMethod: 'POST',
     });
   };
-
   const formatMetadataValue = (key: string, value: string) => {
     if (isURL(value)) {
       return (
@@ -1137,14 +1136,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       showingActiveTask()
     );
   };
-
   const canResetProcess = (task: BasicTask) => {
     return (
       ability.can('POST', targetUris.processInstanceResetPath) &&
       processInstance &&
       processInstance.status === 'suspended' &&
-      task.state === 'READY' &&
-      !showingActiveTask()
+      ((task.state === 'READY' && !showingActiveTask()) ||
+        (task.state === 'ERROR' && showingActiveTask()))
     );
   };
 
@@ -1355,7 +1353,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           startIcon={<Reset />}
           title={titleText}
           data-testid="reset-process-button"
-          onClick={() => resetProcessInstance()}
+          onClick={() => resetProcessInstance(task.guid)}
         >
           {t('reset_process_here')}
         </Button>,
