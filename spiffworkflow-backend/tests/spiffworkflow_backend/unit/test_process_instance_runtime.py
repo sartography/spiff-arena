@@ -52,7 +52,10 @@ class TestProcessInstanceRuntime(BaseTest):
         monkeypatch.setattr("spiffworkflow_backend.services.process_instance_runtime.TaskModel", SimpleNamespace(query=query))
 
         runtime = ProcessInstanceRuntime.__new__(ProcessInstanceRuntime)
-        runtime.process_instance_model = SimpleNamespace(id=123, status=ProcessInstanceStatus.suspended.value)
+        process_instance = ProcessInstanceModel()
+        process_instance.id = 123
+        process_instance.status = ProcessInstanceStatus.suspended.value
+        runtime.process_instance_model = process_instance
 
         with pytest.raises(ApiError) as exc:
             runtime.resume()

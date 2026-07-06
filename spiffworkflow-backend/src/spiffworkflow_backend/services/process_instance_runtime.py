@@ -754,8 +754,6 @@ class ProcessInstanceRuntime:
             self.process_instance_model.status = ProcessInstanceStatus.suspended.value
             db.session.add(self.process_instance_model)
             db.session.commit()
-        else:
-            self.suspend()
 
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
