@@ -729,6 +729,7 @@ class ProcessInstanceRuntime:
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         start_time = time.time()
+        was_suspended = process_instance.status == ProcessInstanceStatus.suspended.value
 
         # Log the event that we are moving back to a previous task.
         ProcessInstanceEventService.add_event_to_process_instance(
@@ -757,7 +758,12 @@ class ProcessInstanceRuntime:
 
         # Save the process
         runtime.save()
-        runtime.suspend()
+        if was_suspended:
+            runtime.process_instance_model.status = ProcessInstanceStatus.suspended.value
+            db.session.add(runtime.process_instance_model)
+            db.session.commit()
+        else:
+            runtime.suspend()
 
     @classmethod
     def update_guids_on_tasks(cls, bpmn_process_instance_dict: dict) -> None:
