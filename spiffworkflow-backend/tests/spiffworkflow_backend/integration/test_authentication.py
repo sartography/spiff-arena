@@ -383,14 +383,35 @@ class TestAuthentication(BaseTest):
             return_value=auth_uri,
         )
 
-        response = client.get(
-            f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
-        )
+        with self.app_config_mock(
+            app,
+            "SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES",
+            "localhost,spiff-dev-host",
+        ):
+            response = client.get(
+                f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
+            )
 
         assert class_method_mock.call_count == 1
         assert response.status_code == 302
         assert response.has_redirect_location
         assert response.headers["location"].startswith(auth_uri)
+
+    def test_rejects_unconfigured_local_development_frontend_hostname_alias(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_uri = "http://unconfigured-dev-host:7001/test-redirect-dne"
+
+        response = client.get(
+            f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=DOES_NOT_MATTER",
+        )
+
+        assert response.status_code == 500
+        assert response.json() is not None
+        assert response.json()["message"].startswith("InvalidRedirectUrlError:")
 
     def test_raises_error_if_invalid_redirect_url(
         self,

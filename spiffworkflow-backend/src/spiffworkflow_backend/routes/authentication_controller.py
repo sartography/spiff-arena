@@ -156,14 +156,28 @@ def _redirect_url_is_allowed_for_frontend(redirect_url: str, frontend_url: str) 
         return False
 
     return bool(
-        _is_local_development_hostname(frontend_url_parsed.hostname)
-        and _is_local_development_hostname(redirect_url_parsed.hostname)
+        _hosts_are_allowed_local_development_redirect_aliases(
+            frontend_url_parsed.hostname,
+            redirect_url_parsed.hostname,
+        )
         and frontend_url_parsed.scheme == redirect_url_parsed.scheme
         and frontend_port == redirect_port
     )
 
 
-def _is_local_development_hostname(hostname: str | None) -> bool:
+def _hosts_are_allowed_local_development_redirect_aliases(
+    frontend_hostname: str | None,
+    redirect_hostname: str | None,
+) -> bool:
+    if frontend_hostname is None or redirect_hostname is None:
+        return False
+
+    configured_hosts = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES", ""))
+    allowed_hosts = {host.strip().lower() for host in configured_hosts.split(",") if host.strip()}
+    return frontend_hostname.lower() in allowed_hosts and redirect_hostname.lower() in allowed_hosts
+
+
+def _requires_host_only_cookie_domain(hostname: str | None) -> bool:
     if hostname is None:
         return False
     if hostname == "localhost" or "." not in hostname:
@@ -311,7 +325,7 @@ def _set_new_access_token_in_cookie(
     tld = current_app.config["THREAD_LOCAL_DATA"]
     frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
     domain_for_frontend_cookie = urlparse(frontend_url).hostname
-    if _is_local_development_hostname(domain_for_frontend_cookie):
+    if _requires_host_only_cookie_domain(domain_for_frontend_cookie):
         domain_for_frontend_cookie = None
 
     # fixme - we should not be passing the access token back to the client
