@@ -13,11 +13,14 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.routes.process_instances_controller import process_instance_resume
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -342,3 +345,55 @@ class TestServiceTaskRetries(BaseTest):
         assert logger.error.call_args.args[2] == _process_instance.id
         assert logger.error.call_args.args[5] == "not_retryable"
         assert logger.exception.call_count == 0
+
+    def test_celery_worker_runs_after_skipping_failed_service_task_and_resuming(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        runtime, process_instance = self.load_retry_runtime()
+
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 400
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 400},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError400", "message": "Bad Request"},
+                }
+            )
+
+            with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
+                runtime.do_engine_steps(save=True)
+
+        service_task = self.get_service_task(runtime)
+        assert service_task.state == TaskState.ERROR
+
+        runtime.suspend()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.manual_complete_task(str(service_task.id), execute=False, user=process_instance.process_initiator)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        ready_tasks = runtime.get_all_ready_or_waiting_tasks()
+        assert process_instance.status == ProcessInstanceStatus.suspended.value
+        assert len(ready_tasks) == 1
+        assert ready_tasks[0].task_spec.name == "EndEvent_1"
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch(
+            "celery.current_app.send_task"
+        ) as send_task, patch(
+            "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+        ) as current_process:
+            current_process.return_value.index = 0
+            response = process_instance_resume(process_instance.id, "test_group/retries")
+            assert response.status_code == 200
+            assert send_task.call_count == 1
+
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.complete.value
