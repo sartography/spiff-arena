@@ -713,15 +713,16 @@ class ProcessInstanceRuntime:
             execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
             self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
 
-        spiff_tasks = self.bpmn_process_instance.get_tasks()
-        task_service = TaskService(
-            process_instance=self.process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
-        )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
+            spiff_tasks = self.bpmn_process_instance.get_tasks()
+            task_service = TaskService(
+                process_instance=self.process_instance_model,
+                serializer=BpmnProcessService.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+                task_model_mapping=self.task_model_mapping,
+            )
+            task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
+
         ProcessInstanceEventService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
 
         self.save()
@@ -1329,10 +1330,7 @@ class ProcessInstanceRuntime:
         if error_task is not None:
             raise ApiError(
                 error_code="process_instance_has_error_tasks",
-                message=(
-                    "Cannot resume a process instance while it has errored tasks. "
-                    "Reset the errored task before resuming."
-                ),
+                message=("Cannot resume a process instance while it has errored tasks. Reset the errored task before resuming."),
                 status_code=400,
             )
 

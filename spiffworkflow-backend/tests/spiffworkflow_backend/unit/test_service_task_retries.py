@@ -397,11 +397,13 @@ class TestServiceTaskRetries(BaseTest):
         assert len(ready_tasks) == 1
         assert ready_tasks[0].task_spec.name == "EndEvent_1"
 
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True), patch(
-            "celery.current_app.send_task"
-        ) as send_task, patch(
-            "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-        ) as current_process:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
             current_process.return_value.index = 0
             response = process_instance_resume(process_instance.id, "test_group/retries")
             assert response.status_code == 200
