@@ -29,10 +29,27 @@ class TestTaskService(BaseTest):
         monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
 
         task_service = TaskService.__new__(TaskService)
+        task_service.task_models = {}
         task_service.task_model_mapping = {}
 
         assert task_service._find_existing_task_model("existing-task-guid") == task_model
         assert task_service.task_model_mapping == {"existing-task-guid": task_model}
+
+    def test_finds_existing_task_model_when_mapping_has_stale_bulk_saved_model(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        stale_task_model = TaskModel(guid="existing-task-guid")
+        db_task_model = TaskModel(guid="existing-task-guid")
+        query = SimpleNamespace(filter_by=lambda guid: SimpleNamespace(first=lambda: db_task_model))
+        monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
+
+        task_service = TaskService.__new__(TaskService)
+        task_service.task_models = {}
+        task_service.task_model_mapping = {"existing-task-guid": stale_task_model}
+
+        assert task_service._find_existing_task_model("existing-task-guid") == db_task_model
+        assert task_service.task_model_mapping == {"existing-task-guid": db_task_model}
 
     def test_can_get_full_bpmn_process_path(
         self,
