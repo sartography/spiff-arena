@@ -23,6 +23,17 @@ class TestTaskService(BaseTest):
 
         assert "the task failed" in str(error)
 
+    def test_finds_and_caches_existing_task_model_when_mapping_misses(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        task_model = SimpleNamespace(guid="existing-task-guid")
+        query = SimpleNamespace(filter_by=lambda guid: SimpleNamespace(first=lambda: task_model))
+        monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
+
+        task_service = TaskService.__new__(TaskService)
+        task_service.task_model_mapping = {}
+
+        assert task_service._find_existing_task_model("existing-task-guid") == task_model
+        assert task_service.task_model_mapping == {"existing-task-guid": task_model}
+
     def test_can_get_full_bpmn_process_path(
         self,
         app: Flask,
