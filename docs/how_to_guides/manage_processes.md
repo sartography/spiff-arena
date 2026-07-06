@@ -171,19 +171,17 @@ Refresh the page to ensure it has transitioned to the next activity, replacing t
 
 ### Repair a Failed Script Task or Service Task
 
-When a script task or service task fails and the process instance is suspended,
-the preferred repair mechanism is to reset the process to the failed task, fix
-the cause, and then resume the instance.
+When a script task or service task fails, suspend the process instance before
+repairing it. Some deployments may be configured to suspend errored instances
+automatically, but otherwise suspending the instance is the first step. The
+preferred repair mechanism is to reset the process to the failed task, fix the
+cause, and then resume the instance.
 
 Use **Reset Process Here** on the failed task to rewind the instance to that
 task. If task data caused the failure, edit the task data while the instance is
 suspended. If configuration or connector behavior caused the failure, fix that
-before resuming. After the instance is resumed, run the process again so the
-failed task is executed from the repaired state.
-
-Manual execution and skip are administrative overrides. They record that an
-operator forced the task state, but they are not the normal way to retry a
-failed script task or service task after fixing the underlying issue.
+before resuming. When the instance resumes, normal process execution continues
+from the reset task.
 
 ## Migrate Process Instance
 
