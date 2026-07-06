@@ -180,8 +180,8 @@ cause, and then resume the instance.
 Use **Reset Process Here** on the failed task to rewind the instance to that
 task. If task data caused the failure, edit the task data while the instance is
 suspended. If configuration or connector behavior caused the failure, fix that
-before resuming. When the instance resumes, normal process execution continues
-from the reset task.
+before resuming. When the instance resumes, normal process execution continues,
+starting with the task that was the target of the reset.
 
 ## Migrate Process Instance
 
