@@ -401,6 +401,7 @@ export default function ProcessModelTreePage({
       successCallback: (result: ProcessModelStatsMap) => {
         setModelStats(result);
       },
+      onUnauthorized: () => setModelStats({}),
     });
   }, []);
 

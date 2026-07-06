@@ -20,6 +20,7 @@ export default function useProcessGroupTree() {
     HttpService.makeCallToBackend({
       path: '/process-models/stats',
       successCallback: (result: ProcessModelStatsMap) => setStats(result),
+      onUnauthorized: () => setStats({}),
     });
   }, []);
 
