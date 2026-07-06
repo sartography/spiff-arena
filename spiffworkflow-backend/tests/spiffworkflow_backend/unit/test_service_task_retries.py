@@ -430,3 +430,82 @@ class TestServiceTaskRetries(BaseTest):
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert process_instance.status == ProcessInstanceStatus.complete.value
+
+    def test_rewinding_failed_service_task_and_resuming_records_events_in_execution_order(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        runtime, process_instance = self.load_retry_runtime()
+
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 400
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 400},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError400", "message": "Bad Request"},
+                }
+            )
+
+            with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
+                runtime.do_engine_steps(save=True)
+
+        failed_service_task = self.get_service_task(runtime)
+        assert failed_service_task.state == TaskState.ERROR
+
+        runtime.suspend()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        ProcessInstanceRuntime.reset_process(process_instance, str(failed_service_task.id))
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.suspended.value
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+            patch("requests.get") as mock_get,
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = True
+            mock_get.return_value.text = "{}"
+            current_process.return_value.index = 0
+
+            response = process_instance_resume(process_instance.id, "test_group/retries")
+            assert response.status_code == 200
+            assert send_task.call_count == 1
+
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+        assert mock_get.call_count == 1
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        tasks_by_guid = {
+            task.guid: task.task_definition.bpmn_identifier
+            for task in TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
+        }
+        events = (
+            ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id)
+            .order_by(ProcessInstanceEventModel.timestamp, ProcessInstanceEventModel.id)
+            .all()
+        )
+        event_labels = [(event.event_type, tasks_by_guid.get(event.task_guid)) for event in events]
+
+        rewind_index = event_labels.index((ProcessInstanceEventType.process_instance_rewound_to_task.value, "ServiceTask_1"))
+        service_completed_index = event_labels.index((ProcessInstanceEventType.task_completed.value, "ServiceTask_1"))
+        end_completed_indexes = [
+            index
+            for index, event_label in enumerate(event_labels)
+            if event_label == (ProcessInstanceEventType.task_completed.value, "EndEvent_1")
+        ]
+
+        assert rewind_index < service_completed_index, event_labels
+        assert len(end_completed_indexes) == 1, event_labels
+        assert service_completed_index < end_completed_indexes[0], event_labels
