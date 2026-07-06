@@ -386,6 +386,21 @@ class TestServiceTaskRetries(BaseTest):
         assert mock_get.call_count == 1
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        completed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(service_task.id),
+            event_type=ProcessInstanceEventType.task_completed.value,
+        ).all()
+        assert len(completed_events) == 1
+        assert completed_events[0].user_id == process_instance.process_initiator_id
+
+        manually_executed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(service_task.id),
+            event_type=ProcessInstanceEventType.task_executed_manually.value,
+        ).all()
+        assert len(manually_executed_events) == 1
+
         suspended_event_count_after_manual_execute = ProcessInstanceEventModel.query.filter_by(
             process_instance_id=process_instance.id,
             event_type=ProcessInstanceEventType.process_instance_suspended.value,
