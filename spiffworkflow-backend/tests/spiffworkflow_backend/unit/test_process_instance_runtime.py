@@ -9,6 +9,7 @@ from uuid import UUID
 import pytest
 from flask import g
 from flask.app import Flask
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
@@ -912,6 +913,52 @@ class TestProcessInstanceRuntime(BaseTest):
         runtime = ProcessInstanceRuntime(process_instance)
         runtime.resume()
         runtime.do_engine_steps(save=True)
+
+    def test_failed_manual_script_task_execution_records_manual_attempt(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/script_with_error",
+            process_model_source_directory="script_with_error",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        with pytest.raises(WorkflowExecutionServiceError):
+            runtime.do_engine_steps(save=True)
+
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_error", runtime.bpmn_process_instance)
+        assert task is not None
+        runtime.suspend()
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        with pytest.raises(WorkflowTaskException):
+            runtime.manual_complete_task(str(task.id), execute=True, user=process_instance.process_initiator)
+
+        manually_executed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_executed_manually.value,
+        ).all()
+        assert len(manually_executed_events) == 1
+
+        completed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_completed.value,
+        ).all()
+        assert len(completed_events) == 0
+
+        failed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_failed.value,
+        ).all()
+        assert len(failed_events) >= 1
 
     def test_celery_worker_runs_after_skipping_error_task_and_resuming(
         self,
