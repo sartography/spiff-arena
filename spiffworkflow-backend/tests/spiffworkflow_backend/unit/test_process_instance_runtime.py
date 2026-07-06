@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
@@ -8,6 +9,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -33,6 +35,19 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceRuntime(BaseTest):
+    def test_resume_fails_when_process_instance_has_error_tasks(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        error_task = SimpleNamespace(guid="error-task-guid")
+        query = SimpleNamespace(filter_by=lambda **_: SimpleNamespace(first=lambda: error_task))
+        monkeypatch.setattr("spiffworkflow_backend.services.process_instance_runtime.TaskModel", SimpleNamespace(query=query))
+
+        runtime = ProcessInstanceRuntime.__new__(ProcessInstanceRuntime)
+        runtime.process_instance_model = SimpleNamespace(id=123, status=ProcessInstanceStatus.suspended.value)
+
+        with pytest.raises(ApiError) as exc:
+            runtime.resume()
+
+        assert exc.value.error_code == "process_instance_has_error_tasks"
+
     def test_script_engine_can_use_custom_scripts(
         self,
         app: Flask,

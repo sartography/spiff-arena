@@ -1308,6 +1308,20 @@ class ProcessInstanceRuntime:
             db.session.add(archived_future_task)
 
     def resume(self) -> None:
+        error_task = TaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            state="ERROR",
+        ).first()
+        if error_task is not None:
+            raise ApiError(
+                error_code="process_instance_has_error_tasks",
+                message=(
+                    "Cannot resume a process instance while it has errored tasks. "
+                    "Reset the errored task before resuming."
+                ),
+                status_code=400,
+            )
+
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
         self.bring_archived_future_tasks_back_to_life()
