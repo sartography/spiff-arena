@@ -346,7 +346,7 @@ class TestServiceTaskRetries(BaseTest):
         assert logger.error.call_args.args[5] == "not_retryable"
         assert logger.exception.call_count == 0
 
-    def test_celery_worker_runs_after_skipping_failed_service_task_and_resuming(
+    def test_manually_executing_failed_service_task_calls_service_and_can_resume(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
         runtime, process_instance = self.load_retry_runtime()
@@ -370,11 +370,27 @@ class TestServiceTaskRetries(BaseTest):
         assert service_task.state == TaskState.ERROR
 
         runtime.suspend()
+        suspended_event_count_before_manual_execute = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         runtime = ProcessInstanceRuntime(process_instance)
-        runtime.manual_complete_task(str(service_task.id), execute=False, user=process_instance.process_initiator)
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = True
+            mock_get.return_value.text = "{}"
+            runtime.manual_complete_task(str(service_task.id), execute=True, user=process_instance.process_initiator)
+
+        assert mock_get.call_count == 1
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        suspended_event_count_after_manual_execute = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
+        assert suspended_event_count_after_manual_execute == suspended_event_count_before_manual_execute
         runtime = ProcessInstanceRuntime(process_instance)
         ready_tasks = runtime.get_all_ready_or_waiting_tasks()
         assert process_instance.status == ProcessInstanceStatus.suspended.value

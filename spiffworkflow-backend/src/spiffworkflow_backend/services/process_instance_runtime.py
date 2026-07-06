@@ -682,6 +682,7 @@ class ProcessInstanceRuntime:
             event_type = ProcessInstanceEventType.task_executed_manually.value
 
         start_time = time.time()
+        was_suspended = self.process_instance_model.status == ProcessInstanceStatus.suspended.value
 
         # manual actually means any human task
         if spiff_task.task_spec.manual:
@@ -699,7 +700,9 @@ class ProcessInstanceRuntime:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
             )
-            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
+            if spiff_task.state == TaskState.ERROR:
+                spiff_task._set_state(TaskState.READY)
+            self.complete_task(spiff_task, user=user)
         else:
             current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
             task_model_delegate = TaskModelSavingDelegate(
@@ -723,7 +726,12 @@ class ProcessInstanceRuntime:
 
         self.save()
         # Saving the workflow seems to reset the status
-        self.suspend()
+        if was_suspended:
+            self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+            db.session.add(self.process_instance_model)
+            db.session.commit()
+        else:
+            self.suspend()
 
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
