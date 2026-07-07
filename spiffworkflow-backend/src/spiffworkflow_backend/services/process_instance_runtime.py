@@ -682,53 +682,87 @@ class ProcessInstanceRuntime:
             event_type = ProcessInstanceEventType.task_executed_manually.value
 
         start_time = time.time()
+        was_suspended = self.process_instance_model.status == ProcessInstanceStatus.suspended.value
 
+        try:
+            self._apply_manual_complete_task_action(spiff_task, task_id, execute, user, start_time)
+        finally:
+            ProcessInstanceEventService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+
+            self._save_and_restore_suspension_state(was_suspended)
+
+    def _apply_manual_complete_task_action(
+        self,
+        spiff_task: SpiffTask,
+        task_id: str,
+        execute: bool,
+        user: UserModel,
+        start_time: float,
+    ) -> None:
         # manual actually means any human task
         if spiff_task.task_spec.manual:
-            # Executing or not executing a human task results in the same state.
-            current_app.logger.info(
-                f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
-            )
-            human_task = HumanTaskModel.query.filter_by(
-                process_instance_id=self.process_instance_model.id,
-                task_id=task_id,
-                completed=False,
-            ).first()
-            self.complete_task(spiff_task, user=user, human_task=human_task)
+            self._complete_human_task_manually(spiff_task, task_id, user)
         elif execute:
-            current_app.logger.info(
-                f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
-            )
-            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
+            self._execute_non_human_task_manually(spiff_task, user)
         else:
-            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
-            task_model_delegate = TaskModelSavingDelegate(
-                serializer=BpmnProcessService.serializer,
-                process_instance=self.process_instance_model,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            )
-            execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
-            self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
+            self._skip_non_human_task(spiff_task, start_time)
+
+    def _complete_human_task_manually(self, spiff_task: SpiffTask, task_id: str, user: UserModel) -> None:
+        # Executing or not executing a human task results in the same state.
+        current_app.logger.info(
+            f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+        )
+        human_task = HumanTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            task_id=task_id,
+            completed=False,
+        ).first()
+        self.complete_task(spiff_task, user=user, human_task=human_task)
+
+    def _execute_non_human_task_manually(self, spiff_task: SpiffTask, user: UserModel) -> None:
+        current_app.logger.info(
+            f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+        )
+        if spiff_task.state == TaskState.ERROR:
+            spiff_task._set_state(TaskState.READY)
+        self.complete_task(spiff_task, user=user)
+
+    def _skip_non_human_task(self, spiff_task: SpiffTask, start_time: float) -> None:
+        current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
+        task_model_delegate = TaskModelSavingDelegate(
+            serializer=BpmnProcessService.serializer,
+            process_instance=self.process_instance_model,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
+        )
+        execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
+        self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
+        task_model_mapping, bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
             process_instance=self.process_instance_model,
             serializer=BpmnProcessService.serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
+            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+            task_model_mapping=task_model_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
-        ProcessInstanceEventService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
 
+    def _save_and_restore_suspension_state(self, was_suspended: bool) -> None:
         self.save()
-        # Saving the workflow seems to reset the status
-        self.suspend()
+        # Saving the workflow seems to reset the status.
+        if was_suspended:
+            self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+            db.session.add(self.process_instance_model)
+            db.session.commit()
 
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         start_time = time.time()
+        was_suspended = process_instance.status == ProcessInstanceStatus.suspended.value
 
         # Log the event that we are moving back to a previous task.
         ProcessInstanceEventService.add_event_to_process_instance(
@@ -755,9 +789,7 @@ class ProcessInstanceRuntime:
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
-        # Save the process
-        runtime.save()
-        runtime.suspend()
+        runtime._save_and_restore_suspension_state(was_suspended)
 
     @classmethod
     def update_guids_on_tasks(cls, bpmn_process_instance_dict: dict) -> None:
@@ -1308,6 +1340,17 @@ class ProcessInstanceRuntime:
             db.session.add(archived_future_task)
 
     def resume(self) -> None:
+        error_task = TaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            state="ERROR",
+        ).first()
+        if error_task is not None:
+            raise ApiError(
+                error_code="process_instance_has_error_tasks",
+                message=("Cannot resume a process instance while it has errored tasks. Reset the errored task before resuming."),
+                status_code=400,
+            )
+
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
         self.bring_archived_future_tasks_back_to_life()

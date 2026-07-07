@@ -169,6 +169,20 @@ Refresh the page to ensure it has transitioned to the next activity, replacing t
 | :----------------------------------------------------------------------------: |
 | From this point onward, the remaining part of the process can smoothly proceed |
 
+### Repair a Failed Script Task or Service Task
+
+When a script task or service task fails, suspend the process instance before
+repairing it. Some deployments may be configured to suspend errored instances
+automatically, but otherwise suspending the instance is the first step. The
+preferred repair mechanism is to reset the process to the failed task, fix the
+cause, and then resume the instance.
+
+Use **Reset Process Here** on the failed task to rewind the instance to that
+task. If task data caused the failure, edit the task data while the instance is
+suspended. If configuration or connector behavior caused the failure, fix that
+before resuming. When the instance resumes, normal process execution continues,
+starting with the task that was the target of the reset.
+
 ## Migrate Process Instance
 
 The process instance migration feature allows users to migrate a process instance to a different version of the associated process model.
@@ -249,4 +263,3 @@ General path params:
 
 - **modified_process_model_identifier**: the process model identifier separated by colons - `:` - instead of slashes
 - **process_instance_id**: the id of the process instance to run on.
-

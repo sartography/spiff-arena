@@ -15,6 +15,10 @@ import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { TimeAgo } from '../../helpers/timeago';
 import { getStorageValue } from '../../services/LocalStorageService';
 import { ProcessModel, ProcessModelStats } from '../../interfaces';
+import {
+  processDescriptionSx,
+  truncateProcessDescription,
+} from './processDescription';
 
 const defaultStyle = {
   ':hover': {
@@ -49,6 +53,7 @@ export default function ProcessModelCard({
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
   const [isFavorite, setIsFavorite] = useState(false);
+  const modelDescription = truncateProcessDescription(model.description);
 
   const navigate = useNavigate();
 
@@ -168,9 +173,14 @@ export default function ProcessModelCard({
             </Typography>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 700, color: 'text.secondary' }}
+              title={model.description || undefined}
+              sx={{
+                ...processDescriptionSx,
+                fontWeight: 700,
+                color: 'text.secondary',
+              }}
             >
-              {model.description || '--'}
+              {modelDescription || '--'}
             </Typography>
             {stats && (
               <Typography
