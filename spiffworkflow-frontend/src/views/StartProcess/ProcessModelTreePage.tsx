@@ -1461,6 +1461,8 @@ export default function ProcessModelTreePage({
                             >
                               <IconButton
                                 size="small"
+                                data-testid="add-process-model-button"
+                                aria-label={t('add_process_model')}
                                 onClick={(e) => e.stopPropagation()}
                                 href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
                               >
