@@ -43,6 +43,14 @@ test('it can keep the correct date when converting seconds to date', () => {
   expect(dateString).toEqual('2022-10-21');
 });
 
+test('it can include milliseconds when formatting date time', () => {
+  const dateTimeString =
+    DateAndTimeService.convertSecondsToFormattedDateTimeWithMilliseconds(
+      1666325400.234,
+    );
+  expect(dateTimeString).toMatch(/\.234$/);
+});
+
 test('it can properly format a duration', () => {
   expect(DateAndTimeService.formatDurationForDisplay('0')).toEqual('0s');
   expect(DateAndTimeService.formatDurationForDisplay('60')).toEqual('1m');

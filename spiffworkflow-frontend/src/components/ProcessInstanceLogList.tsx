@@ -331,7 +331,7 @@ export default function ProcessInstanceLogList({
 
     let timestampComponent = (
       <TableCell>
-        {DateAndTimeService.convertSecondsToFormattedDateTime(
+        {DateAndTimeService.convertSecondsToFormattedDateTimeWithMilliseconds(
           logEntry.timestamp,
         )}
       </TableCell>
@@ -345,7 +345,7 @@ export default function ProcessInstanceLogList({
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
             title={t('view_state_when_task_was_completed')}
           >
-            {DateAndTimeService.convertSecondsToFormattedDateTime(
+            {DateAndTimeService.convertSecondsToFormattedDateTimeWithMilliseconds(
               logEntry.timestamp,
             )}
           </Link>
