@@ -1,6 +1,8 @@
 import ast
 import base64
+import ipaddress
 import re
+from urllib.parse import urlparse
 
 import flask
 from flask import current_app
@@ -115,11 +117,7 @@ def login(
     # strip either :80 and :443 off the end of the frontend url string
     frontend_url = re.sub(r":(80|443)$", "", frontend_url)
 
-    # strip trailing slash off redirect_url, since we want
-    # redirect url http://localhost/ to be valid if the frontend url is http://localhost frontend, etc
-    redirect_url_for_check = redirect_url.rstrip("/")
-
-    if not redirect_url_for_check.startswith(frontend_url):
+    if not _redirect_url_is_allowed_for_frontend(redirect_url, frontend_url):
         raise InvalidRedirectUrlError(
             f"Invalid redirect url was given: '{redirect_url}'. It must start with the frontend url: '{frontend_url}'"
         )
@@ -138,6 +136,58 @@ def login(
         authentication_identifier=authentication_identifier, final_url=redirect_url
     )
     return redirect(login_redirect_url)
+
+
+def _redirect_url_is_allowed_for_frontend(redirect_url: str, frontend_url: str) -> bool:
+    # strip trailing slash off redirect_url, since we want
+    # redirect url http://localhost/ to be valid if the frontend url is http://localhost frontend, etc
+    redirect_url_for_check = redirect_url.rstrip("/")
+    frontend_url_for_check = frontend_url.rstrip("/")
+
+    if redirect_url_for_check == frontend_url_for_check or redirect_url_for_check.startswith(f"{frontend_url_for_check}/"):
+        return True
+
+    frontend_url_parsed = urlparse(frontend_url)
+    redirect_url_parsed = urlparse(redirect_url)
+    try:
+        frontend_port = frontend_url_parsed.port
+        redirect_port = redirect_url_parsed.port
+    except ValueError:
+        return False
+
+    return bool(
+        _hosts_are_allowed_local_development_redirect_aliases(
+            frontend_url_parsed.hostname,
+            redirect_url_parsed.hostname,
+        )
+        and frontend_url_parsed.scheme == redirect_url_parsed.scheme
+        and frontend_port == redirect_port
+    )
+
+
+def _hosts_are_allowed_local_development_redirect_aliases(
+    frontend_hostname: str | None,
+    redirect_hostname: str | None,
+) -> bool:
+    if frontend_hostname is None or redirect_hostname is None:
+        return False
+
+    configured_hosts = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES", ""))
+    allowed_hosts = {host.strip().lower() for host in configured_hosts.split(",") if host.strip()}
+    return frontend_hostname.lower() in allowed_hosts and redirect_hostname.lower() in allowed_hosts
+
+
+def _requires_host_only_cookie_domain(hostname: str | None) -> bool:
+    if hostname is None:
+        return False
+    if hostname == "localhost" or "." not in hostname:
+        return True
+
+    try:
+        ipaddress.ip_address(hostname)
+        return True
+    except ValueError:
+        return False
 
 
 def login_return(
@@ -273,12 +323,9 @@ def _set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    domain_for_frontend_cookie: str | None = re.sub(
-        r"^https?:\/\/",
-        "",
-        current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"],
-    )
-    if domain_for_frontend_cookie and domain_for_frontend_cookie.startswith("localhost"):
+    frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+    domain_for_frontend_cookie = urlparse(frontend_url).hostname
+    if _requires_host_only_cookie_domain(domain_for_frontend_cookie):
         domain_for_frontend_cookie = None
 
     # fixme - we should not be passing the access token back to the client

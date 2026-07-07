@@ -60,5 +60,4 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
         return insert_or_ignore_duplicate(
             model_class=BpmnProcessDefinitionModel,
             values=bpmn_process_definition_dict,
-            postgres_conflict_index_elements=["full_process_model_hash"],
         )

@@ -1,13 +1,17 @@
 import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 from flask import Flask
 from sqlalchemy.exc import OperationalError
 
+import spiffworkflow_backend.models.bpmn_process_definition as bpmn_process_definition_module
+import spiffworkflow_backend.utils.db_utils as db_utils
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
@@ -23,6 +27,165 @@ _AUDIT_SPEC.loader.exec_module(_AUDIT_MODULE)
 
 
 class TestBpmnProcessDefinitionPersistence(BaseTest):
+    def test_bpmn_process_definition_relationship_insert_is_idempotent(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        parent_definition = BpmnProcessDefinitionModel(
+            single_process_hash="parent-single-hash",
+            full_process_model_hash="parent-full-hash",
+            bpmn_identifier="parent_process",
+            bpmn_name="Parent Process",
+            properties_json={},
+            bpmn_version_control_type="git",
+            bpmn_version_control_identifier="main",
+        )
+        child_definition = BpmnProcessDefinitionModel(
+            single_process_hash="child-single-hash",
+            full_process_model_hash=None,
+            bpmn_identifier="child_process",
+            bpmn_name="Child Process",
+            properties_json={},
+            bpmn_version_control_type="git",
+            bpmn_version_control_identifier="main",
+        )
+        db.session.add_all([parent_definition, child_definition])
+        db.session.commit()
+
+        BpmnProcessDefinitionRelationshipModel.insert_or_update_record(parent_definition.id, child_definition.id)
+        BpmnProcessDefinitionRelationshipModel.insert_or_update_record(parent_definition.id, child_definition.id)
+        db.session.commit()
+
+        assert (
+            BpmnProcessDefinitionRelationshipModel.query.filter_by(
+                bpmn_process_definition_parent_id=parent_definition.id,
+                bpmn_process_definition_child_id=child_definition.id,
+            ).count()
+            == 1
+        )
+
+    def test_save_to_database_uses_idempotent_relationship_insert(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        parent_definition = SimpleNamespace(
+            id=None,
+            single_process_hash="parent-single-hash",
+            full_process_model_hash="parent-full-hash",
+            bpmn_identifier="parent_process",
+            bpmn_name="Parent Process",
+            properties_json={},
+        )
+        child_definition = SimpleNamespace(
+            id=None,
+            single_process_hash="child-single-hash",
+            full_process_model_hash=None,
+            bpmn_identifier="child_process",
+            bpmn_name="Child Process",
+            properties_json={},
+        )
+        bpmn_definition_to_task_definitions_mappings = {
+            "parent_process": {
+                "bpmn_process_definition": parent_definition,
+            },
+            "child_process": {
+                "bpmn_process_definition": child_definition,
+            },
+        }
+
+        class QueryStub:
+            def __init__(self) -> None:
+                self.ids = iter([10, 20])
+
+            def filter(self, *args: object, **kwargs: object) -> "QueryStub":
+                return self
+
+            def first(self) -> object:
+                return SimpleNamespace(id=next(self.ids))
+
+        relationship_inserts = []
+
+        def insert_relationship(parent_id: int, child_id: int) -> None:
+            relationship_inserts.append((parent_id, child_id))
+
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "insert_or_update_record", lambda values: None)
+        monkeypatch.setattr(BpmnProcessDefinitionModel, "query", QueryStub())
+        monkeypatch.setattr(BpmnProcessDefinitionRelationshipModel, "insert_or_update_record", insert_relationship)
+
+        BpmnProcessService.save_to_database(
+            bpmn_definition_to_task_definitions_mappings,
+            bpmn_process_definition_parent=cast(BpmnProcessDefinitionModel, parent_definition),
+        )
+
+        assert relationship_inserts == [(10, 20)]
+
+    def test_bpmn_process_definition_insert_ignores_any_postgres_unique_conflict(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured_kwargs = {}
+
+        def insert_or_ignore_duplicate(**kwargs: object) -> None:
+            captured_kwargs.update(kwargs)
+
+        monkeypatch.setattr(bpmn_process_definition_module, "insert_or_ignore_duplicate", insert_or_ignore_duplicate)
+
+        BpmnProcessDefinitionModel.insert_or_update_record(
+            {
+                "single_process_hash": "single-hash",
+                "full_process_model_hash": "full-hash",
+                "bpmn_identifier": "demo_process",
+                "bpmn_name": "Demo Process",
+                "properties_json": {},
+            }
+        )
+
+        assert captured_kwargs["model_class"] == BpmnProcessDefinitionModel
+        assert "postgres_conflict_index_elements" not in captured_kwargs
+
+    def test_insert_or_ignore_duplicate_can_ignore_any_postgres_unique_conflict(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured_conflict_kwargs = {}
+        executed_statements = []
+
+        class InsertStatementStub:
+            def values(self, values: object) -> "InsertStatementStub":
+                return self
+
+            def on_conflict_do_nothing(self, **kwargs: object) -> "InsertStatementStub":
+                captured_conflict_kwargs.update(kwargs)
+                return self
+
+        def postgres_insert(model_class: type) -> InsertStatementStub:
+            return InsertStatementStub()
+
+        def execute(statement: InsertStatementStub) -> None:
+            executed_statements.append(statement)
+
+        monkeypatch.setitem(app.config, "SPIFFWORKFLOW_BACKEND_DATABASE_TYPE", "postgres")
+        monkeypatch.setattr(db_utils, "postgres_insert", postgres_insert)
+        monkeypatch.setattr(db_utils.db.session, "execute", execute)
+
+        db_utils.insert_or_ignore_duplicate(
+            model_class=BpmnProcessDefinitionModel,
+            values={
+                "single_process_hash": "single-hash",
+                "full_process_model_hash": "full-hash",
+                "bpmn_identifier": "demo_process",
+                "bpmn_name": "Demo Process",
+                "properties_json": {},
+            },
+        )
+
+        assert captured_conflict_kwargs == {}
+        assert len(executed_statements) == 1
+
     def test_persist_bpmn_process_definition_rolls_back_parent_row_when_task_definition_insert_fails(
         self,
         app: Flask,
