@@ -9,6 +9,10 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { Subject } from 'rxjs';
+import {
+  processDescriptionSx,
+  truncateProcessDescription,
+} from './processDescription';
 
 /**
  * Displays the Process Group info.
@@ -29,6 +33,7 @@ export default function ProcessGroupCard({
   const navigate = useNavigate();
   const captionColor = 'text.secondary';
   const { t } = useTranslation();
+  const groupDescription = truncateProcessDescription(group.description);
 
   return (
     <Card
@@ -64,9 +69,14 @@ export default function ProcessGroupCard({
 
             <Typography
               variant="caption"
-              sx={{ fontWeight: 700, color: 'text.secondary' }}
+              title={group.description || undefined}
+              sx={{
+                ...processDescriptionSx,
+                fontWeight: 700,
+                color: 'text.secondary',
+              }}
             >
-              {group.description || '--'}
+              {groupDescription || '--'}
             </Typography>
 
             <Typography variant="caption" sx={{ color: captionColor }}>
