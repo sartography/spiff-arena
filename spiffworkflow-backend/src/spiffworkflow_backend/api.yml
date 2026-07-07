@@ -299,16 +299,23 @@ paths:
   /debug/process-instance-with-most-tasks:
     get:
       operationId: spiffworkflow_backend.routes.debug_controller.process_instance_with_most_tasks
-      summary: Returns the process instance with the most tasks and the count
+      summary: Returns the recent process instance with the most tasks and the count
+      description: Considers only the most recent 10,000 process instance IDs so the endpoint remains bounded for monitoring.
       tags:
         - Status
       responses:
         "200":
-          description: Returns process instance ID and task count.
+          description: Returns process instance ID, task count, and the recent ID window scope.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OkTrue"
+                $ref: "#/components/schemas/DebugProcessInstanceWithMostTasks"
+        "404":
+          description: No recent process instances with tasks were found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /debug/celery-backend-results/{process_instance_id}:
     parameters:
@@ -4257,6 +4264,35 @@ components:
           type: string
           description: Value of org.opencontainers.image.created.
           example: "2026-05-12T17:59:27.226Z"
+    DebugProcessInstanceWithMostTasks:
+      type: object
+      required:
+        - process_instance_id
+        - task_count
+        - scope
+      properties:
+        process_instance_id:
+          type: integer
+          example: 1446041
+        task_count:
+          type: integer
+          example: 290
+        scope:
+          type: object
+          required:
+            - global
+            - process_instance_id_window
+            - min_process_instance_id
+          properties:
+            global:
+              type: boolean
+              example: false
+            process_instance_id_window:
+              type: integer
+              example: 10000
+            min_process_instance_id:
+              type: integer
+              example: 1436047
     OkTrue:
       properties:
         ok:
