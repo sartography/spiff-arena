@@ -85,6 +85,10 @@ import {
   filterProcessGroupTree,
 } from '../../components/processGroupTree/groupTreeHelpers';
 import { useConfirmationDialog } from '../../hooks/useConfirmationDialog';
+import {
+  processDescriptionSx,
+  truncateProcessDescription,
+} from './processDescription';
 
 const SPIFF_ID = 'spifftop';
 type Crumb = { id: string; displayName: string };
@@ -1178,6 +1182,8 @@ export default function ProcessModelTreePage({
 
   const renderCatalogModelRow = (model: ProcessModel, ctx: ModelRowContext) => {
     const stats = modelStats[model.id];
+    const modelDescription = truncateProcessDescription(model.description);
+
     return (
       <Box
         key={model.id}
@@ -1204,19 +1210,28 @@ export default function ProcessModelTreePage({
           '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
-        <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
           <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
             {model.display_name}
           </Typography>
-          {model.description ? (
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {model.description}
+          {modelDescription ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              title={model.description || undefined}
+              sx={processDescriptionSx}
+            >
+              {modelDescription}
             </Typography>
           ) : null}
         </Box>
-        <Box sx={{ flexGrow: 1 }} />
         {stats && stats.instance_count > 0 ? (
-          <Typography variant="caption" color="text.disabled">
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            noWrap
+            sx={{ flexShrink: 0 }}
+          >
             {t('n_runs', { count: stats.instance_count })}
           </Typography>
         ) : null}
@@ -1414,15 +1429,20 @@ export default function ProcessModelTreePage({
                       targetUris={targetUris}
                     />
                     {currentProcessGroup && (
-                      <Stack
-                        direction="row"
+                      <Typography
+                        variant="body2"
+                        title={currentProcessGroup.description || undefined}
                         sx={{
                           width: '100%',
                           paddingBottom: 2,
+                          color: 'text.secondary',
+                          ...processDescriptionSx,
                         }}
                       >
-                        {currentProcessGroup.description}
-                      </Stack>
+                        {truncateProcessDescription(
+                          currentProcessGroup.description,
+                        )}
+                      </Typography>
                     )}
                     <CatalogAccordion
                       ariaControls="Process Models Accordion"
