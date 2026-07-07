@@ -119,14 +119,6 @@ const convertSecondsToFormattedDateTime = (seconds: number) => {
   return null;
 };
 
-const convertSecondsToFormattedDateTimeWithMilliseconds = (seconds: number) => {
-  const dateObject = convertSecondsToDateObject(seconds);
-  if (dateObject) {
-    return format(dateObject, `${DATE_TIME_FORMAT}.SSS`);
-  }
-  return null;
-};
-
 const convertDateObjectToFormattedHoursMinutes = (dateObject: Date) => {
   if (dateObject) {
     return format(dateObject, TIME_FORMAT_HOURS_MINUTES);
@@ -270,7 +262,6 @@ const DateAndTimeService = {
   convertSecondsToDateObject,
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
-  convertSecondsToFormattedDateTimeWithMilliseconds,
   convertSecondsToFormattedTimeHoursMinutes,
   convertStringToDate,
   dateStringToYMDFormat,
