@@ -483,7 +483,9 @@ function GroupRowActions({
             <ListItemText>{t('process_model')}</ListItemText>
           </MenuItem>
         ) : null}
-        {canAddInsideGroup ? <Divider /> : null}
+        {canAddInsideGroup && (canEditGroup || canDeleteGroup) ? (
+          <Divider />
+        ) : null}
         {canEditGroup ? (
           <MenuItem
             component="a"
@@ -914,7 +916,7 @@ export default function ProcessModelTreePage({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processGroups, permissionsLoaded, ability]);
+  }, [processGroups, permissionsLoaded, ability, requestedProcessGroupId]);
 
   useEffect(() => {
     if (clickStream) {
