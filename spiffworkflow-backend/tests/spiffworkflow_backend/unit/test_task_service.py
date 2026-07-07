@@ -23,17 +23,23 @@ class TestTaskService(BaseTest):
 
         assert "the task failed" in str(error)
 
-    def test_finds_and_caches_existing_task_model_when_mapping_misses(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        task_model = SimpleNamespace(guid="existing-task-guid")
-        query = SimpleNamespace(filter_by=lambda guid: SimpleNamespace(first=lambda: task_model))
+    def test_find_existing_task_model_does_not_query_database_when_mapping_was_empty(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        def fail_if_queried(guid: str) -> object:
+            raise AssertionError(f"unexpected task lookup for {guid}")
+
+        query = SimpleNamespace(filter_by=fail_if_queried)
         monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
 
         task_service = TaskService.__new__(TaskService)
         task_service.task_models = {}
         task_service.task_model_mapping = {}
+        task_service._should_query_task_models = False
 
-        assert task_service._find_existing_task_model("existing-task-guid") == task_model
-        assert task_service.task_model_mapping == {"existing-task-guid": task_model}
+        assert task_service._find_existing_task_model("new-task-guid") is None
+        assert task_service.task_model_mapping == {}
 
     def test_finds_existing_task_model_when_mapping_has_stale_bulk_saved_model(
         self,
@@ -47,6 +53,7 @@ class TestTaskService(BaseTest):
         task_service = TaskService.__new__(TaskService)
         task_service.task_models = {}
         task_service.task_model_mapping = {"existing-task-guid": stale_task_model}
+        task_service._should_query_task_models = True
 
         assert task_service._find_existing_task_model("existing-task-guid") == db_task_model
         assert task_service.task_model_mapping == {"existing-task-guid": db_task_model}

@@ -136,6 +136,7 @@ class TaskService:
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
         self.dirty_bpmn_process_updates: dict[str, tuple[BpmnWorkflow, BpmnProcessModel]] = {}
+        self._should_query_task_models = len(self.task_model_mapping) > 0
         self._subprocess_guid_lookup_by_top_workflow: dict[int, dict[int, str]] = {}
 
         self.run_started_at: float | None = run_started_at
@@ -162,8 +163,11 @@ class TaskService:
         task_model = self.task_model_mapping.get(task_guid)
         if task_model is not None:
             task_model_state = inspect(task_model)
-            if task_model_state.persistent or task_model_state.pending:
+            if not self._should_query_task_models or task_model_state.persistent or task_model_state.pending:
                 return task_model
+
+        if not self._should_query_task_models:
+            return task_model
 
         db_task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid).first()
         if db_task_model is not None:
