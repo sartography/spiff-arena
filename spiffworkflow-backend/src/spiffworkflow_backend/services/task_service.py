@@ -10,7 +10,6 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import asc
-from sqlalchemy import inspect
 
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -144,36 +143,13 @@ class TaskService:
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
         self.flush_dirty_bpmn_process_updates()
         db.session.bulk_save_objects(self.bpmn_processes.values())
-        new_task_models = [task_model for task_model in self.task_models.values() if not inspect(task_model).persistent]
-        db.session.bulk_save_objects(new_task_models)
-        for task_model in new_task_models:
-            self.task_models.pop(task_model.guid, None)
+        db.session.bulk_save_objects(self.task_models.values())
         if save_process_instance_events:
             db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
 
     def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
         return (self.task_model_mapping, self.bpmn_subprocess_mapping)
-
-    def _find_existing_task_model(self, task_guid: str) -> TaskModel | None:
-        task_model = self.task_models.get(task_guid)
-        if task_model is not None:
-            return task_model
-
-        task_model = self.task_model_mapping.get(task_guid)
-        if task_model is not None:
-            task_model_state = inspect(task_model)
-            if not self._should_query_task_models or task_model_state.persistent or task_model_state.pending:
-                return task_model
-
-        if not self._should_query_task_models:
-            return task_model
-
-        db_task_model: TaskModel | None = TaskModel.query.filter_by(guid=task_guid).first()
-        if db_task_model is not None:
-            self.task_model_mapping[task_guid] = db_task_model
-            return db_task_model
-        return task_model
 
     def process_parents_and_children_and_save_to_database(
         self,
@@ -429,7 +405,9 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model = self._find_existing_task_model(spiff_task_guid)
+        task_model: TaskModel | None = None
+        if self._should_query_task_models:
+            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -442,7 +420,8 @@ class TaskService:
                 process_instance_id=self.process_instance.id,
                 task_definition_id=task_definition.id,
             )
-            self.task_model_mapping[spiff_task_guid] = task_model
+            if not self._should_query_task_models:
+                self.task_model_mapping[spiff_task_guid] = task_model
 
         return (bpmn_process, task_model)
 
@@ -582,7 +561,9 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = self._find_existing_task_model(task_id)
+            task_model = None
+            if self._should_query_task_models:
+                task_model = TaskModel.query.filter_by(guid=task_id).first()
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -590,7 +571,6 @@ class TaskService:
                     spiff_task,
                     self.bpmn_definition_to_task_definitions_mappings,
                 )
-                self.task_model_mapping[task_id] = task_model
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
 

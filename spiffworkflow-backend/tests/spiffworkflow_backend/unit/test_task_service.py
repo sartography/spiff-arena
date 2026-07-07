@@ -23,69 +23,6 @@ class TestTaskService(BaseTest):
 
         assert "the task failed" in str(error)
 
-    def test_find_existing_task_model_does_not_query_database_when_mapping_was_empty(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        def fail_if_queried(guid: str) -> object:
-            raise AssertionError(f"unexpected task lookup for {guid}")
-
-        query = SimpleNamespace(filter_by=fail_if_queried)
-        monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
-
-        task_service = TaskService.__new__(TaskService)
-        task_service.task_models = {}
-        task_service.task_model_mapping = {}
-        task_service._should_query_task_models = False
-
-        assert task_service._find_existing_task_model("new-task-guid") is None
-        assert task_service.task_model_mapping == {}
-
-    def test_finds_existing_task_model_when_mapping_has_stale_bulk_saved_model(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        stale_task_model = TaskModel(guid="existing-task-guid")
-        db_task_model = TaskModel(guid="existing-task-guid")
-        query = SimpleNamespace(filter_by=lambda guid: SimpleNamespace(first=lambda: db_task_model))
-        monkeypatch.setattr("spiffworkflow_backend.services.task_service.TaskModel", SimpleNamespace(query=query))
-
-        task_service = TaskService.__new__(TaskService)
-        task_service.task_models = {}
-        task_service.task_model_mapping = {"existing-task-guid": stale_task_model}
-        task_service._should_query_task_models = True
-
-        assert task_service._find_existing_task_model("existing-task-guid") == db_task_model
-        assert task_service.task_model_mapping == {"existing-task-guid": db_task_model}
-
-    def test_save_objects_to_database_does_not_bulk_insert_same_transient_task_twice(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        task_model = TaskModel(guid="new-task-guid")
-        bulk_saved_objects = []
-        task_service = TaskService.__new__(TaskService)
-        task_service.bpmn_processes = {}
-        task_service.task_models = {task_model.guid: task_model}
-        task_service.process_instance_events = {}
-        task_service.json_data_dicts = {}
-        task_service.dirty_bpmn_process_updates = {}
-
-        monkeypatch.setattr(
-            "spiffworkflow_backend.services.task_service.db.session.bulk_save_objects",
-            lambda objects: bulk_saved_objects.append(list(objects)),
-        )
-        monkeypatch.setattr(
-            "spiffworkflow_backend.services.task_service.JsonDataModel.insert_or_update_json_data_records",
-            lambda _json_data_dicts: None,
-        )
-
-        task_service.save_objects_to_database()
-        task_service.save_objects_to_database()
-
-        assert bulk_saved_objects[1] == [task_model]
-        assert bulk_saved_objects[4] == []
-
     def test_can_get_full_bpmn_process_path(
         self,
         app: Flask,
