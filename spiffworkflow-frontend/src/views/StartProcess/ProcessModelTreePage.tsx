@@ -389,6 +389,25 @@ function GroupRowActions({
   const closeMenu = () => setAnchorEl(null);
   const editProcessGroupLabel = `${t('edit')} ${t('process_group')}`;
   const isCurrentProcessGroup = group.id === currentProcessGroupId;
+  const canAddChildGroup = ability.can('POST', '/v1.0/process-groups');
+  const canAddProcessModel = ability.can(
+    'POST',
+    `/v1.0/process-models/${modifiedGroupId}`,
+  );
+  const canAddInsideGroup = canAddChildGroup || canAddProcessModel;
+  const canEditGroup = ability.can(
+    'PUT',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canDeleteGroup = ability.can(
+    'DELETE',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canOpenGroup = !isCurrentProcessGroup;
+  const hasMenuActions =
+    canOpenGroup || canAddInsideGroup || canEditGroup || canDeleteGroup;
+  const shouldShowDividerAfterOpen =
+    canOpenGroup && (canAddInsideGroup || canEditGroup || canDeleteGroup);
 
   return (
     <>
@@ -396,15 +415,24 @@ function GroupRowActions({
         size="small"
         title={t('more_actions')}
         data-testid={`process-group-actions-button-${modifiedGroupId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
         onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
           e.stopPropagation();
           setAnchorEl(e.currentTarget);
         }}
       >
         <MoreVert fontSize="small" />
       </IconButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-        {isCurrentProcessGroup ? null : (
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canOpenGroup ? (
           <>
             <MenuItem
               data-testid={`open-process-group-menu-item-${modifiedGroupId}`}
@@ -418,11 +446,13 @@ function GroupRowActions({
               </ListItemIcon>
               <ListItemText>{t('open_process_group')}</ListItemText>
             </MenuItem>
-            <Divider />
+            {shouldShowDividerAfterOpen ? <Divider /> : null}
           </>
-        )}
-        <ListSubheader>{t('add_inside_this_group')}</ListSubheader>
-        <Can I="POST" a="/v1.0/process-groups" ability={ability}>
+        ) : null}
+        {canAddInsideGroup ? (
+          <ListSubheader>{t('add_inside_this_group')}</ListSubheader>
+        ) : null}
+        {canAddChildGroup ? (
           <MenuItem
             data-testid={`add-child-process-group-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -438,12 +468,8 @@ function GroupRowActions({
               <Folder fontSize="small" />
             </ListItemIcon>
           </MenuItem>
-        </Can>
-        <Can
-          I="POST"
-          a={`/v1.0/process-models/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canAddProcessModel ? (
           <MenuItem
             data-testid={`add-process-model-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -456,13 +482,9 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{t('process_model')}</ListItemText>
           </MenuItem>
-        </Can>
-        <Divider />
-        <Can
-          I="PUT"
-          a={`/v1.0/process-groups/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canAddInsideGroup ? <Divider /> : null}
+        {canEditGroup ? (
           <MenuItem
             component="a"
             href={`/process-groups/${modifiedGroupId}/edit`}
@@ -474,12 +496,8 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{editProcessGroupLabel}</ListItemText>
           </MenuItem>
-        </Can>
-        <Can
-          I="DELETE"
-          a={`/v1.0/process-groups/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canDeleteGroup ? (
           <MenuItem
             data-testid={`delete-process-group-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -492,7 +510,7 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{t('delete_process_group')}</ListItemText>
           </MenuItem>
-        </Can>
+        ) : null}
       </Menu>
       <DeleteConfirmationDialog />
     </>
