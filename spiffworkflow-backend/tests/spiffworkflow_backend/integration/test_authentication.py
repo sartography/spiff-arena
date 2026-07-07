@@ -383,10 +383,13 @@ class TestAuthentication(BaseTest):
             return_value=auth_uri,
         )
 
-        with self.app_config_mock(
-            app,
-            "SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES",
-            "localhost,spiff-dev-host",
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "http://localhost:7001"),
+            self.app_config_mock(
+                app,
+                "SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES",
+                "localhost,spiff-dev-host",
+            ),
         ):
             response = client.get(
                 f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
