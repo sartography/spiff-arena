@@ -183,7 +183,6 @@
   "failed_to_load_diagram": "Failed to load diagram",
   "failure_details": "Failure Details:",
   "fault": "Fault",
-  "favorites": "Favorites",
   "file": "File",
   "file_contents_not_found": "Could not find file contents for file: {{file}}",
   "file_name": "File Name",

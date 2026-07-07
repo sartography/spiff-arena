@@ -35,7 +35,6 @@ import React, {
 import { Can } from '@casl/react';
 import { Subject } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import StarRateIcon from '@mui/icons-material/StarRate';
 import {
   Delete,
   Edit,
@@ -50,14 +49,10 @@ import {
 import { useDebouncedCallback } from 'use-debounce';
 import { useParams, useNavigate } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
-import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
+import TreePanel, { TreeRef } from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
-import {
-  SPIFF_FAVORITES,
-  getStorageValue,
-} from '../../services/LocalStorageService';
 import {
   PermissionsToCheck,
   ProcessGroup,
@@ -181,48 +176,6 @@ function ProcessModelTreeControls({
           <ViewModule fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup>
-    </Stack>
-  );
-}
-
-function FavoritesShortcut({
-  onClick,
-  treeCollapsed,
-}: {
-  onClick: () => void;
-  treeCollapsed: boolean;
-}) {
-  const { t } = useTranslation();
-
-  if (!treeCollapsed) {
-    return null;
-  }
-
-  return (
-    <Stack
-      direction="row"
-      gap={1}
-      sx={{
-        backgroundColor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'borders.primary',
-        borderRadius: 1,
-        alignItems: 'center',
-        paddingRight: 2,
-        position: 'relative',
-        cursor: 'pointer',
-      }}
-      onClick={onClick}
-    >
-      <StarRateIcon
-        sx={{
-          transform: 'scale(.8)',
-          color: 'spotColors.goldStar',
-          position: 'relative',
-          top: -1,
-        }}
-      />
-      <Typography variant="caption">{t('favorites')}</Typography>
     </Stack>
   );
 }
@@ -636,8 +589,6 @@ export default function ProcessModelTreePage({
     any
   > | null>(null);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
-  // const [treeCollapsed, setTreeCollapsed] = useState(false);
-  const [treeCollapsed] = useState(false);
   const [sortBy, setSortBy] = useState<ProcessModelSortOption>('alphabetical');
   const [showOnlyRun, setShowOnlyRun] = useState(false);
   const [modelStats, setModelStats] = useState<ProcessModelStatsMap>({});
@@ -647,7 +598,6 @@ export default function ProcessModelTreePage({
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
-  const favoriteCrumb: Crumb = { id: 'favorites', displayName: t('favorites') };
   const gridProps = {
     display: 'grid',
     gridGap: 20, // Spacing between cards
@@ -856,7 +806,6 @@ export default function ProcessModelTreePage({
   }, [clickedItem, processGroups, navigate, flattenAllItems]);
 
   useEffect(() => {
-    // If no favorites, proceed with the normal process groups.
     if (processGroups && permissionsLoaded) {
       /**
        * Do this now and put it in state.
@@ -872,17 +821,6 @@ export default function ProcessModelTreePage({
         processGroupsLite,
         requestedProcessGroupId || '',
       );
-      // If there are favorites and no requested group, that's all we want to display, return.
-      const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
-      if (!requestedProcessGroupId && favorites.length) {
-        // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
-        // setModels(flattened.filter((item) => favorites.includes(item.id)));
-        setGroups([]);
-        setModelsExpanded(true);
-        setGroupsExpanded(false);
-        setCrumbs([favoriteCrumb]);
-        return;
-      }
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
         setModels(foundProcessGroup.process_models || []);
@@ -910,7 +848,6 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
@@ -923,24 +860,6 @@ export default function ProcessModelTreePage({
       clickStream.subscribe(handleClickStream);
     }
   }, [clickStream]);
-
-  /** Tree calls back here so we can imperatively rework groups etc. */
-  const handleFavorites = ({ text }: { text: string }) => {
-    if (text === SHOW_FAVORITES) {
-      const storage = JSON.parse(getStorageValue('spifffavorites'));
-      const favs = flatItems.filter((item: any) => storage.includes(item.id));
-      // If there's no favorites, the user is just left looking at nothing.
-      // Load the top level groups instead.
-      // Expand accordions accordingly (haha).
-      setGroups(favs.length ? [] : processGroups);
-      setModels(favs);
-      setModelsExpanded(!!favs.length);
-      setGroupsExpanded(!favs.length);
-      setCrumbs([favoriteCrumb]);
-    }
-
-    return false;
-  };
 
   // taken from ProcessModelSearch
   const getParentGroupsDisplayName = (
@@ -1439,12 +1358,6 @@ export default function ProcessModelTreePage({
               }}
               id="scrollable-process-card-area"
             >
-              <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
-                <FavoritesShortcut
-                  treeCollapsed={treeCollapsed}
-                  onClick={() => handleFavorites({ text: SHOW_FAVORITES })}
-                />
-              </Stack>
               {viewMode === 'list' ? (
                 renderNestedListView()
               ) : (

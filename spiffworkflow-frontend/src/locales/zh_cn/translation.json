@@ -175,7 +175,6 @@
   "failed_to_load_diagram": "加载图表失败",
   "failure_details": "失败详情：",
   "fault": "故障",
-  "favorites": "收藏夹",
   "file": "文件",
   "file_contents_not_found": "找不到文件内容：{{file}}",
   "file_name": "文件名",

@@ -175,7 +175,6 @@
   "failed_to_load_diagram": "Kaavion lataaminen epäonnistui",
   "failure_details": "Virheen tiedot:",
   "fault": "Virhe",
-  "favorites": "Suosikit",
   "file": "Tiedosto",
   "file_contents_not_found": "Tiedoston sisältöä ei löytynyt: {{file}}",
   "file_name": "Tiedostonimi",

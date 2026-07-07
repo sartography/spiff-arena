@@ -5,7 +5,6 @@
  */
 
 const LAST_PROCESS_INSTANCE_RUN_LOCATION = 'lastProcessInstanceRunLocation';
-const SPIFF_FAVORITES = 'spifffavorites';
 
 const getStorageValue = (key: string) => {
   // Some concession to error handling here.
@@ -31,7 +30,6 @@ const setLastProcessInstanceRunLocation = (value: string) => {
 };
 
 export {
-  SPIFF_FAVORITES,
   getStorageValue,
   setStorageValue,
   removeStorageValue,
