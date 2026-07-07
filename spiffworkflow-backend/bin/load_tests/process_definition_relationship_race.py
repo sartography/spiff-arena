@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Create a temporary message-start process and fire concurrent message starts.
+"""Stress the BPMN process-definition relationship race against a live backend.
 
-This is intended as a live-server regression harness for message-start races.
-Start Spiff first, for example with `run-spiff-arena`, then run:
+Start Spiff first, then run from spiffworkflow-backend:
 
-    uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --workers 20
+    uv run python bin/load_tests/process_definition_relationship_race.py
+
+The script creates a temporary process model containing a call activity, then
+fires concurrent cold process-instance creates at the existing backend. Vulnerable
+code can return failures from duplicate `bpmn_process_definition_relationship`
+inserts. Fixed code should create every process instance successfully.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import concurrent.futures
 import json
 import statistics
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,46 +28,85 @@ import requests
 DEFAULT_BACKEND_BASE_URL = "http://localhost:7000"
 DEFAULT_USERNAME = "admin"
 DEFAULT_PASSWORD = "admin"  # noqa: S105 - local development default
-DEFAULT_REALM = "spiffworkflow"
 DEFAULT_CLIENT_ID = "spiffworkflow-backend"
 DEFAULT_CLIENT_SECRET = "JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 
 
-BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+PARENT_BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions
   xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
-  id="Definitions_{process_id}"
+  id="Definitions_{parent_process_id}"
   targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="{process_id}" isExecutable="true">
-    <bpmn:startEvent id="message_start_event" name="Concurrent message start">
-      <bpmn:outgoing>Flow_start_to_end</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_start" messageRef="Message_start" />
+  <bpmn:process id="{parent_process_id}" name="Relationship Race Parent" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_parent">
+      <bpmn:outgoing>Flow_start_to_call</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_start_to_end" sourceRef="message_start_event" targetRef="Event_done" />
-    <bpmn:endEvent id="Event_done">
-      <bpmn:incoming>Flow_start_to_end</bpmn:incoming>
+    <bpmn:sequenceFlow id="Flow_start_to_call" sourceRef="StartEvent_parent" targetRef="Activity_call_child" />
+    <bpmn:callActivity id="Activity_call_child" name="Call child" calledElement="{child_process_id}">
+      <bpmn:incoming>Flow_start_to_call</bpmn:incoming>
+      <bpmn:outgoing>Flow_call_to_end</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="EndEvent_parent">
+      <bpmn:incoming>Flow_call_to_end</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_call_to_end" sourceRef="Activity_call_child" targetRef="EndEvent_parent" />
   </bpmn:process>
-  <bpmn:message id="Message_start" name="{message_name}">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>payload</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="{process_id}">
-      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="message_start_event">
+  <bpmndi:BPMNDiagram id="BPMNDiagram_parent">
+    <bpmndi:BPMNPlane id="BPMNPlane_parent" bpmnElement="{parent_process_id}">
+      <bpmndi:BPMNShape id="StartEvent_parent_di" bpmnElement="StartEvent_parent">
         <dc:Bounds x="180" y="160" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="Event_done">
-        <dc:Bounds x="390" y="160" width="36" height="36" />
+      <bpmndi:BPMNShape id="Activity_call_child_di" bpmnElement="Activity_call_child">
+        <dc:Bounds x="270" y="138" width="120" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_start_to_end_di" bpmnElement="Flow_start_to_end">
+      <bpmndi:BPMNShape id="EndEvent_parent_di" bpmnElement="EndEvent_parent">
+        <dc:Bounds x="450" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_start_to_call_di" bpmnElement="Flow_start_to_call">
         <di:waypoint x="216" y="178" />
+        <di:waypoint x="270" y="178" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_call_to_end_di" bpmnElement="Flow_call_to_end">
         <di:waypoint x="390" y="178" />
+        <di:waypoint x="450" y="178" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+"""
+
+
+CHILD_BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_{child_process_id}"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="{child_process_id}" name="Relationship Race Child" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_child">
+      <bpmn:outgoing>Flow_child_start_to_end</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_child">
+      <bpmn:incoming>Flow_child_start_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_child_start_to_end" sourceRef="StartEvent_child" targetRef="EndEvent_child" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_child">
+    <bpmndi:BPMNPlane id="BPMNPlane_child" bpmnElement="{child_process_id}">
+      <bpmndi:BPMNShape id="StartEvent_child_di" bpmnElement="StartEvent_child">
+        <dc:Bounds x="180" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_child_di" bpmnElement="EndEvent_child">
+        <dc:Bounds x="360" y="160" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_child_start_to_end_di" bpmnElement="Flow_child_start_to_end">
+        <di:waypoint x="216" y="178" />
+        <di:waypoint x="360" y="178" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
@@ -71,23 +115,32 @@ BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 @dataclass
-class MessageResult:
+class CreateResult:
     index: int
     status_code: int
     elapsed_seconds: float
     process_instance_id: int | None
-    process_instance_status: str | None
     error_code: str | None
     response_text: str
 
     @property
     def ok(self) -> bool:
-        return (
-            self.status_code == 200
-            and self.process_instance_id is not None
-            and self.process_instance_status == "complete"
-            and self.error_code is None
-        )
+        return self.status_code == 201 and self.process_instance_id is not None and self.error_code is None
+
+
+def classify_failure(result: CreateResult) -> str:
+    body = result.response_text.lower()
+    if "bpmn_process_definition_relationship_unique" in body or "bpmn_process_definition_relationship" in body:
+        return "relationship_duplicate"
+    if "task_definition_unique" in body or "task_definition" in body:
+        return "task_definition_duplicate"
+    if "process_hash_unique" in body or "bpmn_process_definition" in body:
+        return "process_definition_duplicate"
+    if "deadlock" in body or "1213" in body:
+        return "mysql_deadlock"
+    if result.error_code:
+        return result.error_code
+    return f"http_{result.status_code}"
 
 
 def modified_identifier(identifier: str) -> str:
@@ -109,6 +162,8 @@ def check_response(response: requests.Response, context: str, expected_statuses:
 
 def get_access_token(args: argparse.Namespace) -> str:
     if args.access_token:
+        if not isinstance(args.access_token, str):
+            raise RuntimeError("--access-token must be a string")
         return args.access_token
 
     token_url = args.openid_token_url or f"{args.backend_base_url}/openid/token"
@@ -144,11 +199,21 @@ def request_headers(args: argparse.Namespace, access_token: str | None = None) -
     return headers
 
 
+def login_with_access_token(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> None:
+    response = session.post(
+        f"{args.backend_base_url}/v1.0/login_with_access_token",
+        headers=headers,
+        params={"authentication_identifier": args.authentication_identifier},
+        timeout=args.timeout,
+    )
+    check_response(response, "login_with_access_token", {200, 204, 302})
+
+
 def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
     payload = {
         "id": group_id,
         "display_name": group_id,
-        "description": "Temporary group for concurrent message-start load testing",
+        "description": "Temporary group for BPMN relationship race load testing",
         "display_order": 0,
         "admin": False,
     }
@@ -168,7 +233,7 @@ def create_process_model(
     payload = {
         "id": process_model_id,
         "display_name": process_model_id,
-        "description": "Temporary model for concurrent message-start load testing",
+        "description": "Temporary model for BPMN relationship race load testing",
         "fault_or_suspend_on_exception": "fault",
         "exception_notification_addresses": [],
     }
@@ -198,9 +263,7 @@ def upload_bpmn(
         files={"file": (file_name, bpmn.encode("utf-8"), "text/xml")},
         timeout=args.timeout,
     )
-    if response.status_code == 400 and ("already exists" in response.text or "file_already_exists" in response.text):
-        return
-    check_response(response, "upload BPMN", {201})
+    check_response(response, f"upload {file_name}", {201})
 
 
 def set_primary_bpmn(
@@ -218,7 +281,7 @@ def set_primary_bpmn(
             "primary_file_name": file_name,
             "primary_process_id": process_id,
             "display_name": process_model_id,
-            "description": "Temporary model for concurrent message-start load testing",
+            "description": "Temporary model for BPMN relationship race load testing",
             "fault_or_suspend_on_exception": "fault",
             "exception_notification_addresses": [],
         },
@@ -227,13 +290,12 @@ def set_primary_bpmn(
     check_response(response, "set primary BPMN", {200})
 
 
-def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> tuple[str, str]:
-    suffix = args.suffix or str(int(time.time()))
-    group_id = args.group_id or f"load_test/concurrent_message_starts_{suffix}"
-    process_model_id = f"{group_id}/message_receiver"
-    process_id = f"Process_concurrent_message_starts_{suffix}".replace("-", "_")
-    message_name = args.message_name or f"concurrent_message_start_{suffix}"
-    file_name = "message_start_load_test.bpmn"
+def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> str:
+    suffix = args.suffix or uuid.uuid4().hex
+    group_id = args.group_id or f"load_test/process_definition_relationship_race_{suffix}"
+    process_model_id = f"{group_id}/call_activity_parent"
+    parent_process_id = f"Process_parent_{suffix}"
+    child_process_id = f"Process_child_{suffix}"
 
     create_process_group(session, args, headers, "load_test")
     create_process_group(session, args, headers, group_id)
@@ -243,27 +305,27 @@ def ensure_process_model(session: requests.Session, args: argparse.Namespace, he
         args,
         headers,
         process_model_id,
-        file_name,
-        BPMN_TEMPLATE.format(process_id=process_id, message_name=message_name),
+        "callable_child.bpmn",
+        CHILD_BPMN_TEMPLATE.format(child_process_id=child_process_id),
     )
-    set_primary_bpmn(session, args, headers, process_model_id, file_name, process_id)
+    upload_bpmn(
+        session,
+        args,
+        headers,
+        process_model_id,
+        "call_activity_parent.bpmn",
+        PARENT_BPMN_TEMPLATE.format(parent_process_id=parent_process_id, child_process_id=child_process_id),
+    )
+    set_primary_bpmn(session, args, headers, process_model_id, "call_activity_parent.bpmn", parent_process_id)
+    return process_model_id
 
-    return group_id, message_name
 
-
-def send_message(args: argparse.Namespace, headers: dict[str, str], modified_message_name: str, index: int) -> MessageResult:
-    payload = {
-        "request_index": index,
-        "sent_at": time.time(),
-        "payload": {"email": f"load-test-{index}@example.com"},
-    }
+def create_process_instance(args: argparse.Namespace, headers: dict[str, str], process_model_id: str, index: int) -> CreateResult:
     start = time.perf_counter()
     try:
         response = requests.post(
-            f"{args.backend_base_url}/v1.0/messages/{modified_message_name}",
+            f"{args.backend_base_url}/v1.0/process-instances/{modified_identifier(process_model_id)}",
             headers=headers,
-            json=payload,
-            params={"execution_mode": args.execution_mode},
             timeout=args.timeout,
         )
         elapsed = time.perf_counter() - start
@@ -271,55 +333,42 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
             data = response.json()
         except ValueError:
             data = {}
-
-        process_instance = data.get("process_instance") if isinstance(data, dict) else None
-        return MessageResult(
+        return CreateResult(
             index=index,
             status_code=response.status_code,
             elapsed_seconds=elapsed,
-            process_instance_id=process_instance.get("id") if isinstance(process_instance, dict) else None,
-            process_instance_status=process_instance.get("status") if isinstance(process_instance, dict) else None,
+            process_instance_id=data.get("id") if isinstance(data, dict) else None,
             error_code=data.get("error_code") if isinstance(data, dict) else None,
             response_text=response.text[:2000],
         )
     except Exception as exception:
         elapsed = time.perf_counter() - start
-        return MessageResult(
+        return CreateResult(
             index=index,
             status_code=0,
             elapsed_seconds=elapsed,
             process_instance_id=None,
-            process_instance_status=None,
             error_code=exception.__class__.__name__,
             response_text=str(exception),
         )
 
 
-def run_load(args: argparse.Namespace, headers: dict[str, str], group_id: str, message_name: str) -> list[MessageResult]:
-    modified_message_name = f"{modified_identifier(group_id)}:{message_name}"
-    if args.warm_up:
-        print(f"Warming up message '{modified_message_name}' before the concurrent phase")
-        warm_up_result = send_message(args, headers, modified_message_name, -1)
-        if not warm_up_result.ok:
-            raise RuntimeError(f"warm-up message failed: {warm_up_result.response_text}")
-
+def run_load(args: argparse.Namespace, headers: dict[str, str], process_model_id: str) -> list[CreateResult]:
     print(
-        f"Firing {args.requests} message starts with {args.workers} workers against message '{modified_message_name}' "
-        f"using execution_mode={args.execution_mode}"
+        f"Creating {args.requests} process instances with {args.workers} workers against "
+        f"{args.backend_base_url}/v1.0/process-instances/{modified_identifier(process_model_id)}"
     )
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-        futures = [executor.submit(send_message, args, headers, modified_message_name, i) for i in range(args.requests)]
+        futures = [executor.submit(create_process_instance, args, headers, process_model_id, i) for i in range(args.requests)]
         return [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def print_summary(results: list[MessageResult]) -> None:
-    successes = [r for r in results if r.ok]
-    failures = [r for r in results if not r.ok]
-    elapsed_values = [r.elapsed_seconds for r in results]
-    process_instance_ids = [r.process_instance_id for r in successes if r.process_instance_id is not None]
-    unique_process_instance_ids = set(process_instance_ids)
+def print_summary(results: list[CreateResult]) -> None:
+    successes = [result for result in results if result.ok]
+    failures = [result for result in results if not result.ok]
+    elapsed_values = [result.elapsed_seconds for result in results]
 
-    print("\nConcurrent Message Start Summary")
+    print("\nBPMN Process Definition Relationship Race Summary")
     print(f"Total: {len(results)}")
     print(f"Successes: {len(successes)}")
     print(f"Failures: {len(failures)}")
@@ -329,35 +378,33 @@ def print_summary(results: list[MessageResult]) -> None:
             f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / {max(elapsed_values):.3f}s"
         )
 
-    print(f"Unique successful process instances: {len(unique_process_instance_ids)}")
-    if len(unique_process_instance_ids) != len(successes):
-        duplicate_count = len(successes) - len(unique_process_instance_ids)
-        print(f"Duplicate successful process-instance IDs: {duplicate_count}")
-
     if failures:
+        failure_counts: dict[str, int] = {}
+        for result in failures:
+            classification = classify_failure(result)
+            failure_counts[classification] = failure_counts.get(classification, 0) + 1
+
+        print("\nFailure classes:")
+        for classification, count in sorted(failure_counts.items()):
+            print(f"- {classification}: {count}")
+
         print("\nFailures:")
-        for result in sorted(failures, key=lambda r: r.index)[:20]:
+        for result in sorted(failures, key=lambda item: item.index)[:20]:
+            classification = classify_failure(result)
             print(
-                f"- request={result.index} http={result.status_code} status={result.process_instance_status} "
+                f"- request={result.index} class={classification} http={result.status_code} "
                 f"error={result.error_code} body={result.response_text}"
             )
-
-
-def all_message_starts_landed(results: list[MessageResult]) -> bool:
-    successful_process_instance_ids = [result.process_instance_id for result in results if result.ok]
-    return len(successful_process_instance_ids) == len(results) and len(set(successful_process_instance_ids)) == len(results)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend-base-url", default=DEFAULT_BACKEND_BASE_URL)
-    parser.add_argument("--requests", type=int, default=50)
+    parser.add_argument("--requests", type=int, default=20)
     parser.add_argument("--workers", type=int, default=20)
-    parser.add_argument("--execution-mode", default="synchronous", choices=["synchronous", "asynchronous"])
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
-    parser.add_argument("--realm", default=DEFAULT_REALM)
     parser.add_argument("--client-id", default=DEFAULT_CLIENT_ID)
     parser.add_argument("--client-secret", default=DEFAULT_CLIENT_SECRET)
     parser.add_argument("--openid-token-url")
@@ -365,15 +412,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--access-token")
     parser.add_argument("--api-key")
     parser.add_argument("--group-id", help="Use an existing or deterministic process group path")
-    parser.add_argument("--message-name", help="Use an existing or deterministic message name")
-    parser.add_argument("--suffix", help="Suffix for generated group/model/message identifiers")
-    parser.add_argument(
-        "--no-warm-up",
-        action="store_false",
-        dest="warm_up",
-        help="Skip the single warm-up message and include cold BPMN definition persistence in the stress test",
-    )
-    parser.set_defaults(warm_up=True)
+    parser.add_argument("--suffix", help="Suffix for generated group/model/process identifiers")
     return parser.parse_args()
 
 
@@ -384,20 +423,12 @@ def main() -> int:
     headers = request_headers(args, access_token)
 
     if access_token:
-        response = session.post(
-            f"{args.backend_base_url}/v1.0/login_with_access_token",
-            headers=headers,
-            params={
-                "authentication_identifier": args.authentication_identifier,
-            },
-            timeout=args.timeout,
-        )
-        check_response(response, "login_with_access_token", {200, 204, 302})
+        login_with_access_token(session, args, headers)
 
-    group_id, message_name = ensure_process_model(session, args, headers)
-    results = run_load(args, headers, group_id, message_name)
+    process_model_id = ensure_process_model(session, args, headers)
+    results = run_load(args, headers, process_model_id)
     print_summary(results)
-    return 0 if all_message_starts_landed(results) else 1
+    return 0 if all(result.ok for result in results) else 1
 
 
 if __name__ == "__main__":

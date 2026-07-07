@@ -13,7 +13,7 @@ uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --worker
 The script creates a temporary message-start process model using the API, sends one warm-up message, then fires concurrent
 `POST /v1.0/messages/...` requests. The warm-up keeps this focused on message-start concurrency rather than the separate
 cold BPMN process-definition persistence path. It exits nonzero if any request fails or does not complete its own process
-instance.
+instance, or if successful requests do not each return a distinct process instance.
 
 To include the cold BPMN process-definition persistence path in the same stress test:
 
@@ -54,3 +54,30 @@ Useful options:
 ```sh
 uv run python bin/load_tests/message_start_double_delivery_race.py --help
 ```
+
+## BPMN Process Definition Relationship Race
+
+Use this against an already-running backend for the cold process-definition persistence race where concurrent requests can
+try to create the same `bpmn_process_definition_relationship` row. The script creates a temporary process model with a
+call activity, then fires concurrent process-instance creates. It defaults to the Arena backend on port `7000`.
+
+```sh
+uv run python bin/load_tests/process_definition_relationship_race.py
+```
+
+Useful options:
+
+```sh
+uv run python bin/load_tests/process_definition_relationship_race.py --help
+```
+
+## Task Submission
+
+Use this k6-based harness for parallel manual-task submission against a running backend. It creates its temporary process
+model before running k6:
+
+```sh
+SPIFF_API_KEY="..." NUM_TASKS=10 ./bin/load_tests/task_submission/run_parallel_tasks_test.sh
+```
+
+See `bin/load_tests/task_submission/README.md` for setup details.

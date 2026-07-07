@@ -1,13 +1,21 @@
 import json
+from types import SimpleNamespace
+from typing import Any
+from typing import Protocol
+from typing import cast
+from unittest.mock import patch
 from uuid import UUID
 
 import pytest
 from flask import g
 from flask.app import Flask
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import celery_task_process_instance_run
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -21,6 +29,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
+from spiffworkflow_backend.routes.process_instances_controller import process_instance_resume
 from spiffworkflow_backend.routes.tasks_controller import task_data_update
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
@@ -32,7 +41,27 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
+class SupportsCeleryTaskRun(Protocol):
+    def run(self, process_instance_id: int, task_guid: str | None = None) -> dict[str, Any]: ...
+
+
 class TestProcessInstanceRuntime(BaseTest):
+    def test_resume_fails_when_process_instance_has_error_tasks(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        error_task = SimpleNamespace(guid="error-task-guid")
+        query = SimpleNamespace(filter_by=lambda **_: SimpleNamespace(first=lambda: error_task))
+        monkeypatch.setattr("spiffworkflow_backend.services.process_instance_runtime.TaskModel", SimpleNamespace(query=query))
+
+        runtime = ProcessInstanceRuntime.__new__(ProcessInstanceRuntime)
+        process_instance = ProcessInstanceModel()
+        process_instance.id = 123
+        process_instance.status = ProcessInstanceStatus.suspended.value
+        runtime.process_instance_model = process_instance
+
+        with pytest.raises(ApiError) as exc:
+            runtime.resume()
+
+        assert exc.value.error_code == "process_instance_has_error_tasks"
+
     def test_script_engine_can_use_custom_scripts(
         self,
         app: Flask,
@@ -855,6 +884,10 @@ class TestProcessInstanceRuntime(BaseTest):
 
         task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_error", runtime.bpmn_process_instance)
         runtime.suspend()
+        suspended_event_count_before_reset = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
         if task is not None:
             ProcessInstanceRuntime.reset_process(process_instance, str(task.id))
         else:
@@ -862,6 +895,11 @@ class TestProcessInstanceRuntime(BaseTest):
             ProcessInstanceRuntime.reset_process(process_instance, "script_with_error")
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        suspended_event_count_after_reset = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
+        assert suspended_event_count_after_reset == suspended_event_count_before_reset
         runtime = ProcessInstanceRuntime(process_instance)
         ready_tasks = runtime.get_all_ready_or_waiting_tasks()
         assert len(ready_tasks) == 1
@@ -878,6 +916,101 @@ class TestProcessInstanceRuntime(BaseTest):
         runtime = ProcessInstanceRuntime(process_instance)
         runtime.resume()
         runtime.do_engine_steps(save=True)
+
+    def test_failed_manual_script_task_execution_records_manual_attempt(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/script_with_error",
+            process_model_source_directory="script_with_error",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        with pytest.raises(WorkflowExecutionServiceError):
+            runtime.do_engine_steps(save=True)
+
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_error", runtime.bpmn_process_instance)
+        assert task is not None
+        runtime.suspend()
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        with pytest.raises(WorkflowTaskException):
+            runtime.manual_complete_task(str(task.id), execute=True, user=process_instance.process_initiator)
+
+        manually_executed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_executed_manually.value,
+        ).all()
+        assert len(manually_executed_events) == 1
+
+        completed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_completed.value,
+        ).all()
+        assert len(completed_events) == 0
+
+        failed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(task.id),
+            event_type=ProcessInstanceEventType.task_failed.value,
+        ).all()
+        assert len(failed_events) >= 1
+
+    def test_celery_worker_runs_after_skipping_error_task_and_resuming(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/script_with_error",
+            process_model_source_directory="script_with_error",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        with pytest.raises(WorkflowExecutionServiceError):
+            runtime.do_engine_steps(save=True)
+
+        error_task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_error", runtime.bpmn_process_instance)
+        assert error_task is not None
+        runtime.suspend()
+        runtime = ProcessInstanceRuntime(ProcessInstanceModel.query.filter_by(id=process_instance.id).first())
+        runtime.manual_complete_task(str(error_task.id), execute=False, user=process_instance.process_initiator)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        ready_tasks = runtime.get_all_ready_or_waiting_tasks()
+        assert process_instance.status == ProcessInstanceStatus.suspended.value
+        assert len(ready_tasks) == 1
+        assert ready_tasks[0].task_spec.name == "Event_1asi9h4"
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
+            current_process.return_value.index = 0
+            response = process_instance_resume(process_instance.id, "test_group/script_with_error")
+            assert response.status_code == 200
+            assert send_task.call_count == 1
+
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+        assert response.status_code == 200
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.complete.value
 
     def test_step_through_gateway(
         self,
