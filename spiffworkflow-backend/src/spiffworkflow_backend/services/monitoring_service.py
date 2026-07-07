@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from functools import partial
 from typing import Any
 
 import flask.wrappers
@@ -56,7 +57,7 @@ def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
         metrics.info("version_info", "Application Version Info", **version_info_data_normalized)
 
 
-def traces_sampler(sampling_context: Any) -> Any:
+def traces_sampler(sampling_context: Any, default_sample_rate: float = 0.01) -> Any:
     # always inherit
     if sampling_context["parent_sampled"] is not None:
         return sampling_context["parent_sampled"]
@@ -77,7 +78,7 @@ def traces_sampler(sampling_context: Any) -> Any:
     #         return 1
 
     # Default sample rate for all others (replaces traces_sample_rate)
-    return 0.01
+    return default_sample_rate
 
 
 def should_capture_exception_in_sentry(exc_value: BaseException) -> bool:
@@ -133,7 +134,10 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # of transactions for performance monitoring.
         # We recommend adjusting this value to less than 1(00%) in production.
         "traces_sample_rate": float(sentry_traces_sample_rate),
-        "traces_sampler": traces_sampler,
+        "traces_sampler": partial(
+            traces_sampler,
+            default_sample_rate=float(sentry_traces_sample_rate),
+        ),
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
         "before_send": before_send,
     }

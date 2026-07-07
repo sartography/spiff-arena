@@ -389,6 +389,25 @@ function GroupRowActions({
   const closeMenu = () => setAnchorEl(null);
   const editProcessGroupLabel = `${t('edit')} ${t('process_group')}`;
   const isCurrentProcessGroup = group.id === currentProcessGroupId;
+  const canAddChildGroup = ability.can('POST', '/v1.0/process-groups');
+  const canAddProcessModel = ability.can(
+    'POST',
+    `/v1.0/process-models/${modifiedGroupId}`,
+  );
+  const canAddInsideGroup = canAddChildGroup || canAddProcessModel;
+  const canEditGroup = ability.can(
+    'PUT',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canDeleteGroup = ability.can(
+    'DELETE',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canOpenGroup = !isCurrentProcessGroup;
+  const hasMenuActions =
+    canOpenGroup || canAddInsideGroup || canEditGroup || canDeleteGroup;
+  const shouldShowDividerAfterOpen =
+    canOpenGroup && (canAddInsideGroup || canEditGroup || canDeleteGroup);
 
   return (
     <>
@@ -396,15 +415,24 @@ function GroupRowActions({
         size="small"
         title={t('more_actions')}
         data-testid={`process-group-actions-button-${modifiedGroupId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
         onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
           e.stopPropagation();
           setAnchorEl(e.currentTarget);
         }}
       >
         <MoreVert fontSize="small" />
       </IconButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-        {isCurrentProcessGroup ? null : (
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canOpenGroup ? (
           <>
             <MenuItem
               data-testid={`open-process-group-menu-item-${modifiedGroupId}`}
@@ -418,11 +446,13 @@ function GroupRowActions({
               </ListItemIcon>
               <ListItemText>{t('open_process_group')}</ListItemText>
             </MenuItem>
-            <Divider />
+            {shouldShowDividerAfterOpen ? <Divider /> : null}
           </>
-        )}
-        <ListSubheader>{t('add_inside_this_group')}</ListSubheader>
-        <Can I="POST" a="/v1.0/process-groups" ability={ability}>
+        ) : null}
+        {canAddInsideGroup ? (
+          <ListSubheader>{t('add_inside_this_group')}</ListSubheader>
+        ) : null}
+        {canAddChildGroup ? (
           <MenuItem
             data-testid={`add-child-process-group-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -438,12 +468,8 @@ function GroupRowActions({
               <Folder fontSize="small" />
             </ListItemIcon>
           </MenuItem>
-        </Can>
-        <Can
-          I="POST"
-          a={`/v1.0/process-models/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canAddProcessModel ? (
           <MenuItem
             data-testid={`add-process-model-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -456,13 +482,11 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{t('process_model')}</ListItemText>
           </MenuItem>
-        </Can>
-        <Divider />
-        <Can
-          I="PUT"
-          a={`/v1.0/process-groups/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canAddInsideGroup && (canEditGroup || canDeleteGroup) ? (
+          <Divider />
+        ) : null}
+        {canEditGroup ? (
           <MenuItem
             component="a"
             href={`/process-groups/${modifiedGroupId}/edit`}
@@ -474,12 +498,8 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{editProcessGroupLabel}</ListItemText>
           </MenuItem>
-        </Can>
-        <Can
-          I="DELETE"
-          a={`/v1.0/process-groups/${modifiedGroupId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canDeleteGroup ? (
           <MenuItem
             data-testid={`delete-process-group-menu-item-${modifiedGroupId}`}
             onClick={() => {
@@ -492,7 +512,7 @@ function GroupRowActions({
             </ListItemIcon>
             <ListItemText>{t('delete_process_group')}</ListItemText>
           </MenuItem>
-        </Can>
+        ) : null}
       </Menu>
       <DeleteConfirmationDialog />
     </>
@@ -523,6 +543,15 @@ function ModelRowActions({
   });
 
   const closeMenu = () => setAnchorEl(null);
+  const canEditModel = ability.can(
+    'PUT',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const canDeleteModel = ability.can(
+    'DELETE',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const hasMenuActions = canEditModel || canDeleteModel;
 
   return (
     <>
@@ -530,19 +559,24 @@ function ModelRowActions({
         size="small"
         title={t('more_actions')}
         data-testid={`process-model-actions-button-${modifiedModelId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
         onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
           e.stopPropagation();
           setAnchorEl(e.currentTarget);
         }}
       >
         <MoreVert fontSize="small" />
       </IconButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-        <Can
-          I="PUT"
-          a={`/v1.0/process-models/${modifiedModelId}`}
-          ability={ability}
-        >
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canEditModel ? (
           <MenuItem
             component="a"
             href={`/process-models/${modifiedModelId}/edit`}
@@ -554,12 +588,8 @@ function ModelRowActions({
             </ListItemIcon>
             <ListItemText>{t('edit_process_model')}</ListItemText>
           </MenuItem>
-        </Can>
-        <Can
-          I="DELETE"
-          a={`/v1.0/process-models/${modifiedModelId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canDeleteModel ? (
           <MenuItem
             data-testid={`delete-process-model-menu-item-${modifiedModelId}`}
             onClick={() => {
@@ -572,7 +602,7 @@ function ModelRowActions({
             </ListItemIcon>
             <ListItemText>{t('delete_process_model')}</ListItemText>
           </MenuItem>
-        </Can>
+        ) : null}
       </Menu>
       <DeleteConfirmationDialog />
     </>
@@ -836,9 +866,15 @@ export default function ProcessModelTreePage({
       const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
-      // If there are favorites, that's all we want to display, return.
+      const processGroupsLite: ProcessGroupLite[] =
+        processGroups.map(processGroupToLite);
+      const foundProcessGroup = findProcessGroupByPath(
+        processGroupsLite,
+        requestedProcessGroupId || '',
+      );
+      // If there are favorites and no requested group, that's all we want to display, return.
       const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
-      if (favorites.length) {
+      if (!requestedProcessGroupId && favorites.length) {
         // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
         // setModels(flattened.filter((item) => favorites.includes(item.id)));
         setGroups([]);
@@ -847,12 +883,6 @@ export default function ProcessModelTreePage({
         setCrumbs([favoriteCrumb]);
         return;
       }
-      const processGroupsLite: ProcessGroupLite[] =
-        processGroups.map(processGroupToLite);
-      const foundProcessGroup = findProcessGroupByPath(
-        processGroupsLite,
-        requestedProcessGroupId || '',
-      );
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
         setModels(foundProcessGroup.process_models || []);
@@ -886,7 +916,7 @@ export default function ProcessModelTreePage({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processGroups, permissionsLoaded, ability]);
+  }, [processGroups, permissionsLoaded, ability, requestedProcessGroupId]);
 
   useEffect(() => {
     if (clickStream) {
